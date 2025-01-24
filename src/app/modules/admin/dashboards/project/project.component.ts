@@ -205,8 +205,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
             states: {
                 hover: {
                     filter: {
-                        type: 'darken',
-                        value: 0.75,
+                        type: 'darken'
                     },
                 },
             },
@@ -275,8 +274,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
             states: {
                 hover: {
                     filter: {
-                        type: 'darken',
-                        value: 0.75,
+                        type: 'darken'
                     },
                 },
             },
