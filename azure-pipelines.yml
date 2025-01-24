@@ -17,11 +17,3 @@ steps:
     ng build --configuration production
   displayName: 'Clean install and build'
 
-  - task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Tu-Servicio-Conexión'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      az storage blob upload-batch --destination \$web --source dist/tu-proyecto/ --account-name TuStorageAccount
-  displayName: 'Upload to Azure Blob Storage'
