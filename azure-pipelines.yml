@@ -3,20 +3,17 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
-trigger:
-- main
-
-pool:
-  vmImage: ubuntu-latest
-
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '20.x'
+    versionSpec: '18.x'
   displayName: 'Install Node.js'
 
 - script: |
     npm install -g @angular/cli
-    npm install --force
-    ng build --prod
-  displayName: 'npm install and build'
+    rm -rf node_modules package-lock.json
+    npm cache clean --force
+    npm install --legacy-peer-deps
+    ng build --configuration production
+  displayName: 'Clean install and build'
+
