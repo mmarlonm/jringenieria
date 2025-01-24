@@ -11,6 +11,8 @@ steps:
 
 - script: |
     npm install -g @angular/cli
+    rm -rf node_modules package-lock.json
+    npm cache clean --force
     npm install --legacy-peer-deps
     ng build --configuration production
-  displayName: 'npm install and build'
+  displayName: 'Clean install and build'
