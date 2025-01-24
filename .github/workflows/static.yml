@@ -25,8 +25,17 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
+      - name: Instalar angular cli
+        run: npm install -g @angular/cli
+
+      - name: eliminar node_modules
+        run: rm -rf node_modules package-lock.json
+
+      - name: eliminar cache
+        run: npm cache clean --force
+        
       - name: Instalar dependencias
         run: npm install --legacy-peer-deps
 
