@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     environment: github-pages
 
@@ -50,6 +50,14 @@ jobs:
         with:
           path: dist  # 📌 Asegúrate de que coincide con outputPath en angular.json
 
-      - name: Desplegar en GitHub Pages
+      # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
