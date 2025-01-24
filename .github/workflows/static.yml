@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Construir aplicación Angular
         run: ng build --configuration production --base-href /jr-ingenieria/
