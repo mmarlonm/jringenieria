@@ -41,7 +41,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Construir aplicación Angular
-        run: ng build --configuration production --base-href /jr-ingenieria/
+        run: ng build --configuration production --base-href /
 
       - name: Subir artefacto para GitHub Pages
         uses: actions/upload-pages-artifact@v3
