@@ -32,11 +32,18 @@ jobs:
       - name: Instalar Angular CLI
         run: npm install -g @angular/cli
 
+      - name : eliminar package
+        run: rm -rf node_modules package-lock.json
+
+      - name: limpiar cache
+        run: npm cache clean --force
+
       - name: Instalar dependencias
         run: npm install --legacy-peer-deps
+        
 
       - name: Construir aplicación Angular
-        run: ng build --configuration production --base-href /jringenieria/
+        run: ng build --configuration production
 
       - name: Subir artefacto para GitHub Pages
         uses: actions/upload-pages-artifact@v3
