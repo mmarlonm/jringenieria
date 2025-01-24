@@ -17,6 +17,6 @@ steps:
 
 - script: |
     npm install -g @angular/cli
-    npm install --legacy-peer-deps
+    npm install --force
     ng build --prod
   displayName: 'npm install and build'
