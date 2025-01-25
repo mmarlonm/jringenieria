@@ -39,7 +39,7 @@ jobs:
         run: npm cache clean --force
 
       - name: Instalar dependencias
-        run: npm install --legacy-peer-deps --base-href /jringenieria/
+        run: npm install --legacy-peer-deps --base-href /mmarlonm/
         
 
       - name: Construir aplicación Angular
