@@ -39,11 +39,11 @@ jobs:
         run: npm cache clean --force
 
       - name: Instalar dependencias
-        run: npm install --legacy-peer-deps --base-href /jringenieria/
+        run: npm install --legacy-peer-deps
         
 
       - name: Construir aplicación Angular
-        run: ng build --configuration production
+        run: ng build --configuration production --base-href /jringenieria/
 
       - name: Subir artefacto para GitHub Pages
         uses: actions/upload-pages-artifact@v3
