@@ -48,7 +48,7 @@ jobs:
       - name: Subir artefacto para GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist  # 📌 Asegúrate de que coincide con outputPath en angular.json
+          path: dist/browser  # 📌 Asegúrate de que coincide con outputPath en angular.json
 
       # Deployment job
   deploy:
