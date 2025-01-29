@@ -23,6 +23,7 @@
                         "polyfills": ["zone.js"],
                         "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
+                        "baseHref": "/jringenieria/",
                         "allowedCommonJsDependencies": [
                             "apexcharts",
                             "crypto-js/enc-utf8",
