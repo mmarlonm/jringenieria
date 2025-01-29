@@ -8,6 +8,7 @@ import {
     provideRouter,
     withInMemoryScrolling,
     withPreloading,
+    withHashLocation
 } from '@angular/router';
 import { provideFuse } from '@fuse';
 import { TranslocoService, provideTransloco } from '@ngneat/transloco';
@@ -25,7 +26,8 @@ export const appConfig: ApplicationConfig = {
         provideRouter(
             appRoutes,
             withPreloading(PreloadAllModules),
-            withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
+            withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+            withHashLocation() // Agrega esta opción para habilitar hash
         ),
 
         // Material Date Adapter
