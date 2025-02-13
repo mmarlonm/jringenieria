@@ -10,19 +10,20 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:home',
         children: [
             {
-                id: 'dashboards.project',
-                title: 'Project',
-                type: 'basic',
-                icon: 'heroicons_outline:clipboard-document-check',
-                link: '/dashboards/project',
-            },
-            {
                 id: 'dashboards.analytics',
                 title: 'Analytics',
                 type: 'basic',
                 icon: 'heroicons_outline:chart-pie',
                 link: '/dashboards/analytics',
-            }
+            },
+            {
+                id: 'dashboards.project',
+                title: 'Projectos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-check',
+                link: '/dashboards/project',
+            },
+            
         ],
     },
     {
@@ -38,6 +39,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:user-group',
                 link: '/security/users',
+            },
+            {
+                id: 'apps.roles',
+                title: 'Roles',
+                type: 'basic',
+                icon: 'heroicons_outline:user-group',
+                link: '/security/roles',
             }
         ],
     }

@@ -88,12 +88,12 @@ export class ProfileComponent implements OnInit {
         this._userService.user$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
-                this.user = user;
+                this.user = user['usuario'];
                 this.baseAavatar = this.user.avatar;
                 this.userForm = this._formBuilder.group(
                     {
                       nombreUsuario: [this.user.nombreUsuario, Validators.required],
-                      email: [user.email, [Validators.required, Validators.email, Validators.maxLength(255)]],
+                      email: [user['usuario'].email, [Validators.required, Validators.email, Validators.maxLength(255)]],
                       currentPasswordUser: [''],
                       newPasswordUser: ['', [Validators.minLength(6)]],
                       confirmPasswordUser: [''],

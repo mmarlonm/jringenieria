@@ -10,14 +10,14 @@ import { LayoutComponent } from 'app/layout/layout.component';
 export const appRoutes: Route[] = [
 
     // Redirect empty path to '/example'
-    {path: '', pathMatch : 'full', redirectTo: '/dashboards/project'},
+    {path: '', pathMatch : 'full', redirectTo: '/dashboards/analytics'},
 
     // Redirect signed-in user to the '/example'
     //
     // After the user signs in, the sign-in page will redirect the user to the 'signed-in-redirect'
     // path. Below is another redirection for that path to redirect the user to the desired
     // location. This is a small convenience to keep all main routes together here on this file.
-    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: '/dashboards/project'},
+    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: '/dashboards/analytics'},
 
     // Auth routes for guests
     {
@@ -76,10 +76,12 @@ export const appRoutes: Route[] = [
         children: [
             // Dashboards
             {path: 'dashboards', children: [
-                {path: 'project', loadChildren: () => import('app/modules/admin/dashboards/project/project.routes')}
+                {path: 'project', loadChildren: () => import('app/modules/admin/dashboards/project/project.routes')},
+                {path: 'analytics', loadChildren: () => import('app/modules/admin/dashboards/analytics/analytics.routes')}
             ]},
             {path: 'security', children: [
-                {path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes')}
+                {path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes')},
+                {path: 'roles', loadChildren: () => import('app/modules/admin/security/roles/roles.routes')}
             ]},
             {path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes')},
             {path: 'profile', loadChildren: () => import('app/modules/admin/pages/profile/profile.routes')}

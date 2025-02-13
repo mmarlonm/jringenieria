@@ -1,0 +1,54 @@
+<div class="absolute inset-0 flex flex-col overflow-hidden p-6">
+    <h1 class="text-2xl font-bold mb-4">
+        {{ projectId ? 'Editar Proyecto' : 'Nuevo Proyecto' }}
+    </h1>
+
+    <form [formGroup]="projectForm" (ngSubmit)="saveProject()" class="flex flex-col gap-4">
+      
+      <!-- Nombre del Proyecto -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Nombre del Proyecto</mat-label>
+        <input matInput formControlName="nombre">
+      </mat-form-field>
+    
+      <!-- Categoría -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Categoría</mat-label>
+        <mat-select formControlName="categoria">
+          <mat-option *ngFor="let cat of categorias" [value]="cat.categoriaId">{{ cat.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    
+      <!-- Unidad de Negocio -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Unidad de Negocio</mat-label>
+        <mat-select formControlName="unidadDeNegocio">
+          <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">{{ unidad.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Fechas -->
+      <div class="grid grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+              <mat-label>Fecha de Inicio</mat-label>
+              <input matInput [matDatepicker]="picker1" formControlName="fechaInicio">
+              <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+              <mat-datepicker #picker1></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+              <mat-label>Fecha de Fin</mat-label>
+              <input matInput [matDatepicker]="picker2" formControlName="fechaFin">
+              <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+              <mat-datepicker #picker2></mat-datepicker>
+          </mat-form-field>
+      </div>
+    
+      <!-- Botones -->
+      <div class="flex justify-end gap-2 mt-4">
+        <button mat-raised-button color="primary" type="submit">Guardar</button>
+        <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">Cancelar</button>
+      </div>
+
+    </form>
+</div>

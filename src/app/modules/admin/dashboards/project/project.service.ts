@@ -1,39 +1,47 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class ProjectService {
-    private _data: BehaviorSubject<any> = new BehaviorSubject(null);
+    private apiUrl = `${environment.apiUrl}/Proyecto`; // Asegúrate de que esto sea correcto
 
-    /**
-     * Constructor
-     */
-    constructor(private _httpClient: HttpClient) {}
+  constructor(private http: HttpClient) {}
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Accessors
-    // -----------------------------------------------------------------------------------------------------
+  // Obtener todos los proyectos
+  getProjects(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/proyectos`);
+  }
 
-    /**
-     * Getter for data
-     */
-    get data$(): Observable<any> {
-        return this._data.asObservable();
-    }
+  // Obtener Unidades de Negocio
+  getUnidadesDeNegocio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/unidades-negocio`);
+  }
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Public methods
-    // -----------------------------------------------------------------------------------------------------
+  // Obtener Categorías
+  getCategorias(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/categorias`);
+  }
 
-    /**
-     * Get data
-     */
-    getData(): Observable<any> {
-        return this._httpClient.get('api/dashboards/project').pipe(
-            tap((response: any) => {
-                this._data.next(response);
-            })
-        );
-    }
+  // Crear un nuevo proyecto
+  createProject(project: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/guardar-proyecto`, project);
+  }
+
+  // Actualizar un proyecto existente
+  updateProject(project: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/guardar-proyecto`, project);
+  }
+
+  // Eliminar un proyecto
+  deleteProject(projectId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/eliminar-proyecto/${projectId}`);
+  }
+
+  getProjectById(projectId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/proyecto/${projectId}`);
+  }
 }

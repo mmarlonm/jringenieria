@@ -1,0 +1,35 @@
+<div class="navigation">
+  <!-- Iteramos sobre los grupos principales -->
+  <div *ngFor="let group of navigation" class="group mt-4">
+    <!-- Checkbox para seleccionar/desmarcar todas las vistas del grupo -->
+    <label class="font-bold flex items-center">
+      <input type="checkbox" [checked]="isGroupFullySelected(group)" (change)="toggleGroup(group)">
+      <span class="ml-2">{{ group.title }}</span>
+    </label>
+
+    <ul class="ml-6 mt-2 border-l-2 border-gray-300 pl-4">
+      <!-- Iteramos sobre las vistas dentro del grupo -->
+      <li *ngFor="let item of group.children" class="mb-2">
+        <div class="flex items-center">
+          <!-- Checkbox para seleccionar la vista -->
+          <mat-checkbox 
+            [checked]="selectedPermissions[item.id]?.length > 0" 
+            (change)="togglePermission(item.id, 1)">
+            {{ item.title }}
+          </mat-checkbox>
+        </div>
+
+        <!-- Mostramos los permisos asociados a la vista -->
+        <ul class="ml-6 mt-1" *ngIf="permisos.length > 0">
+          <li *ngFor="let permiso of permisos">
+            <mat-checkbox 
+              [checked]="selectedPermissions[item.id]?.includes(permiso.permisoId)"
+              (change)="togglePermission(item.id, permiso.permisoId)">
+              {{ permiso.descripcionPermiso }}
+            </mat-checkbox>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>

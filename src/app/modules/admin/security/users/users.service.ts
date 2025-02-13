@@ -122,6 +122,26 @@ export class UsersService {
     }
 
     /**
+     * Create contact
+     */
+    updateUsers(user: any): Observable<any> {
+        return this._httpClient.post<any>(`${this.apiUrl}/created-user`, user).pipe(
+            tap((updatedUser) => {
+                // Obtener la lista actual de users
+                this.users$.pipe(take(1)).subscribe((users) => {
+                    // Si el rol existe, actualizarlo; si no, agregarlo
+                    const updatedUsers = users.some(r => r.usuarioId === updatedUser.usuarioId)
+                        ? users.map(r => (r.rolId === updatedUser.usuarioId ? updatedUser : r))
+                        : [...users, updatedUser];
+    
+                    // Emitir la nueva lista de users
+                    this._users.next(updatedUsers);
+                });
+            })
+        );
+    }
+
+    /**
      * Update contact
      *
      * @param id

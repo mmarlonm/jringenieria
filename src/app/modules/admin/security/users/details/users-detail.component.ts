@@ -1,7 +1,7 @@
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TextFieldModule } from '@angular/cdk/text-field';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe, NgClass,CommonModule } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -40,6 +40,9 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { UsersListComponent } from 'app/modules/admin/security/users/list/users-list.component';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 
+//servicion para obtener roles
+import { RolService } from 'app/modules/admin/security/roles/roles.service';
+
 @Component({
     selector: 'users-details',
     templateUrl: './users-detail.component.html',
@@ -64,6 +67,7 @@ import { Subject, debounceTime, takeUntil } from 'rxjs';
         TextFieldModule,
         FuseFindByKeyPipe,
         DatePipe,
+        CommonModule
     ],
 })
 export class UsersDetailsComponent implements OnInit, OnDestroy {
@@ -76,6 +80,9 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     users: any[];
     private _tagsPanelOverlayRef: OverlayRef;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+
+    //asignar roles existentes en sistema
+    roles:any[]=[];
 
     /**
      * Constructor
@@ -90,7 +97,8 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         private _renderer2: Renderer2,
         private _router: Router,
         private _overlay: Overlay,
-        private _viewContainerRef: ViewContainerRef
+        private _viewContainerRef: ViewContainerRef,
+        private _rolService: RolService,
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -101,15 +109,22 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      * On init
      */
     ngOnInit(): void {
+
+        //get roles
+        this._rolService.getRoles().subscribe((resolve)=>{
+            console.log("respuesta roles ", resolve)
+            this.roles = resolve;
+        });
         // Open the drawer
         this._usersListComponent.matDrawer.open();
 
         // Create the user form
         this.contactForm = this._formBuilder.group({
-            id: [''],
+            usuarioId: [''],
             avatar: [null],
             nombreUsuario: ['', [Validators.required]],
-            email: ['', [Validators.required, Validators.email]]
+            email: ['', [Validators.required, Validators.email]],
+            rolId: ['', [Validators.required]]  // Campo para seleccionar el rol
         });
 
         // Get the users
@@ -142,6 +157,8 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
                 // Mark for check
                 this._changeDetectorRef.markForCheck();
             });
+
+        
     }
 
     /**
@@ -189,23 +206,20 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      * Update the user
      */
     updateContact(): void {
-        // Get the user object
+        // Obtener los valores del formulario
         const user = this.contactForm.getRawValue();
-
-        // Go through the user object and clear empty values
-        user.emails = user.emails.filter((email) => email.email);
-
-        user.phoneNumbers = user.phoneNumbers.filter(
-            (phoneNumber) => phoneNumber.phoneNumber
-        );
-
-        // Update the user on the server
-        this._usersService
-            .updateContact(user.id, user)
-            .subscribe(() => {
-                // Toggle the edit mode off
-                this.toggleEditMode(false);
-            });
+    
+        // Verificar si el avatar tiene un prefijo y eliminarlo
+        if (user.avatar && user.avatar.startsWith("data:image")) {
+            user.avatar = user.avatar.split(",")[1]; // Extrae solo la parte Base64
+        }
+    
+        console.log("Usuario a guardar", user);
+    
+        // Enviar la data al servicio
+        this._usersService.updateUsers(user).subscribe(res => {
+            console.log("Respuesta guardado de usuario", res);
+        });
     }
 
     /**
@@ -228,24 +242,24 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         confirmation.afterClosed().subscribe((result) => {
             // If the confirm button pressed...
             if (result === 'confirmed') {
-                // Get the current user's id
-                const id = this.user.id;
+                // Get the current user's usuarioId
+                const usuarioId = this.user.usuarioId;
 
-                // Get the next/previous user's id
+                // Get the next/previous user's usuarioId
                 const currentContactIndex = this.users.findIndex(
-                    (item) => item.id === id
+                    (item) => item.usuarioId === usuarioId
                 );
                 const nextContactIndex =
                     currentContactIndex +
                     (currentContactIndex === this.users.length - 1 ? -1 : 1);
                 const nextContactId =
-                    this.users.length === 1 && this.users[0].id === id
+                    this.users.length === 1 && this.users[0].usuarioId === usuarioId
                         ? null
-                        : this.users[nextContactIndex].id;
+                        : this.users[nextContactIndex].usuarioId;
 
                 // Delete the user
                 this._usersService
-                    .deleteContact(id)
+                    .deleteContact(usuarioId)
                     .subscribe((isDeleted) => {
                         // Return if the user wasn't deleted...
                         if (!isDeleted) {
@@ -281,21 +295,33 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      * @param fileList
      */
     uploadAvatar(fileList: FileList): void {
-        // Return if canceled
+        // Si no hay archivos, salir
         if (!fileList.length) {
             return;
         }
-
+    
         const allowedTypes = ['image/jpeg', 'image/png'];
         const file = fileList[0];
-
-        // Return if the file is not allowed
+    
+        // Si el tipo de archivo no es permitido, salir
         if (!allowedTypes.includes(file.type)) {
+            console.error("Tipo de archivo no permitido.");
             return;
         }
-
-        // Upload the avatar
-        this._usersService.uploadAvatar(this.user.id, file).subscribe();
+    
+        // Convertir a Base64
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64String = reader.result as string;
+    
+            // Asignar al formulario
+            this.contactForm.patchValue({ avatar: base64String });
+            this.user.avatar =base64String;
+    
+            console.log("Avatar convertido a Base64 y asignado al formulario:", base64String);
+        };
+    
+        reader.readAsDataURL(file); // Leer el archivo como Data URL (Base64)
     }
 
     /**
@@ -397,6 +423,6 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      * @param item
      */
     trackByFn(index: number, item: any): any {
-        return item.id || index;
+        return item.usuarioId || index;
     }
 }

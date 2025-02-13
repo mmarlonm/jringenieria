@@ -6,14 +6,14 @@ import {
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-    selector: 'project',
-    templateUrl: './project.component.html',
+    selector: 'roles',
+    templateUrl: './roles.component.html',
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [RouterOutlet],
 })
-export class ProjectComponent {
+export class RolesComponent {
     /**
      * Constructor
      */

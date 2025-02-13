@@ -216,7 +216,7 @@
                             class="w-full"
                             [subscriptSizing]="'dynamic'"
                         >
-                            <mat-label>Name</mat-label>
+                            <mat-label>Nombre Usuario</mat-label>
                             <mat-icon
                                 matPrefix
                                 class="hidden icon-size-5 sm:flex"
@@ -252,6 +252,17 @@
                         </mat-form-field>
                     </div>
 
+                    <!-- roles -->
+                    <div class="mt-8">
+                        <mat-form-field appearance="fill" class="full-width">
+                            <mat-label>Rol</mat-label>
+                            <mat-select formControlName="rolId" required>
+                                <mat-option *ngFor="let rol of roles" [value]="rol.rolId">
+                                    {{ rol.nombreRol }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
                     <!-- Actions -->
                     <div
                         class="-mx-6 mt-10 flex items-center border-t bg-gray-50 py-4 pl-1 pr-4 dark:bg-transparent sm:-mx-12 sm:pl-7 sm:pr-12"

@@ -36,10 +36,11 @@ export class NavigationMockApi {
      * Register Mock API handlers
      */
     registerHandlers(): void {
-        // -----------------------------------------------------------------------------------------------------
-        // @ Navigation - GET
-        // -----------------------------------------------------------------------------------------------------
         this._fuseMockApiService.onGet('api/common/navigation').reply(() => {
+            // 🔹 Obtener los datos del usuario desde localStorage
+            const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const vistasPermitidas: string[] = storedData.vistas?.map(v => v.nombreVista) || [];
+
             // Fill compact navigation children using the default navigation
             this._compactNavigation.forEach((compactNavItem) => {
                 this._defaultNavigation.forEach((defaultNavItem) => {
@@ -72,15 +73,32 @@ export class NavigationMockApi {
                     }
                 });
             });
-
-            // Return the response
+    
+            // 🔹 Función para filtrar la navegación
+            const filtrarNavegacion = (navigation: FuseNavigationItem[]) => {
+                return navigation.map(group => ({
+                    ...group,
+                    children: group.children
+                        ? group.children.filter(item => vistasPermitidas.includes(item.id))
+                        : []
+                })).filter(group => group.children.length > 0); // Eliminar grupos vacíos
+            };
+    
+            const compactNav = filtrarNavegacion(cloneDeep(this._compactNavigation));
+            const defaultNav = filtrarNavegacion(cloneDeep(this._defaultNavigation));
+            const defaultNav2 = cloneDeep(this._defaultNavigation);
+            const futuristicNav = filtrarNavegacion(cloneDeep(this._futuristicNavigation));
+            const horizontalNav = filtrarNavegacion(cloneDeep(this._horizontalNavigation));
+    
+            // 🔹 Devolver la navegación filtrada
             return [
                 200,
                 {
-                    compact: cloneDeep(this._compactNavigation),
-                    default: cloneDeep(this._defaultNavigation),
-                    futuristic: cloneDeep(this._futuristicNavigation),
-                    horizontal: cloneDeep(this._horizontalNavigation),
+                    compact: compactNav,
+                    default: defaultNav,
+                    default2: defaultNav2,
+                    futuristic: futuristicNav,
+                    horizontal: horizontalNav,
                 },
             ];
         });
