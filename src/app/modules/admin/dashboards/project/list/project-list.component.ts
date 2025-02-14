@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../project.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
@@ -35,6 +35,9 @@ export class ProjectListComponent implements OnInit {
   dataSource = new MatTableDataSource<any>();
   projectsCount: number = 0;
   searchText: string = '';
+  permisosUsuario: any[] = [];
+  vistaActual: string = '';
+  permisosDisponibles: string[] = [];
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -42,11 +45,14 @@ export class ProjectListComponent implements OnInit {
   constructor(
     private projectService: ProjectService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    this.vistaActual = this.router.url;
     this.getProjects();
+    this.obtenerPermisos();
   }
 
   ngAfterViewInit() {
@@ -83,5 +89,33 @@ export class ProjectListComponent implements OnInit {
       this.getProjects();
       this.snackBar.open('Proyecto eliminado correctamente', 'Cerrar', { duration: 3000 });
     });
+  }
+
+  obtenerPermisos(): void {
+    // Obtener userInformation desde localStorage
+    const userInformation = localStorage.getItem('userInformation');
+    if (!userInformation) {
+      console.warn('No se encontró información de usuario en localStorage.');
+      return;
+    }
+
+    const userData = JSON.parse(userInformation);
+
+    // Obtener la ruta actual
+    console.log("vista actual ", this.vistaActual);
+    console.log("permisos  ", userData.permisos);
+    // Filtrar permisos que correspondan a la vista actual
+    this.permisosUsuario = userData.permisos.filter(
+      (permiso) => permiso.vista.ruta === `${this.vistaActual}`
+    );
+
+    // Guardar los códigos de los permisos en un array
+    this.permisosDisponibles = this.permisosUsuario.map((permiso) => permiso.codigo);
+
+    console.log('Permisos de esta vista:', this.permisosDisponibles);
+  }
+
+  tienePermiso(codigo: string): boolean {
+    return this.permisosDisponibles.includes(codigo);
   }
 }
