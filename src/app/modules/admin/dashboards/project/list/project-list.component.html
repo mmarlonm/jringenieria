@@ -32,7 +32,7 @@
         <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
             
             <!-- Add rol button -->
-            <button *ngIf="tienePermiso('btnAdd')"
+            <button
                 class="ml-4"
                 mat-flat-button
                 [color]="'primary'"
@@ -92,8 +92,8 @@
                   <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef> Acciones </th>
                     <td mat-cell *matCellDef="let project">
-                      <button mat-button color="accent" (click)="editProject(project.proyectoId)" *ngIf="tienePermiso('btnEdit')">Editar</button>
-                      <button mat-button color="warn" (click)="deleteProject(project.proyectoId)" *ngIf="tienePermiso('btndelete')">Eliminar</button>
+                      <button mat-button color="accent" (click)="editProject(project.proyectoId)">Editar</button>
+                      <button mat-button color="warn" (click)="deleteProject(project.proyectoId)">Eliminar</button>
                     </td>
                   </ng-container>
               
