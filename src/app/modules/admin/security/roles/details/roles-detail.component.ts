@@ -69,7 +69,6 @@ import { RoleNavigationModule } from '../rol-navigation/rol-navigation.module'
     ],
 })
 export class RolesDetailsComponent implements OnInit, OnDestroy {
-    @ViewChild('avatarFileInput') private _avatarFileInput: ElementRef;
 
     editMode: boolean = false;
     tagsEditMode: boolean = false;

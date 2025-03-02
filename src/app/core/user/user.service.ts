@@ -84,7 +84,7 @@ export class UserService {
                         const user = JSON.parse(
                             localStorage.getItem('userInformation') || '{}'
                         );
-                        user.avatar = updatedAvatar;
+                        user.usuario.avatar = updatedAvatar;
                         localStorage.setItem(
                             'userInformation',
                             JSON.stringify(user)

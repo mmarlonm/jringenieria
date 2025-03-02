@@ -56,7 +56,7 @@ export class ProjectDetailsComponent implements OnInit {
 
     this.route.paramMap.subscribe(params => {
         const id = params.get('id');
-        if (id === 'new') {
+        if (!id || id === 'new') {
             this.projectId = null; // Se trata de un nuevo proyecto
         } else {
             this.projectId = Number(id);

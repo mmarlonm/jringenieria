@@ -5,6 +5,10 @@
     <div
       class="relative h-40 w-full bg-accent-100 px-8 dark:bg-accent-700 sm:h-48 sm:px-12"
     >
+      <img
+        class="absolute inset-0 h-full w-full object-cover"
+        src="images/pages/profile/cover-jr.jpg"
+      />
       <div class="mx-auto flex w-full max-w-3xl items-center justify-end pt-6">
         <a mat-icon-button [matTooltip]="'Close'" [routerLink]="['../']">
           <mat-icon
@@ -24,10 +28,12 @@
         <div class="-mt-16 flex flex-auto items-end">
           <!-- Actions -->
           <div class="mb-1 ml-auto flex items-center">
-            <button mat-stroked-button (click)="toggleEditMode(true)">
-              <mat-icon
-                class="icon-size-5"
-              ></mat-icon>
+            <button
+              (click)="toggleEditMode(true)"
+              mat-flat-button
+              [color]="'primary'"
+            >
+              <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
               <span class="ml-2">Edit</span>
             </button>
           </div>
@@ -42,7 +48,7 @@
           <!-- Title -->
           @if (rol.nombreRol) {
             <div class="flex sm:items-center">
-              <mat-icon ></mat-icon>
+              <mat-icon></mat-icon>
               <div class="ml-6 leading-6">
                 {{ rol.nombreRol }}
               </div>
@@ -62,7 +68,7 @@
       <!-- Background -->
       <img
         class="absolute inset-0 h-full w-full object-cover"
-        src="images/pages/profile/cover.jpg"
+        src="images/pages/profile/cover-jr.jpg"
       />
       <!-- Close button -->
       <div class="mx-auto flex w-full max-w-3xl items-center justify-end pt-6">

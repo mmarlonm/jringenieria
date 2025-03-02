@@ -23,6 +23,30 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-check',
                 link: '/dashboards/project',
             },
+            {
+                id: 'dashboards.quote',
+                title: 'Cotizaciones',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-check',
+                link: '/dashboards/quote',
+            },
+            
+        ],
+    },
+    {
+        id: 'catalogs',
+        title: 'Catalogos',
+        subtitle: 'Administracion de catalogos',
+        type: 'collapsable',
+        icon: 'heroicons_outline:book-open',
+        children: [
+            {
+                id: 'catalogs.clients',
+                title: 'Clientes',
+                type: 'basic',
+                icon: 'heroicons_outline:user',
+                link: '/catalogs/clients',
+            }
             
         ],
     },
@@ -31,7 +55,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'Securidad',
         subtitle: 'Configuracion de seguridad',
         type: 'group',
-        icon: 'heroicons_outline:home',
+        icon: 'heroicons_outline:shield-check',
         children: [
             {
                 id: 'apps.contacts',

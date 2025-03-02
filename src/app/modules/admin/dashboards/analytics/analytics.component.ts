@@ -88,7 +88,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this._unsubscribeAll))
         .subscribe((user: User) => {
             console.log("user ", user)
-            this.user = user;
+            this.user = user['usuario'];
         });
 
         // Attach SVG fill fixer to all ApexCharts
