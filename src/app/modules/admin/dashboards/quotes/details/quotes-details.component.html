@@ -5,132 +5,150 @@
 
   <form [formGroup]="quotesForm" (ngSubmit)="saveQuotes()" class="flex flex-col gap-4 overflow-auto">
     
-    <!-- Cliente -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Cliente</mat-label>
-      <input matInput formControlName="cliente">
-    </mat-form-field>
-
-    <!-- Nombre de Contacto -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Nombre de Contacto</mat-label>
-      <input matInput formControlName="nombreContacto">
-    </mat-form-field>
-
-    <!-- Teléfono -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Teléfono</mat-label>
-      <input matInput formControlName="telefono">
-    </mat-form-field>
-
-    <!-- Empresa -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Empresa</mat-label>
-      <input matInput formControlName="empresa">
-    </mat-form-field>
-
-    <!-- Cotizacion -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Cotización</mat-label>
-      <input matInput formControlName="cotizacion">
-    </mat-form-field>
-
-    <!-- Necesidad -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Necesidad</mat-label>
-      <textarea matInput formControlName="necesidad"></textarea>
-    </mat-form-field>
-
-    <!-- Dirección -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Dirección</mat-label>
-      <input matInput formControlName="direccion">
-    </mat-form-field>
-
-    <!-- Orden de Compra -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Orden de Compra</mat-label>
-      <input matInput formControlName="ordenCompra">
-    </mat-form-field>
-
-    <!-- Contrato -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Contrato</mat-label>
-      <input matInput formControlName="contrato">
-    </mat-form-field>
-
-    <!-- Proveedor -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Proveedor</mat-label>
-      <input matInput formControlName="proveedor">
-    </mat-form-field>
-
-    <!-- Vendedor -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Vendedor</mat-label>
-      <input matInput formControlName="vendedor">
-    </mat-form-field>
-
-    <!-- Fechas -->
     <div class="grid grid-cols-2 gap-4">
-        <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Fecha de Entrega</mat-label>
-            <input matInput [matDatepicker]="picker1" formControlName="fechaEntrega">
-            <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
-            <mat-datepicker #picker1></mat-datepicker>
-        </mat-form-field>
+      <!-- Cliente -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cliente</mat-label>
+        <input matInput formControlName="cliente">
+      </mat-form-field>
 
-        <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Fecha de Registro</mat-label>
-            <input matInput [matDatepicker]="picker2" formControlName="fechaRegistro" disabled>
-            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
-            <mat-datepicker #picker2></mat-datepicker>
-        </mat-form-field>
+      <!-- Nombre de Contacto -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Nombre de Contacto</mat-label>
+        <input matInput formControlName="nombreContacto">
+      </mat-form-field>
     </div>
 
-    <!-- Ruta Crítica -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Ruta Crítica</mat-label>
-      <textarea matInput formControlName="rutaCritica"></textarea>
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Teléfono -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Teléfono</mat-label>
+        <input matInput formControlName="telefono">
+      </mat-form-field>
 
-    <!-- Factura -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Factura</mat-label>
-      <input matInput formControlName="factura">
-    </mat-form-field>
+      <!-- Empresa -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Empresa</mat-label>
+        <input matInput formControlName="empresa">
+      </mat-form-field>
+    </div>
 
-    <!-- Pago -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Pago</mat-label>
-      <input matInput type="number" formControlName="pago">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Cotizacion -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cotización</mat-label>
+        <input matInput formControlName="cotizacion">
+      </mat-form-field>
 
-    <!-- Utilidad Programada -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Utilidad Programada</mat-label>
-      <input matInput type="number" formControlName="utilidadProgramada">
-    </mat-form-field>
+      <!-- Necesidad -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Necesidad</mat-label>
+        <textarea matInput formControlName="necesidad"></textarea>
+      </mat-form-field>
+    </div>
 
-    <!-- Utilidad Real -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Utilidad Real</mat-label>
-      <input matInput type="number" formControlName="utilidadReal">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Dirección -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Dirección</mat-label>
+        <input matInput formControlName="direccion">
+      </mat-form-field>
 
-    <!-- Financiamiento -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Financiamiento</mat-label>
-      <input matInput type="number" formControlName="financiamiento">
-    </mat-form-field>
+      <!-- Orden de Compra -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Orden de Compra</mat-label>
+        <input matInput formControlName="ordenCompra">
+      </mat-form-field>
+    </div>
 
-    <!-- Estatus -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Estatus</mat-label>
-      <mat-select formControlName="estatus">
-        <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{ cat.nombre }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Contrato -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Contrato</mat-label>
+        <input matInput formControlName="contrato">
+      </mat-form-field>
+
+      <!-- Proveedor -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Proveedor</mat-label>
+        <input matInput formControlName="proveedor">
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Vendedor -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Vendedor</mat-label>
+        <input matInput formControlName="vendedor">
+      </mat-form-field>
+
+      <!-- Fechas -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Fecha de Entrega</mat-label>
+        <input matInput [matDatepicker]="picker1" formControlName="fechaEntrega">
+        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Fecha de Registro</mat-label>
+        <input matInput [matDatepicker]="picker2" formControlName="fechaRegistro" disabled>
+        <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Ruta Crítica -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Ruta Crítica</mat-label>
+        <textarea matInput formControlName="rutaCritica"></textarea>
+      </mat-form-field>
+
+      <!-- Factura -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Factura</mat-label>
+        <input matInput formControlName="factura">
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Pago -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Pago</mat-label>
+        <input matInput type="number" formControlName="pago">
+      </mat-form-field>
+
+      <!-- Utilidad Programada -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Utilidad Programada</mat-label>
+        <input matInput type="number" formControlName="utilidadProgramada">
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Utilidad Real -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Utilidad Real</mat-label>
+        <input matInput type="number" formControlName="utilidadReal">
+      </mat-form-field>
+
+      <!-- Financiamiento -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Financiamiento</mat-label>
+        <input matInput type="number" formControlName="financiamiento">
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Estatus -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Estatus</mat-label>
+        <mat-select formControlName="estatus">
+          <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{ cat.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   
     <!-- Botones -->
     <div class="sticky bottom-0 py-2 flex justify-end gap-2">
