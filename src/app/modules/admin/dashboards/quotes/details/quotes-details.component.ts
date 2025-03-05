@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
-
+import { CurrencyMaskPipe } from '../../../../../pipes/currency-mask.pipe';
 @Component({
   selector: 'app-quotes-details',
   templateUrl: './quotes-details.component.html',
@@ -23,7 +23,8 @@ import { CommonModule } from '@angular/common';
     MatSelectModule,
     MatButtonModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    CurrencyMaskPipe
   ]
 })
 export class QuoteDetailsComponent implements OnInit {
@@ -137,5 +138,15 @@ export class QuoteDetailsComponent implements OnInit {
         this.router.navigate(['/dashboards/quote']); // O la ruta correspondiente a la lista
       });
     }
+  }
+
+  updateValue(event: Event, controlName: string) {
+    let input = event.target as HTMLInputElement;
+    
+    // Remover caracteres no numéricos excepto el punto decimal
+    let rawValue = input.value.replace(/[^0-9.]/g, '');
+  
+    // Actualizar el FormControl dinámicamente
+    this.quotesForm.get(controlName)?.setValue(rawValue);
   }
 }

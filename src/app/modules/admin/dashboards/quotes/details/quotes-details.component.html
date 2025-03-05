@@ -116,13 +116,25 @@
       <!-- Pago -->
       <mat-form-field appearance="fill" class="w-full">
         <mat-label>Pago</mat-label>
-        <input matInput type="number" formControlName="pago">
+        <input 
+          matInput 
+          type="text" 
+          [value]="quotesForm.get('pago')?.value | currencyMask" 
+          (input)="updateValue($event, 'pago')"  
+          formControlName="pago"
+        />
       </mat-form-field>
 
       <!-- Utilidad Programada -->
       <mat-form-field appearance="fill" class="w-full">
         <mat-label>Utilidad Programada</mat-label>
-        <input matInput type="number" formControlName="utilidadProgramada">
+        <input 
+          matInput 
+          type="text" 
+          [value]="quotesForm.get('utilidadProgramada')?.value | currencyMask" 
+          (input)="updateValue($event, 'utilidadProgramada')" 
+          formControlName="utilidadProgramada"
+        />
       </mat-form-field>
     </div>
 
@@ -130,13 +142,25 @@
       <!-- Utilidad Real -->
       <mat-form-field appearance="fill" class="w-full">
         <mat-label>Utilidad Real</mat-label>
-        <input matInput type="number" formControlName="utilidadReal">
+        <input 
+        matInput 
+        type="text" 
+        [value]="quotesForm.get('utilidadReal')?.value | currencyMask" 
+        (input)="updateValue($event, 'utilidadReal')" 
+        formControlName="utilidadReal"
+      />
       </mat-form-field>
 
       <!-- Financiamiento -->
       <mat-form-field appearance="fill" class="w-full">
         <mat-label>Financiamiento</mat-label>
-        <input matInput type="number" formControlName="financiamiento">
+        <input 
+        matInput 
+        type="text" 
+        [value]="quotesForm.get('financiamiento')?.value | currencyMask" 
+        (input)="updateValue($event, 'financiamiento')" 
+        formControlName="financiamiento"
+      />
       </mat-form-field>
     </div>
 
