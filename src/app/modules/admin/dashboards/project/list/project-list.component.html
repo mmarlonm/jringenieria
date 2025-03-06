@@ -94,7 +94,7 @@
                     <th mat-header-cell *matHeaderCellDef> Acciones </th>
                     <td mat-cell *matCellDef="let project">
                       <button mat-button color="accent" (click)="editProject(project.proyectoId)" *ngIf="tienePermiso('btnEdit')">Editar</button>
-                      <button mat-button color="warn" (click)="deleteProject(project.proyectoId)" *ngIf="tienePermiso('btndelete')">Eliminar</button>
+                      <button mat-button color="warn" (click)="deleteProject(project.proyectoId)" *ngIf="tienePermiso('btnDelete')">Eliminar</button>
                     </td>
                   </ng-container>
               
