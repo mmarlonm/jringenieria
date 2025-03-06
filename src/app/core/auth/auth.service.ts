@@ -81,8 +81,7 @@ export class AuthService {
         this.userInformation = JSON.stringify(userWithoutToken);
 
         // Store the user on the user service
-        this._userService.user = response.usuario;
-
+        this._userService.user = response;
         // Return a new observable with the response
         return of(response);
       })
