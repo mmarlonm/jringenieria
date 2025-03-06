@@ -41,15 +41,63 @@ export class ProjectDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.projectForm = this.fb.group({
-        proyectoId: [0], // 🔹 Se agrega proyectoId para que siempre se tenga
-        nombre: ['', Validators.required],
-        categoria: ['', Validators.required],
-        lugar: ['NA'],
-        unidadDeNegocio: ['', Validators.required],
-        fechaInicio: ['', Validators.required],
-        fechaFin: [''],
-        estado: ['NA']
-      });
+      proyectoId: [0], // 🔹 Se agrega proyectoId para que siempre se tenga
+      nombre: ['', Validators.required],
+      categoria: ['', Validators.required],
+      lugar: ['NA'],
+      unidadDeNegocio: ['', Validators.required],
+      fechaInicio: ['', Validators.required],
+      fechaFin: [''],
+      estado: ['NA'],
+    
+      // Nuevas propiedades
+      cliente: ['', Validators.required],
+      necesidad: [''],
+      direccion: [''],
+      nombreContacto: [''],
+      telefono: [''],
+      empresa: [''],
+    
+      levantamiento: [''],
+      planoArquitectonico: [''],
+      diagramaIsometrico: [''],
+      diagramaUnifilar: [''],
+    
+      materialesCatalogo: [''],
+      materialesPresupuestados: [''],
+      inventarioFinal: [''],
+      cuadroComparativo: [''],
+    
+      proveedor: [''],
+    
+      manoDeObra: [''],
+      personasParticipantes: [''],
+      equipos: [''],
+      herramientas: [''],
+    
+      indirectosCostos: [''],
+      fianzas: [''],
+      anticipo: [''],
+      cotizacion: [''],
+    
+      ordenDeCompra: [''],
+      contrato: [''],
+    
+      programaDeTrabajo: [''],
+      avancesReportes: [''],
+      comentarios: [''],
+      hallazgos: [''],
+      dosier: [''],
+      rutaCritica: [''],
+    
+      factura: [''],
+      pago: [''],
+      utilidadProgramada: [''],
+      utilidadReal: [''],
+      financiamiento: [''],
+    
+      cierreProyectoActaEntrega: ['']
+    });
 
     this.getCategorias();
     this.getUnidadesDeNegocio();
@@ -85,13 +133,62 @@ export class ProjectDetailsComponent implements OnInit {
           unidadDeNegocio: project.unidadDeNegocioId,
           fechaInicio: project.fechaInicio,
           fechaFin: project.fechaFin,
-          estado: project.estado
+          estado: project.estado,
+        
+          // Nuevas propiedades
+          cliente: project.cliente,
+          necesidad: project.necesidad,
+          direccion: project.direccion,
+          nombreContacto: project.nombreContacto,
+          telefono: project.telefono,
+          empresa: project.empresa,
+        
+          levantamiento: project.levantamiento,
+          planoArquitectonico: project.planoArquitectonico,
+          diagramaIsometrico: project.diagramaIsometrico,
+          diagramaUnifilar: project.diagramaUnifilar,
+        
+          materialesCatalogo: project.materialesCatalogo,
+          materialesPresupuestados: project.materialesPresupuestados,
+          inventarioFinal: project.inventarioFinal,
+          cuadroComparativo: project.cuadroComparativo,
+        
+          proveedor: project.proveedor,
+        
+          manoDeObra: project.manoDeObra,
+          personasParticipantes: project.personasParticipantes,
+          equipos: project.equipos,
+          herramientas: project.herramientas,
+        
+          indirectosCostos: project.indirectosCostos,
+          fianzas: project.fianzas,
+          anticipo: project.anticipo,
+          cotizacion: project.cotizacion,
+        
+          ordenDeCompra: project.ordenDeCompra,
+          contrato: project.contrato,
+        
+          programaDeTrabajo: project.programaDeTrabajo,
+          avancesReportes: project.avancesReportes,
+          comentarios: project.comentarios,
+          hallazgos: project.hallazgos,
+          dosier: project.dosier,
+          rutaCritica: project.rutaCritica,
+        
+          factura: project.factura,
+          pago: project.pago,
+          utilidadProgramada: project.utilidadProgramada,
+          utilidadReal: project.utilidadReal,
+          financiamiento: project.financiamiento,
+        
+          cierreProyectoActaEntrega: project.cierreProyectoActaEntrega
         });
       }
     });
   }
 
   saveProject(): void {
+    console.log("guardar proyecto", this.projectForm);
     if (this.projectForm.invalid) return;
   
     const projectData: any = this.projectForm.value;
