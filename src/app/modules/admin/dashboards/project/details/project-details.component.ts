@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../project.service';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ClientsService} from '../../../catalogs/clients/clients.service'; 
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -30,13 +31,15 @@ export class ProjectDetailsComponent implements OnInit {
   projectForm: FormGroup;
   categorias: any[] = [];
   unidadesDeNegocio: any[] = [];
+  clients: any[] = [];
   projectId: number | null = null;
 
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
     private route: ActivatedRoute,
-    public router: Router
+    public router: Router,
+    private clientsService: ClientsService
   ) {}
 
   ngOnInit(): void {
@@ -51,7 +54,8 @@ export class ProjectDetailsComponent implements OnInit {
       estado: ['NA'],
     
       // Nuevas propiedades
-      cliente: ['', Validators.required],
+      //cliente: ['', Validators.required],
+      cliente: [0,[Validators.required, this.noZeroValidator]],
       necesidad: [''],
       direccion: [''],
       nombreContacto: [''],
@@ -101,6 +105,7 @@ export class ProjectDetailsComponent implements OnInit {
 
     this.getCategorias();
     this.getUnidadesDeNegocio();
+    this.getClientes();
 
     this.route.paramMap.subscribe(params => {
         const id = params.get('id');
@@ -113,12 +118,19 @@ export class ProjectDetailsComponent implements OnInit {
     });
   }
 
+  noZeroValidator(control: AbstractControl) {
+    return control.value === 0 ? { noZero: true } : null;
+  }
   getCategorias(): void {
     this.projectService.getCategorias().subscribe(data => this.categorias = data);
   }
 
   getUnidadesDeNegocio(): void {
     this.projectService.getUnidadesDeNegocio().subscribe(data => this.unidadesDeNegocio = data);
+  }
+
+  getClientes(): void {
+    this.clientsService.getClient().subscribe(data => this.clients = data);
   }
 
   loadProject(id: number): void {

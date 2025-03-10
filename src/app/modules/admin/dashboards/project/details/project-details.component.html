@@ -53,7 +53,12 @@
     <!-- Cliente y Contacto -->
     <mat-form-field appearance="fill" class="w-full">
       <mat-label>Cliente</mat-label>
-      <input matInput formControlName="cliente">
+      <mat-select formControlName="cliente">
+        <mat-option *ngFor="let client of clients" [value]="client.clienteId">{{ client.clienteId }} - {{client.nombre}}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')">
+        Debe seleccionar un cliente válido.
+      </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="w-full">
