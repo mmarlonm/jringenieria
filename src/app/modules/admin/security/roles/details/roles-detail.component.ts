@@ -124,10 +124,10 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         console.log("Información de rol recibida: ", rol);
 
         // Transformar vistas y permisos en un formato adecuado para el formulario
-        const vistasConPermisos = rol.vistas.map(vista => ({
+        const vistasConPermisos = (rol.vistas || []).map(vista => ({
             vistaId: vista.vistaId,
             nombreVista: vista.nombreVista,
-            permisos: rol.permisos
+            permisos: (rol.permisos || [])
                 .filter(p => p.vista?.vistaId === vista.vistaId)
                 .map(p => p.permisoId) // Extraemos solo los IDs de permisos
         }));
@@ -178,6 +178,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
             });
 
             this._rolService.getNavigation().subscribe(data => {
+                console.log("data navigation", data)
                 this.navigation = data.default2 || []; // ✅ Asegurar que siempre sea un array
                 console.log("navigation data ", this.navigation)
                 this._changeDetectorRef.markForCheck();

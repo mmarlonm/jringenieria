@@ -95,13 +95,13 @@
                                 <!-- Group -->
                                 @if (
                                     i === 0 ||
-                                    user.nombreUsuario !==
-                                        users[i - 1].nombreUsuario
+                                    user.nombreRol !==
+                                        users[i - 1].nombreRol
                                 ) {
                                     <div
                                         class="text-secondary sticky top-0 z-10 -mt-px border-b border-t bg-gray-50 px-6 py-1 font-medium uppercase dark:bg-gray-900 md:px-8"
                                     >
-                                        {{ user.nombreUsuario }}
+                                        {{ user.nombreRol }}
                                     </div>
                                 }
                                 <!-- Contact -->
