@@ -39,7 +39,7 @@ import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { UsersListComponent } from 'app/modules/admin/security/users/list/users-list.component';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
-
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 //servicion para obtener roles
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
 
@@ -67,7 +67,8 @@ import { RolService } from 'app/modules/admin/security/roles/roles.service';
         TextFieldModule,
         FuseFindByKeyPipe,
         DatePipe,
-        CommonModule
+        CommonModule,
+        MatSlideToggleModule
     ],
 })
 export class UsersDetailsComponent implements OnInit, OnDestroy {
@@ -125,6 +126,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             nombreUsuario: ['', [Validators.required]],
             email: ['', [Validators.required, Validators.email]],
             telefono: ['', [Validators.required]],
+            activo: [true, [Validators.required]],
             rolId: ['', [Validators.required]]  // Campo para seleccionar el rol
         });
 
