@@ -95,6 +95,16 @@
                             </div>
                         </div>
                     }
+                    @if (user.telefono) {
+                        <div class="flex sm:items-center">
+                            <mat-icon
+                                [svgIcon]="'heroicons_outline:phone'"
+                            ></mat-icon>
+                            <div class="ml-6 leading-6">
+                                {{ user.telefono }}
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -207,6 +217,14 @@
                                     {{ user.email }}
                                 </div>
                             }
+
+                            @if (!user.telefono) {
+                                <div
+                                    class="flex h-full w-full items-center justify-center overflow-hidden rounded bg-gray-200 text-8xl font-bold uppercase leading-none text-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                >
+                                    {{ user.telefono }}
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -247,6 +265,27 @@
                                 matInput
                                 [formControlName]="'email'"
                                 [placeholder]="'Email'"
+                                [spellcheck]="false"
+                            />
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Telefono -->
+                    <div class="mt-8">
+                        <mat-form-field
+                            class="w-full"
+                            [subscriptSizing]="'dynamic'"
+                        >
+                            <mat-label>Telefono</mat-label>
+                            <mat-icon
+                                matPrefix
+                                class="hidden icon-size-5 sm:flex"
+                                [svgIcon]="'heroicons_solid:phone'"
+                            ></mat-icon>
+                            <input
+                                matInput
+                                [formControlName]="'telefono'"
+                                [placeholder]="'Telefono'"
                                 [spellcheck]="false"
                             />
                         </mat-form-field>

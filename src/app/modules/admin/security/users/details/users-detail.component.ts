@@ -124,6 +124,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             avatar: [null],
             nombreUsuario: ['', [Validators.required]],
             email: ['', [Validators.required, Validators.email]],
+            telefono: ['', [Validators.required]],
             rolId: ['', [Validators.required]]  // Campo para seleccionar el rol
         });
 

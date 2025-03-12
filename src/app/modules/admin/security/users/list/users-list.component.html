@@ -142,6 +142,15 @@
                                             {{ user.nombreUsuario }}
                                         </div>
                                     </div>
+                                    <div class="ml-4 min-w-0">
+                                        <div
+                                            class="truncate font-medium leading-5"
+                                        >
+                                        @if (user.telefono) {
+                                            Tel. {{ user.telefono }}
+                                        }
+                                        </div>
+                                    </div>
                                 </a>
                             }
                         } @else {
