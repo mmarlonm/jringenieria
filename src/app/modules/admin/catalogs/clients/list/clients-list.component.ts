@@ -112,6 +112,27 @@ export class ClientsListComponent implements OnInit {
     console.log('Permisos de esta vista:', this.permisosDisponibles);
   }
 
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    console.log('Archivo seleccionado:', file);
+    if (file) {
+      this.uploadFile(file);
+    }
+  }
+
+  // Método para subir el archivo a la API
+  uploadFile(file: File): void {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    // Realiza la petición HTTP POST al endpoint de la API
+    this.clientsService.uploadExcel(formData).subscribe(() => {
+      this.getClients();
+      this.snackBar.open('Clientes importados exitosamente', 'Cerrar', { duration: 3000 });
+    });
+  }
+
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
   }

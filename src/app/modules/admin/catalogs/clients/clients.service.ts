@@ -34,4 +34,9 @@ export class ClientsService {
   getClientById(projectId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/get-cliente/${projectId}`);
   }
+
+  // Método para enviar el archivo Excel al servidor
+  uploadExcel(file: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/upload-excel`, file);
+  }
 }
