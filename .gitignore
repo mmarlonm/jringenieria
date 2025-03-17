@@ -2257,3 +2257,16 @@ dist/fuse/browser/images/ui/angular-material/scenes/toolbar.scene.png
 dist/fuse/browser/images/ui/angular-material/scenes/tooltip.scene.png
 dist/fuse/browser/images/ui/angular-material/scenes/tree.scene.png
 dist/fuse/browser/styles/splash-screen.css
+node_modules/.package-lock.json
+node_modules/ngx-mat-select-search/default-options.d.ts
+node_modules/ngx-mat-select-search/index.d.ts
+node_modules/ngx-mat-select-search/LICENSE
+node_modules/ngx-mat-select-search/mat-select-no-entries-found.directive.d.ts
+node_modules/ngx-mat-select-search/mat-select-search-clear.directive.d.ts
+node_modules/ngx-mat-select-search/mat-select-search.component.d.ts
+node_modules/ngx-mat-select-search/ngx-mat-select-search.module.d.ts
+node_modules/ngx-mat-select-search/package.json
+node_modules/ngx-mat-select-search/public_api.d.ts
+node_modules/ngx-mat-select-search/README.md
+node_modules/ngx-mat-select-search/fesm2022/ngx-mat-select-search.mjs
+node_modules/ngx-mat-select-search/fesm2022/ngx-mat-select-search.mjs.map

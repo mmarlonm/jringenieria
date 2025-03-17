@@ -31,6 +31,7 @@
         "lodash-es": "4.17.21",
         "luxon": "3.4.4",
         "ng-apexcharts": "^1.10.0",
+        "ngx-mat-select-search": "^8.0.0",
         "ngx-quill": "26.0.1",
         "perfect-scrollbar": "1.5.5",
         "quill": "2.0.2",

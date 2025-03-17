@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,LOCALE_ID } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../project.service';
 import { ClientsService} from '../../../catalogs/clients/clients.service'; 
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl,FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -10,10 +10,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
+import { debounceTime } from 'rxjs';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 
+registerLocaleData(localeEs);
 @Component({
   selector: 'app-project-details',
   templateUrl: './project-details.component.html',
+  styleUrls: ['./project-details.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -24,8 +31,13 @@ import { CommonModule } from '@angular/common';
     MatSelectModule,
     MatButtonModule,
     MatDatepickerModule,
-    MatNativeDateModule
-  ]
+    MatNativeDateModule,
+    NgxMatSelectSearchModule
+  ],
+  providers: [
+    { provide: LOCALE_ID, useValue: 'es-ES' },              // Idioma general Angular
+    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }         // Idioma para Angular Material (como el Datepicker)
+  ],
 })
 export class ProjectDetailsComponent implements OnInit {
   projectForm: FormGroup;
@@ -33,6 +45,10 @@ export class ProjectDetailsComponent implements OnInit {
   unidadesDeNegocio: any[] = [];
   clients: any[] = [];
   projectId: number | null = null;
+
+  clienteFiltro = new FormControl('');
+  filteredClients: any[] = [];
+  estatus: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -43,8 +59,9 @@ export class ProjectDetailsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    
     this.projectForm = this.fb.group({
-      proyectoId: [0], // 🔹 Se agrega proyectoId para que siempre se tenga
+      proyectoId: [0],  // 🔹 Se agrega proyectoId para que siempre se tenga
       nombre: ['', Validators.required],
       categoria: ['', Validators.required],
       lugar: ['NA'],
@@ -54,8 +71,7 @@ export class ProjectDetailsComponent implements OnInit {
       estado: ['NA'],
     
       // Nuevas propiedades
-      //cliente: ['', Validators.required],
-      cliente: [0,[Validators.required, this.noZeroValidator]],
+      cliente: [0, [Validators.required, this.noZeroValidator]],
       necesidad: [''],
       direccion: [''],
       nombreContacto: [''],
@@ -100,12 +116,14 @@ export class ProjectDetailsComponent implements OnInit {
       utilidadReal: [''],
       financiamiento: [''],
     
-      cierreProyectoActaEntrega: ['']
+      cierreProyectoActaEntrega: [''],
+      estatus : ['']
     });
 
     this.getCategorias();
     this.getUnidadesDeNegocio();
     this.getClientes();
+    this.getEstatus();
 
     this.route.paramMap.subscribe(params => {
         const id = params.get('id');
@@ -116,6 +134,10 @@ export class ProjectDetailsComponent implements OnInit {
             this.loadProject(this.projectId);
         }
     });
+  }
+
+  getEstatus(): void {
+    this.projectService.getEstatus().subscribe(data => this.estatus = data);
   }
 
   noZeroValidator(control: AbstractControl) {
@@ -130,7 +152,20 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   getClientes(): void {
-    this.clientsService.getClient().subscribe(data => this.clients = data);
+    this.clientsService.getClient().subscribe(data => {
+      this.clients = data;
+      this.filteredClients = this.clients;
+
+    // Suscribirse al filtro con debounce
+    this.clienteFiltro.valueChanges
+      .pipe(debounceTime(200))
+      .subscribe((value: string) => {
+        const filterValue = value?.toLowerCase() || '';
+        this.filteredClients = this.clients.filter(client =>
+          `${client.clienteId} - ${client.nombre}`.toLowerCase().includes(filterValue)
+        );
+      });
+    });
   }
 
   loadProject(id: number): void {
@@ -193,7 +228,8 @@ export class ProjectDetailsComponent implements OnInit {
           utilidadReal: project.utilidadReal,
           financiamiento: project.financiamiento,
         
-          cierreProyectoActaEntrega: project.cierreProyectoActaEntrega
+          cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
+          estatus: project.estatus
         });
       }
     });

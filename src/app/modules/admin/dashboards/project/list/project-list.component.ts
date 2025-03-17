@@ -2,18 +2,19 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../project.service';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatDialog } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { MatMenuTrigger } from '@angular/material/menu';  // Importa MatMenuTrigger
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTableModule } from '@angular/material/table';
+import { MatSelectModule } from '@angular/material/select';
 @Component({
   selector: 'app-project-list',
   templateUrl: './project-list.component.html',
@@ -23,15 +24,17 @@ import { FormsModule } from '@angular/forms';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
+    MatPaginator,
+    MatSort,
     MatFormFieldModule,
     MatInputModule,
-    FormsModule
+    FormsModule,
+    MatMenuModule,
+    MatSelectModule
   ]
 })
 export class ProjectListComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'name', 'category', 'startDate', 'endDate', 'actions'];
+  displayedColumns: string[] = ['id', 'nombre', 'categoria','estatus', 'startDate', 'endDate', 'actions'];
   dataSource = new MatTableDataSource<any>();
   projectsCount: number = 0;
   searchText: string = '';
@@ -39,8 +42,19 @@ export class ProjectListComponent implements OnInit {
   vistaActual: string = '';
   permisosDisponibles: string[] = [];
 
+  // Nuevas propiedades para manejo de filtros
+  filterValue: string = '';
+  currentFilterColumn: string = '';
+  filterOptions = {
+    categoria: ['Technology', 'Healthcare', 'Finance'],  // Ejemplo de opciones
+    startDate: ['2023-01-01', '2023-02-01', '2023-03-01'],
+    endDate: ['2023-06-01', '2023-12-01'],
+    estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
+  };
+
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
+  @ViewChild(MatMenuTrigger) menuTrigger: MatMenuTrigger;  // Añadir la referencia a MatMenuTrigger
 
   constructor(
     private projectService: ProjectService,
@@ -66,14 +80,80 @@ export class ProjectListComponent implements OnInit {
       this.dataSource = new MatTableDataSource(projects);
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
+
+      // Establecer el filtro personalizado
+      this.setCustomFilter();
     });
   }
 
   /**
-   * Aplica el filtro de búsqueda en la tabla.
+   * Establece un filtro personalizado para la tabla
    */
-  applyFilter(e): void {
-    this.dataSource.filter = e.target.value.trim().toLowerCase();
+  setCustomFilter(): void {
+    this.dataSource.filterPredicate = (data: any, filter: string) => {
+      if (this.currentFilterColumn === 'nombre' || this.currentFilterColumn === 'categoria') {
+        return data[this.currentFilterColumn]?.toLowerCase().includes(filter);
+      } else if (this.currentFilterColumn === 'startDate' || this.currentFilterColumn === 'endDate' || this.currentFilterColumn === 'estatus') {
+        return data[this.currentFilterColumn] === this.filterValue;
+      }
+      return true;
+    };
+  }
+
+  /**
+   * Abre el menú de filtro para la columna especificada.
+   * Evita que se abran múltiples menús al mismo tiempo.
+   */
+  openFilterMenu(column: string): void {
+    this.currentFilterColumn = column;
+    this.filterValue = '';  // Resetea el valor del filtro cuando se abre un nuevo menú
+  }
+
+  /**
+   * Aplica el filtro correspondiente basado en el tipo de columna.
+   */
+  applyFilter(): void {
+    const filterValue = this.filterValue?.toLowerCase();
+    this.dataSource.filter = filterValue;  // Aplica el filtro global
+  }
+
+  applySelect(): void {
+    const filterValue = this.filterValue;
+    this.dataSource.filter = filterValue;  // Aplica el filtro global
+  }
+
+  /**
+   * Determina si el filtro es de tipo texto.
+   */
+  isTextFilter(column: string): boolean {
+    return column === 'nombre' || column === 'categoria';
+  }
+
+  /**
+   * Determina si el filtro es de tipo selección.
+   */
+  isSelectFilter(column: string): boolean {
+    return column === 'estatus' || column === 'startDate' || column === 'endDate';
+  }
+
+  /**
+   * Obtiene las opciones de filtro para la columna seleccionada.
+   */
+  getFilterOptions(column: string): string[] {
+    return this.filterOptions[column] || [];
+  }
+
+  resetFilter(): void {
+    // Restablecer el valor del filtro
+    this.filterValue = null;  // Esto puede ajustarse según la lógica de tu filtro (por ejemplo, "" para texto vacío)
+  
+    // Limpiar el filtro global (en dataSource)
+    this.dataSource.filter = '';  // Esto elimina el filtro aplicado
+    
+  
+    // Si necesitas que se apliquen cambios adicionales (por ejemplo, restablecer otras partes del estado del filtro),
+    // puedes llamar a las funciones applyFilter() o applySelect() con valores vacíos.
+    this.applyFilter();  // Aplica filtro vacío si es necesario (esto dependerá de cómo se maneje en tu aplicación)
   }
 
   addProject(): void {
@@ -92,27 +172,17 @@ export class ProjectListComponent implements OnInit {
   }
 
   obtenerPermisos(): void {
-    // Obtener userInformation desde localStorage
     const userInformation = localStorage.getItem('userInformation');
     if (!userInformation) {
-      console.warn('No se encontró información de usuario en localStorage.');
       return;
     }
 
     const userData = JSON.parse(userInformation);
-
-    // Obtener la ruta actual
-    console.log("vista actual ", this.vistaActual);
-    console.log("permisos  ", userData.permisos);
-    // Filtrar permisos que correspondan a la vista actual
     this.permisosUsuario = userData.permisos.filter(
       (permiso) => permiso.vista.ruta === `${this.vistaActual}`
     );
 
-    // Guardar los códigos de los permisos en un array
     this.permisosDisponibles = this.permisosUsuario.map((permiso) => permiso.codigo);
-
-    console.log('Permisos de esta vista:', this.permisosDisponibles);
   }
 
   tienePermiso(codigo: string): boolean {

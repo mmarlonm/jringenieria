@@ -1,186 +1,363 @@
 <div class="absolute inset-0 flex flex-col overflow-hidden p-6">
   <h1 class="text-2xl font-bold mb-4">
-      {{ projectId ? 'Editar Proyecto' : 'Nuevo Proyecto' }}
+    {{ projectId ? "Editar Proyecto" : "Nuevo Proyecto" }}
   </h1>
 
-  <form [formGroup]="projectForm" (ngSubmit)="saveProject()" class="flex flex-col gap-4 overflow-auto">
-    
-    <!-- Nombre del Proyecto -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Nombre del Proyecto</mat-label>
-      <input matInput formControlName="nombre">
-    </mat-form-field>
-  
-    <!-- Categoría -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Categoría</mat-label>
-      <mat-select formControlName="categoria">
-        <mat-option *ngFor="let cat of categorias" [value]="cat.categoriaId">{{ cat.nombre }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-  
-    <!-- Unidad de Negocio -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Unidad de Negocio</mat-label>
-      <mat-select formControlName="unidadDeNegocio">
-        <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">{{ unidad.nombre }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <!-- Fechas -->
+  <form
+    [formGroup]="projectForm"
+    (ngSubmit)="saveProject()"
+    class="flex flex-col gap-4 overflow-auto"
+  >
     <div class="grid grid-cols-2 gap-4">
-        <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Fecha de Inicio</mat-label>
-            <input matInput [matDatepicker]="picker1" formControlName="fechaInicio">
-            <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
-            <mat-datepicker #picker1></mat-datepicker>
-        </mat-form-field>
+      <!-- Nombre -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="nombre" />
+      </mat-form-field>
 
-        <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Fecha de Fin</mat-label>
-            <input matInput [matDatepicker]="picker2" formControlName="fechaFin">
-            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
-            <mat-datepicker #picker2></mat-datepicker>
-        </mat-form-field>
+      <!-- Categoria -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Categoría</mat-label>
+        <mat-select formControlName="categoria">
+          <mat-option *ngFor="let cat of categorias" [value]="cat.categoriaId">
+            {{ cat.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
 
-    <!-- Estado -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Estado</mat-label>
-      <input matInput formControlName="estado">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Lugar -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Lugar</mat-label>
+        <input matInput formControlName="lugar" />
+      </mat-form-field>
 
-    <!-- Cliente y Contacto -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Cliente</mat-label>
-      <mat-select formControlName="cliente">
-        <mat-option *ngFor="let client of clients" [value]="client.clienteId">{{ client.clienteId }} - {{client.nombre}}</mat-option>
-      </mat-select>
-      <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')">
-        Debe seleccionar un cliente válido.
-      </mat-error>
-    </mat-form-field>
+      <!-- Unidad de Negocio -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Unidad de Negocio</mat-label>
+        <mat-select formControlName="unidadDeNegocio">
+          <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">
+            {{ unidad.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Necesidad</mat-label>
-      <input matInput formControlName="necesidad">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Fecha Inicio -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Fecha de Inicio</mat-label>
+        <input matInput [matDatepicker]="picker1" formControlName="fechaInicio" />
+        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Dirección</mat-label>
-      <input matInput formControlName="direccion">
-    </mat-form-field>
+      <!-- Fecha Fin -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Fecha de Fin</mat-label>
+        <input matInput [matDatepicker]="picker2" formControlName="fechaFin" />
+        <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Nombre de Contacto</mat-label>
-      <input matInput formControlName="nombreContacto">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Estado -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Estado</mat-label>
+        <input matInput formControlName="estado" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Teléfono</mat-label>
-      <input matInput formControlName="telefono">
-    </mat-form-field>
+      <!-- Cliente -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cliente</mat-label>
+        <mat-select [formControl]="projectForm.get('cliente')" #clienteSelect panelClass="custom-select-panel">
+          <mat-option>
+            <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..." noEntriesFoundLabel="No se encontraron resultados" clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
+          </mat-option>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Empresa</mat-label>
-      <input matInput formControlName="empresa">
-    </mat-form-field>
+          <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
+            {{ client.clienteId }} - {{ client.nombre }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente válido.</mat-error>
+      </mat-form-field>
+    </div>
 
-    <!-- Planos y Diagramas -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Levantamiento</mat-label>
-      <input matInput formControlName="levantamiento">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Necesidad -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Necesidad</mat-label>
+        <input matInput formControlName="necesidad" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Plano Arquitectónico</mat-label>
-      <input matInput formControlName="planoArquitectonico">
-    </mat-form-field>
+      <!-- Dirección -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Dirección</mat-label>
+        <input matInput formControlName="direccion" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Diagrama Isométrico</mat-label>
-      <input matInput formControlName="diagramaIsometrico">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Nombre Contacto -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Nombre de Contacto</mat-label>
+        <input matInput formControlName="nombreContacto" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Diagrama Unifilar</mat-label>
-      <input matInput formControlName="diagramaUnifilar">
-    </mat-form-field>
+      <!-- Teléfono -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Teléfono</mat-label>
+        <input matInput formControlName="telefono" />
+      </mat-form-field>
+    </div>
 
-    <!-- Materiales y Proveedores -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Materiales de Catálogo</mat-label>
-      <input matInput formControlName="materialesCatalogo">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Empresa -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Empresa</mat-label>
+        <input matInput formControlName="empresa" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Materiales Presupuestados</mat-label>
-      <input matInput formControlName="materialesPresupuestados">
-    </mat-form-field>
+      <!-- Levantamiento -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Levantamiento</mat-label>
+        <input matInput formControlName="levantamiento" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Inventario Final</mat-label>
-      <input matInput formControlName="inventarioFinal">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Plano Arquitectónico -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Plano Arquitectónico</mat-label>
+        <input matInput formControlName="planoArquitectonico" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Proveedor</mat-label>
-      <input matInput formControlName="proveedor">
-    </mat-form-field>
+      <!-- Diagrama Isométrico -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Diagrama Isométrico</mat-label>
+        <input matInput formControlName="diagramaIsometrico" />
+      </mat-form-field>
+    </div>
 
-    <!-- Costos y Finanzas -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Indirectos Costos</mat-label>
-      <input matInput formControlName="indirectosCostos">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Diagrama Unifilar -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Diagrama Unifilar</mat-label>
+        <input matInput formControlName="diagramaUnifilar" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Fianzas</mat-label>
-      <input matInput formControlName="fianzas">
-    </mat-form-field>
+      <!-- Materiales Catálogo -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Materiales Catálogo</mat-label>
+        <input matInput formControlName="materialesCatalogo" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Anticipo</mat-label>
-      <input matInput formControlName="anticipo">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Materiales Presupuestados -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Materiales Presupuestados</mat-label>
+        <input matInput formControlName="materialesPresupuestados" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Pago</mat-label>
-      <input matInput formControlName="pago">
-    </mat-form-field>
+      <!-- Inventario Final -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Inventario Final</mat-label>
+        <input matInput formControlName="inventarioFinal" />
+      </mat-form-field>
+    </div>
 
-    <!-- Programación y Reportes -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Programa de Trabajo</mat-label>
-      <input matInput formControlName="programaDeTrabajo">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Cuadro Comparativo -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cuadro Comparativo</mat-label>
+        <input matInput formControlName="cuadroComparativo" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Avances y Reportes</mat-label>
-      <input matInput formControlName="avancesReportes">
-    </mat-form-field>
+      <!-- Proveedor -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Proveedor</mat-label>
+        <input matInput formControlName="proveedor" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Comentarios</mat-label>
-      <input matInput formControlName="comentarios">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Mano de Obra -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Mano de Obra</mat-label>
+        <input matInput formControlName="manoDeObra" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Ruta Crítica</mat-label>
-      <input matInput formControlName="rutaCritica">
-    </mat-form-field>
+      <!-- Personas Participantes -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Personas Participantes</mat-label>
+        <input matInput formControlName="personasParticipantes" />
+      </mat-form-field>
+    </div>
 
-    <!-- Cierre del Proyecto -->
-    <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Cierre del Proyecto (Acta de Entrega)</mat-label>
-      <input matInput formControlName="cierreProyectoActaEntrega">
-    </mat-form-field>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Equipos -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Equipos</mat-label>
+        <input matInput formControlName="equipos" />
+      </mat-form-field>
+
+      <!-- Herramientas -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Herramientas</mat-label>
+        <input matInput formControlName="herramientas" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Indirectos Costos -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Indirectos Costos</mat-label>
+        <input matInput type="number" formControlName="indirectosCostos" />
+      </mat-form-field>
+
+      <!-- Fianzas -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Fianzas</mat-label>
+        <input matInput type="number" formControlName="fianzas" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Anticipo -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Anticipo</mat-label>
+        <input matInput type="number" formControlName="anticipo" />
+      </mat-form-field>
+
+      <!-- Cotización -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cotización</mat-label>
+        <input matInput type="number" formControlName="cotizacion" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Orden de Compra -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Orden de Compra</mat-label>
+        <input matInput formControlName="ordenDeCompra" />
+      </mat-form-field>
+
+      <!-- Contrato -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Contrato</mat-label>
+        <input matInput formControlName="contrato" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Programa de Trabajo -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Programa de Trabajo</mat-label>
+        <input matInput formControlName="programaDeTrabajo" />
+      </mat-form-field>
+
+      <!-- Avances y Reportes -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Avances y Reportes</mat-label>
+        <input matInput formControlName="avancesReportes" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Comentarios -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Comentarios</mat-label>
+        <input matInput formControlName="comentarios" />
+      </mat-form-field>
+
+      <!-- Hallazgos -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Hallazgos</mat-label>
+        <input matInput formControlName="hallazgos" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Dosier -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Dosier</mat-label>
+        <input matInput formControlName="dosier" />
+      </mat-form-field>
+
+      <!-- Ruta Crítica -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Ruta Crítica</mat-label>
+        <input matInput formControlName="rutaCritica" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Factura -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Factura</mat-label>
+        <input matInput formControlName="factura" />
+      </mat-form-field>
+
+      <!-- Pago -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Pago</mat-label>
+        <input matInput type="number" formControlName="pago" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Utilidad Programada -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Utilidad Programada</mat-label>
+        <input matInput type="number" formControlName="utilidadProgramada" />
+      </mat-form-field>
+
+      <!-- Utilidad Real -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Utilidad Real</mat-label>
+        <input matInput type="number" formControlName="utilidadReal" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Financiamiento -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Financiamiento</mat-label>
+        <input matInput type="number" formControlName="financiamiento" />
+      </mat-form-field>
+
+      <!-- Cierre Proyecto Acta Entrega -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cierre Proyecto Acta Entrega</mat-label>
+        <input matInput formControlName="cierreProyectoActaEntrega" />
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Estatus -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Estatus</mat-label>
+        <mat-select formControlName="estatus">
+          <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{ cat.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
 
     <!-- Botones -->
     <div class="flex justify-end gap-2 mt-4">
       <button mat-raised-button color="primary" type="submit">Guardar</button>
-      <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">Cancelar</button>
+      <button
+        mat-button
+        color="warn"
+        type="button"
+        (click)="router.navigate(['/dashboards/project'])"
+      >
+        Cancelar
+      </button>
     </div>
-
   </form>
 </div>

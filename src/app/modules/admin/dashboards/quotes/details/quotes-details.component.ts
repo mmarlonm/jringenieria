@@ -72,7 +72,6 @@ export class QuoteDetailsComponent implements OnInit {
 
     this.route.paramMap.subscribe(params => {
         const id = params.get('id');
-        console.log("id de proyecto ", params);
         if (!id || id === 'new') {
             this.quotesId = null; // Se trata de un nuevo proyecto
         } else {
@@ -118,11 +117,9 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   saveQuotes(): void {
-    console.log("guardar cotización", this.quotesForm);
     if (this.quotesForm.invalid) return;
   
     const quotesData: any = this.quotesForm.value;
-    console.log("data de quote ", quotesData);
   
     if (this.quotesId) {
       // Actualizar proyecto
