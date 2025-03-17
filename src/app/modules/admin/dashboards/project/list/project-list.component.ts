@@ -34,7 +34,7 @@ import { MatSelectModule } from '@angular/material/select';
   ]
 })
 export class ProjectListComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'nombre', 'categoria','estatus', 'startDate', 'endDate', 'actions'];
+  displayedColumns: string[] = ['id', 'nombre', 'categoria','estatus', 'fechaInicio', 'fechaFin', 'actions'];
   dataSource = new MatTableDataSource<any>();
   projectsCount: number = 0;
   searchText: string = '';
@@ -47,8 +47,8 @@ export class ProjectListComponent implements OnInit {
   currentFilterColumn: string = '';
   filterOptions = {
     categoria: ['Technology', 'Healthcare', 'Finance'],  // Ejemplo de opciones
-    startDate: ['2023-01-01', '2023-02-01', '2023-03-01'],
-    endDate: ['2023-06-01', '2023-12-01'],
+    fechaInicio: ['2023-01-01', '2023-02-01', '2023-03-01'],
+    fechaFin: ['2023-06-01', '2023-12-01'],
     estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
   };
 
@@ -93,7 +93,7 @@ export class ProjectListComponent implements OnInit {
     this.dataSource.filterPredicate = (data: any, filter: string) => {
       if (this.currentFilterColumn === 'nombre' || this.currentFilterColumn === 'categoria') {
         return data[this.currentFilterColumn]?.toLowerCase().includes(filter);
-      } else if (this.currentFilterColumn === 'startDate' || this.currentFilterColumn === 'endDate' || this.currentFilterColumn === 'estatus') {
+      } else if (this.currentFilterColumn === 'fechaInicio' || this.currentFilterColumn === 'fechaFin' || this.currentFilterColumn === 'estatus') {
         return data[this.currentFilterColumn] === this.filterValue;
       }
       return true;
@@ -133,7 +133,7 @@ export class ProjectListComponent implements OnInit {
    * Determina si el filtro es de tipo selección.
    */
   isSelectFilter(column: string): boolean {
-    return column === 'estatus' || column === 'startDate' || column === 'endDate';
+    return column === 'estatus' || column === 'fechaInicio' || column === 'fechaFin';
   }
 
   /**
