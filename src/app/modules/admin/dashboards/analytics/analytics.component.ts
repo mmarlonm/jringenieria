@@ -114,8 +114,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     getUsers(): void {
         this._usersService.getUsers().subscribe((users) => {
-            console.log("users ", users);
-            this.users = users.filter(user => user.rolId !== 1 && user.rolId !== 3);
+            this.users = users.filter(user => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false);
         });
     }
 
