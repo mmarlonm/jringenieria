@@ -1366,7 +1366,7 @@
                             <span class="">Team</span>
                             <span
                                 class="rounded-full bg-primary-100 px-2 py-1 text-sm text-on-primary-100"
-                                >9</span
+                                >{{users.length}}</span
                             >
                         </span>
                     </ng-template>
@@ -1374,7 +1374,7 @@
                         <div
                             class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                         >
-                            @for (member of data.teamMembers; track member) {
+                            @for (member of users; track member) {
                                 <div
                                     class="bg-card flex flex-auto flex-col items-center overflow-hidden rounded-2xl shadow"
                                 >
@@ -1388,13 +1388,14 @@
                                             <img
                                                 class="h-full w-full object-cover"
                                                 [src]="member.avatar"
+                                                alt="Contact avatar"
                                             />
                                         </div>
                                         <div class="mt-6 font-medium">
-                                            {{ member.name }}
+                                            {{ member.nombreUsuario }}
                                         </div>
                                         <div class="text-secondary">
-                                            {{ member.title }}
+                                            {{ member.nombreRol }}
                                         </div>
                                     </div>
                                     <!-- Email & Phone -->
@@ -1415,7 +1416,7 @@
                                         </a>
                                         <a
                                             class="flex flex-auto items-center justify-center py-4 hover:bg-hover"
-                                            [href]="'tel:' + member.phone"
+                                            [href]="'tel:' + member.telefono"
                                         >
                                             <mat-icon
                                                 class="text-hint icon-size-5"

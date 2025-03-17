@@ -20,6 +20,7 @@ import { ApexOptions, NgApexchartsModule } from 'ng-apexcharts';
 import { Subject, takeUntil } from 'rxjs';
 import { User } from 'app/core/user/user.types';
 import { UserService } from 'app/core/user/user.service';
+import { UsersService } from '../../security/users/users.service';
 
 @Component({
     selector: 'analytics',
@@ -51,6 +52,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     data: any;
     selectedProject: string = 'ACME Corp. Backend App';
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+    users: any[] = [];
 
     //informacion de usuario logeado 
     user: User;
@@ -62,6 +64,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         private _projectService: AnalyticsService,
         private _router: Router,
         private _userService: UserService,
+        private _usersService: UsersService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -72,6 +75,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
      * On init
      */
     ngOnInit(): void {
+        this.getUsers();
         // Get the data
         this._projectService.data$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -104,6 +108,14 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
                 },
             },
         };
+    }
+
+
+    getUsers(): void {
+        this._usersService.getUsers().subscribe((users) => {
+            console.log("users ", users);
+            this.users = users;
+        });
     }
 
     /**
