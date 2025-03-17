@@ -7,9 +7,18 @@
     
     <div class="grid grid-cols-2 gap-4">
       <!-- Cliente -->
-      <mat-form-field appearance="fill" class="w-full">
+     <mat-form-field appearance="fill" class="w-full">
         <mat-label>Cliente</mat-label>
-        <input matInput formControlName="cliente">
+        <mat-select [formControl]="quotesForm.get('cliente')" #clienteSelect panelClass="custom-select-panel">
+          <mat-option>
+            <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..." noEntriesFoundLabel="No se encontraron resultados" clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
+          </mat-option>
+
+          <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
+            {{ client.clienteId }} - {{ client.nombre }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="quotesForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente válido.</mat-error>
       </mat-form-field>
 
       <!-- Nombre de Contacto -->

@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, LOCALE_ID } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuotesService } from '../quotes.service';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -10,6 +10,12 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
 import { CurrencyMaskPipe } from '../../../../../pipes/currency-mask.pipe';
+import { ClientsService} from '../../../catalogs/clients/clients.service'; 
+import { debounceTime } from 'rxjs';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 @Component({
   selector: 'app-quotes-details',
   templateUrl: './quotes-details.component.html',
@@ -24,8 +30,13 @@ import { CurrencyMaskPipe } from '../../../../../pipes/currency-mask.pipe';
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    CurrencyMaskPipe
-  ]
+    CurrencyMaskPipe,
+    NgxMatSelectSearchModule
+  ],
+    providers: [
+      { provide: LOCALE_ID, useValue: 'es-ES' },              // Idioma general Angular
+      { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }         // Idioma para Angular Material (como el Datepicker)
+    ],
 })
 export class QuoteDetailsComponent implements OnInit {
   quotesForm: FormGroup;
@@ -33,17 +44,22 @@ export class QuoteDetailsComponent implements OnInit {
   unidadesDeNegocio: any[] = [];
   quotesId: number | null = null;
 
+  clienteFiltro = new FormControl('');
+  filteredClients: any[] = [];
+  clients: any[] = [];
+
   constructor(
     private fb: FormBuilder,
     private quotesService: QuotesService,
     private route: ActivatedRoute,
-    public router: Router
+    public router: Router,
+    private clientsService: ClientsService
   ) {}
 
   ngOnInit(): void {
     this.quotesForm = this.fb.group({
       cotizacionId: [0], // ✅ Debe ser número
-      cliente: ['', Validators.required], // 🔹 Cambiar de '' a 0
+      cliente: [0, Validators.required], // 🔹 Cambiar de '' a 0
       usuarioCreadorId: [0, Validators.required], // 🔹 Cambiar de '' a 0
       necesidad: ['', [Validators.required, Validators.maxLength(500)]],
       direccion: ['', [Validators.maxLength(255)]],
@@ -66,6 +82,7 @@ export class QuoteDetailsComponent implements OnInit {
       estatus: [0, [Validators.maxLength(50)]]
     });
     this.getEstatus();
+    this.getClientes();
 
     const userData = JSON.parse(this.quotesService.userInformation);
     this.quotesForm.get('usuarioCreadorId').setValue(userData.usuario.id);
@@ -146,4 +163,21 @@ export class QuoteDetailsComponent implements OnInit {
     // Actualizar el FormControl dinámicamente
     this.quotesForm.get(controlName)?.setValue(rawValue);
   }
+
+  getClientes(): void {
+      this.clientsService.getClient().subscribe(data => {
+        this.clients = data;
+        this.filteredClients = this.clients;
+  
+      // Suscribirse al filtro con debounce
+      this.clienteFiltro.valueChanges
+        .pipe(debounceTime(200))
+        .subscribe((value: string) => {
+          const filterValue = value?.toLowerCase() || '';
+          this.filteredClients = this.clients.filter(client =>
+            `${client.clienteId} - ${client.nombre}`.toLowerCase().includes(filterValue)
+          );
+        });
+      });
+    }
 }
