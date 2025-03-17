@@ -47,8 +47,8 @@ export class ProjectListComponent implements OnInit {
   currentFilterColumn: string = '';
   filterOptions = {
     categoria: ['Technology', 'Healthcare', 'Finance'],  // Ejemplo de opciones
-    fechaInicio: ['2023-01-01', '2023-02-01', '2023-03-01'],
-    fechaFin: ['2023-06-01', '2023-12-01'],
+    fechaInicio: ['2023-01-01'],
+    fechaFin: ['2023-06-01'],
     estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
   };
 
@@ -79,6 +79,10 @@ export class ProjectListComponent implements OnInit {
       this.projectsCount = projects.length;
       this.dataSource = new MatTableDataSource(projects);
       this.dataSource.paginator = this.paginator;
+
+      // Llenar filterOptions con las fechas obtenidas de los proyectos
+      this.filterOptions.fechaInicio = [...new Set(projects.map(project => project.fechaInicio))];
+      this.filterOptions.fechaFin = [...new Set(projects.map(project => project.fechaFin))];
       this.dataSource.sort = this.sort;
 
       // Establecer el filtro personalizado

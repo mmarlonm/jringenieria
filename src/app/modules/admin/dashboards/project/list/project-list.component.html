@@ -167,14 +167,14 @@
               </mat-form-field>
           
               <!-- Filtro de selección -->
-              <mat-form-field *ngIf="isSelectFilter(currentFilterColumn)">
+                <mat-form-field *ngIf="isSelectFilter(currentFilterColumn)">
                 <mat-label>Filtro</mat-label>
                 <mat-select [(ngModel)]="filterValue" (selectionChange)="applySelect()">
                   <mat-option
                     *ngFor="let option of getFilterOptions(currentFilterColumn)"
                     [value]="option"
                   >
-                    {{ option }}
+                  {{ currentFilterColumn === 'fechaInicio' || currentFilterColumn === 'fechaFin' ? (option | date: 'yyyy-MM-dd') : option }}
                   </mat-option>
                 </mat-select>
               </mat-form-field>
