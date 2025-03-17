@@ -75,7 +75,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
      * On init
      */
     ngOnInit(): void {
-        this.getUsers();
+        
         // Get the data
         this._projectService.data$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -85,6 +85,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
                 // Prepare the chart data
                 this._prepareChartData();
+                this.getUsers();
             });
 
             // Subscribe to the user service
@@ -114,7 +115,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     getUsers(): void {
         this._usersService.getUsers().subscribe((users) => {
             console.log("users ", users);
-            this.users = users;
+            this.users = users.filter(user => user.rolId !== 1 && user.rolId !== 3);
         });
     }
 
