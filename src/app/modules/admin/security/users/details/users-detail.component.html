@@ -105,6 +105,30 @@
                             </div>
                         </div>
                     }
+
+                    @if (user.proyectosCreados.length) {
+                        <div class="mt-8">
+                            <h3 class="text-lg font-bold">Proyectos Asignados</h3>
+                            <table class="table-auto w-full mt-4 border-collapse border border-gray-300">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="border border-gray-300 px-4 py-2 text-left">#</th>
+                                        <th class="border border-gray-300 px-4 py-2 text-left">Nombre del Proyecto</th>
+                                        <th class="border border-gray-300 px-4 py-2 text-left">Estatus</th>
+                                        <th class="border border-gray-300 px-4 py-2 text-left">Fecha de Creación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let proyecto of user.proyectosCreados; let i = index" (click)="navigateToProject(proyecto.proyectoId)" class="cursor-pointer hover:bg-gray-100">
+                                        <td class="border border-gray-300 px-4 py-2">{{ i + 1 }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ proyecto.nombre }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ proyecto.estatusNombre }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ proyecto.fechaCreacion | date }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </div>
             </div>
         </div>

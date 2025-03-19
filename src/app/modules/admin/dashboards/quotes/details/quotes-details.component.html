@@ -10,6 +10,7 @@
      <mat-form-field appearance="fill" class="w-full">
         <mat-label>Cliente</mat-label>
         <mat-select [formControl]="quotesForm.get('cliente')" #clienteSelect panelClass="custom-select-panel">
+          <mat-option [value]="null">— Ninguno —</mat-option>
           <mat-option>
             <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..." noEntriesFoundLabel="No se encontraron resultados" clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
           </mat-option>
@@ -19,6 +20,21 @@
           </mat-option>
         </mat-select>
         <mat-error *ngIf="quotesForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente válido.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Prospecto</mat-label>
+        <mat-select [formControl]="quotesForm.get('prospecto')" #clienteSelect panelClass="custom-select-panel">
+          <mat-option [value]="null">— Ninguno —</mat-option>
+          <mat-option>
+            <ngx-mat-select-search [formControl]="prospectFiltro" placeholderLabel="Buscar prospecto..." noEntriesFoundLabel="No se encontraron resultados" clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
+          </mat-option>
+
+          <mat-option *ngFor="let prospect of filteredProspects" [value]="prospect.prospectoId">
+            {{ prospect.prospectoId }} - {{ prospect.empresa }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="quotesForm.get('prospecto')?.hasError('noZero')">Debe seleccionar un prospecto válido.</mat-error>
       </mat-form-field>
 
       <!-- Nombre de Contacto -->

@@ -30,6 +30,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-check',
                 link: '/dashboards/quote',
             },
+            {
+                id: 'dashboards.prospects',
+                title: 'Prospectos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-check',
+                link: '/dashboards/prospects',
+            },
             
         ],
     },

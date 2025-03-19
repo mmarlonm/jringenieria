@@ -100,6 +100,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         private _overlay: Overlay,
         private _viewContainerRef: ViewContainerRef,
         private _rolService: RolService,
+        private router: Router,
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -427,5 +428,9 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      */
     trackByFn(index: number, item: any): any {
         return item.usuarioId || index;
+    }
+
+    navigateToProject(id){
+        this.router.navigate([`/dashboards/project/${id}`]);
     }
 }

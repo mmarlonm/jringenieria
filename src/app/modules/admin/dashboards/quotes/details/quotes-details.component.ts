@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
 import { CurrencyMaskPipe } from '../../../../../pipes/currency-mask.pipe';
 import { ClientsService} from '../../../catalogs/clients/clients.service'; 
+import { ProspectosService } from '../../prospects/prospects.services';
 import { debounceTime } from 'rxjs';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { registerLocaleData } from '@angular/common';
@@ -48,18 +49,24 @@ export class QuoteDetailsComponent implements OnInit {
   filteredClients: any[] = [];
   clients: any[] = [];
 
+  prospectFiltro = new FormControl('');
+  filteredProspects: any[] = [];
+  prospects: any[] = [];
+
   constructor(
     private fb: FormBuilder,
     private quotesService: QuotesService,
     private route: ActivatedRoute,
     public router: Router,
-    private clientsService: ClientsService
+    private clientsService: ClientsService,
+    private prospectsService: ProspectosService
   ) {}
 
   ngOnInit(): void {
     this.quotesForm = this.fb.group({
       cotizacionId: [0], // ✅ Debe ser número
-      cliente: [0, Validators.required], // 🔹 Cambiar de '' a 0
+      cliente: [0], // 🔹 Cambiar de '' a 0
+      prospecto: [0], // 🔹 Cambiar de '' a 0
       usuarioCreadorId: [0, Validators.required], // 🔹 Cambiar de '' a 0
       necesidad: ['', [Validators.required, Validators.maxLength(500)]],
       direccion: ['', [Validators.maxLength(255)]],
@@ -83,6 +90,7 @@ export class QuoteDetailsComponent implements OnInit {
     });
     this.getEstatus();
     this.getClientes();
+    this.getProspects();
 
     const userData = JSON.parse(this.quotesService.userInformation);
     this.quotesForm.get('usuarioCreadorId').setValue(userData.usuario.id);
@@ -96,6 +104,28 @@ export class QuoteDetailsComponent implements OnInit {
             this.loadQuotes(this.quotesId);
         }
     });
+
+    // Al cambiar cliente, deshabilita prospecto
+  this.quotesForm.get('cliente')?.valueChanges.subscribe((clienteId) => {
+    const prospectoControl = this.quotesForm.get('prospecto');
+    if (clienteId) {
+      prospectoControl?.disable({ emitEvent: false });
+      prospectoControl?.reset(); // Limpia selección
+    } else {
+      prospectoControl?.enable({ emitEvent: false });
+    }
+  });
+
+  // Al cambiar prospecto, deshabilita cliente
+  this.quotesForm.get('prospecto')?.valueChanges.subscribe((prospectoId) => {
+    const clienteControl = this.quotesForm.get('cliente');
+    if (prospectoId) {
+      clienteControl?.disable({ emitEvent: false });
+      clienteControl?.reset(); // Limpia selección
+    } else {
+      clienteControl?.enable({ emitEvent: false });
+    }
+  });
   }
 
   getEstatus(): void {
@@ -108,6 +138,7 @@ export class QuoteDetailsComponent implements OnInit {
         this.quotesForm.patchValue({
           cotizacionId: quotes.cotizacionId, // 🔹 Ahora se incluye el ID
           cliente: quotes.cliente,
+          prospecto: quotes.prospecto,
           usuarioCreadorId: quotes.usuarioCreadorId,
           necesidad: quotes.necesidad,
           direccion: quotes.direccion,
@@ -176,6 +207,23 @@ export class QuoteDetailsComponent implements OnInit {
           const filterValue = value?.toLowerCase() || '';
           this.filteredClients = this.clients.filter(client =>
             `${client.clienteId} - ${client.nombre}`.toLowerCase().includes(filterValue)
+          );
+        });
+      });
+    }
+
+    getProspects(): void {
+      this.prospectsService.getProspectos().subscribe(data => {
+        this.prospects = data;
+        this.filteredProspects = this.prospects;
+  
+      // Suscribirse al filtro con debounce
+      this.prospectFiltro.valueChanges
+        .pipe(debounceTime(200))
+        .subscribe((value: string) => {
+          const filterValue = value?.toLowerCase() || '';
+          this.filteredProspects = this.prospects.filter(prospect =>
+            `${prospect.prospectoId} - ${prospect.empresa}`.toLowerCase().includes(filterValue)
           );
         });
       });
