@@ -230,23 +230,41 @@
           <!-- Personas Participantes -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Personas Participantes</mat-label>
-          
+
             <!-- Mat Chip List para mostrar las personas seleccionadas -->
             <mat-chip-list #chipList aria-label="Seleccionar personas">
-              <mat-chip *ngFor="let persona of personasSeleccionadas" [removable]="true" (removed)="removePersona(persona)" class="mdc-list-item__primary-text">
+              <mat-chip
+                *ngFor="let persona of personasSeleccionadas"
+                [removable]="true"
+                (removed)="removePersona(persona)"
+                class="mdc-list-item__primary-text"
+              >
                 <!-- Mostrar el avatar si existe -->
-                <mat-icon matChipAvatar *ngIf="!persona.avatar" class="avatar-icon">person</mat-icon>
-                <img *ngIf="persona.avatar" matChipAvatar [src]="persona.avatar" alt="{{ persona.nombreUsuario }}">
-                
+                <mat-icon
+                  matChipAvatar
+                  *ngIf="!persona.avatar"
+                  class="avatar-icon"
+                  >person</mat-icon
+                >
+                <img
+                  *ngIf="persona.avatar"
+                  matChipAvatar
+                  [src]="persona.avatar"
+                  alt="{{ persona.nombreUsuario }}"
+                />
+
                 <!-- Mostrar el nombre de la persona -->
                 {{ persona.nombreUsuario }}
-              
+
                 <!-- Icono para remover el chip -->
-                <button matChipRemove [attr.aria-label]="'remove ' + persona.nombreUsuario">
+                <button
+                  matChipRemove
+                  [attr.aria-label]="'remove ' + persona.nombreUsuario"
+                >
                   <mat-icon>cancel</mat-icon>
                 </button>
               </mat-chip>
-            
+
               <!-- Input para agregar más personas -->
               <input
                 matInput
@@ -256,12 +274,24 @@
                 placeholder="Buscar usuario"
               />
             </mat-chip-list>
-          
+
             <!-- Mat Autocomplete para la búsqueda de personas -->
-            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPersonaFromAutoComplete($event)">
-              <mat-option *ngFor="let usuario of filteredUsers | async" [value]="usuario">
+            <mat-autocomplete
+              #auto="matAutocomplete"
+              (optionSelected)="addPersonaFromAutoComplete($event)"
+            >
+              <mat-option
+                *ngFor="let usuario of filteredUsers | async"
+                [value]="usuario"
+              >
                 <!-- Avatar en el autocomplete -->
-                <img *ngIf="usuario.avatar" [src]="usuario.avatar" alt="{{ usuario.nombreUsuario }}" class="avatar-img" style="margin-right: 15px;" />
+                <img
+                  *ngIf="usuario.avatar"
+                  [src]="usuario.avatar"
+                  alt="{{ usuario.nombreUsuario }}"
+                  class="avatar-img"
+                  style="margin-right: 15px"
+                />
                 <mat-icon matListIcon *ngIf="!usuario.avatar">person</mat-icon>
                 {{ usuario.nombreUsuario }}
               </mat-option>
@@ -479,41 +509,68 @@
                 <div class="font-medium">Files</div>
                 <div class="-m-2 mt-2 flex flex-wrap">
                   @for (file of files; track trackByFn($index, file)) {
-                    <a
-                      class="bg-card m-2 flex h-40 w-40 cursor-pointer flex-col rounded-2xl p-4 shadow"
-                      (click)="downloadFile(file.proyectoId, file.categoria, file.nombreArchivo)"
+                    <div class="relative m-2">
+                      <!-- Card de archivo -->
+                      <a
+                      class="absolute right-1.5 top-1.5 z-20 h-8 min-h-8 w-8"
+                      (click)="
+                        deleteFile(
+                          file.proyectoId,
+                          file.categoria,
+                          file.nombreArchivo
+                        );
+                      "
+                      mat-icon-button
                     >
-                      <div class="aspect-[9/6]">
-                        {{ file.categoria }}
-                        <div class="flex h-full items-center justify-center">
-                          <!-- Icons -->
+                      <mat-icon
+                        class="icon-size-5"
+                        [svgIcon]="'heroicons_solid:trash'"
+                      ></mat-icon>
+                    </a>
+                      <a
+                        class="bg-card flex h-40 w-40 cursor-pointer flex-col rounded-2xl p-4 shadow"
+                        (click)="
+                          downloadFile(
+                            file.proyectoId,
+                            file.categoria,
+                            file.nombreArchivo
+                          )
+                        "
+                      >
+                        
+
+                        <div class="aspect-[9/6]">
+                          {{ file.categoria }}
+                          <div class="flex h-full items-center justify-center">
+                            <!-- Icons -->
                             <div class="relative">
-                            <mat-icon
-                              class="text-hint opacity-50 icon-size-14"
-                              [svgIcon]="'heroicons_solid:document'"
-                            ></mat-icon>
-                            <div
-                              class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
-                              [class.bg-red-600]="file.type === 'PDF'"
-                              [class.bg-blue-600]="file.type === 'DOC'"
-                              [class.bg-green-600]="file.type === 'XLS'"
-                              [class.bg-gray-600]="file.type === 'TXT'"
-                              [class.bg-amber-600]="file.type === 'JPG'"
-                              [class.bg-orange-600]="file.type === 'PNG'"
-                            >
-                              {{ file.type.toUpperCase() }}
+                              <mat-icon
+                                class="text-hint opacity-50 icon-size-14"
+                                [svgIcon]="'heroicons_solid:document'"
+                              ></mat-icon>
+                              <div
+                                class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
+                                [class.bg-red-600]="file.type === 'PDF'"
+                                [class.bg-blue-600]="file.type === 'DOC'"
+                                [class.bg-green-600]="file.type === 'XLS'"
+                                [class.bg-gray-600]="file.type === 'TXT'"
+                                [class.bg-amber-600]="file.type === 'JPG'"
+                                [class.bg-orange-600]="file.type === 'PNG'"
+                              >
+                                {{ file.type.toUpperCase() }}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div
-                        class="flex flex-auto flex-col justify-center text-center text-sm font-medium"
-                      >
-                        <div class="truncate" [matTooltip]="file.name">
-                          {{ file.nombreArchivo }}
+                        <div
+                          class="flex flex-auto flex-col justify-center text-center text-sm font-medium"
+                        >
+                          <div class="truncate" [matTooltip]="file.name">
+                            {{ file.nombreArchivo }}
+                          </div>
                         </div>
-                      </div>
-                    </a>
+                      </a>
+                    </div>
                   }
                 </div>
               </div>

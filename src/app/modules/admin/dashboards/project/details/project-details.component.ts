@@ -36,6 +36,7 @@ import { MatChipsModule } from "@angular/material/chips";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { MatChipInputEvent } from "@angular/material/chips";
 import { set } from "lodash";
+import { MatSnackBar } from '@angular/material/snack-bar'; // Asegúrate de tenerlo importado
 
 registerLocaleData(localeEs);
 @Component({
@@ -94,7 +95,8 @@ export class ProjectDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private clientsService: ClientsService,
-    private _usersService: UsersService
+    private _usersService: UsersService,
+    private snackBar: MatSnackBar
   ) {
     // Filtrar los usuarios a medida que se escribe en el campo
     this.filteredUsers = this.personasControl.valueChanges.pipe(
@@ -435,6 +437,27 @@ export class ProjectDetailsComponent implements OnInit {
           console.error("Error al descargar el archivo:", error);
         }
       );
+  }
+
+  deleteFile(proyectoId: number, categoria: string, nombreArchivo: string): void {
+    this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe(
+      (res) => {
+        this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
+  
+        // Si necesitas actualizar la lista después de eliminar:
+        this.getFilesAll(); // Opcional: recargar lista de archivos
+      },
+      (error) => {
+        console.error('Error al eliminar el archivo:', error);
+        this.snackBar.open('Ocurrió un error al eliminar el archivo.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
+    );
   }
 
   getUsers(): void {

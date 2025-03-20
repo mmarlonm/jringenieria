@@ -61,4 +61,9 @@ export class ProjectService {
     const url = `${this.apiUrl}/DescargarArchivo/${proyectoId}/${categoria}/${nombreArchivo}`;
     return this.http.get(url, { responseType: 'blob' });
   }
+
+  removeFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrl}/EliminarArchivo/${proyectoId}/${categoria}/${nombreArchivo}`;
+    return this.http.delete(url, { responseType: 'blob' });
+  }
 }
