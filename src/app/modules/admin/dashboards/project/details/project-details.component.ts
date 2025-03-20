@@ -381,10 +381,7 @@ export class ProjectDetailsComponent implements OnInit {
 
   onFileSelected(event: any, tipo: string) {
     const file: File = event.target.files[0];
-    if (file && tipo === "levantamiento") {
-      this.levantamientoFile = file;
-
-      // Opcional: subir directamente
+    if (file && tipo) {
       this.subirArchivo(file, tipo);
     }
   }
@@ -401,14 +398,18 @@ export class ProjectDetailsComponent implements OnInit {
 
     this.projectService.uploadFile(formData).subscribe({
       next: () => {
-        alert("Archivo subido correctamente");
+        this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
         this.getFilesAll();
       },
       error: (err) => {
         console.error("Error al subir el archivo:", err);
-        alert(
-          "Hubo un error al subir el archivo. Por favor, inténtalo de nuevo."
-        );
+        this.snackBar.open('Hubo un error al subir el archivo. Por favor, inténtalo de nuevo.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
       },
     });
   }

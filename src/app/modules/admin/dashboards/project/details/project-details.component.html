@@ -477,7 +477,7 @@
       <div class="flex flex-col gap-4 h-100 overflow-auto pr-2">
         <div class="absolute inset-0 flex min-w-0 flex-col">
           <!-- Levantamiento (Input + Botón Subir) -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 m-2">
             <label>Levantamiento:</label>
 
             <button
@@ -492,7 +492,6 @@
               *ngIf="levantamientoFile?.name"
               class="text-sm text-gray-600 truncate max-w-[200px]"
             >
-              {{ levantamientoFile.name }}
             </span>
 
             <input
@@ -500,6 +499,32 @@
               accept=".pdf,.doc,.docx,.jpg,.png"
               #levantamientoInput
               (change)="onFileSelected($event, 'levantamiento')"
+              hidden
+            />
+          </div>
+
+          <div class="flex items-center gap-3 m-2">
+            <label>Plano Arquitectónico:</label>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="planoArquitectonicoInput.click()"
+            >
+              Subir archivo
+            </button>
+
+            <span
+              *ngIf="levantamientoFile?.name"
+              class="text-sm text-gray-600 truncate max-w-[200px]"
+            >
+            </span>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.png"
+              #planoArquitectonicoInput
+              (change)="onFileSelected($event, 'plano arquitectonico')"
               hidden
             />
           </div>
@@ -528,7 +553,7 @@
                       ></mat-icon>
                     </a>
                       <a
-                        class="bg-card flex h-40 w-40 cursor-pointer flex-col rounded-2xl p-4 shadow"
+                        class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow"
                         (click)="
                           downloadFile(
                             file.proyectoId,
