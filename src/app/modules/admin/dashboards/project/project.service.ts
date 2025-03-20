@@ -48,4 +48,17 @@ export class ProjectService {
   getEstatus(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/estatus`);
   }
+
+  uploadFile(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/SubirArchivo`,formData);
+  }
+
+  getFiles(projectId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/ObtenerArchivos/${projectId}`);
+  }
+
+  downloadFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrl}/DescargarArchivo/${proyectoId}/${categoria}/${nombreArchivo}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
 }

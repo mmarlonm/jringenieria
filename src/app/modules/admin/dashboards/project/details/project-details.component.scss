@@ -1,0 +1,27 @@
+.avatar-img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%; /* Hace que la imagen sea redonda */
+  }
+  
+  .avatar-icon {
+    font-size: 24px; /* Tamaño del icono cuando no hay avatar */
+  }
+
+
+  .mat-chip {
+    display: flex; /* Usar flexbox para la alineación en línea */
+    align-items: center; /* Asegura que el avatar y el texto estén centrados verticalmente */
+  }
+  
+  .mat-chip mat-icon, .mat-chip img {
+    margin-right: 8px; /* Agrega espacio entre el avatar y el nombre */
+    width: 24px;
+    height: 24px;
+    border-radius: 50%; /* Hace que el avatar sea redondo */
+  }
+
+ ::ng-deep .mat-mdc-option .mdc-list-item__primary-text {
+    width: 100%; /* Asegura que el texto se ajuste correctamente */
+    display: contents; /* Asegura que el texto se ajuste correctamente */
+}

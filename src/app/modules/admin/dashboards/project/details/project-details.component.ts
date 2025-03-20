@@ -1,26 +1,48 @@
-import { Component, OnInit,LOCALE_ID } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ProjectService } from '../project.service';
-import { ClientsService} from '../../../catalogs/clients/clients.service'; 
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl,FormControl } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { CommonModule } from '@angular/common';
-import { debounceTime } from 'rxjs';
-import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { registerLocaleData } from '@angular/common';
-import localeEs from '@angular/common/locales/es';
-import { MAT_DATE_LOCALE } from '@angular/material/core';
+import {
+  Component,
+  OnInit,
+  LOCALE_ID,
+  CUSTOM_ELEMENTS_SCHEMA,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { ProjectService } from "../project.service";
+import { ClientsService } from "../../../catalogs/clients/clients.service";
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+  AbstractControl,
+  FormControl,
+} from "@angular/forms";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatInputModule } from "@angular/material/input";
+import { MatSelectModule } from "@angular/material/select";
+import { MatButtonModule } from "@angular/material/button";
+import { MatDatepickerModule } from "@angular/material/datepicker";
+import { MatTabsModule } from "@angular/material/tabs";
+import { MatNativeDateModule } from "@angular/material/core";
+import { CommonModule } from "@angular/common";
+import { debounceTime, Observable } from "rxjs";
+import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
+import { registerLocaleData } from "@angular/common";
+import localeEs from "@angular/common/locales/es";
+import { MAT_DATE_LOCALE } from "@angular/material/core";
+import { MatIconModule } from "@angular/material/icon";
+import { UsersService } from "../../../security/users/users.service";
+import { map, startWith } from "rxjs/operators";
+import { MatChipsModule } from "@angular/material/chips";
+import { MatAutocompleteModule } from "@angular/material/autocomplete";
+import { MatChipInputEvent } from "@angular/material/chips";
+import { set } from "lodash";
 
 registerLocaleData(localeEs);
 @Component({
-  selector: 'app-project-details',
-  templateUrl: './project-details.component.html',
-  styleUrls: ['./project-details.component.scss'],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  selector: "app-project-details",
+  templateUrl: "./project-details.component.html",
+  styleUrls: ["./project-details.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
@@ -32,139 +54,173 @@ registerLocaleData(localeEs);
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    NgxMatSelectSearchModule
+    NgxMatSelectSearchModule,
+    MatTabsModule,
+    MatIconModule,
+    MatChipsModule,
+    MatAutocompleteModule,
   ],
   providers: [
-    { provide: LOCALE_ID, useValue: 'es-ES' },              // Idioma general Angular
-    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }         // Idioma para Angular Material (como el Datepicker)
+    { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
+    { provide: MAT_DATE_LOCALE, useValue: "es-ES" }, // Idioma para Angular Material (como el Datepicker)
   ],
 })
 export class ProjectDetailsComponent implements OnInit {
+  //modulod e archivos
   projectForm: FormGroup;
   categorias: any[] = [];
   unidadesDeNegocio: any[] = [];
   clients: any[] = [];
   projectId: number | null = null;
 
-  clienteFiltro = new FormControl('');
+  clienteFiltro = new FormControl("");
   filteredClients: any[] = [];
   estatus: any[] = [];
+
+  files: any[] = [];
+  //informacion de usuario logeado
+  user: any[] = [];
+
+  // Lista de personas seleccionadas
+  personasSeleccionadas: any[] = [];
+
+  // Control de búsqueda de personas
+  personasControl = new FormControl();
+  filteredUsers: Observable<any[]>; // Lista filtrada de usuarios
 
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
     private route: ActivatedRoute,
     public router: Router,
-    private clientsService: ClientsService
-  ) {}
+    private clientsService: ClientsService,
+    private _usersService: UsersService
+  ) {
+    // Filtrar los usuarios a medida que se escribe en el campo
+    this.filteredUsers = this.personasControl.valueChanges.pipe(
+      startWith(""),
+      map((value) => this._filter(value))
+    );
+  }
 
   ngOnInit(): void {
-    
     this.projectForm = this.fb.group({
-      proyectoId: [0],  // 🔹 Se agrega proyectoId para que siempre se tenga
-      nombre: ['', Validators.required],
-      categoria: ['', Validators.required],
-      lugar: ['NA'],
-      unidadDeNegocio: ['', Validators.required],
-      fechaInicio: ['', Validators.required],
-      fechaFin: [''],
-      estado: ['NA'],
-    
+      proyectoId: [0], // 🔹 Se agrega proyectoId para que siempre se tenga
+      nombre: ["", Validators.required],
+      categoria: ["", Validators.required],
+      lugar: ["NA"],
+      unidadDeNegocio: ["", Validators.required],
+      fechaInicio: ["", Validators.required],
+      fechaFin: [""],
+      estado: ["NA"],
+
       // Nuevas propiedades
       cliente: [0, [Validators.required, this.noZeroValidator]],
-      necesidad: [''],
-      direccion: [''],
-      nombreContacto: [''],
-      telefono: [''],
-      empresa: [''],
-    
-      levantamiento: [''],
-      planoArquitectonico: [''],
-      diagramaIsometrico: [''],
-      diagramaUnifilar: [''],
-    
-      materialesCatalogo: [''],
-      materialesPresupuestados: [''],
-      inventarioFinal: [''],
-      cuadroComparativo: [''],
-    
-      proveedor: [''],
-    
-      manoDeObra: [''],
-      personasParticipantes: [''],
-      equipos: [''],
-      herramientas: [''],
-    
-      indirectosCostos: [''],
-      fianzas: [''],
-      anticipo: [''],
-      cotizacion: [''],
-    
-      ordenDeCompra: [''],
-      contrato: [''],
-    
-      programaDeTrabajo: [''],
-      avancesReportes: [''],
-      comentarios: [''],
-      hallazgos: [''],
-      dosier: [''],
-      rutaCritica: [''],
-    
-      factura: [''],
-      pago: [''],
-      utilidadProgramada: [''],
-      utilidadReal: [''],
-      financiamiento: [''],
-    
-      cierreProyectoActaEntrega: [''],
-      estatus : ['']
-    });
+      necesidad: [""],
+      direccion: [""],
+      nombreContacto: [""],
+      telefono: [""],
+      empresa: [""],
 
+      levantamiento: [""],
+      planoArquitectonico: [""],
+      diagramaIsometrico: [""],
+      diagramaUnifilar: [""],
+
+      materialesCatalogo: [""],
+      materialesPresupuestados: [""],
+      inventarioFinal: [""],
+      cuadroComparativo: [""],
+
+      proveedor: [""],
+
+      manoDeObra: [""],
+      personasParticipantes: [""],
+      equipos: [""],
+      herramientas: [""],
+
+      indirectosCostos: [""],
+      fianzas: [""],
+      anticipo: [""],
+      cotizacion: [""],
+
+      ordenDeCompra: [""],
+      contrato: [""],
+
+      programaDeTrabajo: [""],
+      avancesReportes: [""],
+      comentarios: [""],
+      hallazgos: [""],
+      dosier: [""],
+      rutaCritica: [""],
+
+      factura: [""],
+      pago: [""],
+      utilidadProgramada: [""],
+      utilidadReal: [""],
+      financiamiento: [""],
+
+      cierreProyectoActaEntrega: [""],
+      estatus: [""],
+    });
+    
     this.getCategorias();
     this.getUnidadesDeNegocio();
     this.getClientes();
     this.getEstatus();
+    
 
-    this.route.paramMap.subscribe(params => {
-        const id = params.get('id');
-        if (!id || id === 'new') {
-            this.projectId = null; // Se trata de un nuevo proyecto
-        } else {
-            this.projectId = Number(id);
-            this.loadProject(this.projectId);
-        }
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get("id");
+      if (!id || id === "new") {
+        this.projectId = null; // Se trata de un nuevo proyecto
+        this.getUsers();
+      } else {
+        this.getUsers();
+        this.projectId = Number(id);
+        setTimeout(() => {
+          this.loadProject(this.projectId);
+        }, 2000);
+        this.getFilesAll();
+      }
     });
   }
 
   getEstatus(): void {
-    this.projectService.getEstatus().subscribe(data => this.estatus = data);
+    this.projectService.getEstatus().subscribe((data) => (this.estatus = data));
   }
 
   noZeroValidator(control: AbstractControl) {
     return control.value === 0 ? { noZero: true } : null;
   }
   getCategorias(): void {
-    this.projectService.getCategorias().subscribe(data => this.categorias = data);
+    this.projectService
+      .getCategorias()
+      .subscribe((data) => (this.categorias = data));
   }
 
   getUnidadesDeNegocio(): void {
-    this.projectService.getUnidadesDeNegocio().subscribe(data => this.unidadesDeNegocio = data);
+    this.projectService
+      .getUnidadesDeNegocio()
+      .subscribe((data) => (this.unidadesDeNegocio = data));
   }
 
   getClientes(): void {
-    this.clientsService.getClient().subscribe(data => {
+    this.clientsService.getClient().subscribe((data) => {
       this.clients = data;
       this.filteredClients = this.clients;
 
-    // Suscribirse al filtro con debounce
-    this.clienteFiltro.valueChanges
-      .pipe(debounceTime(200))
-      .subscribe((value: string) => {
-        const filterValue = value?.toLowerCase() || '';
-        this.filteredClients = this.clients.filter(client =>
-          `${client.clienteId} - ${client.nombre}`.toLowerCase().includes(filterValue)
-        );
-      });
+      // Suscribirse al filtro con debounce
+      this.clienteFiltro.valueChanges
+        .pipe(debounceTime(200))
+        .subscribe((value: string) => {
+          const filterValue = value?.toLowerCase() || "";
+          this.filteredClients = this.clients.filter((client) =>
+            `${client.clienteId} - ${client.nombre}`
+              .toLowerCase()
+              .includes(filterValue)
+          );
+        });
     });
   }
 
@@ -181,7 +237,7 @@ export class ProjectDetailsComponent implements OnInit {
           fechaInicio: project.fechaInicio,
           fechaFin: project.fechaFin,
           estado: project.estado,
-        
+
           // Nuevas propiedades
           cliente: project.cliente,
           necesidad: project.necesidad,
@@ -189,48 +245,64 @@ export class ProjectDetailsComponent implements OnInit {
           nombreContacto: project.nombreContacto,
           telefono: project.telefono,
           empresa: project.empresa,
-        
+
           levantamiento: project.levantamiento,
           planoArquitectonico: project.planoArquitectonico,
           diagramaIsometrico: project.diagramaIsometrico,
           diagramaUnifilar: project.diagramaUnifilar,
-        
+
           materialesCatalogo: project.materialesCatalogo,
           materialesPresupuestados: project.materialesPresupuestados,
           inventarioFinal: project.inventarioFinal,
           cuadroComparativo: project.cuadroComparativo,
-        
+
           proveedor: project.proveedor,
-        
+
           manoDeObra: project.manoDeObra,
           personasParticipantes: project.personasParticipantes,
           equipos: project.equipos,
           herramientas: project.herramientas,
-        
+
           indirectosCostos: project.indirectosCostos,
           fianzas: project.fianzas,
           anticipo: project.anticipo,
           cotizacion: project.cotizacion,
-        
+
           ordenDeCompra: project.ordenDeCompra,
           contrato: project.contrato,
-        
+
           programaDeTrabajo: project.programaDeTrabajo,
           avancesReportes: project.avancesReportes,
           comentarios: project.comentarios,
           hallazgos: project.hallazgos,
           dosier: project.dosier,
           rutaCritica: project.rutaCritica,
-        
+
           factura: project.factura,
           pago: project.pago,
           utilidadProgramada: project.utilidadProgramada,
           utilidadReal: project.utilidadReal,
           financiamiento: project.financiamiento,
-        
+
           cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
-          estatus: project.estatus
+          estatus: project.estatus,
         });
+        // Procesamos los IDs de personasParticipantes
+        if (project.personasParticipantes) {
+          // Dividimos los IDs concatenados en un array
+          const personasIds = project.personasParticipantes.split(",");
+          console.log("personasIds", personasIds);
+          // Creamos un array de objetos con los usuarios basados en esos IDs
+          this.personasSeleccionadas = personasIds
+            .map((id) => {
+              const user = this.getUserById(id); // Buscar usuario por ID (debe haber un método o lista para esto)
+              return user ? user : null; // Si se encuentra el usuario, lo agregamos al array
+            })
+            .filter((persona) => persona !== null); // Filtramos cualquier valor nulo
+            console.log("personas seleccionadas", this.personasSeleccionadas);
+          // Si quieres también actualizar el formulario con los usuarios
+          this.updatePersonasParticipantesField();
+        }
       }
     });
   }
@@ -238,23 +310,221 @@ export class ProjectDetailsComponent implements OnInit {
   saveProject(): void {
     console.log("guardar proyecto", this.projectForm);
     if (this.projectForm.invalid) return;
-  
+
     const projectData: any = this.projectForm.value;
     console.log("data de proyecto ", projectData);
-  
+
     if (this.projectId) {
       // Actualizar proyecto
       projectData.proyectoId = this.projectId;
       this.projectService.updateProject(projectData).subscribe(() => {
         // Redirigir a la lista de proyectos
-        this.router.navigate(['/dashboards/project']); // O la ruta correspondiente a la lista
+        this.router.navigate(["/dashboards/project"]); // O la ruta correspondiente a la lista
       });
     } else {
       // Crear nuevo proyecto
       this.projectService.createProject(projectData).subscribe(() => {
         // Redirigir a la lista de proyectos
-        this.router.navigate(['/dashboards/project']); // O la ruta correspondiente a la lista
+        this.router.navigate(["/dashboards/project"]); // O la ruta correspondiente a la lista
       });
     }
+  }
+
+  getFilesAll(): void {
+    if (!this.projectId) return;
+
+    this.projectService.getFiles(this.projectId).subscribe((files) => {
+      console.log("Archivos del proyecto:", files);
+
+      // Mapear los archivos y asignarles un tipo basado en su nombreArchivo
+      this.files = files.map((file) => ({
+        ...file,
+        type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
+      }));
+
+      console.log("Archivos con tipo:", this.files);
+    });
+  }
+
+  // Función para obtener el tipo de archivo según la extensión
+  getFileType(nombreArchivo: string): string {
+    const extension = nombreArchivo
+      ? nombreArchivo.split(".").pop()?.toLowerCase()
+      : "";
+
+    switch (extension) {
+      case "pdf":
+        return "PDF";
+      case "doc":
+      case "docx":
+        return "DOC";
+      case "xls":
+      case "xlsx":
+        return "XLS";
+      case "txt":
+        return "TXT";
+      case "jpg":
+      case "jpeg":
+        return "JPG";
+      case "png":
+        return "PNG";
+      default:
+        return "OTRO";
+    }
+  }
+
+  levantamientoFile: File | null = null;
+
+  onFileSelected(event: any, tipo: string) {
+    const file: File = event.target.files[0];
+    if (file && tipo === "levantamiento") {
+      this.levantamientoFile = file;
+
+      // Opcional: subir directamente
+      this.subirArchivo(file, tipo);
+    }
+  }
+
+  // Si deseas subirlo en ese mismo momento:
+  subirArchivo(event: any, categoria: string): void {
+    const archivo = event;
+    if (!archivo) return;
+
+    const formData = new FormData();
+    formData.append("proyectoId", this.projectId?.toString() || ""); // asegúrate que esté definido
+    formData.append("categoria", categoria);
+    formData.append("archivo", archivo);
+
+    this.projectService.uploadFile(formData).subscribe({
+      next: () => {
+        alert("Archivo subido correctamente");
+        this.getFilesAll();
+      },
+      error: (err) => {
+        console.error("Error al subir el archivo:", err);
+        alert(
+          "Hubo un error al subir el archivo. Por favor, inténtalo de nuevo."
+        );
+      },
+    });
+  }
+
+  trackByFn(index: number, item: any): any {
+    return item.id || index;
+  }
+
+  downloadFile(
+    proyectoId: number,
+    categoria: string,
+    nombreArchivo: string
+  ): void {
+    this.projectService
+      .downloadFile(proyectoId, categoria, nombreArchivo)
+      .subscribe(
+        (response: Blob) => {
+          const a = document.createElement("a");
+          const objectUrl = URL.createObjectURL(response);
+          a.href = objectUrl;
+          a.download = nombreArchivo;
+          a.click();
+          URL.revokeObjectURL(objectUrl); // Limpiar el objeto URL
+        },
+        (error) => {
+          console.error("Error al descargar el archivo:", error);
+        }
+      );
+  }
+
+  getUsers(): void {
+    this._usersService.getUsers().subscribe((users) => {
+      this.user = users.filter(
+        (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
+      );
+      console.log("usuarios ", this.user);
+    });
+  }
+
+  // Filtrar los usuarios
+  private _filter(value: string): any[] {
+    if (typeof value !== "string") {
+      return [];
+    }
+    console.log("valor ", value);
+    const filterValue = value.toLowerCase();
+    return this.user.filter((usuario) =>
+      usuario.nombreUsuario.toLowerCase().includes(filterValue)
+    );
+  }
+
+  // Agregar una persona desde el campo de entrada
+  addPersona(event: MatChipInputEvent): void {
+    // Solo agregamos la persona si el token no está vacío
+    const input = event.input;
+    const value = event.value;
+    console.log("valor ", value);
+    if ((value || "").trim()) {
+      console.log("valor ", value);
+      // Aquí deberías estar buscando el usuario en tu lista de usuarios
+      const persona = this.user.find((u) => u.nombreUsuario === value.trim());
+
+      if (persona && !this.personasSeleccionadas.includes(persona)) {
+        this.personasSeleccionadas.push(persona); // Agregamos la persona seleccionada
+        this.updatePersonasParticipantesField(); // Actualizar el campo
+      }
+    }
+
+    // Limpiar el input después de agregar
+    if (input) {
+      input.value = "";
+    }
+    // Restablecer el control del formulario
+    console.log("personas seleccionadas", this.personasSeleccionadas);
+    console.log("input ", input);
+    input.value = "";
+    this.personasControl.setValue(null);
+    console.log("personas control ", this.personasControl);
+  }
+
+  // Eliminar una persona seleccionada
+  removePersona(persona: any): void {
+    const index = this.personasSeleccionadas.indexOf(persona);
+    if (index >= 0) {
+      this.personasSeleccionadas.splice(index, 1);
+    }
+  }
+
+  // Agregar una persona desde el autocomplete
+  addPersonaFromAutoComplete(event: any): void {
+    const selectedPersona = event.option.value;
+    if (
+      !this.personasSeleccionadas.find(
+        (p) => p.usuarioId === selectedPersona.usuarioId
+      )
+    ) {
+      this.personasSeleccionadas.push(selectedPersona);
+      this.personasControl.setValue(null);
+      this.updatePersonasParticipantesField(); // Actualizar el campo
+    }
+    console.log("personas seleccionadas", this.personasSeleccionadas);
+  }
+
+  updatePersonasParticipantesField(): void {
+    // Concatenar los IDs de las personas seleccionadas y guardarlos en el campo personasParticipantes
+    const selectedIds = this.personasSeleccionadas.map(
+      (persona) => persona.usuarioId
+    );
+    const idsConcatenados = selectedIds.join(","); // Concatenar los IDs separados por coma
+    this.projectForm.patchValue({
+      personasParticipantes: idsConcatenados, // Guardar los IDs como una cadena separada por comas
+    });
+
+    console.log("this.projectForm ", this.projectForm);
+  }
+
+  getUserById(id: string): any {
+    // Suponiendo que tienes una lista de usuarios
+    console.log("id ", id);
+    console.log("usuarios ", this.user);
+    return this.user.find((user) => user.usuarioId === Number(id));
   }
 }
