@@ -178,9 +178,7 @@ export class ProjectDetailsComponent implements OnInit {
       } else {
         this.getUsers();
         this.projectId = Number(id);
-        setTimeout(() => {
-          this.loadProject(this.projectId);
-        }, 2000);
+        this.loadProject(this.projectId);
         this.getFilesAll();
       }
     });
@@ -287,24 +285,28 @@ export class ProjectDetailsComponent implements OnInit {
           cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
           estatus: project.estatus,
         });
-        // Procesamos los IDs de personasParticipantes
-        if (project.personasParticipantes) {
-          // Dividimos los IDs concatenados en un array
-          const personasIds = project.personasParticipantes.split(",");
-          console.log("personasIds", personasIds);
-          // Creamos un array de objetos con los usuarios basados en esos IDs
-          this.personasSeleccionadas = personasIds
-            .map((id) => {
-              const user = this.getUserById(id); // Buscar usuario por ID (debe haber un método o lista para esto)
-              return user ? user : null; // Si se encuentra el usuario, lo agregamos al array
-            })
-            .filter((persona) => persona !== null); // Filtramos cualquier valor nulo
-            console.log("personas seleccionadas", this.personasSeleccionadas);
-          // Si quieres también actualizar el formulario con los usuarios
-          this.updatePersonasParticipantesField();
-        }
       }
     });
+  }
+
+  personasSeleccionadadload(): void {
+    // Obtenemos los IDs de personasParticipantes desde el formulario
+    const personasParticipantes = this.projectForm.get('personasParticipantes')?.value;
+    if (personasParticipantes) {
+      // Dividimos los IDs concatenados en un array
+      const personasIds = personasParticipantes.split(",");
+      console.log("personasIds", personasIds);
+      // Creamos un array de objetos con los usuarios basados en esos IDs
+      this.personasSeleccionadas = personasIds
+        .map((id) => {
+          const user = this.getUserById(id); // Buscar usuario por ID (debe haber un método o lista para esto)
+          return user ? user : null; // Si se encuentra el usuario, lo agregamos al array
+        })
+        .filter((persona) => persona !== null); // Filtramos cualquier valor nulo
+      console.log("personas seleccionadas", this.personasSeleccionadas);
+      // Si quieres también actualizar el formulario con los usuarios
+      this.updatePersonasParticipantesField();
+    }
   }
 
   saveProject(): void {
@@ -441,6 +443,7 @@ export class ProjectDetailsComponent implements OnInit {
         (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
       );
       console.log("usuarios ", this.user);
+      this.personasSeleccionadadload();
     });
   }
 
