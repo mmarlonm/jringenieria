@@ -488,14 +488,6 @@ export class ProjectDetailsComponent implements OnInit {
     console.log("personas control ", this.personasControl);
   }
 
-  // Eliminar una persona seleccionada
-  removePersona(persona: any): void {
-    const index = this.personasSeleccionadas.indexOf(persona);
-    if (index >= 0) {
-      this.personasSeleccionadas.splice(index, 1);
-    }
-  }
-
   // Agregar una persona desde el autocomplete
   addPersonaFromAutoComplete(event: any): void {
     const selectedPersona = event.option.value;
@@ -529,5 +521,13 @@ export class ProjectDetailsComponent implements OnInit {
     console.log("id ", id);
     console.log("usuarios ", this.user);
     return this.user.find((user) => user.usuarioId === Number(id));
+  }
+
+  removePersona(persona: any): void {
+    const index = this.personasSeleccionadas.indexOf(persona);
+    if (index >= 0) {
+      this.personasSeleccionadas.splice(index, 1); // Eliminar del array
+      this.updatePersonasParticipantesField();     // 🔸 Actualizar los IDs concatenados en el form
+    }
   }
 }
