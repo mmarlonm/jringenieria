@@ -21,7 +21,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { User } from 'app/core/user/user.types';
 import { UserService } from 'app/core/user/user.service';
 import { UsersService } from '../../security/users/users.service';
-
+import { CommonModule } from '@angular/common';
 @Component({
     selector: 'analytics',
     templateUrl: './analytics.component.html',
@@ -40,6 +40,7 @@ import { UsersService } from '../../security/users/users.service';
         MatTableModule,
         NgClass,
         CurrencyPipe,
+        CommonModule
     ],
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
@@ -56,6 +57,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     //informacion de usuario logeado 
     user: User;
+
+    analiticaData: any[] = [];
 
     /**
      * Constructor
@@ -86,6 +89,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
                 // Prepare the chart data
                 this._prepareChartData();
                 this.getUsers();
+                this.getAnalitica();
             });
 
             // Subscribe to the user service
@@ -109,6 +113,13 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
                 },
             },
         };
+    }
+
+    getAnalitica(): void {
+        this._projectService.getAnalitica().subscribe((analitica) => {
+            console.log("analitica ", analitica)
+            this.analiticaData = analitica;
+        });
     }
 
 
@@ -477,5 +488,16 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
                 },
             },
         };
+    }
+
+    getColorClass(estatusId: number): string {
+        switch (estatusId) {
+            case 1: return 'text-yellow-500'; // Pendiente
+            case 2: return 'text-green-500';  // Aprobada
+            case 3: return 'text-red-500';    // Rechazada
+            case 4: return 'text-blue-500';   // En Proceso
+            case 5: return 'text-purple-500'; // Finalizada
+            default: return 'text-gray-500';
+        }
     }
 }
