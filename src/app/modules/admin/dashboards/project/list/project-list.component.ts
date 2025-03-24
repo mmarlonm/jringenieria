@@ -15,6 +15,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
+import { HistorialComponent } from '../historial/historial.component';
+import { MatDialog } from '@angular/material/dialog';
+
 @Component({
   selector: 'app-project-list',
   templateUrl: './project-list.component.html',
@@ -56,11 +59,14 @@ export class ProjectListComponent implements OnInit {
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatMenuTrigger) menuTrigger: MatMenuTrigger;  // Añadir la referencia a MatMenuTrigger
 
+  historialData: any[] = [];
+
   constructor(
     private projectService: ProjectService,
     private router: Router,
     private snackBar: MatSnackBar,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
@@ -191,5 +197,16 @@ export class ProjectListComponent implements OnInit {
 
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
+  }
+
+  getHistorial(projectId: number): void {
+    this.projectService.getHistorial(projectId).subscribe((historial) => {
+      this.historialData = historial;
+
+      this.dialog.open(HistorialComponent, {
+        width: '700px',
+        data: { historial }
+      });
+    });
   }
 }

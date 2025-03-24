@@ -182,6 +182,16 @@
                   >
                     Eliminar
                   </button>
+
+                  <!-- 📘 Botón de Historial -->
+                  <button
+                    mat-icon-button
+                    color="grey"
+                    matTooltip="Ver historial de estatus"
+                    (click)="getHistorial(project.proyectoId)"
+                  >
+                    <mat-icon>history</mat-icon>
+                  </button>
                 </td>
               </ng-container>
 

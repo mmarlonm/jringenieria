@@ -66,4 +66,8 @@ export class ProjectService {
     const url = `${this.apiUrl}/EliminarArchivo/${proyectoId}/${categoria}/${nombreArchivo}`;
     return this.http.delete(url, { responseType: 'blob' });
   }
+
+  getHistorial(projectId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/historial-estatus/${projectId}`);
+  }
 }
