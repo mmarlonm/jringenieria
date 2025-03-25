@@ -528,6 +528,58 @@
               hidden
             />
           </div>
+
+          <div class="flex items-center gap-3 m-2">
+            <label>Diagrama Isométrico: </label>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="diagramaIsometricoInput.click()"
+            >
+              Subir archivo
+            </button>
+
+            <span
+              *ngIf="levantamientoFile?.name"
+              class="text-sm text-gray-600 truncate max-w-[200px]"
+            >
+            </span>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.png"
+              #diagramaIsometricoInput
+              (change)="onFileSelected($event, 'diagrama isometrico')"
+              hidden
+            />
+          </div>
+
+          <div class="flex items-center gap-3 m-2">
+            <label>Diagrama Unifilar: </label>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="diagramaUnifilarInput.click()"
+            >
+              Subir archivo
+            </button>
+
+            <span
+              *ngIf="levantamientoFile?.name"
+              class="text-sm text-gray-600 truncate max-w-[200px]"
+            >
+            </span>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.png"
+              #diagramaUnifilarInput
+              (change)="onFileSelected($event, 'diagrama unifilar')"
+              hidden
+            />
+          </div>
           <div class="space-y-8 p-6 md:p-8">
             @if (files.length > 0) {
               <div>
