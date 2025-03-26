@@ -127,14 +127,14 @@
                 <mat-tab label="Home">
                     <ng-template matTabContent>
                         <label>Proyectos</label>
-                        <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5">
+                        <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5" *ngIf="analiticaData?.proyectos.length > 0">
                             <div
                                 class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
                                 *ngFor="let p of analiticaData?.proyectos"
                             >
                                 <div class="flex items-start justify-between">
                                     <div class="truncate text-lg font-medium leading-6 tracking-tight">
-                                        {{ p.estatusNombre }}
+                                        
                                     </div>
                                     <div class="-mr-3 -mt-2 ml-2">
                                         <button mat-icon-button [matMenuTriggerFor]="menu">
@@ -155,21 +155,21 @@
                                         {{ p.totalProyectos }}
                                     </div>
                                     <div class="text-lg font-medium text-center mt-2">
-                                        Proyectos
+                                        {{ p.estatusNombre }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <label>Cotizaciones</label>
-                        <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5">
+                        <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5" *ngIf="analiticaData?.cotizaciones.length > 0">
                             <div
                                 class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
                                 *ngFor="let p of analiticaData?.cotizaciones"
                             >
                                 <div class="flex items-start justify-between">
                                     <div class="truncate text-lg font-medium leading-6 tracking-tight">
-                                        {{ p.estatusNombre }}
+                                        
                                     </div>
                                     <div class="-mr-3 -mt-2 ml-2">
                                         <button mat-icon-button [matMenuTriggerFor]="menu">
@@ -190,7 +190,7 @@
                                         {{ p.totalCotizaciones }}
                                     </div>
                                     <div class="text-lg font-medium text-center mt-2">
-                                        Proyectos
+                                        {{ p.estatusNombre }}
                                     </div>
                                 </div>
                             </div>
