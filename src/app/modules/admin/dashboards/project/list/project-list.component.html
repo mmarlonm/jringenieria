@@ -202,43 +202,57 @@
           </div>
 
           <!-- Menu de Filtros -->
-          <mat-menu #filterMenu="matMenu">
-            <ng-container *ngIf="currentFilterColumn">
-              <!-- Filtro de texto -->
-              <mat-form-field *ngIf="isTextFilter(currentFilterColumn)">
-                <mat-label>Filtro</mat-label>
-                <input
-                  matInput
-                  [(ngModel)]="filterValue"
-                  (input)="applyFilter()"
-                  (click)="$event.stopPropagation()"
-                />
-              </mat-form-field>
-
-              <!-- Filtro de selección -->
-              <mat-form-field *ngIf="isSelectFilter(currentFilterColumn)">
-                <mat-label>Filtro</mat-label>
-                <mat-select
-                  [(ngModel)]="filterValue"
-                  (selectionChange)="applySelect()"
+          <mat-menu #filterMenu="matMenu" class="filter-menu">
+            <div class="filter-container">
+              <ng-container *ngIf="currentFilterColumn">
+                <!-- Filtro de texto -->
+                <mat-form-field
+                  *ngIf="isTextFilter(currentFilterColumn)"
+                  appearance="outline"
+                  class="filter-field"
                 >
-                  <mat-option
-                    *ngFor="let option of getFilterOptions(currentFilterColumn)"
-                    [value]="option"
-                  >
-                    {{
-                      currentFilterColumn === "fechaInicio" ||
-                      currentFilterColumn === "fechaFin"
-                        ? (option | date: "yyyy-MM-dd")
-                        : option
-                    }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <!-- Botón de reset -->
-              <button mat-menu-item (click)="resetFilter()">Reset</button>
-            </ng-container>
+                  <mat-label>Filtro</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="filterValue"
+                    (input)="applyFilter()"
+                    (click)="$event.stopPropagation()"
+                  />
+                </mat-form-field>
+          
+                <!-- Filtro de selección -->
+                <mat-form-field
+                  *ngIf="isSelectFilter(currentFilterColumn)"
+                  appearance="outline"
+                  class="filter-field"
+                >
+                  <mat-label>Filtro</mat-label>
+                  <mat-select [(ngModel)]="filterValue" (selectionChange)="applySelect()">
+                    <mat-option
+                      *ngFor="let option of getFilterOptions(currentFilterColumn)"
+                      [value]="option"
+                    >
+                      {{
+                        currentFilterColumn === 'fechaInicio' ||
+                        currentFilterColumn === 'fechaFin'
+                          ? (option | date: 'yyyy-MM-dd')
+                          : option
+                      }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+          
+                <!-- Botón de reset -->
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  class="reset-button"
+                  (click)="resetFilter()"
+                >
+                  Reset
+                </button>
+              </ng-container>
+            </div>
           </mat-menu>
 
           <!-- Paginador -->

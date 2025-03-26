@@ -21,6 +21,7 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'app-project-list',
   templateUrl: './project-list.component.html',
+  styleUrls: ['./project-list.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -123,7 +124,7 @@ export class ProjectListComponent implements OnInit {
    * Aplica el filtro correspondiente basado en el tipo de columna.
    */
   applyFilter(): void {
-    const filterValue = this.filterValue?.toLowerCase();
+    const filterValue = this.filterValue;
     this.dataSource.filter = filterValue;  // Aplica el filtro global
   }
 
