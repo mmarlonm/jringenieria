@@ -164,6 +164,9 @@ export class ProjectDetailsComponent implements OnInit {
 
       cierreProyectoActaEntrega: [""],
       estatus: [""],
+      liderProyectoId : [""],
+      entregables : [""],
+      cronograma : [""],
     });
     
     this.getCategorias();
@@ -286,6 +289,9 @@ export class ProjectDetailsComponent implements OnInit {
 
           cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
           estatus: project.estatus,
+          liderProyectoId: project.liderProyectoId,
+          entregables: project.entregables,
+          cronograma: project.cronograma,
         });
       }
     });

@@ -198,6 +198,42 @@
         </mat-select>
       </mat-form-field>
     </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Forma de Pago -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Forma de Pago</mat-label>
+        <input matInput formControlName="formaPago" placeholder="Ejemplo: Transferencia, Crédito">
+      </mat-form-field>
+    
+      <!-- Tiempo de Entrega -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Tiempo de Entrega</mat-label>
+        <input matInput formControlName="tiempoEntrega" placeholder="Ejemplo: 15 días hábiles">
+      </mat-form-field>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4 mt-4">
+      <!-- Monto Total -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Monto Total</mat-label>
+        <input matInput type="number" formControlName="montoTotal" placeholder="Ejemplo: 50000">
+      </mat-form-field>
+    
+      <!-- Números de Ajustes de Costos -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Números de Ajustes de Costos</mat-label>
+        <input matInput formControlName="ajustesCostos" placeholder="Ejemplo: AJ-001, AJ-002">
+      </mat-form-field>
+    </div>
+    
+    <div class="grid grid-cols-1 gap-4 mt-4">
+      <!-- Comentarios, Notas -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Comentarios o Notas</mat-label>
+        <textarea matInput formControlName="comentarios" placeholder="Notas adicionales sobre la cotización"></textarea>
+      </mat-form-field>
+    </div>
   
     <!-- Botones -->
     <div class="sticky bottom-0 py-2 flex justify-end gap-2">
