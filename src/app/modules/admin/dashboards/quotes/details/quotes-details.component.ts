@@ -96,7 +96,7 @@ export class QuoteDetailsComponent implements OnInit {
       estatus: [0, [Validators.maxLength(50)]],
       formaPago: [""],
       tiempoEntrega: [""],
-      montoTotal: [""],
+      montoTotal: [0],
       ajustesCostos: [""],
       comentarios: [""],
     });
