@@ -124,12 +124,12 @@ export class ProjectListComponent implements OnInit {
    * Aplica el filtro correspondiente basado en el tipo de columna.
    */
   applyFilter(): void {
-    const filterValue = this.filterValue;
+    const filterValue = this.filterValue.trim().toLowerCase();
     this.dataSource.filter = filterValue;  // Aplica el filtro global
   }
 
   applySelect(): void {
-    const filterValue = this.filterValue;
+    const filterValue = this.filterValue.trim().toLowerCase();
     this.dataSource.filter = filterValue;  // Aplica el filtro global
   }
 

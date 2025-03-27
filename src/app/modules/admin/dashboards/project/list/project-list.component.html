@@ -227,7 +227,7 @@
                   class="filter-field"
                 >
                   <mat-label>Filtro</mat-label>
-                  <mat-select [(ngModel)]="filterValue" (selectionChange)="applySelect()">
+                  <mat-select (selectionChange)="applySelect()" [(ngModel)]="filterValue">
                     <mat-option
                       *ngFor="let option of getFilterOptions(currentFilterColumn)"
                       [value]="option"
