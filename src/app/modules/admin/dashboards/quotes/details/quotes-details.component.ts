@@ -15,6 +15,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatNativeDateModule } from "@angular/material/core";
+import { MatSnackBar } from "@angular/material/snack-bar";
 import { CommonModule } from "@angular/common";
 import { CurrencyMaskPipe } from "../../../../../pipes/currency-mask.pipe";
 import { ClientsService } from "../../../catalogs/clients/clients.service";
@@ -66,7 +67,8 @@ export class QuoteDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private clientsService: ClientsService,
-    private prospectsService: ProspectosService
+    private prospectsService: ProspectosService,
+    private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
@@ -192,12 +194,14 @@ export class QuoteDetailsComponent implements OnInit {
       this.quotesService.updateQuote(quotesData).subscribe(() => {
         // Redirigir a la lista de proyectos
         this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
+        this.snackBar.open('Cotizacion actualizada correctamente', 'Cerrar', { duration: 3000 });
       });
     } else {
       // Crear nuevo proyecto
       this.quotesService.createQuote(quotesData).subscribe(() => {
         // Redirigir a la lista de proyectos
         this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
+        this.snackBar.open('Cotizacion guardada correctamente', 'Cerrar', { duration: 3000 });
       });
     }
   }
