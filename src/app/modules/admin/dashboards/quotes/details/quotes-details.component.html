@@ -9,7 +9,7 @@
       <!-- Cliente -->
      <mat-form-field appearance="fill" class="w-full">
         <mat-label>Cliente</mat-label>
-        <mat-select [formControl]="quotesForm.get('cliente')" #clienteSelect panelClass="custom-select-panel">
+        <mat-select [formControl]="quotesForm.get('cliente')" #clienteSelect panelClass="custom-select-panel" (selectionChange)="onClienteSelected($event.value)">
           <mat-option [value]="null">— Ninguno —</mat-option>
           <mat-option>
             <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..." noEntriesFoundLabel="No se encontraron resultados" clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>

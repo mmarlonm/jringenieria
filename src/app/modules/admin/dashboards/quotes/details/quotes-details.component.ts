@@ -25,6 +25,7 @@ import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
 import { MAT_DATE_LOCALE } from "@angular/material/core";
+import { ChangeDetectorRef } from '@angular/core';
 @Component({
   selector: "app-quotes-details",
   templateUrl: "./quotes-details.component.html",
@@ -69,6 +70,7 @@ export class QuoteDetailsComponent implements OnInit {
     private clientsService: ClientsService,
     private prospectsService: ProspectosService,
     private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -252,5 +254,24 @@ export class QuoteDetailsComponent implements OnInit {
           );
         });
     });
+  }
+
+  onClienteSelected(cliente: any): void {
+    this.clientsService.getClientById(cliente).subscribe((data) => {
+      if (data && data.direccion) {
+        this.quotesForm.patchValue({
+          direccion: data.direccion,
+        });
+    
+        // Forzar la detección de cambios
+        this.cdr.detectChanges();
+      }else{
+        this.quotesForm.patchValue({
+          direccion: "",
+        });
+      }
+    });
+    // Forzar la detección de cambios
+    this.cdr.detectChanges();
   }
 }
