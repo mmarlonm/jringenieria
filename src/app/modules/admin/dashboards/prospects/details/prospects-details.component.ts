@@ -23,6 +23,8 @@ import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
 import { MAT_DATE_LOCALE } from "@angular/material/core";
+import { UsersService } from "../../../security/users/users.service";
+
 @Component({
   selector: "app-prospects-details",
   templateUrl: "./prospects-details.component.html",
@@ -66,12 +68,16 @@ export class ProspectDetailsComponent implements OnInit {
   ];
   mostrarCampoOtros: boolean = false;
 
+  //informacion de usuario logeado
+  user: any[] = [];
+
   constructor(
     private fb: FormBuilder,
     private prospectosService: ProspectosService,
     private route: ActivatedRoute,
     public router: Router,
-    private clientsService: ClientsService
+    private clientsService: ClientsService,
+    private _usersService: UsersService,
   ) {}
 
   ngOnInit(): void {
@@ -88,6 +94,7 @@ export class ProspectDetailsComponent implements OnInit {
       usuarioId: [0, Validators.required], // ID del usuario que lo creó
       comoSeObtuvo: [""],
       otros: [""],
+      personalSeguimiento : [null]
     });
 
     // Verificar si "Otros" ya está seleccionado al cargar el formulario
@@ -106,6 +113,8 @@ export class ProspectDetailsComponent implements OnInit {
         this.loadProspects(this.prospectsId);
       }
     });
+
+    this.getUsers();
   }
 
   loadProspects(id: number): void {
@@ -127,6 +136,7 @@ export class ProspectDetailsComponent implements OnInit {
           usuarioId: prospecto.usuarioId,
           comoSeObtuvo: prospecto.comoSeObtuvo,
           otros: prospecto.otros,
+          personalSeguimiento: prospecto.personalSeguimiento,
         });
       }
     });
@@ -168,5 +178,13 @@ export class ProspectDetailsComponent implements OnInit {
     if (!this.mostrarCampoOtros) {
       this.prospectForm.get("otros")?.setValue(""); // Limpiar campo si no es "Otros"
     }
+  }
+
+  getUsers(): void {
+    this._usersService.getUsers().subscribe((users) => {
+      this.user = users.filter(
+        (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
+      );
+    });
   }
 }

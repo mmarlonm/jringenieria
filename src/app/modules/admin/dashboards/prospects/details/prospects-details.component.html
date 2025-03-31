@@ -77,6 +77,20 @@
       </mat-form-field>
     </div>
 
+    <div class="grid grid-cols-2 gap-4">
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Líder de Proyecto</mat-label>
+        <mat-select formControlName="personalSeguimiento">
+          <mat-option
+            *ngFor="let user of user"
+            [value]="user.usuarioId"
+          >
+            {{ user.nombreUsuario }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
     <!-- Botones -->
     <div class="sticky bottom-0 py-2 flex justify-end gap-2">
       <button mat-raised-button color="primary" type="submit">Guardar</button>

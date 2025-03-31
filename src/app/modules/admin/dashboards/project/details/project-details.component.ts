@@ -342,10 +342,12 @@ export class ProjectDetailsComponent implements OnInit {
     this.projectService.getFiles(this.projectId).subscribe((files) => {
 
       // Mapear los archivos y asignarles un tipo basado en su nombreArchivo
-      this.files = files.map((file) => ({
-        ...file,
-        type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
-      }));
+      if(files.length > 0){
+        this.files = files.map((file) => ({
+          ...file,
+          type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
+        }));
+      }
     });
   }
 
