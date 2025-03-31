@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { MatMenuTrigger } from '@angular/material/menu';  // Importa MatMenuTrigger
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { HistorialComponent } from '../historial/historial.component';
 
 @Component({
   selector: 'app-quotes-list',
@@ -62,11 +63,14 @@ export class QuoteListComponent implements OnInit {
     fechaEntrega: ["2023-01-01"],
     estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
   };
+
+  historialData: any[] = [];
   constructor(
     private quotesService: QuotesService,
     private router: Router,
     private snackBar: MatSnackBar,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
@@ -205,4 +209,15 @@ export class QuoteListComponent implements OnInit {
     // puedes llamar a las funciones applyFilter() o applySelect() con valores vacíos.
     this.applyFilter();  // Aplica filtro vacío si es necesario (esto dependerá de cómo se maneje en tu aplicación)
   }
+
+  getHistorial(cotizacionId: number): void {
+      this.quotesService.getHistorial(cotizacionId).subscribe((historial) => {
+        this.historialData = historial;
+  
+        this.dialog.open(HistorialComponent, {
+          width: '700px',
+          data: { historial }
+        });
+      });
+    }
 }

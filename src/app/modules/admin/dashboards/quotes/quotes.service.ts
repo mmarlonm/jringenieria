@@ -42,4 +42,8 @@ export class QuotesService {
   getEstatus(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/estatus`);
   }
+
+  getHistorial(quoteId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/historial-estatus/${quoteId}`);
+  }
 }
