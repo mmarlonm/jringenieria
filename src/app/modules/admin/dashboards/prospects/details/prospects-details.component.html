@@ -61,10 +61,26 @@
       </mat-form-field>
     </div>
 
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Cómo se obtuvo el contacto -->
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Cómo se obtuvo el contacto</mat-label>
+        <mat-select formControlName="comoSeObtuvo" (selectionChange)="onComoSeObtuvoChange($event.value)">
+          <mat-option *ngFor="let opcion of opcionesContacto" [value]="opcion">{{ opcion }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    
+      <!-- Campo "Otros" (solo visible si se elige "Otros") -->
+      <mat-form-field *ngIf="mostrarCampoOtros" appearance="fill" class="w-full">
+        <mat-label>Especificar otro medio</mat-label>
+        <textarea matInput formControlName="otros"></textarea>
+      </mat-form-field>
+    </div>
+
     <!-- Botones -->
     <div class="sticky bottom-0 py-2 flex justify-end gap-2">
       <button mat-raised-button color="primary" type="submit">Guardar</button>
-      <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/prospectos'])">Cancelar</button>
+      <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/prospects'])">Cancelar</button>
     </div>
 
   </form>
