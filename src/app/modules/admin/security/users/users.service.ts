@@ -70,10 +70,7 @@ export class UsersService {
             take(1),
             map((contacts) => {
                 // Find the contact
-                console.log("id ", id)
-                console.log("contacts ", contacts)
                 const contact = contacts.find((item) => item.usuarioId == id) || null;
-                console.log("contacto buscado ", contact)
                 // Update the contact
                 this._user.next(contact);
 

@@ -100,22 +100,16 @@ export class ClientsListComponent implements OnInit {
 
     const userData = JSON.parse(userInformation);
 
-    console.log("Vista actual:", this.vistaActual);
-    console.log("Permisos:", userData.permisos);
-
     this.permisosUsuario = userData.permisos.filter(
       (permiso) => permiso.vista.ruta === this.vistaActual
     );
 
     this.permisosDisponibles = this.permisosUsuario.map((permiso) => permiso.codigo);
-
-    console.log('Permisos de esta vista:', this.permisosDisponibles);
   }
 
 
   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
-    console.log('Archivo seleccionado:', file);
     if (file) {
       this.uploadFile(file);
     }

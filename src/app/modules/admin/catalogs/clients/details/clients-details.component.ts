@@ -95,7 +95,6 @@ export class ClientsDetailsComponent implements OnInit {
     if (this.clienteForm.invalid) return;
   
     const clientData: any = this.clienteForm.value;
-    console.log("data de proyecto ", clientData);
   
     if (this.clientId) {
       clientData.proyectoId = this.clientId;
@@ -122,7 +121,6 @@ export class ClientsDetailsComponent implements OnInit {
     this.http.get<any[]>(url).subscribe(
       (data) => {
         if (data.length > 0) {
-          console.log("Respuesta de COPOMEX:", data);
           
           const primerResultado = data[0].response; // Toma el primer resultado como referencia
           const estado = primerResultado.estado;

@@ -95,7 +95,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this._userService.user$
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((user: User) => {
-        console.log("user ", user);
         this.user = user["usuario"];
       });
 
@@ -119,7 +118,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   getAnalitica(): void {
     this._projectService.getAnalitica().subscribe((analitica) => {
-      console.log("analitica ", analitica);
       this.analiticaData = analitica;
     });
   }

@@ -32,7 +32,6 @@ export class HistorialComponent {
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     // Asignamos los datos pasados al modal a dataSource
-    console.log(data);
     this.dataSource.data = data.historial;
   }
 

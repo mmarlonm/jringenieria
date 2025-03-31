@@ -109,8 +109,6 @@ export class ProspectListComponent implements OnInit {
     const userData = JSON.parse(userInformation);
 
     // Obtener la ruta actual
-    console.log("vista actual ", this.vistaActual);
-    console.log("permisos  ", userData.permisos);
     // Filtrar permisos que correspondan a la vista actual
     this.permisosUsuario = userData.permisos.filter(
       (permiso) => permiso.vista.ruta === `${this.vistaActual}`
@@ -118,8 +116,6 @@ export class ProspectListComponent implements OnInit {
 
     // Guardar los códigos de los permisos en un array
     this.permisosDisponibles = this.permisosUsuario.map((permiso) => permiso.codigo);
-
-    console.log('Permisos de esta vista:', this.permisosDisponibles);
   }
 
   tienePermiso(codigo: string): boolean {

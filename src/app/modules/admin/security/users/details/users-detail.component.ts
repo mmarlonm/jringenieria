@@ -114,7 +114,6 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
         //get roles
         this._rolService.getRoles().subscribe((resolve)=>{
-            console.log("respuesta roles ", resolve)
             this.roles = resolve;
         });
         // Open the drawer
@@ -150,7 +149,6 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
                 // Get the user
                 this.user = user;
-                console.log("informacion de usuario ", user);
 
                 // Patch values to the form
                 this.contactForm.patchValue(user);
@@ -218,11 +216,8 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             user.avatar = user.avatar.split(",")[1]; // Extrae solo la parte Base64
         }
     
-        console.log("Usuario a guardar", user);
-    
         // Enviar la data al servicio
         this._usersService.updateUsers(user).subscribe(res => {
-            console.log("Respuesta guardado de usuario", res);
         });
     }
 
@@ -322,7 +317,6 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             this.contactForm.patchValue({ avatar: base64String });
             this.user.avatar =base64String;
     
-            console.log("Avatar convertido a Base64 y asignado al formulario:", base64String);
         };
     
         reader.readAsDataURL(file); // Leer el archivo como Data URL (Base64)

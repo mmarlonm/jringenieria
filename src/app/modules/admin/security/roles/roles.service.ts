@@ -91,10 +91,7 @@ export class RolService {
             take(1),
             map((roles) => {
                 // Find the rol
-                console.log("id ", id)
-                console.log("roles ", roles)
                 const rol = roles.find((item) => item.rolId == id) || null;
-                console.log("rol buscado ", rol)
                 // Update the rol
                 this._rol.next(rol);
 

@@ -303,7 +303,6 @@ export class ProjectDetailsComponent implements OnInit {
     if (personasParticipantes) {
       // Dividimos los IDs concatenados en un array
       const personasIds = personasParticipantes.split(",");
-      console.log("personasIds", personasIds);
       // Creamos un array de objetos con los usuarios basados en esos IDs
       this.personasSeleccionadas = personasIds
         .map((id) => {
@@ -311,18 +310,15 @@ export class ProjectDetailsComponent implements OnInit {
           return user ? user : null; // Si se encuentra el usuario, lo agregamos al array
         })
         .filter((persona) => persona !== null); // Filtramos cualquier valor nulo
-      console.log("personas seleccionadas", this.personasSeleccionadas);
       // Si quieres también actualizar el formulario con los usuarios
       this.updatePersonasParticipantesField();
     }
   }
 
   saveProject(): void {
-    console.log("guardar proyecto", this.projectForm);
     if (this.projectForm.invalid) return;
 
     const projectData: any = this.projectForm.value;
-    console.log("data de proyecto ", projectData);
 
     if (this.projectId) {
       // Actualizar proyecto
@@ -344,15 +340,12 @@ export class ProjectDetailsComponent implements OnInit {
     if (!this.projectId) return;
 
     this.projectService.getFiles(this.projectId).subscribe((files) => {
-      console.log("Archivos del proyecto:", files);
 
       // Mapear los archivos y asignarles un tipo basado en su nombreArchivo
       this.files = files.map((file) => ({
         ...file,
         type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
       }));
-
-      console.log("Archivos con tipo:", this.files);
     });
   }
 
@@ -411,7 +404,6 @@ export class ProjectDetailsComponent implements OnInit {
         this.getFilesAll();
       },
       error: (err) => {
-        console.error("Error al subir el archivo:", err);
         this.snackBar.open('Hubo un error al subir el archivo. Por favor, inténtalo de nuevo.', 'Cerrar', {
           duration: 3000,
           panelClass: ['snackbar-error']
@@ -472,7 +464,6 @@ export class ProjectDetailsComponent implements OnInit {
       this.user = users.filter(
         (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
       );
-      console.log("usuarios ", this.user);
       this.personasSeleccionadadload();
     });
   }
@@ -482,7 +473,6 @@ export class ProjectDetailsComponent implements OnInit {
     if (typeof value !== "string") {
       return [];
     }
-    console.log("valor ", value);
     const filterValue = value.toLowerCase();
     return this.user.filter((usuario) =>
       usuario.nombreUsuario.toLowerCase().includes(filterValue)
@@ -494,9 +484,7 @@ export class ProjectDetailsComponent implements OnInit {
     // Solo agregamos la persona si el token no está vacío
     const input = event.input;
     const value = event.value;
-    console.log("valor ", value);
     if ((value || "").trim()) {
-      console.log("valor ", value);
       // Aquí deberías estar buscando el usuario en tu lista de usuarios
       const persona = this.user.find((u) => u.nombreUsuario === value.trim());
 
@@ -511,11 +499,8 @@ export class ProjectDetailsComponent implements OnInit {
       input.value = "";
     }
     // Restablecer el control del formulario
-    console.log("personas seleccionadas", this.personasSeleccionadas);
-    console.log("input ", input);
     input.value = "";
     this.personasControl.setValue(null);
-    console.log("personas control ", this.personasControl);
   }
 
   // Agregar una persona desde el autocomplete
@@ -530,7 +515,6 @@ export class ProjectDetailsComponent implements OnInit {
       this.personasControl.setValue(null);
       this.updatePersonasParticipantesField(); // Actualizar el campo
     }
-    console.log("personas seleccionadas", this.personasSeleccionadas);
   }
 
   updatePersonasParticipantesField(): void {
@@ -542,14 +526,10 @@ export class ProjectDetailsComponent implements OnInit {
     this.projectForm.patchValue({
       personasParticipantes: idsConcatenados, // Guardar los IDs como una cadena separada por comas
     });
-
-    console.log("this.projectForm ", this.projectForm);
   }
 
   getUserById(id: string): any {
     // Suponiendo que tienes una lista de usuarios
-    console.log("id ", id);
-    console.log("usuarios ", this.user);
     return this.user.find((user) => user.usuarioId === Number(id));
   }
 
