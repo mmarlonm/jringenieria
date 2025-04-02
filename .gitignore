@@ -1,4 +1,4 @@
-node_modules/.package-lock.json
+node_modules
 node_modules/ng-apexcharts/package.json
 node_modules/ng-apexcharts/README.md
 node_modules/ng-apexcharts/esm2020/ng-apexcharts.mjs
@@ -15,7 +15,7 @@ node_modules/ng-apexcharts/fesm2022/ng-apexcharts.mjs.map
 node_modules/ng-apexcharts/lib/ng-apexcharts.module.d.ts
 node_modules/ng-apexcharts/lib/chart/chart.component.d.ts
 node_modules/ng-apexcharts/lib/model/apex-types.d.ts
-.angular/cache/18.0.2/fuse/.tsbuildinfo
+.angular/
 .angular/cache/18.0.2/vite/deps/_metadata.json
 .angular/cache/18.0.2/vite/deps/@angular_animations.js
 .angular/cache/18.0.2/vite/deps/@angular_animations.js.map
