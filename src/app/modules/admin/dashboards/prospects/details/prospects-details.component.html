@@ -104,49 +104,46 @@
 
     <mat-tab label="Notas">
       <div class="flex flex-auto flex-col p-6 md:p-8">
+        <!-- Header -->
         <div class="flex items-center">
           <div class="flex flex-auto items-center">
-              <button
-                  class="-ml-2 flex lg:hidden"
-                  mat-icon-button
-              >
-                  <mat-icon
-                      [svgIcon]="'heroicons_outline:bars-3'"
-                  ></mat-icon>
-              </button>
-              <mat-form-field
-                  class="fuse-mat-rounded fuse-mat-dense ml-4 flex-auto lg:ml-0"
-                  [subscriptSizing]="'dynamic'"
-              >
-                  <mat-icon
-                      class="icon-size-5"
-                      [svgIcon]="'heroicons_solid:magnifying-glass'"
-                      matPrefix
-                  ></mat-icon>
-                  <input
-                      matInput
-                      [autocomplete]="'off'"
-                      [placeholder]="'Search notes'"
-                      #searchInput
-                  />
-              </mat-form-field>
+            <mat-form-field class="fuse-mat-rounded fuse-mat-dense flex-auto" [subscriptSizing]="'dynamic'">
+              <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'" matPrefix></mat-icon>
+              <input matInput [autocomplete]="'off'" placeholder="Buscar notas" [(ngModel)]="searchText" />
+            </mat-form-field>
           </div>
           <!-- New note -->
-          <button
-              class="ml-4 min-w-10 px-1 sm:px-4"
-              mat-flat-button
-              [color]="'primary'"
-              (click)="addNewNote()"
-          >
-              <mat-icon
-                  class="icon-size-5"
-                  [svgIcon]="'heroicons_solid:plus-circle'"
-              ></mat-icon>
-              <span class="ml-2 hidden sm:inline-block"
-                  >New note</span
-              >
+          <button class="ml-4 min-w-10 px-1 sm:px-4" mat-flat-button color="primary" (click)="addNewNote()">
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:plus-circle'"></mat-icon>
+            <span class="ml-2 hidden sm:inline-block">Nueva nota</span>
           </button>
-      </div>
+        </div>
+    
+        <!-- Lista de notas -->
+        <div class="-mx-2 mt-8">
+          <div *ngIf="filteredNotes.length; else noNotes">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow flex justify-between items-start" *ngFor="let note of filteredNotes">
+                <div class="flex-1 cursor-pointer" (click)="openNoteDialog(note)">
+                  <h3 class="font-semibold text-lg truncate">{{ note.title }}</h3>
+                  <p class="text-gray-600 dark:text-gray-300 line-clamp-3">{{ note.content }}</p>
+                </div>
+                <!-- Delete Button -->
+                <button mat-icon-button color="warn" (click)="deleteNote(note.idNote, $event)">
+                  <mat-icon [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <ng-template #noNotes>
+            <div class="flex flex-auto flex-col items-center justify-center bg-gray-100 dark:bg-transparent">
+              <mat-icon class="icon-size-24" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+              <div class="text-secondary mt-4 text-2xl font-semibold tracking-tight">
+                ¡No hay notas aún!
+              </div>
+            </div>
+          </ng-template>
+        </div>
       </div>
     </mat-tab>
   </mat-tab-group>

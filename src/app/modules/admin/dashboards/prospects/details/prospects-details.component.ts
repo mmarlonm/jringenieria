@@ -76,6 +76,10 @@ export class ProspectDetailsComponent implements OnInit {
 
   //informacion de usuario logeado
   user: any[] = [];
+  notes: any[] = []; // Lista de notas
+
+  searchText: string = '';
+  usuarioId :number;
 
   constructor(
     private fb: FormBuilder,
@@ -109,6 +113,7 @@ export class ProspectDetailsComponent implements OnInit {
       this.prospectForm.get("comoSeObtuvo")?.value === "Otros";
 
     const userData = JSON.parse(this.prospectosService.userInformation);
+    this.usuarioId = userData.usuario.id;
     this.prospectForm.get("usuarioId").setValue(userData.usuario.id);
 
     this.route.paramMap.subscribe((params) => {
@@ -118,6 +123,7 @@ export class ProspectDetailsComponent implements OnInit {
       } else {
         this.prospectsId = Number(id);
         this.loadProspects(this.prospectsId);
+        this.loadNotes(this.prospectsId); // Cargar notas relacionadas
       }
     });
 
@@ -146,6 +152,13 @@ export class ProspectDetailsComponent implements OnInit {
           personalSeguimiento: prospecto.personalSeguimiento,
         });
       }
+    });
+  }
+
+  // Cargar notas del prospecto
+  loadNotes(prospectId: number): void {
+    this.prospectosService.getNotas(prospectId).subscribe((notes) => {
+      this.notes = notes;
     });
   }
 
@@ -195,20 +208,53 @@ export class ProspectDetailsComponent implements OnInit {
     });
   }
 
+  // Abrir modal para agregar una nueva nota
   addNewNote(): void {
     const dialogRef = this._matDialog.open(NotesDetailsComponent, {
       autoFocus: false,
-      data: { note: { title: "", content: "" } },
+      data: { note: { idNote: 0, title: "", content: "" } },
     });
 
-    // Escuchar cuando el diálogo se cierre
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        console.log("Nota guardada:", result);
-        // Aquí puedes agregar la nota a una lista o hacer otra acción
-      } else {
-        console.log("Diálogo cerrado sin guardar");
+        result.prospectoId = this.prospectsId; // Vincular la nota al prospecto
+        result.usuarioId = this.usuarioId;
+        this.notes.push(result); // Agregar la nueva nota a la lista
+        this.prospectosService.saveNote(result).subscribe();
       }
     });
+  }
+
+  // Abrir modal para editar una nota existente
+  editNote(note: any): void {
+    const dialogRef = this._matDialog.open(NotesDetailsComponent, {
+      autoFocus: false,
+      data: { note },
+    });
+
+    dialogRef.afterClosed().subscribe((updatedNote) => {
+      if (updatedNote) {
+        const index = this.notes.findIndex(n => n.idNote === updatedNote.idNote);
+        if (index !== -1) {
+          this.notes[index] = updatedNote; // Actualizar la nota en la lista
+          this.prospectosService.saveNote(updatedNote).subscribe();
+        }
+      }
+    });
+  }
+
+  // Eliminar una nota
+  deleteNote(noteId: number): void {
+    this.notes = this.notes.filter(n => n.idNote !== noteId);
+    this.prospectosService.deleteNote(noteId).subscribe(res => {
+      this.loadNotes(this.prospectsId);
+    });
+  }
+
+  get filteredNotes() {
+    return this.notes.filter((note) =>
+      note.title.toLowerCase().includes(this.searchText.toLowerCase()) ||
+      note.content.toLowerCase().includes(this.searchText.toLowerCase())
+    );
   }
 }

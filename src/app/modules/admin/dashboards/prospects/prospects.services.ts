@@ -49,4 +49,19 @@ export class ProspectosService {
   deleteSeguimiento(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/delete-seguimiento/${id}`);
   }
+
+  // 🔸 Obtener todos las notas relacionadas a un prospecto
+  getNotas(prospectId): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/notas/${prospectId}`);
+  }
+
+  // 🔸 Crear o actualizar notas
+  saveNote(note: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/save-notes`, note);
+  }
+
+  // 🔸 Eliminar seguimiento
+  deleteNote(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/delete-nota/${id}`);
+  }
 }
