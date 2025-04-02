@@ -53,6 +53,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:user',
                 link: '/catalogs/clients',
+            },
+            {
+                id: 'catalogs.products',
+                title: 'Productos',
+                type: 'basic',
+                icon: 'heroicons_outline:user',
+                link: '/catalogs/products',
             }
             
         ],

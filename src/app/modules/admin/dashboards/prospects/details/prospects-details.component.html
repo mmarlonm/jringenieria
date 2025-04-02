@@ -3,99 +3,153 @@
     {{ prospectsId ? 'Editar Prospecto' : 'Nuevo Prospecto' }}
   </h1>
 
-  <form [formGroup]="prospectForm" (ngSubmit)="saveProspect()" class="flex flex-col gap-4 overflow-auto">
+  <mat-tab-group class="h-full flex-1 overflow-hidden">
+    <mat-tab label="Información General">
+      <form [formGroup]="prospectForm" (ngSubmit)="saveProspect()" class="flex flex-col gap-4 overflow-auto">
     
-    <div class="grid grid-cols-2 gap-4">
-      <!-- Empresa -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Empresa</mat-label>
-        <input matInput formControlName="empresa">
-      </mat-form-field>
-
-      <!-- Contacto -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Nombre de Contacto</mat-label>
-        <input matInput formControlName="contacto">
-      </mat-form-field>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <!-- Teléfono -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Teléfono</mat-label>
-        <input matInput formControlName="telefono">
-      </mat-form-field>
-
-      <!-- Puesto -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Puesto</mat-label>
-        <input matInput formControlName="puesto">
-      </mat-form-field>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <!-- Giro Empresa -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Giro de la Empresa</mat-label>
-        <input matInput formControlName="giroEmpresa">
-      </mat-form-field>
-
-      <!-- Email -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Email</mat-label>
-        <input matInput formControlName="email">
-      </mat-form-field>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <!-- Área de Interés -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Área de Interés</mat-label>
-        <input matInput formControlName="areaInteres">
-      </mat-form-field>
-
-      <!-- Tipo Empresa -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Tipo de Empresa</mat-label>
-        <input matInput formControlName="tipoEmpresa">
-      </mat-form-field>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <!-- Cómo se obtuvo el contacto -->
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Cómo se obtuvo el contacto</mat-label>
-        <mat-select formControlName="comoSeObtuvo" (selectionChange)="onComoSeObtuvoChange($event.value)">
-          <mat-option *ngFor="let opcion of opcionesContacto" [value]="opcion">{{ opcion }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Empresa</mat-label>
+            <input matInput formControlName="empresa">
+          </mat-form-field>
     
-      <!-- Campo "Otros" (solo visible si se elige "Otros") -->
-      <mat-form-field *ngIf="mostrarCampoOtros" appearance="fill" class="w-full">
-        <mat-label>Especificar otro medio</mat-label>
-        <textarea matInput formControlName="otros"></textarea>
-      </mat-form-field>
-    </div>
+          <!-- Contacto -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Nombre de Contacto</mat-label>
+            <input matInput formControlName="contacto">
+          </mat-form-field>
+        </div>
+    
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Teléfono -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono">
+          </mat-form-field>
+    
+          <!-- Puesto -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Puesto</mat-label>
+            <input matInput formControlName="puesto">
+          </mat-form-field>
+        </div>
+    
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Giro Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Giro de la Empresa</mat-label>
+            <input matInput formControlName="giroEmpresa">
+          </mat-form-field>
+    
+          <!-- Email -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email">
+          </mat-form-field>
+        </div>
+    
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Área de Interés -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Área de Interés</mat-label>
+            <input matInput formControlName="areaInteres">
+          </mat-form-field>
+    
+          <!-- Tipo Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Tipo de Empresa</mat-label>
+            <input matInput formControlName="tipoEmpresa">
+          </mat-form-field>
+        </div>
+    
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Cómo se obtuvo el contacto -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Cómo se obtuvo el contacto</mat-label>
+            <mat-select formControlName="comoSeObtuvo" (selectionChange)="onComoSeObtuvoChange($event.value)">
+              <mat-option *ngFor="let opcion of opcionesContacto" [value]="opcion">{{ opcion }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        
+          <!-- Campo "Otros" (solo visible si se elige "Otros") -->
+          <mat-form-field *ngIf="mostrarCampoOtros" appearance="fill" class="w-full">
+            <mat-label>Especificar otro medio</mat-label>
+            <textarea matInput formControlName="otros"></textarea>
+          </mat-form-field>
+        </div>
+    
+        <div class="grid grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Personal de seguimiento</mat-label>
+            <mat-select formControlName="personalSeguimiento">
+              <mat-option
+                *ngFor="let user of user"
+                [value]="user.usuarioId"
+              >
+                {{ user.nombreUsuario }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+    
+        <!-- Botones -->
+        <div class="sticky bottom-0 py-2 flex justify-end gap-2">
+          <button mat-raised-button color="primary" type="submit">Guardar</button>
+          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/prospects'])">Cancelar</button>
+        </div>
+    
+      </form>
+    </mat-tab>
 
-    <div class="grid grid-cols-2 gap-4">
-      <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Personal de seguimiento</mat-label>
-        <mat-select formControlName="personalSeguimiento">
-          <mat-option
-            *ngFor="let user of user"
-            [value]="user.usuarioId"
+    <mat-tab label="Notas">
+      <div class="flex flex-auto flex-col p-6 md:p-8">
+        <div class="flex items-center">
+          <div class="flex flex-auto items-center">
+              <button
+                  class="-ml-2 flex lg:hidden"
+                  mat-icon-button
+              >
+                  <mat-icon
+                      [svgIcon]="'heroicons_outline:bars-3'"
+                  ></mat-icon>
+              </button>
+              <mat-form-field
+                  class="fuse-mat-rounded fuse-mat-dense ml-4 flex-auto lg:ml-0"
+                  [subscriptSizing]="'dynamic'"
+              >
+                  <mat-icon
+                      class="icon-size-5"
+                      [svgIcon]="'heroicons_solid:magnifying-glass'"
+                      matPrefix
+                  ></mat-icon>
+                  <input
+                      matInput
+                      [autocomplete]="'off'"
+                      [placeholder]="'Search notes'"
+                      #searchInput
+                  />
+              </mat-form-field>
+          </div>
+          <!-- New note -->
+          <button
+              class="ml-4 min-w-10 px-1 sm:px-4"
+              mat-flat-button
+              [color]="'primary'"
+              (click)="addNewNote()"
           >
-            {{ user.nombreUsuario }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+              <mat-icon
+                  class="icon-size-5"
+                  [svgIcon]="'heroicons_solid:plus-circle'"
+              ></mat-icon>
+              <span class="ml-2 hidden sm:inline-block"
+                  >New note</span
+              >
+          </button>
+      </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 
-    <!-- Botones -->
-    <div class="sticky bottom-0 py-2 flex justify-end gap-2">
-      <button mat-raised-button color="primary" type="submit">Guardar</button>
-      <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/prospects'])">Cancelar</button>
-    </div>
-
-  </form>
+  
 </div>

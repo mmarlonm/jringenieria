@@ -24,6 +24,10 @@ import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
 import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { UsersService } from "../../../security/users/users.service";
+import { MatTabsModule } from "@angular/material/tabs";
+import { MatIconModule } from "@angular/material/icon";
+import { NotesDetailsComponent } from "../dialog/dialog.component";
+import { MatDialog } from "@angular/material/dialog";
 
 @Component({
   selector: "app-prospects-details",
@@ -41,6 +45,8 @@ import { UsersService } from "../../../security/users/users.service";
     MatNativeDateModule,
     CurrencyMaskPipe,
     NgxMatSelectSearchModule,
+    MatTabsModule,
+    MatIconModule,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -78,6 +84,7 @@ export class ProspectDetailsComponent implements OnInit {
     public router: Router,
     private clientsService: ClientsService,
     private _usersService: UsersService,
+    private _matDialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -94,7 +101,7 @@ export class ProspectDetailsComponent implements OnInit {
       usuarioId: [0, Validators.required], // ID del usuario que lo creó
       comoSeObtuvo: [""],
       otros: [""],
-      personalSeguimiento : [null]
+      personalSeguimiento: [null],
     });
 
     // Verificar si "Otros" ya está seleccionado al cargar el formulario
@@ -185,6 +192,23 @@ export class ProspectDetailsComponent implements OnInit {
       this.user = users.filter(
         (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
       );
+    });
+  }
+
+  addNewNote(): void {
+    const dialogRef = this._matDialog.open(NotesDetailsComponent, {
+      autoFocus: false,
+      data: { note: { title: "", content: "" } },
+    });
+
+    // Escuchar cuando el diálogo se cierre
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        console.log("Nota guardada:", result);
+        // Aquí puedes agregar la nota a una lista o hacer otra acción
+      } else {
+        console.log("Diálogo cerrado sin guardar");
+      }
     });
   }
 }

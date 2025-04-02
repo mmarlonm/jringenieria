@@ -1,0 +1,71 @@
+<div class="absolute inset-0 flex flex-col overflow-hidden p-6">
+    <h1 class="text-2xl font-bold mb-4">
+        {{ productId ? 'Editar Producto' : 'Nuevo Producto' }}
+    </h1>
+
+    <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="flex flex-col gap-4 overflow-auto">
+        <!-- Código de Producto -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Código de Producto</mat-label>
+            <input matInput formControlName="codigoProducto">
+        </mat-form-field>
+
+        <!-- Nombre del Producto -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Nombre del Producto</mat-label>
+            <input matInput formControlName="nombreProducto">
+        </mat-form-field>
+
+        <!-- Descripción -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="descripcion"></textarea>
+        </mat-form-field>
+
+        <!-- Proveedor -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Proveedor</mat-label>
+            <input matInput formControlName="proveedor">
+        </mat-form-field>
+
+        <!-- Precio y Stock -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <mat-form-field appearance="fill" class="w-full">
+                <mat-label>Precio</mat-label>
+                <input matInput type="number" formControlName="precio">
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="w-full">
+                <mat-label>Stock</mat-label>
+                <input matInput type="number" formControlName="stock">
+            </mat-form-field>
+        </div>
+
+        <!-- Unidad de Medida -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Unidad de Medida</mat-label>
+            <input matInput formControlName="unidadMedida">
+        </mat-form-field>
+
+        <!-- Categoría -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Categoría</mat-label>
+            <input matInput formControlName="categoria">
+        </mat-form-field>
+
+        <!-- Fecha de Creación -->
+        <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Fecha de Creación</mat-label>
+            <input matInput formControlName="fechaCreacion" type="datetime-local" disabled>
+        </mat-form-field>
+
+        <!-- Activo -->
+        <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+
+        <!-- Botones -->
+        <div class="sticky bottom-0 py-2 flex justify-end gap-2">
+            <button mat-raised-button color="primary" type="submit" class="w-full md:w-auto">Guardar</button>
+            <button mat-button color="warn" type="button" (click)="router.navigate(['/catalogs/products'])">Cancelar</button>
+        </div>
+    </form>
+</div>
