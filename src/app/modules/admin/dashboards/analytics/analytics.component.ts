@@ -63,6 +63,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   analiticaData: any[] = [];
   salesData: any[] = [];
 
+  chartSales: ApexOptions = {};
+
   /**
    * Constructor
    */
@@ -141,7 +143,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       // Aquí puedes manejar los datos de las ventas
       console.log("Ventas:", sales);
       this.salesData = sales;
-      this.cdr.detectChanges(); // Forzar actualización en la vista
+      this.prepateChartSales();
     });
   }
 
@@ -554,4 +556,47 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         return "text-gray-500";
     }
   }
+
+  prepateChartSales(): void {
+    //sales chart
+    this.chartSales = {
+      chart: {
+        type: 'bar',
+        height: 350,
+        stacked: false
+      },
+      colors: ['#008FFB', '#FF4560'],
+      dataLabels: {
+        enabled: true
+      },
+      markers: {
+        size: 4
+      },
+      plotOptions: {
+        bar: {
+          columnWidth: '40%',
+          distributed: true
+        }
+      },
+      series: this.getSalesSeries(),
+      stroke: {
+        show: true,
+        width: 2,
+        colors: ['transparent']
+      },
+      tooltip: {
+        shared: true,
+        intersect: false
+      },
+      xaxis: {
+        categories: this.getCategories()
+      },
+      yaxis: {
+        title: {
+          text: 'Monto'
+        }
+      }
+    };
+    this.cdr.detectChanges(); // Forzar actualización en la vista
+    }
 }

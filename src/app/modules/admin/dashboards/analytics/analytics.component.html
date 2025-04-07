@@ -526,35 +526,22 @@
                 >
                   Reporte de ventas
                 </div>
-                <div class="flex flex-auto flex-col">
+                <div
+                  class="flex flex-auto flex-col"
+                  *ngIf="salesData.length > 0"
+                >
                   <apx-chart
+                    [series]="chartSales.series"
+                    [chart]="chartSales.chart"
+                    [colors]="chartSales.colors"
+                    [dataLabels]="chartSales.dataLabels"
+                    [markers]="chartSales.markers"
+                    [plotOptions]="chartSales.plotOptions"
+                    [stroke]="chartSales.stroke"
+                    [tooltip]="chartSales.tooltip"
+                    [xaxis]="chartSales.xaxis"
+                    [yaxis]="chartSales.yaxis"
                     class="h-80 w-full flex-auto"
-                    [chart]="{
-                      type: 'bar',
-                      height: 350,
-                      stacked: false,
-                    }"
-                    [colors]="['#008FFB', '#FF4560']"
-                    [dataLabels]="{ enabled: true }"
-                    [markers]="{ size: 4 }"
-                    [plotOptions]="{
-                        bar: {
-                          columnWidth: '40%',
-                          distributed: true
-                        }
-                      }"
-                    [series]="getSalesSeries()"
-                    [stroke]="{ show: true, width: 2, colors: ['transparent'] }"
-                    [tooltip]="{
-                      shared: true,
-                      intersect: false,
-                    }"
-                    [xaxis]="{
-                      categories: getCategories(),
-                    }"
-                    [yaxis]="{
-                      title: { text: 'Monto' },
-                    }"
                   >
                   </apx-chart>
                 </div>
