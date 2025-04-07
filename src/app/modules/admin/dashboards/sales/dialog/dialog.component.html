@@ -1,0 +1,23 @@
+<div class="p-6 w-full max-w-lg">
+    <h2 class="text-xl font-bold mb-4">
+        {{ _data.note ? 'Editar Nota' : 'Nueva Nota' }}
+    </h2>
+
+    <!-- Campo de título -->
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Título</mat-label>
+        <input matInput [(ngModel)]="_data.note.title">
+    </mat-form-field>
+
+    <!-- Campo de contenido -->
+    <mat-form-field appearance="outline" class="w-full mt-4">
+        <mat-label>Nota</mat-label>
+        <textarea matInput rows="4" [(ngModel)]="_data.note.content"></textarea>
+    </mat-form-field>
+
+    <!-- Botones -->
+    <div class="flex justify-end gap-2 mt-6">
+        <button mat-button (click)="closeDialog()">Cancelar</button>
+        <button mat-raised-button color="primary" (click)="saveNote()">Guardar</button>
+    </div>
+</div>

@@ -37,6 +37,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-check',
                 link: '/dashboards/prospects',
             },
+            {
+                id: 'dashboards.sales',
+                title: 'Ventas',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-check',
+                link: '/dashboards/sales',
+            },
             
         ],
     },

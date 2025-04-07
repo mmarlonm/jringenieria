@@ -1,0 +1,107 @@
+<div class="absolute inset-0 flex flex-col overflow-hidden p-6">
+  <h1 class="text-2xl font-bold mb-4">
+    {{ ventaId ? 'Editar Venta' : 'Nueva Venta' }}
+  </h1>
+
+  <mat-tab-group class="h-full flex-1 overflow-hidden">
+    <mat-tab label="Información General">
+      <form [formGroup]="salesForm" (ngSubmit)="saveVenta()" class="flex flex-col gap-4 overflow-auto">
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Fecha -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Fecha</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="fecha">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <!-- Unidad de Negocio -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Unidad de Negocio</mat-label>
+            <mat-select formControlName="unidadNegocioId">
+              <mat-option *ngFor="let unidad of unidadesNegocio" [value]="unidad.unidadId">
+                {{ unidad.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Cliente -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Cliente</mat-label>
+            <mat-select formControlName="clienteId">
+              <mat-option *ngFor="let cliente of clients" [value]="cliente.clienteId">
+                {{ cliente.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Usuario -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Usuario</mat-label>
+            <mat-select formControlName="usuarioId">
+              <mat-option *ngFor="let user of users" [value]="user.usuarioId">
+                {{ user.nombreUsuario }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Serie -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Serie</mat-label>
+            <input matInput formControlName="serie">
+          </mat-form-field>
+
+          <!-- Folio -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Folio</mat-label>
+            <input matInput formControlName="folio">
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Total -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Total</mat-label>
+            <input matInput formControlName="total" (input)="updateValue($event, 'total')">
+          </mat-form-field>
+
+          <!-- Pendiente -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Pendiente</mat-label>
+            <input matInput formControlName="pendiente" (input)="updateValue($event, 'pendiente')">
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Forma de Pago -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Forma de Pago</mat-label>
+            <mat-select formControlName="formaPagoId">
+              <mat-option *ngFor="let metodo of paymentMethods" [value]="metodo.id">
+                {{ metodo.clave }} - {{ metodo.descripcion }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- UUID -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>UUID</mat-label>
+            <input matInput formControlName="uuid">
+          </mat-form-field>
+        </div>
+
+        <!-- Botones -->
+        <div class="sticky bottom-0 py-2 flex justify-end gap-2">
+          <button mat-raised-button color="primary" type="submit">Guardar</button>
+          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/sales'])">Cancelar</button>
+        </div>
+
+      </form>
+    </mat-tab>
+  </mat-tab-group>
+</div>

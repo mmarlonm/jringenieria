@@ -1,0 +1,123 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
+  <!-- Main -->
+  <div class="flex-auto">
+    <!-- Header -->
+    <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8">
+      <!-- Title -->
+      <div>
+        <div class="text-4xl font-extrabold leading-none tracking-tight">
+          Ventas
+        </div>
+        <div class="text-secondary ml-0.5 font-medium">
+          {{ ventasCount > 0 ? ventasCount : 'No Ventas' }}
+        </div>
+      </div>
+
+      <!-- Main actions -->
+      <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+        <button class="ml-4" mat-flat-button color="primary" (click)="addVenta()" *ngIf="tienePermiso('btnAdd')">
+          <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+          <span class="ml-2 mr-1">Agregar Venta</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Ventas list -->
+    <div class="relative">
+      <div class="mat-elevation-z8" *ngIf="ventasCount > 0; else noVentas">
+        <!-- Input para filtrar -->
+        <mat-form-field class="w-full">
+          <mat-label>Buscar</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Filtrar Ventas">
+        </mat-form-field>
+
+        <!-- Tabla -->
+        <div class="overflow-auto" style="max-height: 400px; overflow-y: auto;">
+          <table mat-table [dataSource]="dataSource" matSort class="w-full">
+            <!-- Venta ID -->
+            <ng-container matColumnDef="ventaId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Venta ID </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.ventaId }} </td>
+            </ng-container>
+
+            <!-- Fecha -->
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.fecha | date:'yyyy-MM-dd' }} </td>
+            </ng-container>
+
+            <!-- Serie -->
+            <ng-container matColumnDef="serie">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Serie </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.serie }} </td>
+            </ng-container>
+
+            <!-- Folio -->
+            <ng-container matColumnDef="folio">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Folio </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.folio }} </td>
+            </ng-container>
+
+            <!-- Total -->
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Total </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.total | currency }} </td>
+            </ng-container>
+
+            <!-- Pendiente -->
+            <ng-container matColumnDef="pendiente">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Pendiente </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.pendiente | currency }} </td>
+            </ng-container>
+
+            <!-- Cliente -->
+            <ng-container matColumnDef="clienteNombre">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Cliente </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.clienteNombre }} </td>
+            </ng-container>
+
+            <!-- Agente -->
+            <ng-container matColumnDef="usuarioNombre">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Agente </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.usuarioNombre }} </td>
+            </ng-container>
+
+            <!-- Forma de Pago -->
+            <ng-container matColumnDef="formaDePagoDescripcion">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Forma de Pago </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.formaDePagoDescripcion }} </td>
+            </ng-container>
+
+            <!-- Unidad de Negocio -->
+            <ng-container matColumnDef="unidadDeNegocioNombre">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header> Unidad de Negocio </th>
+              <td mat-cell *matCellDef="let venta"> {{ venta.unidadDeNegocioNombre }} </td>
+            </ng-container>
+
+            <!-- Acciones -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef> Acciones </th>
+              <td mat-cell *matCellDef="let venta">
+                <button mat-button color="accent" (click)="editVenta(venta.ventaId)" *ngIf="tienePermiso('btnEdit')">Editar</button>
+                <button mat-button color="warn" (click)="deleteVenta(venta.ventaId)" *ngIf="tienePermiso('btnDelete')">Eliminar</button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+
+        <!-- Paginador -->
+        <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+      </div>
+
+      <!-- No Ventas -->
+      <ng-template #noVentas>
+        <div class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16">
+          Sin ventas
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

@@ -5,7 +5,7 @@ import {
   OnDestroy,
   OnInit,
   ViewEncapsulation,
-  ChangeDetectorRef
+  ChangeDetectorRef,
 } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -22,6 +22,7 @@ import { Subject, takeUntil } from "rxjs";
 import { User } from "app/core/user/user.types";
 import { UserService } from "app/core/user/user.service";
 import { UsersService } from "../../security/users/users.service";
+import { SalesService } from "../sales/sales.services";
 import { CommonModule } from "@angular/common";
 @Component({
   selector: "analytics",
@@ -60,6 +61,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   user: User;
 
   analiticaData: any[] = [];
+  salesData: any[] = [];
 
   /**
    * Constructor
@@ -69,7 +71,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     private _router: Router,
     private _userService: UserService,
     private _usersService: UsersService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private _salesService: SalesService
   ) {}
 
   // -----------------------------------------------------------------------------------------------------
@@ -114,11 +117,13 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     this.getUsers();
     this.getAnalitica();
+    this.getSales();
   }
 
   getAnalitica(): void {
     this._projectService.getAnalitica().subscribe((analitica) => {
       this.analiticaData = analitica;
+      this.cdr.detectChanges(); // Forzar actualización en la vista
     });
   }
 
@@ -129,6 +134,48 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       );
       this.cdr.detectChanges(); // Forzar actualización en la vista
     });
+  }
+
+  getSales() {
+    this._salesService.getVentas().subscribe((sales) => {
+      // Aquí puedes manejar los datos de las ventas
+      console.log("Ventas:", sales);
+      this.salesData = sales;
+      this.cdr.detectChanges(); // Forzar actualización en la vista
+    });
+  }
+
+  getSalesSeries() {
+    // Agrupar las ventas por unidad de negocio
+    const groupedData = this.salesData.reduce((acc, sale) => {
+      const key = sale.unidadDeNegocioNombre;
+      if (!acc[key]) {
+        acc[key] = { total: 0, pendiente: 0 };
+      }
+      acc[key].total += sale.total;
+      acc[key].pendiente += sale.pendiente;
+      return acc;
+    }, {});
+
+    // Preparar las series para el gráfico
+    const categories = Object.keys(groupedData);
+    const totalData = categories.map((category) => groupedData[category].total);
+    const pendienteData = categories.map(
+      (category) => groupedData[category].pendiente
+    );
+
+    return [
+      { name: "Total", data: totalData },
+      { name: "Pendiente", data: pendienteData },
+    ];
+  }
+
+  // Obtener las categorías de manera dinámica
+  getCategories() {
+    const categories = [
+      ...new Set(this.salesData.map((sale) => sale.unidadDeNegocioNombre)),
+    ];
+    return categories;
   }
 
   /**
