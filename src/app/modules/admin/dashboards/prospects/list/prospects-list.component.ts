@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ProspectosService } from '../prospects.services';
 import { MatTableDataSource } from '@angular/material/table';
@@ -30,7 +30,7 @@ import { FormsModule } from '@angular/forms';
     FormsModule
   ]
 })
-export class ProspectListComponent implements OnInit {
+export class ProspectListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
     'prospectoId',
     'tipoEmpresa',
@@ -63,8 +63,10 @@ export class ProspectListComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    setTimeout(() => {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+    },1200);
   }
 
   getProspects(): void {

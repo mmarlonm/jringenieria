@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit} from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SalesService } from '../sales.services';
 import { MatTableDataSource } from '@angular/material/table';
@@ -30,7 +30,7 @@ import { FormsModule } from '@angular/forms';
     FormsModule
   ]
 })
-export class SalesListComponent implements OnInit {
+export class SalesListComponent implements OnInit,AfterViewInit {
   // Actualiza las columnas para reflejar los datos que necesitas mostrar
   displayedColumns: string[] = [
     'ventaId', 
@@ -70,19 +70,32 @@ export class SalesListComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    setTimeout(() => {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+    },1200);
   }
 
-  // Modificado para manejar los datos con las propiedades correctas del backend
-  getVentas(): void {
-    this.salesService.getVentas().subscribe((ventas) => {
-      this.ventasCount = ventas.length;
-      this.dataSource = new MatTableDataSource(ventas);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-    });
-  }
+getVentas(): void {
+  this.salesService.getVentas().subscribe((ventas) => {
+    this.ventasCount = ventas.length;
+    this.dataSource.data = ventas; // ✅ solo actualizar los datos
+
+    // 🔁 Reasignar el sort/paginator para asegurarte de que siguen vivos
+    this.dataSource.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
+
+    // 👇 Importante: si estás ordenando por campos numéricos o fechas
+    this.dataSource.sortingDataAccessor = (item, property) => {
+      switch (property) {
+        case 'fecha': return new Date(item.fecha);
+        case 'total': return +item.total;
+        case 'pendiente': return +item.pendiente;
+        default: return item[property];
+      }
+    };
+  });
+}
 
   applyFilter(e): void {
     this.dataSource.filter = e.target.value.trim().toLowerCase();

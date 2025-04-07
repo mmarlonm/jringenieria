@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { QuotesService } from '../quotes.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -36,7 +36,7 @@ import { HistorialComponent } from '../historial/historial.component';
     MatSelectModule
   ]
 })
-export class QuoteListComponent implements OnInit {
+export class QuoteListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
     'cotizacionId',
     'cliente',
@@ -80,8 +80,10 @@ export class QuoteListComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    setTimeout(() => {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+    },1200);
   }
 
   getQuotes(): void {

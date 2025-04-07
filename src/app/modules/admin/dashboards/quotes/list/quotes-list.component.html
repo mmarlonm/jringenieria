@@ -48,7 +48,7 @@
           
               <!-- Cliente -->
               <ng-container matColumnDef="cliente">
-                <th mat-header-cell *matHeaderCellDef>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   Cliente
                   <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('cliente')">
                     <mat-icon>filter_list</mat-icon>
@@ -59,7 +59,7 @@
           
               <!-- Empresa -->
               <ng-container matColumnDef="empresa">
-                <th mat-header-cell *matHeaderCellDef>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   Empresa
                   <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('empresa')">
                     <mat-icon>filter_list</mat-icon>
@@ -70,7 +70,7 @@
           
               <!-- Fecha Entrega -->
               <ng-container matColumnDef="fechaEntrega">
-                <th mat-header-cell *matHeaderCellDef>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   Fecha Entrega
                   <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('fechaEntrega')">
                     <mat-icon>filter_list</mat-icon>
@@ -81,7 +81,7 @@
           
               <!-- Estatus -->
               <ng-container matColumnDef="estatus">
-                <th mat-header-cell *matHeaderCellDef>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
                   Estatus
                   <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('estatus')">
                     <mat-icon>filter_list</mat-icon>

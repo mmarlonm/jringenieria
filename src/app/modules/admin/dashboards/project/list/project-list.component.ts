@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../project.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -37,7 +37,7 @@ import { MatDialog } from '@angular/material/dialog';
     MatSelectModule
   ]
 })
-export class ProjectListComponent implements OnInit {
+export class ProjectListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['id', 'nombre', 'categoria','estatus', 'fechaInicio', 'fechaFin', 'actions'];
   dataSource = new MatTableDataSource<any>();
   projectsCount: number = 0;
@@ -77,8 +77,10 @@ export class ProjectListComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    setTimeout(() => {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+    },1200);
   }
 
   getProjects(): void {
