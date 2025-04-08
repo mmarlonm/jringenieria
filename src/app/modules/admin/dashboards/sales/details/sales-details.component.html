@@ -7,7 +7,7 @@
     <mat-tab label="Información General">
       <form [formGroup]="salesForm" (ngSubmit)="saveVenta()" class="flex flex-col gap-4 overflow-auto">
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 ">
           <!-- Fecha -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha</mat-label>
@@ -96,7 +96,7 @@
         </div>
 
         <!-- Botones -->
-        <div class="sticky bottom-0 py-2 flex justify-end gap-2">
+        <div class=" bottom-0 py-2 flex justify-end gap-2 btn-float">
           <button mat-raised-button color="primary" type="submit">Guardar</button>
           <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/sales'])">Cancelar</button>
         </div>

@@ -25,3 +25,9 @@
     width: 100%; /* Asegura que el texto se ajuste correctamente */
     display: contents; /* Asegura que el texto se ajuste correctamente */
 }
+
+.btn-float{
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+}

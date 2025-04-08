@@ -105,6 +105,18 @@
                             </div>
                         </div>
                     }
+                    @if( user.nombreRol){
+                        <div class="flex sm:items-center">
+                            <mat-icon
+                                [svgIcon]="'heroicons_outline:user-group'"
+                            ></mat-icon>
+                            <div class="ml-6 leading-6">
+                                {{ user.nombreRol }}
+                            </div>
+                        </div>
+
+
+                    }
 
                     @if (user.proyectosCreados.length) {
                         <div class="mt-8">
