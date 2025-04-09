@@ -458,10 +458,7 @@
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Líder de Proyecto</mat-label>
             <mat-select formControlName="liderProyectoId">
-              <mat-option
-                *ngFor="let user of user"
-                [value]="user.usuarioId"
-              >
+              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
                 {{ user.nombreUsuario }}
               </mat-option>
             </mat-select>
@@ -472,18 +469,26 @@
           <!-- Entregables -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Entregables</mat-label>
-            <input matInput formControlName="entregables" placeholder="Lista de entregables">
+            <input
+              matInput
+              formControlName="entregables"
+              placeholder="Lista de entregables"
+            />
           </mat-form-field>
-        
+
           <!-- Cronograma -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cronograma</mat-label>
-            <input matInput formControlName="cronograma" placeholder="Fechas clave">
+            <input
+              matInput
+              formControlName="cronograma"
+              placeholder="Fechas clave"
+            />
           </mat-form-field>
         </div>
 
         <!-- Botones -->
-        <div class="flex justify-end gap-2 mt-4 btn-float"  >
+        <div class="flex justify-end gap-2 mt-4 btn-float">
           <button mat-raised-button color="primary" type="submit">
             Guardar
           </button>
@@ -495,56 +500,114 @@
           >
             Cancelar
           </button>
-       </div>
+        </div>
       </form>
     </mat-tab>
 
     <!-- TAB 2: Archivos del Proyecto -->
     <mat-tab label="Archivos del Proyecto">
-      <div class="flex flex-col gap-4 h-120 overflow-auto pr-2">
+      <div class="flex flex-col gap-4 h-[70vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2">
         <div class="absolute inset-0 flex min-w-0 flex-col">
-          <!-- Reordenado -->
-    
-          <!-- Plano Arquitectónico -->
-          <div class="flex items-center gap-3 m-2">
-            <label>Plano Arquitectónico: </label>
-            <button mat-stroked-button type="button" (click)="planoArquitectonicoInput.click()">Subir archivo</button>
-            <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #planoArquitectonicoInput (change)="onFileSelected($event, 'plano arquitectonico')" hidden />
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+            <!-- Cada input en una celda de la grid -->
+            <!-- Plano Arquitectónico -->
+            <div class="flex items-center gap-2">
+              <label class="w-40">Plano Arquitectónico:</label>
+              <button mat-stroked-button type="button" (click)="planoArquitectonicoInput.click()">
+                Subir archivo
+              </button>
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.png"
+                #planoArquitectonicoInput
+                (change)="onFileSelected($event, 'plano arquitectonico')"
+                hidden
+              />
+            </div>
+        
+            <!-- Diagrama Unifilar -->
+            <div class="flex items-center gap-3">
+              <label class="w-40">Diagrama Unifilar:</label>
+              <button mat-stroked-button type="button" (click)="diagramaUnifilarInput.click()">
+                Subir archivo
+              </button>
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.png"
+                #diagramaUnifilarInput
+                (change)="onFileSelected($event, 'diagrama unifilar')"
+                hidden
+              />
+            </div>
+        
+            <!-- Repite la misma estructura para los demás -->
+            <!-- Diagrama Isométrico -->
+            <div class="flex items-center gap-3">
+              <label class="w-40">Diagrama Isométrico:</label>
+              <button mat-stroked-button type="button" (click)="diagramaIsometricoInput.click()">
+                Subir archivo
+              </button>
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.png"
+                #diagramaIsometricoInput
+                (change)="onFileSelected($event, 'diagrama isometrico')"
+                hidden
+              />
+            </div>
+        
+            <!-- Lista de materiales -->
+            <div class="flex items-center gap-3">
+              <label class="w-40">Lista de materiales:</label>
+              <button mat-stroked-button type="button" (click)="listaMaterialesInput.click()">
+                Subir archivo
+              </button>
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                #listaMaterialesInput
+                (change)="onFileSelected($event, 'Lista de materiales')"
+                hidden
+              />
+            </div>
+        
+            <!-- Levantamiento -->
+            <div class="flex items-center gap-3">
+              <label class="w-40">Levantamiento:</label>
+              <button mat-stroked-button type="button" (click)="levantamientoInput.click()">
+                Subir archivo
+              </button>
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.png"
+                #levantamientoInput
+                (change)="onFileSelected($event, 'levantamiento')"
+                hidden
+              />
+            </div>
+        
+            <!-- Fotos -->
+            <div class="flex items-center gap-3">
+              <label class="w-40">Fotos:</label>
+              <button mat-stroked-button type="button" (click)="fotosInput.click()">
+                Subir archivo
+              </button>
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input
+                type="file"
+                accept="image/*"
+                #fotosInput
+                (change)="onFileSelected($event, 'fotos')"
+                hidden
+              />
+            </div>
           </div>
-    
-          <!-- Diagrama Unifilar -->
-          <div class="flex items-center gap-3 m-2">
-            <label>Diagrama Unifilar: </label>
-            <button mat-stroked-button type="button" (click)="diagramaUnifilarInput.click()">Subir archivo</button>
-            <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #diagramaUnifilarInput (change)="onFileSelected($event, 'diagrama unifilar')" hidden />
-          </div>
-    
-          <!-- Diagrama Isométrico -->
-          <div class="flex items-center gap-3 m-2">
-            <label>Diagrama Isométrico: </label>
-            <button mat-stroked-button type="button" (click)="diagramaIsometricoInput.click()">Subir archivo</button>
-            <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #diagramaIsometricoInput (change)="onFileSelected($event, 'diagrama isometrico')" hidden />
-          </div>
-    
-          <!-- Lista de materiales -->
-          <div class="flex items-center gap-3 m-2">
-            <label>Lista de materiales: </label>
-            <button mat-stroked-button type="button" (click)="listaMaterialesInput.click()">Subir archivo</button>
-            <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-            <input type="file" accept=".pdf,.doc,.docx,.xls, .xlsx" #listaMaterialesInput (change)="onFileSelected($event, 'Lista de materiales')" hidden />
-          </div>
-    
-          <!-- Levantamiento -->
-          <div class="flex items-center gap-3 m-2">
-            <label>Levantamiento: </label>
-            <button mat-stroked-button type="button" (click)="levantamientoInput.click()">Subir archivo</button>
-            <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #levantamientoInput (change)="onFileSelected($event, 'levantamiento')" hidden />
-          </div>
-    
+
           <!-- Lista de Archivos -->
           <div class="space-y-8 p-6 md:p-8">
             @if (files.length > 0) {
@@ -556,20 +619,38 @@
                       <!-- Card de archivo -->
                       <a
                         class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8"
-                        (click)="deleteFile(file.proyectoId, file.categoria, file.nombreArchivo)"
+                        (click)="
+                          deleteFile(
+                            file.proyectoId,
+                            file.categoria,
+                            file.nombreArchivo
+                          )
+                        "
                         mat-icon-button
                       >
-                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                        <mat-icon
+                          class="icon-size-5"
+                          [svgIcon]="'heroicons_solid:trash'"
+                        ></mat-icon>
                       </a>
                       <a
                         class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow"
-                        (click)="downloadFile(file.proyectoId, file.categoria, file.nombreArchivo)"
+                        (click)="
+                          downloadFile(
+                            file.proyectoId,
+                            file.categoria,
+                            file.nombreArchivo
+                          )
+                        "
                       >
                         <div class="aspect-[9/6]">
                           {{ file.categoria }}
                           <div class="flex h-full items-center justify-center">
                             <div class="relative">
-                              <mat-icon class="text-hint opacity-50 icon-size-14" [svgIcon]="'heroicons_solid:document'"></mat-icon>
+                              <mat-icon
+                                class="text-hint opacity-50 icon-size-14"
+                                [svgIcon]="'heroicons_solid:document'"
+                              ></mat-icon>
                               <div
                                 class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
                                 [class.bg-red-600]="file.type === 'PDF'"
@@ -584,8 +665,12 @@
                             </div>
                           </div>
                         </div>
-                        <div class="flex flex-auto flex-col justify-center text-center text-sm font-medium">
-                          <div class="truncate" [matTooltip]="file.name">{{ file.nombreArchivo }}</div>
+                        <div
+                          class="flex flex-auto flex-col justify-center text-center text-sm font-medium"
+                        >
+                          <div class="truncate" [matTooltip]="file.name">
+                            {{ file.nombreArchivo }}
+                          </div>
                         </div>
                       </a>
                     </div>

@@ -56,9 +56,10 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 export class SalesDetailsComponent implements OnInit {
   salesForm: FormGroup;
   ventaId: number | null = null;
+  usuarioId: number | null = null;
 
   clients: any[] = [];
-  users: any[] = [];
+  proyects: any[] = [];
   paymentMethods: any[] = [];
   unidadesNegocio: any[] = [];
 
@@ -86,6 +87,7 @@ export class SalesDetailsComponent implements OnInit {
       formaPagoId: [null, Validators.required],
       uuid: ["", Validators.maxLength(50)],
       unidadNegocioId: [null, Validators.required],
+      proyectoId: [null, Validators.required],
     });
 
     this.route.paramMap.subscribe((params) => {
@@ -102,6 +104,10 @@ export class SalesDetailsComponent implements OnInit {
     this.loadUsers();
     this.loadPaymentMethods();
     this.loadUnidades();
+
+    const userData = JSON.parse(this.salesService.userInformation);
+    this.usuarioId = userData.usuario.id;
+    this.salesForm.get("usuarioId").setValue(userData.usuario.id);
   }
 
   loadVenta(id: number): void {
@@ -129,8 +135,8 @@ export class SalesDetailsComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.usersService.getUsers().subscribe((users) => {
-      this.users = users.filter(u => u.activo);
+    this.projectService.getProjects().subscribe((proyects) => {
+      this.proyects = proyects
     });
   }
 

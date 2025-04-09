@@ -40,10 +40,10 @@
 
           <!-- Usuario -->
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Usuario</mat-label>
-            <mat-select formControlName="usuarioId">
-              <mat-option *ngFor="let user of users" [value]="user.usuarioId">
-                {{ user.nombreUsuario }}
+            <mat-label>Proyecto</mat-label>
+            <mat-select formControlName="proyectoId">
+              <mat-option *ngFor="let proyect of proyects" [value]="proyect.proyectoId">
+                {{ proyect.nombre }}
               </mat-option>
             </mat-select>
           </mat-form-field>

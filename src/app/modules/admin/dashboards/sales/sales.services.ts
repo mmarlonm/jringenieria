@@ -11,6 +11,10 @@ export class SalesService {
 
   constructor(private http: HttpClient) {}
 
+  get userInformation(): string {
+    return localStorage.getItem("userInformation") ?? "";
+  }
+
   // 🔹 Obtener todas las ventas
   getVentas(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}`);
