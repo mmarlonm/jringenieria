@@ -107,7 +107,7 @@ export class ProjectDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.projectForm = this.fb.group({
-      proyectoId: [0], // 🔹 Se agrega proyectoId para que siempre se tenga
+      proyectoId: [0],
       nombre: ["", Validators.required],
       categoria: ["", Validators.required],
       lugar: ["NA"],
@@ -115,55 +115,54 @@ export class ProjectDetailsComponent implements OnInit {
       fechaInicio: ["", Validators.required],
       fechaFin: [""],
       estado: ["NA"],
-
-      // Nuevas propiedades
-      cliente: [0, [Validators.required, this.noZeroValidator]],
+    
+      cliente: [0, [Validators.required, this.noZeroValidator]], // es int?, pero requerido
       necesidad: [""],
       direccion: [""],
       nombreContacto: [""],
       telefono: [""],
       empresa: [""],
-
+    
       levantamiento: [""],
       planoArquitectonico: [""],
       diagramaIsometrico: [""],
       diagramaUnifilar: [""],
-
+    
       materialesCatalogo: [""],
       materialesPresupuestados: [""],
       inventarioFinal: [""],
       cuadroComparativo: [""],
-
+    
       proveedor: [""],
-
+    
       manoDeObra: [""],
       personasParticipantes: [""],
       equipos: [""],
       herramientas: [""],
-
-      indirectosCostos: [""],
-      fianzas: [""],
-      anticipo: [""],
-      cotizacion: [""],
-
+    
+      indirectosCostos: [0],
+      fianzas: [0],
+      anticipo: [0],
+      cotizacion: [0],
+    
       ordenDeCompra: [""],
       contrato: [""],
-
+    
       programaDeTrabajo: [""],
       avancesReportes: [""],
       comentarios: [""],
       hallazgos: [""],
       dosier: [""],
       rutaCritica: [""],
-
+    
       factura: [""],
-      pago: [""],
-      utilidadProgramada: [""],
-      utilidadReal: [""],
-      financiamiento: [""],
-
+      pago: [0],
+      utilidadProgramada: [0],
+      utilidadReal: [0],
+      financiamiento: [0],
+    
       cierreProyectoActaEntrega: [""],
-      estatus: [""],
+      estatus: [0, Validators.required],
       liderProyectoId : [""],
       entregables : [""],
       cronograma : [""],
