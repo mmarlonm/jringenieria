@@ -40,6 +40,7 @@ export class UserComponent implements OnInit, OnDestroy {
 
     @Input() showAvatar: boolean = true;
     user: User;
+    userInformation: string = '';
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -69,6 +70,9 @@ export class UserComponent implements OnInit, OnDestroy {
                 // Mark for check
                 this._changeDetectorRef.markForCheck();
             });
+
+        const userData = JSON.parse(this._userService.userInformation);
+        this.userInformation = userData.usuario;
     }
 
     /**

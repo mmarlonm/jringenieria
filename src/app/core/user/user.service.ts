@@ -32,6 +32,10 @@ export class UserService {
         return this._user.asObservable();
     }
 
+    get userInformation(): string {
+        return localStorage.getItem("userInformation") ?? "";
+      }
+
     // -----------------------------------------------------------------------------------------------------
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
