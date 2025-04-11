@@ -79,6 +79,7 @@ export class ProjectDetailsComponent implements OnInit {
   estatus: any[] = [];
 
   files: any[] = [];
+  filesEvidencias: any[] = [];
   //informacion de usuario logeado
   user: any[] = [];
 
@@ -339,17 +340,19 @@ export class ProjectDetailsComponent implements OnInit {
     if (!this.projectId) return;
 
     this.projectService.getFiles(this.projectId).subscribe((files) => {
-
-      // Mapear los archivos y asignarles un tipo basado en su nombreArchivo
-      if(files.length > 0){
-        this.files = files.map((file) => ({
-          ...file,
-          type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
-        }));
-      }
-      else{
+      const allFiles = files.map((file) => ({
+        ...file,
+        type: this.getFileType(file.nombreArchivo),
+      }));
+      if(allFiles.length > 0){
+        // Separar los archivos
+      this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
+      this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
+      }else{
         this.files = [];
+        this.filesEvidencias = [];
       }
+      
     });
   }
 
