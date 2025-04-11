@@ -347,6 +347,9 @@ export class ProjectDetailsComponent implements OnInit {
           type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
         }));
       }
+      else{
+        this.files = [];
+      }
     });
   }
 

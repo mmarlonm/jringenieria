@@ -26,6 +26,9 @@ import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
 import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { ChangeDetectorRef } from '@angular/core';
+import { MatTabsModule } from "@angular/material/tabs";
+import { MatIconModule } from "@angular/material/icon";
+
 @Component({
   selector: "app-quotes-details",
   templateUrl: "./quotes-details.component.html",
@@ -42,6 +45,8 @@ import { ChangeDetectorRef } from '@angular/core';
     MatNativeDateModule,
     CurrencyMaskPipe,
     NgxMatSelectSearchModule,
+    MatTabsModule,
+    MatIconModule
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -61,6 +66,8 @@ export class QuoteDetailsComponent implements OnInit {
   prospectFiltro = new FormControl("");
   filteredProspects: any[] = [];
   prospects: any[] = [];
+  cotizacionFile: File | null = null;
+  files: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -118,6 +125,7 @@ export class QuoteDetailsComponent implements OnInit {
       } else {
         this.quotesId = Number(id);
         this.loadQuotes(this.quotesId);
+        this.getFilesAll();
       }
     });
 
@@ -273,5 +281,132 @@ export class QuoteDetailsComponent implements OnInit {
     });
     // Forzar la detección de cambios
     this.cdr.detectChanges();
+  }
+
+  onFileSelected(event: any, tipo: string) {
+    const file: File = event.target.files[0];
+    if (file && tipo) {
+      this.subirArchivo(file, tipo);
+    }
+  }
+
+  subirArchivo(event: any, categoria: string): void {
+    const archivo = event;
+    if (!archivo) return;
+
+    const formData = new FormData();
+    formData.append("cotizacionId", this.quotesId?.toString() || ""); // asegúrate que esté definido
+    formData.append("categoria", categoria);
+    formData.append("archivo", archivo);
+
+    this.quotesService.uploadFile(formData).subscribe({
+      next: () => {
+        this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
+        this.getFilesAll();
+      },
+      error: (err) => {
+        this.snackBar.open('Hubo un error al subir el archivo. Por favor, inténtalo de nuevo.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      },
+    });
+  }
+
+  getFilesAll(): void {
+    console.log("getFilesAll", this.quotesId);
+    if (!this.quotesId) return;
+
+    this.quotesService.getFiles(this.quotesId).subscribe((files) => {
+
+      // Mapear los archivos y asignarles un tipo basado en su nombreArchivo
+      if(files.length > 0){
+        this.files = files.map((file) => ({
+          ...file,
+          type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
+        }));
+      }
+      else{
+        this.files = [];
+      }
+      console.log("files ",this.files);
+    });
+  }
+
+  // Función para obtener el tipo de archivo según la extensión
+  getFileType(nombreArchivo: string): string {
+    const extension = nombreArchivo
+      ? nombreArchivo.split(".").pop()?.toLowerCase()
+      : "";
+
+    switch (extension) {
+      case "pdf":
+        return "PDF";
+      case "doc":
+      case "docx":
+        return "DOC";
+      case "xls":
+      case "xlsx":
+        return "XLS";
+      case "txt":
+        return "TXT";
+      case "jpg":
+      case "jpeg":
+        return "JPG";
+      case "png":
+        return "PNG";
+      default:
+        return "OTRO";
+    }
+  }
+
+  trackByFn(index: number, item: any): any {
+    return item.id || index;
+  }
+
+  downloadFile(
+    quotesId: number,
+    categoria: string,
+    nombreArchivo: string
+  ): void {
+    this.quotesService
+      .downloadFile(quotesId, categoria, nombreArchivo)
+      .subscribe(
+        (response: Blob) => {
+          const a = document.createElement("a");
+          const objectUrl = URL.createObjectURL(response);
+          a.href = objectUrl;
+          a.download = nombreArchivo;
+          a.click();
+          URL.revokeObjectURL(objectUrl); // Limpiar el objeto URL
+        },
+        (error) => {
+          console.error("Error al descargar el archivo:", error);
+        }
+      );
+  }
+
+  deleteFile(quotesId: number, categoria: string, nombreArchivo: string): void {
+    this.quotesService.removeFile(quotesId, categoria, nombreArchivo).subscribe(
+      (res) => {
+        this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
+  
+        // Si necesitas actualizar la lista después de eliminar:
+        this.getFilesAll(); // Opcional: recargar lista de archivos
+      },
+      (error) => {
+        console.error('Error al eliminar el archivo:', error);
+        this.snackBar.open('Ocurrió un error al eliminar el archivo.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
+    );
   }
 }

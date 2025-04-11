@@ -46,4 +46,22 @@ export class QuotesService {
   getHistorial(quoteId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/historial-estatus/${quoteId}`);
   }
+
+  uploadFile(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/SubirArchivoCotizacion`,formData);
+  }
+
+  getFiles(projectId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/ObtenerArchivosCotizacion/${projectId}`);
+  }
+
+  downloadFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrl}/DescargarArchivoCotizacion/${proyectoId}/${categoria}/${nombreArchivo}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  removeFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrl}/EliminarArchivoCotizacion/${proyectoId}/${categoria}/${nombreArchivo}`;
+    return this.http.delete(url, { responseType: 'blob' });
+  }
 }
