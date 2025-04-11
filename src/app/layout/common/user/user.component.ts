@@ -40,7 +40,7 @@ export class UserComponent implements OnInit, OnDestroy {
 
     @Input() showAvatar: boolean = true;
     user: User;
-    userInformation: string = '';
+    userInformation: any = {};
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
