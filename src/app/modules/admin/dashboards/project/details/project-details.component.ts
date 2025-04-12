@@ -89,6 +89,7 @@ export class ProjectDetailsComponent implements OnInit {
   // Control de búsqueda de personas
   personasControl = new FormControl();
   filteredUsers: Observable<any[]>; // Lista filtrada de usuarios
+  disabledArchivos: boolean = true; 
 
   constructor(
     private fb: FormBuilder,
@@ -185,6 +186,7 @@ export class ProjectDetailsComponent implements OnInit {
         this.projectId = Number(id);
         this.loadProject(this.projectId);
         this.getFilesAll();
+        this.disabledArchivos=false;
       }
     });
   }
@@ -340,11 +342,17 @@ export class ProjectDetailsComponent implements OnInit {
     if (!this.projectId) return;
 
     this.projectService.getFiles(this.projectId).subscribe((files) => {
+
+      if(files == null){
+        this.files = [];
+        this.filesEvidencias = [];
+        return
+      }
       const allFiles = files.map((file) => ({
         ...file,
         type: this.getFileType(file.nombreArchivo),
       }));
-      if(allFiles.length > 0){
+      if(allFiles && allFiles.length > 0){
         // Separar los archivos
       this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
       this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');

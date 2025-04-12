@@ -505,7 +505,7 @@
     </mat-tab>
 
     <!-- TAB 2: Archivos del Proyecto -->
-    <mat-tab label="Archivos del Proyecto">
+    <mat-tab label="Archivos del Proyecto" [disabled]="disabledArchivos">
       <div
         class="flex flex-col gap-4 h-[65vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2"
       >
@@ -727,7 +727,7 @@
       </div>
     </mat-tab>
 
-    <mat-tab label="Evidencias del Proyecto">
+    <mat-tab label="Evidencias del Proyecto" [disabled]="disabledArchivos">
       <div
         class="flex flex-col gap-4 h-[70vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2"
       >
