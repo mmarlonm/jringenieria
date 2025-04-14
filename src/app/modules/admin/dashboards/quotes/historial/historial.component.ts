@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button'; // Importa para los 
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-proyecto-historial-modal',
+  selector: 'app-quotes-historial-modal',
   templateUrl: './historial.component.html',
   standalone: true, // Utilizado en Angular 14+ para componentes independientes (standalone)
   imports: [

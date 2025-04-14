@@ -10,11 +10,13 @@ import {
     tap,
     throwError,
 } from 'rxjs';
+import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
 
 @Injectable({ providedIn: 'root' })
 export class QuickChatService {
     private _chat: BehaviorSubject<Chat> = new BehaviorSubject(null);
     private _chats: BehaviorSubject<Chat[]> = new BehaviorSubject<Chat[]>(null);
+    private apiUrl = `${environment.apiUrl}/Chat`; // Asegúrate de que esto sea correcto
 
     /**
      * Constructor
@@ -32,6 +34,10 @@ export class QuickChatService {
         return this._chat.asObservable();
     }
 
+    get userInformation(): string {
+        return localStorage.getItem("userInformation") ?? "";
+      }
+
     /**
      * Getter for chat
      */
@@ -43,16 +49,6 @@ export class QuickChatService {
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
-    /**
-     * Get chats
-     */
-    getChats(): Observable<any> {
-        return this._httpClient.get<Chat[]>('api/apps/chat/chats').pipe(
-            tap((response: Chat[]) => {
-                this._chats.next(response);
-            })
-        );
-    }
 
     /**
      * Get chat
@@ -80,5 +76,28 @@ export class QuickChatService {
                     return of(chat);
                 })
             );
+    }
+
+    getChats(id : number): Observable<any> {
+        return this._httpClient.get<Chat[]>(`${this.apiUrl}/chats/${id}`).pipe(
+            tap((response: Chat[]) => {
+                this._chats.next(response);
+            })
+        );
+    }
+
+    enviarMensaje(mensaje: { remitenteId: number; destinatarioId: number; contenido: string }): Observable<any> {
+        return this._httpClient.post<any>(`${this.apiUrl}/enviar`, mensaje).pipe(
+            tap((mensajeEnviado) => {
+            })
+        );
+    }
+
+    getChatById1(id : number, usuarioActualId: number): Observable<any> {
+        return this._httpClient.get<Chat>(`${this.apiUrl}/obtener/${id}/${usuarioActualId}`).pipe(
+            tap((chat) => {
+                this._chat.next(chat);
+            })
+        );
     }
 }

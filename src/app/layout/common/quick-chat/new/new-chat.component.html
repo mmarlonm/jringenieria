@@ -1,0 +1,22 @@
+<h2 mat-dialog-title>Nuevo Chat</h2>
+
+<mat-dialog-content [formGroup]="form" class="flex flex-col gap-4">
+    <mat-form-field appearance="fill">
+        <mat-label>Seleccionar destinatario</mat-label>
+        <mat-select formControlName="destinatarioId">
+            <mat-option *ngFor="let usuario of data.usrs" [value]="usuario.usuarioId">
+                {{ usuario.nombreUsuario }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+        <mat-label>Mensaje</mat-label>
+        <textarea matInput formControlName="contenido" rows="3"></textarea>
+    </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="cerrar()">Cancelar</button>
+    <button mat-flat-button color="primary" (click)="enviar()" [disabled]="form.invalid">Enviar</button>
+</mat-dialog-actions>
