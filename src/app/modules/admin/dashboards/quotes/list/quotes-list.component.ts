@@ -58,7 +58,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
 
   currentFilterColumn: string = '';
   filterValue: string = '';
-  filterOptions = {
+  filterOptions:any = {
     empresa: ["Technology"],  // Ejemplo de opciones
     fechaEntrega: ["2023-01-01"],
     estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
@@ -87,7 +87,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   }
 
   getQuotes(): void {
-    this.quotesService.getQuotes().subscribe((quotes) => {
+    this.quotesService.getQuotes().subscribe((res:any) => {
+      if (res) {
+        if(res.code==200){
+          var quotes:any = res.data;
+    
       this.quotesCount = quotes.length;
       this.dataSource = new MatTableDataSource(quotes);
       this.dataSource.paginator = this.paginator;
@@ -100,7 +104,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
       this.dataSource.sort = this.sort;
 
       this.setCustomFilter();
+        }
+      }
     });
+  
   }
 
   /**
@@ -125,9 +132,17 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   }
 
   deleteQuote(projectId: number): void {
-    this.quotesService.deleteQuote(projectId).subscribe(() => {
-      this.getQuotes();
-      this.snackBar.open('Cotizacion eliminada correctamente', 'Cerrar', { duration: 3000 });
+    this.quotesService.deleteQuote(projectId).subscribe((res) => {
+      if(res.code==200){
+        this.getQuotes();
+        this.snackBar.open('Cotizacion eliminada correctamente', 'Cerrar', { duration: 3000 });    
+      }
+    else{
+      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['snackbar-error']
+      });
+    }  
     });
   }
 
@@ -213,13 +228,23 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   }
 
   getHistorial(cotizacionId: number): void {
-      this.quotesService.getHistorial(cotizacionId).subscribe((historial) => {
+      this.quotesService.getHistorial(cotizacionId).subscribe((res:any) => {
+        if(res.code==200)
+        {
+        var historial:any=res.data;
         this.historialData = historial;
   
         this.dialog.open(HistorialComponent, {
           width: '700px',
           data: { historial }
         });
+        }
+        else{
+          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-error']
+          });
+        }
       });
     }
 }

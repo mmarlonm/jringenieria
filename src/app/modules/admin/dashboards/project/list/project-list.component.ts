@@ -49,7 +49,7 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
   // Nuevas propiedades para manejo de filtros
   filterValue: string = '';
   currentFilterColumn: string = '';
-  filterOptions = {
+  filterOptions:any = {
     categoria: ['Technology', 'Healthcare', 'Finance'],  // Ejemplo de opciones
     fechaInicio: ['2023-01-01'],
     fechaFin: ['2023-06-01'],
@@ -84,9 +84,10 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
   }
 
   getProjects(): void {
-    this.projectService.getProjects().subscribe((projects) => {
-      this.projectsCount = projects.length;
-      this.dataSource = new MatTableDataSource(projects);
+    this.projectService.getProjects().subscribe((projects:any) => {
+      if(projects.code==200){
+      this.projectsCount = projects.data.length;
+      this.dataSource = new MatTableDataSource(projects.data);
       this.dataSource.paginator = this.paginator;
 
       // Llenar filterOptions con las fechas obtenidas de los proyectos
@@ -96,6 +97,14 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
 
       // Establecer el filtro personalizado
       this.setCustomFilter();
+    
+      }
+      else{
+        this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
     });
   }
 

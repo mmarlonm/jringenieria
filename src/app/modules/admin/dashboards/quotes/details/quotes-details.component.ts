@@ -153,42 +153,53 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   getEstatus(): void {
-    this.quotesService.getEstatus().subscribe((data) => (this.estatus = data));
+    this.quotesService.getEstatus().subscribe((data) => (this.estatus = data.data));
   }
 
   loadQuotes(id: number): void {
-    this.quotesService.getQuoteById(id).subscribe((quotes) => {
-      if (quotes) {
-        this.quotesForm.patchValue({
-          cotizacionId: quotes.cotizacionId, // 🔹 Ahora se incluye el ID
-          cliente: quotes.cliente,
-          prospecto: quotes.prospecto,
-          usuarioCreadorId: quotes.usuarioCreadorId,
-          necesidad: quotes.necesidad,
-          direccion: quotes.direccion,
-          nombreContacto: quotes.nombreContacto,
-          telefono: quotes.telefono,
-          empresa: quotes.empresa,
-          cotizacion: quotes.cotizacion,
-          ordenCompra: quotes.ordenCompra,
-          contrato: quotes.contrato,
-          proveedor: quotes.proveedor,
-          vendedor: quotes.vendedor,
-          fechaEntrega: quotes.fechaEntrega,
-          rutaCritica: quotes.rutaCritica,
-          factura: quotes.factura,
-          pago: quotes.pago,
-          utilidadProgramada: quotes.utilidadProgramada,
-          utilidadReal: quotes.utilidadReal,
-          financiamiento: quotes.financiamiento,
-          fechaRegistro: quotes.fechaRegistro,
-          estatus: quotes.estatus,
-          formaPago: quotes.formaPago,
-          tiempoEntrega: quotes.tiempoEntrega,
-          montoTotal: quotes.montoTotal,
-          ajustesCostos: quotes.ajustesCostos,
-          comentarios: quotes.comentarios,
-        });
+    this.quotesService.getQuoteById(id).subscribe((res) => {
+      if (res) {
+        if(res.code==200){
+          var quotes = res.data;
+          this.quotesForm.patchValue({
+            cotizacionId: quotes.cotizacionId, // 🔹 Ahora se incluye el ID
+            cliente: quotes.cliente,
+            prospecto: quotes.prospecto,
+            usuarioCreadorId: quotes.usuarioCreadorId,
+            necesidad: quotes.necesidad,
+            direccion: quotes.direccion,
+            nombreContacto: quotes.nombreContacto,
+            telefono: quotes.telefono,
+            empresa: quotes.empresa,
+            cotizacion: quotes.cotizacion,
+            ordenCompra: quotes.ordenCompra,
+            contrato: quotes.contrato,
+            proveedor: quotes.proveedor,
+            vendedor: quotes.vendedor,
+            fechaEntrega: quotes.fechaEntrega,
+            rutaCritica: quotes.rutaCritica,
+            factura: quotes.factura,
+            pago: quotes.pago,
+            utilidadProgramada: quotes.utilidadProgramada,
+            utilidadReal: quotes.utilidadReal,
+            financiamiento: quotes.financiamiento,
+            fechaRegistro: quotes.fechaRegistro,
+            estatus: quotes.estatus,
+            formaPago: quotes.formaPago,
+            tiempoEntrega: quotes.tiempoEntrega,
+            montoTotal: quotes.montoTotal,
+            ajustesCostos: quotes.ajustesCostos,
+            comentarios: quotes.comentarios,
+          });
+        }
+        else
+        {
+          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-error']
+          });
+        }
+        
       }
     });
   }
@@ -201,17 +212,28 @@ export class QuoteDetailsComponent implements OnInit {
     if (this.quotesId) {
       // Actualizar proyecto
       quotesData.cotizacionId = this.quotesId;
-      this.quotesService.updateQuote(quotesData).subscribe(() => {
-        // Redirigir a la lista de proyectos
-        this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
-        this.snackBar.open('Cotizacion actualizada correctamente', 'Cerrar', { duration: 3000 });
-      });
+      this.quotesService.updateQuote(quotesData).subscribe((res) => {
+        if(res.code==200){
+                // Redirigir a la lista de proyectos
+                this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
+                this.snackBar.open('Cotizacion actualizada correctamente', 'Cerrar', { duration: 3000 });
+        }else{
+          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-error']
+          });
+        }
+       });
     } else {
       // Crear nuevo proyecto
-      this.quotesService.createQuote(quotesData).subscribe(() => {
+      this.quotesService.createQuote(quotesData).subscribe((res) => {
+        if(res.code==200){
         // Redirigir a la lista de proyectos
         this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
         this.snackBar.open('Cotizacion guardada correctamente', 'Cerrar', { duration: 3000 });
+        }else{
+
+        }
       });
     }
   }

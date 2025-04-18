@@ -231,7 +231,8 @@ export class ProjectDetailsComponent implements OnInit {
 
   loadProject(id: number): void {
     this.projectService.getProjectById(this.projectId).subscribe((projects) => {
-      const project = projects;
+      if(projects.code==200){
+        const project = projects.data;
       if (project) {
         this.projectForm.patchValue({
           proyectoId: project.proyectoId, // 🔹 Ahora se incluye el ID
@@ -296,6 +297,12 @@ export class ProjectDetailsComponent implements OnInit {
           cronograma: project.cronograma,
         });
       }
+    }else{
+      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['snackbar-error']
+      });
+    }
     });
   }
 
@@ -411,13 +418,21 @@ export class ProjectDetailsComponent implements OnInit {
     formData.append("archivo", archivo);
 
     this.projectService.uploadFile(formData).subscribe({
-      next: () => {
+      next: (res) => {
+        if(res.code==200){
         this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
           duration: 3000,
           panelClass: ['snackbar-success']
         });
         this.getFilesAll();
-      },
+      }
+    else{
+      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['snackbar-error']
+      });
+    }
+    },
       error: (err) => {
         this.snackBar.open('Hubo un error al subir el archivo. Por favor, inténtalo de nuevo.', 'Cerrar', {
           duration: 3000,
@@ -455,7 +470,9 @@ export class ProjectDetailsComponent implements OnInit {
 
   deleteFile(proyectoId: number, categoria: string, nombreArchivo: string): void {
     this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe(
-      (res) => {
+      (res:any) => {
+        if(res.code==200){
+        
         this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
           duration: 3000,
           panelClass: ['snackbar-success']
@@ -463,6 +480,13 @@ export class ProjectDetailsComponent implements OnInit {
   
         // Si necesitas actualizar la lista después de eliminar:
         this.getFilesAll(); // Opcional: recargar lista de archivos
+      }else{
+        this.snackBar.open('Hubo un error, contacte al administrador', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+
+      }
       },
       (error) => {
         console.error('Error al eliminar el archivo:', error);
