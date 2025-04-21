@@ -86,30 +86,30 @@ export class QuoteDetailsComponent implements OnInit {
       cliente: [0], // 🔹 Cambiar de '' a 0
       prospecto: [0], // 🔹 Cambiar de '' a 0
       usuarioCreadorId: [0, Validators.required], // 🔹 Cambiar de '' a 0
-      necesidad: ["", [Validators.required, Validators.maxLength(500)]],
-      direccion: ["", [Validators.maxLength(255)]],
-      nombreContacto: ["", [Validators.maxLength(255)]],
-      telefono: ["", [Validators.maxLength(50)]],
-      empresa: ["", [Validators.maxLength(255)]],
-      cotizacion: ["", [Validators.maxLength(255)]],
-      ordenCompra: ["", [Validators.maxLength(255)]],
-      contrato: ["", [Validators.maxLength(255)]],
-      proveedor: ["", [Validators.maxLength(255)]],
-      vendedor: ["", [Validators.maxLength(255)]],
+      necesidad: [null, [Validators.required, Validators.maxLength(500)]],
+      direccion: [null, [Validators.maxLength(255)]],
+      nombreContacto: [null, [Validators.required,Validators.maxLength(255)]],
+      telefono: [null, [Validators.maxLength(50)]],
+      empresa: [null, [Validators.maxLength(255)]],
+      cotizacion: [null, [Validators.maxLength(255)]],
+      ordenCompra: [null, [Validators.maxLength(255)]],
+      contrato: [null, [Validators.maxLength(255)]],
+      proveedor: [null, [Validators.maxLength(255)]],
+      vendedor: [null, [Validators.maxLength(255)]],
       fechaEntrega: [null], // ✅ Debe ser Date o null
-      rutaCritica: ["", [Validators.maxLength(500)]],
-      factura: ["", [Validators.maxLength(255)]],
+      rutaCritica: [null, [Validators.maxLength(500)]],
+      factura: [null, [Validators.maxLength(255)]],
       pago: [null, Validators.pattern(/^\d+(\.\d{1,2})?$/)], // ✅ Debe ser número o null
       utilidadProgramada: [null, Validators.pattern(/^\d+(\.\d{1,2})?$/)],
       utilidadReal: [null, Validators.pattern(/^\d+(\.\d{1,2})?$/)],
       financiamiento: [null, Validators.pattern(/^\d+(\.\d{1,2})?$/)],
       fechaRegistro: [new Date()], // ✅ Enviar como `Date`
       estatus: [0, [Validators.maxLength(50)]],
-      formaPago: [""],
-      tiempoEntrega: [""],
+      formaPago: [null],
+      tiempoEntrega: [null],
       montoTotal: [0],
-      ajustesCostos: [""],
-      comentarios: [""],
+      ajustesCostos: [null],
+      comentarios: [null],
     });
     this.getEstatus();
     this.getClientes();
