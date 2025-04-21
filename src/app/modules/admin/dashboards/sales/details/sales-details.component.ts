@@ -135,8 +135,8 @@ export class SalesDetailsComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.projectService.getProjects().subscribe((proyects) => {
-      this.proyects = proyects
+    this.projectService.getProjects().subscribe((proyects:any) => {
+      this.proyects = proyects.data
     });
   }
 
