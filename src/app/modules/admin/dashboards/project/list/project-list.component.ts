@@ -91,8 +91,8 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
       this.dataSource.paginator = this.paginator;
 
       // Llenar filterOptions con las fechas obtenidas de los proyectos
-      this.filterOptions.fechaInicio = [...new Set(projects.map(project => project.fechaInicio))];
-      this.filterOptions.fechaFin = [...new Set(projects.map(project => project.fechaFin))];
+      this.filterOptions.fechaInicio = [...new Set(projects.data.map(project => project.fechaInicio))];
+      this.filterOptions.fechaFin = [...new Set(projects.data.map(project => project.fechaFin))];
       this.dataSource.sort = this.sort;
 
       // Establecer el filtro personalizado

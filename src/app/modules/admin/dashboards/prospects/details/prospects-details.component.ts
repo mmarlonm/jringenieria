@@ -33,6 +33,7 @@ import { MatDialog } from "@angular/material/dialog";
   selector: "app-prospects-details",
   templateUrl: "./prospects-details.component.html",
   styleUrls: ["./prospects-details.component.scss"],
+  
   standalone: true,
   imports: [
     CommonModule,

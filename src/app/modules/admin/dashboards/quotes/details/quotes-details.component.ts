@@ -32,6 +32,7 @@ import { MatIconModule } from "@angular/material/icon";
 @Component({
   selector: "app-quotes-details",
   templateUrl: "./quotes-details.component.html",
+  styleUrls:["./quotes-details.component.scss"],
   standalone: true,
   imports: [
     CommonModule,

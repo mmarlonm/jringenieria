@@ -21,6 +21,7 @@ import { HistorialComponent } from '../historial/historial.component';
 @Component({
   selector: 'app-quotes-list',
   templateUrl: './quotes-list.component.html',
+  
   standalone: true,
   imports: [
     CommonModule,
