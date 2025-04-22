@@ -76,18 +76,18 @@ export class SalesDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.salesForm = this.fb.group({
-      ventaId: [0],
-      fecha: [null, Validators.required],
-      serie: ["", Validators.maxLength(10)],
-      folio: ["", Validators.maxLength(20)],
-      clienteId: [null, Validators.required],
-      total: [0, Validators.required],
-      pendiente: [0],
-      usuarioId: [null, Validators.required],
-      formaPagoId: [null, Validators.required],
-      uuid: ["", Validators.maxLength(50)],
-      unidadNegocioId: [null, Validators.required],
-      proyectoId: [null, Validators.required],
+      ventaId: [0], // ID generado por backend, no requerido aquí
+      fecha: [null, Validators.required], // DateTime => requerido
+      serie: [null, Validators.maxLength(10)], // opcional
+      folio: [null, Validators.maxLength(20)], // opcional
+      total: [0, Validators.required], // decimal? => pero lo estás requiriendo en frontend, está bien si lo necesitas obligatorio
+      pendiente: [0], // opcional
+      uuid: [null, Validators.maxLength(50)], // opcional (Guid?)
+      clienteId: [null, Validators.required], // requerido
+      usuarioId: [null, Validators.required], // requerido
+      formaPagoId: [null, Validators.required], // requerido
+      unidadNegocioId: [null, Validators.required], // requerido
+      proyectoId: [null, Validators.required], // no está en el DTO pero asumimos que es necesario
     });
 
     this.route.paramMap.subscribe((params) => {
@@ -135,8 +135,8 @@ export class SalesDetailsComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.projectService.getProjects().subscribe((proyects) => {
-      this.proyects = proyects
+    this.projectService.getProjects().subscribe((proyects:any) => {
+      this.proyects = proyects.data
     });
   }
 
