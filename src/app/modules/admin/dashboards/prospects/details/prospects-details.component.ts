@@ -28,6 +28,8 @@ import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import { NotesDetailsComponent } from "../dialog/dialog.component";
 import { MatDialog } from "@angular/material/dialog";
+import Swal from 'sweetalert2';
+
 
 @Component({
   selector: "app-prospects-details",
@@ -133,7 +135,9 @@ export class ProspectDetailsComponent implements OnInit {
   }
 
   loadProspects(id: number): void {
-    this.prospectosService.getProspectoById(id).subscribe((prospecto) => {
+    this.prospectosService.getProspectoById(id).subscribe((res) => {
+      if(res.code==200){
+      var prospecto = res.data
       if (prospecto) {
         // Verifica si "comoSeObtuvo" es "Otros" para activar el campo de texto adicional
         this.mostrarCampoOtros =
@@ -154,6 +158,15 @@ export class ProspectDetailsComponent implements OnInit {
           personalSeguimiento: prospecto.personalSeguimiento,
         });
       }
+      }
+      else{
+        Swal.fire({
+                   icon: "error",
+                   title:"Opps",
+                   text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                   draggable: true
+                 });
+     }
     });
   }
 
@@ -172,17 +185,22 @@ export class ProspectDetailsComponent implements OnInit {
     if (this.prospectsId) {
       // Actualizar proyecto
       quotesData.prospectoId = this.prospectsId;
-      this.prospectosService.saveProspecto(quotesData).subscribe(() => {
-        // Redirigir a la lista de proyectos
-        this.router.navigate(["/dashboards/prospects"]); // O la ruta correspondiente a la lista
-      });
-    } else {
-      // Crear nuevo proyecto
-      this.prospectosService.saveProspecto(quotesData).subscribe(() => {
-        // Redirigir a la lista de proyectos
-        this.router.navigate(["/dashboards/prospects"]); // O la ruta correspondiente a la lista
-      });
     }
+
+    this.prospectosService.saveProspecto(quotesData).subscribe((res) => {
+      if(res.code==200){  
+      // Redirigir a la lista de proyectos
+      this.router.navigate(["/dashboards/prospects"]); // O la ruta correspondiente a la lista
+      }
+      else{
+        Swal.fire({
+          icon: "error",
+          title:"Opps",
+          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
+        });
+      } 
+    });
   }
 
   updateValue(event: Event, controlName: string) {
