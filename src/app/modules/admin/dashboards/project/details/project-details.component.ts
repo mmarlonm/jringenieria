@@ -37,6 +37,7 @@ import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { MatChipInputEvent } from "@angular/material/chips";
 import { set } from "lodash";
 import { MatSnackBar } from '@angular/material/snack-bar'; // Asegúrate de tenerlo importado
+import Swal from 'sweetalert2';
 
 registerLocaleData(localeEs);
 @Component({
@@ -299,10 +300,12 @@ export class ProjectDetailsComponent implements OnInit {
         });
       }
     }else{
-      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-        duration: 3000,
-        panelClass: ['snackbar-error']
-      });
+      Swal.fire({
+                  icon: "error",
+                  title:"Opps",
+                  text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                  draggable: true
+                });
     }
     });
   }
@@ -428,17 +431,23 @@ export class ProjectDetailsComponent implements OnInit {
         this.getFilesAll();
       }
     else{
-      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-        duration: 3000,
-        panelClass: ['snackbar-error']
-      });
+      Swal.fire({
+                  icon: "error",
+                  title:"Opps",
+                  text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                  draggable: true
+                });
+      
     }
     },
       error: (err) => {
-        this.snackBar.open('Hubo un error al subir el archivo. Por favor, inténtalo de nuevo.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
-        });
+        Swal.fire({
+                    icon: "error",
+                    title:"Opps",
+                    text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                    draggable: true
+                  });
+        
       },
     });
   }
@@ -482,19 +491,24 @@ export class ProjectDetailsComponent implements OnInit {
         // Si necesitas actualizar la lista después de eliminar:
         this.getFilesAll(); // Opcional: recargar lista de archivos
       }else{
-        this.snackBar.open('Hubo un error, contacte al administrador', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
-        });
+       Swal.fire({
+                   icon: "error",
+                   title:"Opps",
+                   text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                   draggable: true
+                 });
+       
 
       }
       },
       (error) => {
-        console.error('Error al eliminar el archivo:', error);
-        this.snackBar.open('Ocurrió un error al eliminar el archivo.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
-        });
+        Swal.fire({
+                    icon: "error",
+                    title:"Opps",
+                    text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                    draggable: true
+                  });
+        
       }
     );
   }
