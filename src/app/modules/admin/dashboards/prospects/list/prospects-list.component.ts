@@ -13,6 +13,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
+
 
 @Component({
   selector: 'app-prospects-list',
@@ -70,11 +72,23 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
   }
 
   getProspects(): void {
-    this.prospectosService.getProspectos().subscribe((prospects) => {
+    this.prospectosService.getProspectos().subscribe((res:any) => {
+      if(res.code==200){
+      var prospects = res.data
       this.prospectsCount = prospects.length;
       this.dataSource = new MatTableDataSource(prospects);
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
+      }
+      else{
+        Swal.fire({
+                           icon: "error",
+                           title:"Opps",
+                           text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                           draggable: true
+                         });
+        
+      }
     });
   }
 
@@ -94,9 +108,18 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
   }
 
   deleteQuote(prospectId: number): void {
-    this.prospectosService.deleteProspecto(prospectId).subscribe(() => {
+    this.prospectosService.deleteProspecto(prospectId).subscribe((res) => {
+      if(res.code==200){
       this.getProspects();
-      this.snackBar.open('Prospecto eliminado correctamente', 'Cerrar', { duration: 3000 });
+      }
+      else{
+        Swal.fire({
+          icon: "error",
+          title:"Opps",
+          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
+        });
+      }
     });
   }
 

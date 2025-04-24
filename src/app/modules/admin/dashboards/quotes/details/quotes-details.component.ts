@@ -28,10 +28,12 @@ import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { ChangeDetectorRef } from '@angular/core';
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
+import Swal from 'sweetalert2';
 
 @Component({
   selector: "app-quotes-details",
   templateUrl: "./quotes-details.component.html",
+  styleUrls:["./quotes-details.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
@@ -194,10 +196,13 @@ export class QuoteDetailsComponent implements OnInit {
         }
         else
         {
-          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-            duration: 3000,
-            panelClass: ['snackbar-error']
+          Swal.fire({
+            icon: "error",
+            title:"Opps",
+            text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+            draggable: true
           });
+
         }
         
       }
@@ -218,10 +223,12 @@ export class QuoteDetailsComponent implements OnInit {
                 this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
                 this.snackBar.open('Cotizacion actualizada correctamente', 'Cerrar', { duration: 3000 });
         }else{
-          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-            duration: 3000,
-            panelClass: ['snackbar-error']
-          });
+          Swal.fire({
+            icon: "error",
+            title:"Opps",
+            text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+            draggable: true
+          }); 
         }
        });
     } else {
@@ -232,7 +239,12 @@ export class QuoteDetailsComponent implements OnInit {
         this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
         this.snackBar.open('Cotizacion guardada correctamente', 'Cerrar', { duration: 3000 });
         }else{
-
+          Swal.fire({
+            icon: "error",
+            title:"Opps",
+            text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+            draggable: true
+          });
         }
       });
     }
@@ -330,9 +342,11 @@ export class QuoteDetailsComponent implements OnInit {
         this.getFilesAll();
       },
       error: (err) => {
-        this.snackBar.open('Hubo un error al subir el archivo. Por favor, inténtalo de nuevo.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
+        Swal.fire({
+          icon: "error",
+          title:"Opps",
+          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
         });
       },
     });
@@ -423,11 +437,12 @@ export class QuoteDetailsComponent implements OnInit {
         this.getFilesAll(); // Opcional: recargar lista de archivos
       },
       (error) => {
-        console.error('Error al eliminar el archivo:', error);
-        this.snackBar.open('Ocurrió un error al eliminar el archivo.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
-        });
+        Swal.fire({
+          icon: "error",
+          title:"Opps",
+          text:"Ocurrio un error al eliminar el archivo",
+          draggable: true
+        });       
       }
     );
   }
