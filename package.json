@@ -37,6 +37,7 @@
         "perfect-scrollbar": "1.5.5",
         "quill": "2.0.2",
         "rxjs": "7.8.1",
+        "sweetalert2": "^11.19.1",
         "tslib": "2.6.2",
         "zone.js": "0.14.6"
     },
