@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-sales-list',
@@ -77,7 +78,9 @@ export class SalesListComponent implements OnInit,AfterViewInit {
   }
 
 getVentas(): void {
-  this.salesService.getVentas().subscribe((ventas) => {
+  this.salesService.getVentas().subscribe((res:any) => {
+    if(res.code==200){
+    var ventas = res.data;
     this.ventasCount = ventas.length;
     this.dataSource.data = ventas; // ✅ solo actualizar los datos
 
@@ -94,6 +97,14 @@ getVentas(): void {
         default: return item[property];
       }
     };
+  }else{
+            Swal.fire({
+              icon: "error",
+              title:"Opps",
+              text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+              draggable: true
+            });
+  }
   });
 }
 
@@ -110,9 +121,19 @@ getVentas(): void {
   }
 
   deleteVenta(ventaId: number): void {
-    this.salesService.deleteVenta(ventaId).subscribe(() => {
+    this.salesService.deleteVenta(ventaId).subscribe((res:any) => {
+      if(res.code == 200){
       this.getVentas();
       this.snackBar.open('Venta eliminada correctamente', 'Cerrar', { duration: 3000 });
+      }
+      else{
+        Swal.fire({
+                  icon: "error",
+                  title:"Opps",
+                  text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                  draggable: true
+                });
+      }
     });
   }
 

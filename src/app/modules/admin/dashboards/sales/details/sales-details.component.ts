@@ -27,6 +27,7 @@ import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import { ProjectService } from "../../project/project.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import Swal from 'sweetalert2'
 
 @Component({
   selector: "app-sales-details",
@@ -111,8 +112,18 @@ export class SalesDetailsComponent implements OnInit {
   }
 
   loadVenta(id: number): void {
-    this.salesService.getVentaById(id).subscribe((venta) => {
+    this.salesService.getVentaById(id).subscribe((res) => {
+      if(res.code == 200 ){
+      var venta = res.data;
       if (venta) this.salesForm.patchValue(venta);
+    }else{
+      Swal.fire({
+                    icon: "error",
+                    title:"Opps",
+                    text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+                    draggable: true
+                  });
+    }
     });
   }
 
@@ -121,10 +132,19 @@ export class SalesDetailsComponent implements OnInit {
     if (this.salesForm.invalid) return;
 
     const data = this.salesForm.value;
-    this.salesService.createVenta(data).subscribe(() => {
+    this.salesService.createVenta(data).subscribe((res) => {
+      if(res.code == 200){
       this.router.navigate(["/dashboards/sales"]);
       const message = this.ventaId ? 'Cotización actualizada correctamente' : 'Cotización guardada correctamente';
       this.snackBar.open(message, 'Cerrar', { duration: 3000 });
+      }else{
+        Swal.fire({
+          icon: "error",
+          title:"Opps",
+          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
+        });
+      }
     });
   }
 
