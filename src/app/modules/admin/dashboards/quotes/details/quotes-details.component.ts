@@ -280,8 +280,8 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   getProspects(): void {
-    this.prospectsService.getProspectos().subscribe((data) => {
-      this.prospects = data;
+    this.prospectsService.getProspectos().subscribe((res:any) => {
+      this.prospects = res.data;
       this.filteredProspects = this.prospects;
 
       // Suscribirse al filtro con debounce
