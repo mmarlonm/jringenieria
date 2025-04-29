@@ -118,7 +118,7 @@
 
                     }
 
-                    @if (user.proyectosCreados.length) {
+                    @if (user.proyectosCreados?.length) {
                         <div class="mt-8">
                             <h3 class="text-lg font-bold">Proyectos Asignados</h3>
                             <table class="table-auto w-full mt-4 border-collapse border border-gray-300">
@@ -375,7 +375,6 @@
                             class="ml-2"
                             mat-flat-button
                             [color]="'primary'"
-                            [disabled]="contactForm.invalid"
                             [matTooltip]="'Save'"
                             (click)="updateContact()"
                         >

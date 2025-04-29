@@ -210,7 +210,16 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   saveQuotes(): void {
-    if (this.quotesForm.invalid) return;
+    if (this.quotesForm.invalid) {
+       Swal.fire({
+                             icon: "error",
+                             title:"Opps",
+                             text:"Por favor, completa los campos obligatorios",
+                             draggable: true
+                           });   
+                           return;                   
+          
+    }
 
     const quotesData: any = this.quotesForm.value;
 

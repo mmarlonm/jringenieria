@@ -120,7 +120,9 @@ getVentas(): void {
     this.router.navigate([`/dashboards/sales/${ventaId}`]);
   }
 
-  deleteVenta(ventaId: number): void {
+  async deleteVenta(ventaId: number){
+    const confirmed = await this.showConfirmation();
+    if(confirmed){
     this.salesService.deleteVenta(ventaId).subscribe((res:any) => {
       if(res.code == 200){
       this.getVentas();
@@ -135,6 +137,7 @@ getVentas(): void {
                 });
       }
     });
+  }
   }
 
   obtenerPermisos(): void {
@@ -156,4 +159,17 @@ getVentas(): void {
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
   }
+   showConfirmation(): Promise<boolean>{
+          return Swal.fire({
+            title:'Seguro que desea eliminar',
+            text:'Esta accion no se puede revertir',
+            icon:'warning',
+            showCancelButton:true,
+            confirmButtonText:'Eliminar',
+            cancelButtonText:'Cancelar',
+            reverseButtons:true,
+          }).then((result)=> {
+            return result.isConfirmed;
+          });
+        }
 }

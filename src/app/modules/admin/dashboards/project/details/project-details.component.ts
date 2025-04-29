@@ -329,7 +329,16 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   saveProject(): void {
-    if (this.projectForm.invalid) return;
+    if (this.projectForm.invalid){
+     Swal.fire({
+                       icon: "error",
+                       title:"Opps",
+                       text:"Por favor, completa los campos obligatorios",
+                       draggable: true
+                     });   
+                     return;                   
+                    }
+    
 
     const projectData: any = this.projectForm.value;
 
