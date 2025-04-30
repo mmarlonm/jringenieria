@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import Swal from 'sweetalert2';
 @Component({
   selector: 'app-products-details',
   templateUrl: './products-details.component.html',
@@ -79,7 +80,15 @@ export class ProductsDetailsComponent implements OnInit {
   }
 
   saveProduct(): void {
-    if (this.productForm.invalid) return;
+    if (this.productForm.invalid){
+       Swal.fire({
+                             icon: "error",
+                             title:"Opps",
+                             text:"Por favor, completa los campos obligatorios",
+                             draggable: true
+                           });   
+                           return;                   
+    }
   
     const productData: any = this.productForm.value;
   

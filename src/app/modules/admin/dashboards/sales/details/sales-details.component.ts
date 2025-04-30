@@ -129,7 +129,15 @@ export class SalesDetailsComponent implements OnInit {
 
   saveVenta(): void {
     console.log(this.salesForm);
-    if (this.salesForm.invalid) return;
+   if (this.salesForm.invalid) {
+     Swal.fire({
+                           icon: "error",
+                           title:"Opps",
+                           text:"Por favor, completa los campos obligatorios",
+                           draggable: true
+                         });   
+                         return;                   
+   }
 
     const data = this.salesForm.value;
     this.salesService.createVenta(data).subscribe((res) => {

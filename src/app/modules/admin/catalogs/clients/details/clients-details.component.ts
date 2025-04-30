@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-clients-details',
@@ -92,7 +93,16 @@ export class ClientsDetailsComponent implements OnInit {
   }
 
   saveClient(): void {
-    if (this.clienteForm.invalid) return;
+    if (this.clienteForm.invalid){
+       Swal.fire({
+                             icon: "error",
+                             title:"Opps",
+                             text:"Por favor, completa los campos obligatorios",
+                             draggable: true
+                           });   
+                           return;                   
+          
+    };
   
     const clientData: any = this.clienteForm.value;
   

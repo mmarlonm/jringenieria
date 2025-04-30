@@ -178,7 +178,15 @@ export class ProspectDetailsComponent implements OnInit {
   }
 
   saveProspect(): void {
-    if (this.prospectForm.invalid) return;
+    if (this.prospectForm.invalid){
+           Swal.fire({
+                                 icon: "error",
+                                 title:"Opps",
+                                 text:"Por favor, completa los campos obligatorios",
+                                 draggable: true
+                               });   
+                               return;                   
+    }
 
     const quotesData: any = this.prospectForm.value;
 

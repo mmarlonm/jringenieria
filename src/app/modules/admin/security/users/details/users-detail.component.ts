@@ -42,6 +42,7 @@ import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 //servicion para obtener roles
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'users-details',
@@ -208,6 +209,15 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      * Update the user
      */
     updateContact(): void {
+        if(this.contactForm.invalid){
+        Swal.fire({
+                    icon: "error",
+                    title:"Opps",
+                    text:"Por favor, completa los campos obligatorios",
+                    draggable: true
+                 }); 
+                    return;
+        }
         // Obtener los valores del formulario
         const user = this.contactForm.getRawValue();
     

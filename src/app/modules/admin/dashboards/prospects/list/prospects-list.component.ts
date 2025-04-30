@@ -107,7 +107,9 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
     this.router.navigate([`/dashboards/prospects/${prospectId}`]);
   }
 
-  deleteQuote(prospectId: number): void {
+  async deleteQuote(prospectId: number){
+    const confirmed = await this.showConfirmation();
+    if(confirmed){
     this.prospectosService.deleteProspecto(prospectId).subscribe((res) => {
       if(res.code==200){
       this.getProspects();
@@ -121,6 +123,7 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
         });
       }
     });
+  }
   }
 
   obtenerPermisos(): void {
@@ -146,4 +149,17 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
   }
+  showConfirmation(): Promise<boolean>{
+      return Swal.fire({
+        title:'Seguro que desea eliminar',
+        text:'Esta accion no se puede revertir',
+        icon:'warning',
+        showCancelButton:true,
+        confirmButtonText:'Eliminar',
+        cancelButtonText:'Cancelar',
+        reverseButtons:true,
+      }).then((result)=> {
+        return result.isConfirmed;
+      });
+    }
 }

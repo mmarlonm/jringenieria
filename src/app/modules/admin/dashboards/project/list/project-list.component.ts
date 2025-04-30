@@ -17,6 +17,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { HistorialComponent } from '../historial/historial.component';
 import { MatDialog } from '@angular/material/dialog';
+import { reverse } from 'lodash';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-project-list',
@@ -186,11 +188,14 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
     this.router.navigate([`/dashboards/project/${projectId}`]);
   }
 
-  deleteProject(projectId: number): void {
-    this.projectService.deleteProject(projectId).subscribe(() => {
-      this.getProjects();
-      this.snackBar.open('Proyecto eliminado correctamente', 'Cerrar', { duration: 3000 });
-    });
+  async deleteProject(projectId: number){
+    const confirmed = await this.showConfirmation();
+    if(confirmed){
+      this.projectService.deleteProject(projectId).subscribe(() => {
+        this.getProjects();
+        this.snackBar.open('Proyecto eliminado correctamente', 'Cerrar', { duration: 3000 });
+      });
+    }
   }
 
   obtenerPermisos(): void {
@@ -219,6 +224,20 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
         width: '700px',
         data: { historial }
       });
+    });
+  }
+
+  showConfirmation(): Promise<boolean>{
+    return Swal.fire({
+      title:'Seguro que desea eliminar',
+      text:'Esta accion no se puede revertir',
+      icon:'warning',
+      showCancelButton:true,
+      confirmButtonText:'Eliminar',
+      cancelButtonText:'Cancelar',
+      reverseButtons:true,
+    }).then((result)=> {
+      return result.isConfirmed;
     });
   }
 }
