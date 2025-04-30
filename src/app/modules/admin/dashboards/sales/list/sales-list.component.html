@@ -2,7 +2,7 @@
   <!-- Main -->
   <div class="flex-auto">
     <!-- Header -->
-    <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8">
+    <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex- md:px-8">
       <!-- Title -->
       <div>
         <div class="text-4xl font-extrabold leading-none tracking-tight">
@@ -11,15 +11,17 @@
         <div class="text-secondary ml-0.5 font-medium">
           {{ ventasCount > 0 ? ventasCount : 'No Ventas' }}
         </div>
+       
       </div>
-
-      <!-- Main actions -->
-      <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+      <div class="sticky py-2 flex justify-end ">
         <button class="ml-4" mat-flat-button color="primary" (click)="addVenta()" *ngIf="tienePermiso('btnAdd')">
           <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
           <span class="ml-2 mr-1">Agregar Venta</span>
         </button>
       </div>
+
+      <!-- Main actions -->
+      
     </div>
 
     <!-- Ventas list -->

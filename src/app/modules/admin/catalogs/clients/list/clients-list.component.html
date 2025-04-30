@@ -2,7 +2,7 @@
     <!-- Main -->
     <div class="flex-auto">
         <!-- Header -->
-        <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8">
+        <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex- md:px-8">
             <!-- Title -->
             <div>
                 <div class="text-4xl font-extrabold leading-none tracking-tight">
@@ -22,9 +22,7 @@
                     }}
                 </div>
             </div>
-
-            <!-- Main actions -->
-            <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+            <div class="sticky py-2 flex justify-end ">
                 <!-- Add client button -->
                 <button class="ml-4" mat-flat-button [color]="'primary'" (click)="addClient()" *ngIf="tienePermiso('btnAdd')">
                     <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
@@ -38,7 +36,10 @@
                 <!-- Hidden file input for Excel -->
                 <input #fileInput type="file" accept=".xls, .xlsx" (change)="onFileSelected($event)" style="display: none;">
             </div>
-        </div>
+
+
+            <!-- Main actions -->
+                   </div>
 
         <!-- Clients list -->
         <div class="relative">
