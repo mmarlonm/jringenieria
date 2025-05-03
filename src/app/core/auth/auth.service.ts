@@ -69,7 +69,24 @@ export class AuthService {
     if (this._authenticated) {
       return throwError("User is already logged in.");
     }
-    return this._httpClient.post(`${this.apiUrl}/login`, credentials).pipe(
+
+    // Obtener metadata del navegador
+    const metadata = {
+      navegador: navigator.userAgent,
+      sistemaOperativo: navigator.platform,
+      dispositivo: /Mobi|Android/i.test(navigator.userAgent)
+        ? "Móvil"
+        : "Escritorio",
+    };
+
+    // Combinar credenciales con metadata
+  const body = {
+    ...credentials,
+    metadata
+  };
+
+
+    return this._httpClient.post(`${this.apiUrl}/login`, body).pipe(
       switchMap((response: any) => {
         // Store the access token in the local storage
         this.accessToken = response.token;
