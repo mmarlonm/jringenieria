@@ -139,9 +139,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   getSales() {
-    this._salesService.getVentas().subscribe((sales) => {
+    this._salesService.getVentas().subscribe((sales:any) => {
       // Aquí puedes manejar los datos de las ventas
-      this.salesData = sales;
+      this.salesData = sales.data;
       this.prepateChartSales();
     });
   }

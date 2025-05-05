@@ -3,7 +3,7 @@ import { inject, Injectable } from "@angular/core";
 import { AuthUtils } from "app/core/auth/auth.utils";
 import { UserService } from "app/core/user/user.service";
 import { environment } from "environments/environment"; // Asegúrate de tener la URL base de tu API aquí
-import { Observable, of, switchMap, throwError } from "rxjs";
+import { Observable, of, switchMap, throwError, from } from "rxjs";
 @Injectable({ providedIn: "root" })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/Auth`; // Asegúrate de que esto sea correcto
@@ -33,7 +33,7 @@ export class AuthService {
     localStorage.setItem("userInformation", usr);
   }
 
-  get userInformation(): string {
+  get userInformation(): any {
     return localStorage.getItem("userInformation") ?? "";
   }
 
@@ -65,43 +65,81 @@ export class AuthService {
    * @param credentials
    */
   signIn(credentials: { username: string; password: string }): Observable<any> {
-    // Throw error, if the user is already logged in
     if (this._authenticated) {
       return throwError("User is already logged in.");
     }
-
-    // Obtener metadata del navegador
-    const metadata = {
-      navegador: navigator.userAgent,
-      sistemaOperativo: navigator.platform,
-      dispositivo: /Mobi|Android/i.test(navigator.userAgent)
-        ? "Móvil"
-        : "Escritorio",
-    };
-
-    // Combinar credenciales con metadata
-  const body = {
-    ...credentials,
-    metadata
-  };
-
-
-    return this._httpClient.post(`${this.apiUrl}/login`, body).pipe(
-      switchMap((response: any) => {
-        // Store the access token in the local storage
-        this.accessToken = response.token;
-        // Set the authenticated flag to true
-        this._authenticated = true;
-
-        const { token, ...userWithoutToken } = response;
-        this.userInformation = JSON.stringify(userWithoutToken);
-
-        // Store the user on the user service
-        this._userService.user = response;
-        // Return a new observable with the response
-        return of(response);
+  
+    // Convertimos la promesa en observable con from()
+    return from(this.obtenerMetadataCompleta()).pipe(
+      switchMap(metadata => {
+        const body = {
+          ...credentials,
+          metadata
+        };
+  
+        return this._httpClient.post(`${this.apiUrl}/login`, body).pipe(
+          switchMap((response: any) => {
+            this.accessToken = response.token;
+            this._authenticated = true;
+            const { token, ...userWithoutToken } = response;
+            this.userInformation = JSON.stringify(userWithoutToken);
+            this._userService.user = response;
+            return of(response);
+          })
+        );
       })
     );
+  }
+
+  obtenerMetadataCompleta(): Promise<any> {
+    const userAgent = navigator.userAgent;
+  
+    const navegador = (() => {
+      if (userAgent.includes("Chrome")) return "Chrome";
+      if (userAgent.includes("Firefox")) return "Firefox";
+      if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) return "Safari";
+      if (userAgent.includes("Edge")) return "Edge";
+      return "Desconocido";
+    })();
+  
+    const sistemaOperativo = (() => {
+      if (userAgent.includes("Windows")) return "Windows";
+      if (userAgent.includes("Mac")) return "MacOS";
+      if (userAgent.includes("Linux")) return "Linux";
+      if (userAgent.includes("Android")) return "Android";
+      if (userAgent.includes("iPhone")) return "iOS";
+      return "Desconocido";
+    })();
+  
+    const dispositivo = /Mobi|Android/i.test(userAgent) ? "Móvil" : "Escritorio";
+  
+    const ipPromise = fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => data.ip)
+      .catch(() => "Desconocida");
+  
+    const ubicacionPromise = this.obtenerUbicacionPorIP();
+  
+    return Promise.all([ipPromise, ubicacionPromise]).then(([ip, ubicacion]) => ({
+      Ip: ip,
+      Navegador: navegador,
+      SistemaOperativo: sistemaOperativo,
+      Dispositivo: dispositivo,
+      Ubicacion: ubicacion
+    }));
+  }
+
+  async obtenerUbicacionPorIP(): Promise<string> {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+  
+      // Ej: "Ciudad, Región, País"
+      return `${data.city}, ${data.region}, ${data.country_name}`;
+    } catch (error) {
+      console.error('Error obteniendo ubicación por IP:', error);
+      return 'Ubicación desconocida';
+    }
   }
 
   /**
