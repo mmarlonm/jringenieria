@@ -38,11 +38,15 @@ export class PresenceService {
 
   private startHeartbeat() {
     setInterval(() => {
-      this.hubConnection.invoke("Heartbeat")
-      .then((res) => {
-        console.log("Heartbeat enviado", res);
-      })
-      .catch((err) => console.error(err));
+      if (this.hubConnection.state === signalR.HubConnectionState.Connected) {
+        this.hubConnection.invoke("Heartbeat")
+          .then((res) => {
+            console.log("Heartbeat enviado", res);
+          })
+          .catch((err) => console.error("Error al enviar Heartbeat", err));
+      } else {
+        console.warn("HubConnection no está conectado. Heartbeat cancelado.");
+      }
     }, 30000); // cada 30 segundos
   }
 
