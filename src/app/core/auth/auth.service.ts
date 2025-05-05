@@ -4,12 +4,14 @@ import { AuthUtils } from "app/core/auth/auth.utils";
 import { UserService } from "app/core/user/user.service";
 import { environment } from "environments/environment"; // Asegúrate de tener la URL base de tu API aquí
 import { Observable, of, switchMap, throwError, from } from "rxjs";
+import { PresenceService } from "app/presence.service"; // Asegúrate de que la ruta sea correcta
 @Injectable({ providedIn: "root" })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/Auth`; // Asegúrate de que esto sea correcto
   private _authenticated: boolean = false;
   private _httpClient = inject(HttpClient);
   private _userService = inject(UserService);
+  private _presenceService = inject(PresenceService);
 
   // -----------------------------------------------------------------------------------------------------
   // @ Accessors
@@ -84,6 +86,7 @@ export class AuthService {
             const { token, ...userWithoutToken } = response;
             this.userInformation = JSON.stringify(userWithoutToken);
             this._userService.user = response;
+            this._presenceService.startConnection(response.token, response.usuario.id);
             return of(response);
           })
         );
@@ -147,12 +150,14 @@ export class AuthService {
    */
   signOut(): Observable<any> {
     // Remove the access token from the local storage
+    
     localStorage.removeItem("accessToken");
     localStorage.removeItem("userInformation");
     // Set the authenticated flag to false
     this._authenticated = false;
 
     // Return the observable
+    this._presenceService.stopConnection();
     return of(true);
   }
 

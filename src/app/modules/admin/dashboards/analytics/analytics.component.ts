@@ -18,12 +18,13 @@ import { Router } from "@angular/router";
 import { TranslocoModule } from "@ngneat/transloco";
 import { AnalyticsService } from "app/modules/admin/dashboards/analytics/analytics.service";
 import { ApexOptions, NgApexchartsModule } from "ng-apexcharts";
-import { Subject, takeUntil } from "rxjs";
+import { Subject, take, takeUntil } from "rxjs";
 import { User } from "app/core/user/user.types";
 import { UserService } from "app/core/user/user.service";
 import { UsersService } from "../../security/users/users.service";
 import { SalesService } from "../sales/sales.services";
 import { CommonModule } from "@angular/common";
+import { PresenceService } from "app/presence.service";
 @Component({
   selector: "analytics",
   templateUrl: "./analytics.component.html",
@@ -64,6 +65,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   salesData: any[] = [];
 
   chartSales: ApexOptions = {};
+  connectedUsers: string[] = [];
 
   /**
    * Constructor
@@ -74,7 +76,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     private _userService: UserService,
     private _usersService: UsersService,
     private cdr: ChangeDetectorRef,
-    private _salesService: SalesService
+    private _salesService: SalesService,
+    private presenceService: PresenceService
   ) {}
 
   // -----------------------------------------------------------------------------------------------------
@@ -120,6 +123,32 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.getUsers();
     this.getAnalitica();
     this.getSales();
+    this.presenceService.onUsuarioConectado()
+  .pipe(takeUntil(this._unsubscribeAll))
+  .subscribe((newConnectedUsers: string[]) => {
+    const previousUsers = this.connectedUsers;
+
+    const nuevos = newConnectedUsers.filter(u => !previousUsers.includes(u));
+    const desconectados = previousUsers.filter(u => !newConnectedUsers.includes(u));
+
+    if (nuevos.length > 0) {
+      console.log('🚀 Usuarios que se conectaron:', nuevos);
+    }
+
+    if (desconectados.length > 0) {
+      console.log('❌ Usuarios que se desconectaron:', desconectados);
+    }
+
+    this.connectedUsers = newConnectedUsers;
+
+    // 🔁 Actualizar la propiedad `online` en los usuarios
+    this.users = this.users.map(user => ({
+      ...user,
+      online: newConnectedUsers.includes(user.usuarioId.toString()) // o usa `user.id` si usas IDs
+    }));
+
+    this.cdr.detectChanges(); // Forzar actualización en la vista
+  });
   }
 
   getAnalitica(): void {
@@ -129,12 +158,24 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     });
   }
 
-  getUsers() {
+  getUsers(): void {
     this._usersService.getUsers().subscribe((users) => {
-      this.users = users.filter(
-        (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
+      // Primero, filtramos por roles/activo
+      let filteredUsers = users.filter(
+        (user) => user.rolId !== 3 && user.activo !== false
       );
-      this.cdr.detectChanges(); // Forzar actualización en la vista
+      console.log("Usuarios filtrados:", filteredUsers);
+  
+      // Ahora obtenemos la lista de conectados desde PresenceService
+      this.presenceService.connectedUsers$.pipe(take(1)).subscribe((connectedIds) => {
+        // Marcamos cada usuario como online si está en la lista
+        this.users = filteredUsers.map(user => ({
+          ...user,
+          online: connectedIds.includes(user.usuarioId.toString())
+        }));
+        console.log('Usuarios conectados:', this.users);
+        this.cdr.detectChanges(); // Forzar actualización en la vista
+      });
     });
   }
 

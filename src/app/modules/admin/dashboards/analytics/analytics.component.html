@@ -884,18 +884,33 @@
                 >
                   <!-- Avatar & Info -->
                   <div class="flex w-full flex-auto flex-col p-8 text-center">
-                    <div class="mx-auto h-32 w-32 overflow-hidden rounded-full">
+                    <!-- Avatar con indicador de estado -->
+                    <div class="relative mx-auto h-32 w-32 rounded-full">
                       <img
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-cover rounded-full"
                         [src]="member.avatar"
                         alt="Contact avatar"
                       />
+                      <!-- Indicador de estado online/offline -->
+                      <div
+                        class="absolute top-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2"
+                        style="right: 20px !important;"
+                        [ngClass]="{
+                          'bg-green-500 border-white': member.online,
+                          'bg-gray-400 border-white': !member.online
+                        }"
+                        [title]="member.online ? 'Online' : 'Offline'"
+                      ></div>
                     </div>
+                  
+                    <!-- Nombre del usuario -->
                     <div class="mt-6 font-medium">
                       {{ member.nombreUsuario }}
                     </div>
+                  
+                    <!-- Correo electrónico -->
                     <div class="text-secondary">
-                      {{ member.nombreRol }}
+                      {{ member.email }}
                     </div>
                   </div>
                   <!-- Email & Phone -->
