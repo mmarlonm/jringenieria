@@ -78,6 +78,13 @@ export class AppComponent implements OnInit, OnDestroy {
   
   resetInactivityTimer(): void {
     clearTimeout(this.inactivityTimeout);
+
+    const token = localStorage.getItem("accessToken");
+    const storedData = JSON.parse(
+      localStorage.getItem("userInformation") || "{}"
+    );
+
+    if (!token || !storedData?.usuario?.id) return;
   
     // Si estaba inactivo, lo marcamos como activo
     if (this.isInactive) {
