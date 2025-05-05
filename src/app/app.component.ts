@@ -33,7 +33,10 @@ export class AppComponent implements OnInit, OnDestroy {
       localStorage.getItem("userInformation") || "{}"
     );
 
-    if (!token || !storedData?.usuario?.id) return;
+    if (!token || !storedData?.usuario?.id) {
+      this.presenceService.stopConnection();
+      return;
+    };
 
     this.presenceService.startConnection(token, storedData.usuario.id);
 
