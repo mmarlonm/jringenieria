@@ -2,7 +2,7 @@
   <!-- Main -->
   <div class="flex-auto">
     <!-- Header -->
-    <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex- md:px-8">
+    <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8">
       <!-- Title -->
       <div>
         <div class="text-4xl font-extrabold leading-none tracking-tight">
@@ -11,15 +11,39 @@
         <div class="text-secondary ml-0.5 font-medium">
           {{ ventasCount > 0 ? ventasCount : 'No Ventas' }}
         </div>
+      <!-- Main actions -->
+      <div class="mt-4 flex items-center sm:mt-0 md:mt-4">  
+      <!-- Search -->
+      <div class="flex-auto">
+          <mat-form-field
+              class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+              subscriptSizing="dynamic"
+          >
+              <mat-icon
+                  class="icon-size-5"
+                  matPrefix
+                  [svgIcon]="
+                      'heroicons_solid:magnifying-glass'
+                  "
+              ></mat-icon>
+              <input
+                  matInput
+                  [autocomplete]="'off'"
+                  [placeholder]="'Search users'"
+              />
+          </mat-form-field>    
+      </div>
+     <!-- Add sales button -->
+     <div class="sticky py-2 flex justify-end ">
+      <button class="ml-4" mat-flat-button color="primary" (click)="addVenta()" *ngIf="tienePermiso('btnAdd')">
+        <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+        <span class="ml-2 mr-1">Agregar Venta</span>
+      </button>
+    </div>
+
+      </div>
        
       </div>
-      <div class="sticky py-2 flex justify-end ">
-        <button class="ml-4" mat-flat-button color="primary" (click)="addVenta()" *ngIf="tienePermiso('btnAdd')">
-          <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
-          <span class="ml-2 mr-1">Agregar Venta</span>
-        </button>
-      </div>
-
       <!-- Main actions -->
       
     </div>
@@ -27,12 +51,6 @@
     <!-- Ventas list -->
     <div class="relative">
       <div class="mat-elevation-z8" *ngIf="ventasCount > 0; else noVentas">
-        <!-- Input para filtrar -->
-        <mat-form-field class="w-full">
-          <mat-label>Buscar</mat-label>
-          <input matInput (keyup)="applyFilter($event)" placeholder="Filtrar Ventas">
-        </mat-form-field>
-
         <!-- Tabla -->
         <div class="overflow-auto" style="max-height: 400px; overflow-y: auto;">
           <table mat-table [dataSource]="dataSource" matSort class="w-full">
