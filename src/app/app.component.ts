@@ -22,7 +22,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   @HostListener("window:beforeunload", ["$event"])
   unloadHandler(event: any): void {
-    this.presenceService.stopConnection(); // <-- Notifica al servidor
+    this.presenceService.stopConnection(); // Notifica al servidor al cerrar ventana
   }
 
   ngOnInit(): void {
@@ -36,9 +36,16 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!token || !storedData?.usuario?.id) {
       this.presenceService.stopConnection();
       return;
-    };
+    }
 
     this.presenceService.startConnection(token, storedData.usuario.id);
+
+    // ⏱ Enviar Heartbeat cada 30 segundos si está activo
+    setInterval(() => {
+      if (!this.isInactive) {
+        this.presenceService.sendHeartbeat();
+      }
+    }, 30000); // cada 30 segundos
 
     this.presenceService
       .onUsuarioConectado()
@@ -72,13 +79,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   startInactivityWatch(): void {
     this.resetInactivityTimer();
-  
+
     // Escuchar eventos que indican actividad
     window.addEventListener('mousemove', this.resetInactivityTimer.bind(this));
     window.addEventListener('keydown', this.resetInactivityTimer.bind(this));
     window.addEventListener('click', this.resetInactivityTimer.bind(this));
   }
-  
+
   resetInactivityTimer(): void {
     clearTimeout(this.inactivityTimeout);
 
@@ -88,19 +95,17 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     if (!token || !storedData?.usuario?.id) return;
-  
-    // Si estaba inactivo, lo marcamos como activo
+
     if (this.isInactive) {
       this.isInactive = false;
-      this.presenceService.setActive(); // 👈 Notificar al servidor
-      console.log('👋 Usuario volvió a estar activo');
+      this.presenceService.setActive();
+      console.log("👋 Usuario volvió a estar activo");
     }
-  
-    // Configurar el timeout nuevamente
+
     this.inactivityTimeout = setTimeout(() => {
       this.isInactive = true;
-      this.presenceService.setAway(); // 👈 Notificar al servidor
-      console.log('💤 Usuario marcado como inactivo');
+      this.presenceService.setAway();
+      console.log("💤 Usuario marcado como inactivo");
     }, this.inactivityLimit);
   }
 }

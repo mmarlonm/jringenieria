@@ -98,4 +98,12 @@ export class PresenceService {
       this.hubConnection = undefined; // Limpiar referencia
     }
   }
+
+  sendHeartbeat(): void {
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      this.hubConnection.invoke("Heartbeat").catch((err) =>
+        console.error("Error en Heartbeat", err)
+      );
+    }
+  }
 }
