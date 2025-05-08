@@ -1,9 +1,9 @@
-<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden flex flex-col">
   <!-- Main -->
   <div class="flex-auto">
     <!-- Header -->
     <div
-      class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex- md:px-8"
+      class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8"
     >
       <!-- Title -->
       <div>
@@ -26,8 +26,27 @@
         </div>
         
       <!-- Main actions -->
-      </div>
-      <div class="sticky py-2 flex justify-end ">
+      <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+        <!-- Search -->
+        <div class="flex-auto">
+            <mat-form-field
+                class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+                subscriptSizing="dynamic"
+            >
+                <mat-icon
+                    class="icon-size-5"
+                    matPrefix
+                    [svgIcon]="
+                        'heroicons_solid:magnifying-glass'
+                    "
+                ></mat-icon>
+                <input
+                    matInput
+                    [autocomplete]="'off'"
+                    [placeholder]="'Search users'"
+                />
+            </mat-form-field>    
+        </div>
         <!-- Add rol button -->
         <button
           class="ml-4"
@@ -39,24 +58,17 @@
           <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
           <span class="ml-2 mr-1">Agregar Proyecto</span>
         </button>
+        
+    </div>
       </div>
-
+      
     </div>
 
     <!-- Contacts list -->
     <div class="relative">
       @if (projectsCount > 0) {
         <div class="mat-elevation-z8">
-          <!-- Input para filtrar -->
-          <mat-form-field class="w-full">
-            <mat-label>Buscar</mat-label>
-            <input
-              matInput
-              (keyup)="applyFilter($event)"
-              placeholder="Filtrar proyectos"
-            />
-          </mat-form-field>
-
+          
           <!-- Tabla -->
           <div
             class="overflow-auto"
