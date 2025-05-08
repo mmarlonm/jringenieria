@@ -138,6 +138,7 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
    */
   applyFilter(): void {
     const filterValue = this.filterValue.trim().toLowerCase();
+    console.log('Filter Value:', filterValue);
     this.dataSource.filter = filterValue;  // Aplica el filtro global
   }
 

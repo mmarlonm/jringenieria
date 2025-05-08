@@ -42,6 +42,8 @@
                 ></mat-icon>
                 <input
                     matInput
+                    [(ngModel)]="filterValue"
+                    (keyup)="applyFilter()"
                     [autocomplete]="'off'"
                     [placeholder]="'Search users'"
                 />

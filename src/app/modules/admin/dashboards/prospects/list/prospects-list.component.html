@@ -30,6 +30,7 @@
               ></mat-icon>
               <input
                   matInput
+                  (keyup)="applyFilter($event)"
                   [autocomplete]="'off'"
                   [placeholder]="'Search users'"
               />
