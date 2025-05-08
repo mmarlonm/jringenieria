@@ -79,13 +79,13 @@ export class PresenceService {
 
   setAway(): void {
     if (this.usuarioId) {
-      this.hubConnection?.invoke("SetAway", this.usuarioId).catch(console.error);
+      this.hubConnection?.invoke("SetAway", this.usuarioId.toString()).catch(console.error);
     }
   }
 
   setActive(): void {
     if (this.usuarioId) {
-      this.hubConnection?.invoke("SetActive", this.usuarioId).catch(console.error);
+      this.hubConnection?.invoke("SetActive", this.usuarioId.toString()).catch(console.error);
     }
   }
 
