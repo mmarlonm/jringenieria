@@ -148,8 +148,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       const found :any = newConnectedUsers.find((u:any) => u.userId === user.usuarioId.toString());
       return {
         ...user,
-        online: !!found && found.status === "Activo",
-        status: found?.status ?? "Desconectado"
+        online: found.status
       };
     });
     console.log('Usuarios conectados:', this.users);
@@ -174,11 +173,26 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   
       // Ahora obtenemos la lista de conectados desde PresenceService
       this.presenceService.connectedUsers$.pipe(take(1)).subscribe((connectedIds) => {
+        console.log("Usuarios conectados desde el servicio:", connectedIds);
         // Marcamos cada usuario como online si está en la lista
-        this.users = filteredUsers.map(user => ({
-          ...user,
-          online: connectedIds.includes(user.usuarioId.toString())
-        }));
+        this.users = filteredUsers.map(user => {
+          const found :any = connectedIds.find((u:any) => u.userId === user.usuarioId.toString());
+          if (found) {
+            console.log("Usuario conectado:", found);
+            console.log("Usuario encontrado:", found);
+          return {
+            ...user,
+            online: found.status
+          };
+          }
+          else {
+            return {
+              ...user,
+              online: ""
+            };
+          }
+          
+        });
         console.log('Usuarios conectados:', this.users);
         this.cdr.detectChanges(); // Forzar actualización en la vista
       });
