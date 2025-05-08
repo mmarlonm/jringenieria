@@ -137,6 +137,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     if (desconectados.length > 0) {
       console.log('❌ Usuarios que se desconectaron:', desconectados);
+
     }
 
     this.connectedUsers = newConnectedUsers;
@@ -146,7 +147,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       ...user,
       online: newConnectedUsers.includes(user.usuarioId.toString()) // o usa `user.id` si usas IDs
     }));
-
+    console.log('Usuarios conectados:', this.users);
     this.cdr.detectChanges(); // Forzar actualización en la vista
   });
   }
