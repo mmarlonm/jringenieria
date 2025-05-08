@@ -126,6 +126,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.presenceService.onUsuarioConectado()
   .pipe(takeUntil(this._unsubscribeAll))
   .subscribe((newConnectedUsers: string[]) => {
+    console.log('Usuarios conectados:', newConnectedUsers);
     const previousUsers = this.connectedUsers;
 
     const nuevos = newConnectedUsers.filter(u => !previousUsers.includes(u));
@@ -143,10 +144,14 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.connectedUsers = newConnectedUsers;
 
     // 🔁 Actualizar la propiedad `online` en los usuarios
-    this.users = this.users.map(user => ({
-      ...user,
-      online: newConnectedUsers.includes(user.usuarioId.toString()) // o usa `user.id` si usas IDs
-    }));
+    this.users = this.users.map(user => {
+      const found :any = newConnectedUsers.find((u:any) => u.userId === user.usuarioId.toString());
+      return {
+        ...user,
+        online: !!found && found.status === "Activo",
+        status: found?.status ?? "Desconectado"
+      };
+    });
     console.log('Usuarios conectados:', this.users);
     this.cdr.detectChanges(); // Forzar actualización en la vista
   });
