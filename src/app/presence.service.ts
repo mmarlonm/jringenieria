@@ -1,4 +1,3 @@
-// src/app/services/presence.service.ts
 import { Injectable } from "@angular/core";
 import * as signalR from "@microsoft/signalr";
 import { BehaviorSubject, Observable } from "rxjs";
@@ -6,17 +5,18 @@ import { environment } from "environments/environment";
 
 @Injectable({ providedIn: "root" })
 export class PresenceService {
-  private hubConnection: signalR.HubConnection;
+  private hubConnection: signalR.HubConnection | undefined;
   private connectedUsersSubject = new BehaviorSubject<string[]>([]);
   connectedUsers$ = this.connectedUsersSubject.asObservable();
   private apiUrlPresence = `${environment.apiUrlSignal}`;
   private apiUrl = `${environment.apiUrl}/Auth`;
-  private usuarioId: string;
-
+  private usuarioId: string | undefined;
+  private heartbeatIntervalId: any;
 
   public startConnection(token: string, userId: string): void {
+    if (this.hubConnection) return;
+
     this.usuarioId = userId;
-    if (this.hubConnection) return; // Previene múltiples conexiones
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.apiUrlPresence}/presenceHub?usuarioId=${userId}`, {
         accessTokenFactory: () => token,
@@ -27,83 +27,85 @@ export class PresenceService {
     this.hubConnection
       .start()
       .then(() => {
-        console.log("SignalR conectado");
+        console.log("✅ SignalR conectado");
         this.startHeartbeat();
         this.requestConnectedUsers();
         this.listenToConnectedUsers();
         this.listenToUserStatus();
       })
-      .catch((err) => console.error("Error conectando SignalR", err));
+      .catch((err) => console.error("❌ Error conectando SignalR", err));
   }
 
   private startHeartbeat() {
-    setInterval(() => {
-      if (this.hubConnection.state === signalR.HubConnectionState.Connected) {
-        this.hubConnection.invoke("Heartbeat")
-          .then((res) => {
-            console.log("Heartbeat enviado", res);
-          })
-          .catch((err) => console.error("Error al enviar Heartbeat", err));
-      } else {
-        console.warn("HubConnection no está conectado. Heartbeat cancelado.");
+    this.stopHeartbeat(); // evitar duplicados
+    this.heartbeatIntervalId = setInterval(() => {
+      if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+        this.hubConnection.invoke("Heartbeat").catch((err) =>
+          console.error("Error en Heartbeat", err)
+        );
       }
-    }, 30000); // cada 30 segundos
+    }, 30000);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatIntervalId) {
+      clearInterval(this.heartbeatIntervalId);
+      this.heartbeatIntervalId = null;
+    }
   }
 
   private requestConnectedUsers() {
     fetch(`${this.apiUrl}/conectados`)
       .then((res) => res.json())
-      .then((data) => this.connectedUsersSubject.next(data));
+      .then((data) => this.connectedUsersSubject.next(data))
+      .catch((err) => console.error("Error al obtener usuarios conectados", err));
   }
 
   private listenToConnectedUsers() {
-    this.hubConnection.on(
-      "ConnectedUsersUpdated",
-      (connectedUsers: string[]) => {
-        console.log("Usuarios conectados actualizados:", connectedUsers);
-        this.connectedUsersSubject.next(connectedUsers);
-      }
-    );
-  }
-
-  public onUsuarioConectado(): Observable<any> {
-    return this.connectedUsersSubject.asObservable();
+    this.hubConnection?.on("ConnectedUsersUpdated", (connectedUsers: string[]) => {
+      this.connectedUsersSubject.next(connectedUsers);
+    });
   }
 
   private listenToUserStatus() {
-    this.hubConnection.on("UserConnected", (userId: string) => {
+    this.hubConnection?.on("UserConnected", (userId: string) => {
       console.log(`✅ Usuario conectado: ${userId}`);
-      // aquí puedes mostrar un toast o animación si quieres
     });
 
-    this.hubConnection.on("UserDisconnected", (userId: string) => {
+    this.hubConnection?.on("UserDisconnected", (userId: string) => {
       console.log(`❌ Usuario desconectado: ${userId}`);
-      // también puedes mostrar un mensaje visual
     });
   }
 
   setAway(): void {
-    this.hubConnection.invoke('SetAway', this.usuarioId).catch(console.error);
+    if (this.usuarioId) {
+      this.hubConnection?.invoke("SetAway", this.usuarioId).catch(console.error);
+    }
   }
-  
+
   setActive(): void {
-    this.hubConnection.invoke('SetActive', this.usuarioId).catch(console.error);
+    if (this.usuarioId) {
+      this.hubConnection?.invoke("SetActive", this.usuarioId).catch(console.error);
+    }
   }
 
   stopConnection() {
+    this.stopHeartbeat();
     if (this.hubConnection) {
       this.hubConnection.stop()
-        .then(() => console.log('SignalR desconectado'))
-        .catch(err => console.error('Error al desconectar SignalR', err));
-      this.hubConnection = undefined; // Limpiar referencia
+        .then(() => console.log("🛑 SignalR desconectado"))
+        .catch(err => console.error("Error al desconectar SignalR", err));
+      this.hubConnection = undefined;
     }
   }
 
   sendHeartbeat(): void {
-    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
-      this.hubConnection.invoke("Heartbeat").catch((err) =>
-        console.error("Error en Heartbeat", err)
-      );
+    if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+      this.hubConnection.invoke("Heartbeat").catch(console.error);
     }
+  }
+
+  public onUsuarioConectado(): Observable<string[]> {
+    return this.connectedUsers$;
   }
 }
