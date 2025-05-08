@@ -8,7 +8,8 @@ import { inject } from '@angular/core';
 import { AuthService } from 'app/core/auth/auth.service';
 import { AuthUtils } from 'app/core/auth/auth.utils';
 import { Observable, catchError, throwError } from 'rxjs';
-
+import { PresenceService } from '../../presence.service';
+import { Router } from '@angular/router';
 /**
  * Intercept
  *
@@ -20,7 +21,8 @@ export const authInterceptor = (
     next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
     const authService = inject(AuthService);
-
+    const presenceService = inject(PresenceService);
+    const router = inject(Router);
     // Clone the request object
     let newReq = req.clone();
 
@@ -53,7 +55,7 @@ export const authInterceptor = (
                 authService.signOut();
 
                 // Reload the app
-                location.reload();
+                router.navigate(['/sign-out']);
             }
 
             return throwError(error);
