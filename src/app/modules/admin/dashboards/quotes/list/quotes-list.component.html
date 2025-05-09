@@ -27,8 +27,10 @@
           ></mat-icon>
           <input
               matInput
+              [(ngModel)]="filterValue"
+              (keyup)="applyFilter()"
               [autocomplete]="'off'"
-              [placeholder]="'Search users'"
+              [placeholder]="'Search quotes'"
           />
       </mat-form-field>   
   </div>
@@ -50,7 +52,7 @@
  
 
     <!-- Cotizaciones list -->
-    <div class="relative">
+    <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8">
       <div class="mat-elevation-z8" *ngIf="quotesCount > 0; else noQuotes">
         <!-- Tabla -->
         <div class="overflow-auto" style="max-height: 400px; overflow-y: auto;">
