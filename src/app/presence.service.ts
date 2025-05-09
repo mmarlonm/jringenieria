@@ -62,7 +62,7 @@ export class PresenceService {
   }
 
   private listenToConnectedUsers() {
-    this.hubConnection?.on("ConnectedUsersUpdated", (connectedUsers: string[]) => {
+    this.hubConnection?.on("ConnectedUsersUpdated", (connectedUsers: any) => {
       this.connectedUsersSubject.next(connectedUsers);
     });
   }
