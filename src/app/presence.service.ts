@@ -44,7 +44,7 @@ export class PresenceService {
           console.error("Error en Heartbeat", err)
         );
       }
-    }, 30000);
+    }, 62000);
   }
 
   private stopHeartbeat() {
