@@ -896,9 +896,9 @@
                         class="absolute top-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2"
                         style="right: 20px !important;"
                         [ngClass]="{
-                          'bg-green-500 border-white': member.status === 'Activo',
-                          'bg-yellow-400 border-white': member.status === 'Inactivo',
-                          'bg-gray-400 border-white': member.status === ''
+                          'bg-green-500 border-white': member.online === 'Activo',
+                          'bg-yellow-400 border-white': member.online === 'Inactivo',
+                          'bg-gray-400 border-white': member.online === ''
                         }"
                         [title]="member.online ? 'Online' : 'Offline'"
                       ></div>
