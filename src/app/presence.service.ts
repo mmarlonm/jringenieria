@@ -13,6 +13,8 @@ export class PresenceService {
   private usuarioId: string | undefined;
   private heartbeatIntervalId: any;
 
+  private isUserActive = true;
+
   public startConnection(token: string, userId: string): void {
     if (this.hubConnection) return;
 
@@ -39,7 +41,10 @@ export class PresenceService {
   private startHeartbeat() {
     this.stopHeartbeat(); // evitar duplicados
     this.heartbeatIntervalId = setInterval(() => {
-      if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+      if (
+        this.hubConnection?.state === signalR.HubConnectionState.Connected &&
+        this.isUserActive
+      ) {
         this.hubConnection.invoke("Heartbeat").catch((err) =>
           console.error("Error en Heartbeat", err)
         );
@@ -79,12 +84,14 @@ export class PresenceService {
 
   setAway(): void {
     if (this.usuarioId) {
+      this.isUserActive = false;
       this.hubConnection?.invoke("SetAway", this.usuarioId.toString()).catch(console.error);
     }
   }
-
+  
   setActive(): void {
     if (this.usuarioId) {
+      this.isUserActive = true;
       this.hubConnection?.invoke("SetActive", this.usuarioId.toString()).catch(console.error);
     }
   }
