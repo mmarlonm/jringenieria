@@ -145,10 +145,10 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     // 🔁 Actualizar la propiedad `online` en los usuarios
     this.users = this.users.map(user => {
-      const found :any = newConnectedUsers.find((u:any) => u.userId === user.usuarioId.toString());
+      const found: any = newConnectedUsers.find((u: any) => u.userId === user.usuarioId.toString());
       return {
         ...user,
-        online: found.status
+        online: found ? found.status : false // o `null`, según lo que signifique "desconectado"
       };
     });
     console.log('Usuarios conectados:', this.users);
