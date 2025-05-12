@@ -126,20 +126,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.presenceService.onUsuarioConectado()
   .pipe(takeUntil(this._unsubscribeAll))
   .subscribe((newConnectedUsers: string[]) => {
-    console.log('Usuarios conectados:', newConnectedUsers);
-    const previousUsers = this.connectedUsers;
-
-    const nuevos = newConnectedUsers.filter(u => !previousUsers.includes(u));
-    const desconectados = previousUsers.filter(u => !newConnectedUsers.includes(u));
-
-    if (nuevos.length > 0) {
-      console.log('🚀 Usuarios que se conectaron:', nuevos);
-    }
-
-    if (desconectados.length > 0) {
-      console.log('❌ Usuarios que se desconectaron:', desconectados);
-
-    }
 
     this.connectedUsers = newConnectedUsers;
 
@@ -151,7 +137,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         online: found ? found.status : false // o `null`, según lo que signifique "desconectado"
       };
     });
-    console.log('Usuarios conectados:', this.users);
     this.cdr.detectChanges(); // Forzar actualización en la vista
   });
   }
@@ -169,17 +154,13 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       let filteredUsers = users.filter(
         (user) => user.rolId !== 3 && user.activo !== false
       );
-      console.log("Usuarios filtrados:", filteredUsers);
   
       // Ahora obtenemos la lista de conectados desde PresenceService
       this.presenceService.connectedUsers$.pipe(take(1)).subscribe((connectedIds) => {
-        console.log("Usuarios conectados desde el servicio:", connectedIds);
         // Marcamos cada usuario como online si está en la lista
         this.users = filteredUsers.map(user => {
           const found :any = connectedIds.find((u:any) => u.userId === user.usuarioId.toString());
           if (found) {
-            console.log("Usuario conectado:", found);
-            console.log("Usuario encontrado:", found);
           return {
             ...user,
             online: found.status
@@ -193,7 +174,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
           }
           
         });
-        console.log('Usuarios conectados:', this.users);
         this.cdr.detectChanges(); // Forzar actualización en la vista
       });
     });

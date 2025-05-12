@@ -40,7 +40,7 @@ import Swal from 'sweetalert2';
 export class QuoteListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
     'cotizacionId',
-    'cliente',
+    'nombreCliente',
     'empresa',
     'fechaEntrega',
     'estatus',
@@ -112,16 +112,16 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Aplica el filtro de búsqueda en la tabla.
+   * Aplica el filtro correspondiente basado en el tipo de columna.
    */
   applyFilter(): void {
-    const filterValue = this.filterValue.trim().toLowerCase(); // Convierte a minúsculas y elimina espacios
-    this.dataSource.filter = filterValue;  // Aplica el filtro global
+    this.setCustomFilter(); // Asegúrate de configurar el filtro antes
+    this.dataSource.filter = this.filterValue.trim().toLowerCase(); // Se usa como input del predicate
   }
 
   applySelect(): void {
-    const filterValue = this.filterValue.trim().toLowerCase(); // Convierte a minúsculas y elimina espacios
-    this.dataSource.filter = filterValue;  // Aplica el filtro global
+    this.setCustomFilter();
+    this.dataSource.filter = this.filterValue.trim().toLowerCase();
   }
 
   addQuote(): void {
@@ -189,12 +189,19 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
    */
   setCustomFilter(): void {
     this.dataSource.filterPredicate = (data: any, filter: string) => {
-      if (this.currentFilterColumn === 'empresa') {
-        return data[this.currentFilterColumn]?.toLowerCase().includes(filter);
-      } else if (this.currentFilterColumn === 'fechaEntrega' || this.currentFilterColumn === 'estatus') {
-        return data[this.currentFilterColumn] === this.filterValue;
+      if (this.currentFilterColumn) {
+        // Filtro por columna específica
+        if (this.isTextFilter(this.currentFilterColumn)) {
+          return data[this.currentFilterColumn]?.toLowerCase().includes(filter);
+        } else {
+          return data[this.currentFilterColumn] === this.filterValue;
+        }
+      } else {
+        // Filtro global en todos los campos visibles
+        return this.displayedColumns.some((col) => {
+          return data[col]?.toString().toLowerCase().includes(filter);
+        });
       }
-      return true;
     };
   }
 

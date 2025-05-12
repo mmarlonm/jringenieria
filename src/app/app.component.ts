@@ -39,13 +39,6 @@ export class AppComponent implements OnInit, OnDestroy {
       .onUsuarioConectado()
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((newConnectedUsers: string[]) => {
-        const previousUsers = this.connectedUsers;
-        const nuevos = newConnectedUsers.filter(u => !previousUsers.includes(u));
-        const desconectados = previousUsers.filter(u => !newConnectedUsers.includes(u));
-
-        if (nuevos.length > 0) console.log("🚀 Usuarios que se conectaron:", nuevos);
-        if (desconectados.length > 0) console.log("❌ Usuarios que se desconectaron:", desconectados);
-
         this.connectedUsers = newConnectedUsers;
       });
 
@@ -76,13 +69,11 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.isInactive) {
       this.isInactive = false;
       this.presenceService.setActive();
-      console.log("👋 Usuario volvió a estar activo");
     }
 
     this.inactivityTimeout = setTimeout(() => {
       this.isInactive = true;
       this.presenceService.setAway();
-      console.log("💤 Usuario marcado como inactivo");
     }, this.inactivityLimit);
   }
 
