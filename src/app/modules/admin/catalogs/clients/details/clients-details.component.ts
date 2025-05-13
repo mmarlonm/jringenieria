@@ -12,10 +12,14 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Swal from 'sweetalert2';
+import { StarRatingModule, StarRatingConfigService } from 'angular-star-rating';
+import {StarRatingBridgeModule} from './start-rating-bridge.module'
+
 
 @Component({
   selector: 'app-clients-details',
   templateUrl: './clients-details.component.html',
+  styleUrls:["./clientes-details.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
@@ -26,9 +30,10 @@ import Swal from 'sweetalert2';
     MatSelectModule,
     MatButtonModule,
     MatDatepickerModule,
-    MatNativeDateModule
-  ]
-})
+    MatNativeDateModule,
+    StarRatingBridgeModule
+  ],
+  })
 export class ClientsDetailsComponent implements OnInit {
   clienteForm: FormGroup;
   categorias: any[] = [];
@@ -66,7 +71,8 @@ export class ClientsDetailsComponent implements OnInit {
         email: ['', [Validators.required, Validators.email]],
         empresa: [''],
         rfc: [''],
-        activo: [true]
+        activo: [true],
+        Calificacion:[3]
     });
 
     this.route.paramMap.subscribe(params => {
@@ -88,6 +94,7 @@ export class ClientsDetailsComponent implements OnInit {
     this.clientsService.getClientById(id).subscribe((cliente) => {
         if (cliente) {
             this.clienteForm.patchValue(cliente);
+            this.clienteForm.get("Calificacion").setValue(cliente.calificacion)
         }
     });
   }

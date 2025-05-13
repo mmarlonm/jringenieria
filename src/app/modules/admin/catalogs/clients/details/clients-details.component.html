@@ -5,10 +5,19 @@
 
     <form [formGroup]="clienteForm" (ngSubmit)="saveClient()" class="flex flex-col gap-4 overflow-auto">
         <!-- Nombre -->
-        <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombre">
-        </mat-form-field>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <mat-form-field appearance="fill" class="w-full">
+                <mat-label>Nombre</mat-label>
+                <input matInput formControlName="nombre">
+            </mat-form-field>
+            <div class="star-rating-container"> 
+                <label class="star-label">
+                Calificacion:
+                </label>
+                <star-rating-control formControlName="Calificacion" size="large"></star-rating-control>
+            </div>
+
+        </div>
 
         <!-- Dirección -->
         <mat-form-field appearance="fill" class="w-full">
@@ -27,11 +36,12 @@
                 <mat-label>Colonia</mat-label>
                 <mat-select formControlName="colonia">
                     <!-- Mostrar el valor guardado como opción inicial si aún no se ha llenado el select -->
-                    <mat-option *ngIf="!asentamientos.includes(clienteForm.get('colonia')?.value) && clienteForm.get('colonia')?.value" 
-                                [value]="clienteForm.get('colonia')?.value">
+                    <mat-option
+                        *ngIf="!asentamientos.includes(clienteForm.get('colonia')?.value) && clienteForm.get('colonia')?.value"
+                        [value]="clienteForm.get('colonia')?.value">
                         {{ clienteForm.get('colonia')?.value }}
                     </mat-option>
-            
+
                     <mat-option *ngFor="let asentamiento of asentamientos" [value]="asentamiento">
                         {{ asentamiento }}
                     </mat-option>
@@ -90,7 +100,8 @@
         <!-- Botones -->
         <div class="sticky bottom-0 py-2 flex justify-end gap-2">
             <button mat-raised-button color="primary" type="submit" class="w-full md:w-auto">Guardar</button>
-            <button mat-button color="warn" type="button" (click)="router.navigate(['/catalogs/clients'])">Cancelar</button>
+            <button mat-button color="warn" type="button"
+                (click)="router.navigate(['/catalogs/clients'])">Cancelar</button>
         </div>
     </form>
 </div>
