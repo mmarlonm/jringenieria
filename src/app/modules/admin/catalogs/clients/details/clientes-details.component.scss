@@ -1,0 +1,13 @@
+.star-rating-container {
+  display: flex;
+  flex-direction: column; // o 'row' si prefieres a la izquierda
+  align-items: center;    // centra horizontalmente
+  justify-content: center; // centra verticalmente si hay espacio
+  gap: 8px;
+  text-align: center;
+}
+
+.star-label {
+  font-weight: 500;
+  font-size: 16px;
+}
