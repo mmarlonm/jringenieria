@@ -2,7 +2,7 @@
     <div
         class="w-full px-4 py-8 sm:bg-card sm:w-auto sm:rounded-2xl sm:p-12 sm:shadow"
     >
-        <div class="mx-auto w-full max-w-80 sm:mx-0 sm:w-80">
+        <div class="mx-auto w-full max-w-85 sm:mx-0 sm:w-85">
             <!-- Logo -->
             <div class="mx-auto w-12">
                 <img src="images/logo/logo.svg" />
@@ -12,18 +12,18 @@
             <div
                 class="mt-8 text-center text-4xl font-extrabold leading-tight tracking-tight"
             >
-                You have signed out!
+                Cerrando la sesión
             </div>
             <div class="mt-0.5 flex justify-center font-medium">
                 <!-- Redirect countdown -->
                 @if (countdown > 0) {
-                    Redirecting in
+                    Redireccionando a la pagina de inicio
                     {{ countdown | i18nPlural: countdownMapping }}
                 }
 
                 <!-- Redirect message -->
                 @if (countdown === 0) {
-                    You are now being redirected!
+                    Ya estas siendo redirrecionado
                 }
             </div>
 

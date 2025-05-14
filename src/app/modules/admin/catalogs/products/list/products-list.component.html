@@ -2,7 +2,7 @@
     <!-- Main -->
     <div class="flex-auto">
         <!-- Header -->
-        <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8">
+        <div class="flex flex-auto flex-col justify-between px-6 sm:flex-col md:flex- md:px-8">
             <!-- Title -->
             <div>
                 <div class="text-4xl font-extrabold leading-none tracking-tight">
@@ -15,7 +15,7 @@
                     {{
                         productsCount
                         | i18nPlural : {
-                            '=0': 'No Productos',
+                            '=0': 'Sin Productos',
                             '=1': 'Producto',
                             other: 'Productos',
                         }
@@ -42,7 +42,7 @@
                     matInput
                     (keyup)="applyFilter($event)"
                     [autocomplete]="'off'"
-                    [placeholder]="'Search products'"
+                    [placeholder]="'Buscar productos'"
                 />
             </mat-form-field>    
         </div>
@@ -62,14 +62,14 @@
         </div>
 
         <!-- Clients list -->
-        <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8">
+        <div class="flex flex-auto flex-col justify-between px-6 py-8 sm:flex-col md:flex- md:px-8 ">
             @if (productsCount > 0) {
                 <div class="mat-elevation-z8">
                     <!-- Tabla -->
-                    <div class="overflow-auto" style="max-height: 400px; overflow-y: auto;">
-                        <table mat-table [dataSource]="dataSource" matSort class="w-full">
+                    <div style="max-height: 400px; overflow-y: auto; ">
+                        <table mat-table [dataSource]="dataSource" matSort>
                           <!-- ID -->
-                          <ng-container matColumnDef="productoId">
+                          <ng-container matColumnDef="productoId" sticky>
                             <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
                             <td mat-cell *matCellDef="let product"> {{ product.productoId }} </td>
                           </ng-container>
@@ -102,13 +102,13 @@
                           </ng-container>
                       
                           <!-- Filas -->
-                          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
                           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                         </table>
                     </div>
 
                     <!-- Paginador -->
-                    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+                    <mat-paginator class="mat-paginator-sticky" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
                 </div>
             } @else {
                 <div class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16">

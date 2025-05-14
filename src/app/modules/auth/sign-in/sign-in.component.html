@@ -59,7 +59,7 @@
 
                 <!-- Password field -->
                 <mat-form-field class="w-full">
-                    <mat-label>Password</mat-label>
+                    <mat-label>Contraseña</mat-label>
                     <input
                         id="password"
                         matInput
@@ -90,7 +90,7 @@
                             ></mat-icon>
                         }
                     </button>
-                    <mat-error> Password is required </mat-error>
+                    <mat-error> Contraseña requerida </mat-error>
                 </mat-form-field>
 
                 <!-- Actions -->
@@ -102,12 +102,12 @@
                         [color]="'primary'"
                         [formControlName]="'rememberMe'"
                     >
-                        Remember me
+                        Recordar contraseña
                     </mat-checkbox>
                     <a
                         class="text-md font-medium text-primary-500 hover:underline"
                         [routerLink]="['/forgot-password']"
-                        >Forgot password?
+                        >¿Olvidaste tu contraseña?
                     </a>
                 </div>
 
@@ -120,7 +120,7 @@
                     (click)="signIn()"
                 >
                     @if (!signInForm.disabled) {
-                        <span> Sign in </span>
+                        <span> Iniciar sesión </span>
                     }
                     @if (signInForm.disabled) {
                         <mat-progress-spinner
@@ -133,7 +133,7 @@
                 <!-- Separator -->
                 <div class="mt-8 flex items-center">
                     <div class="mt-px flex-auto border-t"></div>
-                    <div class="text-secondary mx-2">Or continue with</div>
+                    <div class="text-secondary mx-2">o iniciar sesión como</div>
                     <div class="mt-px flex-auto border-t"></div>
                 </div>
 

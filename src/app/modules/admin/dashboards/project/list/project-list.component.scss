@@ -46,3 +46,21 @@
       gap: 8px;
     }
   }
+  .small-icon-button {
+   width: 30px !important;
+   height: 30px !important;
+   line-height: 30px !important;
+
+   .mat-icon {
+      width: 20px !important;
+      height: 20px !important;
+      line-height: 20px !important;
+   }
+   .material-icons {
+      font-size: 20px !important;
+   }
+}
+.mat-column-actions {
+    flex: none;
+    width: 100px;
+}

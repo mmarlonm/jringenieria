@@ -2,7 +2,7 @@
     <!-- Main -->
     <div class="flex-auto">
         <!-- Header -->
-        <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8">
+        <div class="flex flex-auto flex-col justify-between px-6 sm:flex-col md:flex- md:px-8">
             <!-- Title -->
             <div>
                 <div class="text-4xl font-extrabold leading-none tracking-tight">
@@ -15,7 +15,7 @@
                     {{
                         clientsCount
                         | i18nPlural : {
-                            '=0': 'No clientes',
+                            '=0': 'Sin clientes',
                             '=1': 'cliente',
                             other: 'clientes',
                         }
@@ -41,7 +41,7 @@
                     matInput
                     (keyup)="applyFilter($event)"    
                     [autocomplete]="'off'"
-                    [placeholder]="'Search Clients'"
+                    [placeholder]="'Buscar cliente'"
                 />
             </mat-form-field>    
         </div>
@@ -69,7 +69,7 @@
                    </div>
 
         <!-- Clients list -->
-        <div class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-col md:flex- md:px-8">
+        <div class="flex flex-auto flex-col justify-between px-6 py-8 sm:flex-col md:flex- md:px-8">
             @if (clientsCount > 0) {
                 <div class="mat-elevation-z8">
                     <!-- Tabla -->
@@ -115,7 +115,7 @@
                           </ng-container>
                       
                           <!-- Filas -->
-                          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky:true"></tr>
                           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                         </table>
                     </div>
