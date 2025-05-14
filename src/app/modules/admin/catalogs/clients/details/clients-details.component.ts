@@ -94,7 +94,7 @@ export class ClientsDetailsComponent implements OnInit {
     this.clientsService.getClientById(id).subscribe((cliente) => {
         if (cliente) {
             this.clienteForm.patchValue(cliente);
-            this.clienteForm.get("Calificacion").setValue(cliente.calificacion)
+            this.clienteForm.get("Calificacion").setValue(cliente.calificacion || 3); // Valor por defecto
         }
     });
   }
