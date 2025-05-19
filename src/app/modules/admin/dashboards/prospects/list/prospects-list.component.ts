@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-prospects-list',
   templateUrl: './prospects-list.component.html',
+  styleUrls: ["./prospects-list.component.scss"],
   standalone: true,
   imports: [
     CommonModule,

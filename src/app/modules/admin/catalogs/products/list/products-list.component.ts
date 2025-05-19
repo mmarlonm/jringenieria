@@ -17,6 +17,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-products-list',
   templateUrl: './products-list.component.html',
+  styleUrls: ["./products-list.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
