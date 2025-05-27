@@ -13,10 +13,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import Swal from "sweetalert2";
+
 
 @Component({
   selector: 'app-clients-list',
   templateUrl: './clients-list.component.html',
+  styleUrls: ["./clients-list.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
@@ -84,11 +87,16 @@ export class ClientsListComponent implements OnInit {
     this.router.navigate([`/catalogs/clients/${clientId}`]); // Ajustado a la ruta correcta
   }
 
-  deleteClient(clientId: number): void {
-    this.clientsService.deleteClient(clientId).subscribe(() => {
-      this.getClients();
-      this.snackBar.open('Cliente eliminado correctamente', 'Cerrar', { duration: 3000 });
-    });
+  async deleteClient(clientId: number) {
+    const confirmed = await this.showConfirmation();
+    if (confirmed) {
+      this.clientsService.deleteClient(clientId).subscribe(() => {
+        this.getClients();
+        this.snackBar.open("Proyecto eliminado correctamente", "Cerrar", {
+          duration: 3000,
+        });
+      });
+    }
   }
 
   obtenerPermisos(): void {
@@ -130,4 +138,17 @@ export class ClientsListComponent implements OnInit {
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
   }
+   showConfirmation(): Promise<boolean> {
+      return Swal.fire({
+        title: "Seguro que desea eliminar",
+        text: "Esta accion no se puede revertir",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Eliminar",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true,
+      }).then((result) => {
+        return result.isConfirmed;
+      });
+    }
 }
