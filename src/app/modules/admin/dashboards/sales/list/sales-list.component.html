@@ -130,9 +130,15 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef> Acciones </th>
               <td mat-cell *matCellDef="let venta">
-                <button mat-button color="accent" (click)="editVenta(venta.ventaId)" *ngIf="tienePermiso('btnEdit')">Editar</button>
-                <button mat-button color="warn" (click)="deleteVenta(venta.ventaId)" *ngIf="tienePermiso('btnDelete')">Eliminar</button>
-              </td>
+                <button mat-icon-button color="accent" class="small-icon-button" (click)="editVenta(venta.ventaId)"
+                  *ngIf="tienePermiso('btnEdit')">
+                   <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" class="small-icon-button" (click)="deleteVenta(venta.ventaId)"
+                  *ngIf="tienePermiso('btnDelete')">
+                  <mat-icon>delete</mat-icon>
+                </button>
+                </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky:true"></tr>
