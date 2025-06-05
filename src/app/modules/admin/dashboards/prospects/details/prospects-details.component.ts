@@ -8,6 +8,7 @@ import {
   ReactiveFormsModule,
   FormsModule,
   FormControl,
+  FormArray,
 } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
@@ -28,14 +29,14 @@ import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import { NotesDetailsComponent } from "../dialog/dialog.component";
 import { MatDialog } from "@angular/material/dialog";
-import Swal from 'sweetalert2';
-
+import Swal from "sweetalert2";
+import * as L from "leaflet";
 
 @Component({
   selector: "app-prospects-details",
   templateUrl: "./prospects-details.component.html",
   styleUrls: ["./prospects-details.component.scss"],
-  
+
   standalone: true,
   imports: [
     CommonModule,
@@ -82,8 +83,13 @@ export class ProspectDetailsComponent implements OnInit {
   user: any[] = [];
   notes: any[] = []; // Lista de notas
 
-  searchText: string = '';
-  usuarioId :number;
+  searchText: string = "";
+  usuarioId: number;
+
+  map: any;
+  marker: any;
+  latitud: number | null = null;
+  longitud: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -110,6 +116,11 @@ export class ProspectDetailsComponent implements OnInit {
       comoSeObtuvo: [""],
       otros: [""],
       personalSeguimiento: [null],
+      latitud: [null],
+      longitud: [null],
+
+      emails: this.fb.array([this.createEmailField()]),
+      telefonos: this.fb.array([this.createPhoneNumberField()]),
     });
 
     // Verificar si "Otros" ya está seleccionado al cargar el formulario
@@ -132,41 +143,94 @@ export class ProspectDetailsComponent implements OnInit {
     });
 
     this.getUsers();
+
+    this.map = L.map("map").setView([19.4326, -99.1332], 6); // Ciudad de México
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(this.map);
+
+    this.map.on("click", (e: any) => {
+      this.latitud = e.latlng.lat;
+      this.longitud = e.latlng.lng;
+      this.setMarker(this.latitud, this.longitud);
+    });
+
+    if (this.latitud && this.longitud) {
+      this.setMarker(this.latitud, this.longitud);
+    }
   }
 
   loadProspects(id: number): void {
     this.prospectosService.getProspectoById(id).subscribe((res) => {
-      if(res.code==200){
-      var prospecto = res.data
-      if (prospecto) {
-        // Verifica si "comoSeObtuvo" es "Otros" para activar el campo de texto adicional
-        this.mostrarCampoOtros =
-          prospecto.comoSeObtuvo === "Otros" ? true : false;
-        this.prospectForm.patchValue({
-          prospectoId: prospecto.prospectoId,
-          empresa: prospecto.empresa,
-          contacto: prospecto.contacto,
-          telefono: prospecto.telefono,
-          puesto: prospecto.puesto,
-          giroEmpresa: prospecto.giroEmpresa,
-          email: prospecto.email,
-          areaInteres: prospecto.areaInteres,
-          tipoEmpresa: prospecto.tipoEmpresa,
-          usuarioId: prospecto.usuarioId,
-          comoSeObtuvo: prospecto.comoSeObtuvo,
-          otros: prospecto.otros,
-          personalSeguimiento: prospecto.personalSeguimiento,
+      if (res.code == 200) {
+        const prospecto = res.data;
+
+        if (prospecto) {
+          this.mostrarCampoOtros = prospecto.comoSeObtuvo === "Otros";
+
+          // Primero limpiamos los FormArray actuales
+          this.emails.clear();
+          this.telefonos.clear();
+
+          // Si hay emails en el prospecto, los agregamos al FormArray
+          if (prospecto.emails && prospecto.emails.length > 0) {
+            prospecto.emails.forEach((emailObj: any) => {
+              this.emails.push(
+                this.fb.group({
+                  email: [emailObj.email],
+                  descripcion: [emailObj.descripcion],
+                })
+              );
+            });
+          } else {
+            // Si no hay, agregamos uno vacío
+            this.addEmailField();
+          }
+
+          // Si hay teléfonos en el prospecto, los agregamos al FormArray
+          if (prospecto.telefonos && prospecto.telefonos.length > 0) {
+            prospecto.telefonos.forEach((phoneObj: any) => {
+              this.telefonos.push(
+                this.fb.group({
+                  telefono: [phoneObj.telefono],
+                  descripcion: [phoneObj.descripcion],
+                })
+              );
+            });
+          } else {
+            // Si no hay, agregamos uno vacío
+            this.addPhoneNumberField();
+          }
+          this.latitud = prospecto.latitud;
+          this.longitud = prospecto.longitud;
+          // Asignación de los demás campos
+          this.prospectForm.patchValue({
+            prospectoId: prospecto.prospectoId,
+            empresa: prospecto.empresa,
+            contacto: prospecto.contacto,
+            telefono: prospecto.telefono,
+            puesto: prospecto.puesto,
+            giroEmpresa: prospecto.giroEmpresa,
+            email: prospecto.email,
+            areaInteres: prospecto.areaInteres,
+            tipoEmpresa: prospecto.tipoEmpresa,
+            usuarioId: prospecto.usuarioId,
+            comoSeObtuvo: prospecto.comoSeObtuvo,
+            otros: prospecto.otros,
+            personalSeguimiento: prospecto.personalSeguimiento,
+            latitud: prospecto.latitud,
+            longitud: prospecto.longitud,
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true,
         });
       }
-      }
-      else{
-        Swal.fire({
-                   icon: "error",
-                   title:"Opps",
-                   text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                   draggable: true
-                 });
-     }
     });
   }
 
@@ -178,14 +242,14 @@ export class ProspectDetailsComponent implements OnInit {
   }
 
   saveProspect(): void {
-    if (this.prospectForm.invalid){
-           Swal.fire({
-                                 icon: "error",
-                                 title:"Opps",
-                                 text:"Por favor, completa los campos obligatorios",
-                                 draggable: true
-                               });   
-                               return;                   
+    if (this.prospectForm.invalid) {
+      Swal.fire({
+        icon: "error",
+        title: "Opps",
+        text: "Por favor, completa los campos obligatorios",
+        draggable: true,
+      });
+      return;
     }
 
     const quotesData: any = this.prospectForm.value;
@@ -194,20 +258,23 @@ export class ProspectDetailsComponent implements OnInit {
       // Actualizar proyecto
       quotesData.prospectoId = this.prospectsId;
     }
-
-    this.prospectosService.saveProspecto(quotesData).subscribe((res) => {
-      if(res.code==200){  
-      // Redirigir a la lista de proyectos
-      this.router.navigate(["/dashboards/prospects"]); // O la ruta correspondiente a la lista
-      }
-      else{
+    const datos = {
+      ...quotesData,
+      latitud: this.latitud,
+      longitud: this.longitud,
+    };
+    this.prospectosService.saveProspecto(datos).subscribe((res) => {
+      if (res.code == 200) {
+        // Redirigir a la lista de proyectos
+        this.router.navigate(["/dashboards/prospects"]); // O la ruta correspondiente a la lista
+      } else {
         Swal.fire({
           icon: "error",
-          title:"Opps",
-          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true,
         });
-      } 
+      }
     });
   }
 
@@ -262,7 +329,9 @@ export class ProspectDetailsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((updatedNote) => {
       if (updatedNote) {
-        const index = this.notes.findIndex(n => n.idNote === updatedNote.idNote);
+        const index = this.notes.findIndex(
+          (n) => n.idNote === updatedNote.idNote
+        );
         if (index !== -1) {
           this.notes[index] = updatedNote; // Actualizar la nota en la lista
           this.prospectosService.saveNote(updatedNote).subscribe();
@@ -273,16 +342,164 @@ export class ProspectDetailsComponent implements OnInit {
 
   // Eliminar una nota
   deleteNote(noteId: number): void {
-    this.notes = this.notes.filter(n => n.idNote !== noteId);
-    this.prospectosService.deleteNote(noteId).subscribe(res => {
+    this.notes = this.notes.filter((n) => n.idNote !== noteId);
+    this.prospectosService.deleteNote(noteId).subscribe((res) => {
       this.loadNotes(this.prospectsId);
     });
   }
 
   get filteredNotes() {
-    return this.notes.filter((note) =>
-      note.title.toLowerCase().includes(this.searchText.toLowerCase()) ||
-      note.content.toLowerCase().includes(this.searchText.toLowerCase())
+    return this.notes.filter(
+      (note) =>
+        note.title.toLowerCase().includes(this.searchText.toLowerCase()) ||
+        note.content.toLowerCase().includes(this.searchText.toLowerCase())
     );
   }
+
+  // Getters para acceder fácilmente a los arrays
+  get emails(): FormArray {
+    return this.prospectForm.get("emails") as FormArray;
+  }
+
+  get telefonos(): FormArray {
+    return this.prospectForm.get("telefonos") as FormArray;
+  }
+
+  // Funciones para crear campos
+  createEmailField(): FormGroup {
+    return this.fb.group({
+      email: ["", [Validators.email]],
+      descripcion: [""],
+    });
+  }
+
+  createPhoneNumberField(): FormGroup {
+    return this.fb.group({
+      telefono: [""],
+      descripcion: [""],
+    });
+  }
+
+  // Agregar campos
+  addEmailField(): void {
+    this.emails.push(this.createEmailField());
+  }
+
+  addPhoneNumberField(): void {
+    this.telefonos.push(this.createPhoneNumberField());
+  }
+
+  // Eliminar campos
+  removeEmailField(index: number): void {
+    this.emails.removeAt(index);
+  }
+
+  removePhoneNumberField(index: number): void {
+    this.telefonos.removeAt(index);
+  }
+
+  setMarker(lat: number, lng: number) {
+    if (this.marker) this.map.removeLayer(this.marker);
+    this.marker = L.marker([lat, lng]).addTo(this.map);
+    this.map.setView([lat, lng], 15);
+  }
+
+  buscarDireccion(direccion: string) {
+    fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${direccion}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          this.latitud = lat;
+          this.longitud = lon;
+          this.setMarker(lat, lon);
+        }
+      });
+  }
+
+  onTabChange(event: any): void {
+    const tabLabel = event.tab.textLabel;
+
+    if (tabLabel === "Ubicación") {
+      setTimeout(() => {
+        if (!this.map) {
+          this.initMap();
+        } else {
+          this.map.invalidateSize(); // Por si el mapa ya existe pero está oculto
+        }
+      }, 300); // Espera breve para asegurar que el DOM esté renderizado
+    }
+  }
+
+  initMap(): void {
+  const container = document.getElementById('map');
+  if (!container) {
+    console.error("Map container not found.");
+    return;
+  }
+
+  // Verifica si ya hay un mapa creado para evitar errores
+  if (this.map) {
+    this.map.remove();  // Limpia el mapa anterior
+  }
+
+  this.map = L.map(container).setView([19.4326, -99.1332], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(this.map);
+
+  // Si ya tiene coordenadas guardadas, muestra el marcador
+  if (this.latitud && this.longitud) {
+    const latlng = [this.latitud, this.longitud] as L.LatLngExpression;
+
+    this.marker = L.marker(latlng, { draggable: true }).addTo(this.map);
+
+    // 🔹 Añade tooltip con info del prospecto
+    const info = `
+      <strong>${this.prospectForm.get('empresa')?.value}</strong><br>
+      Contacto: ${this.prospectForm.get('contacto')?.value}<br>
+      Tel: ${this.prospectForm.get('telefono')?.value}
+    `;
+    this.marker.bindTooltip(info, { permanent: true, direction: "top" }).openTooltip();
+
+    this.map.setView(latlng, 14);
+
+    this.marker.on('dragend', (e: any) => {
+      const { lat, lng } = e.target.getLatLng();
+      this.latitud = lat;
+      this.longitud = lng;
+    });
+  }
+
+  // Evento click para agregar marcador nuevo o actualizar
+  this.map.on('click', (e: L.LeafletMouseEvent) => {
+    const { lat, lng } = e.latlng;
+    this.latitud = lat;
+    this.longitud = lng;
+
+    if (this.marker) {
+      this.map.removeLayer(this.marker);
+    }
+
+    this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
+
+    const info = `
+      <strong>${this.prospectForm.get('empresa')?.value}</strong><br>
+      Contacto: ${this.prospectForm.get('contacto')?.value}<br>
+      Tel: ${this.prospectForm.get('telefono')?.value}
+    `;
+    this.marker.bindTooltip(info, { permanent: true, direction: "top" }).openTooltip();
+
+    this.marker.on('dragend', (event: any) => {
+      const { lat, lng } = event.target.getLatLng();
+      this.latitud = lat;
+      this.longitud = lng;
+    });
+  });
+}
+
 }

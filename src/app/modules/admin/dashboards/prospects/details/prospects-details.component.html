@@ -1,104 +1,222 @@
 <div class="absolute inset-0 flex flex-col overflow-hidden p-6">
   <h1 class="text-2xl font-bold mb-4">
-    {{ prospectsId ? 'Editar Prospecto' : 'Nuevo Prospecto' }}
+    {{ prospectsId ? "Editar Prospecto" : "Nuevo Prospecto" }}
   </h1>
 
-  <mat-tab-group class="h-full flex-1 overflow-hidden">
+  <mat-tab-group class="h-full flex-1 overflow-hidden" (selectedTabChange)="onTabChange($event)">
     <mat-tab label="Información General">
-      <form [formGroup]="prospectForm" (ngSubmit)="saveProspect()" class="flex flex-col gap-4 overflow-auto">
-    
+      <form
+        [formGroup]="prospectForm"
+        class="flex flex-col gap-4 overflow-auto"
+      >
         <div class="grid grid-cols-2 gap-4">
           <!-- Empresa -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Empresa</mat-label>
-            <input matInput formControlName="empresa">
+            <input matInput formControlName="empresa" />
           </mat-form-field>
-    
+
           <!-- Contacto -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Nombre de Contacto</mat-label>
-            <input matInput formControlName="contacto">
+            <input matInput formControlName="contacto" />
           </mat-form-field>
         </div>
-    
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Teléfono -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefono">
+            <input matInput formControlName="telefono" />
           </mat-form-field>
-    
+
           <!-- Puesto -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Puesto</mat-label>
-            <input matInput formControlName="puesto">
+            <input matInput formControlName="puesto" />
           </mat-form-field>
         </div>
-    
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Giro Empresa -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Giro de la Empresa</mat-label>
-            <input matInput formControlName="giroEmpresa">
+            <input matInput formControlName="giroEmpresa" />
           </mat-form-field>
-    
+
           <!-- Email -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Email</mat-label>
-            <input matInput formControlName="email">
+            <input matInput formControlName="email" />
           </mat-form-field>
         </div>
-    
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Área de Interés -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Área de Interés</mat-label>
-            <input matInput formControlName="areaInteres">
+            <input matInput formControlName="areaInteres" />
           </mat-form-field>
-    
+
           <!-- Tipo Empresa -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Tipo de Empresa</mat-label>
-            <input matInput formControlName="tipoEmpresa">
+            <input matInput formControlName="tipoEmpresa" />
           </mat-form-field>
         </div>
-    
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Cómo se obtuvo el contacto -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cómo se obtuvo el contacto</mat-label>
-            <mat-select formControlName="comoSeObtuvo" (selectionChange)="onComoSeObtuvoChange($event.value)">
-              <mat-option *ngFor="let opcion of opcionesContacto" [value]="opcion">{{ opcion }}</mat-option>
+            <mat-select
+              formControlName="comoSeObtuvo"
+              (selectionChange)="onComoSeObtuvoChange($event.value)"
+            >
+              <mat-option
+                *ngFor="let opcion of opcionesContacto"
+                [value]="opcion"
+                >{{ opcion }}</mat-option
+              >
             </mat-select>
           </mat-form-field>
-        
+
           <!-- Campo "Otros" (solo visible si se elige "Otros") -->
-          <mat-form-field *ngIf="mostrarCampoOtros" appearance="fill" class="w-full">
+          <mat-form-field
+            *ngIf="mostrarCampoOtros"
+            appearance="fill"
+            class="w-full"
+          >
             <mat-label>Especificar otro medio</mat-label>
             <textarea matInput formControlName="otros"></textarea>
           </mat-form-field>
         </div>
-    
+
         <div class="grid grid-cols-2 gap-4">
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Personal de seguimiento</mat-label>
             <mat-select formControlName="personalSeguimiento">
-              <mat-option
-                *ngFor="let user of user"
-                [value]="user.usuarioId"
-              >
+              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
                 {{ user.nombreUsuario }}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
-    
-        <!-- Botones -->
-        <div class="bottom-0 py-2 flex justify-end gap-2 btn-float" >
-          <button mat-raised-button color="primary" type="submit">Guardar</button>
-          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/prospects'])">Cancelar</button>
+
+        <!-- Emails -->
+        <div class="bg-white p-6 rounded-2xl shadow mt-6">
+          <h2 class="text-lg font-semibold mb-4">Emails</h2>
+
+          <div formArrayName="emails">
+            <div
+              *ngFor="let email of emails.controls; let i = index"
+              [formGroupName]="i"
+              class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"
+            >
+              <mat-form-field class="flex-auto" [subscriptSizing]="'dynamic'">
+                <mat-label>Email</mat-label>
+                <mat-icon
+                  matPrefix
+                  class="hidden icon-size-5 sm:flex"
+                  [svgIcon]="'heroicons_solid:envelope'"
+                ></mat-icon>
+                <input matInput formControlName="email" type="email" />
+              </mat-form-field>
+
+              <mat-form-field class="flex-auto" [subscriptSizing]="'dynamic'">
+                <mat-label>Etiqueta</mat-label>
+                <mat-icon
+                  matPrefix
+                  class="hidden icon-size-5 sm:flex"
+                  [svgIcon]="'heroicons_solid:tag'"
+                ></mat-icon>
+                <input matInput formControlName="descripcion" />
+              </mat-form-field>
+
+              <div class="flex items-center">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="removeEmailField(i)"
+                  *ngIf="emails.length > 1"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button mat-flat-button color="primary" (click)="addEmailField()">
+            <mat-icon>add</mat-icon> Agregar Email
+          </button>
         </div>
-    
+
+        <!-- Teléfonos -->
+        <div class="bg-white p-6 rounded-2xl shadow mt-6">
+          <h2 class="text-lg font-semibold mb-4">Teléfonos</h2>
+
+          <div formArrayName="telefonos">
+            <div
+              *ngFor="let phone of telefonos.controls; let i = index"
+              [formGroupName]="i"
+              class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"
+            >
+              <mat-form-field class="flex-auto" [subscriptSizing]="'dynamic'">
+                <mat-label>Teléfono</mat-label>
+                <mat-icon
+                  matPrefix
+                  class="hidden icon-size-5 sm:flex"
+                  [svgIcon]="'heroicons_solid:phone'"
+                ></mat-icon>
+                <input matInput formControlName="telefono" />
+              </mat-form-field>
+
+              <mat-form-field class="flex-auto" [subscriptSizing]="'dynamic'">
+                <mat-label>Etiqueta</mat-label>
+                <mat-icon
+                  matPrefix
+                  class="hidden icon-size-5 sm:flex"
+                  [svgIcon]="'heroicons_solid:tag'"
+                ></mat-icon>
+                <input matInput formControlName="descripcion" />
+              </mat-form-field>
+
+              <div class="flex items-center">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="removePhoneNumberField(i)"
+                  *ngIf="telefonos.length > 1"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="addPhoneNumberField()"
+          >
+            <mat-icon>add</mat-icon> Agregar Teléfono
+          </button>
+        </div>
+
+        <!-- Botones -->
+        <div class="bottom-0 py-2 flex justify-end gap-2 btn-float">
+          <button mat-raised-button color="primary" (click)="saveProspect()">
+            Guardar
+          </button>
+          <button
+            mat-button
+            color="warn"
+            type="button"
+            (click)="router.navigate(['/dashboards/prospects'])"
+          >
+            Cancelar
+          </button>
+        </div>
       </form>
     </mat-tab>
 
@@ -107,38 +225,79 @@
         <!-- Header -->
         <div class="flex items-center">
           <div class="flex flex-auto items-center">
-            <mat-form-field class="fuse-mat-rounded fuse-mat-dense flex-auto" [subscriptSizing]="'dynamic'">
-              <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'" matPrefix></mat-icon>
-              <input matInput [autocomplete]="'off'" placeholder="Buscar notas" [(ngModel)]="searchText" />
+            <mat-form-field
+              class="fuse-mat-rounded fuse-mat-dense flex-auto"
+              [subscriptSizing]="'dynamic'"
+            >
+              <mat-icon
+                class="icon-size-5"
+                [svgIcon]="'heroicons_solid:magnifying-glass'"
+                matPrefix
+              ></mat-icon>
+              <input
+                matInput
+                [autocomplete]="'off'"
+                placeholder="Buscar notas"
+                [(ngModel)]="searchText"
+              />
             </mat-form-field>
           </div>
           <!-- New note -->
-          <button class="ml-4 min-w-10 px-1 sm:px-4" mat-flat-button color="primary" (click)="addNewNote()">
-            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:plus-circle'"></mat-icon>
+          <button
+            class="ml-4 min-w-10 px-1 sm:px-4"
+            mat-flat-button
+            color="primary"
+            (click)="addNewNote()"
+          >
+            <mat-icon
+              class="icon-size-5"
+              [svgIcon]="'heroicons_solid:plus-circle'"
+            ></mat-icon>
             <span class="ml-2 hidden sm:inline-block">Nueva nota</span>
           </button>
         </div>
-    
+
         <!-- Lista de notas -->
         <div class="-mx-2 mt-8">
           <div *ngIf="filteredNotes.length; else noNotes">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow flex justify-between items-start" *ngFor="let note of filteredNotes">
-                <div class="flex-1 cursor-pointer" (click)="openNoteDialog(note)">
-                  <h3 class="font-semibold text-lg truncate">{{ note.title }}</h3>
-                  <p class="text-gray-600 dark:text-gray-300 line-clamp-3">{{ note.content }}</p>
+              <div
+                class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow flex justify-between items-start"
+                *ngFor="let note of filteredNotes"
+              >
+                <div
+                  class="flex-1 cursor-pointer"
+                  (click)="openNoteDialog(note)"
+                >
+                  <h3 class="font-semibold text-lg truncate">
+                    {{ note.title }}
+                  </h3>
+                  <p class="text-gray-600 dark:text-gray-300 line-clamp-3">
+                    {{ note.content }}
+                  </p>
                 </div>
                 <!-- Delete Button -->
-                <button mat-icon-button color="warn" (click)="deleteNote(note.idNote, $event)">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="deleteNote(note.idNote, $event)"
+                >
                   <mat-icon [svgIcon]="'heroicons_solid:trash'"></mat-icon>
                 </button>
               </div>
             </div>
           </div>
           <ng-template #noNotes>
-            <div class="flex flex-auto flex-col items-center justify-center bg-gray-100 dark:bg-transparent">
-              <mat-icon class="icon-size-24" [svgIcon]="'heroicons_outline:document'"></mat-icon>
-              <div class="text-secondary mt-4 text-2xl font-semibold tracking-tight">
+            <div
+              class="flex flex-auto flex-col items-center justify-center bg-gray-100 dark:bg-transparent"
+            >
+              <mat-icon
+                class="icon-size-24"
+                [svgIcon]="'heroicons_outline:document'"
+              ></mat-icon>
+              <div
+                class="text-secondary mt-4 text-2xl font-semibold tracking-tight"
+              >
                 ¡No hay notas aún!
               </div>
             </div>
@@ -146,7 +305,17 @@
         </div>
       </div>
     </mat-tab>
-  </mat-tab-group>
 
-  
+    <mat-tab label="Ubicación">
+      <div>
+        <input
+          type="text"
+          placeholder="Buscar dirección..."
+          (keyup.enter)="buscarDireccion(direccionInput.value)"
+          #direccionInput
+        />
+        <div id="map" style="height: 400px"></div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 </div>
