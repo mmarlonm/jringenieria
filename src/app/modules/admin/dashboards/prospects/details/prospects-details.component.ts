@@ -441,65 +441,69 @@ export class ProspectDetailsComponent implements OnInit {
     return;
   }
 
-  // Verifica si ya hay un mapa creado para evitar errores
-  if (this.map) {
-    this.map.remove();  // Limpia el mapa anterior
-  }
+  // 👉 Arregla los íconos del marcador para GitHub Pages
+  const icon = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
 
-  this.map = L.map(container).setView([19.4326, -99.1332], 6);
+  this.map = L.map('map').setView([19.4326, -99.1332], 6); // México
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(this.map);
 
-  // Si ya tiene coordenadas guardadas, muestra el marcador
+  // Si hay coordenadas existentes, mostrar el marcador con info
   if (this.latitud && this.longitud) {
-    const latlng = [this.latitud, this.longitud] as L.LatLngExpression;
-
-    this.marker = L.marker(latlng, { draggable: true }).addTo(this.map);
-
-    // 🔹 Añade tooltip con info del prospecto
-    const info = `
-      <strong>${this.prospectForm.get('empresa')?.value}</strong><br>
-      Contacto: ${this.prospectForm.get('contacto')?.value}<br>
-      Tel: ${this.prospectForm.get('telefono')?.value}
+    const popupContent = `
+      <b>Empresa:</b> ${this.prospectForm.value.empresa}<br>
+      <b>Contacto:</b> ${this.prospectForm.value.contacto}<br>
+      <b>Teléfono:</b> ${this.prospectForm.value.telefono}
     `;
-    this.marker.bindTooltip(info, { permanent: true, direction: "top" }).openTooltip();
 
-    this.map.setView(latlng, 14);
+    this.marker = L.marker([this.latitud, this.longitud], { draggable: true, icon }).addTo(this.map)
+      .bindPopup(popupContent)
+      .openPopup();
+
+    this.map.setView([this.latitud, this.longitud], 14);
 
     this.marker.on('dragend', (e: any) => {
       const { lat, lng } = e.target.getLatLng();
       this.latitud = lat;
       this.longitud = lng;
     });
-  }
-
-  // Evento click para agregar marcador nuevo o actualizar
-  this.map.on('click', (e: L.LeafletMouseEvent) => {
-    const { lat, lng } = e.latlng;
-    this.latitud = lat;
-    this.longitud = lng;
-
-    if (this.marker) {
-      this.map.removeLayer(this.marker);
-    }
-
-    this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
-
-    const info = `
-      <strong>${this.prospectForm.get('empresa')?.value}</strong><br>
-      Contacto: ${this.prospectForm.get('contacto')?.value}<br>
-      Tel: ${this.prospectForm.get('telefono')?.value}
-    `;
-    this.marker.bindTooltip(info, { permanent: true, direction: "top" }).openTooltip();
-
-    this.marker.on('dragend', (event: any) => {
-      const { lat, lng } = event.target.getLatLng();
+  } else {
+    // Clic en el mapa para colocar nuevo marcador
+    this.map.on('click', (e: any) => {
+      const { lat, lng } = e.latlng;
       this.latitud = lat;
       this.longitud = lng;
+
+      if (this.marker) {
+        this.map.removeLayer(this.marker);
+      }
+
+      const popupContent = `
+        <b>Empresa:</b> ${this.prospectForm.value.empresa}<br>
+        <b>Contacto:</b> ${this.prospectForm.value.contacto}<br>
+        <b>Teléfono:</b> ${this.prospectForm.value.telefono}
+      `;
+
+      this.marker = L.marker([lat, lng], { draggable: true, icon }).addTo(this.map)
+        .bindPopup(popupContent)
+        .openPopup();
+
+      this.marker.on('dragend', (event: any) => {
+        const { lat, lng } = event.target.getLatLng();
+        this.latitud = lat;
+        this.longitud = lng;
+      });
     });
-  });
+  }
 }
 
 }
