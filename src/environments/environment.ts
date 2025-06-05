@@ -4,6 +4,6 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-    apiUrl: 'https://pike-down-gba-ppc.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
-    apiUrlSignal: 'https://pike-down-gba-ppc.trycloudflare.com'
+    apiUrl: 'https://protected-unless-link-interactive.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+    apiUrlSignal: 'https://protected-unless-link-interactive.trycloudflare.com'
   };
