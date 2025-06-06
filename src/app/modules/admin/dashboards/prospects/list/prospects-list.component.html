@@ -87,7 +87,7 @@
             <!-- Fecha Entrega -->
             <ng-container matColumnDef="fechaRegistro">
               <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha Registro </th>
-              <td mat-cell *matCellDef="let quote"> {{ quote.fechaRegistro | date:'yyyy-MM-dd' }} </td>
+              <td mat-cell *matCellDef="let quote"> {{ quote.fechaRegistro | date:'dd-MM-yyyy' }} </td>
             </ng-container>
   
             <!-- Estatus -->

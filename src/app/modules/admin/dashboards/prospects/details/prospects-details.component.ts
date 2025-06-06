@@ -23,7 +23,7 @@ import { debounceTime } from "rxjs";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
-import { MAT_DATE_LOCALE } from "@angular/material/core";
+import { MAT_DATE_FORMATS, DateAdapter, MAT_DATE_LOCALE } from "@angular/material/core";
 import { UsersService } from "../../../security/users/users.service";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
@@ -31,6 +31,19 @@ import { NotesDetailsComponent } from "../dialog/dialog.component";
 import { MatDialog } from "@angular/material/dialog";
 import Swal from "sweetalert2";
 import * as L from "leaflet";
+import { MomentDateAdapter } from '@angular/material-moment-adapter';
+
+export const CUSTOM_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: "app-prospects-details",
@@ -54,8 +67,8 @@ import * as L from "leaflet";
     MatIconModule,
   ],
   providers: [
-    { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
-    { provide: MAT_DATE_LOCALE, useValue: "es-ES" }, // Idioma para Angular Material (como el Datepicker)
+    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
+    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS }
   ],
 })
 export class ProspectDetailsComponent implements OnInit {
@@ -69,7 +82,11 @@ export class ProspectDetailsComponent implements OnInit {
   clients: any[] = [];
   opcionesContacto: string[] = [
     "Web",
+    "Whatsapp",
     "Facebook",
+    "Correo Electrónico",
+    "Teléfono",
+    "Llamada",
     "Instagram",
     "Twitter",
     "LinkedIn",
@@ -118,6 +135,15 @@ export class ProspectDetailsComponent implements OnInit {
       personalSeguimiento: [null],
       latitud: [null],
       longitud: [null],
+
+      // 🆕 Nuevos campos
+      relacionComercial: [""],
+      descripcion: [""],
+      seguimiento: [""],
+      llamada: [""],
+      observaciones: [""],
+      fechaAccion: [""],
+      canalMedio: [""],
 
       emails: this.fb.array([this.createEmailField()]),
       telefonos: this.fb.array([this.createPhoneNumberField()]),
@@ -221,6 +247,13 @@ export class ProspectDetailsComponent implements OnInit {
             personalSeguimiento: prospecto.personalSeguimiento,
             latitud: prospecto.latitud,
             longitud: prospecto.longitud,
+            relacionComercial: prospecto.relacionComercial,
+            descripcion: prospecto.descripcion,
+            seguimiento: prospecto.seguimiento,
+            llamada: prospecto.llamada,
+            observaciones: prospecto.observaciones,
+            fechaAccion: prospecto.fechaAccion,
+            canalMedio: prospecto.canalMedio,
           });
         }
       } else {
@@ -435,75 +468,80 @@ export class ProspectDetailsComponent implements OnInit {
   }
 
   initMap(): void {
-  const container = document.getElementById('map');
-  if (!container) {
-    console.error("Map container not found.");
-    return;
-  }
+    const container = document.getElementById("map");
+    if (!container) {
+      console.error("Map container not found.");
+      return;
+    }
 
-  // 👉 Arregla los íconos del marcador para GitHub Pages
-  const icon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-  });
+    // 👉 Arregla los íconos del marcador para GitHub Pages
+    const icon = L.icon({
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
 
-  this.map = L.map('map').setView([19.4326, -99.1332], 6); // México
+    this.map = L.map("map").setView([19.4326, -99.1332], 6); // México
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(this.map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(this.map);
 
-  // Si hay coordenadas existentes, mostrar el marcador con info
-  if (this.latitud && this.longitud) {
-    const popupContent = `
+    // Si hay coordenadas existentes, mostrar el marcador con info
+    if (this.latitud && this.longitud) {
+      const popupContent = `
       <b>Empresa:</b> ${this.prospectForm.value.empresa}<br>
       <b>Contacto:</b> ${this.prospectForm.value.contacto}<br>
       <b>Teléfono:</b> ${this.prospectForm.value.telefono}
     `;
 
-    this.marker = L.marker([this.latitud, this.longitud], { draggable: true, icon }).addTo(this.map)
-      .bindPopup(popupContent)
-      .openPopup();
+      this.marker = L.marker([this.latitud, this.longitud], {
+        draggable: true,
+        icon,
+      })
+        .addTo(this.map)
+        .bindPopup(popupContent)
+        .openPopup();
 
-    this.map.setView([this.latitud, this.longitud], 14);
+      this.map.setView([this.latitud, this.longitud], 14);
 
-    this.marker.on('dragend', (e: any) => {
-      const { lat, lng } = e.target.getLatLng();
-      this.latitud = lat;
-      this.longitud = lng;
-    });
-  } else {
-    // Clic en el mapa para colocar nuevo marcador
-    this.map.on('click', (e: any) => {
-      const { lat, lng } = e.latlng;
-      this.latitud = lat;
-      this.longitud = lng;
+      this.marker.on("dragend", (e: any) => {
+        const { lat, lng } = e.target.getLatLng();
+        this.latitud = lat;
+        this.longitud = lng;
+      });
+    } else {
+      // Clic en el mapa para colocar nuevo marcador
+      this.map.on("click", (e: any) => {
+        const { lat, lng } = e.latlng;
+        this.latitud = lat;
+        this.longitud = lng;
 
-      if (this.marker) {
-        this.map.removeLayer(this.marker);
-      }
+        if (this.marker) {
+          this.map.removeLayer(this.marker);
+        }
 
-      const popupContent = `
+        const popupContent = `
         <b>Empresa:</b> ${this.prospectForm.value.empresa}<br>
         <b>Contacto:</b> ${this.prospectForm.value.contacto}<br>
         <b>Teléfono:</b> ${this.prospectForm.value.telefono}
       `;
 
-      this.marker = L.marker([lat, lng], { draggable: true, icon }).addTo(this.map)
-        .bindPopup(popupContent)
-        .openPopup();
+        this.marker = L.marker([lat, lng], { draggable: true, icon })
+          .addTo(this.map)
+          .bindPopup(popupContent)
+          .openPopup();
 
-      this.marker.on('dragend', (event: any) => {
-        const { lat, lng } = event.target.getLatLng();
-        this.latitud = lat;
-        this.longitud = lng;
+        this.marker.on("dragend", (event: any) => {
+          const { lat, lng } = event.target.getLatLng();
+          this.latitud = lat;
+          this.longitud = lng;
+        });
       });
-    });
+    }
   }
-}
-
 }

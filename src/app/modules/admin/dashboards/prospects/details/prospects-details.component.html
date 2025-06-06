@@ -10,44 +10,44 @@
         class="flex flex-col gap-4 overflow-auto"
       >
         <div class="grid grid-cols-2 gap-4">
-          <!-- Empresa -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Empresa</mat-label>
-            <input matInput formControlName="empresa" />
-          </mat-form-field>
-
           <!-- Contacto -->
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Nombre de Contacto</mat-label>
+            <mat-label>Nombre</mat-label>
             <input matInput formControlName="contacto" />
+          </mat-form-field>
+          
+          <!-- Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>ORGANIZACIÓN / INSTITUCIÓN</mat-label>
+            <input matInput formControlName="empresa" />
           </mat-form-field>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <!-- Teléfono -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefono" />
-          </mat-form-field>
-
           <!-- Puesto -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Puesto</mat-label>
             <input matInput formControlName="puesto" />
           </mat-form-field>
+
+          <!-- Teléfono -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono" />
+          </mat-form-field>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <!-- Giro Empresa -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Giro de la Empresa</mat-label>
-            <input matInput formControlName="giroEmpresa" />
-          </mat-form-field>
-
           <!-- Email -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Email</mat-label>
             <input matInput formControlName="email" />
+          </mat-form-field>
+
+          <!-- Giro Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Giro de la Empresa</mat-label>
+            <input matInput formControlName="giroEmpresa" />
           </mat-form-field>
         </div>
 
@@ -66,9 +66,71 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Responsable de seguimiento</mat-label>
+            <mat-select formControlName="personalSeguimiento">
+              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
+                {{ user.nombreUsuario }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Relacion Comercial</mat-label>
+            <input matInput formControlName="relacionComercial" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Descripcion</mat-label>
+            <input matInput formControlName="descripcion" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Seguimiento</mat-label>
+            <input matInput formControlName="seguimiento" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Llamada</mat-label>
+            <input matInput formControlName="llamada" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Observaciones</mat-label>
+            <input matInput formControlName="observaciones" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Fecha Accion</mat-label>
+            <input
+              matInput
+              [matDatepicker]="fAccion"
+              formControlName="fechaAccion"
+            />
+            <mat-hint>DD/MM/YYYY</mat-hint>
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="fAccion"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #fAccion></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Canal/Medio</mat-label>
+            <input matInput formControlName="canalMedio" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
           <!-- Cómo se obtuvo el contacto -->
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Cómo se obtuvo el contacto</mat-label>
+            <mat-label>Primer contacto</mat-label>
             <mat-select
               formControlName="comoSeObtuvo"
               (selectionChange)="onComoSeObtuvoChange($event.value)"
@@ -89,17 +151,6 @@
           >
             <mat-label>Especificar otro medio</mat-label>
             <textarea matInput formControlName="otros"></textarea>
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Personal de seguimiento</mat-label>
-            <mat-select formControlName="personalSeguimiento">
-              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
-                {{ user.nombreUsuario }}
-              </mat-option>
-            </mat-select>
           </mat-form-field>
         </div>
 

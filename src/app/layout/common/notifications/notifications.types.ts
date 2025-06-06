@@ -8,4 +8,5 @@ export interface Notification {
     link?: string;
     useRouter?: boolean;
     read: boolean;
+    view: boolean; // nueva propiedad para control de visibilidad
 }
