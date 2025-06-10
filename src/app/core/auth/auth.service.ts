@@ -97,7 +97,7 @@ export class AuthService {
     if (this._authenticated) return of(true);
     if (!this.accessToken || AuthUtils.isTokenExpired(this.accessToken)) return of(false);
 
-    const user: any = JSON.parse(this.userInformation);
+    const user: any = JSON.parse(this.userInformation || "{}");
     this._userService.user = user;
 
     return of(true);
