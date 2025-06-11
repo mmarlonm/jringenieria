@@ -433,7 +433,27 @@ export class ProspectDetailsComponent implements OnInit {
 
   setMarker(lat: number, lng: number) {
     if (this.marker) this.map.removeLayer(this.marker);
-    this.marker = L.marker([lat, lng]).addTo(this.map);
+    // 👉 Arregla los íconos del marcador para GitHub Pages
+    const icon = L.icon({
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+
+    const popupContent = `
+      <b>Empresa:</b> ${this.prospectForm.value.empresa}<br>
+      <b>Contacto:</b> ${this.prospectForm.value.contacto}<br>
+      <b>Teléfono:</b> ${this.prospectForm.value.telefono}
+    `;
+
+    this.marker = L.marker([lat, lng], {
+        draggable: true,
+        icon,
+      }).addTo(this.map).bindPopup(popupContent).openPopup();
     this.map.setView([lat, lng], 15);
   }
 
