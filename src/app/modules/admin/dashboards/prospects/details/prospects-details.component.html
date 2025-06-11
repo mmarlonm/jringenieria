@@ -359,12 +359,15 @@
 
     <mat-tab label="Ubicación">
       <div>
-        <input
-          type="text"
-          placeholder="Buscar dirección..."
-          (keyup.enter)="buscarDireccion(direccionInput.value)"
-          #direccionInput
-        />
+         <div class="flex-auto mb-4">
+            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
+              <mat-icon class="icon-size-5" matPrefix [svgIcon]="
+                        'heroicons_solid:magnifying-glass'
+                    "></mat-icon>
+              <input matInput (keyup.enter)="buscarDireccion(direccionInput.value)" [autocomplete]="'off'"
+                [placeholder]="'Buscar dirección...'"  #direccionInput/>
+            </mat-form-field>
+          </div>
         <div id="map" style="height: 400px"></div>
       </div>
     </mat-tab>
