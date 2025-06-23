@@ -1,107 +1,154 @@
 <div class="absolute inset-0 flex flex-col overflow-hidden p-6">
-    <h1 class="text-2xl font-bold mb-4">
-        {{ clientId ? 'Editar Cliente' : 'Nuevo Cliente' }}
-    </h1>
+  <h1 class="text-2xl font-bold mb-4">
+    {{ clientId ? "Editar Cliente" : "Nuevo Cliente" }}
+  </h1>
 
-    <form [formGroup]="clienteForm" (ngSubmit)="saveClient()" class="flex flex-col gap-4 overflow-auto">
+  <mat-tab-group class="h-full flex-1 overflow-hidden" (selectedTabChange)="onTabChange($event)">
+    <mat-tab label="Información General">
+      <form
+        [formGroup]="clienteForm"
+        (ngSubmit)="saveClient()"
+        class="flex flex-col gap-4 overflow-auto"
+      >
         <!-- Nombre -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Nombre</mat-label>
-                <input matInput formControlName="nombre">
-            </mat-form-field>
-            <div class="star-rating-container"> 
-                <label class="star-label">
-                Calificacion:
-                </label>
-                <star-rating-control formControlName="Calificacion" size="large"></star-rating-control>
-            </div>
-
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" />
+          </mat-form-field>
+          <div class="star-rating-container">
+            <label class="star-label"> Calificacion: </label>
+            <star-rating-control
+              formControlName="Calificacion"
+              size="large"
+            ></star-rating-control>
+          </div>
         </div>
 
         <!-- Dirección -->
         <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Dirección</mat-label>
-            <input matInput formControlName="direccion">
+          <mat-label>Dirección</mat-label>
+          <input matInput formControlName="direccion" />
         </mat-form-field>
 
         <!-- Ciudad y Estado -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Ciudad</mat-label>
-                <input matInput formControlName="ciudad">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Ciudad</mat-label>
+            <input matInput formControlName="ciudad" />
+          </mat-form-field>
 
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Colonia</mat-label>
-                <mat-select formControlName="colonia">
-                    <!-- Mostrar el valor guardado como opción inicial si aún no se ha llenado el select -->
-                    <mat-option
-                        *ngIf="!asentamientos.includes(clienteForm.get('colonia')?.value) && clienteForm.get('colonia')?.value"
-                        [value]="clienteForm.get('colonia')?.value">
-                        {{ clienteForm.get('colonia')?.value }}
-                    </mat-option>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Colonia</mat-label>
+            <mat-select formControlName="colonia">
+              <!-- Mostrar el valor guardado como opción inicial si aún no se ha llenado el select -->
+              <mat-option
+                *ngIf="
+                  !asentamientos.includes(clienteForm.get('colonia')?.value) &&
+                  clienteForm.get('colonia')?.value
+                "
+                [value]="clienteForm.get('colonia')?.value"
+              >
+                {{ clienteForm.get("colonia")?.value }}
+              </mat-option>
 
-                    <mat-option *ngFor="let asentamiento of asentamientos" [value]="asentamiento">
-                        {{ asentamiento }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+              <mat-option
+                *ngFor="let asentamiento of asentamientos"
+                [value]="asentamiento"
+              >
+                {{ asentamiento }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Estado</mat-label>
-            <mat-select formControlName="estado">
-                <mat-option *ngFor="let estado of estadosMexico" [value]="estado">
-                    {{ estado }}
-                </mat-option>
-            </mat-select>
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="estado">
+            <mat-option *ngFor="let estado of estadosMexico" [value]="estado">
+              {{ estado }}
+            </mat-option>
+          </mat-select>
         </mat-form-field>
 
         <!-- País y Código Postal -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>País</mat-label>
-                <input matInput formControlName="pais" disabled value="México">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>País</mat-label>
+            <input matInput formControlName="pais" disabled value="México" />
+          </mat-form-field>
 
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Código Postal</mat-label>
-                <input matInput formControlName="codigoPostal" (blur)="buscarDireccionPorCP()">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Código Postal</mat-label>
+            <input
+              matInput
+              formControlName="codigoPostal"
+              (blur)="buscarDireccionPorCP()"
+            />
+          </mat-form-field>
         </div>
 
         <!-- Teléfono y Email -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Teléfono</mat-label>
-                <input matInput formControlName="telefono">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono" />
+          </mat-form-field>
 
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Email</mat-label>
-                <input matInput type="email" formControlName="email">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
         </div>
 
         <!-- Empresa y RFC -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Empresa</mat-label>
-                <input matInput formControlName="empresa">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Empresa</mat-label>
+            <input matInput formControlName="empresa" />
+          </mat-form-field>
 
-            <mat-form-field appearance="fill" class="w-full">
-                <mat-label>RFC</mat-label>
-                <input matInput formControlName="rfc">
-            </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>RFC</mat-label>
+            <input matInput formControlName="rfc" />
+          </mat-form-field>
         </div>
 
         <!-- Botones -->
         <div class="sticky bottom-0 py-2 flex justify-end gap-2">
-            <button mat-raised-button color="primary" type="submit" class="w-full md:w-auto">Guardar</button>
-            <button mat-button color="warn" type="button"
-                (click)="router.navigate(['/catalogs/clients'])">Cancelar</button>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            class="w-full md:w-auto"
+          >
+            Guardar
+          </button>
+          <button
+            mat-button
+            color="warn"
+            type="button"
+            (click)="router.navigate(['/catalogs/clients'])"
+          >
+            Cancelar
+          </button>
         </div>
-    </form>
+      </form>
+    </mat-tab>
+
+    <mat-tab label="Ubicación">
+      <div>
+         <div class="flex-auto mb-4">
+            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
+              <mat-icon class="icon-size-5" matPrefix [svgIcon]="
+                        'heroicons_solid:magnifying-glass'
+                    "></mat-icon>
+              <input matInput (keyup.enter)="buscarDireccion(direccionInput.value)" [autocomplete]="'off'"
+                [placeholder]="'Buscar dirección...'"  #direccionInput/>
+            </mat-form-field>
+          </div>
+        <div id="map" style="height: 400px"></div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 </div>
