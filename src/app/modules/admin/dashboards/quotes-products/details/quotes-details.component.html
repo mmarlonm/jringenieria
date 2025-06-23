@@ -45,6 +45,16 @@
               <mat-icon>{{ selectedClienteId ? "edit" : "add" }}</mat-icon>
             </button>
 
+            <button
+              *ngIf="selectedClienteId"
+              mat-icon-button
+              matSuffix
+              (click)="clearClienteSeleccionado()"
+              matTooltip="Quitar cliente seleccionado"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+
             <mat-error *ngIf="quotesForm.get('cliente')?.hasError('noZero')">
               Debe seleccionar un cliente válido.
             </mat-error>

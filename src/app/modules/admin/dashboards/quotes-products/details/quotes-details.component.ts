@@ -343,4 +343,9 @@ export class QuoteDetailsComponent implements OnInit {
       .getUnidadesDeNegocio()
       .subscribe((data) => (this.unidadesDeNegocio = data));
   }
+
+  clearClienteSeleccionado(): void {
+  this.quotesForm.get('clienteId')?.setValue(null);
+  this.selectedClienteId = null;
+}
 }
