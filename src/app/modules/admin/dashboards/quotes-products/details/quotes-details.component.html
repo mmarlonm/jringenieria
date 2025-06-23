@@ -1,0 +1,148 @@
+<div class="absolute inset-0 flex flex-col overflow-hidden p-6">
+  <h1 class="text-2xl font-bold mb-4">
+    {{ quotesId ? "Editar Cotización" : "Nueva Cotización" }}
+  </h1>
+  <mat-tab-group class="h-full flex-1 overflow-hidden">
+    <mat-tab label="Información General">
+      <form [formGroup]="quotesForm" class="flex flex-col gap-4 overflow-auto">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Cliente -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Cliente</mat-label>
+            <mat-select
+              [formControl]="quotesForm.get('clienteId')"
+              #clienteSelect
+              panelClass="custom-select-panel"
+              (selectionChange)="onClienteSelected($event.value)"
+            >
+              <mat-option [value]="null">— Ninguno —</mat-option>
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="clienteFiltro"
+                  placeholderLabel="Buscar cliente..."
+                  noEntriesFoundLabel="No se encontraron resultados"
+                  clearSearchInputLabel="Limpiar búsqueda"
+                ></ngx-mat-select-search>
+              </mat-option>
+
+              <mat-option
+                *ngFor="let client of filteredClients"
+                [value]="client.clienteId"
+              >
+                {{ client.clienteId }} - {{ client.nombre }}
+              </mat-option>
+            </mat-select>
+
+            <!-- Botón para abrir modal -->
+            <button
+              mat-icon-button
+              matSuffix
+              (click)="abrirModalCliente($event)"
+              [matTooltip]="
+                selectedClienteId ? 'Editar cliente' : 'Agregar nuevo cliente'
+              "
+            >
+              <mat-icon>{{ selectedClienteId ? "edit" : "add" }}</mat-icon>
+            </button>
+
+            <mat-error *ngIf="quotesForm.get('cliente')?.hasError('noZero')">
+              Debe seleccionar un cliente válido.
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Nombre de cliente -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Nombre de Cliente</mat-label>
+            <input matInput formControlName="nombreCliente" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Nombre de Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Nombre de Empresa</mat-label>
+            <input matInput formControlName="nombreEmpresa" />
+          </mat-form-field>
+
+          <!-- Nombre de Correo -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Correo</mat-label>
+            <input matInput formControlName="correo" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Telefono -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Telefono</mat-label>
+            <input matInput formControlName="telefono" />
+          </mat-form-field>
+
+          <!-- RFC -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>RFC</mat-label>
+            <input matInput formControlName="rfc" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Direccion -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="direccionCompleta" />
+          </mat-form-field>
+
+          <!-- Estado -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Estado</mat-label>
+            <input matInput formControlName="estado" />
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Unidad de Negocio -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Unidad de Negocio</mat-label>
+            <mat-select formControlName="unidadDeNegocioId">
+              <mat-option
+                *ngFor="let unidad of unidadesDeNegocio"
+                [value]="unidad.unidadId"
+              >
+                {{ unidad.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Requisitos Especiales -->
+          <div class="flex items-center">
+            <mat-slide-toggle
+              formControlName="requisitosEspeciales"
+              color="primary"
+            >
+              ¿Requisitos Especiales?
+            </mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="saveQuotes()"
+          >
+            Guardar
+          </button>
+          <button
+            mat-button
+            color="warn"
+            type="button"
+            (click)="router.navigate(['/dashboards/quote'])"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </mat-tab>
+  </mat-tab-group>
+</div>

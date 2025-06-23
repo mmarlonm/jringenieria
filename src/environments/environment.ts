@@ -4,6 +4,6 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-    apiUrl: 'https://pricing-recreation-min-solutions.trycloudflare.com/api', // Aquí va la URL de tu API (ajusta según sea necesario) 
-    apiUrlSignal: 'https://pricing-recreation-min-solutions.trycloudflare.com'
+    apiUrl: 'https://utility-weekend-anytime-cognitive.trycloudflare.com/api', // Aquí va la URL de tu API (ajusta según sea necesario) 
+    apiUrlSignal: 'https://utility-weekend-anytime-cognitive.trycloudflare.com'
   };

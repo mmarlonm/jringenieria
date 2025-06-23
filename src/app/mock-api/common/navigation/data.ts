@@ -31,6 +31,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 link: '/dashboards/quote',
             },
             {
+                id: 'dashboards.quote-products',
+                title: 'Cotizaciones de  Productos',
+                type: 'basic',
+                icon: 'heroicons_outline:banknotes',
+                link: '/dashboards/quote-products',
+            },
+            {
                 id: 'dashboards.prospects',
                 title: 'Prospectos',
                 type: 'basic',
