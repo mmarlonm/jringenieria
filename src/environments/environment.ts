@@ -4,6 +4,6 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-    apiUrl: 'https://solid-grace-discussions-aug.trycloudflare.com/api', // Aquí va la URL de tu API (ajusta según sea necesario) 
-    apiUrlSignal: 'https://solid-grace-discussions-aug.trycloudflare.com'
+    apiUrl: 'https://clocks-proposition-wed-leaves.trycloudflare.com/api', // Aquí va la URL de tu API (ajusta según sea necesario) 
+    apiUrlSignal: 'https://clocks-proposition-wed-leaves.trycloudflare.com'
   };
