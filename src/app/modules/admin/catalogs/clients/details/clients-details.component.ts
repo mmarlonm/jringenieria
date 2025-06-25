@@ -94,22 +94,6 @@ export class ClientsDetailsComponent implements OnInit {
             this.loadClient(this.clientId);
         }
     });
-
-    this.map = L.map("map").setView([19.4326, -99.1332], 6); // Ciudad de México
-    
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap contributors",
-        }).addTo(this.map);
-    
-        this.map.on("click", (e: any) => {
-          this.latitud = e.latlng.lat;
-          this.longitud = e.latlng.lng;
-          this.setMarker(this.latitud, this.longitud);
-        });
-    
-        if (this.latitud && this.longitud) {
-          this.setMarker(this.latitud, this.longitud);
-        }
   }
 
   getCategorias(): void {
@@ -328,5 +312,10 @@ setMarker(lat: number, lng: number) {
         });
       });
     }
+    this.map.on("click", (e: any) => {
+          this.latitud = e.latlng.lat;
+          this.longitud = e.latlng.lng;
+          this.setMarker(this.latitud, this.longitud);
+        });
   }
 }

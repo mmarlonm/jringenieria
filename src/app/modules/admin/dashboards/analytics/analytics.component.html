@@ -77,7 +77,7 @@
             ></mat-icon>
           </div>
         </div>
-              </div>
+      </div>
     </div>
   </div>
 
@@ -89,6 +89,7 @@
         class="sm:px-2"
         mat-stretch-tabs="false"
         [animationDuration]="'0'"
+        (selectedTabChange)="onTabChange($event)"
       >
         <!-- Home -->
         <mat-tab label="Home">
@@ -873,21 +874,24 @@
                       <!-- Indicador de estado online/offline -->
                       <div
                         class="absolute top-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2"
-                        style="right: 20px !important;"
+                        style="right: 20px !important"
                         [ngClass]="{
-                          'bg-green-500 border-white': member.online === 'Activo',
-                          'bg-yellow-400 border-white': member.online === 'Inactivo',
-                          'bg-gray-400 border-white': !member.online || member.online === ''
+                          'bg-green-500 border-white':
+                            member.online === 'Activo',
+                          'bg-yellow-400 border-white':
+                            member.online === 'Inactivo',
+                          'bg-gray-400 border-white':
+                            !member.online || member.online === '',
                         }"
                         [title]="member.online ? 'Online' : 'Offline'"
                       ></div>
                     </div>
-                  
+
                     <!-- Nombre del usuario -->
                     <div class="mt-6 font-medium">
                       {{ member.nombreUsuario }}
                     </div>
-                  
+
                     <!-- Correo electrónico -->
                     <div class="text-secondary">
                       {{ member.email }}
@@ -918,6 +922,42 @@
                   </div>
                 </div>
               }
+            </div>
+          </ng-template>
+        </mat-tab>
+
+        <!-- Mapa de clientes y prospectos -->
+        <mat-tab label="Ubicación">
+          <ng-template mat-tab-label>
+            <span class="inline-flex items-center space-x-2">
+              <span class="">Ubicación</span>
+            </span>
+          </ng-template>
+          <ng-template matTabContent>
+            <div class="relative">
+              <!-- Toggle centrado flotante -->
+              <div
+                class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 p-2 rounded shadow"
+              >
+                <mat-button-toggle-group
+                  name="tipoToggle"
+                  [(ngModel)]="tipoSeleccionado"
+                  (change)="cargarMarcadores()"
+                  appearance="legacy"
+                  color="primary"
+                  exclusive
+                >
+                  <mat-button-toggle value="cliente"
+                    >Clientes</mat-button-toggle
+                  >
+                  <mat-button-toggle value="prospecto"
+                    >Prospectos</mat-button-toggle
+                  >
+                </mat-button-toggle-group>
+              </div>
+
+              <!-- Mapa -->
+              <div id="map" style="height: 500px; width: 100%"></div>
             </div>
           </ng-template>
         </mat-tab>

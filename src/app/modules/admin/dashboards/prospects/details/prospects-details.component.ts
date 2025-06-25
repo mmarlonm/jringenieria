@@ -169,22 +169,6 @@ export class ProspectDetailsComponent implements OnInit {
     });
 
     this.getUsers();
-
-    this.map = L.map("map").setView([19.4326, -99.1332], 6); // Ciudad de México
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(this.map);
-
-    this.map.on("click", (e: any) => {
-      this.latitud = e.latlng.lat;
-      this.longitud = e.latlng.lng;
-      this.setMarker(this.latitud, this.longitud);
-    });
-
-    if (this.latitud && this.longitud) {
-      this.setMarker(this.latitud, this.longitud);
-    }
   }
 
   loadProspects(id: number): void {
@@ -510,6 +494,12 @@ export class ProspectDetailsComponent implements OnInit {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(this.map);
+
+    this.map.on("click", (e: any) => {
+      this.latitud = e.latlng.lat;
+      this.longitud = e.latlng.lng;
+      this.setMarker(this.latitud, this.longitud);
+    });
 
     // Si hay coordenadas existentes, mostrar el marcador con info
     if (this.latitud && this.longitud) {

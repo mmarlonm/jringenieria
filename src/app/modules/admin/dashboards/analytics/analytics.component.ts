@@ -25,6 +25,11 @@ import { UsersService } from "../../security/users/users.service";
 import { SalesService } from "../sales/sales.services";
 import { CommonModule } from "@angular/common";
 import { PresenceService } from "app/presence.service";
+import * as L from "leaflet";
+import { MatSelectModule } from "@angular/material/select";
+import { MatTabChangeEvent } from "@angular/material/tabs";
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: "analytics",
   templateUrl: "./analytics.component.html",
@@ -44,6 +49,8 @@ import { PresenceService } from "app/presence.service";
     NgClass,
     CurrencyPipe,
     CommonModule,
+    MatSelectModule,
+    FormsModule
   ],
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
@@ -66,6 +73,11 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   chartSales: ApexOptions = {};
   connectedUsers: string[] = [];
+
+  map!: L.Map;
+
+  tipoSeleccionado: string = "cliente";
+  marcadores: L.Marker[] = [];
 
   /**
    * Constructor
@@ -123,22 +135,24 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.getUsers();
     this.getAnalitica();
     this.getSales();
-    this.presenceService.onUsuarioConectado()
-  .pipe(takeUntil(this._unsubscribeAll))
-  .subscribe((newConnectedUsers: string[]) => {
+    this.presenceService
+      .onUsuarioConectado()
+      .pipe(takeUntil(this._unsubscribeAll))
+      .subscribe((newConnectedUsers: string[]) => {
+        this.connectedUsers = newConnectedUsers;
 
-    this.connectedUsers = newConnectedUsers;
-
-    // 🔁 Actualizar la propiedad `online` en los usuarios
-    this.users = this.users.map(user => {
-      const found: any = newConnectedUsers.find((u: any) => u.userId === user.usuarioId.toString());
-      return {
-        ...user,
-        online: found ? found.status : false // o `null`, según lo que signifique "desconectado"
-      };
-    });
-    this.cdr.detectChanges(); // Forzar actualización en la vista
-  });
+        // 🔁 Actualizar la propiedad `online` en los usuarios
+        this.users = this.users.map((user) => {
+          const found: any = newConnectedUsers.find(
+            (u: any) => u.userId === user.usuarioId.toString()
+          );
+          return {
+            ...user,
+            online: found ? found.status : false, // o `null`, según lo que signifique "desconectado"
+          };
+        });
+        this.cdr.detectChanges(); // Forzar actualización en la vista
+      });
   }
 
   getAnalitica(): void {
@@ -154,33 +168,35 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       let filteredUsers = users.filter(
         (user) => user.rolId !== 3 && user.activo !== false
       );
-  
+
       // Ahora obtenemos la lista de conectados desde PresenceService
-      this.presenceService.connectedUsers$.pipe(take(1)).subscribe((connectedIds) => {
-        // Marcamos cada usuario como online si está en la lista
-        this.users = filteredUsers.map(user => {
-          const found :any = connectedIds.find((u:any) => u.userId === user.usuarioId.toString());
-          if (found) {
-          return {
-            ...user,
-            online: found.status
-          };
-          }
-          else {
-            return {
-              ...user,
-              online: ""
-            };
-          }
-          
+      this.presenceService.connectedUsers$
+        .pipe(take(1))
+        .subscribe((connectedIds) => {
+          // Marcamos cada usuario como online si está en la lista
+          this.users = filteredUsers.map((user) => {
+            const found: any = connectedIds.find(
+              (u: any) => u.userId === user.usuarioId.toString()
+            );
+            if (found) {
+              return {
+                ...user,
+                online: found.status,
+              };
+            } else {
+              return {
+                ...user,
+                online: "",
+              };
+            }
+          });
+          this.cdr.detectChanges(); // Forzar actualización en la vista
         });
-        this.cdr.detectChanges(); // Forzar actualización en la vista
-      });
     });
   }
 
   getSales() {
-    this._salesService.getVentas().subscribe((sales:any) => {
+    this._salesService.getVentas().subscribe((sales: any) => {
       // Aquí puedes manejar los datos de las ventas
       this.salesData = sales.data;
       this.prepateChartSales();
@@ -601,42 +617,110 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     //sales chart
     this.chartSales = {
       chart: {
-        type: 'bar',
+        type: "bar",
         height: 350,
-        stacked: false
+        stacked: false,
       },
-      colors: ['#008FFB', '#FF4560'],
+      colors: ["#008FFB", "#FF4560"],
       dataLabels: {
-        enabled: true
+        enabled: true,
       },
       markers: {
-        size: 4
+        size: 4,
       },
       plotOptions: {
         bar: {
-          columnWidth: '40%',
-          distributed: true
-        }
+          columnWidth: "40%",
+          distributed: true,
+        },
       },
       series: this.getSalesSeries(),
       stroke: {
         show: true,
         width: 2,
-        colors: ['transparent']
+        colors: ["transparent"],
       },
       tooltip: {
         shared: true,
-        intersect: false
+        intersect: false,
       },
       xaxis: {
-        categories: this.getCategories()
+        categories: this.getCategories(),
       },
       yaxis: {
         title: {
-          text: 'Monto'
-        }
-      }
+          text: "Monto",
+        },
+      },
     };
     this.cdr.detectChanges(); // Forzar actualización en la vista
+  }
+
+  onTabChange(event: MatTabChangeEvent): void {
+    if (event.tab.textLabel === "Ubicación") {
+      setTimeout(() => {
+        if (!this.map) {
+          this.initMap();
+          this.cargarMarcadores();
+        }
+      }, 0); // Esperar al siguiente ciclo para que el DOM se renderice
     }
+  }
+
+  initMap(): void {
+    this.map = L.map("map").setView([23.6345, -102.5528], 2); // México
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(this.map);
+  }
+
+  async cargarMarcadores(): Promise<void> {
+  // Limpiar marcadores anteriores
+  this.marcadores.forEach((m) => this.map.removeLayer(m));
+  this.marcadores = [];
+  console.log("Cargando marcador ", this.tipoSeleccionado);
+  this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
+    
+    for (const u of ubicaciones) {
+      if (u.latitud && u.longitud) {
+        const marker = L.marker([u.latitud, u.longitud]);
+
+        // Popup con enlace clicable
+        const popupContent = `<a href="#" class="popup-link" data-id="${u.id}" data-tipo="${u.tipo}"><strong>${u.nombre}</strong></a><br/>(${u.tipo})`;
+
+        marker.bindPopup(popupContent);
+
+        // Escuchar el evento de apertura del popup para agregar click handler
+        marker.on('popupopen', () => {
+          setTimeout(() => {
+            const link = document.querySelector('.popup-link');
+            if (link) {
+              link.addEventListener('click', (event: Event) => {
+                event.preventDefault();
+
+                const id = (link as HTMLElement).getAttribute('data-id');
+                const tipo = (link as HTMLElement).getAttribute('data-tipo');
+
+                if (tipo?.toLowerCase() === 'prospecto') {
+                  this._router.navigate([`/dashboards/prospects/${id}`]);
+                } else if (tipo?.toLowerCase() === 'cliente') {
+                  this._router.navigate([`/catalogs/clients/${id}`]);
+                }
+              });
+            }
+          }, 0); // Esperar a que se renderice el popup
+        });
+
+        marker.addTo(this.map);
+        this.marcadores.push(marker);
+      }
+    }
+
+    if (this.marcadores.length > 0) {
+      const group = L.featureGroup(this.marcadores);
+      this.map.fitBounds(group.getBounds().pad(0.2));
+    }
+  });
+}
 }
