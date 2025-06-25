@@ -78,6 +78,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   tipoSeleccionado: string = "cliente";
   marcadores: L.Marker[] = [];
+  marker: any;
 
   /**
    * Constructor
@@ -681,18 +682,29 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   this.marcadores = [];
   console.log("Cargando marcador ", this.tipoSeleccionado);
   this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
-    
+    const icon = L.icon({
+          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          shadowUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
     for (const u of ubicaciones) {
       if (u.latitud && u.longitud) {
-        const marker = L.marker([u.latitud, u.longitud]);
+        this.marker = L.marker([u.latitud, u.longitud], {
+        draggable: true,
+        icon,
+      });
 
         // Popup con enlace clicable
         const popupContent = `<a href="#" class="popup-link" data-id="${u.id}" data-tipo="${u.tipo}"><strong>${u.nombre}</strong></a><br/>(${u.tipo})`;
 
-        marker.bindPopup(popupContent);
+        this.marker.bindPopup(popupContent);
 
         // Escuchar el evento de apertura del popup para agregar click handler
-        marker.on('popupopen', () => {
+        this.marker.on('popupopen', () => {
           setTimeout(() => {
             const link = document.querySelector('.popup-link');
             if (link) {
@@ -712,8 +724,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
           }, 0); // Esperar a que se renderice el popup
         });
 
-        marker.addTo(this.map);
-        this.marcadores.push(marker);
+        this.marker.addTo(this.map);
+        this.marcadores.push(this.marker);
       }
     }
 
