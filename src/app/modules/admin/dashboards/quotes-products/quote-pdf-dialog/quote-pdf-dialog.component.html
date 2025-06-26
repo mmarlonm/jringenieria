@@ -21,7 +21,7 @@
             <div class="text-secondary font-medium tracking-tight">CLIENTE</div>
             <div class="font-medium">{{ data?.nombreCliente }}</div>
             <div class="text-secondary font-medium tracking-tight">TOTAL</div>
-            <div class="font-medium">{{ data?.total | currency }}</div>
+            <div class="font-medium">{{ data?.total | currency:'MXN':'symbol':'1.2-2' }}</div>
           </div>
           <div
             class="dark -mr-16 grid auto-cols-max grid-flow-col gap-x-8 rounded-l-2xl bg-accent px-8 py-6"
@@ -59,10 +59,10 @@
 
           <ng-container *ngFor="let item of data?.detalles">
             <div class="col-span-8 text-lg font-medium">{{ item?.nombreProducto }}</div>
-            <div class="self-center text-right">{{ item?.precioUnitario | currency }}</div>
+            <div class="self-center text-right">{{ item?.precioUnitario | currency:'MXN':'symbol':'1.2-2' }}</div>
             <div class="self-center text-right">{{ item?.cantidad }}</div>
             <div class="col-span-2 self-center text-right">
-              {{ (item?.cantidad * item?.precioUnitario - item?.descuento) | currency }}
+              {{ (item?.cantidad * item?.precioUnitario - item?.descuento) | currency:'MXN':'symbol':'1.2-2' }}
             </div>
             <div class="col-span-12 my-4 border-b"></div>
           </ng-container>
@@ -70,15 +70,15 @@
           <!-- Resumen -->
           <div class="col-span-12 mt-16"></div>
           <div class="text-secondary col-span-10 font-medium tracking-tight">SUBTOTAL</div>
-          <div class="col-span-2 text-right text-lg">{{ data?.subtotal | currency }}</div>
+          <div class="col-span-2 text-right text-lg">{{ data?.subtotal | currency:'MXN':'symbol':'1.2-2' }}</div>
 
           <div class="col-span-12 my-3 border-b"></div>
           <div class="text-secondary col-span-10 font-medium tracking-tight">IVA (16%)</div>
-          <div class="col-span-2 text-right text-lg">{{ data?.iva | currency }}</div>
+          <div class="col-span-2 text-right text-lg">{{ data?.iva | currency:'MXN':'symbol':'1.2-2' }}</div>
 
           <div class="col-span-12 my-3 border-b"></div>
           <div class="text-secondary col-span-10 text-2xl font-medium tracking-tight">TOTAL</div>
-          <div class="col-span-2 text-right text-2xl font-medium">{{ data?.total | currency }}</div>
+          <div class="col-span-2 text-right text-2xl font-medium">{{ data?.total | currency:'MXN':'symbol':'1.2-2' }}</div>
         </div>
 
         <!-- Pie -->
