@@ -34,4 +34,10 @@ export class QuotesService {
   deleteQuote(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
+
+  buscarProducto(q: string): Observable<any> {
+  return this.http.get<any>(`${this.apiUrl}/productos`, {
+    params: { q }
+  });
+}
 }

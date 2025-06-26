@@ -1,0 +1,14 @@
+::ng-deep .dialog-a4 .mat-dialog-container {
+  padding: 0 !important;
+  overflow: visible !important;
+  border-radius: 0;
+}
+
+.mat-mdc-dialog-content {
+    display: block;
+    flex-grow: 1;
+    box-sizing: border-box;
+    margin: 0;
+    overflow: auto;
+    max-height: 86vh;
+}

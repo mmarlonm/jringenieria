@@ -32,8 +32,12 @@ import Swal from "sweetalert2";
 import { MatDialog } from "@angular/material/dialog";
 import { ProjectService } from "../../project/project.service";
 import { AddClientComponent } from "../add-client/add-client.component";
+import { AddProductDialogComponent } from "../add-product-dialog/add-product-dialog.component";
+import { QuotePdfDialogComponent } from "../quote-pdf-dialog/quote-pdf-dialog.component";
 import { MatSlideToggle } from "@angular/material/slide-toggle";
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatTableModule } from "@angular/material/table";
+import { MatTableDataSource } from "@angular/material/table";
 
 @Component({
   selector: "app-quotes-details",
@@ -55,7 +59,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatTabsModule,
     MatIconModule,
     MatSlideToggle,
-    MatTooltipModule
+    MatTooltipModule,
+    MatTableModule,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -78,6 +83,36 @@ export class QuoteDetailsComponent implements OnInit {
   cotizacionFile: File | null = null;
   files: any[] = [];
   selectedClienteId: number | null = null;
+
+  // Columnas para la tabla
+  displayedColumns = [
+    "nombre",
+    "cantidad",
+    "precioUnitario",
+    "descuento",
+    "subtotal",
+    "acciones",
+  ];
+
+  // Productos agregados a la cotización
+  productos: Array<{
+    cotizacionProductoDetalleId?: number | null; // Puede ser null para nuevos productos
+    productoId: number;
+    nombreProducto: string;
+    cantidad: number;
+    precioUnitario: number;
+    descuento: number;
+    notas?: string | null;
+  }> = [];
+
+  // Totales
+  subtotal = 0;
+  iva = 0;
+  total = 0;
+
+  dataSource = new MatTableDataSource<any>();
+
+  cotizacion: any;
 
   constructor(
     private fb: FormBuilder,
@@ -162,7 +197,8 @@ export class QuoteDetailsComponent implements OnInit {
     this.quotesService.getQuoteById(id).subscribe((res) => {
       if (res && res.code === 200) {
         const quotes = res.data;
-
+        this.productos = quotes.detalles || [];
+        this.cotizacion = quotes;
         this.quotesForm.patchValue({
           cotizacionProductosId: quotes.cotizacionProductosId,
           clienteId: quotes.clienteId,
@@ -181,6 +217,9 @@ export class QuoteDetailsComponent implements OnInit {
           direccionCompleta: quotes.direccionCompleta,
           estado: quotes.estado,
         });
+
+        this.dataSource.data = this.productos; // inicial
+        this.calcularTotales();
       } else {
         Swal.fire({
           icon: "error",
@@ -203,7 +242,18 @@ export class QuoteDetailsComponent implements OnInit {
       return;
     }
 
-    const quotesData: any = this.quotesForm.value;
+    const quotesData: any = {
+      ...this.quotesForm.value,
+      // Detalles de productos
+      detalles: this.productos.map((p) => ({
+        cotizacionProductoDetalleId: p.cotizacionProductoDetalleId ?? null,
+        productoId: p.productoId,
+        cantidad: p.cantidad,
+        precioUnitario: p.precioUnitario,
+        descuento: p.descuento,
+        notas: p.notas ?? null,
+      })),
+    };
 
     if (this.quotesId) {
       // Actualizar proyecto
@@ -318,13 +368,13 @@ export class QuoteDetailsComponent implements OnInit {
   abrirModalCliente(event: MouseEvent): void {
     event.stopPropagation();
 
-    const clienteId = this.quotesForm.get('clienteId')?.value;
+    const clienteId = this.quotesForm.get("clienteId")?.value;
 
     const dialogRef = this.dialog.open(AddClientComponent, {
       width: "600px",
       data: {
-      clienteId: clienteId > 0 ? clienteId : null
-    }
+        clienteId: clienteId > 0 ? clienteId : null,
+      },
     });
 
     dialogRef.afterClosed().subscribe((nuevoCliente) => {
@@ -345,7 +395,51 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   clearClienteSeleccionado(): void {
-  this.quotesForm.get('clienteId')?.setValue(null);
-  this.selectedClienteId = null;
-}
+    this.quotesForm.get("clienteId")?.setValue(null);
+    this.selectedClienteId = null;
+  }
+
+  // Abrir diálogo para agregar producto
+  openAddProductDialog() {
+    const dialogRef = this.dialog.open(AddProductDialogComponent, {
+      width: "600px",
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((producto) => {
+      console.log("Producto seleccionado:", producto);
+      if (producto) {
+        this.productos.push(producto);
+        this.dataSource.data = [...this.productos]; // ← forzar refresh
+        this.calcularTotales();
+      }
+    });
+  }
+
+  // Eliminar producto de la lista
+  eliminarProducto(index: number) {
+    this.productos.splice(index, 1);
+    this.calcularTotales();
+  }
+
+  // Calcular subtotal, iva y total
+  calcularTotales() {
+    this.subtotal = this.productos.reduce(
+      (acc, p) => acc + (p.cantidad * p.precioUnitario - p.descuento),
+      0
+    );
+    this.iva = this.subtotal * 0.16; // IVA 16%
+    this.total = this.subtotal + this.iva;
+  }
+
+  openCotizacionPreview(): void {
+    this.cotizacion.subtotal = this.subtotal;
+    this.cotizacion.iva = this.iva;
+    this.cotizacion.total = this.total;
+    this.dialog.open(QuotePdfDialogComponent, {
+      data: this.cotizacion,
+      width: "820px", // un poco más que 794px para márgenes
+      panelClass: "dialog-a4",
+    });
+  }
 }

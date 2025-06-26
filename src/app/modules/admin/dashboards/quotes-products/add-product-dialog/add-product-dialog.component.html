@@ -1,0 +1,47 @@
+<h2 mat-dialog-title class="text-xl font-bold mb-2">Buscar Producto</h2>
+
+<mat-dialog-content class="space-y-4">
+  <div class="flex gap-2">
+    <mat-form-field appearance="fill" class="flex-1">
+      <mat-label>Nombre o código</mat-label>
+      <input matInput [(ngModel)]="query" (keyup.enter)="buscar()" />
+    </mat-form-field>
+
+    <button mat-flat-button color="primary" (click)="buscar()">Buscar</button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="resultados.length > 0">
+    <div *ngFor="let p of resultados" class="rounded-xl border p-4 shadow-sm flex flex-col justify-between bg-white">
+      <div>
+        <div class="font-semibold text-lg">{{ p.nombreProducto }}</div>
+        <div class="text-sm text-gray-500">Código: {{ p.codigoProducto }}</div>
+        <div class="text-sm text-gray-500">Unidad: {{ p.unidadMedida }}</div>
+        <div class="text-sm text-gray-500">Precio: {{ p.precio | currency }}</div>
+      </div>
+
+      <div class="mt-4 flex items-end gap-2">
+        <mat-form-field appearance="outline" class="w-24">
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" min="1" [(ngModel)]="p.cantidad" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-24">
+          <mat-label>Descuento</mat-label>
+          <input matInput type="number" min="0" [(ngModel)]="p.descuento" />
+        </mat-form-field>
+
+        <button mat-icon-button color="primary" (click)="seleccionar(p)">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="resultados.length === 0 && query" class="text-center text-gray-500 italic">
+    No se encontraron resultados.
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="mt-4">
+  <button mat-button (click)="cancelar()">Cancelar</button>
+</mat-dialog-actions>
