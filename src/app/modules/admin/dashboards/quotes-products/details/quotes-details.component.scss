@@ -3,3 +3,11 @@
     bottom: 0px !important;
     right: 0px;
   }
+
+  ::ng-deep .full-width-dialog .mat-dialog-container {
+  padding: 0;
+  max-height: 80vh; /* Para evitar que se desborde verticalmente */
+  width: 80vw;
+  overflow: auto;
+  box-sizing: border-box;
+}

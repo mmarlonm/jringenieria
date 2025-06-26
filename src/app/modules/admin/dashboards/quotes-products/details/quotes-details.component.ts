@@ -402,7 +402,9 @@ export class QuoteDetailsComponent implements OnInit {
   // Abrir diálogo para agregar producto
   openAddProductDialog() {
     const dialogRef = this.dialog.open(AddProductDialogComponent, {
-      width: "600px",
+      width: "80vw",
+      maxWidth: "80vw",
+      panelClass: "full-width-dialog",
       disableClose: true,
     });
 
@@ -418,30 +420,30 @@ export class QuoteDetailsComponent implements OnInit {
 
   // Eliminar producto de la lista
   eliminarProducto(index: number): void {
-  if (index < 0 || index >= this.productos.length) {
-    console.warn('Índice inválido al eliminar producto');
-    return;
-  }
-
-  Swal.fire({
-    title: '¿Eliminar producto?',
-    text: 'Esta acción no se puede deshacer.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar',
-  }).then((result) => {
-    if (result.isConfirmed) {
-      this.productos.splice(index, 1);
-      this.dataSource.data = [...this.productos]; // ← actualizar tabla
-      this.calcularTotales();
-
-      this.snackBar.open('Producto eliminado correctamente', 'Cerrar', {
-        duration: 2500,
-      });
+    if (index < 0 || index >= this.productos.length) {
+      console.warn("Índice inválido al eliminar producto");
+      return;
     }
-  });
-}
+
+    Swal.fire({
+      title: "¿Eliminar producto?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.productos.splice(index, 1);
+        this.dataSource.data = [...this.productos]; // ← actualizar tabla
+        this.calcularTotales();
+
+        this.snackBar.open("Producto eliminado correctamente", "Cerrar", {
+          duration: 2500,
+        });
+      }
+    });
+  }
 
   // Calcular subtotal, iva y total
   calcularTotales() {

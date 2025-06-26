@@ -10,6 +10,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { HttpClient } from '@microsoft/signalr';
 import { QuotesService } from '../quotes-products.service'
+import { MatTableModule } from '@angular/material/table';
 
 @Component({
     selector: 'app-add-product-dialog',
@@ -23,7 +24,8 @@ import { QuotesService } from '../quotes-products.service'
     MatInputModule,
     MatButtonModule,
     MatListModule,
-    MatIconModule
+    MatIconModule,
+    MatTableModule
   ]
 })
 export class AddProductDialogComponent implements OnInit {
@@ -31,6 +33,16 @@ export class AddProductDialogComponent implements OnInit {
   resultados: any[] = [];
   cantidad = 1;
   descuento = 0;
+
+  displayedColumns: string[] = [
+  'nombreProducto',
+  'codigoProducto',
+  'unidadMedida',
+  'precio',
+  'cantidad',
+  'descuento',
+  'accion'
+];
 
   constructor(
     private dialogRef: MatDialogRef<AddProductDialogComponent>,
