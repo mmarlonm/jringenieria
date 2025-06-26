@@ -7,7 +7,6 @@
     <mat-tab label="Información General">
       <form
         [formGroup]="clienteForm"
-        (ngSubmit)="saveClient()"
         class="flex flex-col gap-4 overflow-auto"
       >
         <!-- Nombre -->
@@ -113,26 +112,6 @@
             <input matInput formControlName="rfc" />
           </mat-form-field>
         </div>
-
-        <!-- Botones -->
-        <div class="sticky bottom-0 py-2 flex justify-end gap-2">
-          <button
-            mat-raised-button
-            color="primary"
-            type="submit"
-            class="w-full md:w-auto"
-          >
-            Guardar
-          </button>
-          <button
-            mat-button
-            color="warn"
-            type="button"
-            (click)="router.navigate(['/catalogs/clients'])"
-          >
-            Cancelar
-          </button>
-        </div>
       </form>
     </mat-tab>
 
@@ -151,4 +130,25 @@
       </div>
     </mat-tab>
   </mat-tab-group>
+
+      <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="saveClient()"
+            class="w-full md:w-auto" 
+          >
+            Guardar
+          </button>
+          <button
+            mat-button
+            color="warn"
+            type="button"
+            (click)="router.navigate(['/catalogs/clients'])"
+          >
+            Cancelar
+          </button>
+        </div>
+    
+
 </div>
