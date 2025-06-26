@@ -30,6 +30,9 @@ import { UserService } from 'app/core/user/user.service';
 import { User } from 'app/core/user/user.types';
 import { Subject, finalize, takeUntil, takeWhile, tap, timer } from 'rxjs';
 import { AuthService } from 'app/core/auth/auth.service';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { ProfileService } from './profile.services';
 
 @Component({
     selector: 'profile',
@@ -53,13 +56,16 @@ import { AuthService } from 'app/core/auth/auth.service';
         ReactiveFormsModule,
         MatCard,
         MatCardTitle,
-        CommonModule
+        CommonModule,
+        MatSelectModule,
+        MatDatepickerModule
     ],
 })
 export class ProfileComponent implements OnInit {
     userAvatar: string | ArrayBuffer | null = null; // Ruta temporal para mostrar la imagen seleccionada
     user: User;
     userForm: FormGroup;
+    userinformationForm: FormGroup;
 
     baseAavatar: any;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
@@ -75,7 +81,8 @@ export class ProfileComponent implements OnInit {
         private _formBuilder: FormBuilder,
         private _snackBar: MatSnackBar,
         private _authService: AuthService,
-        private _router: Router
+        private _router: Router,
+        private _profileService : ProfileService
     ) {
         
     }
@@ -90,6 +97,8 @@ export class ProfileComponent implements OnInit {
             .subscribe((user: User) => {
                 this.user = user['usuario'];
                 this.baseAavatar = this.user.avatar;
+                
+              
                 this.userForm = this._formBuilder.group(
                     {
                       nombreUsuario: [this.user.nombreUsuario, Validators.required],
@@ -98,8 +107,23 @@ export class ProfileComponent implements OnInit {
                       newPasswordUser: ['', [Validators.minLength(6)]],
                       confirmPasswordUser: [''],
                     },
-                    { validators: this.passwordsMatch }
+                 { validators: this.passwordsMatch }
                   );
+                this.userinformationForm = this._formBuilder.group(
+                  {
+                    UsuarioInformacionId:[0],
+                    sexo:[null],
+                    fechaNacimiento:[null],
+                    NumeroContacto1:[null],
+                    nombreContacto1:[null],
+                    parentesco1:[null],
+                    NumeroContacto2:[null],
+                    nombreContacto2:[null],
+                    parentesco2:[null],
+                    direccion:[null],
+                  }
+                  );
+
 
                   // Forzar validación al cambiar los valores de las contraseñas
             this.userForm.get('newPasswordUser')?.valueChanges.subscribe(() => {
@@ -109,6 +133,23 @@ export class ProfileComponent implements OnInit {
             this.userForm.get('confirmPasswordUser')?.valueChanges.subscribe(() => {
                 this.userForm.updateValueAndValidity();
             });
+              this._profileService.getProfile(Number(this.user.id)).subscribe((res:any) => { 
+                console.log("resultado ",res)
+                this.userinformationForm.patchValue(
+                  {
+                    UsuarioInformacionId : res.usuarioInformacion.usuarioInformacionId,
+                    sexo: res.usuarioInformacion.sexo,
+                    fechaNacimiento:res.usuarioInformacion.fechaNacimiento,
+                    NumeroContacto1:res.usuarioInformacion.numeroContacto1,
+                    nombreContacto1:res.usuarioInformacion.nombreContacto1,
+                    parentesco1:res.usuarioInformacion.parentesco1,
+                    NumeroContacto2:res.usuarioInformacion.numeroContacto2,
+                    nombreContacto2:res.usuarioInformacion.nombreContacto2,
+                    parentesco2:res.usuarioInformacion.parentesco2,
+                    direccion:res.usuarioInformacion.direccion,
+                  }
+                )
+                })
             });
     }
 
@@ -170,10 +211,12 @@ export class ProfileComponent implements OnInit {
     if (this.userForm.invalid) {
       return;
     }
+    
 
     const { nombreUsuario, email, currentPasswordUser, newPasswordUser, confirmPasswordUser } = this.userForm.value;
+    const { UsuarioInformacionId, sexo, fechaNacimiento, NumeroContacto1, NumeroContacto2, nombreContacto1, nombreContacto2, parentesco1, parentesco2, direccion} = this.userinformationForm.value;
     const id = this.user.id;
-    const obj = { nombreUsuario, email , id};
+    const obj = { nombreUsuario, email , id, UsuarioInformacion : { UsuarioInformacionId, sexo, fechaNacimiento, NumeroContacto1, NumeroContacto2, nombreContacto1, nombreContacto2, parentesco1, parentesco2, direccion} };
     // Actualizar datos del usuario
     this._userService.updateUser(obj).subscribe(
       () => {

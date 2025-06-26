@@ -1,9 +1,9 @@
 // src/environments/environment.ts
 export const environment = {
     production: false,
-    //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
-    //apiUrlSignal: 'http://localhost:5162'  // chat real time
+    apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
+    apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-    apiUrl: 'https://con-spent-bit-exemption.trycloudflare.com/api', // Aquí va la URL de tu API (ajusta según sea necesario) 
-    apiUrlSignal: 'https://con-spent-bit-exemption.trycloudflare.com'
+    //apiUrl: 'https://civilian-specialists-rabbit-ratings.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+    //apiUrlSignal: 'https://civilian-specialists-rabbit-ratings.trycloudflare.com'
   };
