@@ -15,6 +15,7 @@ import { MatTableModule } from '@angular/material/table';
 @Component({
     selector: 'app-add-product-dialog',
   templateUrl: './add-product-dialog.component.html',
+  styleUrls: ['./add-product-dialog.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -41,6 +42,8 @@ export class AddProductDialogComponent implements OnInit {
   'precio',
   'cantidad',
   'descuento',
+  'stock',
+  'almacen',
   'accion'
 ];
 
@@ -70,7 +73,9 @@ seleccionar(producto: any) {
     nombreProducto: producto.nombreProducto,
     cantidad: producto.cantidad,
     precioUnitario: producto.precio,
-    descuento: producto.descuento
+    descuento: producto.descuento,
+    stock : producto.stock,
+    almacen : producto.almacen
   });
 }
 
