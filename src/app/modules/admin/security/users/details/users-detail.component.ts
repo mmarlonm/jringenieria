@@ -1,7 +1,7 @@
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TextFieldModule } from '@angular/cdk/text-field';
-import { DatePipe, NgClass,CommonModule } from '@angular/common';
+import { DatePipe, NgClass, CommonModule } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -84,7 +84,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     //asignar roles existentes en sistema
-    roles:any[]=[];
+    roles: any[] = [];
 
     /**
      * Constructor
@@ -102,7 +102,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         private _viewContainerRef: ViewContainerRef,
         private _rolService: RolService,
         private router: Router,
-    ) {}
+    ) { }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
@@ -114,7 +114,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
 
         //get roles
-        this._rolService.getRoles().subscribe((resolve)=>{
+        this._rolService.getRoles().subscribe((resolve) => {
             this.roles = resolve;
         });
         // Open the drawer
@@ -161,7 +161,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
                 this._changeDetectorRef.markForCheck();
             });
 
-        
+
     }
 
     /**
@@ -209,23 +209,23 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
      * Update the user
      */
     updateContact(): void {
-        if(this.contactForm.invalid){
-        Swal.fire({
-                    icon: "error",
-                    title:"Opps",
-                    text:"Por favor, completa los campos obligatorios",
-                    draggable: true
-                 }); 
-                    return;
+        if (this.contactForm.invalid) {
+            Swal.fire({
+                icon: "error",
+                title: "Opps",
+                text: "Por favor, completa los campos obligatorios",
+                draggable: true
+            });
+            return;
         }
         // Obtener los valores del formulario
         const user = this.contactForm.getRawValue();
-    
+
         // Verificar si el avatar tiene un prefijo y eliminarlo
         if (user.avatar && user.avatar.startsWith("data:image")) {
             user.avatar = user.avatar.split(",")[1]; // Extrae solo la parte Base64
         }
-    
+
         // Enviar la data al servicio
         this._usersService.updateUsers(user).subscribe(res => {
         });
@@ -308,27 +308,27 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         if (!fileList.length) {
             return;
         }
-    
+
         const allowedTypes = ['image/jpeg', 'image/png'];
         const file = fileList[0];
-    
+
         // Si el tipo de archivo no es permitido, salir
         if (!allowedTypes.includes(file.type)) {
             console.error("Tipo de archivo no permitido.");
             return;
         }
-    
+
         // Convertir a Base64
         const reader = new FileReader();
         reader.onload = () => {
             const base64String = reader.result as string;
-    
+
             // Asignar al formulario
             this.contactForm.patchValue({ avatar: base64String });
-            this.user.avatar =base64String;
-    
+            this.user.avatar = base64String;
+
         };
-    
+
         reader.readAsDataURL(file); // Leer el archivo como Data URL (Base64)
     }
 
@@ -434,7 +434,18 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         return item.usuarioId || index;
     }
 
-    navigateToProject(id){
+    navigateToProject(id) {
         this.router.navigate([`/dashboards/project/${id}`]);
+    }
+    async copyTextToClipboard(text: string): Promise<void> {
+        try {
+            await navigator.clipboard.writeText(text);
+            console.log('Texto copiado al portapapeles');
+            // Aquí podrías mostrar un mensaje al usuario, por ejemplo:
+            // alert('Texto copiado al portapapeles!');
+        } catch (err) {
+            console.error('Error al copiar el texto: ', err);
+            // Aquí podrías mostrar un mensaje de error al usuario.
+        }
     }
 }
