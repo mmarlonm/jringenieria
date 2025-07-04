@@ -137,6 +137,18 @@
               ¿Requisitos Especiales?
             </mat-slide-toggle>
           </div>
+     
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Estatus -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Estatus</mat-label>
+                  <mat-select formControlName="estatus">
+              <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
+                cat.nombre
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
        

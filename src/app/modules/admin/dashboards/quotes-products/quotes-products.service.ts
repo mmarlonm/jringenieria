@@ -8,6 +8,8 @@ import { environment } from 'environments/environment';
 })
 export class QuotesService {
   private apiUrl = `${environment.apiUrl}/CotizacionProductos`;
+  private apiUrlCotizacion = `${environment.apiUrl}/Cotizacion`; // Asegúrate de que esto sea correcto
+
 
   constructor(private http: HttpClient) {}
 
@@ -40,4 +42,8 @@ export class QuotesService {
     params: { q }
   });
 }
+getEstatus(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrlCotizacion}/estatus`);
+  }
+
 }

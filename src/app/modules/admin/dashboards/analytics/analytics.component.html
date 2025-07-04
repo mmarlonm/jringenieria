@@ -184,6 +184,47 @@
               </div>
             </div>
 
+             <label>Cotizaciones Productos</label>
+            <div
+              class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5"
+              *ngIf="analiticaData?.cotizacionesProductos?.length > 0"
+            >
+              <div
+                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
+                *ngFor="let p of analiticaData?.cotizacionesProductos"
+              >
+                <div class="flex items-start justify-between">
+                  <div
+                    class="truncate text-lg font-medium leading-6 tracking-tight"
+                  ></div>
+                  <div class="-mr-3 -mt-2 ml-2">
+                    <button mat-icon-button [matMenuTriggerFor]="menu">
+                      <mat-icon
+                        class="icon-size-5"
+                        svgIcon="heroicons_mini:ellipsis-vertical"
+                      ></mat-icon>
+                    </button>
+                    <mat-menu #menu="matMenu">
+                      <button mat-menu-item>Hoy</button>
+                      <button mat-menu-item>Ayer</button>
+                      <button mat-menu-item>Última semana</button>
+                    </mat-menu>
+                  </div>
+                </div>
+                <div class="mt-2 flex flex-col items-center">
+                  <div
+                    class="text-7xl font-bold leading-none tracking-tight"
+                    [ngClass]="getColorClass(p.estatusId)"
+                  >
+                    {{ p.totalCotizaciones }}
+                  </div>
+                  <div class="text-lg font-medium text-center mt-2">
+                    {{ p.estatusNombre }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div
               class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4"
               style="margin-top: 8px"
