@@ -145,7 +145,9 @@ export class QuoteDetailsComponent implements OnInit {
       rfc: [null, [Validators.maxLength(50)]],
       direccionCompleta: [null, [Validators.maxLength(300)]],
       estado: [null, [Validators.maxLength(100)]],
+      estatus: [0, [Validators.maxLength(50)]],
     });
+    this.getEstatus();
     this.getClientes();
     this.getProspects();
 
@@ -216,6 +218,7 @@ export class QuoteDetailsComponent implements OnInit {
           rfc: quotes.rfc,
           direccionCompleta: quotes.direccionCompleta,
           estado: quotes.estado,
+          estatus: quotes.estatus,
         });
 
         this.dataSource.data = this.productos; // inicial
@@ -464,5 +467,8 @@ export class QuoteDetailsComponent implements OnInit {
       width: "820px", // un poco más que 794px para márgenes
       panelClass: "dialog-a4",
     });
+  }
+  getEstatus(): void {
+    this.quotesService.getEstatus().subscribe((data) => (this.estatus = data.data));
   }
 }
