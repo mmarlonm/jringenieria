@@ -3,8 +3,8 @@
     {{ quotesId ? "Editar Cotización" : "Nueva Cotización" }}
 
     <button mat-flat-button color="accent" (click)="openCotizacionPreview()">
-        <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
-      </button>
+      <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+    </button>
   </h1>
   <mat-tab-group class="h-full flex-1 overflow-hidden">
 
@@ -14,49 +14,29 @@
           <!-- Cliente -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cliente</mat-label>
-            <mat-select
-              [formControl]="quotesForm.get('clienteId')"
-              #clienteSelect
-              panelClass="custom-select-panel"
-              (selectionChange)="onClienteSelected($event.value)"
-            >
+            <mat-select [formControl]="quotesForm.get('clienteId')" #clienteSelect panelClass="custom-select-panel"
+              (selectionChange)="onClienteSelected($event.value)">
               <mat-option [value]="null">— Ninguno —</mat-option>
               <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="clienteFiltro"
-                  placeholderLabel="Buscar cliente..."
+                <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..."
                   noEntriesFoundLabel="No se encontraron resultados"
-                  clearSearchInputLabel="Limpiar búsqueda"
-                ></ngx-mat-select-search>
+                  clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
               </mat-option>
 
-              <mat-option
-                *ngFor="let client of filteredClients"
-                [value]="client.clienteId"
-              >
+              <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
                 {{ client.clienteId }} - {{ client.nombre }}
               </mat-option>
             </mat-select>
 
             <!-- Botón para abrir modal -->
-            <button
-              mat-icon-button
-              matSuffix
-              (click)="abrirModalCliente($event)"
-              [matTooltip]="
+            <button mat-icon-button matSuffix (click)="abrirModalCliente($event)" [matTooltip]="
                 selectedClienteId ? 'Editar cliente' : 'Agregar nuevo cliente'
-              "
-            >
+              ">
               <mat-icon>{{ selectedClienteId ? "edit" : "add" }}</mat-icon>
             </button>
 
-            <button
-              *ngIf="selectedClienteId"
-              mat-icon-button
-              matSuffix
-              (click)="clearClienteSeleccionado()"
-              matTooltip="Quitar cliente seleccionado"
-            >
+            <button *ngIf="selectedClienteId" mat-icon-button matSuffix (click)="clearClienteSeleccionado()"
+              matTooltip="Quitar cliente seleccionado">
               <mat-icon>close</mat-icon>
             </button>
 
@@ -119,10 +99,7 @@
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Unidad de Negocio</mat-label>
             <mat-select formControlName="unidadDeNegocioId">
-              <mat-option
-                *ngFor="let unidad of unidadesDeNegocio"
-                [value]="unidad.unidadId"
-              >
+              <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">
                 {{ unidad.nombre }}
               </mat-option>
             </mat-select>
@@ -130,68 +107,53 @@
 
           <!-- Requisitos Especiales -->
           <div class="flex items-center">
-            <mat-slide-toggle
-              formControlName="requisitosEspeciales"
-              color="primary"
-            >
+            <mat-slide-toggle formControlName="requisitosEspeciales" color="primary">
               ¿Requisitos Especiales?
             </mat-slide-toggle>
           </div>
-     
+
         </div>
         <div class="grid grid-cols-2 gap-4">
           <!-- Estatus -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Estatus</mat-label>
-                  <mat-select formControlName="estatus">
+            <mat-select formControlName="estatus">
               <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
                 cat.nombre
-              }}</mat-option>
+                }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
 
-       
+
       </form>
     </mat-tab>
 
     <mat-tab label="Productos">
-      <div class="flex flex-col h-full p-4 overflow-auto">
+      <div class="flex flex-col h-full overflow-auto">
         <!-- Botón para agregar producto -->
         <div class="mb-4 flex justify-end">
-          <button
-            mat-flat-button
-            color="primary"
-            (click)="openAddProductDialog()"
-          >
+          <button mat-flat-button color="primary" (click)="openAddProductDialog()">
             + Agregar Producto
           </button>
         </div>
 
         <!-- Tabla de productos cotizados -->
-        <table
-          mat-table
-          [dataSource]="dataSource"
-          class="mat-elevation-z8 w-full mb-4"
-        >
+        <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 w-full table-auto"
+          style="min-width: 1000px;">
           <!-- Nombre Producto -->
           <ng-container matColumnDef="nombre">
-            <th mat-header-cell *matHeaderCellDef>Producto</th>
-            <td mat-cell *matCellDef="let element">
+            <th mat-header-cell *matHeaderCellDef class="w-2/6">Producto</th>
+            <td mat-cell *matCellDef="let element" class="w-2/6">
               {{ element.nombreProducto }}
             </td>
           </ng-container>
 
           <!-- Cantidad editable -->
           <ng-container matColumnDef="cantidad">
-            <th mat-header-cell *matHeaderCellDef>Cantidad</th>
-            <td mat-cell *matCellDef="let element">
-              <input
-                type="number"
-                min="1"
-                [(ngModel)]="element.cantidad"
-                (ngModelChange)="calcularTotales()"
-              />
+            <th mat-header-cell *matHeaderCellDef class="w-1/12">Cantidad</th>
+            <td mat-cell *matCellDef="let element" class="w-1/12">
+              <input type="number" min="1" [(ngModel)]="element.cantidad" (ngModelChange)="calcularTotales()" />
             </td>
           </ng-container>
 
@@ -199,13 +161,7 @@
           <ng-container matColumnDef="precioUnitario">
             <th mat-header-cell *matHeaderCellDef>Precio Unitario</th>
             <td mat-cell *matCellDef="let element">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                [(ngModel)]="element.precioUnitario"
-                (ngModelChange)="calcularTotales()"
-              />
+              {{ element.precioUnitario | currency:'MXN':'symbol':'1.2-2' }}
             </td>
           </ng-container>
 
@@ -213,13 +169,16 @@
           <ng-container matColumnDef="descuento">
             <th mat-header-cell *matHeaderCellDef>Descuento</th>
             <td mat-cell *matCellDef="let element">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                [(ngModel)]="element.descuento"
-                (ngModelChange)="calcularTotales()"
-              />
+              <input type="number" min="0" step="0.01" [(ngModel)]="element.descuento"
+                (ngModelChange)="calcularTotales()" />
+            </td>
+          </ng-container>
+
+
+          <ng-container matColumnDef="tiempoEntrega">
+            <th mat-header-cell *matHeaderCellDef>Tiempo Entrega</th>
+            <td mat-cell *matCellDef="let element">
+              <input type="number" min="0" step="1" [(ngModel)]="element.tiempoEntrega" placeholder="Días" />
             </td>
           </ng-container>
 
@@ -228,8 +187,8 @@
             <th mat-header-cell *matHeaderCellDef>Subtotal</th>
             <td mat-cell *matCellDef="let element">
               {{
-                element.cantidad * element.precioUnitario - element.descuento
-                  | currency
+              element.cantidad * element.precioUnitario - element.descuento
+              | currency
               }}
             </td>
           </ng-container>
@@ -238,11 +197,7 @@
           <ng-container matColumnDef="acciones">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let element; let i = index">
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="eliminarProducto(i)"
-              >
+              <button mat-icon-button color="warn" (click)="eliminarProducto(i)">
                 <mat-icon>delete</mat-icon>
               </button>
             </td>
@@ -253,9 +208,7 @@
         </table>
 
         <!-- Resumen -->
-        <div
-          class="mt-auto p-4 border-t border-gray-300 flex justify-end space-x-8 text-lg font-semibold"
-        >
+        <div class="mt-auto p-4 border-t border-gray-300 flex justify-end space-x-8 text-lg font-semibold">
           <div>
             <div>Subtotal: {{ subtotal | currency:'MXN':'symbol':'1.2-2' }}</div>
             <div>IVA (16%): {{ iva | currency:'MXN':'symbol':'1.2-2' }}</div>
@@ -267,23 +220,11 @@
 
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
-          <button
-            mat-raised-button
-            color="primary"
-            type="button"
-            (click)="saveQuotes()"
-          >
-            Guardar
-          </button>
-          <button
-            mat-button
-            color="warn"
-            type="button"
-            (click)="router.navigate(['/dashboards/quote-products'])"
-          >
-            Cancelar
-          </button>
-        </div>
+    <button mat-raised-button color="primary" type="button" (click)="saveQuotes()">
+      Guardar
+    </button>
+    <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/quote-products'])">
+      Cancelar
+    </button>
+  </div>
 </div>
-
-

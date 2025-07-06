@@ -90,6 +90,7 @@ export class QuoteDetailsComponent implements OnInit {
     "cantidad",
     "precioUnitario",
     "descuento",
+    "tiempoEntrega",
     "subtotal",
     "acciones",
   ];
@@ -102,6 +103,7 @@ export class QuoteDetailsComponent implements OnInit {
     cantidad: number;
     precioUnitario: number;
     descuento: number;
+    tiempoEntrega?: number; // Tiempo de entrega opcional
     notas?: string | null;
   }> = [];
 
@@ -199,6 +201,7 @@ export class QuoteDetailsComponent implements OnInit {
     this.quotesService.getQuoteById(id).subscribe((res) => {
       if (res && res.code === 200) {
         const quotes = res.data;
+        console.log("Cargando cotización:", quotes);
         this.productos = quotes.detalles || [];
         this.cotizacion = quotes;
         this.quotesForm.patchValue({
@@ -220,7 +223,7 @@ export class QuoteDetailsComponent implements OnInit {
           estado: quotes.estado,
           estatus: quotes.estatus,
         });
-
+        console.log("Datos de la cotización cargados:", this.productos);
         this.dataSource.data = this.productos; // inicial
         this.calcularTotales();
       } else {
@@ -254,6 +257,7 @@ export class QuoteDetailsComponent implements OnInit {
         cantidad: p.cantidad,
         precioUnitario: p.precioUnitario,
         descuento: p.descuento,
+        tiempoEntrega: p.tiempoEntrega ?? null, // Tiempo de entrega opcional
         notas: p.notas ?? null,
       })),
     };

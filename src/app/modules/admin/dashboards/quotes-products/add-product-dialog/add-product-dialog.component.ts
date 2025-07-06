@@ -13,7 +13,7 @@ import { QuotesService } from '../quotes-products.service'
 import { MatTableModule } from '@angular/material/table';
 
 @Component({
-    selector: 'app-add-product-dialog',
+  selector: 'app-add-product-dialog',
   templateUrl: './add-product-dialog.component.html',
   styleUrls: ['./add-product-dialog.component.scss'],
   standalone: true,
@@ -36,50 +36,72 @@ export class AddProductDialogComponent implements OnInit {
   descuento = 0;
 
   displayedColumns: string[] = [
-  'nombreProducto',
-  'codigoProducto',
-  'unidadMedida',
-  'precio',
-  'cantidad',
-  'descuento',
-  'stock',
-  'almacen',
-  'accion'
-];
+    'expandir',
+    'nombreProducto',
+    'codigoProducto',
+    'unidadMedida',
+    'precio',
+    'cantidad',
+    'descuento',
+    'stock',
+    'almacen',
+    'accion'
+  ];
+
+  expandedElement: any | null = null;
+
+  periodos = [
+    { campo: 'costoEntradasPeriodo1', label: 'Ene' },
+    { campo: 'costoEntradasPeriodo2', label: 'Feb' },
+    { campo: 'costoEntradasPeriodo3', label: 'Mar' },
+    { campo: 'costoEntradasPeriodo4', label: 'Abr' },
+    { campo: 'costoEntradasPeriodo5', label: 'May' },
+    { campo: 'costoEntradasPeriodo6', label: 'Jun' },
+    { campo: 'costoEntradasPeriodo7', label: 'Jul' },
+    { campo: 'costoEntradasPeriodo8', label: 'Ago' },
+    { campo: 'costoEntradasPeriodo9', label: 'Sep' },
+    { campo: 'costoEntradasPeriodo10', label: 'Oct' },
+    { campo: 'costoEntradasPeriodo11', label: 'Nov' },
+    { campo: 'costoEntradasPeriodo12', label: 'Dic' }
+  ];
 
   constructor(
     private dialogRef: MatDialogRef<AddProductDialogComponent>,
     private quotesService: QuotesService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    }
+  }
 
   buscar() {
-  if (!this.query.trim()) return;
+    if (!this.query.trim()) return;
 
-  this.quotesService.buscarProducto(this.query).subscribe((res) => {
-    this.resultados = res.map(p => ({
-      ...p,
-      cantidad: 1,
-      descuento: 0
-    }));
-  });
-}
+    this.quotesService.buscarProducto(this.query).subscribe((res) => {
+      this.resultados = res.map(p => ({
+        ...p,
+        cantidad: 1,
+        descuento: 0
+      }));
+    });
+  }
 
-seleccionar(producto: any) {
-  this.dialogRef.close({
-    productoId: producto.productoId,
-    nombreProducto: producto.nombreProducto,
-    cantidad: producto.cantidad,
-    precioUnitario: producto.precio,
-    descuento: producto.descuento,
-    stock : producto.stock,
-    almacen : producto.almacen
-  });
-}
+  seleccionar(producto: any) {
+    this.dialogRef.close({
+      productoId: producto.productoId,
+      nombreProducto: producto.nombreProducto,
+      cantidad: producto.cantidad,
+      precioUnitario: producto.precio,
+      descuento: producto.descuento,
+      stock: producto.stock,
+      almacen: producto.almacen
+    });
+  }
 
   cancelar() {
     this.dialogRef.close(null);
+  }
+
+  aplicarPrecio(producto: any, nuevoPrecio: number) {
+    producto.precio = nuevoPrecio;
   }
 }
