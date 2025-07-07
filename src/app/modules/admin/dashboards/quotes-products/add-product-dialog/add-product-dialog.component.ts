@@ -65,6 +65,8 @@ export class AddProductDialogComponent implements OnInit {
     { campo: 'costoEntradasPeriodo12', label: 'Dic' }
   ];
 
+  cargando = false;
+
   constructor(
     private dialogRef: MatDialogRef<AddProductDialogComponent>,
     private quotesService: QuotesService
@@ -75,6 +77,7 @@ export class AddProductDialogComponent implements OnInit {
 
   buscar() {
     if (!this.query.trim()) return;
+     this.cargando = true;
 
     this.quotesService.buscarProducto(this.query).subscribe((res) => {
       this.resultados = res.map(p => ({
@@ -82,6 +85,8 @@ export class AddProductDialogComponent implements OnInit {
         cantidad: 1,
         descuento: 0
       }));
+
+      this.cargando = false;
     });
   }
 
