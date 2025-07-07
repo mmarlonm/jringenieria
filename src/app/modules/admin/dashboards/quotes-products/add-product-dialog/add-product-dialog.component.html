@@ -70,25 +70,25 @@
           <tr *ngIf="expandedElement === p" class="bg-gray-50">
             <td colspan="10">
               <div class="p-4 border-t">
-                <h3 class="text-sm font-semibold mb-2">Costos por Ejercicio y Periodo</h3>
+                <h3 class="text-sm font-semibold mb-2 text-center">Costos por Ejercicio y Periodo</h3>
 
-                <table class="w-full text-sm border rounded">
+                <table class="w-full text-sm border rounded text-center">
                   <thead class="bg-gray-100">
                     <tr>
-                      <th>Ejercicio</th>
-                      <th>Periodo</th>
-                      <th>Costo</th>
-                      <th>Aplicar</th>
+                      <th class="px-2 py-1">Ejercicio</th>
+                      <th class="px-2 py-1">Periodo</th>
+                      <th class="px-2 py-1">Costo</th>
+                      <th class="px-2 py-1">Aplicar</th>
                     </tr>
                   </thead>
                   <tbody>
                     <ng-container *ngFor="let ec of p.existenciaCostos">
                       <ng-container *ngFor="let periodo of periodos">
                         <tr>
-                          <td>{{ ec.ejercicioId }}</td>
-                          <td>{{ periodo.label }}</td>
-                          <td>{{ ec[periodo.campo] | currency: 'MXN' }}</td>
-                          <td>
+                          <td class="px-2 py-1">{{ ec.ejercicioId }}</td>
+                          <td class="px-2 py-1">{{ periodo.label }}</td>
+                          <td class="px-2 py-1">{{ ec[periodo.campo] | currency: 'MXN' }}</td>
+                          <td class="px-2 py-1">
                             <button mat-stroked-button color="primary" (click)="aplicarPrecio(p, ec[periodo.campo])"
                               [disabled]="!ec[periodo.campo]">
                               Usar
@@ -102,6 +102,7 @@
               </div>
             </td>
           </tr>
+
         </ng-container>
       </tbody>
     </table>
