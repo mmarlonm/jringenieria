@@ -2,4 +2,6 @@
 /*  @ Import/write your custom styles here.
 /*  @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
 /* ----------------------------------------------------------------------------------------------------- */
-@import '../../node_modules/css-star-rating/css/star-rating.css'
+@import '../../node_modules/css-star-rating/css/star-rating.css';
+// En styles.scss
+@import 'flatpickr/dist/flatpickr.min.css';

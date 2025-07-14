@@ -1,0 +1,105 @@
+<h1 mat-dialog-title>Nueva Tarea</h1>
+
+<div mat-dialog-content>
+    <form [formGroup]="form" class="space-y-4">
+
+        <!-- Nombre -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" />
+        </mat-form-field>
+
+        <!-- Comentarios -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Comentarios</mat-label>
+            <textarea matInput formControlName="comentarios"></textarea>
+        </mat-form-field>
+
+        <!-- Asignar equipo -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Asignar equipo</mat-label>
+            <mat-select multiple [(ngModel)]="form.value.usuarioIds" formControlName="usuarioIds">
+                <mat-option *ngFor="let user of userList" [value]="user.usuarioId">{{ user.nombreUsuario }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <!-- Fechas y Horas -->
+        <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
+            <!-- Inicio Estimado -->
+            <div>
+                <label for="fechaInicioEstimada" class="block text-sm font-medium text-gray-700 mb-1">
+                    Inicio Estimado
+                </label>
+                <input
+                    id="fechaInicioEstimada"
+                    type="text"
+                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:border-blue-500"
+                    placeholder="Selecciona fecha y hora"
+                    readonly
+                />
+            </div>
+
+            <!-- Fin Estimado -->
+            <div>
+                <label for="fechaFinEstimada" class="block text-sm font-medium text-gray-700 mb-1">
+                    Fin Estimado
+                </label>
+                <input
+                    id="fechaFinEstimada"
+                    type="text"
+                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:border-blue-500"
+                    placeholder="Selecciona fecha y hora"
+                    readonly
+                />
+            </div>
+
+            <!-- Inicio Real -->
+            <div>
+                <label for="fechaInicioReal" class="block text-sm font-medium text-gray-700 mb-1">
+                    Inicio Real
+                </label>
+                <input
+                    id="fechaInicioReal"
+                    type="text"
+                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:border-blue-500"
+                    placeholder="Selecciona fecha y hora"
+                    readonly
+                />
+            </div>
+
+            <!-- Fin Real -->
+            <div>
+                <label for="fechaFinReal" class="block text-sm font-medium text-gray-700 mb-1">
+                    Fin Real
+                </label>
+                <input
+                    id="fechaFinReal"
+                    type="text"
+                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:border-blue-500"
+                    placeholder="Selecciona fecha y hora"
+                    readonly
+                />
+            </div>
+        </div>
+
+        <!-- Links -->
+        <div formArrayName="links" class="mt-6 space-y-2">
+            <div *ngFor="let link of links.controls; let i = index" class="flex gap-2 items-center">
+                <mat-form-field class="flex-1" appearance="outline">
+                    <mat-label>Link #{{ i + 1 }}</mat-label>
+                    <input matInput [formControlName]="i"/>
+                </mat-form-field>
+                <button mat-icon-button color="warn" type="button" (click)="removeLink(i)">
+                    <mat-icon>delete</mat-icon>
+                </button>
+            </div>
+            <button mat-button color="primary" type="button" (click)="addLink()">+ Agregar Link</button>
+        </div>
+
+    </form>
+</div>
+
+<div mat-dialog-actions align="end" class="mt-4">
+    <button mat-button (click)="cancel()">Cancelar</button>
+    <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()" *ngIf="!data?.readOnly">Guardar</button>
+</div>

@@ -82,6 +82,7 @@ export const appRoutes: Route[] = [
                 {path: 'analytics', loadChildren: () => import('app/modules/admin/dashboards/analytics/analytics.routes')},
                 {path: 'sales', loadChildren: () => import('app/modules/admin/dashboards/sales/sales.routes')},
                 {path: 'quote-products', loadChildren: () => import('app/modules/admin/dashboards/quotes-products/quotes-products.routes')},
+                {path: 'tasks', loadChildren: () => import('app/modules/admin/dashboards/tasks/tasks.routes')},
             ]},
             {path: 'catalogs', children: [
                 {path: 'clients', loadChildren: () => import('app/modules/admin/catalogs/clients/clients.routes')},

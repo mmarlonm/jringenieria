@@ -51,6 +51,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:shopping-cart',
                 link: '/dashboards/sales',
             },
+            {
+                id: 'dashboards.tasjks',
+                title: 'Tareas',
+                type: 'basic',
+                icon: 'heroicons_outline:check-circle',
+                link: '/dashboards/tasks',
+            },
             
         ],
     },
