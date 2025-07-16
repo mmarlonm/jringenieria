@@ -56,7 +56,7 @@ import { Subject, takeUntil } from "rxjs";
     ],
 })
 export class TaskListComponent implements OnInit, AfterViewInit {
-    displayedColumns: string[] = ["id", "nombre", "fechaInicioEstimada", "fechaFinEstimada", "actions"];
+    displayedColumns: string[] = ["id", "nombre", "fechaInicioEstimada", "fechaFinEstimada","comentarios", "actions"];
     dataSource = new MatTableDataSource<Task>();
     @ViewChild(MatPaginator) paginator: MatPaginator;
     @ViewChild(MatSort) sort: MatSort;
