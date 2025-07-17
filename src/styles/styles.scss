@@ -5,3 +5,24 @@
 @import '../../node_modules/css-star-rating/css/star-rating.css';
 // En styles.scss
 @import 'flatpickr/dist/flatpickr.min.css';
+
+
+::ng-deep .calendar-menu-panel {
+  width: 700px !important;
+  height: 500px !important;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+
+.mat-mdc-menu-panel {
+    min-width: 112px;
+    max-width: 800px !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    outline: 0;
+    border-radius: var(--mat-menu-container-shape);
+    background-color: var(--mat-menu-container-color);
+    will-change: transform, opacity;
+}

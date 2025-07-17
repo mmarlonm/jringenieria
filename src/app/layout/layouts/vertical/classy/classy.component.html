@@ -2,13 +2,8 @@
 <fuse-loading-bar></fuse-loading-bar>
 
 <!-- Navigation -->
-<fuse-vertical-navigation
-    class="dark bg-gray-900 print:hidden"
-    [mode]="isScreenSmall ? 'over' : 'side'"
-    [name]="'mainNavigation'"
-    [navigation]="navigation.default"
-    [opened]="!isScreenSmall"
->
+<fuse-vertical-navigation class="dark bg-gray-900 print:hidden" [mode]="isScreenSmall ? 'over' : 'side'"
+    [name]="'mainNavigation'" [navigation]="navigation.default" [opened]="!isScreenSmall">
     <!-- Navigation header hook -->
     <ng-container fuseVerticalNavigationContentHeader>
         <div class="flex w-full items-center p-4 pl-6">
@@ -26,28 +21,19 @@
         <div class="flex w-full flex-col items-center p-4">
             <div class="relative h-24 w-24">
                 @if (user?.avatar) {
-                    <img
-                        class="h-full w-full rounded-full"
-                        [src]="user.avatar"
-                        alt="User avatar"
-                    />
+                <img class="h-full w-full rounded-full" [src]="user.avatar" alt="User avatar" />
                 }
                 @if (!user?.avatar) {
-                    <mat-icon
-                        class="icon-size-24"
-                        [svgIcon]="'heroicons_solid:user-circle'"
-                    ></mat-icon>
+                <mat-icon class="icon-size-24" [svgIcon]="'heroicons_solid:user-circle'"></mat-icon>
                 }
             </div>
             <div class="mt-6 flex w-full flex-col items-center justify-center">
                 <div
-                    class="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-medium leading-normal"
-                >
+                    class="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-medium leading-normal">
                     {{ user?.name }}
                 </div>
                 <div
-                    class="text-secondary mt-0.5 w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-md font-medium leading-normal"
-                >
+                    class="text-secondary mt-0.5 w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-md font-medium leading-normal">
                     {{ user?.email }}
                 </div>
             </div>
@@ -55,9 +41,7 @@
     </ng-container>
     <!-- Navigation footer hook -->
     <ng-container fuseVerticalNavigationContentFooter>
-        <div
-            class="mb-4 mt-2 flex h-16 flex-0 items-center justify-center pl-2 pr-6 opacity-12"
-        >
+        <div class="mb-4 mt-2 flex h-16 flex-0 items-center justify-center pl-2 pr-6 opacity-12">
             <img class="max-w-36" src="images/logo/LOGO-HORIZOLTAL-COLOR.png" />
         </div>
     </ng-container>
@@ -67,8 +51,7 @@
 <div class="flex w-full min-w-0 flex-auto flex-col">
     <!-- Header -->
     <div
-        class="bg-card relative z-49 flex h-16 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none md:px-6 print:hidden"
-    >
+        class="bg-card relative z-49 flex h-16 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none md:px-6 print:hidden">
         <!-- Navigation toggle button -->
         <button mat-icon-button (click)="toggleNavigation('mainNavigation')">
             <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
@@ -80,14 +63,13 @@
             <!--search [appearance]="'bar'"></search-->
             <!--shortcuts></shortcuts>
             <messages></messages-->
-            <button
-                class="lg:hidden"
-                mat-icon-button
-                (click)="quickChat.toggle()"
-            >
-                <mat-icon
-                    [svgIcon]="'heroicons_outline:chat-bubble-left-right'"
-                ></mat-icon>
+            <!-- Botón de calendario -->
+            <button mat-icon-button [matMenuTriggerFor]="calendarMenu">
+                <mat-icon>calendar_today</mat-icon>
+            </button>
+
+            <button class="lg:hidden" mat-icon-button (click)="quickChat.toggle()">
+                <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
             </button>
         </div>
     </div>
@@ -97,7 +79,7 @@
         <!-- *ngIf="true" hack is required here for router-outlet to work correctly.
              Otherwise, layout changes won't be registered and the view won't be updated! -->
         @if (true) {
-            <router-outlet></router-outlet>
+        <router-outlet></router-outlet>
         }
     </div>
 
@@ -109,3 +91,10 @@
 
 <!-- Quick chat -->
 <quick-chat #quickChat="quickChat"></quick-chat>
+
+<mat-menu #calendarMenu="matMenu" (menuOpened)="onCalendarMenuOpened()">
+  <div style="width: 700px; height: 600px;" (click)="$event.stopPropagation()" class="p-4">
+    <app-tareas-calendar #fullCalendar [tareas]="misTareas"></app-tareas-calendar>
+  </div>
+</mat-menu>
+
