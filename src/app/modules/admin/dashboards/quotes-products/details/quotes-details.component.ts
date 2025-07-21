@@ -148,6 +148,7 @@ export class QuoteDetailsComponent implements OnInit {
       direccionCompleta: [null, [Validators.maxLength(300)]],
       estado: [null, [Validators.maxLength(100)]],
       estatus: [0, [Validators.maxLength(50)]],
+      observaciones: [null, [Validators.maxLength(500)]],
     });
     this.getEstatus();
     this.getClientes();
@@ -222,6 +223,7 @@ export class QuoteDetailsComponent implements OnInit {
           direccionCompleta: quotes.direccionCompleta,
           estado: quotes.estado,
           estatus: quotes.estatus,
+          observaciones: quotes.observaciones,
         });
         console.log("Datos de la cotización cargados:", this.productos);
         this.dataSource.data = this.productos; // inicial
@@ -362,6 +364,7 @@ export class QuoteDetailsComponent implements OnInit {
           telefono: data.telefono || "",
           rfc: data.rfc || "",
           estado: data.estado || "",
+          observaciones: data.observaciones || "",
         });
 
         // Forzar la detección de cambios

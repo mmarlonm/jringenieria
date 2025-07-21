@@ -59,9 +59,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   currentFilterColumn: string = '';
   filterValue: string = '';
   filterOptions:any = {
-    empresa: ["Technology"],  // Ejemplo de opciones
-    fechaEntrega: ["2023-01-01"],
-    estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
+    cotizacionProductosId: [],  // Ejemplo de opciones
+    nombreCliente: [],
+    unidadDeNegocioNombre: [],
+    createdDate: [],
+    requisitosEspeciales: [],
   };
 
   historialData: any[] = [];
@@ -96,9 +98,15 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
       this.dataSource = new MatTableDataSource(quotes);
       this.dataSource.paginator = this.paginator;
 
-      this.filterOptions.fechaEntrega = [...new Set(
+      this.filterOptions.createdDate = [...new Set(
         quotes
-          .map(quote => quote.fechaEntrega)
+          .map(quote => quote.createdDate)
+          .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
+      )];
+
+      this.filterOptions.unidadDeNegocioNombre = [...new Set(
+        quotes
+          .map(quote => quote.unidadDeNegocio.nombre)
           .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
       )];
       this.dataSource.sort = this.sort;
@@ -208,14 +216,14 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
    * Determina si el filtro es de tipo texto.
    */
   isTextFilter(column: string): boolean {
-    return column === 'empresa';
+    return column === 'nombreCliente' || column === 'requisitosEspeciales' || column === 'cotizacionProductosId';
   }
 
   /**
    * Determina si el filtro es de tipo selección.
    */
   isSelectFilter(column: string): boolean {
-    return column === 'estatus' || column === 'fechaEntrega';
+    return column === 'unidadDeNegocioNombre' || column === 'createdDate';
   }
 
   /**
