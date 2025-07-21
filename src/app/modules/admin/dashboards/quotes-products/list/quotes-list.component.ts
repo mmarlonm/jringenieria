@@ -195,22 +195,35 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
    * Establece un filtro personalizado para la tabla
    */
   setCustomFilter(): void {
-    this.dataSource.filterPredicate = (data: any, filter: string) => {
-      if (this.currentFilterColumn) {
-        // Filtro por columna específica
-        if (this.isTextFilter(this.currentFilterColumn)) {
-          return data[this.currentFilterColumn]?.toLowerCase().includes(filter);
-        } else {
-          return data[this.currentFilterColumn] === this.filterValue;
-        }
-      } else {
-        // Filtro global en todos los campos visibles
-        return this.displayedColumns.some((col) => {
-          return data[col]?.toString().toLowerCase().includes(filter);
-        });
+  this.dataSource.filterPredicate = (data: any, filter: string) => {
+    if (this.currentFilterColumn) {
+      const column = this.currentFilterColumn;
+
+      if (column === 'unidadDeNegocioNombre') {
+        return data.unidadDeNegocio?.nombre?.toLowerCase() === filter.toLowerCase();
       }
-    };
-  }
+
+      if (column === 'createdDate') {
+        return data.createdDate === filter;
+      }
+
+      if (this.isTextFilter(column)) {
+        return data[column]?.toString().toLowerCase().includes(filter);
+      }
+
+      return false;
+    } else {
+      // Filtro global en todos los campos visibles
+      return this.displayedColumns.some((col) => {
+        const value = col === 'unidadDeNegocioNombre'
+          ? data.unidadDeNegocio?.nombre
+          : data[col];
+        return value?.toString().toLowerCase().includes(filter);
+      });
+    }
+  };
+}
+
 
   /**
    * Determina si el filtro es de tipo texto.
