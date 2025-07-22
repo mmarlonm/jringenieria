@@ -46,4 +46,8 @@ getEstatus(): Observable<any> {
     return this.http.get<any>(`${this.apiUrlCotizacion}/estatus`);
   }
 
+  getHistorial(quoteId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/historial-estatus/${quoteId}`);
+  }
+
 }

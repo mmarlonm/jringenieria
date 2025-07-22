@@ -17,6 +17,8 @@ import { MatMenuTrigger } from '@angular/material/menu';  // Importa MatMenuTrig
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import Swal from 'sweetalert2';
+import { HistorialComponent } from '../historial/historial.component';
+
 @Component({
   selector: 'app-quotes-list',
   templateUrl: './quotes-list.component.html',
@@ -58,7 +60,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
 
   currentFilterColumn: string = '';
   filterValue: string = '';
-  filterOptions:any = {
+  filterOptions: any = {
     cotizacionProductosId: [],  // Ejemplo de opciones
     nombreCliente: [],
     unidadDeNegocioNombre: [],
@@ -73,7 +75,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     private snackBar: MatSnackBar,
     private route: ActivatedRoute,
     private dialog: MatDialog,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
@@ -85,37 +87,37 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.dataSource.sort = this.sort;
       this.dataSource.paginator = this.paginator;
-    },1200);
+    }, 1200);
   }
 
   getQuotes(): void {
-    this.quotesService.getQuotes().subscribe((res:any) => {
+    this.quotesService.getQuotes().subscribe((res: any) => {
       if (res) {
-        if(res.code==200){
-          var quotes:any = res.data;
-    
-      this.quotesCount = quotes.length;
-      this.dataSource = new MatTableDataSource(quotes);
-      this.dataSource.paginator = this.paginator;
+        if (res.code == 200) {
+          var quotes: any = res.data;
 
-      this.filterOptions.createdDate = [...new Set(
-        quotes
-          .map(quote => quote.createdDate)
-          .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
-      )];
+          this.quotesCount = quotes.length;
+          this.dataSource = new MatTableDataSource(quotes);
+          this.dataSource.paginator = this.paginator;
 
-      this.filterOptions.unidadDeNegocioNombre = [...new Set(
-        quotes
-          .map(quote => quote.unidadDeNegocio.nombre)
-          .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
-      )];
-      this.dataSource.sort = this.sort;
+          this.filterOptions.createdDate = [...new Set(
+            quotes
+              .map(quote => quote.createdDate)
+              .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
+          )];
 
-      this.setCustomFilter();
+          this.filterOptions.unidadDeNegocioNombre = [...new Set(
+            quotes
+              .map(quote => quote.unidadDeNegocio.nombre)
+              .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
+          )];
+          this.dataSource.sort = this.sort;
+
+          this.setCustomFilter();
         }
       }
     });
-  
+
   }
 
   /**
@@ -139,23 +141,23 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     this.router.navigate([`/dashboards/quote-products/${projectId}`]);
   }
 
-  async deleteQuote(projectId: number){
+  async deleteQuote(projectId: number) {
     const confirmed = await this.showConfirmation();
-    if(confirmed){
+    if (confirmed) {
 
-    this.quotesService.deleteQuote(projectId).subscribe((res) => {
-      if(res.code==200){
-        this.getQuotes();
-        this.snackBar.open('Cotizacion eliminada correctamente', 'Cerrar', { duration: 3000 });    
-      }
-    else{
-      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-        duration: 3000,
-        panelClass: ['snackbar-error']
+      this.quotesService.deleteQuote(projectId).subscribe((res) => {
+        if (res.code == 200) {
+          this.getQuotes();
+          this.snackBar.open('Cotizacion eliminada correctamente', 'Cerrar', { duration: 3000 });
+        }
+        else {
+          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-error']
+          });
+        }
       });
-    }  
-    });
-  }
+    }
   }
 
   obtenerPermisos(): void {
@@ -195,34 +197,34 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
    * Establece un filtro personalizado para la tabla
    */
   setCustomFilter(): void {
-  this.dataSource.filterPredicate = (data: any, filter: string) => {
-    if (this.currentFilterColumn) {
-      const column = this.currentFilterColumn;
+    this.dataSource.filterPredicate = (data: any, filter: string) => {
+      if (this.currentFilterColumn) {
+        const column = this.currentFilterColumn;
 
-      if (column === 'unidadDeNegocioNombre') {
-        return data.unidadDeNegocio?.nombre?.toLowerCase() === filter.toLowerCase();
+        if (column === 'unidadDeNegocioNombre') {
+          return data.unidadDeNegocio?.nombre?.toLowerCase() === filter.toLowerCase();
+        }
+
+        if (column === 'createdDate') {
+          return data.createdDate === filter;
+        }
+
+        if (this.isTextFilter(column)) {
+          return data[column]?.toString().toLowerCase().includes(filter);
+        }
+
+        return false;
+      } else {
+        // Filtro global en todos los campos visibles
+        return this.displayedColumns.some((col) => {
+          const value = col === 'unidadDeNegocioNombre'
+            ? data.unidadDeNegocio?.nombre
+            : data[col];
+          return value?.toString().toLowerCase().includes(filter);
+        });
       }
-
-      if (column === 'createdDate') {
-        return data.createdDate === filter;
-      }
-
-      if (this.isTextFilter(column)) {
-        return data[column]?.toString().toLowerCase().includes(filter);
-      }
-
-      return false;
-    } else {
-      // Filtro global en todos los campos visibles
-      return this.displayedColumns.some((col) => {
-        const value = col === 'unidadDeNegocioNombre'
-          ? data.unidadDeNegocio?.nombre
-          : data[col];
-        return value?.toString().toLowerCase().includes(filter);
-      });
-    }
-  };
-}
+    };
+  }
 
 
   /**
@@ -249,27 +251,47 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   resetFilter(): void {
     // Restablecer el valor del filtro
     this.filterValue = null;  // Esto puede ajustarse según la lógica de tu filtro (por ejemplo, "" para texto vacío)
-  
+
     // Limpiar el filtro global (en dataSource)
     this.dataSource.filter = '';  // Esto elimina el filtro aplicado
-    
-  
+
+
     // Si necesitas que se apliquen cambios adicionales (por ejemplo, restablecer otras partes del estado del filtro),
     // puedes llamar a las funciones applyFilter() o applySelect() con valores vacíos.
     this.applyFilter();  // Aplica filtro vacío si es necesario (esto dependerá de cómo se maneje en tu aplicación)
   }
 
-    showConfirmation(): Promise<boolean>{
-        return Swal.fire({
-          title:'Seguro que desea eliminar',
-          text:'Esta accion no se puede revertir',
-          icon:'warning',
-          showCancelButton:true,
-          confirmButtonText:'Eliminar',
-          cancelButtonText:'Cancelar',
-          reverseButtons:true,
-        }).then((result)=> {
-          return result.isConfirmed;
+  showConfirmation(): Promise<boolean> {
+    return Swal.fire({
+      title: 'Seguro que desea eliminar',
+      text: 'Esta accion no se puede revertir',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    }).then((result) => {
+      return result.isConfirmed;
+    });
+  }
+
+  getHistorial(cotizacionId: number): void {
+    this.quotesService.getHistorial(cotizacionId).subscribe((res: any) => {
+      if (res.code == 200) {
+        var historial: any = res.data;
+        this.historialData = historial;
+
+        this.dialog.open(HistorialComponent, {
+          width: '700px',
+          data: { historial }
         });
       }
+      else {
+        this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
+    });
+  }
 }
