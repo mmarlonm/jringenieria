@@ -4,6 +4,6 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-   apiUrl: 'https://scripting-andy-lake-oz.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
-   apiUrlSignal: 'https://scripting-andy-lake-oz.trycloudflare.com'
+   apiUrl: 'https://io-compaq-rd-household.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+   apiUrlSignal: 'https://io-compaq-rd-household.trycloudflare.com'
   };
