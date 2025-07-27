@@ -3,14 +3,10 @@
     {{ projectId ? "Editar Proyecto" : "Nuevo Proyecto" }}
   </h1>
 
-  <mat-tab-group class="h-full flex-1 overflow-hidden">
+  <mat-tab-group class="h-full flex-1 overflow-hidden" (selectedTabChange)="onTabChange($event)">
     <!-- TAB 1: Información General -->
     <mat-tab label="Información General">
-      <form
-        [formGroup]="projectForm"
-        (ngSubmit)="saveProject()"
-        class="flex flex-col gap-4"
-      >
+      <form [formGroup]="projectForm" (ngSubmit)="saveProject()" class="flex flex-col gap-4">
         <div class="grid grid-cols-2 gap-4">
           <!-- Nombre -->
           <mat-form-field appearance="fill" class="w-full">
@@ -18,18 +14,47 @@
             <input matInput formControlName="nombre" />
           </mat-form-field>
 
-          <!-- Categoria -->
+          <!-- Dirección -->
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Categoría</mat-label>
-            <mat-select formControlName="categoria">
-              <mat-option
-                *ngFor="let cat of categorias"
-                [value]="cat.categoriaId"
-              >
-                {{ cat.nombre }}
-              </mat-option>
-            </mat-select>
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="direccion" />
           </mat-form-field>
+
+
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Empresa -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Empresa</mat-label>
+            <input matInput formControlName="empresa" />
+          </mat-form-field>
+
+          <!-- OC -->
+          <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+            <mat-label>Orden de Compra</mat-label>
+            <input matInput [value]="ordenCompraFile?.name || getNombreArchivoGuardado('ordenCompra') || ''" />
+
+            <!-- Botón de subir o descargar archivo -->
+            <button mat-icon-button type="button" matTooltip="Subir o Descargar archivo"
+              (click)="hasArchivoGuardado('ordenCompra') ? descargarArchivoGuardado('ordenCompra') : ordenCompraInput.click()">
+              <mat-icon>{{ hasArchivoGuardado('ordenCompra') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            </button>
+
+            <!-- Botón eliminar -->
+            <button *ngIf="hasArchivoGuardado('ordenCompra')" mat-icon-button color="warn" type="button"
+              matTooltip="Eliminar archivo" (click)="eliminarArchivo('ordenCompra')">
+              <mat-icon>delete</mat-icon>
+            </button>
+
+            <!-- Input real oculto -->
+            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #ordenCompraInput
+              (change)="onFileSelected($event, 'ordenCompra')" hidden />
+          </mat-form-field>
+
+
+
+
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -43,10 +68,7 @@
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Unidad de Negocio</mat-label>
             <mat-select formControlName="unidadDeNegocio">
-              <mat-option
-                *ngFor="let unidad of unidadesDeNegocio"
-                [value]="unidad.unidadId"
-              >
+              <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">
                 {{ unidad.nombre }}
               </mat-option>
             </mat-select>
@@ -57,30 +79,16 @@
           <!-- Fecha Inicio -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha de Inicio</mat-label>
-            <input
-              matInput
-              [matDatepicker]="picker1"
-              formControlName="fechaInicio"
-            />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="picker1"
-            ></mat-datepicker-toggle>
+            <input matInput [matDatepicker]="picker1" formControlName="fechaInicio" />
+            <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
             <mat-datepicker #picker1></mat-datepicker>
           </mat-form-field>
 
           <!-- Fecha Fin -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha de Fin</mat-label>
-            <input
-              matInput
-              [matDatepicker]="picker2"
-              formControlName="fechaFin"
-            />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="picker2"
-            ></mat-datepicker-toggle>
+            <input matInput [matDatepicker]="picker2" formControlName="fechaFin" />
+            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
             <mat-datepicker #picker2></mat-datepicker>
           </mat-form-field>
         </div>
@@ -95,30 +103,19 @@
           <!-- Cliente -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cliente</mat-label>
-            <mat-select
-              [formControl]="projectForm.get('cliente')"
-              #clienteSelect
-              panelClass="custom-select-panel"
-            >
+            <mat-select [formControl]="projectForm.get('cliente')" #clienteSelect panelClass="custom-select-panel">
               <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="clienteFiltro"
-                  placeholderLabel="Buscar cliente..."
+                <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..."
                   noEntriesFoundLabel="No se encontraron resultados"
-                  clearSearchInputLabel="Limpiar búsqueda"
-                ></ngx-mat-select-search>
+                  clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
               </mat-option>
 
-              <mat-option
-                *ngFor="let client of filteredClients"
-                [value]="client.clienteId"
-              >
+              <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
                 {{ client.clienteId }} - {{ client.nombre }}
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')"
-              >Debe seleccionar un cliente válido.</mat-error
-            >
+            <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente
+              válido.</mat-error>
           </mat-form-field>
         </div>
 
@@ -129,10 +126,14 @@
             <input matInput formControlName="necesidad" />
           </mat-form-field>
 
-          <!-- Dirección -->
+          <!-- Categoria -->
           <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Dirección</mat-label>
-            <input matInput formControlName="direccion" />
+            <mat-label>Categoría</mat-label>
+            <mat-select formControlName="categoria">
+              <mat-option *ngFor="let cat of categorias" [value]="cat.categoriaId">
+                {{ cat.nombre }}
+              </mat-option>
+            </mat-select>
           </mat-form-field>
         </div>
 
@@ -151,11 +152,7 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <!-- Empresa -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Empresa</mat-label>
-            <input matInput formControlName="empresa" />
-          </mat-form-field>
+
 
           <!-- Levantamiento -->
           <mat-form-field appearance="fill" class="w-full">
@@ -233,65 +230,32 @@
 
             <!-- Mat Chip List para mostrar las personas seleccionadas -->
             <mat-chip-list #chipList aria-label="Seleccionar personas">
-              <mat-chip
-                *ngFor="let persona of personasSeleccionadas"
-                [removable]="true"
-                (removed)="removePersona(persona)"
-                class="mdc-list-item__primary-text"
-              >
+              <mat-chip *ngFor="let persona of personasSeleccionadas" [removable]="true"
+                (removed)="removePersona(persona)" class="mdc-list-item__primary-text">
                 <!-- Mostrar el avatar si existe -->
-                <mat-icon
-                  matChipAvatar
-                  *ngIf="!persona.avatar"
-                  class="avatar-icon"
-                  >person</mat-icon
-                >
-                <img
-                  *ngIf="persona.avatar"
-                  matChipAvatar
-                  [src]="persona.avatar"
-                  alt="{{ persona.nombreUsuario }}"
-                />
+                <mat-icon matChipAvatar *ngIf="!persona.avatar" class="avatar-icon">person</mat-icon>
+                <img *ngIf="persona.avatar" matChipAvatar [src]="persona.avatar" alt="{{ persona.nombreUsuario }}" />
 
                 <!-- Mostrar el nombre de la persona -->
                 {{ persona.nombreUsuario }}
 
                 <!-- Icono para remover el chip -->
-                <button
-                  matChipRemove
-                  [attr.aria-label]="'remove ' + persona.nombreUsuario"
-                >
+                <button matChipRemove [attr.aria-label]="'remove ' + persona.nombreUsuario">
                   <mat-icon>cancel</mat-icon>
                 </button>
               </mat-chip>
 
               <!-- Input para agregar más personas -->
-              <input
-                matInput
-                [matAutocomplete]="auto"
-                [formControl]="personasControl"
-                (matChipInputTokenEnd)="addPersona($event)"
-                placeholder="Buscar usuario"
-              />
+              <input matInput [matAutocomplete]="auto" [formControl]="personasControl"
+                (matChipInputTokenEnd)="addPersona($event)" placeholder="Buscar usuario" />
             </mat-chip-list>
 
             <!-- Mat Autocomplete para la búsqueda de personas -->
-            <mat-autocomplete
-              #auto="matAutocomplete"
-              (optionSelected)="addPersonaFromAutoComplete($event)"
-            >
-              <mat-option
-                *ngFor="let usuario of filteredUsers | async"
-                [value]="usuario"
-              >
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPersonaFromAutoComplete($event)">
+              <mat-option *ngFor="let usuario of filteredUsers | async" [value]="usuario">
                 <!-- Avatar en el autocomplete -->
-                <img
-                  *ngIf="usuario.avatar"
-                  [src]="usuario.avatar"
-                  alt="{{ usuario.nombreUsuario }}"
-                  class="avatar-img"
-                  style="margin-right: 15px"
-                />
+                <img *ngIf="usuario.avatar" [src]="usuario.avatar" alt="{{ usuario.nombreUsuario }}" class="avatar-img"
+                  style="margin-right: 15px" />
                 <mat-icon matListIcon *ngIf="!usuario.avatar">person</mat-icon>
                 {{ usuario.nombreUsuario }}
               </mat-option>
@@ -415,11 +379,7 @@
           <!-- Utilidad Programada -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Utilidad Programada</mat-label>
-            <input
-              matInput
-              type="number"
-              formControlName="utilidadProgramada"
-            />
+            <input matInput type="number" formControlName="utilidadProgramada" />
           </mat-form-field>
 
           <!-- Utilidad Real -->
@@ -450,7 +410,7 @@
             <mat-select formControlName="estatus">
               <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
                 cat.nombre
-              }}</mat-option>
+                }}</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -469,21 +429,13 @@
           <!-- Entregables -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Entregables</mat-label>
-            <input
-              matInput
-              formControlName="entregables"
-              placeholder="Lista de entregables"
-            />
+            <input matInput formControlName="entregables" placeholder="Lista de entregables" />
           </mat-form-field>
 
           <!-- Cronograma -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cronograma</mat-label>
-            <input
-              matInput
-              formControlName="cronograma"
-              placeholder="Fechas clave"
-            />
+            <input matInput formControlName="cronograma" placeholder="Fechas clave" />
           </mat-form-field>
         </div>
 
@@ -492,12 +444,7 @@
           <button mat-raised-button color="primary" type="submit">
             Guardar
           </button>
-          <button
-            mat-button
-            color="warn"
-            type="button"
-            (click)="router.navigate(['/dashboards/project'])"
-          >
+          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">
             Cancelar
           </button>
         </div>
@@ -506,221 +453,128 @@
 
     <!-- TAB 2: Archivos del Proyecto -->
     <mat-tab label="Archivos del Proyecto" [disabled]="disabledArchivos">
-      <div
-        class="flex flex-col gap-4 h-[65vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2"
-      >
+      <div class="flex flex-col gap-4 h-[65vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2">
         <div class="absolute inset-0 flex min-w-0 flex-col">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2 p-2">
             <!-- Cada input en una celda de la grid -->
             <!-- Plano Arquitectónico -->
             <div class="flex items-center gap-1">
               <label class="w-40">Plano Arquitectónico:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="planoArquitectonicoInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="planoArquitectonicoInput.click()">
                 Subir archivo
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.png"
-                #planoArquitectonicoInput
-                (change)="onFileSelected($event, 'plano arquitectonico')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #planoArquitectonicoInput
+                (change)="onFileSelected($event, 'plano arquitectonico')" hidden />
             </div>
 
             <!-- Diagrama Unifilar -->
             <div class="flex items-center gap-3">
               <label class="w-40">Diagrama Unifilar:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="diagramaUnifilarInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="diagramaUnifilarInput.click()">
                 Subir archivo
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.png"
-                #diagramaUnifilarInput
-                (change)="onFileSelected($event, 'diagrama unifilar')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #diagramaUnifilarInput
+                (change)="onFileSelected($event, 'diagrama unifilar')" hidden />
             </div>
 
             <!-- Repite la misma estructura para los demás -->
             <!-- Diagrama Isométrico -->
             <div class="flex items-center gap-3">
               <label class="w-40">Diagrama Isométrico:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="diagramaIsometricoInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="diagramaIsometricoInput.click()">
                 Subir archivo
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.png"
-                #diagramaIsometricoInput
-                (change)="onFileSelected($event, 'diagrama isometrico')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #diagramaIsometricoInput
+                (change)="onFileSelected($event, 'diagrama isometrico')" hidden />
             </div>
 
             <!-- Lista de materiales -->
             <div class="flex items-center gap-3">
               <label class="w-40">Lista de materiales:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="listaMaterialesInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="listaMaterialesInput.click()">
                 Subir archivo
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                #listaMaterialesInput
-                (change)="onFileSelected($event, 'Lista de materiales')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" #listaMaterialesInput
+                (change)="onFileSelected($event, 'Lista de materiales')" hidden />
             </div>
 
             <!-- Levantamiento -->
             <div class="flex items-center gap-3">
               <label class="w-40">Levantamiento:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="levantamientoInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="levantamientoInput.click()">
                 Subir archivo
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.png"
-                #levantamientoInput
-                (change)="onFileSelected($event, 'levantamiento')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #levantamientoInput
+                (change)="onFileSelected($event, 'levantamiento')" hidden />
             </div>
 
             <!-- Fotos -->
             <div class="flex items-center gap-3">
               <label class="w-40">Fotos:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="fotosInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="fotosInput.click()">
                 Subir archivo
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept="image/*"
-                #fotosInput
-                (change)="onFileSelected($event, 'fotos')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept="image/*" #fotosInput (change)="onFileSelected($event, 'fotos')" hidden />
             </div>
           </div>
 
           <!-- Lista de Archivos -->
           <div class="space-y-8 p-6 md:p-8">
             @if (files.length > 0) {
-              <div>
-                <div class="font-medium">Files</div>
-                <div class="-m-2 mt-2 flex flex-wrap">
-                  @for (file of files; track trackByFn($index, file)) {
-                    <div class="relative m-2">
-                      <!-- Card de archivo -->
-                      <a
-                        class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8"
-                        (click)="
+            <div>
+              <div class="font-medium">Files</div>
+              <div class="-m-2 mt-2 flex flex-wrap">
+                @for (file of files; track trackByFn($index, file)) {
+                <div class="relative m-2">
+                  <!-- Card de archivo -->
+                  <a class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8" (click)="
                           deleteFile(
                             file.proyectoId,
                             file.categoria,
                             file.nombreArchivo
                           )
-                        "
-                        mat-icon-button
-                      >
-                        <mat-icon
-                          class="icon-size-5"
-                          [svgIcon]="'heroicons_solid:trash'"
-                        ></mat-icon>
-                      </a>
-                      <a
-                        class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow"
-                        (click)="
+                        " mat-icon-button>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                  </a>
+                  <a class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow" (click)="
                           downloadFile(
                             file.proyectoId,
                             file.categoria,
                             file.nombreArchivo
                           )
-                        "
-                      >
-                        <div class="aspect-[9/6]">
-                          {{ file.categoria }}
-                          <div class="flex h-full items-center justify-center">
-                            <div class="relative">
-                              <mat-icon
-                                class="text-hint opacity-50 icon-size-14"
-                                [svgIcon]="'heroicons_solid:document'"
-                              ></mat-icon>
-                              <div
-                                class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
-                                [class.bg-red-600]="file.type === 'PDF'"
-                                [class.bg-blue-600]="file.type === 'DOC'"
-                                [class.bg-green-600]="file.type === 'XLS'"
-                                [class.bg-gray-600]="file.type === 'TXT'"
-                                [class.bg-amber-600]="file.type === 'JPG'"
-                                [class.bg-orange-600]="file.type === 'PNG'"
-                              >
-                                {{ file.type.toUpperCase() }}
-                              </div>
-                            </div>
+                        ">
+                    <div class="aspect-[9/6]">
+                      {{ file.categoria }}
+                      <div class="flex h-full items-center justify-center">
+                        <div class="relative">
+                          <mat-icon class="text-hint opacity-50 icon-size-14"
+                            [svgIcon]="'heroicons_solid:document'"></mat-icon>
+                          <div
+                            class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
+                            [class.bg-red-600]="file.type === 'PDF'" [class.bg-blue-600]="file.type === 'DOC'"
+                            [class.bg-green-600]="file.type === 'XLS'" [class.bg-gray-600]="file.type === 'TXT'"
+                            [class.bg-amber-600]="file.type === 'JPG'" [class.bg-orange-600]="file.type === 'PNG'">
+                            {{ file.type.toUpperCase() }}
                           </div>
                         </div>
-                        <div
-                          class="flex flex-auto flex-col justify-center text-center text-sm font-medium"
-                        >
-                          <div class="truncate" [matTooltip]="file.name">
-                            {{ file.nombreArchivo }}
-                          </div>
-                        </div>
-                      </a>
+                      </div>
                     </div>
-                  }
+                    <div class="flex flex-auto flex-col justify-center text-center text-sm font-medium">
+                      <div class="truncate" [matTooltip]="file.name">
+                        {{ file.nombreArchivo }}
+                      </div>
+                    </div>
+                  </a>
                 </div>
+                }
               </div>
+            </div>
             }
           </div>
         </div>
@@ -728,112 +582,188 @@
     </mat-tab>
 
     <mat-tab label="Evidencias del Proyecto" [disabled]="disabledArchivos">
-      <div
-        class="flex flex-col gap-4 h-[70vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2"
-      >
+      <div class="flex flex-col gap-4 h-[70vh] md:h-[80vh] lg:h-[80vh] overflow-auto pr-2">
         <div class="absolute inset-0 flex min-w-0 flex-col">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
             <!-- Fotos -->
             <div class="flex items-center gap-3">
               <label class="w-40">Fotos con camara:</label>
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="fotosCamaraInput.click()"
-              >
+              <button mat-stroked-button type="button" (click)="fotosCamaraInput.click()">
                 Tomar foto
               </button>
-              <span
-                *ngIf="levantamientoFile?.name"
-                class="text-sm text-gray-600 truncate max-w-[200px]"
-              ></span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                #fotosCamaraInput
-                (change)="onFileSelected($event, 'Evidencias')"
-                hidden
-              />
+              <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
+              <input type="file" accept="image/*" capture="environment" #fotosCamaraInput
+                (change)="onFileSelected($event, 'Evidencias')" hidden />
             </div>
           </div>
 
           <!-- Lista de Archivos -->
           <div class="space-y-8 p-6 md:p-8">
             @if (filesEvidencias.length > 0) {
-              <div>
-                <div class="font-medium">Files</div>
-                <div class="-m-2 mt-2 flex flex-wrap">
-                  @for (
-                    file of filesEvidencias;
-                    track trackByFn($index, file)
-                  ) {
-                    <div class="relative m-2">
-                      <!-- Card de archivo -->
-                      <a
-                        class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8"
-                        (click)="
+            <div>
+              <div class="font-medium">Files</div>
+              <div class="-m-2 mt-2 flex flex-wrap">
+                @for (
+                file of filesEvidencias;
+                track trackByFn($index, file)
+                ) {
+                <div class="relative m-2">
+                  <!-- Card de archivo -->
+                  <a class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8" (click)="
                           deleteFile(
                             file.proyectoId,
                             file.categoria,
                             file.nombreArchivo
                           )
-                        "
-                        mat-icon-button
-                      >
-                        <mat-icon
-                          class="icon-size-5"
-                          [svgIcon]="'heroicons_solid:trash'"
-                        ></mat-icon>
-                      </a>
-                      <a
-                        class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow"
-                        (click)="
+                        " mat-icon-button>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                  </a>
+                  <a class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow" (click)="
                           downloadFile(
                             file.proyectoId,
                             file.categoria,
                             file.nombreArchivo
                           )
-                        "
-                      >
-                        <div class="aspect-[9/6]">
-                          {{ file.categoria }}
-                          <div class="flex h-full items-center justify-center">
-                            <div class="relative">
-                              <mat-icon
-                                class="text-hint opacity-50 icon-size-14"
-                                [svgIcon]="'heroicons_solid:document'"
-                              ></mat-icon>
-                              <div
-                                class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
-                                [class.bg-red-600]="file.type === 'PDF'"
-                                [class.bg-blue-600]="file.type === 'DOC'"
-                                [class.bg-green-600]="file.type === 'XLS'"
-                                [class.bg-gray-600]="file.type === 'TXT'"
-                                [class.bg-amber-600]="file.type === 'JPG'"
-                                [class.bg-orange-600]="file.type === 'PNG'"
-                              >
-                                {{ file.type.toUpperCase() }}
-                              </div>
-                            </div>
+                        ">
+                    <div class="aspect-[9/6]">
+                      {{ file.categoria }}
+                      <div class="flex h-full items-center justify-center">
+                        <div class="relative">
+                          <mat-icon class="text-hint opacity-50 icon-size-14"
+                            [svgIcon]="'heroicons_solid:document'"></mat-icon>
+                          <div
+                            class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
+                            [class.bg-red-600]="file.type === 'PDF'" [class.bg-blue-600]="file.type === 'DOC'"
+                            [class.bg-green-600]="file.type === 'XLS'" [class.bg-gray-600]="file.type === 'TXT'"
+                            [class.bg-amber-600]="file.type === 'JPG'" [class.bg-orange-600]="file.type === 'PNG'">
+                            {{ file.type.toUpperCase() }}
                           </div>
                         </div>
-                        <div
-                          class="flex flex-auto flex-col justify-center text-center text-sm font-medium"
-                        >
-                          <div class="truncate" [matTooltip]="file.name">
-                            {{ file.nombreArchivo }}
-                          </div>
-                        </div>
-                      </a>
+                      </div>
                     </div>
-                  }
+                    <div class="flex flex-auto flex-col justify-center text-center text-sm font-medium">
+                      <div class="truncate" [matTooltip]="file.name">
+                        {{ file.nombreArchivo }}
+                      </div>
+                    </div>
+                  </a>
                 </div>
+                }
               </div>
+            </div>
             }
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Gantt Chart">
+      <div class="gantt-wrapper">
+        <!-- Formulario arriba -->
+        <form [formGroup]="taskForm" (ngSubmit)="addTask()" class="gantt-form">
+          <mat-form-field appearance="fill">
+            <mat-label>Nombre de la tarea</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Fecha Inicio</mat-label>
+            <input matInput [matDatepicker]="pickerStart" formControlName="start" />
+            <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
+            <mat-datepicker #pickerStart></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Fecha Fin</mat-label>
+            <input matInput [matDatepicker]="pickerEnd" formControlName="end" />
+            <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+            <mat-datepicker #pickerEnd></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Dependencias</mat-label>
+            <mat-select formControlName="dependencies" multiple>
+              <mat-option *ngFor="let t of tasks" [value]="t.id">{{ t.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+
+
+          <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">
+            Agregar tarea
+          </button>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Modo de vista</mat-label>
+            <mat-select [(value)]="viewMode" (selectionChange)="changeView($event.value)">
+              <mat-option value="Day">Día</mat-option>
+              <mat-option value="Week">Semana</mat-option>
+              <mat-option value="Month">Mes</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </form>
+
+        <!-- Gantt chart abajo -->
+        <div>
+          <div class="gantt-container">
+            <div id="gantt"></div>
           </div>
         </div>
       </div>
     </mat-tab>
   </mat-tab-group>
 </div>
+<ng-template #editTaskDialog let-data>
+  <h2 mat-dialog-title>Editar Tarea</h2>
+  <mat-dialog-content [formGroup]="editForm">
+
+    <!-- Nombre -->
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <!-- Progreso -->
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Progreso (%)</mat-label>
+      <input matInput type="number" formControlName="progress" min="0" max="100" />
+    </mat-form-field>
+
+    <!-- Fecha inicio -->
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Fecha de inicio</mat-label>
+      <input matInput [matDatepicker]="startPicker" formControlName="start" />
+      <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+      <mat-datepicker #startPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Fecha fin -->
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Fecha de fin</mat-label>
+      <input matInput [matDatepicker]="endPicker" formControlName="end" />
+      <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+      <mat-datepicker #endPicker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- Equipo -->
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Equipo</mat-label>
+      <input matInput formControlName="equipo" />
+    </mat-form-field>
+
+    <!-- Dependencias -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Dependencias</mat-label>
+      <mat-select formControlName="dependencies" multiple>
+        <mat-option *ngFor="let t of tasks" [value]="t.id">{{ t.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeDialog()">Cancelar</button>
+    <button mat-button color="warn" (click)="deleteTask()">Eliminar</button>
+    <button mat-button color="primary" (click)="saveTaskEdit()">Guardar</button>
+  </mat-dialog-actions>
+</ng-template>

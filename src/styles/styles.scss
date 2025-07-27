@@ -26,3 +26,10 @@
     background-color: var(--mat-menu-container-color);
     will-change: transform, opacity;
 }
+
+.gantt-container {
+  height: 500px !important; /* fallback de 500px si no está definida */
+  width: 100% !important; /* fallback de 100% si no está definida */
+  border: 1px solid #ccc;
+  overflow: auto;
+}

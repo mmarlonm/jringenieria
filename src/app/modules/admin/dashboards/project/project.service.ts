@@ -7,9 +7,9 @@ import { environment } from 'environments/environment'; // Asegúrate de tener l
   providedIn: 'root'
 })
 export class ProjectService {
-    private apiUrl = `${environment.apiUrl}/Proyecto`; // Asegúrate de que esto sea correcto
+  private apiUrl = `${environment.apiUrl}/Proyecto`; // Asegúrate de que esto sea correcto
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Obtener todos los proyectos
   getProjects(): Observable<any[]> {
@@ -50,7 +50,7 @@ export class ProjectService {
   }
 
   uploadFile(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/SubirArchivo`,formData);
+    return this.http.post<any>(`${this.apiUrl}/SubirArchivo`, formData);
   }
 
   getFiles(projectId: number): Observable<any> {
@@ -62,10 +62,12 @@ export class ProjectService {
     return this.http.get(url, { responseType: 'blob' });
   }
 
-  removeFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
-    const url = `${this.apiUrl}/EliminarArchivo/${proyectoId}/${categoria}/${nombreArchivo}`;
-    return this.http.delete(url, { responseType: 'blob' });
+  removeFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<any> {
+    const encodedFileName = encodeURIComponent(nombreArchivo); // Manejo de caracteres especiales
+    const url = `${this.apiUrl}/EliminarArchivo/${proyectoId}/${categoria}/${encodedFileName}`;
+    return this.http.delete<any>(url);
   }
+
 
   getHistorial(projectId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/historial-estatus/${projectId}`);
