@@ -29,32 +29,31 @@
             <mat-label>Empresa</mat-label>
             <input matInput formControlName="empresa" />
           </mat-form-field>
+        </div>
 
-          <!-- OC -->
-          <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
-            <mat-label>Orden de Compra</mat-label>
-            <input matInput [value]="ordenCompraFile?.name || getNombreArchivoGuardado('ordenCompra') || ''" />
+        <div class="grid grid-cols-2 gap-4">
+          <ng-container *ngFor="let categoria of categoriasInputs">
+            <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+              <mat-label>{{ categoria.label }}</mat-label>
+              <input matInput [value]="getArchivoNombre(categoria.key)" />
 
-            <!-- Botón de subir o descargar archivo -->
-            <button mat-icon-button type="button" matTooltip="Subir o Descargar archivo"
-              (click)="hasArchivoGuardado('ordenCompra') ? descargarArchivoGuardado('ordenCompra') : ordenCompraInput.click()">
-              <mat-icon>{{ hasArchivoGuardado('ordenCompra') ? 'cloud_download' : 'attach_file' }}</mat-icon>
-            </button>
+              <!-- Botón de subir o descargar archivo -->
+              <button mat-icon-button type="button" matTooltip="Subir o Descargar archivo"
+                (click)="hasArchivoGuardado(categoria.key) ? descargarArchivoGuardado(categoria.key) : fileInputs[categoria.key].click()">
+                <mat-icon>{{ hasArchivoGuardado(categoria.key) ? 'cloud_download' : 'attach_file' }}</mat-icon>
+              </button>
 
-            <!-- Botón eliminar -->
-            <button *ngIf="hasArchivoGuardado('ordenCompra')" mat-icon-button color="warn" type="button"
-              matTooltip="Eliminar archivo" (click)="eliminarArchivo('ordenCompra')">
-              <mat-icon>delete</mat-icon>
-            </button>
+              <!-- Botón eliminar -->
+              <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="warn" type="button"
+                matTooltip="Eliminar archivo" (click)="eliminarArchivo(categoria.key)">
+                <mat-icon>delete</mat-icon>
+              </button>
 
-            <!-- Input real oculto -->
-            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #ordenCompraInput
-              (change)="onFileSelected($event, 'ordenCompra')" hidden />
-          </mat-form-field>
+              <!-- Input real oculto -->
+              <input type="file" [attr.data-key]="categoria.key" #fileInput (change)="onFileSelectedOne($event, categoria.key)" hidden />
 
-
-
-
+            </mat-form-field>
+          </ng-container>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

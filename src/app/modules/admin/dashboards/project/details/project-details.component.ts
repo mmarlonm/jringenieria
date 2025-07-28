@@ -4,6 +4,10 @@ import {
   LOCALE_ID,
   CUSTOM_ELEMENTS_SCHEMA,
   ChangeDetectorRef,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  AfterViewInit,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ProjectService } from "../project.service";
@@ -71,7 +75,7 @@ registerLocaleData(localeEs);
     { provide: MAT_DATE_LOCALE, useValue: "es-ES" }, // Idioma para Angular Material (como el Datepicker)
   ],
 })
-export class ProjectDetailsComponent implements OnInit {
+export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
   //modulod e archivos
   projectForm: FormGroup;
   categorias: any[] = [];
@@ -108,6 +112,33 @@ export class ProjectDetailsComponent implements OnInit {
   editForm!: FormGroup;
   selectedTaskId!: string;
   selectedTask: any;
+
+  categoriasInputs = [
+    { key: 'ordenCompra', label: 'OC' },
+    { key: 'cotizacion', label: 'Cotización' },
+    { key: 'fianza', label: 'Fianzas' },
+    { key: 'contrato', label: 'Contrato' },
+    { key: 'polizas', label: 'Pólizas' },
+    { key: 'programaTrabajo', label: 'Programa de trabajo' },
+    { key: 'ast', label: 'AST' },
+    { key: 'documentacionIngreso', label: 'Documentación ingreso planta' },
+    { key: 'memorandos', label: 'Memorandos' },
+    { key: 'anticiposPagos', label: 'Anticipos/Pagos' },
+    { key: 'listadoMateriales', label: 'Listado de materiales' },
+    { key: 'compraMateriales', label: 'Compra de materiales' },
+    { key: 'equiposHerramientas', label: 'Equipos/Herramientas' },
+    { key: 'reportes', label: 'Reportes' },
+    { key: 'almacenCampo', label: 'Almacén en campo' },
+    { key: 'entregaRecepcion', label: 'Entrega recepción' },
+    { key: 'dossier', label: 'Dossier' },
+    { key: 'cierreFianza', label: 'Cierre de fianza' },
+    { key: 'garantias', label: 'Garantías' },
+    { key: 'encuesta', label: 'Encuesta de satisfacción' },
+    { key: 'comentarios', label: 'Comentarios' }
+  ];
+
+  fileInputs: { [key: string]: HTMLInputElement } = {};
+  @ViewChildren('fileInput') fileInputsRef!: QueryList<ElementRef<HTMLInputElement>>;
 
   constructor(
     private fb: FormBuilder,
@@ -227,6 +258,16 @@ export class ProjectDetailsComponent implements OnInit {
       end: [null],
       equipo: [''],
       dependencies: ['']
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Mapea cada input con su categoría
+    this.fileInputsRef.forEach((ref) => {
+      const key = ref.nativeElement.getAttribute('data-key');
+      if (key) {
+        this.fileInputs[key] = ref.nativeElement;
+      }
     });
   }
 
@@ -554,6 +595,8 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   ordenCompraFile: File | null = null;
+  fianzaFile: File | null = null;
+  compraFile: File | null = null;
 
   onFileSelectedOne(event: Event, tipo: string) {
     const input = event.target as HTMLInputElement;
@@ -563,6 +606,12 @@ export class ProjectDetailsComponent implements OnInit {
 
     if (tipo === 'ordenCompra') {
       this.ordenCompraFile = file;
+    }
+    if (tipo === 'fianza') {
+      this.fianzaFile = file;
+    }
+    if (tipo === 'compra') {
+      this.compraFile = file;
     }
     if (file && tipo) {
       this.subirArchivo(file, tipo);
@@ -638,16 +687,25 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   deleteFile(proyectoId: number, categoria: string, nombreArchivo: string): void {
-  this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe({
-    next: (res: any) => {
-      console.log(res);
-      if (res.code === 200) {
-        this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-success']
-        });
-        this.getFilesAll(); // Recarga la lista de archivos
-      } else {
+    this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe({
+      next: (res: any) => {
+        console.log(res);
+        if (res.code === 200) {
+          this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-success']
+          });
+          this.getFilesAll(); // Recarga la lista de archivos
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Oops",
+            text: "Hubo un error en el sistema, contacte al administrador.",
+            draggable: true
+          });
+        }
+      },
+      error: (err) => {
         Swal.fire({
           icon: "error",
           title: "Oops",
@@ -655,17 +713,8 @@ export class ProjectDetailsComponent implements OnInit {
           draggable: true
         });
       }
-    },
-    error: (err) => {
-      Swal.fire({
-        icon: "error",
-        title: "Oops",
-        text: "Hubo un error en el sistema, contacte al administrador.",
-        draggable: true
-      });
-    }
-  });
-}
+    });
+  }
 
 
   getUsers(): void {
@@ -936,29 +985,37 @@ export class ProjectDetailsComponent implements OnInit {
     this.downloadFile(archivo.proyectoId, archivo.categoria, archivo.nombreArchivo);
   }
   eliminarArchivo(categoria: string): void {
-  const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
 
-  if (!archivo) return;
+    if (!archivo) return;
 
-  Swal.fire({
-    title: '¿Estás seguro?',
-    text: 'Se eliminará el archivo permanentemente.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      this.deleteFile(archivo.proyectoId, archivo.categoria, archivo.nombreArchivo);
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Se eliminará el archivo permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.deleteFile(archivo.proyectoId, archivo.categoria, archivo.nombreArchivo);
 
-      // Limpiar referencia local si aplica
-      if (categoria === 'ordenCompra') {
-        this.ordenCompraFile = null;
+        // Limpiar referencia local si aplica
+        if (categoria === 'ordenCompra') {
+          this.ordenCompraFile = null;
+        }
+        if (categoria === 'fianza') {
+          this.fianzaFile = null;
+        }
+        if (categoria === 'compra') {
+          this.compraFile = null;
+        }
       }
-    }
-  });
-}
-
+    });
+  }
+  getArchivoNombre(categoria: string): string {
+    return this[`${categoria}File`]?.name || this.getNombreArchivoGuardado(categoria) || '';
+  }
 }
