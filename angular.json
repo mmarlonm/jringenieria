@@ -53,7 +53,8 @@
                             "src/styles/styles.scss",
                             "src/styles/tailwind.scss",
                             "node_modules/leaflet/dist/leaflet.css",
-                            "node_modules/angular-calendar/css/angular-calendar.css"
+                            "node_modules/angular-calendar/css/angular-calendar.css",
+                             "node_modules/frappe-gantt/dist/frappe-gantt.css"
                         ],
                         "scripts": [
                             "node_modules/leaflet/dist/leaflet.js"

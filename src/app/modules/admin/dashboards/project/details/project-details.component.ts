@@ -3,6 +3,11 @@ import {
   OnInit,
   LOCALE_ID,
   CUSTOM_ELEMENTS_SCHEMA,
+  ChangeDetectorRef,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  AfterViewInit,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ProjectService } from "../project.service";
@@ -38,6 +43,9 @@ import { MatChipInputEvent } from "@angular/material/chips";
 import { set } from "lodash";
 import { MatSnackBar } from '@angular/material/snack-bar'; // Asegúrate de tenerlo importado
 import Swal from 'sweetalert2';
+import Gantt from "frappe-gantt";
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { TemplateRef, ViewChild } from '@angular/core';
 
 registerLocaleData(localeEs);
 @Component({
@@ -67,7 +75,7 @@ registerLocaleData(localeEs);
     { provide: MAT_DATE_LOCALE, useValue: "es-ES" }, // Idioma para Angular Material (como el Datepicker)
   ],
 })
-export class ProjectDetailsComponent implements OnInit {
+export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
   //modulod e archivos
   projectForm: FormGroup;
   categorias: any[] = [];
@@ -90,7 +98,47 @@ export class ProjectDetailsComponent implements OnInit {
   // Control de búsqueda de personas
   personasControl = new FormControl();
   filteredUsers: Observable<any[]>; // Lista filtrada de usuarios
-  disabledArchivos: boolean = true; 
+  disabledArchivos: boolean = true;
+
+  taskForm: FormGroup;
+  tasks: any[] = [];
+  gantt: any;
+
+  viewMode: 'Day' | 'Week' | 'Month' = 'Day';
+
+  @ViewChild('editTaskDialog') editTaskDialog!: TemplateRef<any>;
+
+  dialogRef!: MatDialogRef<any>;
+  editForm!: FormGroup;
+  selectedTaskId!: string;
+  selectedTask: any;
+
+  categoriasInputs = [
+    { key: 'ordenCompra', label: 'OC' },
+    { key: 'cotizacion', label: 'Cotización' },
+    { key: 'fianza', label: 'Fianzas' },
+    { key: 'contrato', label: 'Contrato' },
+    { key: 'polizas', label: 'Pólizas' },
+    { key: 'programaTrabajo', label: 'Programa de trabajo' },
+    { key: 'ast', label: 'AST' },
+    { key: 'documentacionIngreso', label: 'Documentación ingreso planta' },
+    { key: 'memorandos', label: 'Memorandos' },
+    { key: 'anticiposPagos', label: 'Anticipos/Pagos' },
+    { key: 'listadoMateriales', label: 'Listado de materiales' },
+    { key: 'compraMateriales', label: 'Compra de materiales' },
+    { key: 'equiposHerramientas', label: 'Equipos/Herramientas' },
+    { key: 'reportes', label: 'Reportes' },
+    { key: 'almacenCampo', label: 'Almacén en campo' },
+    { key: 'entregaRecepcion', label: 'Entrega recepción' },
+    { key: 'dossier', label: 'Dossier' },
+    { key: 'cierreFianza', label: 'Cierre de fianza' },
+    { key: 'garantias', label: 'Garantías' },
+    { key: 'encuesta', label: 'Encuesta de satisfacción' },
+    { key: 'comentarios', label: 'Comentarios' }
+  ];
+
+  fileInputs: { [key: string]: HTMLInputElement } = {};
+  @ViewChildren('fileInput') fileInputsRef!: QueryList<ElementRef<HTMLInputElement>>;
 
   constructor(
     private fb: FormBuilder,
@@ -99,7 +147,9 @@ export class ProjectDetailsComponent implements OnInit {
     public router: Router,
     private clientsService: ClientsService,
     private _usersService: UsersService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog, // ✅ Esta línea es clave
   ) {
     // Filtrar los usuarios a medida que se escribe en el campo
     this.filteredUsers = this.personasControl.valueChanges.pipe(
@@ -118,65 +168,65 @@ export class ProjectDetailsComponent implements OnInit {
       fechaInicio: [null, Validators.required],
       fechaFin: [null],
       estado: ["NA"],
-    
+
       cliente: [0, [Validators.required, this.noZeroValidator]], // int? pero requerido
       necesidad: [null],
       direccion: [null],
       nombreContacto: [null],
       telefono: [null],
       empresa: [null],
-    
+
       levantamiento: [null],
       planoArquitectonico: [null],
       diagramaIsometrico: [null],
       diagramaUnifilar: [null],
-    
+
       materialesCatalogo: [null],
       materialesPresupuestados: [null],
       inventarioFinal: [null],
       cuadroComparativo: [null],
-    
+
       proveedor: [null],
-    
+
       manoDeObra: [null],
       personasParticipantes: [null],
       equipos: [null],
       herramientas: [null],
-    
+
       indirectosCostos: [0],
       fianzas: [0],
       anticipo: [0],
       cotizacion: [0],
-    
+
       ordenDeCompra: [null],
       contrato: [null],
-    
+
       programaDeTrabajo: [null],
       avancesReportes: [null],
       comentarios: [null],
       hallazgos: [null],
       dosier: [null],
       rutaCritica: [null],
-    
+
       factura: [null],
       pago: [0],
       utilidadProgramada: [0],
       utilidadReal: [0],
       financiamiento: [0],
-    
+
       cierreProyectoActaEntrega: [null],
       estatus: [0, [Validators.required, this.noZeroValidator]],
-    
+
       liderProyectoId: [null],
       entregables: [null],
       cronograma: [null],
     });
-    
+
     this.getCategorias();
     this.getUnidadesDeNegocio();
     this.getClientes();
     this.getEstatus();
-    
+
 
     this.route.paramMap.subscribe((params) => {
       const id = params.get("id");
@@ -188,9 +238,111 @@ export class ProjectDetailsComponent implements OnInit {
         this.projectId = Number(id);
         this.loadProject(this.projectId);
         this.getFilesAll();
-        this.disabledArchivos=false;
+        this.disabledArchivos = false;
       }
     });
+
+    this.taskForm = this.fb.group({
+      name: ["", Validators.required],
+      start: [null, Validators.required],
+      end: [null, Validators.required],
+      equipo: [null],
+      dependencies: [[]], // como array inicialmente
+    });
+
+
+    this.editForm = this.fb.group({
+      name: ["", Validators.required],
+      progress: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
+      start: [null],
+      end: [null],
+      equipo: [''],
+      dependencies: ['']
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Mapea cada input con su categoría
+    this.fileInputsRef.forEach((ref) => {
+      const key = ref.nativeElement.getAttribute('data-key');
+      if (key) {
+        this.fileInputs[key] = ref.nativeElement;
+      }
+    });
+  }
+
+  initGantt(): void {
+    const container = document.getElementById("gantt");
+    if (!container) {
+      console.error("No se encontró el contenedor Gantt");
+      return;
+    }
+
+    // Limpiar contenido anterior para evitar duplicados o errores visuales
+    container.innerHTML = "";
+
+    // Si previamente añadiste listener global de input, remuévelo para evitar duplicados
+    // Para hacerlo correctamente deberías guardar la referencia del handler
+    // Aquí asumimos que sólo se llama initGantt una vez o se controla de otra forma
+
+    this.gantt = new Gantt(container, this.tasks, {
+      view_mode: this.viewMode,
+      language: 'es',
+      popup: '',
+      on_click: (task) => {
+        const foundTask = this.tasks.find(t => t.id === task.id);
+        if (!foundTask) return;
+        console.log("Tarea encontrada:", foundTask);
+        this.selectedTaskId = task.id;
+        this.editForm.setValue({
+          name: foundTask.name,
+          progress: foundTask.progress,
+          start: foundTask.start ? new Date(foundTask.start) : null,
+          end: foundTask.end ? new Date(foundTask.end) : null,
+          equipo: foundTask.equipo || '',
+          dependencies: foundTask.dependencies || []
+        });
+
+        this.openEditDialog(task);
+      },
+
+      on_date_change: (task, start, end) => {
+        console.log("Fecha cambiada:", task, start, end);
+      },
+      on_progress_change: (task, progress) => {
+        console.log("Progreso cambiado:", task, progress);
+      },
+      on_view_change: (mode) => {
+        console.log("Modo de vista cambiado:", mode);
+      },
+    });
+
+    setTimeout(() => {
+      this.addHoverListeners();
+    }, 100); // Esperamos que el DOM renderice
+
+    // Agregar listener global solo UNA vez para evitar multiples listeners.
+    // Para eso, verificamos si ya está agregado, si no, lo agregamos:
+    if (!container.hasAttribute('data-progress-listener')) {
+      container.addEventListener("input", (event) => {
+        const target = event.target as HTMLInputElement;
+        if (target && target.type === "range" && target.id.startsWith("progress-input-")) {
+          const taskId = target.id.replace("progress-input-", "");
+          const newProgress = Number(target.value);
+
+          // Actualiza el span con el valor actual
+          const span = document.getElementById(`${target.id}-value`);
+          if (span) span.textContent = newProgress.toString();
+
+          // Actualiza progreso en el gantt
+          if (this.gantt) {
+            this.gantt.progress(taskId, newProgress);
+            console.log(`Progreso actualizado para tarea ${taskId}: ${newProgress}%`);
+          }
+        }
+      });
+      container.setAttribute('data-progress-listener', 'true');
+    }
   }
 
   getEstatus(): void {
@@ -233,80 +385,90 @@ export class ProjectDetailsComponent implements OnInit {
 
   loadProject(id: number): void {
     this.projectService.getProjectById(this.projectId).subscribe((projects) => {
-      if(projects.code==200){
+      if (projects.code == 200) {
         const project = projects.data;
-      if (project) {
-        this.projectForm.patchValue({
-          proyectoId: project.proyectoId, // 🔹 Ahora se incluye el ID
-          nombre: project.nombre,
-          categoria: project.categoriaId,
-          lugar: project.lugar,
-          unidadDeNegocio: project.unidadDeNegocioId,
-          fechaInicio: project.fechaInicio,
-          fechaFin: project.fechaFin,
-          estado: project.estado,
+        const tasks = projects.data.ganttTasks || [];
 
-          // Nuevas propiedades
-          cliente: project.cliente,
-          necesidad: project.necesidad,
-          direccion: project.direccion,
-          nombreContacto: project.nombreContacto,
-          telefono: project.telefono,
-          empresa: project.empresa,
+        this.tasks = tasks.map((task: any) => ({
+          ...task,
+          id: task.tempId || task.id, // usa tempId si existe, sino el id original
+          start: new Date(task.startDate),
+          end: new Date(task.endDate),
+          TempId: task.tempId || task.id, // mantén el id temporal si existe
+          dependencies: task.dependencies ? task.dependencies.split(',') : []
+        }));
+        if (project) {
+          this.projectForm.patchValue({
+            proyectoId: project.proyectoId, // 🔹 Ahora se incluye el ID
+            nombre: project.nombre,
+            categoria: project.categoriaId,
+            lugar: project.lugar,
+            unidadDeNegocio: project.unidadDeNegocioId,
+            fechaInicio: project.fechaInicio,
+            fechaFin: project.fechaFin,
+            estado: project.estado,
 
-          levantamiento: project.levantamiento,
-          planoArquitectonico: project.planoArquitectonico,
-          diagramaIsometrico: project.diagramaIsometrico,
-          diagramaUnifilar: project.diagramaUnifilar,
+            // Nuevas propiedades
+            cliente: project.cliente,
+            necesidad: project.necesidad,
+            direccion: project.direccion,
+            nombreContacto: project.nombreContacto,
+            telefono: project.telefono,
+            empresa: project.empresa,
 
-          materialesCatalogo: project.materialesCatalogo,
-          materialesPresupuestados: project.materialesPresupuestados,
-          inventarioFinal: project.inventarioFinal,
-          cuadroComparativo: project.cuadroComparativo,
+            levantamiento: project.levantamiento,
+            planoArquitectonico: project.planoArquitectonico,
+            diagramaIsometrico: project.diagramaIsometrico,
+            diagramaUnifilar: project.diagramaUnifilar,
 
-          proveedor: project.proveedor,
+            materialesCatalogo: project.materialesCatalogo,
+            materialesPresupuestados: project.materialesPresupuestados,
+            inventarioFinal: project.inventarioFinal,
+            cuadroComparativo: project.cuadroComparativo,
 
-          manoDeObra: project.manoDeObra,
-          personasParticipantes: project.personasParticipantes,
-          equipos: project.equipos,
-          herramientas: project.herramientas,
+            proveedor: project.proveedor,
 
-          indirectosCostos: project.indirectosCostos,
-          fianzas: project.fianzas,
-          anticipo: project.anticipo,
-          cotizacion: project.cotizacion,
+            manoDeObra: project.manoDeObra,
+            personasParticipantes: project.personasParticipantes,
+            equipos: project.equipos,
+            herramientas: project.herramientas,
 
-          ordenDeCompra: project.ordenDeCompra,
-          contrato: project.contrato,
+            indirectosCostos: project.indirectosCostos,
+            fianzas: project.fianzas,
+            anticipo: project.anticipo,
+            cotizacion: project.cotizacion,
 
-          programaDeTrabajo: project.programaDeTrabajo,
-          avancesReportes: project.avancesReportes,
-          comentarios: project.comentarios,
-          hallazgos: project.hallazgos,
-          dosier: project.dosier,
-          rutaCritica: project.rutaCritica,
+            ordenDeCompra: project.ordenDeCompra,
+            contrato: project.contrato,
 
-          factura: project.factura,
-          pago: project.pago,
-          utilidadProgramada: project.utilidadProgramada,
-          utilidadReal: project.utilidadReal,
-          financiamiento: project.financiamiento,
+            programaDeTrabajo: project.programaDeTrabajo,
+            avancesReportes: project.avancesReportes,
+            comentarios: project.comentarios,
+            hallazgos: project.hallazgos,
+            dosier: project.dosier,
+            rutaCritica: project.rutaCritica,
 
-          cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
-          estatus: project.estatus,
-          liderProyectoId: project.liderProyectoId,
-          entregables: project.entregables,
-          cronograma: project.cronograma,
+            factura: project.factura,
+            pago: project.pago,
+            utilidadProgramada: project.utilidadProgramada,
+            utilidadReal: project.utilidadReal,
+            financiamiento: project.financiamiento,
+
+            cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
+            estatus: project.estatus,
+            liderProyectoId: project.liderProyectoId,
+            entregables: project.entregables,
+            cronograma: project.cronograma,
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
         });
       }
-    }else{
-      Swal.fire({
-                  icon: "error",
-                  title:"Opps",
-                  text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                  draggable: true
-                });
-    }
     });
   }
 
@@ -329,18 +491,30 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   saveProject(): void {
-    if (this.projectForm.invalid){
-     Swal.fire({
-                       icon: "error",
-                       title:"Opps",
-                       text:"Por favor, completa los campos obligatorios",
-                       draggable: true
-                     });   
-                     return;                   
-                    }
-    
+    if (this.projectForm.invalid) {
+      Swal.fire({
+        icon: "error",
+        title: "Opps",
+        text: "Por favor, completa los campos obligatorios",
+        draggable: true
+      });
+      return;
+    }
 
-    const projectData: any = this.projectForm.value;
+
+    const projectData: any = {
+      ...this.projectForm.value,
+      ganttTasks: this.tasks.map(task => ({
+        id: null, // puede ser undefined para nuevas
+        name: task.name,
+        startDate: task.start instanceof Date ? task.start.toISOString() : task.start,
+        endDate: task.end instanceof Date ? task.end.toISOString() : task.end,
+        progress: task.progress ?? 0,
+        dependencies: task.dependencies?.join(",") ?? "",
+        equipo: task.equipo ?? "",
+        TempId: task.id // Mantener el ID temporal para referencia
+      }))
+    };
 
     if (this.projectId) {
       // Actualizar proyecto
@@ -363,7 +537,7 @@ export class ProjectDetailsComponent implements OnInit {
 
     this.projectService.getFiles(this.projectId).subscribe((files) => {
 
-      if(files == null){
+      if (files == null) {
         this.files = [];
         this.filesEvidencias = [];
         return
@@ -372,15 +546,15 @@ export class ProjectDetailsComponent implements OnInit {
         ...file,
         type: this.getFileType(file.nombreArchivo),
       }));
-      if(allFiles && allFiles.length > 0){
+      if (allFiles && allFiles.length > 0) {
         // Separar los archivos
-      this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
-      this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
-      }else{
+        this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
+        this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
+      } else {
         this.files = [];
         this.filesEvidencias = [];
       }
-      
+
     });
   }
 
@@ -420,6 +594,31 @@ export class ProjectDetailsComponent implements OnInit {
     }
   }
 
+  ordenCompraFile: File | null = null;
+  fianzaFile: File | null = null;
+  compraFile: File | null = null;
+
+  onFileSelectedOne(event: Event, tipo: string) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+
+    if (tipo === 'ordenCompra') {
+      this.ordenCompraFile = file;
+    }
+    if (tipo === 'fianza') {
+      this.fianzaFile = file;
+    }
+    if (tipo === 'compra') {
+      this.compraFile = file;
+    }
+    if (file && tipo) {
+      this.subirArchivo(file, tipo);
+    }
+  }
+
+
   // Si deseas subirlo en ese mismo momento:
   subirArchivo(event: any, categoria: string): void {
     const archivo = event;
@@ -432,31 +631,31 @@ export class ProjectDetailsComponent implements OnInit {
 
     this.projectService.uploadFile(formData).subscribe({
       next: (res) => {
-        if(res.code==200){
-        this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-success']
-        });
-        this.getFilesAll();
-      }
-    else{
-      Swal.fire({
-                  icon: "error",
-                  title:"Opps",
-                  text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                  draggable: true
-                });
-      
-    }
-    },
+        if (res.code == 200) {
+          this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-success']
+          });
+          this.getFilesAll();
+        }
+        else {
+          Swal.fire({
+            icon: "error",
+            title: "Opps",
+            text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+            draggable: true
+          });
+
+        }
+      },
       error: (err) => {
         Swal.fire({
-                    icon: "error",
-                    title:"Opps",
-                    text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                    draggable: true
-                  });
-        
+          icon: "error",
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
+        });
+
       },
     });
   }
@@ -488,39 +687,35 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   deleteFile(proyectoId: number, categoria: string, nombreArchivo: string): void {
-    this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe(
-      (res:any) => {
-        if(res.code==200){
-        
-        this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-success']
-        });
-  
-        // Si necesitas actualizar la lista después de eliminar:
-        this.getFilesAll(); // Opcional: recargar lista de archivos
-      }else{
-       Swal.fire({
-                   icon: "error",
-                   title:"Opps",
-                   text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                   draggable: true
-                 });
-       
-
-      }
+    this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe({
+      next: (res: any) => {
+        console.log(res);
+        if (res.code === 200) {
+          this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['snackbar-success']
+          });
+          this.getFilesAll(); // Recarga la lista de archivos
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Oops",
+            text: "Hubo un error en el sistema, contacte al administrador.",
+            draggable: true
+          });
+        }
       },
-      (error) => {
+      error: (err) => {
         Swal.fire({
-                    icon: "error",
-                    title:"Opps",
-                    text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                    draggable: true
-                  });
-        
+          icon: "error",
+          title: "Oops",
+          text: "Hubo un error en el sistema, contacte al administrador.",
+          draggable: true
+        });
       }
-    );
+    });
   }
+
 
   getUsers(): void {
     this._usersService.getUsers().subscribe((users) => {
@@ -602,5 +797,225 @@ export class ProjectDetailsComponent implements OnInit {
       this.personasSeleccionadas.splice(index, 1); // Eliminar del array
       this.updatePersonasParticipantesField();     // 🔸 Actualizar los IDs concatenados en el form
     }
+  }
+
+  addTask(): void {
+    if (this.taskForm.invalid) return;
+
+    const formValue = this.taskForm.value;
+
+    // Obtener el número más alto de ID actual
+    const maxId = this.tasks
+      .map(t => parseInt(t.id.replace('task-', '')))
+      .filter(n => !isNaN(n))
+      .reduce((max, n) => Math.max(max, n), 0);
+
+    const nextId = maxId + 1;
+
+    const newTask: any = {
+      id: 'task-' + nextId,
+      name: formValue.name,
+      start: this.formatDate(formValue.start),
+      end: this.formatDate(formValue.end),
+      progress: 0,
+      dependencies: (formValue.dependencies || []).join(','),
+      equipo: formValue.equipo
+    };
+
+    this.tasks.push(newTask);
+
+    if (this.gantt) {
+      this.gantt.refresh(this.tasks);
+    } else {
+      this.initGantt();
+    }
+
+    this.taskForm.reset();
+  }
+
+
+  // Formatea la fecha a string yyyy-mm-dd para Frappe Gantt
+  formatDate(date: Date): string {
+    const d = new Date(date);
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  }
+
+  changeView(view: 'Day' | 'Week' | 'Month'): void {
+    this.viewMode = view;
+    if (this.gantt) {
+      this.gantt.change_view_mode(view);
+    }
+  }
+  saveTaskEdit() {
+    if (this.editForm.invalid) return;
+
+    const index = this.tasks.findIndex(t => t.id === this.selectedTaskId);
+    if (index !== -1) {
+      this.tasks[index] = {
+        ...this.tasks[index],
+        ...this.editForm.value
+      };
+      this.gantt.refresh(this.tasks);
+    }
+
+    this.dialogRef.close();
+  }
+
+  openEditDialog(task: any) {
+    this.editForm.setValue({
+      name: task.name,
+      progress: task.progress,
+      start: task.start ? new Date(task.start) : null,
+      end: task.end ? new Date(task.end) : null,
+      equipo: task.equipo || '',
+      dependencies: task.dependencies || []
+    });
+    this.selectedTaskId = task.id;
+    this.selectedTask = task;
+
+    this.dialogRef = this.dialog.open(this.editTaskDialog);
+
+    this.dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.saveTaskEdit();
+      }
+      this.selectedTaskId = '';
+    });
+  }
+
+  closeDialog(task: any) {
+    this.dialogRef.close();
+  }
+
+  addHoverListeners() {
+    const bars = document.querySelectorAll('.bar');
+    bars.forEach((bar: Element) => {
+      const taskId = bar.getAttribute('data-id');
+      const task = this.tasks.find(t => t.id === taskId);
+
+      if (task) {
+        bar.addEventListener('mouseenter', (e) => this.showTooltip(e as MouseEvent, task));
+        bar.addEventListener('mousemove', (e) => this.moveTooltip(e as MouseEvent));
+        bar.addEventListener('mouseleave', () => this.hideTooltip());
+      }
+    });
+  }
+
+  showTooltip(event: MouseEvent, task: any) {
+    let tooltip = document.getElementById('gantt-tooltip');
+    if (!tooltip) {
+      tooltip = document.createElement('div');
+      tooltip.id = 'gantt-tooltip';
+      tooltip.style.position = 'absolute';
+      tooltip.style.zIndex = '1000';
+      tooltip.style.background = '#fff';
+      tooltip.style.border = '1px solid #ccc';
+      tooltip.style.padding = '8px';
+      tooltip.style.borderRadius = '4px';
+      tooltip.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+      tooltip.style.pointerEvents = 'none';
+      tooltip.style.fontSize = '12px';
+      document.body.appendChild(tooltip);
+    }
+
+    tooltip.innerHTML = `
+    <strong>${task.name}</strong><br>
+    Inicio: ${task.start}<br>
+    Fin: ${task.end}<br>
+    Progreso: ${task.progress}%
+  `;
+
+    tooltip.style.display = 'block';
+  }
+
+  moveTooltip(event: MouseEvent) {
+    const tooltip = document.getElementById('gantt-tooltip');
+    if (tooltip) {
+      tooltip.style.top = `${event.pageY + 10}px`;
+      tooltip.style.left = `${event.pageX + 10}px`;
+    }
+  }
+
+  hideTooltip() {
+    const tooltip = document.getElementById('gantt-tooltip');
+    if (tooltip) {
+      tooltip.style.display = 'none';
+    }
+  }
+
+  deleteTask(): void {
+    if (!this.selectedTask) return;
+    console.log("Eliminando tarea:", this.selectedTask);
+    console.log("Tareas antes de eliminar:", this.tasks);
+    // Si las tareas están en un array: this.tasks
+    this.tasks = this.tasks.filter(t => t.id !== this.selectedTask.id);
+
+    // Vuelve a renderizar el gráfico
+    this.initGantt();
+
+    this.dialog.closeAll();
+  }
+
+  onTabChange(event: any): void {
+    const tabLabel = event.tab.textLabel;
+
+    if (tabLabel === "Gantt Chart") {
+      setTimeout(() => {
+        this.initGantt();
+        this.addHoverListeners();
+      }, 300); // Espera breve para asegurar que el DOM esté renderizado
+    }
+  }
+
+  getNombreArchivoGuardado(categoria: string): string | null {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    return archivo?.nombreArchivo || null;
+  }
+  hasArchivoGuardado(categoria: string): boolean {
+    return !!this.getNombreArchivoGuardado(categoria);
+  }
+
+  descargarArchivoGuardado(categoria: string): void {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    if (!archivo) return;
+
+    this.downloadFile(archivo.proyectoId, archivo.categoria, archivo.nombreArchivo);
+  }
+  eliminarArchivo(categoria: string): void {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+
+    if (!archivo) return;
+
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Se eliminará el archivo permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.deleteFile(archivo.proyectoId, archivo.categoria, archivo.nombreArchivo);
+
+        // Limpiar referencia local si aplica
+        if (categoria === 'ordenCompra') {
+          this.ordenCompraFile = null;
+        }
+        if (categoria === 'fianza') {
+          this.fianzaFile = null;
+        }
+        if (categoria === 'compra') {
+          this.compraFile = null;
+        }
+      }
+    });
+  }
+  getArchivoNombre(categoria: string): string {
+    return this[`${categoria}File`]?.name || this.getNombreArchivoGuardado(categoria) || '';
   }
 }

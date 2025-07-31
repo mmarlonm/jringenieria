@@ -27,7 +27,47 @@
 }
 
 .btn-float{
-  position: absolute;
-  bottom: 0px;
-  right: 0px;
+    position: absolute !important;
+    bottom: 0px !important;
+    right: 0px;
+  }
+.gantt-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.gantt-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.gantt-form mat-form-field {
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+.gantt-container {
+  width: 100%;
+  height: 30vh; // Altura responsiva
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: auto;
+
+  #gantt {
+    width: 100%;
+    height: 100%;
+  }
+
+  .bar {
+    cursor: pointer;
+  }
+}
+
+#gantt-tooltip {
+  transition: opacity 0.2s ease-in-out;
+  max-width: 200px;
 }
