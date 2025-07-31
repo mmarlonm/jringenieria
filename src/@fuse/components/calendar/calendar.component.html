@@ -1,4 +1,45 @@
+<div class="row text-center">
+  <div class="col-md-4">
+    <div class="btn-group">
+       <button mat-flat-button color="primary" class="w-full md:w-auto  gap-2" 
+       mwlCalendarNextView
+        [view]="view"
+        [(viewDate)]="viewDate"
+        (viewDateChange)="closeOpenMonthViewDay()">
+        anterior
+    </button>
+     <button mat-flat-button color="primary" class="w-full md:w-auto gap-2" 
+       mwlCalendarToday
+        [(viewDate)]="viewDate">
+        actual
+    </button>
+      <button mat-flat-button color="primary" class="w-full md:w-auto gap-2" 
+       mwlCalendarNextView
+        [view]="view"
+        [(viewDate)]="viewDate"
+        (viewDateChange)="closeOpenMonthViewDay()">
+        siguiente
+    </button>
+
+    </div>
+  </div>
+  <div class="col-md-4">
+    <h3>{{ viewDate | calendarDate:(view + 'ViewTitle'):'es' }}</h3>
+  </div>
+  <div class="col-md-4">
+      </div>
+</div>
+<ng-template #customCellTemplate let-day="day">
+  <div
+    class="cal-cell-top"
+    [ngClass]="{'today-highlight': isToday(day.date)}">
+    {{ getDayNumber(day.date) }}
+  </div>
+</ng-template>
+
 <mwl-calendar-month-view
-    [viewDate]="viewDate"
-    [events]="events">
+  [viewDate]="viewDate"
+  [events]="events"
+  [locale]="'es'"
+  class="custom-month-view">
   </mwl-calendar-month-view>
