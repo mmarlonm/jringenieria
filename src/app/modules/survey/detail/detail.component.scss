@@ -5,3 +5,59 @@ mat-form-field {
 textarea {
   resize: none;
 }
+.emoji-rating {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.emoji-block {
+  width: 40px;
+  height: 60px;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  font-family: Arial, sans-serif;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s;
+}
+
+.emoji-block .emoji {
+  font-size: 22px;
+  line-height: 30px;
+  background: transparent;
+}
+
+.emoji-block .number {
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 30px;
+  border-radius: 4px;
+  padding: 0 6px;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+/* Colores por nivel */
+.low .number {
+  background-color: #de8787;
+  color: #2e2e2e;
+}
+
+.medium .number {
+  background-color: #f6f0a3;
+  color: #2e2e2e;
+}
+
+.high .number {
+  background-color: #94c1bd;
+  color: #2e2e2e;
+}
+
+/* 🎯 Efecto de selección claro */
+.selected .number {
+  border: 2px solid #000;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+  transform: scale(1.15);
+}

@@ -1,69 +1,91 @@
-<form *ngIf="form" [formGroup]="form" (ngSubmit)="enviar()" class="p-6 max-w-4xl mx-auto space-y-6">
-
+<form
+  *ngIf="form"
+  [formGroup]="form"
+  (ngSubmit)="enviar()"
+  class="p-6 max-w-4xl mx-auto space-y-6"
+>
   <!-- Título -->
-    <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
-      ENCUESTA DE SATISFACCIÓN DE servicios/proyectos
-    </h1>
+  <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
+    ENCUESTA DE SATISFACCIÓN DE servicios/proyectos
+  </h1>
 
-    <!-- Datos de contacto -->
-    <form [formGroup]="form" (ngSubmit)="enviar()" class="space-y-4">
-       <div class="flex items-center justify-center">
-        <mat-label>Que sucursal le atendió:</mat-label>
-          <mat-radio-group [(ngModel)]="labelPosition">
-        <mat-radio-button class="example-margin" value="after">Pachuca</mat-radio-button>
-        <mat-radio-button class="example-margin" value="before">Queretaro</mat-radio-button>
-         <mat-radio-button class="example-margin" value="before">Puebla</mat-radio-button>
-      </mat-radio-group>
-      </div>    
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <mat-form-field appearance="outline">
-          <mat-label>Nombre</mat-label>
-          <input matInput formControlName="nombre" />
-        </mat-form-field>
+  <!-- Datos de contacto -->
+  <div class="flex items-center justify-center">
+    <mat-label>Que sucursal le atendió:</mat-label>
+    <mat-radio-group [(ngModel)]="labelPosition">
+      <mat-radio-button class="example-margin" value="after"
+        >Pachuca</mat-radio-button
+      >
+      <mat-radio-button class="example-margin" value="before"
+        >Queretaro</mat-radio-button
+      >
+      <mat-radio-button class="example-margin" value="before"
+        >Puebla</mat-radio-button
+      >
+    </mat-radio-group>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="nombre" />
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Empresa</mat-label>
-          <input matInput formControlName="empresa" />
-        </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Empresa</mat-label>
+      <input matInput formControlName="empresa" />
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="email" />
-        </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" />
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Teléfono</mat-label>
-          <input matInput formControlName="telefono" />
-        </mat-form-field>
-
-      </div>
-       <div class="col-span-1 md:col-span-2 flex justify-center">
+    <mat-form-field appearance="outline">
+      <mat-label>Teléfono</mat-label>
+      <input matInput formControlName="telefono" />
+    </mat-form-field>
+  </div>
+  <div class="col-span-1 md:col-span-2 flex justify-center">
     <mat-form-field appearance="outline" class="w-full md:w-1/2">
       <mat-label>Cargo/Puesto</mat-label>
       <input matInput formControlName="cargo" />
     </mat-form-field>
   </div>
 
-      <!-- Leyenda de bienvenida -->
-       <div style="background-color: #419486; ">
-      <div style="padding: 10px;">
-      <p class="text-white font-bold ">
-        Estimado cliente.<br/>En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
+  <!-- Leyenda de bienvenida -->
+  <div style="background-color: #419486">
+    <div style="padding: 10px">
+      <p class="text-white font-bold">
+        Estimado cliente.<br />En JR Ingeniería Eléctrica nos interesa mejorar
+        nuestro servicio.
       </p>
-      <p class="text-black font-bold " >
-        Por favor indica tu respuesta en una escala del 0 al 10, donde 0 representa el nivel más bajo y 10 el más alto
+      <p class="text-black font-bold">
+        Por favor indica tu respuesta en una escala del 0 al 10, donde 0
+        representa el nivel más bajo y 10 el más alto
       </p>
-      </div>
-      </div>
+    </div>
+  </div>
 
   <!-- Pregunta 1 -->
   <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold">¿Cómo calificarías el servicio del personal que te atendió?</label>
-    <div class="flex items-center gap-4">
-      <mat-slider formControlName="servicioPersonal" min="1" max="10" step="1" thumbLabel tickInterval="1"></mat-slider>
-      <span class="text-2xl" [style.color]="getColor(form.get('servicioPersonal')?.value)">
-        {{ getEmoji(form.get('servicioPersonal')?.value) }}
-      </span>
+    <label class="font-semibold"
+      >¿Cómo calificarías el servicio del personal que te atendió?</label
+    >
+    <div class="emoji-rating">
+      <div
+        class="emoji-block"
+        *ngFor="let item of scale"
+        [ngClass]="{
+          low: item.value <= 6,
+          medium: item.value === 7 || item.value === 8,
+          high: item.value >= 9,
+          selected: calificacion === item.value,
+        }"
+        (click)="select(item.value)"
+      >
+        <div class="emoji">{{ item.emoji }}</div>
+        <div class="number">{{ item.value }}</div>
+      </div>
     </div>
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
@@ -73,11 +95,23 @@
 
   <!-- Pregunta 2 -->
   <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold">¿Qué posibilidades hay de que recomiendes nuestros productos?</label>
+    <label class="font-semibold"
+      >¿Qué posibilidades hay de que recomiendes nuestros productos?</label
+    >
     <div class="flex items-center gap-4">
-      <mat-slider formControlName="recomendarProductos" min="1" max="10" step="1" thumbLabel tickInterval="1"></mat-slider>
-      <span class="text-2xl" [style.color]="getColor(form.get('recomendarProductos')?.value)">
-        {{ getEmoji(form.get('recomendarProductos')?.value) }}
+      <mat-slider
+        formControlName="recomendarProductos"
+        min="1"
+        max="10"
+        step="1"
+        thumbLabel
+        tickInterval="1"
+      ></mat-slider>
+      <span
+        class="text-2xl"
+        [style.color]="getColor(form.get('recomendarProductos')?.value)"
+      >
+        {{ getEmoji(form.get("recomendarProductos")?.value) }}
       </span>
     </div>
     <mat-form-field appearance="outline" class="w-full">
@@ -88,11 +122,23 @@
 
   <!-- Pregunta 3 -->
   <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold">¿En qué medida los productos ayudaron a resolver tu problema?</label>
+    <label class="font-semibold"
+      >¿En qué medida los productos ayudaron a resolver tu problema?</label
+    >
     <div class="flex items-center gap-4">
-      <mat-slider formControlName="ayudaProducto" min="1" max="10" step="1" thumbLabel tickInterval="1"></mat-slider>
-      <span class="text-2xl" [style.color]="getColor(form.get('ayudaProducto')?.value)">
-        {{ getEmoji(form.get('ayudaProducto')?.value) }}
+      <mat-slider
+        formControlName="ayudaProducto"
+        min="1"
+        max="10"
+        step="1"
+        thumbLabel
+        tickInterval="1"
+      ></mat-slider>
+      <span
+        class="text-2xl"
+        [style.color]="getColor(form.get('ayudaProducto')?.value)"
+      >
+        {{ getEmoji(form.get("ayudaProducto")?.value) }}
       </span>
     </div>
     <mat-form-field appearance="outline" class="w-full">
@@ -103,11 +149,23 @@
 
   <!-- Pregunta 4 -->
   <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold">¿Nuestro equipo comprendió tus necesidades?</label>
+    <label class="font-semibold"
+      >¿Nuestro equipo comprendió tus necesidades?</label
+    >
     <div class="flex items-center gap-4">
-      <mat-slider formControlName="comprensionNecesidades" min="1" max="10" step="1" thumbLabel tickInterval="1"></mat-slider>
-      <span class="text-2xl" [style.color]="getColor(form.get('comprensionNecesidades')?.value)">
-        {{ getEmoji(form.get('comprensionNecesidades')?.value) }}
+      <mat-slider
+        formControlName="comprensionNecesidades"
+        min="1"
+        max="10"
+        step="1"
+        thumbLabel
+        tickInterval="1"
+      ></mat-slider>
+      <span
+        class="text-2xl"
+        [style.color]="getColor(form.get('comprensionNecesidades')?.value)"
+      >
+        {{ getEmoji(form.get("comprensionNecesidades")?.value) }}
       </span>
     </div>
     <mat-form-field appearance="outline" class="w-full">
@@ -118,11 +176,23 @@
 
   <!-- Pregunta 5 -->
   <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold">¿Cómo evalúas calidad y tiempo de entrega?</label>
+    <label class="font-semibold"
+      >¿Cómo evalúas calidad y tiempo de entrega?</label
+    >
     <div class="flex items-center gap-4">
-      <mat-slider formControlName="tiempoEntrega" min="1" max="10" step="1" thumbLabel tickInterval="1"></mat-slider>
-      <span class="text-2xl" [style.color]="getColor(form.get('tiempoEntrega')?.value)">
-        {{ getEmoji(form.get('tiempoEntrega')?.value) }}
+      <mat-slider
+        formControlName="tiempoEntrega"
+        min="1"
+        max="10"
+        step="1"
+        thumbLabel
+        tickInterval="1"
+      ></mat-slider>
+      <span
+        class="text-2xl"
+        [style.color]="getColor(form.get('tiempoEntrega')?.value)"
+      >
+        {{ getEmoji(form.get("tiempoEntrega")?.value) }}
       </span>
     </div>
     <mat-form-field appearance="outline" class="w-full">
@@ -132,31 +202,47 @@
   </div>
 
   <!-- Frecuencia -->
-    <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold">¿Con que frecuencia solicitas servicios de la empresa?</label>
-  
-   <div class="flex">
-     
-          <mat-radio-group>
-        <mat-radio-button class="example-margin" value="after">1ra vez</mat-radio-button>
-        <mat-radio-button class="example-margin" value="before">1 o mas veces al mes</mat-radio-button>
-        <mat-radio-button class="example-margin" value="before">2 o 3 veces al año</mat-radio-button>
-        <mat-radio-button class="example-margin" value="before">1 vez al año</mat-radio-button>
+  <div class="p-4 border rounded space-y-2">
+    <label class="font-semibold"
+      >¿Con que frecuencia solicitas servicios de la empresa?</label
+    >
+
+    <div class="flex">
+      <mat-radio-group>
+        <mat-radio-button class="example-margin" value="after"
+          >1ra vez</mat-radio-button
+        >
+        <mat-radio-button class="example-margin" value="before"
+          >1 o mas veces al mes</mat-radio-button
+        >
+        <mat-radio-button class="example-margin" value="before"
+          >2 o 3 veces al año</mat-radio-button
+        >
+        <mat-radio-button class="example-margin" value="before"
+          >1 vez al año</mat-radio-button
+        >
       </mat-radio-group>
-</div>
-</div>
+    </div>
+  </div>
   <!-- Productos deseados -->
   <mat-form-field appearance="outline" class="w-full">
-    <mat-label >¿Qué servicios le gustaría que agreguemos a nuestro catálogo?</mat-label>
+    <mat-label
+      >¿Qué servicios le gustaría que agreguemos a nuestro catálogo?</mat-label
+    >
     <textarea matInput rows="2" formControlName="productosDeseados"></textarea>
   </mat-form-field>
 
   <!-- Cómo conoció -->
   <div class="space-y-2">
     <label class="font-semibold block">¿Cómo conociste JR Ingeniería?</label>
-    <mat-radio-group formControlName="comoConocio" class="grid grid-cols-3 gap-2">
+    <mat-radio-group
+      formControlName="comoConocio"
+      class="grid grid-cols-3 gap-2"
+    >
       <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
-      <mat-radio-button value="Recomendación">Busqueda en internet</mat-radio-button>
+      <mat-radio-button value="Recomendación"
+        >Busqueda en internet</mat-radio-button
+      >
       <mat-radio-button value="Recomendación">Espectaculares</mat-radio-button>
       <mat-radio-button value="Tienda">Visita tienda</mat-radio-button>
       <mat-radio-button value="Facebook">Facebook</mat-radio-button>
@@ -167,6 +253,8 @@
   </div>
 
   <div class="pt-4">
-    <button mat-raised-button color="primary" type="submit" class="w-full">Enviar</button>
+    <button mat-raised-button color="primary" type="submit" class="w-full">
+      Enviar
+    </button>
   </div>
 </form>

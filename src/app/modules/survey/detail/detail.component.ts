@@ -62,7 +62,21 @@ export class DetailComponent implements OnInit {
   }
 ];
 
+  calificacion: number | null = null;
 
+  scale = [
+    { value: 0, emoji: '☹️' },
+    { value: 1, emoji: '☹️' },
+    { value: 2, emoji: '☹️' },
+    { value: 3, emoji: '☹️' },
+    { value: 4, emoji: '☹️' },
+    { value: 5, emoji: '☹️' },
+    { value: 6, emoji: '☹️' },
+    { value: 7, emoji: '😐' },
+    { value: 8, emoji: '😐' },
+    { value: 9, emoji: '😊' },
+    { value: 10, emoji: '😊' },
+  ];
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -124,4 +138,9 @@ export class DetailComponent implements OnInit {
       this.form.reset();
     });
   }
+
+  select(value: number) {
+    this.calificacion = value;
+    console.log('Calificación seleccionada:', value);
+  } 
 }
