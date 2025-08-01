@@ -2,11 +2,19 @@
 
   <!-- Título -->
     <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
-      ENCUESTA DE SATISFACCIÓN DE PRODUCTOS
+      ENCUESTA DE SATISFACCIÓN DE servicios/proyectos
     </h1>
 
     <!-- Datos de contacto -->
     <form [formGroup]="form" (ngSubmit)="enviar()" class="space-y-4">
+       <div class="flex items-center justify-center">
+        <mat-label>Que sucursal le atendió:</mat-label>
+          <mat-radio-group [(ngModel)]="labelPosition">
+        <mat-radio-button class="example-margin" value="after">Pachuca</mat-radio-button>
+        <mat-radio-button class="example-margin" value="before">Queretaro</mat-radio-button>
+         <mat-radio-button class="example-margin" value="before">Puebla</mat-radio-button>
+      </mat-radio-group>
+      </div>    
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <mat-form-field appearance="outline">
           <mat-label>Nombre</mat-label>
@@ -27,12 +35,26 @@
           <mat-label>Teléfono</mat-label>
           <input matInput formControlName="telefono" />
         </mat-form-field>
+
       </div>
+       <div class="col-span-1 md:col-span-2 flex justify-center">
+    <mat-form-field appearance="outline" class="w-full md:w-1/2">
+      <mat-label>Cargo/Puesto</mat-label>
+      <input matInput formControlName="cargo" />
+    </mat-form-field>
+  </div>
 
       <!-- Leyenda de bienvenida -->
-      <p class="text-center text-gray-700 mt-6 mb-4">
-        Estimado cliente, para nosotros es muy importante conocer su opinión y mejorar nuestro servicio.
+       <div style="background-color: #419486; ">
+      <div style="padding: 10px;">
+      <p class="text-white font-bold ">
+        Estimado cliente.<br/>En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
       </p>
+      <p class="text-black font-bold " >
+        Por favor indica tu respuesta en una escala del 0 al 10, donde 0 representa el nivel más bajo y 10 el más alto
+      </p>
+      </div>
+      </div>
 
   <!-- Pregunta 1 -->
   <div class="p-4 border rounded space-y-2">
@@ -110,18 +132,22 @@
   </div>
 
   <!-- Frecuencia -->
-  <mat-form-field appearance="outline" class="w-full">
-    <mat-label>Frecuencia con que compras</mat-label>
-    <mat-select formControlName="frecuencia">
-      <mat-option value="1ra vez">1ra vez</mat-option>
-      <mat-option value="1-3 veces al año">1-3 veces al año</mat-option>
-      <mat-option value="10 o más veces">10 o más veces</mat-option>
-    </mat-select>
-  </mat-form-field>
-
+    <div class="p-4 border rounded space-y-2">
+    <label class="font-semibold">¿Con que frecuencia solicitas servicios de la empresa?</label>
+  
+   <div class="flex">
+     
+          <mat-radio-group>
+        <mat-radio-button class="example-margin" value="after">1ra vez</mat-radio-button>
+        <mat-radio-button class="example-margin" value="before">1 o mas veces al mes</mat-radio-button>
+        <mat-radio-button class="example-margin" value="before">2 o 3 veces al año</mat-radio-button>
+        <mat-radio-button class="example-margin" value="before">1 vez al año</mat-radio-button>
+      </mat-radio-group>
+</div>
+</div>
   <!-- Productos deseados -->
   <mat-form-field appearance="outline" class="w-full">
-    <mat-label>¿Qué productos deseas?</mat-label>
+    <mat-label >¿Qué servicios le gustaría que agreguemos a nuestro catálogo?</mat-label>
     <textarea matInput rows="2" formControlName="productosDeseados"></textarea>
   </mat-form-field>
 
@@ -130,6 +156,8 @@
     <label class="font-semibold block">¿Cómo conociste JR Ingeniería?</label>
     <mat-radio-group formControlName="comoConocio" class="grid grid-cols-3 gap-2">
       <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
+      <mat-radio-button value="Recomendación">Busqueda en internet</mat-radio-button>
+      <mat-radio-button value="Recomendación">Espectaculares</mat-radio-button>
       <mat-radio-button value="Tienda">Visita tienda</mat-radio-button>
       <mat-radio-button value="Facebook">Facebook</mat-radio-button>
       <mat-radio-button value="Instagram">Instagram</mat-radio-button>
