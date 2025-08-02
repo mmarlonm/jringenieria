@@ -35,6 +35,7 @@ export const appRoutes: Route[] = [
             {path: 'sign-in', loadChildren: () => import('app/modules/auth/sign-in/sign-in.routes')},
             {path: 'sign-up', loadChildren: () => import('app/modules/auth/sign-up/sign-up.routes')},
             {path: 'survey', loadChildren: () => import('app/modules/survey/survey.routes')}, // Survey module route
+            {path: 'survey-productos', loadChildren: () => import('app/modules/survey_productos/survey_productos.routes')}, // Survey module route
         ]
     },
 
