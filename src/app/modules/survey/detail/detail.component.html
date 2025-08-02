@@ -67,9 +67,40 @@
   </div>
 
   <!-- Pregunta 1 -->
-  <div class="p-4 border rounded space-y-2">
+  <div class="p-4 grid grid-cols-5  border rounded space-y-2">
+  <div class="col-span-3 ">
     <label class="font-semibold"
-      >¿Cómo calificarías el servicio del personal que te atendió?</label
+      >¿Cómo calificarías el servicio de parte del personal que te atendió?</label>
+      <div class="emoji-rating">
+      <div
+        class="emoji-block"
+        *ngFor="let item of scale"
+        [ngClass]="{
+          low: item.value <= 6,
+          medium: item.value === 7 || item.value === 8,
+          high: item.value >= 9,
+          selected: calificacion === item.value,
+        }"
+        (click)="select(item.value)"
+      >
+        <div class="emoji">{{ item.emoji }}</div>
+        <div class="number">{{ item.value }}</div>
+      </div>
+    </div>
+    </div>
+    <div class="col-span-2 ">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
+      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
+    </mat-form-field>
+  </div>
+  </div>
+
+  <!-- Pregunta 2 -->
+  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
+    <div class="col-span-3">
+    <label class="font-semibold"
+      >¿Cuáles son las posibilidades que recomiendes nuestros servicios a <br />familiares, amigos y colegas?</label
     >
     <div class="emoji-rating">
       <div
@@ -87,118 +118,134 @@
         <div class="number">{{ item.value }}</div>
       </div>
     </div>
+    </div>
+    <div class="col-span-2">
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
       <textarea matInput rows="2" formControlName="razonServicio"></textarea>
     </mat-form-field>
   </div>
-
-  <!-- Pregunta 2 -->
-  <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold"
-      >¿Qué posibilidades hay de que recomiendes nuestros productos?</label
-    >
-    <div class="flex items-center gap-4">
-      <mat-slider
-        formControlName="recomendarProductos"
-        min="1"
-        max="10"
-        step="1"
-        thumbLabel
-        tickInterval="1"
-      ></mat-slider>
-      <span
-        class="text-2xl"
-        [style.color]="getColor(form.get('recomendarProductos')?.value)"
-      >
-        {{ getEmoji(form.get("recomendarProductos")?.value) }}
-      </span>
-    </div>
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonRecomendar"></textarea>
-    </mat-form-field>
-  </div>
+</div>
 
   <!-- Pregunta 3 -->
-  <div class="p-4 border rounded space-y-2">
+  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
+    <div class="col-span-3">
     <label class="font-semibold"
-      >¿En qué medida los productos ayudaron a resolver tu problema?</label
-    >
-    <div class="flex items-center gap-4">
-      <mat-slider
-        formControlName="ayudaProducto"
-        min="1"
-        max="10"
-        step="1"
-        thumbLabel
-        tickInterval="1"
-      ></mat-slider>
-      <span
-        class="text-2xl"
-        [style.color]="getColor(form.get('ayudaProducto')?.value)"
+      >¿En que medida los servicios adquiridos de JR, ayudaron a resolver tu problema?</label>
+    <div class="emoji-rating">
+      <div
+        class="emoji-block"
+        *ngFor="let item of scale"
+        [ngClass]="{
+          low: item.value <= 6,
+          medium: item.value === 7 || item.value === 8,
+          high: item.value >= 9,
+          selected: calificacion === item.value,
+        }"
+        (click)="select(item.value)"
       >
-        {{ getEmoji(form.get("ayudaProducto")?.value) }}
-      </span>
+        <div class="emoji">{{ item.emoji }}</div>
+        <div class="number">{{ item.value }}</div>
+      </div>
     </div>
+    </div>
+    <div class="col-span-2 ">
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonAyuda"></textarea>
+      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
     </mat-form-field>
+  </div>
   </div>
 
   <!-- Pregunta 4 -->
-  <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold"
-      >¿Nuestro equipo comprendió tus necesidades?</label
+  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
+    <div class="col-span-3"> 
+     <label class="font-semibold"
+      >¿Cómo evalúa el desarrollo de nuestros proyectos/servicios?</label
     >
-    <div class="flex items-center gap-4">
-      <mat-slider
-        formControlName="comprensionNecesidades"
-        min="1"
-        max="10"
-        step="1"
-        thumbLabel
-        tickInterval="1"
-      ></mat-slider>
-      <span
-        class="text-2xl"
-        [style.color]="getColor(form.get('comprensionNecesidades')?.value)"
+    <div class="emoji-rating">
+      <div
+        class="emoji-block"
+        *ngFor="let item of scale"
+        [ngClass]="{
+          low: item.value <= 6,
+          medium: item.value === 7 || item.value === 8,
+          high: item.value >= 9,
+          selected: calificacion === item.value,
+        }"
+        (click)="select(item.value)"
       >
-        {{ getEmoji(form.get("comprensionNecesidades")?.value) }}
-      </span>
+        <div class="emoji">{{ item.emoji }}</div>
+        <div class="number">{{ item.value }}</div>
+      </div>
     </div>
+    </div>
+    <div class="col-span-2 ">
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonComprension"></textarea>
+      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
     </mat-form-field>
   </div>
+</div>
 
   <!-- Pregunta 5 -->
-  <div class="p-4 border rounded space-y-2">
+  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
+    <div class="col-span-3">
     <label class="font-semibold"
-      >¿Cómo evalúas calidad y tiempo de entrega?</label
-    >
-    <div class="flex items-center gap-4">
-      <mat-slider
-        formControlName="tiempoEntrega"
-        min="1"
-        max="10"
-        step="1"
-        thumbLabel
-        tickInterval="1"
-      ></mat-slider>
-      <span
-        class="text-2xl"
-        [style.color]="getColor(form.get('tiempoEntrega')?.value)"
+      >¿Nuestro equipo comprendió sus necesidades y le brindó atención personalizada?</label>
+    <div class="emoji-rating">
+      <div
+        class="emoji-block"
+        *ngFor="let item of scale"
+        [ngClass]="{
+          low: item.value <= 6,
+          medium: item.value === 7 || item.value === 8,
+          high: item.value >= 9,
+          selected: calificacion === item.value,
+        }"
+        (click)="select(item.value)"
       >
-        {{ getEmoji(form.get("tiempoEntrega")?.value) }}
-      </span>
+        <div class="emoji">{{ item.emoji }}</div>
+        <div class="number">{{ item.value }}</div>
+      </div>
     </div>
+    </div>
+    <div class="col-span-2 ">
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonEntrega"></textarea>
+      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
     </mat-form-field>
+  </div>
+  </div>
+
+   <!-- Pregunta 6 -->
+  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
+  <div class="col-span-3">
+    <label class="font-semibold"
+      >¿Cómo evalúa el cumplimiento en cuanto a calidad y tiempo de entrega?</label>
+    <div class="emoji-rating">
+      <div
+        class="emoji-block"
+        *ngFor="let item of scale"
+        [ngClass]="{
+          low: item.value <= 6,
+          medium: item.value === 7 || item.value === 8,
+          high: item.value >= 9,
+          selected: calificacion === item.value,
+        }"
+        (click)="select(item.value)"
+      >
+        <div class="emoji">{{ item.emoji }}</div>
+        <div class="number">{{ item.value }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-span-2 ">
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
+      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
+    </mat-form-field>
+  </div>
   </div>
 
   <!-- Frecuencia -->
