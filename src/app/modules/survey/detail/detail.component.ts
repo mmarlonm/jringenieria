@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angul
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,6 +11,10 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
+import Swal from 'sweetalert2';
+
+// Services
+import { EncuestaDTO, SurveyService } from 'app/modules/survey/survey.service';
 
 @Component({
   selector: 'app-survey-detail',
@@ -21,8 +26,6 @@ import { MatButtonModule } from '@angular/material/button';
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-
-    // Angular Material
     MatFormFieldModule,
     MatInputModule,
     MatSliderModule,
@@ -34,113 +37,125 @@ import { MatButtonModule } from '@angular/material/button';
 export class DetailComponent implements OnInit {
   form: FormGroup;
   proyectoId: number = 0;
-  fields = [
-  {
-    label: '¿Cómo calificarías el servicio del personal que te atendió?',
-    control: 'servicioPersonal',
-    razon: 'razonServicio'
-  },
-  {
-    label: '¿Qué posibilidades hay de que recomiendes nuestros productos?',
-    control: 'recomendarProductos',
-    razon: 'razonRecomendar'
-  },
-  {
-    label: '¿En qué medida los productos ayudaron a resolver tu problema?',
-    control: 'ayudaProducto',
-    razon: 'razonAyuda'
-  },
-  {
-    label: '¿Nuestro equipo comprendió tus necesidades?',
-    control: 'comprensionNecesidades',
-    razon: 'razonComprension'
-  },
-  {
-    label: '¿Cómo evalúas calidad y tiempo de entrega?',
-    control: 'tiempoEntrega',
-    razon: 'razonEntrega'
-  }
-];
 
-  calificacion: number | null = null;
+  fields = [
+    {
+      label: '¿Cómo calificarías el servicio del personal que te atendió?',
+      control: 'servicioPersonal',
+      razon: 'razonServicio'
+    },
+    {
+      label: '¿Qué posibilidades hay de que recomiendes nuestros productos?',
+      control: 'recomendarProductos',
+      razon: 'razonRecomendar'
+    },
+    {
+      label: '¿En qué medida los productos ayudaron a resolver tu problema?',
+      control: 'ayudaProducto',
+      razon: 'razonAyuda'
+    },
+    {
+      label: '¿Nuestro equipo comprendió tus necesidades?',
+      control: 'comprensionNecesidades',
+      razon: 'razonComprension'
+    },
+    {
+      label: '¿Cómo evalúas calidad y tiempo de entrega?',
+      control: 'tiempoEntrega',
+      razon: 'razonEntrega'
+    }
+  ];
 
   scale = [
-    { value: 0, emoji: '☹️' },
-    { value: 1, emoji: '☹️' },
-    { value: 2, emoji: '☹️' },
-    { value: 3, emoji: '☹️' },
-    { value: 4, emoji: '☹️' },
-    { value: 5, emoji: '☹️' },
-    { value: 6, emoji: '☹️' },
-    { value: 7, emoji: '😐' },
-    { value: 8, emoji: '😐' },
+    { value: 0, emoji: '😠' },
+    { value: 1, emoji: '😠' },
+    { value: 2, emoji: '😞' },
+    { value: 3, emoji: '😞' },
+    { value: 4, emoji: '😐' },
+    { value: 5, emoji: '😐' },
+    { value: 6, emoji: '🙂' },
+    { value: 7, emoji: '🙂' },
+    { value: 8, emoji: '😊' },
     { value: 9, emoji: '😊' },
-    { value: 10, emoji: '😊' },
+    { value: 10, emoji: '🤩' }
   ];
+
+  encuestaYaRespondida = false;
+
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private http: HttpClient
-  ) {}
+    private http: HttpClient,
+    private surveyService: SurveyService
+  ) { }
 
   ngOnInit(): void {
-  this.proyectoId = +this.route.snapshot.paramMap.get('proyectoId')!;
+    this.proyectoId = +this.route.snapshot.paramMap.get('id')!;
+    this.form = this.fb.group({
+      nombre: [''],
+      empresa: [''],
+      email: [''],
+      telefono: [''],
 
-  this.form = this.fb.group({
-    nombre: [''],
-    empresa: [''],
-    email: [''],
-    telefono: [''],
+      servicioPersonal: [5],
+      recomendarProductos: [5],
+      ayudaProducto: [5],
+      comprensionNecesidades: [5],
+      tiempoEntrega: [5],
 
-    servicioPersonal: [5],
-    recomendarProductos: [5],
-    ayudaProducto: [5],
-    comprensionNecesidades: [5],
-    tiempoEntrega: [5],
+      razonServicio: [''],
+      razonRecomendar: [''],
+      razonAyuda: [''],
+      razonComprension: [''],
+      razonEntrega: [''],
 
-    razonServicio: [''],
-    razonRecomendar: [''],
-    razonAyuda: [''],
-    razonComprension: [''],
-    razonEntrega: [''],
+      frecuencia: [''],
+      productosDeseados: [''],
+      comoConocio: ['']
+    });
 
-    frecuencia: [''],
-    productosDeseados: [''],
-    comoConocio: ['']
+    this.surveyService.existeEncuesta(this.proyectoId).subscribe((existe) => {
+    this.encuestaYaRespondida = existe;
+
+    if (existe) {
+      this.form.disable(); // Desactiva el formulario si ya fue respondido
+    }
   });
-
-  // Debug extra
-  setTimeout(() => {
-    console.log('Form keys:', Object.keys(this.form.controls));
-  });
-}
-
-
-  getEmoji(valor: number): string {
-    if (valor <= 3) return '😠';
-    if (valor <= 6) return '😐';
-    return '😄';
-  }
-
-  getColor(valor: number): string {
-    if (valor <= 3) return 'red';
-    if (valor <= 6) return 'orange';
-    return 'green';
   }
 
   enviar() {
-    const data = {
-      proyectoId: this.proyectoId,
-      ...this.form.value
-    };
-    this.http.post('/api/encuesta/guardar', data).subscribe(() => {
-      alert('Gracias por tu respuesta');
-      this.form.reset();
-    });
-  }
+  const data: EncuestaDTO = {
+    proyectoId: this.proyectoId,
+    ...this.form.value
+  };
 
-  select(value: number) {
-    this.calificacion = value;
-    console.log('Calificación seleccionada:', value);
-  } 
+  this.surveyService.guardarEncuesta(data).subscribe({
+    next: (res) => {
+      if (res.code === 200) {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Gracias!',
+          text: 'Encuesta guardada exitosamente.',
+          confirmButtonText: 'Aceptar'
+        });
+        this.form.reset();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: res.message || 'Ocurrió un error al guardar la encuesta.'
+        });
+      }
+    },
+    error: (error) => {
+      console.error('Error al guardar la encuesta:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un error al enviar la encuesta. Por favor, inténtalo de nuevo más tarde.'
+      });
+    }
+  });
+}
 }

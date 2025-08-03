@@ -72,4 +72,8 @@ export class ProjectService {
   getHistorial(projectId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/historial-estatus/${projectId}`);
   }
+
+  enviarEncuesta(dto: any): Observable<any> {
+  return this.http.post(`${this.apiUrl}/enviar-correo`, dto);
+}
 }

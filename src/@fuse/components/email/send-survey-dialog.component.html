@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Enviar encuesta</h2>
+
+<mat-dialog-content [formGroup]="form">
+  <div formArrayName="emails" class="space-y-3">
+    <div *ngFor="let emailCtrl of emails.controls; let i = index" class="flex items-center gap-2">
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Correo electrónico</mat-label>
+        <input matInput [formControl]="emailCtrl" />
+        <mat-error *ngIf="emailCtrl.invalid">Correo inválido</mat-error>
+      </mat-form-field>
+      <button mat-icon-button color="warn" (click)="removeEmail(i)">
+        <mat-icon>remove_circle</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <button mat-button color="primary" (click)="addEmail()" class="mt-4">
+    <mat-icon>add</mat-icon> Agregar otro correo
+  </button>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="submit()" [disabled]="form.invalid">
+    Enviar encuesta
+  </button>
+</mat-dialog-actions>

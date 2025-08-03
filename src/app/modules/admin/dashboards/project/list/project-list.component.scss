@@ -64,3 +64,18 @@
     flex: none;
     width: 100px;
 }
+
+table.mat-table {
+  width: 100%; /* Que ocupe todo el ancho disponible */
+  table-layout: auto; /* Ajusta las columnas al contenido */
+}
+
+.mat-column-id {
+  width: 50px; /* fija ancho pequeño para columnas como ID */
+  white-space: nowrap;
+}
+
+.mat-column-actions {
+  width: 160px; /* lo que necesites */
+  white-space: nowrap;
+}

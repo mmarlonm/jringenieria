@@ -63,9 +63,7 @@
                   <mat-icon>filter_list</mat-icon>
                 </button>
               </th>
-              <td mat-cell *matCellDef="let project">
-                {{ project.proyectoId }}
-              </td>
+              <td mat-cell *matCellDef="let project">{{ project.proyectoId }}</td>
             </ng-container>
 
             <!-- Nombre -->
@@ -87,9 +85,7 @@
                   <mat-icon>filter_list</mat-icon>
                 </button>
               </th>
-              <td mat-cell *matCellDef="let project">
-                {{ project.estatus }}
-              </td>
+              <td mat-cell *matCellDef="let project">{{ project.estatus }}</td>
             </ng-container>
 
             <!-- Categoría -->
@@ -100,9 +96,7 @@
                   <mat-icon>filter_list</mat-icon>
                 </button>
               </th>
-              <td mat-cell *matCellDef="let project">
-                {{ project.categoria }}
-              </td>
+              <td mat-cell *matCellDef="let project">{{ project.categoria }}</td>
             </ng-container>
 
             <!-- Fecha Inicio -->
@@ -113,9 +107,7 @@
                   <mat-icon>filter_list</mat-icon>
                 </button>
               </th>
-              <td mat-cell *matCellDef="let project">
-                {{ project.fechaInicio | date: "yyyy-MM-dd" }}
-              </td>
+              <td mat-cell *matCellDef="let project">{{ project.fechaInicio | date: "yyyy-MM-dd" }}</td>
             </ng-container>
 
             <!-- Fecha Fin -->
@@ -126,36 +118,38 @@
                   <mat-icon>filter_list</mat-icon>
                 </button>
               </th>
-              <td mat-cell *matCellDef="let project">
-                {{ project.fechaFin | date: "yyyy-MM-dd" }}
-              </td>
+              <td mat-cell *matCellDef="let project">{{ project.fechaFin | date: "yyyy-MM-dd" }}</td>
             </ng-container>
 
             <!-- Acciones -->
-            <ng-container matColumnDef="actions"  >
-              <th mat-header-cell *matHeaderCellDef style="min-width: 150px;">Acciones</th>
-              <td mat-cell *matCellDef="let project" style="min-width: 150px;">
-                <button mat-icon-button color="accent" class="small-icon-button" (click)="editProject(project.proyectoId)"
-                  *ngIf="tienePermiso('btnEdit')">
-                   <mat-icon>edit</mat-icon>
+            <ng-container matColumnDef="actions" stickyEnd>
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let project">
+                <button mat-icon-button color="accent" class="small-icon-button"
+                  (click)="editProject(project.proyectoId)" *ngIf="tienePermiso('btnEdit')">
+                  <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" class="small-icon-button" (click)="deleteProject(project.proyectoId)"
-                  *ngIf="tienePermiso('btnDelete')">
+                <button mat-icon-button color="warn" class="small-icon-button"
+                  (click)="deleteProject(project.proyectoId)" *ngIf="tienePermiso('btnDelete')">
                   <mat-icon>delete</mat-icon>
                 </button>
 
-                <!-- 📘 Botón de Historial -->
                 <button mat-icon-button color="grey" class="small-icon-button" matTooltip="Ver historial de estatus"
                   (click)="getHistorial(project.proyectoId)">
                   <mat-icon>history</mat-icon>
                 </button>
+
+                <button mat-icon-button color="primary" class="small-icon-button"
+                  matTooltip="Enviar encuesta al cliente" (click)="enviarEncuesta(project)">
+                  <mat-icon>send</mat-icon>
+                </button>
               </td>
             </ng-container>
 
-            <!-- Filas -->
             <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky:true"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
+
         </div>
 
         <!-- Menu de Filtros -->

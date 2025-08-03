@@ -19,6 +19,7 @@ import { HistorialComponent } from "../historial/historial.component";
 import { MatDialog } from "@angular/material/dialog";
 import { reverse } from "lodash";
 import Swal from "sweetalert2";
+import { SendSurveyDialogComponent } from '@fuse/components/email/send-survey-dialog.component';
 
 @Component({
   selector: "app-project-list",
@@ -266,4 +267,40 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
       return result.isConfirmed;
     });
   }
+
+  enviarEncuesta(project: any): void {
+  const dialogRef = this.dialog.open(SendSurveyDialogComponent, {
+    width: '500px',
+    data: { proyectoId: project.proyectoId }
+  });
+
+  dialogRef.afterClosed().subscribe((emails: string[]) => {
+    if (emails && emails.length > 0) {
+      const dto = {
+        emails: emails,
+        clienteNombre: project.clienteNombre || '',
+        proyectoNombre: project.nombre || '',
+        urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey/${project.proyectoId}`
+      };
+
+      this.projectService.enviarEncuesta(dto).subscribe({
+        next: () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Encuesta enviada',
+            text: 'Se envió correctamente al cliente.',
+          });
+        },
+        error: () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la encuesta. Intenta más tarde.',
+          });
+        }
+      });
+    }
+  });
+}
+
 }
