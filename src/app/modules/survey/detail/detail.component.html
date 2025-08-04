@@ -1,88 +1,98 @@
-<form [formGroup]="form" (ngSubmit)="enviar()" class="p-6 max-w-4xl mx-auto space-y-6">
+<form [formGroup]="form" (ngSubmit)="enviar()" class="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
   <!-- Título -->
-  <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
+  <h1 class="text-center text-xl sm:text-2xl font-bold mb-4 uppercase text-green-800">
     ENCUESTA DE SATISFACCIÓN DE SERVICIOS/PROYECTOS
   </h1>
 
+  <!-- Encuesta ya respondida -->
   <div *ngIf="encuestaYaRespondida"
     class="max-w-xl mx-auto my-8 bg-green-100 border border-green-400 rounded-2xl p-6 shadow-lg flex flex-col items-center text-center">
     <div class="text-green-700 mb-4">
-      <svg class="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <svg class="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd"
           d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 011.5 0v.5a.75.75 0 01-1.5 0v-.5zM10 6a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 6z"
-          clip-rule="evenodd"></path>
+          clip-rule="evenodd" />
       </svg>
     </div>
-    <h2 class="text-xl font-bold text-green-800 mb-2">Encuesta ya respondida</h2>
+    <h2 class="text-lg sm:text-xl font-bold text-green-800 mb-2">Encuesta ya respondida</h2>
     <p class="text-green-900 text-sm">
       Esta encuesta ya fue contestada anteriormente. Gracias por tu participación.<br />
       El formulario se encuentra en modo lectura.
     </p>
   </div>
 
+  <!-- Formulario activo -->
   <div *ngIf="!encuestaYaRespondida">
+
     <!-- Datos de contacto -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Nombre</mat-label>
         <input matInput formControlName="nombre" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Empresa</mat-label>
         <input matInput formControlName="empresa" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Email</mat-label>
         <input matInput formControlName="email" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Teléfono</mat-label>
         <input matInput formControlName="telefono" />
       </mat-form-field>
     </div>
 
-    <!-- Leyenda de bienvenida -->
-    <div style="background-color: #419486">
-      <div style="padding: 10px">
-        <p class="text-white font-bold">
-          Estimado cliente.<br />En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
-        </p>
-        <p class="text-black font-bold">
-          Por favor indica tu respuesta en una escala del 0 al 10, donde 0 representa el nivel más bajo y 10 el más alto
-        </p>
-      </div>
+    <!-- Leyenda -->
+    <div class="bg-[#419486] p-4 rounded text-white space-y-2">
+      <p class="font-bold">
+        Estimado cliente.<br />En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
+      </p>
+      <p class="text-black font-bold">
+        Por favor indica tu respuesta en una escala del 0 al 10, donde 0 representa el nivel más bajo y 10 el más alto.
+      </p>
     </div>
 
     <!-- Preguntas -->
-    <div *ngFor="let field of fields" class="p-4 grid grid-cols-5 border rounded space-y-2">
-      <div class="col-span-3">
-        <label class="font-semibold">{{ field.label }}</label>
-        <div class="emoji-rating">
-          <div class="emoji-block" *ngFor="let item of scale" [ngClass]="{
-            low: item.value <= 6,
-            medium: item.value === 7 || item.value === 8,
-            high: item.value >= 9,
-            selected: form.get(field.control)?.value === item.value
-          }" (click)="form.get(field.control)?.setValue(item.value)">
-            <div class="emoji">{{ item.emoji }}</div>
-            <div class="number">{{ item.value }}</div>
+    <div *ngFor="let field of fields" class="p-4 border rounded space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
+        <!-- Pregunta -->
+        <div class="md:col-span-3">
+          <label class="font-semibold block mb-2">{{ field.label }}</label>
+          <div class="flex flex-wrap gap-1 justify-start">
+            <div
+              class="emoji-block"
+              *ngFor="let item of scale"
+              [ngClass]="{
+                low: item.value <= 6,
+                medium: item.value === 7 || item.value === 8,
+                high: item.value >= 9,
+                selected: form.get(field.control)?.value === item.value
+              }"
+              (click)="form.get(field.control)?.setValue(item.value)">
+              <div class="emoji">{{ item.emoji }}</div>
+              <div class="number">{{ item.value }}</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-span-2">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-          <textarea matInput rows="2" [formControlName]="field.razon"></textarea>
-        </mat-form-field>
+
+        <!-- Razonamiento -->
+        <div class="md:col-span-2">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
+            <textarea matInput rows="2" [formControlName]="field.razon"></textarea>
+          </mat-form-field>
+        </div>
       </div>
     </div>
 
     <!-- Frecuencia -->
     <div class="p-4 border rounded space-y-2">
-      <label class="font-semibold">¿Con qué frecuencia solicitas servicios de la empresa?</label>
+      <label class="font-semibold block">¿Con qué frecuencia solicitas servicios de la empresa?</label>
       <mat-radio-group formControlName="frecuencia" class="flex flex-wrap gap-4">
         <mat-radio-button value="1ra vez">1ra vez</mat-radio-button>
         <mat-radio-button value="1 o más veces al mes">1 o más veces al mes</mat-radio-button>
@@ -91,16 +101,16 @@
       </mat-radio-group>
     </div>
 
-    <!-- Productos deseados -->
+    <!-- Servicios deseados -->
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>¿Qué servicios le gustaría que agreguemos a nuestro catálogo?</mat-label>
       <textarea matInput rows="2" formControlName="productosDeseados"></textarea>
     </mat-form-field>
 
-    <!-- Cómo conoció JR -->
+    <!-- ¿Cómo conociste JR? -->
     <div class="space-y-2">
       <label class="font-semibold block">¿Cómo conociste JR Ingeniería?</label>
-      <mat-radio-group formControlName="comoConocio" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+      <mat-radio-group formControlName="comoConocio" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
         <mat-radio-button value="Busqueda en internet">Búsqueda en internet</mat-radio-button>
         <mat-radio-button value="Espectaculares">Espectaculares</mat-radio-button>
@@ -112,9 +122,9 @@
       </mat-radio-group>
     </div>
 
-    <!-- Botón de envío -->
+    <!-- Enviar -->
     <div class="pt-4">
-      <button mat-raised-button color="primary" type="submit" class="w-full">
+      <button mat-raised-button type="submit" class="w-full bg-[#419486] text-white hover:bg-[#367a6c] focus:bg-[#367a6c]">
         Enviar
       </button>
     </div>
