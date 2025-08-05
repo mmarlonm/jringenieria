@@ -58,6 +58,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:check-circle',
                 link: '/dashboards/tasks',
             },
+            {
+                id: 'dashboards.surveys',
+                title: 'Encuestas',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/dashboards/surveys',
+            },
             
         ],
     },

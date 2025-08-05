@@ -1,0 +1,147 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden flex flex-col">
+    <!-- Main -->
+    <div class="flex-auto">
+        <!-- Header -->
+        <div class="flex flex-auto flex-col justify-between  px-6 sm:flex-col md:flex- md:px-8">
+            <!-- Title -->
+            <div>
+                <div class="text-4xl font-extrabold leading-none tracking-tight">
+                    Encuestas
+                </div>
+                <div class="text-secondary ml-0.5 font-medium">
+                    @if (surveysCount > 0) {
+                    {{ surveysCount }}
+                    }
+                    {{
+                    surveysCount
+                    | i18nPlural
+                    : {
+                    "=0": "Sin encuestas",
+                    "=1": "Encuesta",
+                    other: "Encuestas",
+                    }
+                    }}
+                </div>
+
+                <!-- Main actions -->
+                <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+                    <!-- Search -->
+                    <div class="flex-auto">
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+                            subscriptSizing="dynamic">
+                            <mat-icon class="icon-size-5" matPrefix [svgIcon]="
+                        'heroicons_solid:magnifying-glass'
+                    "></mat-icon>
+                            <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" [autocomplete]="'off'"
+                                [placeholder]="'Buscar encuesta'" />
+                        </mat-form-field>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Contacts list -->
+        <div class="flex flex-auto flex-col justify-between px-6 py-8 sm:flex-col md:flex- md:px-8">
+            @if (surveysCount > 0) {
+            <div class="mat-elevation-z8">
+
+                <!-- Tabla -->
+                <div class="overflow-auto" style="max-height: 400px; overflow-y: auto">
+                    <table mat-table [dataSource]="dataSource" matSort class="w-full">
+                        <!-- ID -->
+                        <ng-container matColumnDef="id">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                ID
+                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+                                    <mat-icon>filter_list</mat-icon>
+                                </button>
+                            </th>
+                            <td mat-cell *matCellDef="let survey">{{ survey.id }}</td>
+                        </ng-container>
+
+                        <!-- Nombre -->
+                        <ng-container matColumnDef="nombre">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Nombre
+                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+                                    <mat-icon>filter_list</mat-icon>
+                                </button>
+                            </th>
+                            <td mat-cell *matCellDef="let survey">{{ survey.nombre }}</td>
+                        </ng-container>
+
+                        <!-- Estatus -->
+                        <ng-container matColumnDef="proyectoNombre">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Proyecto
+                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+                                    <mat-icon>filter_list</mat-icon>
+                                </button>
+                            </th>
+                            <td mat-cell *matCellDef="let survey">{{ survey.proyectoNombre }}</td>
+                        </ng-container>
+
+                        <!-- Categoría -->
+                        <ng-container matColumnDef="email">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Email
+                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+                                    <mat-icon>filter_list</mat-icon>
+                                </button>
+                            </th>
+                            <td mat-cell *matCellDef="let survey">{{ survey.email }}</td>
+                        </ng-container>
+
+                        <!-- Fecha Inicio -->
+                        <ng-container matColumnDef="fechaRegistro">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Fecha Registro
+                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+                                    <mat-icon>filter_list</mat-icon>
+                                </button>
+                            </th>
+                            <td mat-cell *matCellDef="let survey">{{ survey.fechaRegistro | date: "yyyy-MM-dd" }}</td>
+                        </ng-container>
+
+                        <!-- Fecha Fin -->
+                        <ng-container matColumnDef="fechaFin">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Fecha Fin
+                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+                                    <mat-icon>filter_list</mat-icon>
+                                </button>
+                            </th>
+                            <td mat-cell *matCellDef="let survey">{{ survey.fechaFin | date: "yyyy-MM-dd" }}</td>
+                        </ng-container>
+
+                        <!-- Acciones -->
+                        <ng-container matColumnDef="actions" stickyEnd>
+                            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                            <td mat-cell *matCellDef="let survey">
+                                <button mat-icon-button color="accent" class="small-icon-button"
+                                    (click)="openSurveyDialog(survey.id)">
+                                    <mat-icon>visibility</mat-icon>
+                                </button>
+                            </td>
+                        </ng-container>
+
+
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky:true"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+                    </table>
+
+                </div>
+
+                <!-- Paginador -->
+                <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+            </div>
+            } @else {
+            <div class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16">
+                Sin Encuestas
+            </div>
+            }
+        </div>
+    </div>
+</div>
