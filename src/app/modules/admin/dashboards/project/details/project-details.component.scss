@@ -71,3 +71,31 @@
   transition: opacity 0.2s ease-in-out;
   max-width: 200px;
 }
+
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 320px;
+  max-width: 90vw;
+  padding: 20px;
+  background: #f0f0f3;
+  border-radius: 20px;
+  box-shadow:
+    8px 8px 16px #bebebe,
+    -8px -8px 16px #ffffff;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  user-select: none;
+}

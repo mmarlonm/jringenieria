@@ -46,6 +46,8 @@ import Swal from 'sweetalert2';
 import Gantt from "frappe-gantt";
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { TemplateRef, ViewChild } from '@angular/core';
+import { NeumorphicProgressComponent } from '@fuse/components/neumorphic-progress/neumorphic-progress.component';
+import { CurrencyPipe } from '@angular/common';
 
 registerLocaleData(localeEs);
 @Component({
@@ -69,13 +71,15 @@ registerLocaleData(localeEs);
     MatIconModule,
     MatChipsModule,
     MatAutocompleteModule,
+    NeumorphicProgressComponent
   ],
   providers: [
+    CurrencyPipe,
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
     { provide: MAT_DATE_LOCALE, useValue: "es-ES" }, // Idioma para Angular Material (como el Datepicker)
   ],
 })
-export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
+export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   //modulod e archivos
   projectForm: FormGroup;
   categorias: any[] = [];
@@ -140,6 +144,15 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
   fileInputs: { [key: string]: HTMLInputElement } = {};
   @ViewChildren('fileInput') fileInputsRef!: QueryList<ElementRef<HTMLInputElement>>;
 
+  nuevoAnticipo: number | null = null;
+  mostrarHistorial = false;
+
+  // Variables para mostrar formateadas
+  pagoTotalDisplay: string = '';
+  anticipoDisplay: string = '';
+
+  progressValue: number;
+
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
@@ -150,6 +163,7 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog, // ✅ Esta línea es clave
+    private currencyPipe: CurrencyPipe
   ) {
     // Filtrar los usuarios a medida que se escribe en el campo
     this.filteredUsers = this.personasControl.valueChanges.pipe(
@@ -220,6 +234,8 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
       liderProyectoId: [null],
       entregables: [null],
       cronograma: [null],
+      pagoTotal: [0],
+      anticipoList: [0]
     });
 
     this.getCategorias();
@@ -239,6 +255,10 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
         this.loadProject(this.projectId);
         this.getFilesAll();
         this.disabledArchivos = false;
+        setTimeout(() => {
+          this.progressValue = this.getPagoProgreso();
+          console.log("Progreso inicial:", this.progressValue);
+        }, 1000); // Espera un poco para que se cargue el Gantt
       }
     });
 
@@ -259,6 +279,12 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
       equipo: [''],
       dependencies: ['']
     });
+
+    // Inicializa valores del form con formato
+    const pagoTotal = this.projectForm.get('pagoTotal')?.value || 0;
+    this.pagoTotalDisplay = this.currencyPipe.transform(pagoTotal, 'MXN', 'symbol', '1.2-2') || '';
+
+    this.anticipoDisplay = this.currencyPipe.transform(0, 'MXN', 'symbol', '1.2-2') || '';
   }
 
   ngAfterViewInit(): void {
@@ -397,6 +423,7 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
           TempId: task.tempId || task.id, // mantén el id temporal si existe
           dependencies: task.dependencies ? task.dependencies.split(',') : []
         }));
+
         if (project) {
           this.projectForm.patchValue({
             proyectoId: project.proyectoId, // 🔹 Ahora se incluye el ID
@@ -459,7 +486,18 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
             liderProyectoId: project.liderProyectoId,
             entregables: project.entregables,
             cronograma: project.cronograma,
+            pagoTotal: project.pagoTotal || 0,
+            anticipoList: project.anticipoList || 0
           });
+
+          const pagoTotal = project.pagoTotal || 0;
+          this.pagoTotalDisplay = this.currencyPipe.transform(pagoTotal, 'MXN', 'symbol', '1.2-2') || '';
+          // Convertir "100;50;200" → [100, 50, 200] y sumar
+          const totalAnticipos = project.anticipoList
+            .split(';')
+            .map(v => Number(v.trim()) || 0)
+            .reduce((acc, val) => acc + val, 0);
+          this.anticipoDisplay = this.currencyPipe.transform(totalAnticipos, 'MXN', 'symbol', '1.2-2') || '';
         }
       } else {
         Swal.fire({
@@ -501,18 +539,32 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
       return;
     }
 
+    const { anticipoList, ...restFormValues } = this.projectForm.value;
+
+    const nuevoValor = this.nuevoAnticipo?.toString().trim();
+    const historialPrevio = anticipoList || '';
+
+    let anticipoListFinal = historialPrevio;
+
+    // Si hay un nuevo valor y es numérico válido
+    if (nuevoValor && !isNaN(Number(nuevoValor))) {
+      anticipoListFinal = historialPrevio
+        ? `${historialPrevio};${nuevoValor}`
+        : nuevoValor;
+    }
 
     const projectData: any = {
-      ...this.projectForm.value,
+      ...restFormValues, // todo menos anticipoList y nuevoAnticipo
+      anticipoList: anticipoListFinal,
       ganttTasks: this.tasks.map(task => ({
-        id: null, // puede ser undefined para nuevas
+        id: null,
         name: task.name,
         startDate: task.start instanceof Date ? task.start.toISOString() : task.start,
         endDate: task.end instanceof Date ? task.end.toISOString() : task.end,
         progress: task.progress ?? 0,
         dependencies: task.dependencies?.join(",") ?? "",
         equipo: task.equipo ?? "",
-        TempId: task.id // Mantener el ID temporal para referencia
+        TempId: task.id
       }))
     };
 
@@ -1018,4 +1070,76 @@ export class ProjectDetailsComponent implements OnInit,AfterViewInit  {
   getArchivoNombre(categoria: string): string {
     return this[`${categoria}File`]?.name || this.getNombreArchivoGuardado(categoria) || '';
   }
+
+  // Convierte el string anticipoList en array
+  obtenerHistorial(): number[] {
+    const historialStr = this.projectForm.get('anticipoList')?.value || '';
+    return historialStr
+      .split(';')
+      .filter(x => x.trim() !== '')
+      .map(x => parseFloat(x));
+  }
+
+  // Calcula el total anticipado
+  calcularTotalAnticipos(): number {
+    return this.obtenerHistorial().reduce((acc, val) => acc + val, 0);
+  }
+
+  // Llamar al guardar para agregar nuevo anticipo
+  agregarAnticipo() {
+    if (this.nuevoAnticipo != null && this.nuevoAnticipo > 0) {
+      let historial = this.projectForm.get('anticipoList')?.value || '';
+      historial = historial ? historial + ';' + this.nuevoAnticipo : '' + this.nuevoAnticipo;
+      this.projectForm.get('anticipoList')?.setValue(historial);
+      this.nuevoAnticipo = null;
+    }
+  }
+
+  onPagoTotalInput(event: any) {
+    const rawValue = this.cleanNumber(event.target.value);
+    this.projectForm.get('pagoTotal')?.setValue(rawValue);
+    this.pagoTotalDisplay = event.target.value;
+  }
+
+  onPagoTotalBlur(event: any) {
+    const rawValue = this.cleanNumber(event.target.value);
+    this.pagoTotalDisplay = this.currencyPipe.transform(rawValue, 'MXN', 'symbol', '1.2-2') || '';
+  }
+
+  onAnticipoInput(event: any) {
+    const rawValue = this.cleanNumber(event.target.value);
+    this.nuevoAnticipo = rawValue;
+    this.anticipoDisplay = event.target.value;
+  }
+
+  onAnticipoBlur(event: any) {
+    const rawValue = this.cleanNumber(event.target.value);
+    this.anticipoDisplay = this.currencyPipe.transform(rawValue, 'MXN', 'symbol', '1.2-2') || '';
+  }
+
+  // Utilidad para limpiar valores
+  private cleanNumber(value: string): number {
+    return parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0;
+  }
+
+  getPagoProgreso(): number {
+    const pagoTotal = Number(this.projectForm.get('pagoTotal')?.value) || 0;
+    const anticipoListStr = this.projectForm.get('anticipoList')?.value || '';
+
+    if (pagoTotal <= 0 || !anticipoListStr.trim()) {
+      return 0; // evita divisiones entre cero o valores vacíos
+    }
+
+    // Convertir "100;50;200" → [100, 50, 200] y sumar
+    const totalAnticipos = anticipoListStr
+      .split(';')
+      .map(v => Number(v.trim()) || 0)
+      .reduce((acc, val) => acc + val, 0);
+
+    const porcentaje = (totalAnticipos / pagoTotal) * 100;
+
+    // Limitar a máximo 100% para evitar desbordes visuales
+    return Math.min(Math.round(porcentaje), 100);
+  }
+
 }

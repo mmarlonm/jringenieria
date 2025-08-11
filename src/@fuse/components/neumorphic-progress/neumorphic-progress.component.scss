@@ -1,0 +1,55 @@
+.progress-container {
+  width: 100%;
+  background: #fdfdfd;
+  border-radius: 30px;
+  padding: 5px;
+  box-shadow: inset 14px 14px 28px rgba(0, 0, 0, 0.15),
+              inset -14px -14px 28px rgba(255, 255, 255, 1);
+  position: relative;
+}
+
+.progress-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #444;
+  font-family: 'Roboto', Arial, sans-serif;
+  z-index: 3;
+}
+.progress-label.min { left: 12px; }
+.progress-label.max { right: 12px; }
+
+.progress-bar {
+  height: 30px;
+  border-radius: 25px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.25),
+              -8px -8px 16px rgba(255, 255, 255, 0.9);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(270deg, #2596be, #1e7fa3, #2596be);
+  background-size: 400% 400%;
+  animation: waterFlow 3s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 1.5s ease-out;
+}
+
+.progress-text {
+  color: white;
+  font-weight: bold;
+  font-family: 'Roboto', Arial, sans-serif;
+  z-index: 2;
+}
+
+@keyframes waterFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

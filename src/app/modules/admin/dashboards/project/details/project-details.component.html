@@ -6,7 +6,34 @@
   <mat-tab-group class="h-full flex-1 overflow-hidden" (selectedTabChange)="onTabChange($event)">
     <!-- TAB 1: Información General -->
     <mat-tab label="Información General">
-      <form [formGroup]="projectForm" (ngSubmit)="saveProject()" class="flex flex-col gap-4">
+      <div class="w-full gap-4 mb-4">
+        <app-neumorphic-progress [value]="progressValue"></app-neumorphic-progress>
+      </div>
+      <form [formGroup]="projectForm" class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Pago Total -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Pago Total</mat-label>
+            <input matInput type="text" [value]="pagoTotalDisplay" (blur)="onPagoTotalBlur($event)"
+              (input)="onPagoTotalInput($event)" />
+          </mat-form-field>
+
+          <!-- Anticipo -->
+          <div class="flex items-center gap-2">
+            <mat-form-field appearance="fill" class="flex-1">
+              <mat-label>Anticipo</mat-label>
+              <input matInput type="text" [value]="anticipoDisplay" (blur)="onAnticipoBlur($event)"
+                (input)="onAnticipoInput($event)" />
+            </mat-form-field>
+
+            <!-- Botón historial -->
+            <button mat-icon-button color="primary" (click)="mostrarHistorial = !mostrarHistorial">
+              <mat-icon>history</mat-icon>
+            </button>
+          </div>
+        </div>
+
+
         <div class="grid grid-cols-2 gap-4">
           <!-- Nombre -->
           <mat-form-field appearance="fill" class="w-full">
@@ -50,7 +77,8 @@
               </button>
 
               <!-- Input real oculto -->
-              <input type="file" [attr.data-key]="categoria.key" #fileInput (change)="onFileSelectedOne($event, categoria.key)" hidden />
+              <input type="file" [attr.data-key]="categoria.key" #fileInput
+                (change)="onFileSelectedOne($event, categoria.key)" hidden />
 
             </mat-form-field>
           </ng-container>
@@ -440,7 +468,7 @@
 
         <!-- Botones -->
         <div class="flex justify-end gap-2 mt-4 btn-float">
-          <button mat-raised-button color="primary" type="submit">
+          <button mat-raised-button color="primary" type="submit" (click)="saveProject()">
             Guardar
           </button>
           <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">
@@ -766,3 +794,18 @@
     <button mat-button color="primary" (click)="saveTaskEdit()">Guardar</button>
   </mat-dialog-actions>
 </ng-template>
+
+<!-- Overlay oscuro semi-transparente -->
+<div *ngIf="mostrarHistorial" class="modal-overlay" (click)="mostrarHistorial = false"></div>
+
+<!-- Modal flotante centrado -->
+<div *ngIf="mostrarHistorial" class="modal-container" (click)="$event.stopPropagation()">
+  <h3 class="text-lg font-semibold mb-2">Historial de Anticipos</h3>
+  <ul class="list-disc list-inside max-h-60 overflow-auto">
+    <li *ngFor="let pago of obtenerHistorial()">{{ pago | currency:'MXN':'symbol' }}</li>
+  </ul>
+  <div class="mt-2 font-bold">
+    Total Anticipado: {{ calcularTotalAnticipos() | currency:'MXN':'symbol' }}
+  </div>
+  <button mat-raised-button color="warn" (click)="mostrarHistorial = false">Cerrar</button>
+</div>
