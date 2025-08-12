@@ -466,15 +466,7 @@
           </mat-form-field>
         </div>
 
-        <!-- Botones -->
-        <div class="flex justify-end gap-2 mt-4 btn-float">
-          <button mat-raised-button color="primary" type="submit" (click)="saveProject()">
-            Guardar
-          </button>
-          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">
-            Cancelar
-          </button>
-        </div>
+       
       </form>
     </mat-tab>
 
@@ -739,6 +731,15 @@
       </div>
     </mat-tab>
   </mat-tab-group>
+   <!-- Botones -->
+        <div class="flex justify-end gap-2 mb-4 btn-float z-99">
+          <button mat-raised-button color="primary" type="submit" (click)="saveProject()">
+            Guardar
+          </button>
+          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">
+            Cancelar
+          </button>
+        </div>
 </div>
 <ng-template #editTaskDialog let-data>
   <h2 mat-dialog-title>Editar Tarea</h2>
