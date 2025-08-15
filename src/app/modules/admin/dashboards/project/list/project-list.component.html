@@ -36,11 +36,11 @@
             </mat-form-field>
           </div>
           <!-- Add rol button -->
-          <button class="ml-4" mat-flat-button [color]="'primary'" (click)="addProject()"
-            *ngIf="tienePermiso('btnAdd')">
-            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-            <span class="ml-2 mr-1">Agregar Proyecto</span>
+          <button class="ml-4" mat-flat-button color="primary" (click)="addProject()" *ngIf="tienePermiso('btnAdd')">
+            <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+            <span class="button-text ml-2 mr-1">Agregar Proyecto</span>
           </button>
+
 
         </div>
       </div>

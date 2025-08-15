@@ -6,11 +6,11 @@
   <mat-tab-group class="h-full flex-1 overflow-hidden" (selectedTabChange)="onTabChange($event)">
     <!-- TAB 1: Información General -->
     <mat-tab label="Información General">
-      <div class="w-full gap-4 mb-4">
+      <div class="w-full gap-4 mb-4" >
         <app-neumorphic-progress [value]="progressValue"></app-neumorphic-progress>
       </div>
       <form [formGroup]="projectForm" class="flex flex-col gap-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Pago Total -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Pago Total</mat-label>
@@ -34,7 +34,7 @@
         </div>
 
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Nombre -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Nombre</mat-label>
@@ -50,7 +50,7 @@
 
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Empresa -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Empresa</mat-label>
@@ -58,7 +58,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ng-container *ngFor="let categoria of categoriasInputs">
             <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
               <mat-label>{{ categoria.label }}</mat-label>
@@ -84,7 +84,7 @@
           </ng-container>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div cclass="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Lugar -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Lugar</mat-label>
@@ -102,7 +102,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Fecha Inicio -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha de Inicio</mat-label>
@@ -120,7 +120,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Estado -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Estado</mat-label>
@@ -146,7 +146,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Necesidad -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Necesidad</mat-label>
@@ -164,7 +164,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Nombre Contacto -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Nombre de Contacto</mat-label>
@@ -178,7 +178,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
 
           <!-- Levantamiento -->
@@ -188,7 +188,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Plano Arquitectónico -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Plano Arquitectónico</mat-label>
@@ -202,7 +202,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Diagrama Unifilar -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Diagrama Unifilar</mat-label>
@@ -216,7 +216,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Materiales Presupuestados -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Materiales Presupuestados</mat-label>
@@ -230,7 +230,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Cuadro Comparativo -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cuadro Comparativo</mat-label>
@@ -244,7 +244,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Mano de Obra -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Mano de Obra</mat-label>
@@ -290,7 +290,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Equipos -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Equipos</mat-label>
@@ -304,7 +304,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Indirectos Costos -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Indirectos Costos</mat-label>
@@ -318,7 +318,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Anticipo -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Anticipo</mat-label>
@@ -332,7 +332,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Orden de Compra -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Orden de Compra</mat-label>
@@ -346,7 +346,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Programa de Trabajo -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Programa de Trabajo</mat-label>
@@ -360,7 +360,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Comentarios -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Comentarios</mat-label>
@@ -374,7 +374,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Dosier -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Dosier</mat-label>
@@ -388,7 +388,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Factura -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Factura</mat-label>
@@ -402,7 +402,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Utilidad Programada -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Utilidad Programada</mat-label>
@@ -416,7 +416,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Financiamiento -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Financiamiento</mat-label>
@@ -430,7 +430,7 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Estatus -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Estatus</mat-label>
@@ -452,7 +452,8 @@
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4
+        ">
           <!-- Entregables -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Entregables</mat-label>

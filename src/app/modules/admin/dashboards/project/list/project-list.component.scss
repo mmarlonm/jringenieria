@@ -79,3 +79,8 @@ table.mat-table {
   width: 160px; /* lo que necesites */
   white-space: nowrap;
 }
+@media (max-width: 768px) {
+  .button-text {
+    display: none;
+  }
+}
