@@ -47,12 +47,13 @@
         </div>
          <!-- Add client button -->
          <button class="ml-4" mat-flat-button [color]="'primary'" (click)="addClient()" *ngIf="tienePermiso('btnAdd')">
-            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-            <span class="ml-2 mr-1">Agregar Cliente</span>
+            <mat-icon [svgIcon]="'heroicons_outline:user-plus'"></mat-icon>
+            <span class="button-text ml-2 mr-1">Agregar Cliente</span>
         </button>
 
-        <button class="ml-4" mat-flat-button [color]="'primary'" (click)="fileInput.click()" *ngIf="tienePermiso('btnAdd')">
-            <span class="ml-2 mr-1">Subir Archivo</span>
+        <button class="ml-2" mat-flat-button [color]="'primary'" (click)="fileInput.click()" *ngIf="tienePermiso('btnAdd')">
+            <mat-icon svgIcon="heroicons_outline:arrow-up-tray"></mat-icon>
+            <span class="button-text ml-2 mr-1">Subir Archivo</span>
         </button>
     
         <!-- Hidden file input for Excel -->

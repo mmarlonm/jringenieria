@@ -49,12 +49,13 @@
          <!-- Add client button -->
          <button class="ml-4" mat-flat-button [color]="'primary'" (click)="addProduct()" *ngIf="tienePermiso('btnAdd')">
             <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-            <span class="ml-2 mr-1">Agregar Producto</span>
+            <span class="button-text mr-1">Agregar Producto</span>
         </button>
         <!-- Subir Archivo-->
 
-        <button class="ml-4" mat-flat-button [color]="'primary'" (click)="fileInput.click()" *ngIf="tienePermiso('btnAdd')">
-            <span class="ml-2 mr-1">Subir Archivo</span>
+        <button class="ml-2" mat-flat-button [color]="'primary'" (click)="fileInput.click()" *ngIf="tienePermiso('btnAdd')">
+            <mat-icon svgIcon="heroicons_outline:arrow-up-tray"></mat-icon>
+            <span class="button-text mr-1">Subir Archivo</span>
         </button>
 
         <input #fileInput type="file" accept=".xls, .xlsx" (change)="onFileSelected($event)" style="display: none;">    
