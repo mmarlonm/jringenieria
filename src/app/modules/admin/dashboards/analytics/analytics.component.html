@@ -2,36 +2,25 @@
   <!-- Header -->
   <div class="bg-card">
     <div class="mx-auto flex w-full max-w-screen-xl flex-col px-6 sm:px-8">
-      <div
-        class="my-8 flex min-w-0 flex-auto flex-col sm:my-12 sm:flex-row sm:items-center"
-      >
+      <div class="my-8 flex min-w-0 flex-auto flex-col sm:my-12 sm:flex-row sm:items-center">
         <!-- Avatar and name -->
         <div class="flex min-w-0 flex-auto items-center">
           <div class="h-16 w-16 flex-0 overflow-hidden rounded-full">
             @if (user?.avatar) {
-              <img
-                class="h-full w-full rounded-full"
-                [src]="user.avatar"
-                alt="User avatar"
-              />
+            <img class="h-full w-full rounded-full" [src]="user.avatar" alt="User avatar" />
             }
             @if (!user?.avatar) {
-              <mat-icon
-                class="icon-size-24"
-                [svgIcon]="'heroicons_solid:user-circle'"
-              ></mat-icon>
+            <mat-icon class="icon-size-24" [svgIcon]="'heroicons_solid:user-circle'"></mat-icon>
             }
           </div>
           <div class="ml-4 flex min-w-0 flex-col">
             <ng-container *transloco="let t">
-              <div
-                class="truncate text-2xl font-semibold leading-7 tracking-tight md:text-5xl md:leading-snug"
-              >
+              <div class="truncate text-2xl font-semibold leading-7 tracking-tight md:text-5xl md:leading-snug">
                 @if(user?.sexo == 1){
-                  {{ t("¡Bienvenido") }}, {{ user?.nombreUsuario }}!
+                {{ t("¡Bienvenido") }}, {{ user?.nombreUsuario }}!
                 }
                 @else if(user?.sexo == 2){
-                  {{ t("¡Bienvenida") }}, {{ user?.nombreUsuario }}!
+                {{ t("¡Bienvenida") }}, {{ user?.nombreUsuario }}!
                 }
                 @else(){
                 {{ t("¡Bienvenid@") }}, {{ user?.nombreUsuario }}!
@@ -39,10 +28,7 @@
               </div>
             </ng-container>
             <div class="flex items-center">
-              <mat-icon
-                class="icon-size-5"
-                [svgIcon]="'heroicons_solid:bell'"
-              ></mat-icon>
+              <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:bell'"></mat-icon>
               <div class="text-secondary ml-1.5 truncate leading-6">
                 Tines 2 mensajes nuevos y 15 tareas nuevas
               </div>
@@ -52,17 +38,11 @@
         <!-- Actions -->
         <div class="mt-6 flex items-center space-x-3 sm:ml-2 sm:mt-0">
           <button class="bg-accent" mat-flat-button [color]="'accent'">
-            <mat-icon
-              class="icon-size-5"
-              [svgIcon]="'heroicons_solid:envelope'"
-            ></mat-icon>
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:envelope'"></mat-icon>
             <span class="ml-2">Mensajes</span>
           </button>
           <button mat-flat-button [color]="'primary'">
-            <mat-icon
-              class="icon-size-5"
-              [svgIcon]="'heroicons_solid:cog-8-tooth'"
-            ></mat-icon>
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:cog-8-tooth'"></mat-icon>
             <span class="ml-2">Configuracion</span>
           </button>
         </div>
@@ -70,8 +50,7 @@
       <!-- Project selector -->
       <div
         class="bg-default relative flex cursor-pointer self-start overflow-hidden rounded-t-xl border border-b-0 pb-1 pl-5 pr-4 pt-2"
-        matRipple
-      >
+        matRipple>
         <div class="flex items-center">
           <div class="overflow-hidden">
             <div class="truncate font-medium leading-6">
@@ -79,10 +58,7 @@
             </div>
           </div>
           <div class="flex items-center justify-center pl-2">
-            <mat-icon
-              class="icon-size-5"
-              [svgIcon]="'heroicons_mini:chevron-down'"
-            ></mat-icon>
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_mini:chevron-down'"></mat-icon>
           </div>
         </div>
       </div>
@@ -93,195 +69,84 @@
   <div class="-mt-px flex-auto border-t pt-4 sm:pt-6">
     <div class="mx-auto w-full max-w-screen-xl">
       <!-- Tabs -->
-      <mat-tab-group
-        class="sm:px-2"
-        mat-stretch-tabs="false"
-        [animationDuration]="'0'"
-        (selectedTabChange)="onTabChange($event)"
-      >
+      <mat-tab-group class="sm:px-2" mat-stretch-tabs="false" [animationDuration]="'0'"
+        (selectedTabChange)="onTabChange($event)">
         <!-- Home -->
         <mat-tab label="Home">
           <ng-template matTabContent>
-            <label>Proyectos</label>
-            <div
-              class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5"
-              *ngIf="analiticaData?.proyectos?.length > 0"
-            >
-              <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
-                *ngFor="let p of analiticaData?.proyectos"
-              >
-                <div class="flex items-start justify-between">
-                  <div
-                    class="truncate text-lg font-medium leading-6 tracking-tight"
-                  ></div>
-                  <div class="-mr-3 -mt-2 ml-2">
-                    <button mat-icon-button [matMenuTriggerFor]="menu">
-                      <mat-icon
-                        class="icon-size-5"
-                        svgIcon="heroicons_mini:ellipsis-vertical"
-                      ></mat-icon>
-                    </button>
-                    <mat-menu #menu="matMenu">
-                      <button mat-menu-item>Hoy</button>
-                      <button mat-menu-item>Ayer</button>
-                      <button mat-menu-item>Última semana</button>
-                    </mat-menu>
-                  </div>
-                </div>
-                <div class="mt-2 flex flex-col items-center">
-                  <div
-                    class="text-7xl font-bold leading-none tracking-tight"
-                    [ngClass]="getColorClass(p.estatusId)"
-                  >
-                    {{ p.totalProyectos }}
-                  </div>
-                  <div class="text-lg font-medium text-center mt-2">
-                    {{ p.estatusNombre }}
-                  </div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Proyectos -->
+              <div class="bg-card rounded-2xl p-6 shadow">
+                <label class="block text-lg font-medium mb-4">Proyectos</label>
+                <ng-container *ngIf="proyectosSeries?.length > 0; else sinDatosProyectos">
+                  <apx-chart [series]="proyectosSeries" [chart]="chartOptions.chart" [labels]="proyectosLabels"
+                    [legend]="chartOptions.legend" [plotOptions]="chartOptions.plotOptions">
+                  </apx-chart>
+                </ng-container>
+                <ng-template #sinDatosProyectos>
+                  <div class="text-center text-gray-400 py-20">Sin datos</div>
+                </ng-template>
+              </div>
+
+              <!-- Cotizaciones -->
+              <div class="bg-card rounded-2xl p-6 shadow">
+                <label class="block text-lg font-medium mb-4">Cotizaciones</label>
+                <ng-container *ngIf="cotizacionesSeries?.length > 0; else sinDatosCotizaciones">
+                  <apx-chart [series]="cotizacionesSeries" [chart]="chartOptions.chart" [labels]="cotizacionesLabels"
+                    [legend]="chartOptions.legend" [plotOptions]="chartOptions.plotOptions">
+                  </apx-chart>
+                </ng-container>
+                <ng-template #sinDatosCotizaciones>
+                  <div class="text-center text-gray-400 py-20">Sin datos</div>
+                </ng-template>
+              </div>
+
+              <!-- Cotizaciones Productos -->
+              <div class="bg-card rounded-2xl p-6 shadow">
+                <label class="block text-lg font-medium mb-4">Cotizaciones Productos</label>
+                <ng-container *ngIf="productosSeries?.length > 0; else sinDatosProductos">
+                  <apx-chart [series]="productosSeries" [chart]="chartOptions.chart" [labels]="productosLabels"
+                    [legend]="chartOptions.legend" [plotOptions]="chartOptions.plotOptions">
+                  </apx-chart>
+                </ng-container>
+                <ng-template #sinDatosProductos>
+                  <div class="text-center text-gray-400 py-20">Sin datos</div>
+                </ng-template>
               </div>
             </div>
 
-            <label>Cotizaciones</label>
-            <div
-              class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5"
-              *ngIf="analiticaData?.cotizaciones?.length > 0"
-            >
-              <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
-                *ngFor="let p of analiticaData?.cotizaciones"
-              >
-                <div class="flex items-start justify-between">
-                  <div
-                    class="truncate text-lg font-medium leading-6 tracking-tight"
-                  ></div>
-                  <div class="-mr-3 -mt-2 ml-2">
-                    <button mat-icon-button [matMenuTriggerFor]="menu">
-                      <mat-icon
-                        class="icon-size-5"
-                        svgIcon="heroicons_mini:ellipsis-vertical"
-                      ></mat-icon>
-                    </button>
-                    <mat-menu #menu="matMenu">
-                      <button mat-menu-item>Hoy</button>
-                      <button mat-menu-item>Ayer</button>
-                      <button mat-menu-item>Última semana</button>
-                    </mat-menu>
-                  </div>
-                </div>
-                <div class="mt-2 flex flex-col items-center">
-                  <div
-                    class="text-7xl font-bold leading-none tracking-tight"
-                    [ngClass]="getColorClass(p.estatusId)"
-                  >
-                    {{ p.totalCotizaciones }}
-                  </div>
-                  <div class="text-lg font-medium text-center mt-2">
-                    {{ p.estatusNombre }}
-                  </div>
-                </div>
-              </div>
-            </div>
 
-             <label>Cotizaciones Productos</label>
-            <div
-              class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5"
-              *ngIf="analiticaData?.cotizacionesProductos?.length > 0"
-            >
-              <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow"
-                *ngFor="let p of analiticaData?.cotizacionesProductos"
-              >
-                <div class="flex items-start justify-between">
-                  <div
-                    class="truncate text-lg font-medium leading-6 tracking-tight"
-                  ></div>
-                  <div class="-mr-3 -mt-2 ml-2">
-                    <button mat-icon-button [matMenuTriggerFor]="menu">
-                      <mat-icon
-                        class="icon-size-5"
-                        svgIcon="heroicons_mini:ellipsis-vertical"
-                      ></mat-icon>
-                    </button>
-                    <mat-menu #menu="matMenu">
-                      <button mat-menu-item>Hoy</button>
-                      <button mat-menu-item>Ayer</button>
-                      <button mat-menu-item>Última semana</button>
-                    </mat-menu>
-                  </div>
-                </div>
-                <div class="mt-2 flex flex-col items-center">
-                  <div
-                    class="text-7xl font-bold leading-none tracking-tight"
-                    [ngClass]="getColorClass(p.estatusId)"
-                  >
-                    {{ p.totalCotizaciones }}
-                  </div>
-                  <div class="text-lg font-medium text-center mt-2">
-                    {{ p.estatusNombre }}
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div
-              class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4"
-              style="margin-top: 8px"
-            >
+            <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4" style="margin-top: 8px">
               <!-- Github issues summary -->
               <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2 md:col-span-4"
-              >
-                <div
-                  class="flex flex-col items-start justify-between sm:flex-row"
-                >
-                  <div
-                    class="truncate text-lg font-medium leading-6 tracking-tight"
-                  >
+                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2 md:col-span-4">
+                <div class="flex flex-col items-start justify-between sm:flex-row">
+                  <div class="truncate text-lg font-medium leading-6 tracking-tight">
                     Informacion General
                   </div>
                   <div class="mt-3 sm:ml-2 sm:mt-0">
-                    <mat-button-toggle-group
-                      value="this-week"
-                      #githubIssuesWeekSelector="matButtonToggleGroup"
-                    >
-                      <mat-button-toggle value="last-week"
-                        >Last Week</mat-button-toggle
-                      >
-                      <mat-button-toggle value="this-week"
-                        >This Week</mat-button-toggle
-                      >
+                    <mat-button-toggle-group value="this-week" #githubIssuesWeekSelector="matButtonToggleGroup">
+                      <mat-button-toggle value="last-week">Last Week</mat-button-toggle>
+                      <mat-button-toggle value="this-week">This Week</mat-button-toggle>
                     </mat-button-toggle-group>
                   </div>
                 </div>
-                <div
-                  class="mt-8 grid w-full grid-flow-row grid-cols-1 gap-6 sm:mt-4 lg:grid-cols-2"
-                >
+                <div class="mt-8 grid w-full grid-flow-row grid-cols-1 gap-6 sm:mt-4 lg:grid-cols-2">
                   <!-- New vs. Closed -->
                   <div class="flex flex-auto flex-col">
                     <div class="text-secondary font-medium">New vs. Closed</div>
                     <div class="flex flex-auto flex-col">
-                      <apx-chart
-                        class="h-80 w-full flex-auto"
-                        [chart]="chartGithubIssues.chart"
-                        [colors]="chartGithubIssues.colors"
-                        [dataLabels]="chartGithubIssues.dataLabels"
-                        [grid]="chartGithubIssues.grid"
-                        [labels]="chartGithubIssues.labels"
-                        [legend]="chartGithubIssues.legend"
-                        [plotOptions]="chartGithubIssues.plotOptions"
-                        [series]="
+                      <apx-chart class="h-80 w-full flex-auto" [chart]="chartGithubIssues.chart"
+                        [colors]="chartGithubIssues.colors" [dataLabels]="chartGithubIssues.dataLabels"
+                        [grid]="chartGithubIssues.grid" [labels]="chartGithubIssues.labels"
+                        [legend]="chartGithubIssues.legend" [plotOptions]="chartGithubIssues.plotOptions" [series]="
                           chartGithubIssues.series[
                             githubIssuesWeekSelector.value
                           ]
-                        "
-                        [states]="chartGithubIssues.states"
-                        [stroke]="chartGithubIssues.stroke"
-                        [tooltip]="chartGithubIssues.tooltip"
-                        [xaxis]="chartGithubIssues.xaxis"
-                        [yaxis]="chartGithubIssues.yaxis"
-                      ></apx-chart>
+                        " [states]="chartGithubIssues.states" [stroke]="chartGithubIssues.stroke"
+                        [tooltip]="chartGithubIssues.tooltip" [xaxis]="chartGithubIssues.xaxis"
+                        [yaxis]="chartGithubIssues.yaxis"></apx-chart>
                     </div>
                   </div>
                   <!-- Resumen -->
@@ -290,11 +155,8 @@
                     <div class="mt-6 grid flex-auto grid-cols-4 gap-4">
                       <!-- New issues -->
                       <div
-                        class="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-indigo-50 px-1 py-8 text-indigo-800 dark:bg-white dark:bg-opacity-5 dark:text-indigo-400"
-                      >
-                        <div
-                          class="text-5xl font-semibold leading-none tracking-tight sm:text-7xl"
-                        >
+                        class="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-indigo-50 px-1 py-8 text-indigo-800 dark:bg-white dark:bg-opacity-5 dark:text-indigo-400">
+                        <div class="text-5xl font-semibold leading-none tracking-tight sm:text-7xl">
                           {{ analiticaData.totalProspectos }}
                         </div>
                         <div class="mt-1 text-sm font-medium sm:text-lg">
@@ -303,11 +165,8 @@
                       </div>
                       <!-- Closed -->
                       <div
-                        class="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-green-50 px-1 py-8 text-green-800 dark:bg-white dark:bg-opacity-5 dark:text-green-500"
-                      >
-                        <div
-                          class="text-5xl font-semibold leading-none tracking-tight sm:text-7xl"
-                        >
+                        class="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-green-50 px-1 py-8 text-green-800 dark:bg-white dark:bg-opacity-5 dark:text-green-500">
+                        <div class="text-5xl font-semibold leading-none tracking-tight sm:text-7xl">
                           {{ analiticaData.totalClientes }}
                         </div>
                         <div class="mt-1 text-sm font-medium sm:text-lg">
@@ -316,15 +175,12 @@
                       </div>
                       <!-- Fixed -->
                       <div
-                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1"
-                      >
-                        <div
-                          class="text-5xl font-semibold leading-none tracking-tight"
-                        >
+                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1">
+                        <div class="text-5xl font-semibold leading-none tracking-tight">
                           {{
-                            data.githubIssues.overview[
-                              githubIssuesWeekSelector.value
-                            ]["fixed"]
+                          data.githubIssues.overview[
+                          githubIssuesWeekSelector.value
+                          ]["fixed"]
                           }}
                         </div>
                         <div class="mt-1 text-center text-sm font-medium">
@@ -333,15 +189,12 @@
                       </div>
                       <!-- Won't fix -->
                       <div
-                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1"
-                      >
-                        <div
-                          class="text-5xl font-semibold leading-none tracking-tight"
-                        >
+                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1">
+                        <div class="text-5xl font-semibold leading-none tracking-tight">
                           {{
-                            data.githubIssues.overview[
-                              githubIssuesWeekSelector.value
-                            ]["wont-fix"]
+                          data.githubIssues.overview[
+                          githubIssuesWeekSelector.value
+                          ]["wont-fix"]
                           }}
                         </div>
                         <div class="mt-1 text-center text-sm font-medium">
@@ -350,15 +203,12 @@
                       </div>
                       <!-- Re-opened -->
                       <div
-                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1"
-                      >
-                        <div
-                          class="text-5xl font-semibold leading-none tracking-tight"
-                        >
+                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1">
+                        <div class="text-5xl font-semibold leading-none tracking-tight">
                           {{
-                            data.githubIssues.overview[
-                              githubIssuesWeekSelector.value
-                            ]["re-opened"]
+                          data.githubIssues.overview[
+                          githubIssuesWeekSelector.value
+                          ]["re-opened"]
                           }}
                         </div>
                         <div class="mt-1 text-center text-sm font-medium">
@@ -367,15 +217,12 @@
                       </div>
                       <!-- Needs triage -->
                       <div
-                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1"
-                      >
-                        <div
-                          class="text-5xl font-semibold leading-none tracking-tight"
-                        >
+                        class="text-secondary col-span-2 flex flex-col items-center justify-center rounded-2xl bg-gray-100 px-1 py-8 dark:bg-white dark:bg-opacity-5 sm:col-span-1">
+                        <div class="text-5xl font-semibold leading-none tracking-tight">
                           {{
-                            data.githubIssues.overview[
-                              githubIssuesWeekSelector.value
-                            ]["needs-triage"]
+                          data.githubIssues.overview[
+                          githubIssuesWeekSelector.value
+                          ]["needs-triage"]
                           }}
                         </div>
                         <div class="mt-1 text-center text-sm font-medium">
@@ -388,76 +235,46 @@
               </div>
               <!-- Task distribution -->
               <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2 md:col-span-4 lg:col-span-2"
-              >
-                <div
-                  class="flex flex-col items-start justify-between sm:flex-row"
-                >
-                  <div
-                    class="truncate text-lg font-medium leading-6 tracking-tight"
-                  >
+                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2 md:col-span-4 lg:col-span-2">
+                <div class="flex flex-col items-start justify-between sm:flex-row">
+                  <div class="truncate text-lg font-medium leading-6 tracking-tight">
                     Task Distribution
                   </div>
                   <div class="mt-3 sm:ml-2 sm:mt-0">
-                    <mat-button-toggle-group
-                      value="this-week"
-                      #taskDistributionWeekSelector="matButtonToggleGroup"
-                    >
-                      <mat-button-toggle value="last-week"
-                        >Last Week</mat-button-toggle
-                      >
-                      <mat-button-toggle value="this-week"
-                        >This Week</mat-button-toggle
-                      >
+                    <mat-button-toggle-group value="this-week" #taskDistributionWeekSelector="matButtonToggleGroup">
+                      <mat-button-toggle value="last-week">Last Week</mat-button-toggle>
+                      <mat-button-toggle value="this-week">This Week</mat-button-toggle>
                     </mat-button-toggle-group>
                   </div>
                 </div>
                 <div class="mt-6 flex flex-auto flex-col">
-                  <apx-chart
-                    class="h-80 w-full flex-auto"
-                    [chart]="chartTaskDistribution.chart"
-                    [labels]="chartTaskDistribution.labels"
-                    [legend]="chartTaskDistribution.legend"
-                    [plotOptions]="chartTaskDistribution.plotOptions"
-                    [series]="
+                  <apx-chart class="h-80 w-full flex-auto" [chart]="chartTaskDistribution.chart"
+                    [labels]="chartTaskDistribution.labels" [legend]="chartTaskDistribution.legend"
+                    [plotOptions]="chartTaskDistribution.plotOptions" [series]="
                       chartTaskDistribution.series[
                         taskDistributionWeekSelector.value
                       ]
-                    "
-                    [states]="chartTaskDistribution.states"
-                    [stroke]="chartTaskDistribution.stroke"
-                    [theme]="chartTaskDistribution.theme"
-                    [tooltip]="chartTaskDistribution.tooltip"
-                    [yaxis]="chartTaskDistribution.yaxis"
-                  ></apx-chart>
+                    " [states]="chartTaskDistribution.states" [stroke]="chartTaskDistribution.stroke"
+                    [theme]="chartTaskDistribution.theme" [tooltip]="chartTaskDistribution.tooltip"
+                    [yaxis]="chartTaskDistribution.yaxis"></apx-chart>
                 </div>
-                <div
-                  class="-m-6 mt-4 grid grid-cols-2 divide-x border-t bg-gray-50 dark:bg-transparent"
-                >
-                  <div
-                    class="flex flex-col items-center justify-center p-6 sm:p-8"
-                  >
-                    <div
-                      class="text-5xl font-semibold leading-none tracking-tighter"
-                    >
+                <div class="-m-6 mt-4 grid grid-cols-2 divide-x border-t bg-gray-50 dark:bg-transparent">
+                  <div class="flex flex-col items-center justify-center p-6 sm:p-8">
+                    <div class="text-5xl font-semibold leading-none tracking-tighter">
                       {{
-                        data.taskDistribution.overview[
-                          taskDistributionWeekSelector.value
-                        ]["new"]
+                      data.taskDistribution.overview[
+                      taskDistributionWeekSelector.value
+                      ]["new"]
                       }}
                     </div>
                     <div class="text-secondary mt-1 text-center">New tasks</div>
                   </div>
-                  <div
-                    class="flex flex-col items-center justify-center p-6 sm:p-8"
-                  >
-                    <div
-                      class="text-5xl font-semibold leading-none tracking-tighter"
-                    >
+                  <div class="flex flex-col items-center justify-center p-6 sm:p-8">
+                    <div class="text-5xl font-semibold leading-none tracking-tighter">
                       {{
-                        data.taskDistribution.overview[
-                          taskDistributionWeekSelector.value
-                        ]["completed"]
+                      data.taskDistribution.overview[
+                      taskDistributionWeekSelector.value
+                      ]["completed"]
                       }}
                     </div>
                     <div class="text-secondary mt-1 text-center">
@@ -468,73 +285,52 @@
               </div>
               <!-- Schedule -->
               <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2 md:col-span-4 lg:col-span-2"
-              >
-                <div
-                  class="flex flex-col items-start justify-between sm:flex-row"
-                >
-                  <div
-                    class="truncate text-lg font-medium leading-6 tracking-tight"
-                  >
+                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2 md:col-span-4 lg:col-span-2">
+                <div class="flex flex-col items-start justify-between sm:flex-row">
+                  <div class="truncate text-lg font-medium leading-6 tracking-tight">
                     Schedule
                   </div>
                   <div class="mt-3 sm:ml-2 sm:mt-0">
-                    <mat-button-toggle-group
-                      value="today"
-                      #scheduleDaySelector="matButtonToggleGroup"
-                    >
+                    <mat-button-toggle-group value="today" #scheduleDaySelector="matButtonToggleGroup">
                       <mat-button-toggle value="today">Today</mat-button-toggle>
-                      <mat-button-toggle value="tomorrow"
-                        >Tomorrow</mat-button-toggle
-                      >
+                      <mat-button-toggle value="tomorrow">Tomorrow</mat-button-toggle>
                     </mat-button-toggle-group>
                   </div>
                 </div>
                 <div class="mt-2 flex flex-col divide-y">
                   @for (
-                    scheduleItem of data.schedule[scheduleDaySelector.value];
-                    track trackByFn($index, scheduleItem)
+                  scheduleItem of data.schedule[scheduleDaySelector.value];
+                  track trackByFn($index, scheduleItem)
                   ) {
-                    <div
-                      class="flex flex-row items-center justify-between px-0.5 py-4"
-                    >
-                      <div class="flex flex-col">
-                        <div class="font-medium">
-                          {{ scheduleItem.title }}
-                        </div>
-                        <div
-                          class="-ml-0.5 mt-2 flex flex-col space-y-1 sm:mt-1 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0"
-                        >
-                          @if (scheduleItem.time) {
-                            <div class="flex items-center">
-                              <mat-icon
-                                class="text-hint icon-size-5"
-                                [svgIcon]="'heroicons_solid:clock'"
-                              ></mat-icon>
-                              <div class="text-secondary ml-1.5 text-md">
-                                {{ scheduleItem.time }}
-                              </div>
-                            </div>
-                          }
-                          @if (scheduleItem.location) {
-                            <div class="flex items-center">
-                              <mat-icon
-                                class="text-hint icon-size-5"
-                                [svgIcon]="'heroicons_solid:map-pin'"
-                              ></mat-icon>
-                              <div class="text-secondary ml-1.5 text-md">
-                                {{ scheduleItem.location }}
-                              </div>
-                            </div>
-                          }
-                        </div>
+                  <div class="flex flex-row items-center justify-between px-0.5 py-4">
+                    <div class="flex flex-col">
+                      <div class="font-medium">
+                        {{ scheduleItem.title }}
                       </div>
-                      <button mat-icon-button>
-                        <mat-icon
-                          [svgIcon]="'heroicons_mini:chevron-right'"
-                        ></mat-icon>
-                      </button>
+                      <div
+                        class="-ml-0.5 mt-2 flex flex-col space-y-1 sm:mt-1 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0">
+                        @if (scheduleItem.time) {
+                        <div class="flex items-center">
+                          <mat-icon class="text-hint icon-size-5" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
+                          <div class="text-secondary ml-1.5 text-md">
+                            {{ scheduleItem.time }}
+                          </div>
+                        </div>
+                        }
+                        @if (scheduleItem.location) {
+                        <div class="flex items-center">
+                          <mat-icon class="text-hint icon-size-5" [svgIcon]="'heroicons_solid:map-pin'"></mat-icon>
+                          <div class="text-secondary ml-1.5 text-md">
+                            {{ scheduleItem.location }}
+                          </div>
+                        </div>
+                        }
+                      </div>
                     </div>
+                    <button mat-icon-button>
+                      <mat-icon [svgIcon]="'heroicons_mini:chevron-right'"></mat-icon>
+                    </button>
+                  </div>
                   }
                 </div>
               </div>
@@ -548,54 +344,29 @@
             <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-6">
               <!-- Reporte de ventas -->
               <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-3 lg:col-span-4"
-              >
-                <div
-                  class="truncate text-lg font-medium leading-6 tracking-tight"
-                >
+                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-3 lg:col-span-4">
+                <div class="truncate text-lg font-medium leading-6 tracking-tight">
                   Reporte de ventas
                 </div>
-                <div
-                  class="flex flex-auto flex-col"
-                  *ngIf="salesData.length > 0"
-                >
-                  <apx-chart
-                    [series]="chartSales.series"
-                    [chart]="chartSales.chart"
-                    [colors]="chartSales.colors"
-                    [dataLabels]="chartSales.dataLabels"
-                    [markers]="chartSales.markers"
-                    [plotOptions]="chartSales.plotOptions"
-                    [stroke]="chartSales.stroke"
-                    [tooltip]="chartSales.tooltip"
-                    [xaxis]="chartSales.xaxis"
-                    [yaxis]="chartSales.yaxis"
-                    class="h-80 w-full flex-auto"
-                  >
+                <div class="flex flex-auto flex-col" *ngIf="salesData.length > 0">
+                  <apx-chart [series]="chartSales.series" [chart]="chartSales.chart" [colors]="chartSales.colors"
+                    [dataLabels]="chartSales.dataLabels" [markers]="chartSales.markers"
+                    [plotOptions]="chartSales.plotOptions" [stroke]="chartSales.stroke" [tooltip]="chartSales.tooltip"
+                    [xaxis]="chartSales.xaxis" [yaxis]="chartSales.yaxis" class="h-80 w-full flex-auto">
                   </apx-chart>
                 </div>
               </div>
               <!-- Expense -->
               <div class="grid grid-cols-1 gap-y-6 sm:col-span-3 lg:col-span-2">
                 <!-- Weekly expenses -->
-                <div
-                  class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2"
-                >
+                <div class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2">
                   <div class="flex items-start justify-between">
-                    <div
-                      class="truncate text-lg font-medium leading-6 tracking-tight"
-                    >
+                    <div class="truncate text-lg font-medium leading-6 tracking-tight">
                       Weekly Expenses
                     </div>
                     <div class="-mr-3 -mt-2 ml-2">
-                      <button
-                        mat-icon-button
-                        [matMenuTriggerFor]="weeklyExpensesMenu"
-                      >
-                        <mat-icon
-                          class="icon-size-5"
-                          [svgIcon]="'heroicons_mini:ellipsis-vertical'"
-                        ></mat-icon>
+                      <button mat-icon-button [matMenuTriggerFor]="weeklyExpensesMenu">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_mini:ellipsis-vertical'"></mat-icon>
                       </button>
                       <mat-menu #weeklyExpensesMenu="matMenu">
                         <button mat-menu-item>This week</button>
@@ -606,57 +377,35 @@
                   </div>
                   <div class="mt-1 flex items-center">
                     <div class="flex flex-col">
-                      <div
-                        class="text-3xl font-semibold leading-tight tracking-tight"
-                      >
+                      <div class="text-3xl font-semibold leading-tight tracking-tight">
                         {{ data.weeklyExpenses.amount | currency: "USD" }}
                       </div>
                       <div class="flex items-center">
-                        <mat-icon
-                          class="mr-1 text-green-500 icon-size-5"
-                          [svgIcon]="'heroicons_solid:arrow-trending-down'"
-                        ></mat-icon>
-                        <div
-                          class="text-secondary whitespace-nowrap text-sm font-medium leading-none"
-                        >
+                        <mat-icon class="mr-1 text-green-500 icon-size-5"
+                          [svgIcon]="'heroicons_solid:arrow-trending-down'"></mat-icon>
+                        <div class="text-secondary whitespace-nowrap text-sm font-medium leading-none">
                           <span class="text-green-500">2%</span>
                           below projected
                         </div>
                       </div>
                     </div>
                     <div class="ml-8 flex flex-auto flex-col">
-                      <apx-chart
-                        class="h-16 w-full flex-auto"
-                        [chart]="chartWeeklyExpenses.chart"
-                        [colors]="chartWeeklyExpenses.colors"
-                        [series]="chartWeeklyExpenses.series"
-                        [stroke]="chartWeeklyExpenses.stroke"
-                        [tooltip]="chartWeeklyExpenses.tooltip"
-                        [xaxis]="chartWeeklyExpenses.xaxis"
-                        [yaxis]="chartWeeklyExpenses.yaxis"
-                      ></apx-chart>
+                      <apx-chart class="h-16 w-full flex-auto" [chart]="chartWeeklyExpenses.chart"
+                        [colors]="chartWeeklyExpenses.colors" [series]="chartWeeklyExpenses.series"
+                        [stroke]="chartWeeklyExpenses.stroke" [tooltip]="chartWeeklyExpenses.tooltip"
+                        [xaxis]="chartWeeklyExpenses.xaxis" [yaxis]="chartWeeklyExpenses.yaxis"></apx-chart>
                     </div>
                   </div>
                 </div>
                 <!-- Monthly expenses -->
-                <div
-                  class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2"
-                >
+                <div class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2">
                   <div class="flex items-start justify-between">
-                    <div
-                      class="truncate text-lg font-medium leading-6 tracking-tight"
-                    >
+                    <div class="truncate text-lg font-medium leading-6 tracking-tight">
                       Monthly Expenses
                     </div>
                     <div class="-mr-3 -mt-2 ml-2">
-                      <button
-                        mat-icon-button
-                        [matMenuTriggerFor]="monthlyExpensesMenu"
-                      >
-                        <mat-icon
-                          class="icon-size-5"
-                          [svgIcon]="'heroicons_mini:ellipsis-vertical'"
-                        ></mat-icon>
+                      <button mat-icon-button [matMenuTriggerFor]="monthlyExpensesMenu">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_mini:ellipsis-vertical'"></mat-icon>
                       </button>
                       <mat-menu #monthlyExpensesMenu="matMenu">
                         <button mat-menu-item>This week</button>
@@ -667,57 +416,35 @@
                   </div>
                   <div class="mt-1 flex items-center">
                     <div class="flex flex-col">
-                      <div
-                        class="text-3xl font-semibold leading-tight tracking-tight"
-                      >
+                      <div class="text-3xl font-semibold leading-tight tracking-tight">
                         {{ data.monthlyExpenses.amount | currency: "USD" }}
                       </div>
                       <div class="flex items-center">
-                        <mat-icon
-                          class="mr-1 text-red-500 icon-size-5"
-                          [svgIcon]="'heroicons_solid:arrow-trending-up'"
-                        ></mat-icon>
-                        <div
-                          class="text-secondary whitespace-nowrap text-sm font-medium leading-none"
-                        >
+                        <mat-icon class="mr-1 text-red-500 icon-size-5"
+                          [svgIcon]="'heroicons_solid:arrow-trending-up'"></mat-icon>
+                        <div class="text-secondary whitespace-nowrap text-sm font-medium leading-none">
                           <span class="text-red-500">4%</span>
                           above projected
                         </div>
                       </div>
                     </div>
                     <div class="ml-8 flex flex-auto flex-col">
-                      <apx-chart
-                        class="h-16 w-full flex-auto"
-                        [chart]="chartMonthlyExpenses.chart"
-                        [colors]="chartMonthlyExpenses.colors"
-                        [series]="chartMonthlyExpenses.series"
-                        [stroke]="chartMonthlyExpenses.stroke"
-                        [tooltip]="chartMonthlyExpenses.tooltip"
-                        [xaxis]="chartMonthlyExpenses.xaxis"
-                        [yaxis]="chartMonthlyExpenses.yaxis"
-                      ></apx-chart>
+                      <apx-chart class="h-16 w-full flex-auto" [chart]="chartMonthlyExpenses.chart"
+                        [colors]="chartMonthlyExpenses.colors" [series]="chartMonthlyExpenses.series"
+                        [stroke]="chartMonthlyExpenses.stroke" [tooltip]="chartMonthlyExpenses.tooltip"
+                        [xaxis]="chartMonthlyExpenses.xaxis" [yaxis]="chartMonthlyExpenses.yaxis"></apx-chart>
                     </div>
                   </div>
                 </div>
                 <!-- Yearly expenses -->
-                <div
-                  class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2"
-                >
+                <div class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-2">
                   <div class="flex items-start justify-between">
-                    <div
-                      class="truncate text-lg font-medium leading-6 tracking-tight"
-                    >
+                    <div class="truncate text-lg font-medium leading-6 tracking-tight">
                       Yearly Expenses
                     </div>
                     <div class="-mr-3 -mt-2 ml-2">
-                      <button
-                        mat-icon-button
-                        [matMenuTriggerFor]="yearlyExpensesMenu"
-                      >
-                        <mat-icon
-                          class="icon-size-5"
-                          [svgIcon]="'heroicons_mini:ellipsis-vertical'"
-                        ></mat-icon>
+                      <button mat-icon-button [matMenuTriggerFor]="yearlyExpensesMenu">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_mini:ellipsis-vertical'"></mat-icon>
                       </button>
                       <mat-menu #yearlyExpensesMenu="matMenu">
                         <button mat-menu-item>This week</button>
@@ -728,69 +455,46 @@
                   </div>
                   <div class="mt-1 flex items-center">
                     <div class="flex flex-col">
-                      <div
-                        class="text-3xl font-semibold leading-tight tracking-tight"
-                      >
+                      <div class="text-3xl font-semibold leading-tight tracking-tight">
                         {{ data.yearlyExpenses.amount | currency: "USD" }}
                       </div>
                       <div class="flex items-center">
-                        <mat-icon
-                          class="mr-1 text-red-500 icon-size-5"
-                          [svgIcon]="'heroicons_solid:arrow-trending-up'"
-                        ></mat-icon>
-                        <div
-                          class="text-secondary whitespace-nowrap text-sm font-medium leading-none"
-                        >
+                        <mat-icon class="mr-1 text-red-500 icon-size-5"
+                          [svgIcon]="'heroicons_solid:arrow-trending-up'"></mat-icon>
+                        <div class="text-secondary whitespace-nowrap text-sm font-medium leading-none">
                           <span class="text-red-500">3%</span>
                           above projected
                         </div>
                       </div>
                     </div>
                     <div class="ml-8 flex flex-auto flex-col">
-                      <apx-chart
-                        class="h-16 w-full flex-auto"
-                        [chart]="chartYearlyExpenses.chart"
-                        [colors]="chartYearlyExpenses.colors"
-                        [series]="chartYearlyExpenses.series"
-                        [stroke]="chartYearlyExpenses.stroke"
-                        [tooltip]="chartYearlyExpenses.tooltip"
-                        [xaxis]="chartYearlyExpenses.xaxis"
-                        [yaxis]="chartYearlyExpenses.yaxis"
-                      ></apx-chart>
+                      <apx-chart class="h-16 w-full flex-auto" [chart]="chartYearlyExpenses.chart"
+                        [colors]="chartYearlyExpenses.colors" [series]="chartYearlyExpenses.series"
+                        [stroke]="chartYearlyExpenses.stroke" [tooltip]="chartYearlyExpenses.tooltip"
+                        [xaxis]="chartYearlyExpenses.xaxis" [yaxis]="chartYearlyExpenses.yaxis"></apx-chart>
                     </div>
                   </div>
                 </div>
               </div>
               <!-- Budget details -->
-              <div
-                class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-6"
-              >
-                <div
-                  class="truncate text-lg font-medium leading-6 tracking-tight"
-                >
+              <div class="bg-card flex flex-auto flex-col overflow-hidden rounded-2xl p-6 shadow sm:col-span-6">
+                <div class="truncate text-lg font-medium leading-6 tracking-tight">
                   Budget Details
                 </div>
                 <div class="mt-2 flex flex-auto flex-col overflow-x-auto">
-                  <table
-                    class="min-w-240 overflow-y-visible"
-                    mat-table
-                    [dataSource]="data.budgetDetails.rows"
-                  >
+                  <table class="min-w-240 overflow-y-visible" mat-table [dataSource]="data.budgetDetails.rows">
                     <!-- Type -->
                     <ng-container matColumnDef="type" sticky>
                       <th mat-header-cell *matHeaderCellDef>Type</th>
                       <td mat-cell *matCellDef="let budget">
                         <span class="flex items-center">
-                          <span
-                            class="h-2 w-2 rounded-full"
-                            [ngClass]="{
+                          <span class="h-2 w-2 rounded-full" [ngClass]="{
                               'bg-blue-500': budget.id === 1,
                               'bg-red-500': budget.id === 2,
                               'bg-green-500': budget.id === 3,
                               'bg-amber-500': budget.id === 4,
                               'bg-indigo-500': budget.id === 5,
-                            }"
-                          ></span>
+                            }"></span>
                           <span class="ml-3 leading-4">{{ budget.type }}</span>
                         </span>
                       </td>
@@ -837,54 +541,33 @@
                         <span class="flex items-center">
                           <span>
                             <!-- Low -->
-                            @if (budget.remainingPercentage < 30) {
-                              <span
-                                class="flex h-4 w-1 items-end overflow-hidden rounded bg-red-200"
-                              >
-                                <span
-                                  class="flex h-1/3 w-full bg-red-600"
-                                ></span>
-                              </span>
-                            }
-                            <!-- Medium -->
-                            @if (
-                              budget.remainingPercentage >= 30 &&
-                              budget.remainingPercentage < 80
-                            ) {
-                              <span
-                                class="flex h-4 w-1 items-end overflow-hidden rounded bg-orange-200"
-                              >
-                                <span
-                                  class="flex h-2/4 w-full bg-orange-400"
-                                ></span>
-                              </span>
-                            }
-                            <!-- High -->
-                            @if (budget.remainingPercentage >= 80) {
-                              <span
-                                class="flex h-4 w-1 items-end overflow-hidden rounded bg-green-100"
-                              >
-                                <span
-                                  class="flex h-full w-full bg-green-400"
-                                ></span>
-                              </span>
-                            }
+                            @if (budget.remainingPercentage < 30) { <span
+                              class="flex h-4 w-1 items-end overflow-hidden rounded bg-red-200">
+                              <span class="flex h-1/3 w-full bg-red-600"></span>
                           </span>
-                          <span class="ml-3 leading-4"
-                            >{{ budget.remainingPercentage }}%</span
-                          >
+                          }
+                          <!-- Medium -->
+                          @if (
+                          budget.remainingPercentage >= 30 &&
+                          budget.remainingPercentage < 80 ) { <span
+                            class="flex h-4 w-1 items-end overflow-hidden rounded bg-orange-200">
+                            <span class="flex h-2/4 w-full bg-orange-400"></span>
+                        </span>
+                        }
+                        <!-- High -->
+                        @if (budget.remainingPercentage >= 80) {
+                        <span class="flex h-4 w-1 items-end overflow-hidden rounded bg-green-100">
+                          <span class="flex h-full w-full bg-green-400"></span>
+                        </span>
+                        }
+                        </span>
+                        <span class="ml-3 leading-4">{{ budget.remainingPercentage }}%</span>
                         </span>
                       </td>
                     </ng-container>
 
-                    <tr
-                      mat-header-row
-                      *matHeaderRowDef="data.budgetDetails.columns"
-                    ></tr>
-                    <tr
-                      mat-row
-                      *matRowDef="let row; columns: data.budgetDetails.columns"
-                    ></tr>
+                    <tr mat-header-row *matHeaderRowDef="data.budgetDetails.columns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: data.budgetDetails.columns"></tr>
                   </table>
                 </div>
               </div>
@@ -897,79 +580,54 @@
           <ng-template mat-tab-label>
             <span class="inline-flex items-center space-x-2">
               <span class="">Team</span>
-              <span
-                class="rounded-full bg-primary-100 px-2 py-1 text-sm text-on-primary-100"
-                >{{ users.length }}</span
-              >
+              <span class="rounded-full bg-primary-100 px-2 py-1 text-sm text-on-primary-100">{{ users.length }}</span>
             </span>
           </ng-template>
           <ng-template matTabContent>
-            <div
-              class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-            >
+            <div class="grid w-full min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               @for (member of users; track member) {
-                <div
-                  class="bg-card flex flex-auto flex-col items-center overflow-hidden rounded-2xl shadow"
-                >
-                  <!-- Avatar & Info -->
-                  <div class="flex w-full flex-auto flex-col p-8 text-center">
-                    <!-- Avatar con indicador de estado -->
-                    <div class="relative mx-auto h-32 w-32 rounded-full">
-                      <img
-                        class="h-full w-full object-cover rounded-full"
-                        [src]="member.avatar"
-                        alt="Contact avatar"
-                      />
-                      <!-- Indicador de estado online/offline -->
-                      <div
-                        class="absolute top-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2"
-                        style="right: 20px !important"
-                        [ngClass]="{
+              <div class="bg-card flex flex-auto flex-col items-center overflow-hidden rounded-2xl shadow">
+                <!-- Avatar & Info -->
+                <div class="flex w-full flex-auto flex-col p-8 text-center">
+                  <!-- Avatar con indicador de estado -->
+                  <div class="relative mx-auto h-32 w-32 rounded-full">
+                    <img class="h-full w-full object-cover rounded-full" [src]="member.avatar" alt="Contact avatar" />
+                    <!-- Indicador de estado online/offline -->
+                    <div class="absolute top-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2"
+                      style="right: 20px !important" [ngClass]="{
                           'bg-green-500 border-white':
                             member.online === 'Activo',
                           'bg-yellow-400 border-white':
                             member.online === 'Inactivo',
                           'bg-gray-400 border-white':
                             !member.online || member.online === '',
-                        }"
-                        [title]="member.online ? 'Online' : 'Offline'"
-                      ></div>
-                    </div>
-
-                    <!-- Nombre del usuario -->
-                    <div class="mt-6 font-medium">
-                      {{ member.nombreUsuario }}
-                    </div>
-
-                    <!-- Correo electrónico -->
-                    <div class="text-secondary">
-                      {{ member.email }}
-                    </div>
+                        }" [title]="member.online ? 'Online' : 'Offline'"></div>
                   </div>
-                  <!-- Email & Phone -->
-                  <div class="flex w-full items-center divide-x border-t">
-                    <a
-                      class="flex flex-auto items-center justify-center py-4 hover:bg-hover"
-                      [href]="'mailto:' + member.email"
-                    >
-                      <mat-icon
-                        class="text-hint icon-size-5"
-                        [svgIcon]="'heroicons_solid:envelope'"
-                      ></mat-icon>
-                      <span class="ml-2">Email</span>
-                    </a>
-                    <a
-                      class="flex flex-auto items-center justify-center py-4 hover:bg-hover"
-                      [href]="'tel:' + member.telefono"
-                    >
-                      <mat-icon
-                        class="text-hint icon-size-5"
-                        [svgIcon]="'heroicons_solid:phone'"
-                      ></mat-icon>
-                      <span class="ml-2">Call</span>
-                    </a>
+
+                  <!-- Nombre del usuario -->
+                  <div class="mt-6 font-medium">
+                    {{ member.nombreUsuario }}
+                  </div>
+
+                  <!-- Correo electrónico -->
+                  <div class="text-secondary">
+                    {{ member.email }}
                   </div>
                 </div>
+                <!-- Email & Phone -->
+                <div class="flex w-full items-center divide-x border-t">
+                  <a class="flex flex-auto items-center justify-center py-4 hover:bg-hover"
+                    [href]="'mailto:' + member.email">
+                    <mat-icon class="text-hint icon-size-5" [svgIcon]="'heroicons_solid:envelope'"></mat-icon>
+                    <span class="ml-2">Email</span>
+                  </a>
+                  <a class="flex flex-auto items-center justify-center py-4 hover:bg-hover"
+                    [href]="'tel:' + member.telefono">
+                    <mat-icon class="text-hint icon-size-5" [svgIcon]="'heroicons_solid:phone'"></mat-icon>
+                    <span class="ml-2">Call</span>
+                  </a>
+                </div>
+              </div>
               }
             </div>
           </ng-template>
@@ -985,23 +643,11 @@
           <ng-template matTabContent>
             <div class="relative">
               <!-- Toggle centrado flotante -->
-              <div
-                class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 p-2 rounded shadow"
-              >
-                <mat-button-toggle-group
-                  name="tipoToggle"
-                  [(ngModel)]="tipoSeleccionado"
-                  (change)="cargarMarcadores()"
-                  appearance="legacy"
-                  color="primary"
-                  exclusive
-                >
-                  <mat-button-toggle value="cliente"
-                    >Clientes</mat-button-toggle
-                  >
-                  <mat-button-toggle value="prospecto"
-                    >Prospectos</mat-button-toggle
-                  >
+              <div class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 p-2 rounded shadow">
+                <mat-button-toggle-group name="tipoToggle" [(ngModel)]="tipoSeleccionado" (change)="cargarMarcadores()"
+                  appearance="legacy" color="primary" exclusive>
+                  <mat-button-toggle value="cliente">Clientes</mat-button-toggle>
+                  <mat-button-toggle value="prospecto">Prospectos</mat-button-toggle>
                 </mat-button-toggle-group>
               </div>
 

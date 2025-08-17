@@ -80,6 +80,21 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   marcadores: L.Marker[] = [];
   marker: any;
 
+  proyectosSeries: ApexNonAxisChartSeries = [];
+  proyectosLabels: string[] = [];
+
+  cotizacionesSeries: ApexNonAxisChartSeries = [];
+  cotizacionesLabels: string[] = [];
+
+  productosSeries: ApexNonAxisChartSeries = [];
+  productosLabels: string[] = [];
+
+  chartOptions = {
+    chart: { type: "donut", height: 300 },
+    legend: { position: 'bottom' },
+    plotOptions: { pie: { donut: { size: '50%' } } }
+  };
+
   /**
    * Constructor
    */
@@ -158,8 +173,28 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   getAnalitica(): void {
-    this._projectService.getAnalitica().subscribe((analitica) => {
+    this._projectService.getAnalitica().subscribe((analitica:any) => {
       this.analiticaData = analitica;
+      // Proyectos
+    if (analitica?.proyectos) {
+      const filtered = analitica.proyectos.filter(p => p.totalProyectos > 0);
+      this.proyectosSeries = filtered.map(p => p.totalProyectos);
+      this.proyectosLabels = filtered.map(p => p.estatusNombre);
+    }
+
+    // Cotizaciones
+    if (analitica?.cotizaciones) {
+      const filtered = analitica.cotizaciones.filter(c => c.totalCotizaciones > 0);
+      this.cotizacionesSeries = filtered.map(c => c.totalCotizaciones);
+      this.cotizacionesLabels = filtered.map(c => c.estatusNombre);
+    }
+
+    // Cotizaciones Productos
+    if (analitica?.cotizacionesProductos) {
+      const filtered = analitica.cotizacionesProductos.filter(c => c.totalCotizaciones > 0);
+      this.productosSeries = filtered.map(c => c.totalCotizaciones);
+      this.productosLabels = filtered.map(c => c.estatusNombre);
+    }
       this.cdr.detectChanges(); // Forzar actualización en la vista
     });
   }

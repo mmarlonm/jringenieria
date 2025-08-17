@@ -114,7 +114,7 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
         this.setCustomFilter();
       } else {
         this.snackBar.open(
-          "Hubo un error en el sistema, contacte al administrador del sistema.",
+          projects.message || "Error al obtener los proyectos",
           "Cerrar",
           {
             duration: 3000,
