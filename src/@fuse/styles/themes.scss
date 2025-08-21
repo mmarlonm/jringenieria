@@ -3,16 +3,15 @@
 @use 'user-themes' as userThemes;
 @include mat.core();
 
-
-// Paleta personalizada basada en #419486
+// Paleta personalizada basada en #419486 pero agregando #2596be
 $custom-primary: (
   50: #419486,
   100: #419486,
   200: #419486,
   300: #419486,
   400: #419486,
-  500: #419486,
-  600: #419486,
+  500: #2596be, // reemplazamos con el nuevo color
+  600: #2596be, // reemplazamos con el nuevo color
   700: #419486,
   800: #419486,
   900: #419486,
