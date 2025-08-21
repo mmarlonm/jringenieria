@@ -45,6 +45,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     'unidadDeNegocioNombre',
     'createdDate',
     'requisitosEspeciales',
+    'total',
     'actions'
   ];
   dataSource = new MatTableDataSource<any>();
