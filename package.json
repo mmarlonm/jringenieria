@@ -42,6 +42,8 @@
         "date-fns": "^4.1.0",
         "flatpickr": "^4.6.13",
         "frappe-gantt": "^1.0.3",
+        "highcharts": "^11.2.0",
+        "highcharts-angular": "^4.0.0",
         "highlight.js": "11.9.0",
         "html2pdf.js": "^0.10.3",
         "leaflet": "^1.9.4",
