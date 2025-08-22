@@ -29,6 +29,14 @@ import * as L from "leaflet";
 import { MatSelectModule } from "@angular/material/select";
 import { MatTabChangeEvent } from "@angular/material/tabs";
 import { FormsModule } from '@angular/forms';
+import { HighchartsChartModule, HighchartsChartComponent } from 'highcharts-angular';
+
+import * as Highcharts from 'highcharts';
+import HC_funnel from 'highcharts/modules/funnel';
+import { ViewChild } from '@angular/core';
+
+// Inicializar el módulo
+HC_funnel(Highcharts);
 
 @Component({
   selector: "analytics",
@@ -50,7 +58,8 @@ import { FormsModule } from '@angular/forms';
     CurrencyPipe,
     CommonModule,
     MatSelectModule,
-    FormsModule
+    FormsModule,
+    HighchartsChartModule
   ],
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
@@ -95,6 +104,59 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     plotOptions: { pie: { donut: { size: '50%' } } }
   };
 
+
+
+  unidadesNegocio = [
+    { UnidadId: 1, Nombre: 'Querétaro' },
+    { UnidadId: 2, Nombre: 'Puebla' },
+    { UnidadId: 3, Nombre: 'Hidalgo' },
+  ];
+
+  Highcharts: typeof Highcharts = Highcharts;
+  chartOptionsEmbudo: Highcharts.Options = {
+    chart: {
+      type: 'funnel',
+      height: 400
+    },
+    title: {
+      text: 'Embudo de Cotizaciones por Unidad de Negocio'
+    },
+    plotOptions: {
+      series: {
+        dataLabels: {
+          enabled: true,
+          format: '{point.name}: {point.y}'
+        },
+      }
+    },
+    series: [{
+      type: 'funnel',
+      name: 'Hidalgo',
+      data: [
+        // Total por unidad (primer nivel)
+        { name: 'Total', y: 1365, color: '#7cb5ec' },
+
+        // Desglose por estatus (segundo nivel)
+        { name: 'Pendiente', y: 1364, color: '#f7a35c' },
+        { name: 'Aprobada', y: 0, color: '#8085e9' },
+        { name: 'Rechazada', y: 0, color: '#f15c80' },
+        { name: 'Finalizada', y: 0, color: '#e4d354' },
+        { name: 'En Proceso', y: 1, color: '#00e396' },
+      ]
+    }]
+  };
+  selectedUnidadNegocio: number = this.unidadesNegocio[0].UnidadId; // valor por defecto
+
+  datosEmbudo = [
+    { UnidadId: 1, Unidad: 'Querétaro', Total: 592, Pendiente: 592, Aprobada: 0, Rechazada: 0, Finalizada: 0, EnProceso: 0 },
+    { UnidadId: 2, Unidad: 'Puebla', Total: 321, Pendiente: 321, Aprobada: 0, Rechazada: 0, Finalizada: 0, EnProceso: 0 },
+    { UnidadId: 3, Unidad: 'Hidalgo', Total: 1365, Pendiente: 1364, Aprobada: 0, Rechazada: 0, Finalizada: 0, EnProceso: 1 },
+  ];
+
+  @ViewChild('chartEmbudo', { static: false }) chartEmbudo!: HighchartsChartComponent;
+
+  updateFlag = false; // bandera para forzar actualización
+
   /**
    * Constructor
    */
@@ -106,7 +168,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private _salesService: SalesService,
     private presenceService: PresenceService
-  ) {}
+  ) { }
 
   // -----------------------------------------------------------------------------------------------------
   // @ Lifecycle hooks
@@ -132,7 +194,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((user: User) => {
         this.user = user["usuario"];
-        console.log("informacion de usuario",this.user)
+        console.log("informacion de usuario", this.user)
       });
 
     // Attach SVG fill fixer to all ApexCharts
@@ -170,31 +232,62 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         });
         this.cdr.detectChanges(); // Forzar actualización en la vista
       });
+    this.onUnidadNegocioChange();
+  }
+
+  onUnidadNegocioChange() {
+    const datosFiltrados = this.obtenerDatosEmbudo(this.selectedUnidadNegocio);
+    console.log("Datos filtrados:", datosFiltrados);
+
+    // Actualizar las series
+    this.chartOptionsEmbudo.series = [{
+      type: 'funnel',
+      name: 'Cotizaciones',
+      data: datosFiltrados
+    }];
+
+    // Forzar Highcharts a actualizar
+    this.updateFlag = true;
+    setTimeout(() => this.updateFlag = false); // reset para próximos cambios
+  }
+
+
+  obtenerDatosEmbudo(unidadId: number) {
+    const unidad = this.datosEmbudo.find(d => d.UnidadId === unidadId);
+    if (!unidad) return [];
+
+    return [
+      { name: `${unidad.Unidad} - Total`, y: unidad.Total, color: '#7cb5ec' },
+      { name: `${unidad.Unidad} - Pendiente`, y: unidad.Pendiente, color: '#f7a35c' },
+      { name: `${unidad.Unidad} - Aprobada`, y: unidad.Aprobada, color: '#8085e9' },
+      { name: `${unidad.Unidad} - Rechazada`, y: unidad.Rechazada, color: '#f15c80' },
+      { name: `${unidad.Unidad} - Finalizada`, y: unidad.Finalizada, color: '#e4d354' },
+    ];
   }
 
   getAnalitica(): void {
-    this._projectService.getAnalitica().subscribe((analitica:any) => {
+    this._projectService.getAnalitica().subscribe((analitica: any) => {
       this.analiticaData = analitica;
       // Proyectos
-    if (analitica?.proyectos) {
-      const filtered = analitica.proyectos.filter(p => p.totalProyectos > 0);
-      this.proyectosSeries = filtered.map(p => p.totalProyectos);
-      this.proyectosLabels = filtered.map(p => p.estatusNombre);
-    }
+      if (analitica?.proyectos) {
+        const filtered = analitica.proyectos.filter(p => p.totalProyectos > 0);
+        this.proyectosSeries = filtered.map(p => p.totalProyectos);
+        this.proyectosLabels = filtered.map(p => p.estatusNombre);
+      }
 
-    // Cotizaciones
-    if (analitica?.cotizaciones) {
-      const filtered = analitica.cotizaciones.filter(c => c.totalCotizaciones > 0);
-      this.cotizacionesSeries = filtered.map(c => c.totalCotizaciones);
-      this.cotizacionesLabels = filtered.map(c => c.estatusNombre);
-    }
+      // Cotizaciones
+      if (analitica?.cotizaciones) {
+        const filtered = analitica.cotizaciones.filter(c => c.totalCotizaciones > 0);
+        this.cotizacionesSeries = filtered.map(c => c.totalCotizaciones);
+        this.cotizacionesLabels = filtered.map(c => c.estatusNombre);
+      }
 
-    // Cotizaciones Productos
-    if (analitica?.cotizacionesProductos) {
-      const filtered = analitica.cotizacionesProductos.filter(c => c.totalCotizaciones > 0);
-      this.productosSeries = filtered.map(c => c.totalCotizaciones);
-      this.productosLabels = filtered.map(c => c.estatusNombre);
-    }
+      // Cotizaciones Productos
+      if (analitica?.cotizacionesProductos) {
+        const filtered = analitica.cotizacionesProductos.filter(c => c.totalCotizaciones > 0);
+        this.productosSeries = filtered.map(c => c.totalCotizaciones);
+        this.productosLabels = filtered.map(c => c.estatusNombre);
+      }
       this.cdr.detectChanges(); // Forzar actualización en la vista
     });
   }
@@ -713,62 +806,62 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   async cargarMarcadores(): Promise<void> {
-  // Limpiar marcadores anteriores
-  this.marcadores.forEach((m) => this.map.removeLayer(m));
-  this.marcadores = [];
-  console.log("Cargando marcador ", this.tipoSeleccionado);
-  this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
-    const icon = L.icon({
-          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          shadowUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        });
-    for (const u of ubicaciones) {
-      if (u.latitud && u.longitud) {
-        this.marker = L.marker([u.latitud, u.longitud], {
-        draggable: true,
-        icon,
+    // Limpiar marcadores anteriores
+    this.marcadores.forEach((m) => this.map.removeLayer(m));
+    this.marcadores = [];
+    console.log("Cargando marcador ", this.tipoSeleccionado);
+    this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
+      const icon = L.icon({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
       });
+      for (const u of ubicaciones) {
+        if (u.latitud && u.longitud) {
+          this.marker = L.marker([u.latitud, u.longitud], {
+            draggable: true,
+            icon,
+          });
 
-        // Popup con enlace clicable
-        const popupContent = `<a href="#" class="popup-link" data-id="${u.id}" data-tipo="${u.tipo}"><strong>${u.nombre}</strong></a><br/>(${u.tipo})`;
+          // Popup con enlace clicable
+          const popupContent = `<a href="#" class="popup-link" data-id="${u.id}" data-tipo="${u.tipo}"><strong>${u.nombre}</strong></a><br/>(${u.tipo})`;
 
-        this.marker.bindPopup(popupContent);
+          this.marker.bindPopup(popupContent);
 
-        // Escuchar el evento de apertura del popup para agregar click handler
-        this.marker.on('popupopen', () => {
-          setTimeout(() => {
-            const link = document.querySelector('.popup-link');
-            if (link) {
-              link.addEventListener('click', (event: Event) => {
-                event.preventDefault();
+          // Escuchar el evento de apertura del popup para agregar click handler
+          this.marker.on('popupopen', () => {
+            setTimeout(() => {
+              const link = document.querySelector('.popup-link');
+              if (link) {
+                link.addEventListener('click', (event: Event) => {
+                  event.preventDefault();
 
-                const id = (link as HTMLElement).getAttribute('data-id');
-                const tipo = (link as HTMLElement).getAttribute('data-tipo');
+                  const id = (link as HTMLElement).getAttribute('data-id');
+                  const tipo = (link as HTMLElement).getAttribute('data-tipo');
 
-                if (tipo?.toLowerCase() === 'prospecto') {
-                  this._router.navigate([`/dashboards/prospects/${id}`]);
-                } else if (tipo?.toLowerCase() === 'cliente') {
-                  this._router.navigate([`/catalogs/clients/${id}`]);
-                }
-              });
-            }
-          }, 0); // Esperar a que se renderice el popup
-        });
+                  if (tipo?.toLowerCase() === 'prospecto') {
+                    this._router.navigate([`/dashboards/prospects/${id}`]);
+                  } else if (tipo?.toLowerCase() === 'cliente') {
+                    this._router.navigate([`/catalogs/clients/${id}`]);
+                  }
+                });
+              }
+            }, 0); // Esperar a que se renderice el popup
+          });
 
-        this.marker.addTo(this.map);
-        this.marcadores.push(this.marker);
+          this.marker.addTo(this.map);
+          this.marcadores.push(this.marker);
+        }
       }
-    }
 
-    if (this.marcadores.length > 0) {
-      const group = L.featureGroup(this.marcadores);
-      this.map.fitBounds(group.getBounds().pad(0.2));
-    }
-  });
-}
+      if (this.marcadores.length > 0) {
+        const group = L.featureGroup(this.marcadores);
+        this.map.fitBounds(group.getBounds().pad(0.2));
+      }
+    });
+  }
 }
