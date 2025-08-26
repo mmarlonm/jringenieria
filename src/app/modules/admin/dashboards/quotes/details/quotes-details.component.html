@@ -6,7 +6,6 @@
     <mat-tab label="Información General">
       <form
         [formGroup]="quotesForm"
-        (ngSubmit)="saveQuotes()"
         class="flex flex-col gap-4 overflow-auto"
       >
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -410,7 +409,7 @@
    <!-- Botones -->
 
         <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
-          <button mat-raised-button color="primary" type="submit">
+          <button mat-raised-button color="primary" type="submit" (click)="saveQuotes()">
             Guardar
           </button>
           <button
