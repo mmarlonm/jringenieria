@@ -34,6 +34,16 @@ import { HighchartsChartModule, HighchartsChartComponent } from 'highcharts-angu
 import * as Highcharts from 'highcharts';
 import HC_funnel from 'highcharts/modules/funnel';
 import { ViewChild } from '@angular/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
+import { FormGroup, FormControl } from '@angular/forms';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+import { ReactiveFormsModule } from '@angular/forms';
+// Registrar español
+registerLocaleData(localeEs);
 
 // Inicializar el módulo
 HC_funnel(Highcharts);
@@ -59,7 +69,12 @@ HC_funnel(Highcharts);
     CommonModule,
     MatSelectModule,
     FormsModule,
-    HighchartsChartModule
+    HighchartsChartModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatNativeDateModule,
+    ReactiveFormsModule
   ],
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
@@ -147,15 +162,36 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   };
   selectedUnidadNegocio: number = this.unidadesNegocio[0].UnidadId; // valor por defecto
 
-  datosEmbudo = [
-    { UnidadId: 1, Unidad: 'Querétaro', Total: 592, Pendiente: 592, Aprobada: 0, Rechazada: 0, Finalizada: 0, EnProceso: 0 },
-    { UnidadId: 2, Unidad: 'Puebla', Total: 321, Pendiente: 321, Aprobada: 0, Rechazada: 0, Finalizada: 0, EnProceso: 0 },
-    { UnidadId: 3, Unidad: 'Hidalgo', Total: 1365, Pendiente: 1364, Aprobada: 0, Rechazada: 0, Finalizada: 0, EnProceso: 1 },
-  ];
+  datosEmbudo = [];
 
   @ViewChild('chartEmbudo', { static: false }) chartEmbudo!: HighchartsChartComponent;
 
   updateFlag = false; // bandera para forzar actualización
+
+  // Mantener dateRange como objeto
+  dateRangeForm = new FormGroup({
+    start: new FormControl(new Date()),
+    end: new FormControl(new Date())
+  });
+  // Colores por estatus
+  coloresEstatus: { [key: string]: string } = {
+    Total: '#7cb5ec',
+    Pendiente: '#f7a35c',
+    Aprobada: '#8085e9',
+    Rechazada: '#f15c80',
+    Finalizada: '#e4d354',
+    EnProceso: '#00e396'
+  };
+
+  // Dentro de tu clase AnalyticsComponent
+  formFiltro = new FormGroup({
+    unidadNegocio: new FormControl(this.unidadesNegocio[0].UnidadId),
+    fecha: new FormGroup({
+      start: new FormControl(new Date()),
+      end: new FormControl(new Date())
+    })
+  });
+
 
   /**
    * Constructor
@@ -233,23 +269,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges(); // Forzar actualización en la vista
       });
     this.onUnidadNegocioChange();
+    this.onBuscar();
   }
 
-  onUnidadNegocioChange() {
-    const datosFiltrados = this.obtenerDatosEmbudo(this.selectedUnidadNegocio);
-    console.log("Datos filtrados:", datosFiltrados);
-
-    // Actualizar las series
-    this.chartOptionsEmbudo.series = [{
-      type: 'funnel',
-      name: 'Cotizaciones',
-      data: datosFiltrados
-    }];
-
-    // Forzar Highcharts a actualizar
-    this.updateFlag = true;
-    setTimeout(() => this.updateFlag = false); // reset para próximos cambios
-  }
 
 
   obtenerDatosEmbudo(unidadId: number) {
@@ -864,4 +886,57 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  buildFunnelData(unidad: any) {
+    return [
+      { name: 'Total', y: unidad.Total, color: this.coloresEstatus['Total'] },
+      { name: 'Pendiente', y: unidad.Pendiente, color: this.coloresEstatus['Pendiente'] },
+      { name: 'Aprobada', y: unidad.Aprobada, color: this.coloresEstatus['Aprobada'] },
+      { name: 'Rechazada', y: unidad.Rechazada, color: this.coloresEstatus['Rechazada'] },
+      { name: 'Finalizada', y: unidad.Finalizada, color: this.coloresEstatus['Finalizada'] },
+      { name: 'En Proceso', y: unidad.EnProceso, color: this.coloresEstatus['EnProceso'] }
+    ];
+  }
+
+
+  onUnidadNegocioChange() {
+  this.selectedUnidadNegocio = this.formFiltro.get('unidadNegocio')?.value;
+  // actualizar gráfica
+  const unidad = this.datosEmbudo.find(u => u.unidadId === this.selectedUnidadNegocio);
+  if (!unidad) return;
+
+  this.chartOptionsEmbudo.series = [{
+    type: 'funnel',
+    name: unidad.unidadDeNegocio,
+    data: [
+      { name: 'Total', y: unidad.total, color: '#7cb5ec' },
+      { name: 'Pendiente', y: unidad.pendiente, color: '#f7a35c' },
+      { name: 'Aprobada', y: unidad.aprobada, color: '#8085e9' },
+      { name: 'Rechazada', y: unidad.rechazada, color: '#f15c80' },
+      { name: 'Finalizada', y: unidad.finalizada, color: '#e4d354' },
+      { name: 'En Proceso', y: unidad.enProceso, color: '#00e396' }
+    ]
+  }];
+
+  this.updateFlag = true;
+}
+
+onBuscar() {
+  const unidadId = this.formFiltro.get('unidadNegocio')?.value;
+  const fechaInicio = this.formFiltro.get('fecha.start')?.value;
+  const fechaFin = this.formFiltro.get('fecha.end')?.value;
+
+  if (!fechaInicio || !fechaFin) return;
+
+  console.log('Buscando datos del:', fechaInicio, 'al:', fechaFin, 'para unidad:', unidadId);
+
+  this._projectService.getDataGraf(fechaInicio, fechaFin)
+    .subscribe((response: any[]) => {
+      this.datosEmbudo = response || [];
+      this.onUnidadNegocioChange(); // actualizar gráfica
+      this.cdr.detectChanges()
+    });
+}
+
+
 }

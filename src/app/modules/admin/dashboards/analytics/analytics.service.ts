@@ -11,7 +11,7 @@ export class AnalyticsService {
   /**
    * Constructor
    */
-  constructor(private _httpClient: HttpClient) {}
+  constructor(private _httpClient: HttpClient) { }
 
   // -----------------------------------------------------------------------------------------------------
   // @ Accessors
@@ -49,4 +49,16 @@ export class AnalyticsService {
     const params = new HttpParams().set("tipo", tipo);
     return this._httpClient.get<any[]>(`${this.apiUrl}/mapa`, { params });
   }
+
+  // Obtener datos para grafica de embudo
+  getDataGraf(fechaInicio: Date, fechaFin: Date): Observable<any[]> {
+    let params = new HttpParams()
+      // Convertimos la fecha a string en formato 'yyyy-MM-dd'
+      .set("fechaInicio", fechaInicio.toISOString().split("T")[0])
+      .set("fechaFin", fechaFin.toISOString().split("T")[0]);
+
+    return this._httpClient.get<any[]>(`${this.apiUrl}/embudo-report`, { params });
+  }
+
+
 }
