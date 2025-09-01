@@ -4,6 +4,6 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-   apiUrl: 'https://emissions-chat-plugins-rent.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
-   apiUrlSignal: 'https://emissions-chat-plugins-rent.trycloudflare.com'
+   apiUrl: 'https://brick-firm-dosage-crazy.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+   apiUrlSignal: 'https://brick-firm-dosage-crazy.trycloudflare.com'
   };
