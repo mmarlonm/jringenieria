@@ -23,7 +23,11 @@ import { debounceTime } from "rxjs";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
-import { MAT_DATE_FORMATS, DateAdapter, MAT_DATE_LOCALE } from "@angular/material/core";
+import {
+  MAT_DATE_FORMATS,
+  DateAdapter,
+  MAT_DATE_LOCALE,
+} from "@angular/material/core";
 import { UsersService } from "../../../security/users/users.service";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
@@ -31,17 +35,17 @@ import { NotesDetailsComponent } from "../dialog/dialog.component";
 import { MatDialog } from "@angular/material/dialog";
 import Swal from "sweetalert2";
 import * as L from "leaflet";
-import { MomentDateAdapter } from '@angular/material-moment-adapter';
+import { MomentDateAdapter } from "@angular/material-moment-adapter";
 
 export const CUSTOM_DATE_FORMATS = {
   parse: {
-    dateInput: 'DD/MM/YYYY',
+    dateInput: "DD/MM/YYYY",
   },
   display: {
-    dateInput: 'DD/MM/YYYY',
-    monthYearLabel: 'MMM YYYY',
-    dateA11yLabel: 'LL',
-    monthYearA11yLabel: 'MMMM YYYY',
+    dateInput: "DD/MM/YYYY",
+    monthYearLabel: "MMM YYYY",
+    dateA11yLabel: "LL",
+    monthYearA11yLabel: "MMMM YYYY",
   },
 };
 
@@ -67,8 +71,12 @@ export const CUSTOM_DATE_FORMATS = {
     MatIconModule,
   ],
   providers: [
-    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
-    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS }
+    {
+      provide: DateAdapter,
+      useClass: MomentDateAdapter,
+      deps: [MAT_DATE_LOCALE],
+    },
+    { provide: MAT_DATE_FORMATS, useValue: CUSTOM_DATE_FORMATS },
   ],
 })
 export class ProspectDetailsComponent implements OnInit {
@@ -435,25 +443,191 @@ export class ProspectDetailsComponent implements OnInit {
     `;
 
     this.marker = L.marker([lat, lng], {
-        draggable: true,
-        icon,
-      }).addTo(this.map).bindPopup(popupContent).openPopup();
+      draggable: true,
+      icon,
+    })
+      .addTo(this.map)
+      .bindPopup(popupContent)
+      .openPopup();
     this.map.setView([lat, lng], 15);
   }
 
   buscarDireccion(direccion: string) {
+    // Un solo flujo para manejar todos los casos:
+    const cidRegex = /google\.com\/maps\?cid=(\d+)/;
+    const shortLinkRegex = /https?:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
+    const coordRegex = /^\s*(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)\s*$/;
+    // Google Maps URL with @lat,lng,zoom (e.g. https://www.google.com/maps/@19.432608,-99.133209,15z)
+    const atLatLngRegex = /@(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)(?:,|\/)/;
+
+    // 1. Detectar Google Maps CID links
+    const matchCid = direccion.match(cidRegex);
+    if (matchCid) {
+      const cid = matchCid[1];
+      const apiKey: string = "AIzaSyCnhkYFNO57qkBrvOaIFJwZy6vDYtJMncg"; // 👉 pon aquí tu API Key de Google
+      if (!apiKey || apiKey === "TU_API_KEY_AQUI") {
+        Swal.fire({
+          icon: "warning",
+          title: "Atención",
+          text: "Para buscar enlaces de Google Maps con CID necesitas configurar una API Key de Google Places.",
+        });
+        return;
+      }
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?cid=${cid}&key=${apiKey}`;
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.result?.geometry?.location) {
+            const lat = data.result.geometry.location.lat;
+            const lng = data.result.geometry.location.lng;
+            this.latitud = lat;
+            this.longitud = lng;
+            this.setMarker(lat, lng);
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "No se pudieron obtener coordenadas para este enlace de Google Maps.",
+            });
+          }
+        })
+        .catch((err) => {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Hubo un problema al contactar Google Places API.",
+          });
+          console.error("Error al obtener coordenadas:", err);
+        });
+      return;
+    }
+
+    // 2. Detectar enlaces de Google Maps con @lat,lng,zoom en la URL
+    const matchAtLatLng = direccion.match(atLatLngRegex);
+    if (matchAtLatLng) {
+      const lat = parseFloat(matchAtLatLng[1]);
+      const lng = parseFloat(matchAtLatLng[3]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        this.latitud = lat;
+        this.longitud = lng;
+        this.setMarker(lat, lng);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Coordenadas inválidas en el enlace de Google Maps.",
+        });
+      }
+      return;
+    }
+
+    // 3. Detectar Google Maps short links (maps.app.goo.gl/...)
+    const matchShort = direccion.match(shortLinkRegex);
+    if (matchShort) {
+      // Intentar resolver el shortlink
+      fetch(matchShort[0], { method: "HEAD", redirect: "follow" })
+        .then((res) => {
+          // Algunos navegadores bloquean CORS en HEAD, intentar GET si falla
+          if (res && res.url && res.url !== matchShort[0]) {
+            // Llamar recursivamente con la URL final
+            this.buscarDireccion(res.url);
+          } else {
+            // Si no se pudo resolver, intentar con GET
+            fetch(matchShort[0], { method: "GET", redirect: "follow" })
+              .then((res2) => {
+                if (res2 && res2.url && res2.url !== matchShort[0]) {
+                  this.buscarDireccion(res2.url);
+                } else {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "No se pudo resolver el shortlink de Google Maps. Intenta pegar el enlace largo.",
+                  });
+                }
+              })
+              .catch((err2) => {
+                Swal.fire({
+                  icon: "error",
+                  title: "Error",
+                  text: "No se pudo resolver el shortlink de Google Maps.",
+                });
+                console.error("Error al resolver shortlink (GET):", err2);
+              });
+          }
+        })
+        .catch((err) => {
+          // Si HEAD falla, intentar GET
+          fetch(matchShort[0], { method: "GET", redirect: "follow" })
+            .then((res2) => {
+              if (res2 && res2.url && res2.url !== matchShort[0]) {
+                this.buscarDireccion(res2.url);
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Error",
+                  text: "No se pudo resolver el shortlink de Google Maps. Intenta pegar el enlace largo.",
+                });
+              }
+            })
+            .catch((err2) => {
+              Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "No se pudo resolver el shortlink de Google Maps.",
+              });
+              console.error("Error al resolver shortlink (GET):", err2);
+            });
+          console.error("Error al resolver shortlink (HEAD):", err);
+        });
+      return;
+    }
+
+    // 4. Detectar coordenadas (lat,lon)
+    const matchCoords = direccion.match(coordRegex);
+    if (matchCoords) {
+      const lat = parseFloat(matchCoords[1]);
+      const lng = parseFloat(matchCoords[3]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        this.latitud = lat;
+        this.longitud = lng;
+        this.setMarker(lat, lng);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Coordenadas inválidas.",
+        });
+      }
+      return;
+    }
+
+    // 5. Buscar como dirección normal usando Nominatim
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${direccion}`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`
     )
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {
           const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
+          const lng = parseFloat(data[0].lon);
           this.latitud = lat;
-          this.longitud = lon;
-          this.setMarker(lat, lon);
+          this.longitud = lng;
+          this.setMarker(lat, lng);
+        } else {
+          Swal.fire({
+            icon: "info",
+            title: "Sin resultados",
+            text: "No se encontraron coordenadas para esta dirección.",
+          });
         }
+      })
+      .catch((err) => {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error al buscar la dirección.",
+        });
+        console.error("Error al buscar dirección en Nominatim:", err);
       });
   }
 
@@ -523,6 +697,47 @@ export class ProspectDetailsComponent implements OnInit {
         const { lat, lng } = e.target.getLatLng();
         this.latitud = lat;
         this.longitud = lng;
+      });
+    } else if (this.prospectsId === null) {
+      // Si es un nuevo prospecto y no hay lat/lng, intentar obtener la ubicación del usuario
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            this.latitud = position.coords.latitude;
+            this.longitud = position.coords.longitude;
+            this.setMarker(this.latitud, this.longitud);
+          },
+          (error) => {
+            // Si falla la geolocalización, no hacer nada, dejar el mapa en vista por defecto
+          }
+        );
+      }
+      // Clic en el mapa para colocar nuevo marcador
+      this.map.on("click", (e: any) => {
+        const { lat, lng } = e.latlng;
+        this.latitud = lat;
+        this.longitud = lng;
+
+        if (this.marker) {
+          this.map.removeLayer(this.marker);
+        }
+
+        const popupContent = `
+        <b>Empresa:</b> ${this.prospectForm.value.empresa}<br>
+        <b>Contacto:</b> ${this.prospectForm.value.contacto}<br>
+        <b>Teléfono:</b> ${this.prospectForm.value.telefono}
+      `;
+
+        this.marker = L.marker([lat, lng], { draggable: true, icon })
+          .addTo(this.map)
+          .bindPopup(popupContent)
+          .openPopup();
+
+        this.marker.on("dragend", (event: any) => {
+          const { lat, lng } = event.target.getLatLng();
+          this.latitud = lat;
+          this.longitud = lng;
+        });
       });
     } else {
       // Clic en el mapa para colocar nuevo marcador

@@ -899,11 +899,27 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
 
-  onUnidadNegocioChange() {
+onUnidadNegocioChange() {
   this.selectedUnidadNegocio = this.formFiltro.get('unidadNegocio')?.value;
   // actualizar gráfica
   const unidad = this.datosEmbudo.find(u => u.unidadId === this.selectedUnidadNegocio);
-  if (!unidad) return;
+  if (!unidad) {
+    // Si no hay datos para la unidad seleccionada, mostrar todos los valores en 0
+    this.chartOptionsEmbudo.series = [{
+      type: 'funnel',
+      name: 'Sin datos',
+      data: [
+        { name: 'Total', y: 0, color: '#7cb5ec' },
+        { name: 'Pendiente', y: 0, color: '#f7a35c' },
+        { name: 'Aprobada', y: 0, color: '#8085e9' },
+        { name: 'Rechazada', y: 0, color: '#f15c80' },
+        { name: 'Finalizada', y: 0, color: '#e4d354' },
+        { name: 'En Proceso', y: 0, color: '#00e396' }
+      ]
+    }];
+    this.updateFlag = true;
+    return;
+  }
 
   this.chartOptionsEmbudo.series = [{
     type: 'funnel',

@@ -153,10 +153,14 @@
                 </div>
 
                 <!-- Contenido -->
-                <highcharts-chart #chartEmbudo [Highcharts]="Highcharts" [options]="chartOptionsEmbudo"
-                  [(update)]="updateFlag" style="width: 110%; height: 400px; display: block; margin-left: -5%;">
-                </highcharts-chart>
-
+                <ng-container *ngIf="datosEmbudo?.length > 0; else noEmbudoDatos">
+                  <highcharts-chart #chartEmbudo [Highcharts]="Highcharts" [options]="chartOptionsEmbudo"
+                    [(update)]="updateFlag" style="width: 110%; height: 400px; display: block; margin-left: -5%;">
+                  </highcharts-chart>
+                </ng-container>
+                <ng-template #noEmbudoDatos>
+                  <div class="text-center text-gray-400 py-20">No se encontraron datos</div>
+                </ng-template>
 
               </div>
             </div>
