@@ -36,6 +36,7 @@ import { MatDialog } from "@angular/material/dialog";
 import Swal from "sweetalert2";
 import * as L from "leaflet";
 import { MomentDateAdapter } from "@angular/material-moment-adapter";
+import { environment } from '../../../../../../environments/environment';
 
 export const CUSTOM_DATE_FORMATS = {
   parse: {
@@ -464,7 +465,7 @@ export class ProspectDetailsComponent implements OnInit {
     const matchCid = direccion.match(cidRegex);
     if (matchCid) {
       const cid = matchCid[1];
-      const apiKey: string = "AIzaSyCnhkYFNO57qkBrvOaIFJwZy6vDYtJMncg"; // 👉 pon aquí tu API Key de Google
+      const apiKey: string = environment.apiKeyGoogle; // 👉 pon aquí tu API Key de Google
       if (!apiKey || apiKey === "TU_API_KEY_AQUI") {
         Swal.fire({
           icon: "warning",
