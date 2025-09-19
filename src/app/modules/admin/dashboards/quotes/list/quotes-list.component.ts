@@ -40,6 +40,7 @@ import Swal from 'sweetalert2';
 export class QuoteListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
     'cotizacionId',
+    'cotizacion',
     'nombreCliente',
     'empresa',
     'fechaEntrega',
