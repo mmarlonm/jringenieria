@@ -192,6 +192,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     })
   });
 
+  usuarios: string[] = []; // Lista de nombres de usuario para el combo
+  usuarioSeleccionado: string = ''; // Usuario filtrado
+
 
   /**
    * Constructor
@@ -831,37 +834,56 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     // Limpiar marcadores anteriores
     this.marcadores.forEach((m) => this.map.removeLayer(m));
     this.marcadores = [];
+    this.usuarios = [];
+
     console.log("Cargando marcador ", this.tipoSeleccionado);
+
     this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
       const icon = L.icon({
         iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         iconSize: [25, 41],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34],
         shadowSize: [41, 41],
       });
-      for (const u of ubicaciones) {
+
+      // Generar lista de usuarios únicos
+      const usuariosSet = new Set<string>();
+      ubicaciones.forEach(u => usuariosSet.add(u.nombreUsuario));
+      this.usuarios = Array.from(usuariosSet);
+
+      // Filtrar si hay usuario seleccionado
+      const ubicacionesFiltradas = this.usuarioSeleccionado
+        ? ubicaciones.filter(u => u.nombreUsuario === this.usuarioSeleccionado)
+        : ubicaciones;
+
+      for (const u of ubicacionesFiltradas) {
         if (u.latitud && u.longitud) {
-          this.marker = L.marker([u.latitud, u.longitud], {
-            draggable: true,
-            icon,
-          });
+          const marker = L.marker([u.latitud, u.longitud], { draggable: true, icon });
 
-          // Popup con enlace clicable
-          const popupContent = `<a href="#" class="popup-link" data-id="${u.id}" data-tipo="${u.tipo}"><strong>${u.nombre}</strong></a><br/>(${u.tipo})`;
+          // Mostrar nombre y usuario en el popup
+          const nombre = u.nombre ?? "Sin nombre";
+          const nombreUsuario = u.nombreUsuario ?? "Desconocido";
+          const tipo = u.tipo ?? "Desconocido";
 
-          this.marker.bindPopup(popupContent);
+          const popupContent = `
+            <strong>${nombre}</strong><br/>
+            Cargado por: <em>${nombreUsuario}</em><br/>
+            (${tipo})<br/>
+            <a href="#" class="popup-link" data-id="${u.id}" data-tipo="${tipo}">Ver detalle</a>
+          `;
 
-          // Escuchar el evento de apertura del popup para agregar click handler
-          this.marker.on('popupopen', () => {
+
+          marker.bindPopup(popupContent);
+
+          // Manejar click en el popup
+          marker.on('popupopen', () => {
             setTimeout(() => {
               const link = document.querySelector('.popup-link');
               if (link) {
                 link.addEventListener('click', (event: Event) => {
                   event.preventDefault();
-
                   const id = (link as HTMLElement).getAttribute('data-id');
                   const tipo = (link as HTMLElement).getAttribute('data-tipo');
 
@@ -872,20 +894,22 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
                   }
                 });
               }
-            }, 0); // Esperar a que se renderice el popup
+            }, 0);
           });
 
-          this.marker.addTo(this.map);
-          this.marcadores.push(this.marker);
+          marker.addTo(this.map);
+          this.marcadores.push(marker);
         }
       }
 
+      // Ajustar bounds
       if (this.marcadores.length > 0) {
         const group = L.featureGroup(this.marcadores);
         this.map.fitBounds(group.getBounds().pad(0.2));
       }
     });
   }
+
 
   buildFunnelData(unidad: any) {
     return [
@@ -899,60 +923,60 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
 
-onUnidadNegocioChange() {
-  this.selectedUnidadNegocio = this.formFiltro.get('unidadNegocio')?.value;
-  // actualizar gráfica
-  const unidad = this.datosEmbudo.find(u => u.unidadId === this.selectedUnidadNegocio);
-  if (!unidad) {
-    // Si no hay datos para la unidad seleccionada, mostrar todos los valores en 0
+  onUnidadNegocioChange() {
+    this.selectedUnidadNegocio = this.formFiltro.get('unidadNegocio')?.value;
+    // actualizar gráfica
+    const unidad = this.datosEmbudo.find(u => u.unidadId === this.selectedUnidadNegocio);
+    if (!unidad) {
+      // Si no hay datos para la unidad seleccionada, mostrar todos los valores en 0
+      this.chartOptionsEmbudo.series = [{
+        type: 'funnel',
+        name: 'Sin datos',
+        data: [
+          { name: 'Total', y: 0, color: '#7cb5ec' },
+          { name: 'Pendiente', y: 0, color: '#f7a35c' },
+          { name: 'Aprobada', y: 0, color: '#8085e9' },
+          { name: 'Rechazada', y: 0, color: '#f15c80' },
+          { name: 'Finalizada', y: 0, color: '#e4d354' },
+          { name: 'En Proceso', y: 0, color: '#00e396' }
+        ]
+      }];
+      this.updateFlag = true;
+      return;
+    }
+
     this.chartOptionsEmbudo.series = [{
       type: 'funnel',
-      name: 'Sin datos',
+      name: unidad.unidadDeNegocio,
       data: [
-        { name: 'Total', y: 0, color: '#7cb5ec' },
-        { name: 'Pendiente', y: 0, color: '#f7a35c' },
-        { name: 'Aprobada', y: 0, color: '#8085e9' },
-        { name: 'Rechazada', y: 0, color: '#f15c80' },
-        { name: 'Finalizada', y: 0, color: '#e4d354' },
-        { name: 'En Proceso', y: 0, color: '#00e396' }
+        { name: 'Total', y: unidad.total, color: '#7cb5ec' },
+        { name: 'Pendiente', y: unidad.pendiente, color: '#f7a35c' },
+        { name: 'Aprobada', y: unidad.aprobada, color: '#8085e9' },
+        { name: 'Rechazada', y: unidad.rechazada, color: '#f15c80' },
+        { name: 'Finalizada', y: unidad.finalizada, color: '#e4d354' },
+        { name: 'En Proceso', y: unidad.enProceso, color: '#00e396' }
       ]
     }];
+
     this.updateFlag = true;
-    return;
   }
 
-  this.chartOptionsEmbudo.series = [{
-    type: 'funnel',
-    name: unidad.unidadDeNegocio,
-    data: [
-      { name: 'Total', y: unidad.total, color: '#7cb5ec' },
-      { name: 'Pendiente', y: unidad.pendiente, color: '#f7a35c' },
-      { name: 'Aprobada', y: unidad.aprobada, color: '#8085e9' },
-      { name: 'Rechazada', y: unidad.rechazada, color: '#f15c80' },
-      { name: 'Finalizada', y: unidad.finalizada, color: '#e4d354' },
-      { name: 'En Proceso', y: unidad.enProceso, color: '#00e396' }
-    ]
-  }];
+  onBuscar() {
+    const unidadId = this.formFiltro.get('unidadNegocio')?.value;
+    const fechaInicio = this.formFiltro.get('fecha.start')?.value;
+    const fechaFin = this.formFiltro.get('fecha.end')?.value;
 
-  this.updateFlag = true;
-}
+    if (!fechaInicio || !fechaFin) return;
 
-onBuscar() {
-  const unidadId = this.formFiltro.get('unidadNegocio')?.value;
-  const fechaInicio = this.formFiltro.get('fecha.start')?.value;
-  const fechaFin = this.formFiltro.get('fecha.end')?.value;
+    console.log('Buscando datos del:', fechaInicio, 'al:', fechaFin, 'para unidad:', unidadId);
 
-  if (!fechaInicio || !fechaFin) return;
-
-  console.log('Buscando datos del:', fechaInicio, 'al:', fechaFin, 'para unidad:', unidadId);
-
-  this._projectService.getDataGraf(fechaInicio, fechaFin)
-    .subscribe((response: any[]) => {
-      this.datosEmbudo = response || [];
-      this.onUnidadNegocioChange(); // actualizar gráfica
-      this.cdr.detectChanges()
-    });
-}
+    this._projectService.getDataGraf(fechaInicio, fechaFin)
+      .subscribe((response: any[]) => {
+        this.datosEmbudo = response || [];
+        this.onUnidadNegocioChange(); // actualizar gráfica
+        this.cdr.detectChanges()
+      });
+  }
 
 
 }

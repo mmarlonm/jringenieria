@@ -692,19 +692,33 @@
           </ng-template>
           <ng-template matTabContent>
             <div class="relative">
-              <!-- Toggle centrado flotante -->
-              <div class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 p-2 rounded shadow">
+              <!-- Contenedor centrado flotante de filtros -->
+              <div
+                class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 p-4 rounded-xl shadow-lg flex flex-col md:flex-row items-center gap-4">
+
+                <!-- Toggle entre Clientes y Prospectos -->
                 <mat-button-toggle-group name="tipoToggle" [(ngModel)]="tipoSeleccionado" (change)="cargarMarcadores()"
-                  appearance="legacy" color="primary" exclusive>
+                  appearance="legacy" color="primary" exclusive class="flex-wrap">
                   <mat-button-toggle value="cliente">Clientes</mat-button-toggle>
                   <mat-button-toggle value="prospecto">Prospectos</mat-button-toggle>
                 </mat-button-toggle-group>
+
+                <!-- Selector de usuario -->
+                <mat-form-field appearance="fill" class="w-48" *ngIf="tipoSeleccionado === 'prospecto'">
+                  <mat-label>Filtrar por usuario</mat-label>
+                  <mat-select [(value)]="usuarioSeleccionado" (selectionChange)="cargarMarcadores()">
+                    <mat-option value="">Todos</mat-option>
+                    <mat-option *ngFor="let u of usuarios" [value]="u">{{ u }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
               </div>
 
               <!-- Mapa -->
               <div id="map" style="height: 500px; width: 100%"></div>
             </div>
           </ng-template>
+
         </mat-tab>
       </mat-tab-group>
     </div>
