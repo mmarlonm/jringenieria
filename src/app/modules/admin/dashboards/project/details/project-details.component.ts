@@ -585,30 +585,37 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   }
 
   getFilesAll(): void {
-    if (!this.projectId) return;
+  if (!this.projectId) return;
 
-    this.projectService.getFiles(this.projectId).subscribe((files) => {
+  this.projectService.getFiles(this.projectId).subscribe((files) => {
 
-      if (files == null) {
-        this.files = [];
-        this.filesEvidencias = [];
-        return
-      }
-      const allFiles = files.map((file) => ({
-        ...file,
-        type: this.getFileType(file.nombreArchivo),
-      }));
-      if (allFiles && allFiles.length > 0) {
-        // Separar los archivos
-        this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
-        this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
-      } else {
-        this.files = [];
-        this.filesEvidencias = [];
-      }
+    if (files == null) {
+      this.files = [];
+      this.filesEvidencias = [];
+      return;
+    }
 
-    });
-  }
+    // Combinar archivos de proyecto y archivos de cotización
+    const allFiles = [
+      ...(files.archivosProyecto || []),
+      ...(files.archivosCotizacion || [])
+    ].map((file) => ({
+      ...file,
+      type: this.getFileType(file.nombreArchivo),
+    }));
+
+    if (allFiles && allFiles.length > 0) {
+      // Separar los archivos por categoría
+      this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
+      this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
+    } else {
+      this.files = [];
+      this.filesEvidencias = [];
+    }
+
+  });
+}
+
 
   // Función para obtener el tipo de archivo según la extensión
   getFileType(nombreArchivo: string): string {

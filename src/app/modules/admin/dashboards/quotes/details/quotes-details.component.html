@@ -74,6 +74,16 @@
             <mat-label>Nombre de Contacto</mat-label>
             <input matInput formControlName="nombreContacto" />
           </mat-form-field>
+
+          <!-- Unidad de Negocio -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Unidad de Negocio</mat-label>
+            <mat-select formControlName="unidadId">
+              <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">
+                {{ unidad.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

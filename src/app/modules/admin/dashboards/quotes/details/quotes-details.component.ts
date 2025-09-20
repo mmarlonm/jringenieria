@@ -22,13 +22,17 @@ import { ClientsService } from "../../../catalogs/clients/clients.service";
 import { ProspectosService } from "../../prospects/prospects.services";
 import { debounceTime } from "rxjs";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
-import { registerLocaleData } from "@angular/common";
-import localeEs from "@angular/common/locales/es";
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+
+registerLocaleData(localeEs, 'es');
+
 import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { ChangeDetectorRef } from '@angular/core';
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import Swal from 'sweetalert2';
+import { ProjectService } from "../../project/project.service";
 
 @Component({
   selector: "app-quotes-details",
@@ -79,7 +83,8 @@ export class QuoteDetailsComponent implements OnInit {
     private clientsService: ClientsService,
     private prospectsService: ProspectosService,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private projectService: ProjectService,
   ) {}
 
   ngOnInit(): void {
@@ -112,10 +117,12 @@ export class QuoteDetailsComponent implements OnInit {
       montoTotal: [0],
       ajustesCostos: [null],
       comentarios: [null],
+      unidadId : [null]
     });
     this.getEstatus();
     this.getClientes();
     this.getProspects();
+    this.getUnidadesDeNegocio();
 
     const userData = JSON.parse(this.quotesService.userInformation);
     this.quotesForm.get("usuarioCreadorId").setValue(userData.usuario.id);
@@ -192,6 +199,7 @@ export class QuoteDetailsComponent implements OnInit {
             montoTotal: quotes.montoTotal,
             ajustesCostos: quotes.ajustesCostos,
             comentarios: quotes.comentarios,
+            unidadId: quotes.unidadId
           });
         }
         else
@@ -210,28 +218,28 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   saveQuotes(): void {
-    if (this.quotesForm.invalid) {
-       Swal.fire({
-                             icon: "error",
-                             title:"Opps",
-                             text:"Por favor, completa los campos obligatorios",
-                             draggable: true
-                           });   
-                           return;                   
-          
-    }
+  if (this.quotesForm.invalid) {
+    Swal.fire({
+      icon: "error",
+      title:"Opps",
+      text:"Por favor, completa los campos obligatorios",
+      draggable: true
+    });   
+    return;                   
+  }
 
-    const quotesData: any = this.quotesForm.value;
+  const quotesData: any = this.quotesForm.value;
 
+  // Función para guardar la cotización (create o update)
+  const guardarCotizacion = () => {
     if (this.quotesId) {
-      // Actualizar proyecto
+      // Actualizar
       quotesData.cotizacionId = this.quotesId;
       this.quotesService.updateQuote(quotesData).subscribe((res) => {
-        if(res.code==200){
-                // Redirigir a la lista de proyectos
-                this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
-                this.snackBar.open('Cotizacion actualizada correctamente', 'Cerrar', { duration: 3000 });
-        }else{
+        if(res.code == 200){
+          this.router.navigate(["/dashboards/quote"]);
+          this.snackBar.open('Cotización actualizada correctamente', 'Cerrar', { duration: 3000 });
+        } else {
           Swal.fire({
             icon: "error",
             title:"Opps",
@@ -239,15 +247,14 @@ export class QuoteDetailsComponent implements OnInit {
             draggable: true
           }); 
         }
-       });
+      });
     } else {
-      // Crear nuevo proyecto
+      // Crear nuevo
       this.quotesService.createQuote(quotesData).subscribe((res) => {
-        if(res.code==200){
-        // Redirigir a la lista de proyectos
-        this.router.navigate(["/dashboards/quote"]); // O la ruta correspondiente a la lista
-        this.snackBar.open('Cotizacion guardada correctamente', 'Cerrar', { duration: 3000 });
-        }else{
+        if(res.code == 200){
+          this.router.navigate(["/dashboards/quote"]);
+          this.snackBar.open('Cotización guardada correctamente', 'Cerrar', { duration: 3000 });
+        } else {
           Swal.fire({
             icon: "error",
             title:"Opps",
@@ -257,7 +264,29 @@ export class QuoteDetailsComponent implements OnInit {
         }
       });
     }
+  };
+
+  // Si el estatus es 2 (Aprobada), mostrar confirmación
+  if (quotesData.estatus == 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cotización Aprobada",
+      text: "Esta cotización está aprobada y se migrará a proyecto. ¿Desea continuar?",
+      showCancelButton: true,
+      confirmButtonText: "Sí, guardar",
+      cancelButtonText: "Cancelar",
+      allowOutsideClick: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        guardarCotizacion();
+      }
+    });
+  } else {
+    // Guardar directamente si no está aprobada
+    guardarCotizacion();
   }
+}
+
 
   updateValue(event: Event, controlName: string) {
     let input = event.target as HTMLInputElement;
@@ -454,5 +483,11 @@ export class QuoteDetailsComponent implements OnInit {
         });       
       }
     );
+  }
+
+  getUnidadesDeNegocio(): void {
+    this.projectService
+      .getUnidadesDeNegocio()
+      .subscribe((data) => (this.unidadesDeNegocio = data));
   }
 }
