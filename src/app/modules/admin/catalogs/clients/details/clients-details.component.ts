@@ -17,6 +17,8 @@ import {StarRatingBridgeModule} from './start-rating-bridge.module'
 import * as L from "leaflet";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
+import { environment } from '../../../../../../environments/environment';
+
 @Component({
   selector: 'app-clients-details',
   templateUrl: './clients-details.component.html',
@@ -206,21 +208,110 @@ setMarker(lat: number, lng: number) {
     this.map.setView([lat, lng], 15);
   }
 
-  buscarDireccion(direccion: string) {
-    fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${direccion}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
-          this.latitud = lat;
-          this.longitud = lon;
-          this.setMarker(lat, lon);
-        }
+  buscarDireccion(direccion: string, redirectCount: number = 0) {
+  if (!direccion) return;
+
+  const cidRegex = /google\.com\/maps\?cid=(\d+)/;
+  const shortLinkRegex = /https?:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
+  const coordRegex = /^\s*(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)\s*$/;
+  const atLatLngRegex = /@(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)(?:,|\/)/;
+
+  // 1. Google Maps CID
+  const matchCid = direccion.match(cidRegex);
+  if (matchCid) {
+    const cid = matchCid[1];
+    const apiKey: string = environment.apiKeyGoogle;
+    if (!apiKey || apiKey === "TU_API_KEY_AQUI") {
+      Swal.fire({
+        icon: "warning",
+        title: "Atención",
+        text: "Para buscar enlaces CID necesitas configurar la API Key de Google Places.",
       });
+      return;
+    }
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?cid=${cid}&key=${apiKey}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.result?.geometry?.location) {
+          const lat = data.result.geometry.location.lat;
+          const lng = data.result.geometry.location.lng;
+          this.latitud = lat;
+          this.longitud = lng;
+          this.setMarker(lat, lng);
+        } else {
+          Swal.fire({ icon: "error", title: "Error", text: "No se pudieron obtener coordenadas del enlace." });
+        }
+      })
+      .catch(err => console.error(err));
+    return;
   }
+
+  // 2. Google Maps @lat,lng
+  const matchAtLatLng = direccion.match(atLatLngRegex);
+  if (matchAtLatLng) {
+    const lat = parseFloat(matchAtLatLng[1]);
+    const lng = parseFloat(matchAtLatLng[3]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      this.latitud = lat;
+      this.longitud = lng;
+      this.setMarker(lat, lng);
+    } else {
+      Swal.fire({ icon: "error", title: "Error", text: "Coordenadas inválidas en URL." });
+    }
+    return;
+  }
+
+  // 3. Google Maps shortlink (maps.app.goo.gl)
+  const matchShort = direccion.match(shortLinkRegex);
+  if (matchShort && redirectCount < 2) {
+    fetch(matchShort[0], { method: "HEAD", redirect: "follow" })
+      .then(res => {
+        if (res?.url && res.url !== matchShort[0]) {
+          this.buscarDireccion(res.url, redirectCount + 1);
+        } else {
+          Swal.fire({ icon: "error", title: "Error", text: "No se pudo resolver el shortlink." });
+        }
+      })
+      .catch(err => console.error("Error shortlink:", err));
+    return;
+  }
+
+  // 4. Coordenadas directas lat,lon
+  const matchCoords = direccion.match(coordRegex);
+  if (matchCoords) {
+    const lat = parseFloat(matchCoords[1]);
+    const lng = parseFloat(matchCoords[3]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      this.latitud = lat;
+      this.longitud = lng;
+      this.setMarker(lat, lng);
+    } else {
+      Swal.fire({ icon: "error", title: "Error", text: "Coordenadas inválidas." });
+    }
+    return;
+  }
+
+  // 5. Dirección normal -> Nominatim
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        this.latitud = lat;
+        this.longitud = lon;
+        this.setMarker(lat, lon);
+      } else {
+        Swal.fire({ icon: "info", title: "Sin resultados", text: "No se encontraron coordenadas." });
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      Swal.fire({ icon: "error", title: "Error", text: "Error al buscar la dirección." });
+    });
+}
+
 
   onTabChange(event: any): void {
     const tabLabel = event.tab.textLabel;
