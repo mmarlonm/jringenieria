@@ -831,87 +831,90 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   async cargarMarcadores(): Promise<void> {
-    this.marcadores.forEach((m) => this.map.removeLayer(m));
-    this.marcadores = [];
-    this.usuarios = [];
+  // Limpiar marcadores existentes
+  this.marcadores.forEach((m) => this.map.removeLayer(m));
+  this.marcadores = [];
+  this.usuarios = [];
 
-    this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
-      const usuariosSet = new Set<string>();
-      ubicaciones.forEach(u => usuariosSet.add(u.nombreUsuario ?? 'Desconocido'));
-      this.usuarios = Array.from(usuariosSet);
+  this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
+    // Generar lista de usuarios únicos
+    const usuariosUnicos = Array.from(new Set(ubicaciones.map(u => u.nombreUsuario ?? 'Desconocido')));
+    this.usuarios = usuariosUnicos;
 
-      const ubicacionesFiltradas = this.usuarioSeleccionado
-        ? ubicaciones.filter(u => (u.nombreUsuario ?? 'Desconocido') === this.usuarioSeleccionado)
-        : ubicaciones;
+    // Colores disponibles
+    const colores = ['blue', 'red', 'green', 'orange', 'purple', 'darkblue', 'cadetblue', 'darkred'];
 
-      // Colores para usuarios
-      const colores = ['blue', 'red', 'green', 'orange', 'purple', 'darkblue', 'cadetblue', 'darkred'];
-      const colorPorUsuario: { [key: string]: string } = {};
-      if (!this.usuarioSeleccionado) {
-        const usuariosUnicos = Array.from(new Set(ubicaciones.map(u => u.nombreUsuario ?? 'Desconocido')));
-        usuariosUnicos.forEach((usuario, i) => {
-          colorPorUsuario[usuario] = colores[i % colores.length];
+    // Mapear cada usuario a un color
+    const colorPorUsuario: { [key: string]: string } = {};
+    usuariosUnicos.forEach((usuario, i) => {
+      colorPorUsuario[usuario] = colores[i % colores.length];
+    });
+
+    // Filtrar ubicaciones según selección
+    const ubicacionesFiltradas = this.usuarioSeleccionado
+      ? ubicaciones.filter(u => (u.nombreUsuario ?? 'Desconocido') === this.usuarioSeleccionado)
+      : ubicaciones;
+
+    // Crear marcadores
+    for (const u of ubicacionesFiltradas) {
+      if (u.latitud && u.longitud) {
+        const nombreUsuario = u.nombreUsuario ?? 'Desconocido';
+        const nombre = u.nombre ?? 'Sin nombre';
+        const tipo = u.tipo ?? 'Desconocido';
+
+        // ⚡ Mantener el color asignado al usuario, incluso al filtrar
+        const color = colorPorUsuario[nombreUsuario] || 'blue';
+
+        const icon = L.icon({
+          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
         });
-      }
 
-      for (const u of ubicacionesFiltradas) {
-        if (u.latitud && u.longitud) {
-          const nombreUsuario = u.nombreUsuario ?? 'Desconocido';
-          const nombre = u.nombre ?? 'Sin nombre';
-          const tipo = u.tipo ?? 'Desconocido';
+        const marker = L.marker([u.latitud, u.longitud], { draggable: true, icon });
 
-          // Asignar color
-          const color = this.usuarioSeleccionado ? 'blue' : colorPorUsuario[nombreUsuario] || 'blue';
-
-          // Icono Leaflet con color dinámico
-          const icon = L.icon({
-            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41],
-          });
-
-          const marker = L.marker([u.latitud, u.longitud], { draggable: true, icon });
-
-          const popupContent = `
+        const popupContent = `
           <strong>${nombre}</strong><br/>
           Cargado por: <em>${nombreUsuario}</em><br/>
           (${tipo})<br/>
           <a href="#" class="popup-link" data-id="${u.id}" data-tipo="${tipo}">Ver detalle</a>
         `;
-          marker.bindPopup(popupContent);
+        marker.bindPopup(popupContent);
 
-          marker.on('popupopen', () => {
-            setTimeout(() => {
-              const link = document.querySelector('.popup-link');
-              if (link) {
-                link.addEventListener('click', (event: Event) => {
-                  event.preventDefault();
-                  const id = (link as HTMLElement).getAttribute('data-id');
-                  const tipo = (link as HTMLElement).getAttribute('data-tipo');
-                  if (tipo?.toLowerCase() === 'prospecto') {
-                    this._router.navigate([`/dashboards/prospects/${id}`]);
-                  } else if (tipo?.toLowerCase() === 'cliente') {
-                    this._router.navigate([`/catalogs/clients/${id}`]);
-                  }
-                });
-              }
-            }, 0);
-          });
+        marker.on('popupopen', () => {
+          setTimeout(() => {
+            const link = document.querySelector('.popup-link');
+            if (link) {
+              link.addEventListener('click', (event: Event) => {
+                event.preventDefault();
+                const id = (link as HTMLElement).getAttribute('data-id');
+                const tipo = (link as HTMLElement).getAttribute('data-tipo');
+                if (tipo?.toLowerCase() === 'prospecto') {
+                  this._router.navigate([`/dashboards/prospects/${id}`]);
+                } else if (tipo?.toLowerCase() === 'cliente') {
+                  this._router.navigate([`/catalogs/clients/${id}`]);
+                }
+              });
+            }
+          }, 0);
+        });
 
-          marker.addTo(this.map);
-          this.marcadores.push(marker);
-        }
+        marker.addTo(this.map);
+        this.marcadores.push(marker);
+        this.cdr.detectChanges(); // Forzar actualización en la vista
       }
+    }
 
-      if (this.marcadores.length > 0) {
-        const group = L.featureGroup(this.marcadores);
-        this.map.fitBounds(group.getBounds().pad(0.2));
-      }
-    });
-  }
+    // Ajustar el mapa a los marcadores
+    if (this.marcadores.length > 0) {
+      const group = L.featureGroup(this.marcadores);
+      this.map.fitBounds(group.getBounds().pad(0.2));
+    }
+  });
+}
 
 
 
