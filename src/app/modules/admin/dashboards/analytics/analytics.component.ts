@@ -42,6 +42,7 @@ import { FormGroup, FormControl } from '@angular/forms';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
 import { ReactiveFormsModule } from '@angular/forms';
+import { HttpClient } from "@angular/common/http";
 // Registrar español
 registerLocaleData(localeEs);
 
@@ -195,6 +196,22 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   usuarios: string[] = []; // Lista de nombres de usuario para el combo
   usuarioSeleccionado: string = ''; // Usuario filtrado
 
+  private categorias = [
+  { query: "automotive factory", motivo: "Industrias automotrices con alto consumo eléctrico y automatización de procesos." },
+  { query: "cement plant", motivo: "Plantas cementeras requieren alta tensión y mantenimiento eléctrico especializado." },
+  { query: "mine", motivo: "Mineras requieren instalaciones eléctricas robustas y seguras." },
+  { query: "hotel", motivo: "Hoteles necesitan eficiencia energética, iluminación y automatización." },
+  { query: "hospital", motivo: "Hospitales requieren energía confiable para equipos médicos y respaldo." },
+  { query: "farm", motivo: "Granjas y empresas ganaderas usan sistemas eléctricos para producción." },
+  { query: "industrial park", motivo: "Parques industriales concentran múltiples empresas con alto potencial B2B." },
+  { query: "office", motivo: "Oficinas corporativas demandan cableado estructurado, seguridad y climatización." },
+  { query: "shopping mall", motivo: "Centros comerciales requieren alta demanda de electricidad y mantenimiento." }
+];
+
+
+prospectosExistentes: any[] = []; // Para almacenar los prospectos ya existentes
+
+
 
   /**
    * Constructor
@@ -206,7 +223,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     private _usersService: UsersService,
     private cdr: ChangeDetectorRef,
     private _salesService: SalesService,
-    private presenceService: PresenceService
+    private presenceService: PresenceService,
+    private http: HttpClient
   ) { }
 
   // -----------------------------------------------------------------------------------------------------
@@ -837,6 +855,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   this.usuarios = [];
 
   this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
+    this.prospectosExistentes = ubicaciones; // Guardar los prospectos ya existentes
     // Generar lista de usuarios únicos
     const usuariosUnicos = Array.from(new Set(ubicaciones.map(u => u.nombreUsuario ?? 'Desconocido')));
     this.usuarios = usuariosUnicos;
@@ -986,5 +1005,107 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       });
   }
 
+async asistenteProspeccion() {
+  if (!navigator.geolocation) {
+    alert("Tu navegador no soporta geolocalización.");
+    return;
+  }
 
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    this.map.setView([lat, lon], 13);
+
+    try {
+      this._projectService.getProspectosIA(lat,
+        lon,
+        this.prospectosExistentes?.map(p => p.nombre) || []).subscribe((prospectos) => {
+
+        prospectos.forEach(r => {
+        if (this.prospectosExistentes.some(p => p.nombre.toLowerCase() === r.nombre.toLowerCase())) return;
+
+        const marker = L.marker([r.latitud, r.longitud], { icon: this.getIconSugerencia() })
+          .addTo(this.map)
+          .bindPopup(`
+            <b>${r.nombre}</b><br/>
+            Tipo: ${r.tipo}<br/>
+            <em>${r.motivo}</em><br/>
+            ⚡ Prospecto sugerido por IA
+          `);
+
+        this.marcadores.push(marker);
+      });
+
+      if (this.marcadores.length > 0) {
+        const group = L.featureGroup(this.marcadores);
+        this.map.fitBounds(group.getBounds().pad(0.2));
+      }
+      });
+
+      
+
+    } catch (err) {
+      console.error("Error consultando IA:", err);
+      alert("No se pudieron generar prospectos con IA");
+    }
+  }, (err) => {
+    console.error("Error obteniendo ubicación:", err);
+    alert("No se pudo obtener tu ubicación actual.");
+  });
+}
+
+private getIconSugerencia(): L.Icon {
+  return L.icon({
+    iconUrl: 'assets/images/lightning.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -28]
+  });
+}
+
+buscarProspectos() {
+  if (!navigator.geolocation) {
+    alert("Tu navegador no soporta geolocalización.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      // Centrar en ubicación actual
+      this.map.setView([lat, lon], 13);
+
+      this.categorias.forEach(cat => {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cat.query}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
+
+        this.http.get<any[]>(url).subscribe(resultados => {
+          resultados.forEach(r => {
+            const nombreLugar = r.display_name;
+
+            // 🔎 Excluir prospectos existentes (por nombre aproximado)
+            if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
+              return;
+            }
+
+            // ⚡ Crear marcador sugerido
+            L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
+              .addTo(this.map)
+              .bindPopup(`
+                <b>${nombreLugar}</b><br/>
+                Categoría: ${cat.query}<br/>
+                <em>${cat.motivo}</em><br/>
+                ⚡ Prospecto sugerido
+              `);
+          });
+        });
+      });
+    },
+    (err) => {
+      console.error("Error obteniendo ubicación:", err);
+      alert("No se pudo obtener tu ubicación actual.");
+    }
+  );
+}
 }

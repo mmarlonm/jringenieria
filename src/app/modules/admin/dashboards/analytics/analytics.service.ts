@@ -60,5 +60,15 @@ export class AnalyticsService {
     return this._httpClient.get<any[]>(`${this.apiUrl}/embudo-report`, { params });
   }
 
+  // Servicio Angular
+  getProspectosIA(lat: number, lon: number, prospectosExistentes: string[]): Observable<any[]> {
+    const body = {
+      lat,
+      lon,
+      prospectosExistentes
+    };
+
+    return this._httpClient.post<any[]>(`${this.apiUrl}/prospectos`, body);
+  }
 
 }

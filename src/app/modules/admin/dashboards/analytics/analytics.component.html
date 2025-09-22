@@ -694,7 +694,7 @@
             <div class="relative">
               <!-- Contenedor centrado flotante de filtros -->
               <div
-                class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 p-4 rounded-xl shadow-lg flex flex-col md:flex-row items-center gap-4">
+                class="absolute top-3 left-1/3 -translate-x-1/2 z-[1000] bg-white/90 p-1 rounded-xl shadow-lg flex flex-col md:flex-row items-center gap-4">
 
                 <!-- Toggle entre Clientes y Prospectos -->
                 <mat-button-toggle-group name="tipoToggle" [(ngModel)]="tipoSeleccionado" (change)="cargarMarcadores()"
@@ -711,6 +711,12 @@
                     <mat-option *ngFor="let u of usuarios" [value]="u">{{ u }}</mat-option>
                   </mat-select>
                 </mat-form-field>
+
+                <!-- agrega esto arriba del mapa -->
+                <button mat-raised-button color="primary" (click)="buscarProspectos()" *ngIf="tipoSeleccionado === 'prospecto'">
+                  ⚡ Asistente de Prospección
+                </button>
+
 
               </div>
 
