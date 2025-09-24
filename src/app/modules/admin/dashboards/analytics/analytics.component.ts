@@ -197,16 +197,17 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   usuarioSeleccionado: string = ''; // Usuario filtrado
 
   private categorias = [
-  { query: "automotive factory", motivo: "Industrias automotrices con alto consumo eléctrico y automatización de procesos." },
-  { query: "cement plant", motivo: "Plantas cementeras requieren alta tensión y mantenimiento eléctrico especializado." },
-  { query: "mine", motivo: "Mineras requieren instalaciones eléctricas robustas y seguras." },
+  { query: "fábrica automotriz", motivo: "Industrias automotrices con alto consumo eléctrico y automatización de procesos." },
+  { query: "planta cementera", motivo: "Plantas cementeras requieren alta tensión y mantenimiento eléctrico especializado." },
+  { query: "mina", motivo: "Mineras requieren instalaciones eléctricas robustas y seguras." },
   { query: "hotel", motivo: "Hoteles necesitan eficiencia energética, iluminación y automatización." },
   { query: "hospital", motivo: "Hospitales requieren energía confiable para equipos médicos y respaldo." },
-  { query: "farm", motivo: "Granjas y empresas ganaderas usan sistemas eléctricos para producción." },
-  { query: "industrial park", motivo: "Parques industriales concentran múltiples empresas con alto potencial B2B." },
-  { query: "office", motivo: "Oficinas corporativas demandan cableado estructurado, seguridad y climatización." },
-  { query: "shopping mall", motivo: "Centros comerciales requieren alta demanda de electricidad y mantenimiento." }
+  { query: "granja", motivo: "Granjas y empresas ganaderas usan sistemas eléctricos para producción." },
+  { query: "parque industrial", motivo: "Parques industriales concentran múltiples empresas con alto potencial B2B." },
+  { query: "oficinas", motivo: "Oficinas corporativas demandan cableado estructurado, seguridad y climatización." },
+  { query: "centro comercial", motivo: "Centros comerciales requieren alta demanda de electricidad y mantenimiento." }
 ];
+
 
 
 prospectosExistentes: any[] = []; // Para almacenar los prospectos ya existentes
@@ -1074,34 +1075,28 @@ buscarProspectos() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
+      // Centrar en ubicación actual
       this.map.setView([lat, lon], 13);
 
-      // Palabras clave para JR Ingeniería Eléctrica
-      const keywords = [
-        "electricista",
-        "instalaciones eléctricas",
-        "equipo eléctrico",
-        "mantenimiento industrial",
-        "empresa eléctrica",
-        "proveedor eléctrico"
-      ];
-
-      keywords.forEach(keyword => {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(keyword)}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
+      this.categorias.forEach(cat => {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cat.query}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
 
         this.http.get<any[]>(url).subscribe(resultados => {
           resultados.forEach(r => {
             const nombreLugar = r.display_name;
 
+            // 🔎 Excluir prospectos existentes (por nombre aproximado)
             if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
               return;
             }
 
+            // ⚡ Crear marcador sugerido
             L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
               .addTo(this.map)
               .bindPopup(`
                 <b>${nombreLugar}</b><br/>
-                Categoría: ${keyword}<br/>
+                Categoría: ${cat.query}<br/>
+                <em>${cat.motivo}</em><br/>
                 ⚡ Prospecto sugerido
               `);
           });
@@ -1114,5 +1109,4 @@ buscarProspectos() {
     }
   );
 }
-
 }
