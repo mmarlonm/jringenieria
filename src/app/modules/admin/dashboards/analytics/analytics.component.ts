@@ -1074,28 +1074,34 @@ buscarProspectos() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // Centrar en ubicación actual
       this.map.setView([lat, lon], 13);
 
-      this.categorias.forEach(cat => {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cat.query}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
+      // Palabras clave para JR Ingeniería Eléctrica
+      const keywords = [
+        "electricista",
+        "instalaciones eléctricas",
+        "equipo eléctrico",
+        "mantenimiento industrial",
+        "empresa eléctrica",
+        "proveedor eléctrico"
+      ];
+
+      keywords.forEach(keyword => {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(keyword)}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
 
         this.http.get<any[]>(url).subscribe(resultados => {
           resultados.forEach(r => {
             const nombreLugar = r.display_name;
 
-            // 🔎 Excluir prospectos existentes (por nombre aproximado)
             if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
               return;
             }
 
-            // ⚡ Crear marcador sugerido
             L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
               .addTo(this.map)
               .bindPopup(`
                 <b>${nombreLugar}</b><br/>
-                Categoría: ${cat.query}<br/>
-                <em>${cat.motivo}</em><br/>
+                Categoría: ${keyword}<br/>
                 ⚡ Prospecto sugerido
               `);
           });
@@ -1108,4 +1114,5 @@ buscarProspectos() {
     }
   );
 }
+
 }
