@@ -212,6 +212,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
 prospectosExistentes: any[] = []; // Para almacenar los prospectos ya existentes
 
+mostrarFiltros = true; // inicialmente se muestran los filtros
+
+
 
 
   /**
