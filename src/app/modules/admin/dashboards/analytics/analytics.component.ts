@@ -1094,7 +1094,7 @@ buscarProspectos() {
             }
 
             // ⚡ Crear marcador sugerido
-            L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
+            const marker = L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
               .addTo(this.map)
               .bindPopup(`
                 <b>${nombreLugar}</b><br/>
@@ -1102,7 +1102,14 @@ buscarProspectos() {
                 <em>${cat.motivo}</em><br/>
                 ⚡ Prospecto sugerido
               `);
+
+              this.marcadores.push(marker);
           });
+
+          if (this.marcadores.length > 0) {
+        const group = L.featureGroup(this.marcadores);
+        this.map.fitBounds(group.getBounds().pad(0.2));
+      }
         });
       });
     },
