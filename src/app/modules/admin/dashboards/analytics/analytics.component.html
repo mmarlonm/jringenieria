@@ -691,63 +691,50 @@
             </span>
           </ng-template>
           <ng-template matTabContent>
-  <div class="relative">
-    <!-- Botón flotante para mostrar/ocultar filtros -->
-    <button
-      mat-fab
-      color="primary"
-      class="absolute top-3 left-3 z-[1100]"
-      (click)="mostrarFiltros = !mostrarFiltros">
-      <mat-icon>{{ mostrarFiltros ? 'close' : 'filter_list' }}</mat-icon>
-    </button>
+            <div class="relative">
+              <!-- Botón flotante para mostrar/ocultar filtros -->
+              <button mat-fab color="primary" class="absolute top-3 left-3 z-[1100]"
+                (click)="mostrarFiltros = !mostrarFiltros">
+                <mat-icon>{{ mostrarFiltros ? 'close' : 'filter_list' }}</mat-icon>
+              </button>
 
-    <!-- Contenedor de filtros flotantes -->
-    <div
-      *ngIf="mostrarFiltros"
-      class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex flex-row items-center gap-2 whitespace-nowrap">
+              <!-- Contenedor de filtros flotantes -->
+              <div *ngIf="mostrarFiltros"
+                class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex flex-row items-center gap-2 whitespace-nowrap">
 
-      <!-- Toggle entre Clientes y Prospectos -->
-      <mat-button-toggle-group
-        name="tipoToggle"
-        [(ngModel)]="tipoSeleccionado"
-        (change)="cargarMarcadores()"
-        appearance="standard"
-        color="primary"
-        exclusive>
-        <mat-button-toggle value="cliente" class="bg-white px-2 rounded">Clientes</mat-button-toggle>
-        <mat-button-toggle value="prospecto" class="bg-white px-2 rounded">Prospectos</mat-button-toggle>
-      </mat-button-toggle-group>
+                <!-- Toggle entre Clientes y Prospectos -->
+                <mat-button-toggle-group name="tipoToggle" [(ngModel)]="tipoSeleccionado" (change)="cargarMarcadores()"
+                  appearance="standard" color="primary" exclusive>
+                  <mat-button-toggle value="cliente" class="bg-white px-2 rounded">Clientes</mat-button-toggle>
+                  <mat-button-toggle value="prospecto" class="bg-white px-2 rounded">Prospectos</mat-button-toggle>
+                </mat-button-toggle-group>
 
-      <!-- Selector de usuario -->
-      <mat-form-field
-        appearance="fill"
-        class="w-48 bg-white rounded px-2"
-        *ngIf="tipoSeleccionado === 'prospecto'">
-        <mat-label>Filtrar por usuario</mat-label>
-        <mat-select
-          [(value)]="usuarioSeleccionado"
-          (selectionChange)="cargarMarcadores()">
-          <mat-option value="">Todos</mat-option>
-          <mat-option *ngFor="let u of usuarios" [value]="u">{{ u }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+                <!-- Selector de usuario -->
+                <mat-form-field appearance="fill" class="w-48 bg-white rounded px-2"
+                  *ngIf="tipoSeleccionado === 'prospecto'">
+                  <mat-label>Filtrar por usuario</mat-label>
+                  <mat-select [(value)]="usuarioSeleccionado" (selectionChange)="cargarMarcadores()">
+                    <mat-option value="">Todos</mat-option>
+                    <mat-option *ngFor="let u of usuarios" [value]="u">{{ u }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
 
-      <!-- Botón de prospección -->
-      <button
-        mat-raised-button
-        color="accent"
-        (click)="buscarProspectos()"
-        class="px-4 py-2"
-        *ngIf="tipoSeleccionado === 'prospecto'">
-        ⚡ Asistente de Prospección
-      </button>
+                <!-- Botón de prospección -->
+                <button mat-raised-button color="primary" (click)="buscarProspectos()" class="px-4 py-2"
+                  *ngIf="tipoSeleccionado === 'prospecto'">
+                  ⚡ Asistente de Prospección
+                </button>
 
-    </div>
+                <button (click)="optimizarRuta()" mat-raised-button color="primary">
+                  Optimizar Ruta con IA
+                </button>
 
-    <!-- Mapa -->
-    <div id="map" style="height: 500px; width: 100%"></div>
-  </div>
-</ng-template>
+              </div>
+
+              <!-- Mapa -->
+              <div id="map" style="height: 500px; width: 100%"></div>
+            </div>
+          </ng-template>
 
 
         </mat-tab>

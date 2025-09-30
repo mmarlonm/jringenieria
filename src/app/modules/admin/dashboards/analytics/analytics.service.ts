@@ -71,4 +71,31 @@ export class AnalyticsService {
     return this._httpClient.post<any[]>(`${this.apiUrl}/prospectos`, body);
   }
 
+
+  /**
+   * Optimiza la ruta usando los prospectos sugeridos.
+   * @param prospectos Lista completa de prospectos obtenidos desde el mapa
+   */
+  optimizarRuta(prospectos: any[]): Observable<any[]> {
+    if (prospectos.length === 0) {
+      console.warn("No hay prospectos sugeridos para optimizar.");
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    // Enviar al backend
+    const body = prospectos.map(p => ({
+      Nombre: p.nombre,
+      Tipo: p.categoria || "desconocida",
+      Latitud: p.lat,
+      Longitud: p.lon
+    }));
+
+    console.log("Enviando prospectos a optimizar:", body);
+
+    return this._httpClient.post<any[]>(`${this.apiUrl}/optimizar-ruta`, body);
+  }
+
 }

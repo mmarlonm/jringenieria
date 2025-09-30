@@ -197,24 +197,26 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   usuarioSeleccionado: string = ''; // Usuario filtrado
 
   private categorias = [
-  { query: "fábrica automotriz", motivo: "Industrias automotrices con alto consumo eléctrico y automatización de procesos." },
-  { query: "planta cementera", motivo: "Plantas cementeras requieren alta tensión y mantenimiento eléctrico especializado." },
-  { query: "mina", motivo: "Mineras requieren instalaciones eléctricas robustas y seguras." },
-  { query: "hotel", motivo: "Hoteles necesitan eficiencia energética, iluminación y automatización." },
-  { query: "hospital", motivo: "Hospitales requieren energía confiable para equipos médicos y respaldo." },
-  { query: "granja", motivo: "Granjas y empresas ganaderas usan sistemas eléctricos para producción." },
-  { query: "parque industrial", motivo: "Parques industriales concentran múltiples empresas con alto potencial B2B." },
-  { query: "oficinas", motivo: "Oficinas corporativas demandan cableado estructurado, seguridad y climatización." },
-  { query: "centro comercial", motivo: "Centros comerciales requieren alta demanda de electricidad y mantenimiento." }
-];
+    { query: "fábrica automotriz", motivo: "Industrias automotrices con alto consumo eléctrico y automatización de procesos." },
+    { query: "planta cementera", motivo: "Plantas cementeras requieren alta tensión y mantenimiento eléctrico especializado." },
+    { query: "mina", motivo: "Mineras requieren instalaciones eléctricas robustas y seguras." },
+    { query: "hotel", motivo: "Hoteles necesitan eficiencia energética, iluminación y automatización." },
+    { query: "hospital", motivo: "Hospitales requieren energía confiable para equipos médicos y respaldo." },
+    { query: "granja", motivo: "Granjas y empresas ganaderas usan sistemas eléctricos para producción." },
+    { query: "parque industrial", motivo: "Parques industriales concentran múltiples empresas con alto potencial B2B." },
+    { query: "oficinas", motivo: "Oficinas corporativas demandan cableado estructurado, seguridad y climatización." },
+    { query: "centro comercial", motivo: "Centros comerciales requieren alta demanda de electricidad y mantenimiento." }
+  ];
 
 
 
-prospectosExistentes: any[] = []; // Para almacenar los prospectos ya existentes
+  prospectosExistentes: any[] = []; // Para almacenar los prospectos ya existentes
 
-mostrarFiltros = true; // inicialmente se muestran los filtros
-// 👇 flag para controlar la primera búsqueda
-isFirstSearch = true;
+  mostrarFiltros = true; // inicialmente se muestran los filtros
+  // 👇 flag para controlar la primera búsqueda
+  isFirstSearch = true;
+
+  rutaLayer: L.Polyline | null = null;
   /**
    * Constructor
    */
@@ -851,91 +853,91 @@ isFirstSearch = true;
   }
 
   async cargarMarcadores(): Promise<void> {
-  // Limpiar marcadores existentes
-  this.marcadores.forEach((m) => this.map.removeLayer(m));
-  this.marcadores = [];
-  this.usuarios = [];
+    // Limpiar marcadores existentes
+    this.marcadores.forEach((m) => this.map.removeLayer(m));
+    this.marcadores = [];
+    this.usuarios = [];
 
-  this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
-    this.prospectosExistentes = ubicaciones; // Guardar los prospectos ya existentes
-    // Generar lista de usuarios únicos
-    const usuariosUnicos = Array.from(new Set(ubicaciones.map(u => u.nombreUsuario ?? 'Desconocido')));
-    this.usuarios = usuariosUnicos;
+    this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
+      this.prospectosExistentes = ubicaciones; // Guardar los prospectos ya existentes
+      // Generar lista de usuarios únicos
+      const usuariosUnicos = Array.from(new Set(ubicaciones.map(u => u.nombreUsuario ?? 'Desconocido')));
+      this.usuarios = usuariosUnicos;
 
-    // Colores disponibles
-    const colores = ['blue', 'red', 'green', 'orange', 'purple', 'darkblue', 'cadetblue', 'darkred'];
+      // Colores disponibles
+      const colores = ['blue', 'red', 'green', 'orange', 'purple', 'darkblue', 'cadetblue', 'darkred'];
 
-    // Mapear cada usuario a un color
-    const colorPorUsuario: { [key: string]: string } = {};
-    usuariosUnicos.forEach((usuario, i) => {
-      colorPorUsuario[usuario] = colores[i % colores.length];
-    });
+      // Mapear cada usuario a un color
+      const colorPorUsuario: { [key: string]: string } = {};
+      usuariosUnicos.forEach((usuario, i) => {
+        colorPorUsuario[usuario] = colores[i % colores.length];
+      });
 
-    // Filtrar ubicaciones según selección
-    const ubicacionesFiltradas = this.usuarioSeleccionado
-      ? ubicaciones.filter(u => (u.nombreUsuario ?? 'Desconocido') === this.usuarioSeleccionado)
-      : ubicaciones;
+      // Filtrar ubicaciones según selección
+      const ubicacionesFiltradas = this.usuarioSeleccionado
+        ? ubicaciones.filter(u => (u.nombreUsuario ?? 'Desconocido') === this.usuarioSeleccionado)
+        : ubicaciones;
 
-    // Crear marcadores
-    for (const u of ubicacionesFiltradas) {
-      if (u.latitud && u.longitud) {
-        const nombreUsuario = u.nombreUsuario ?? 'Desconocido';
-        const nombre = u.nombre ?? 'Sin nombre';
-        const tipo = u.tipo ?? 'Desconocido';
+      // Crear marcadores
+      for (const u of ubicacionesFiltradas) {
+        if (u.latitud && u.longitud) {
+          const nombreUsuario = u.nombreUsuario ?? 'Desconocido';
+          const nombre = u.nombre ?? 'Sin nombre';
+          const tipo = u.tipo ?? 'Desconocido';
 
-        // ⚡ Mantener el color asignado al usuario, incluso al filtrar
-        const color = colorPorUsuario[nombreUsuario] || 'blue';
+          // ⚡ Mantener el color asignado al usuario, incluso al filtrar
+          const color = colorPorUsuario[nombreUsuario] || 'blue';
 
-        const icon = L.icon({
-          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        });
+          const icon = L.icon({
+            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+          });
 
-        const marker = L.marker([u.latitud, u.longitud], { draggable: true, icon });
+          const marker = L.marker([u.latitud, u.longitud], { draggable: true, icon });
 
-        const popupContent = `
+          const popupContent = `
           <strong>${nombre}</strong><br/>
           Cargado por: <em>${nombreUsuario}</em><br/>
           (${tipo})<br/>
           <a href="#" class="popup-link" data-id="${u.id}" data-tipo="${tipo}">Ver detalle</a>
         `;
-        marker.bindPopup(popupContent);
+          marker.bindPopup(popupContent);
 
-        marker.on('popupopen', () => {
-          setTimeout(() => {
-            const link = document.querySelector('.popup-link');
-            if (link) {
-              link.addEventListener('click', (event: Event) => {
-                event.preventDefault();
-                const id = (link as HTMLElement).getAttribute('data-id');
-                const tipo = (link as HTMLElement).getAttribute('data-tipo');
-                if (tipo?.toLowerCase() === 'prospecto') {
-                  this._router.navigate([`/dashboards/prospects/${id}`]);
-                } else if (tipo?.toLowerCase() === 'cliente') {
-                  this._router.navigate([`/catalogs/clients/${id}`]);
-                }
-              });
-            }
-          }, 0);
-        });
+          marker.on('popupopen', () => {
+            setTimeout(() => {
+              const link = document.querySelector('.popup-link');
+              if (link) {
+                link.addEventListener('click', (event: Event) => {
+                  event.preventDefault();
+                  const id = (link as HTMLElement).getAttribute('data-id');
+                  const tipo = (link as HTMLElement).getAttribute('data-tipo');
+                  if (tipo?.toLowerCase() === 'prospecto') {
+                    this._router.navigate([`/dashboards/prospects/${id}`]);
+                  } else if (tipo?.toLowerCase() === 'cliente') {
+                    this._router.navigate([`/catalogs/clients/${id}`]);
+                  }
+                });
+              }
+            }, 0);
+          });
 
-        marker.addTo(this.map);
-        this.marcadores.push(marker);
-        this.cdr.detectChanges(); // Forzar actualización en la vista
+          marker.addTo(this.map);
+          this.marcadores.push(marker);
+          this.cdr.detectChanges(); // Forzar actualización en la vista
+        }
       }
-    }
 
-    // Ajustar el mapa a los marcadores
-    if (this.marcadores.length > 0) {
-      const group = L.featureGroup(this.marcadores);
-      this.map.fitBounds(group.getBounds().pad(0.2));
-    }
-  });
-}
+      // Ajustar el mapa a los marcadores
+      if (this.marcadores.length > 0) {
+        const group = L.featureGroup(this.marcadores);
+        this.map.fitBounds(group.getBounds().pad(0.2));
+      }
+    });
+  }
 
 
 
@@ -1007,122 +1009,214 @@ isFirstSearch = true;
       });
   }
 
-async asistenteProspeccion() {
-  if (!navigator.geolocation) {
-    alert("Tu navegador no soporta geolocalización.");
-    return;
-  }
+  async asistenteProspeccion() {
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización.");
+      return;
+    }
 
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-    this.map.setView([lat, lon], 13);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      this.map.setView([lat, lon], 13);
 
-    try {
-      this._projectService.getProspectosIA(lat,
-        lon,
-        this.prospectosExistentes?.map(p => p.nombre) || []).subscribe((prospectos) => {
+      try {
+        this._projectService.getProspectosIA(lat,
+          lon,
+          this.prospectosExistentes?.map(p => p.nombre) || []).subscribe((prospectos) => {
 
-        prospectos.forEach(r => {
-        if (this.prospectosExistentes.some(p => p.nombre.toLowerCase() === r.nombre.toLowerCase())) return;
+            prospectos.forEach(r => {
+              if (this.prospectosExistentes.some(p => p.nombre.toLowerCase() === r.nombre.toLowerCase())) return;
 
-        const marker = L.marker([r.latitud, r.longitud], { icon: this.getIconSugerencia() })
-          .addTo(this.map)
-          .bindPopup(`
+              const marker = L.marker([r.latitud, r.longitud], { icon: this.getIconSugerencia() })
+                .addTo(this.map)
+                .bindPopup(`
             <b>${r.nombre}</b><br/>
             Tipo: ${r.tipo}<br/>
             <em>${r.motivo}</em><br/>
             ⚡ Prospecto sugerido por IA
           `);
 
-        this.marcadores.push(marker);
-      });
+              this.marcadores.push(marker);
+            });
 
-      if (this.marcadores.length > 0) {
-        const group = L.featureGroup(this.marcadores);
-        this.map.fitBounds(group.getBounds().pad(0.2));
+            if (this.marcadores.length > 0) {
+              const group = L.featureGroup(this.marcadores);
+              this.map.fitBounds(group.getBounds().pad(0.2));
+            }
+          });
+
+
+
+      } catch (err) {
+        console.error("Error consultando IA:", err);
+        alert("No se pudieron generar prospectos con IA");
       }
-      });
-
-      
-
-    } catch (err) {
-      console.error("Error consultando IA:", err);
-      alert("No se pudieron generar prospectos con IA");
-    }
-  }, (err) => {
-    console.error("Error obteniendo ubicación:", err);
-    alert("No se pudo obtener tu ubicación actual.");
-  });
-}
-
-private getIconSugerencia(): L.Icon {
-  return L.icon({
-    iconUrl: 'assets/images/lightning.png',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -28]
-  });
-}
-
-buscarProspectos() {
-  if (!navigator.geolocation) {
-    alert("Tu navegador no soporta geolocalización.");
-    return;
+    }, (err) => {
+      console.error("Error obteniendo ubicación:", err);
+      alert("No se pudo obtener tu ubicación actual.");
+    });
   }
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
+  private getIconSugerencia(): L.Icon {
+    return L.icon({
+      iconUrl: 'assets/images/lightning.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -28]
+    });
+  }
 
-      // Siempre centrar en ubicación actual
-      this.map.setView([lat, lon], 13);
+  buscarProspectos() {
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización.");
+      return;
+    }
 
-      // 👉 Primera búsqueda: solo hospital, después todas
-      const categoriasABuscar = this.categorias;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
 
-      categoriasABuscar.forEach(cat => {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cat.query}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
+        // Siempre centrar en ubicación actual
+        this.map.setView([lat, lon], 13);
 
-        this.http.get<any[]>(url).subscribe({
-          next: (resultados) => {
-            resultados.forEach(r => {
-              const nombreLugar = r.display_name;
+        // 👉 Primera búsqueda: solo hospital, después todas
+        const categoriasABuscar = this.categorias;
 
-              // Evitar duplicados con prospectos existentes
-              if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
-                return;
-              }
+        categoriasABuscar.forEach(cat => {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cat.query}&limit=10&viewbox=${lon - 0.1},${lat + 0.1},${lon + 0.1},${lat - 0.1}&bounded=1`;
 
-              // Crear marcador sugerido
-              const marker = L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
-                .addTo(this.map)
-                .bindPopup(`
+          this.http.get<any[]>(url).subscribe({
+            next: (resultados) => {
+              resultados.forEach(r => {
+                const nombreLugar = r.display_name;
+
+                // Evitar duplicados con prospectos existentes
+                if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
+                  return;
+                }
+
+                // Crear marcador sugerido
+                const marker = L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
+                  .addTo(this.map)
+                  .bindPopup(`
                   <b>${nombreLugar}</b><br/>
                   Categoría: ${cat.query}<br/>
                   <em>${cat.motivo}</em><br/>
                   ⚡ Prospecto sugerido
                 `);
 
-              this.marcadores.push(marker);
-            });
-          },
-          error: (err) => {
-            console.warn(`❌ Error buscando categoría "${cat.query}":`, err);
-            // 👉 aquí simplemente seguimos con la siguiente categoría
-          }
+                this.marcadores.push(marker);
+              });
+            },
+            error: (err) => {
+              console.warn(`❌ Error buscando categoría "${cat.query}":`, err);
+              // 👉 aquí simplemente seguimos con la siguiente categoría
+            }
+          });
         });
-      });
 
-      // ✅ Después de la primera búsqueda, ya busca todas
-      this.isFirstSearch = false;
+        // ✅ Después de la primera búsqueda, ya busca todas
+        this.isFirstSearch = false;
+      },
+      (err) => {
+        console.error("Error obteniendo ubicación:", err);
+        alert("No se pudo obtener tu ubicación actual.");
+      }
+    );
+  }
+
+optimizarRuta() {
+  const prospectos = this.marcadores.map((m, i) => ({
+    nombre: m.getPopup()?.getContent() || `Prospecto ${i + 1}`,
+    lat: m.getLatLng().lat,
+    lon: m.getLatLng().lng,
+    categoria: "desconocida"
+  }));
+  const prospectosSugeridos = prospectos.filter(p =>
+      String(p.nombre).includes("⚡ Prospecto sugerido")
+    );
+
+  console.log("Prospectos para optimizar:", prospectosSugeridos);
+
+  this._projectService.optimizarRuta(prospectosSugeridos).subscribe({
+    next: (resp:any) => {
+      try {
+        console.log("Respuesta IA:", resp);
+        const rutaOrdenada = JSON.parse(resp); // Ajusta si tu backend devuelve JSON string
+        this.dibujarRuta(rutaOrdenada);
+      } catch (e) {
+        console.error("Error procesando respuesta IA, usando TSP local:", e);
+        const rutaLocal = this.tspLocal(prospectosSugeridos);
+        this.dibujarRuta(rutaLocal);
+      }
     },
-    (err) => {
-      console.error("Error obteniendo ubicación:", err);
-      alert("No se pudo obtener tu ubicación actual.");
+    error: err => {
+      console.warn("Error DeepSeek, fallback TSP local:", err);
+      const rutaLocal = this.tspLocal(prospectosSugeridos);
+      this.dibujarRuta(rutaLocal);
     }
-  );
+  });
+}
+
+private dibujarRuta(ruta: any[]) {
+  if (this.rutaLayer) this.map.removeLayer(this.rutaLayer);
+
+  const coords = ruta.map(r => [r.lat, r.lon]) as [number, number][];
+  this.rutaLayer = L.polyline(coords, { color: 'blue', weight: 4 }).addTo(this.map);
+
+  ruta.forEach((p, idx) => {
+    L.marker([p.lat, p.lon], {
+      icon: L.divIcon({
+        className: 'numero-icon',
+        html: `<div style="background:#007bff;color:white;border-radius:50%;width:24px;height:24px;
+                    display:flex;align-items:center;justify-content:center;font-size:12px;">${idx + 1}</div>`
+      })
+    }).addTo(this.map)
+      .bindPopup(`<b>${p.nombre}</b><br/>Orden: ${idx + 1}<br/>${p.categoria}`);
+  });
+
+  this.map.fitBounds(this.rutaLayer.getBounds().pad(0.2));
+}
+
+
+
+// Reordenar prospectos por distancia (Nearest Neighbor)
+private tspLocal(prospectos: any[]): any[] {
+  if (!prospectos.length) return [];
+
+  const visitados = new Set<number>();
+  const ruta: any[] = [];
+
+  let actual = 0; // comenzamos con el primer prospecto
+  visitados.add(actual);
+  ruta.push({ ...prospectos[actual], orden: 1 });
+
+  while (ruta.length < prospectos.length) {
+    let nextIndex = -1;
+    let minDist = Infinity;
+
+    prospectos.forEach((p, i) => {
+      if (!visitados.has(i)) {
+        const dx = prospectos[actual].lat - p.lat;
+        const dy = prospectos[actual].lon - p.lon;
+        const dist = dx * dx + dy * dy;
+        if (dist < minDist) {
+          minDist = dist;
+          nextIndex = i;
+        }
+      }
+    });
+
+    if (nextIndex === -1) break;
+
+    visitados.add(nextIndex);
+    ruta.push({ ...prospectos[nextIndex], orden: ruta.length + 1 });
+    actual = nextIndex;
+  }
+
+  return ruta;
 }
 
 }
