@@ -213,10 +213,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 prospectosExistentes: any[] = []; // Para almacenar los prospectos ya existentes
 
 mostrarFiltros = true; // inicialmente se muestran los filtros
-
-
-
-
+// 👇 flag para controlar la primera búsqueda
+isFirstSearch = true;
   /**
    * Constructor
    */
@@ -1078,40 +1076,47 @@ buscarProspectos() {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // Centrar en ubicación actual
+      // Siempre centrar en ubicación actual
       this.map.setView([lat, lon], 13);
 
-      this.categorias.forEach(cat => {
+      // 👉 Primera búsqueda: solo hospital, después todas
+      const categoriasABuscar = this.categorias;
+
+      categoriasABuscar.forEach(cat => {
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cat.query}&limit=10&viewbox=${lon-0.1},${lat+0.1},${lon+0.1},${lat-0.1}&bounded=1`;
 
-        this.http.get<any[]>(url).subscribe(resultados => {
-          resultados.forEach(r => {
-            const nombreLugar = r.display_name;
+        this.http.get<any[]>(url).subscribe({
+          next: (resultados) => {
+            resultados.forEach(r => {
+              const nombreLugar = r.display_name;
 
-            // 🔎 Excluir prospectos existentes (por nombre aproximado)
-            if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
-              return;
-            }
+              // Evitar duplicados con prospectos existentes
+              if (this.prospectosExistentes.some(p => nombreLugar.toLowerCase().includes(p.nombre.toLowerCase()))) {
+                return;
+              }
 
-            // ⚡ Crear marcador sugerido
-            const marker = L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
-              .addTo(this.map)
-              .bindPopup(`
-                <b>${nombreLugar}</b><br/>
-                Categoría: ${cat.query}<br/>
-                <em>${cat.motivo}</em><br/>
-                ⚡ Prospecto sugerido
-              `);
+              // Crear marcador sugerido
+              const marker = L.marker([+r.lat, +r.lon], { icon: this.getIconSugerencia() })
+                .addTo(this.map)
+                .bindPopup(`
+                  <b>${nombreLugar}</b><br/>
+                  Categoría: ${cat.query}<br/>
+                  <em>${cat.motivo}</em><br/>
+                  ⚡ Prospecto sugerido
+                `);
 
               this.marcadores.push(marker);
-          });
-
-          if (this.marcadores.length > 0) {
-        const group = L.featureGroup(this.marcadores);
-        this.map.fitBounds(group.getBounds().pad(0.2));
-      }
+            });
+          },
+          error: (err) => {
+            console.warn(`❌ Error buscando categoría "${cat.query}":`, err);
+            // 👉 aquí simplemente seguimos con la siguiente categoría
+          }
         });
       });
+
+      // ✅ Después de la primera búsqueda, ya busca todas
+      this.isFirstSearch = false;
     },
     (err) => {
       console.error("Error obteniendo ubicación:", err);
@@ -1119,4 +1124,5 @@ buscarProspectos() {
     }
   );
 }
+
 }
