@@ -725,7 +725,7 @@
                   ⚡ Asistente de Prospección
                 </button>
 
-                <button (click)="optimizarRuta()" mat-raised-button color="primary">
+                <button (click)="optimizarRuta()" mat-raised-button color="primary" *ngIf="tipoSeleccionado === 'prospecto'">
                   Optimizar Ruta con IA
                 </button>
 
