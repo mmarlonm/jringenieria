@@ -42,9 +42,9 @@ import { SendSurveyDialogComponent } from '@fuse/components/email/send-survey-di
 })
 export class ProjectListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
-    "id",
+    "ordenDeCompra",
     "nombre",
-    "categoria",
+    "empresa",
     "estatus",
     "fechaInicio",
     "fechaFin",
