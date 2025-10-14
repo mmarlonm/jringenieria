@@ -117,12 +117,15 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   selectedTaskId!: string;
   selectedTask: any;
 
-  categoriasInputs = [
+  categoriasInputsParte1 = [
     { key: 'ordenCompra', label: 'OC' },
     { key: 'cotizacion', label: 'Cotización' },
     { key: 'fianza', label: 'Fianzas' },
     { key: 'contrato', label: 'Contrato' },
-    { key: 'polizas', label: 'Pólizas' },
+    { key: 'polizas', label: 'Pólizas' }
+  ];
+
+  categoriasInputsParte2 = [
     { key: 'programaTrabajo', label: 'Programa de trabajo' },
     { key: 'ast', label: 'AST' },
     { key: 'documentacionIngreso', label: 'Documentación ingreso planta' },
@@ -140,6 +143,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     { key: 'encuesta', label: 'Encuesta de satisfacción' },
     { key: 'comentarios', label: 'Comentarios' }
   ];
+
 
   fileInputs: { [key: string]: HTMLInputElement } = {};
   @ViewChildren('fileInput') fileInputsRef!: QueryList<ElementRef<HTMLInputElement>>;
@@ -183,18 +187,30 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       fechaFin: [null],
       estado: ["NA"],
 
-      cliente: [0, [Validators.required, this.noZeroValidator]], // int? pero requerido
+      cliente: [0, [Validators.required, this.noZeroValidator]],
       necesidad: [null],
       direccion: [null],
+
+      // --- CONTACTOS ---
       nombreContacto: [null],
       telefono: [null],
       empresa: [null],
 
+      // Nuevos campos agregados
+      nombreContactoResponsable: [null],
+      telefonoResponsable: [null],
+      empresaResponsable: [null],
+      nombreContactoSupervisor: [null],
+      telefonoSupervisor: [null],
+      empresaSupervisor: [null],
+
+      // --- DOCUMENTOS Y ARCHIVOS ---
       levantamiento: [null],
       planoArquitectonico: [null],
       diagramaIsometrico: [null],
       diagramaUnifilar: [null],
 
+      // --- MATERIALES ---
       materialesCatalogo: [null],
       materialesPresupuestados: [null],
       inventarioFinal: [null],
@@ -202,19 +218,23 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
       proveedor: [null],
 
+      // --- RECURSOS ---
       manoDeObra: [null],
       personasParticipantes: [null],
       equipos: [null],
       herramientas: [null],
 
+      // --- COSTOS ---
       indirectosCostos: [0],
       fianzas: [0],
       anticipo: [0],
       cotizacion: [0],
 
+      // --- CONTRATOS Y DOCUMENTOS ---
       ordenDeCompra: [null],
       contrato: [null],
 
+      // --- SEGUIMIENTO ---
       programaDeTrabajo: [null],
       avancesReportes: [null],
       comentarios: [null],
@@ -222,12 +242,14 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       dosier: [null],
       rutaCritica: [null],
 
+      // --- FINANZAS ---
       factura: [null],
       pago: [0],
       utilidadProgramada: [0],
       utilidadReal: [0],
       financiamiento: [0],
 
+      // --- CIERRE ---
       cierreProyectoActaEntrega: [null],
       estatus: [0, [Validators.required, this.noZeroValidator]],
 
@@ -237,6 +259,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       pagoTotal: [0],
       anticipoList: [0]
     });
+
 
     this.getCategorias();
     this.getUnidadesDeNegocio();
@@ -585,36 +608,36 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   }
 
   getFilesAll(): void {
-  if (!this.projectId) return;
+    if (!this.projectId) return;
 
-  this.projectService.getFiles(this.projectId).subscribe((files) => {
+    this.projectService.getFiles(this.projectId).subscribe((files) => {
 
-    if (files == null) {
-      this.files = [];
-      this.filesEvidencias = [];
-      return;
-    }
+      if (files == null) {
+        this.files = [];
+        this.filesEvidencias = [];
+        return;
+      }
 
-    // Combinar archivos de proyecto y archivos de cotización
-    const allFiles = [
-      ...(files.archivosProyecto || []),
-      ...(files.archivosCotizacion || [])
-    ].map((file) => ({
-      ...file,
-      type: this.getFileType(file.nombreArchivo),
-    }));
+      // Combinar archivos de proyecto y archivos de cotización
+      const allFiles = [
+        ...(files.archivosProyecto || []),
+        ...(files.archivosCotizacion || [])
+      ].map((file) => ({
+        ...file,
+        type: this.getFileType(file.nombreArchivo),
+      }));
 
-    if (allFiles && allFiles.length > 0) {
-      // Separar los archivos por categoría
-      this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
-      this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
-    } else {
-      this.files = [];
-      this.filesEvidencias = [];
-    }
+      if (allFiles && allFiles.length > 0) {
+        // Separar los archivos por categoría
+        this.filesEvidencias = allFiles.filter(f => f.categoria.toLowerCase() === 'evidencias');
+        this.files = allFiles.filter(f => f.categoria.toLowerCase() !== 'evidencias');
+      } else {
+        this.files = [];
+        this.filesEvidencias = [];
+      }
 
-  });
-}
+    });
+  }
 
 
   // Función para obtener el tipo de archivo según la extensión

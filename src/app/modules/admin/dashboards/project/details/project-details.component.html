@@ -6,104 +6,72 @@
   <mat-tab-group class="h-full flex-1 overflow-hidden" (selectedTabChange)="onTabChange($event)">
     <!-- TAB 1: Información General -->
     <mat-tab label="Información General">
-      <div class="w-full gap-4 mb-4" >
+      <div class="w-full gap-4 mb-4">
         <app-neumorphic-progress [value]="progressValue"></app-neumorphic-progress>
       </div>
+
       <form [formGroup]="projectForm" class="flex flex-col gap-4">
+
+        <!-- Pago Total y Anticipo (con botón historial) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Pago Total -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Pago Total</mat-label>
             <input matInput type="text" [value]="pagoTotalDisplay" (blur)="onPagoTotalBlur($event)"
               (input)="onPagoTotalInput($event)" />
           </mat-form-field>
 
-          <!-- Anticipo -->
           <div class="flex items-center gap-2">
             <mat-form-field appearance="fill" class="flex-1">
               <mat-label>Anticipo</mat-label>
               <input matInput type="text" [value]="anticipoDisplay" (blur)="onAnticipoBlur($event)"
                 (input)="onAnticipoInput($event)" />
             </mat-form-field>
-
-            <!-- Botón historial -->
             <button mat-icon-button color="primary" (click)="mostrarHistorial = !mostrarHistorial">
               <mat-icon>history</mat-icon>
             </button>
           </div>
         </div>
 
+        <!-- Nombre de Proyecto -->
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Nombre del Proyecto</mat-label>
+          <input matInput formControlName="nombre" />
+        </mat-form-field>
 
+        <!-- Dirección -->
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Dirección</mat-label>
+          <input matInput formControlName="direccion" />
+        </mat-form-field>
+
+        <!-- Empresa -->
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Empresa</mat-label>
+          <input matInput formControlName="empresa" />
+        </mat-form-field>
+
+        <!-- Archivos antes (OC, Cotización, Fianzas, Contrato, Pólizas) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Nombre -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombre" />
-          </mat-form-field>
-
-          <!-- Dirección -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Dirección</mat-label>
-            <input matInput formControlName="direccion" />
-          </mat-form-field>
-
-
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Empresa -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Empresa</mat-label>
-            <input matInput formControlName="empresa" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ng-container *ngFor="let categoria of categoriasInputs">
+          <ng-container *ngFor="let categoria of categoriasInputsParte1">
             <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
               <mat-label>{{ categoria.label }}</mat-label>
-              <input matInput [value]="getArchivoNombre(categoria.key)" />
-
-              <!-- Botón de subir o descargar archivo -->
-              <button mat-icon-button type="button" matTooltip="Subir o Descargar archivo"
+              <input matInput [value]="getArchivoNombre(categoria.key)" readonly />
+              <button mat-icon-button type="button"
                 (click)="hasArchivoGuardado(categoria.key) ? descargarArchivoGuardado(categoria.key) : fileInputs[categoria.key].click()">
                 <mat-icon>{{ hasArchivoGuardado(categoria.key) ? 'cloud_download' : 'attach_file' }}</mat-icon>
               </button>
-
-              <!-- Botón eliminar -->
               <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="warn" type="button"
-                matTooltip="Eliminar archivo" (click)="eliminarArchivo(categoria.key)">
+                (click)="eliminarArchivo(categoria.key)">
                 <mat-icon>delete</mat-icon>
               </button>
-
-              <!-- Input real oculto -->
               <input type="file" [attr.data-key]="categoria.key" #fileInput
                 (change)="onFileSelectedOne($event, categoria.key)" hidden />
-
             </mat-form-field>
           </ng-container>
         </div>
 
-        <div cclass="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Lugar -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Lugar</mat-label>
-            <input matInput formControlName="lugar" />
-          </mat-form-field>
-
-          <!-- Unidad de Negocio -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Unidad de Negocio</mat-label>
-            <mat-select formControlName="unidadDeNegocio">
-              <mat-option *ngFor="let unidad of unidadesDeNegocio" [value]="unidad.unidadId">
-                {{ unidad.nombre }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
+        <!-- Fechas de Inicio y Fin -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Fecha Inicio -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha de Inicio</mat-label>
             <input matInput [matDatepicker]="picker1" formControlName="fechaInicio" />
@@ -111,7 +79,6 @@
             <mat-datepicker #picker1></mat-datepicker>
           </mat-form-field>
 
-          <!-- Fecha Fin -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha de Fin</mat-label>
             <input matInput [matDatepicker]="picker2" formControlName="fechaFin" />
@@ -120,356 +87,135 @@
           </mat-form-field>
         </div>
 
+        <!-- Contacto Responsable del Proyecto (Cliente) -->
+        <h3 class="font-semibold text-lg mt-4">Contacto Responsable del Proyecto (Cliente)</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Estado -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Estado</mat-label>
-            <input matInput formControlName="estado" />
+          <mat-form-field appearance="fill">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombreContactoCliente" />
           </mat-form-field>
-
-          <!-- Cliente -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Cliente</mat-label>
-            <mat-select [formControl]="projectForm.get('cliente')" #clienteSelect panelClass="custom-select-panel">
-              <mat-option>
-                <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..."
-                  noEntriesFoundLabel="No se encontraron resultados"
-                  clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
-              </mat-option>
-
-              <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
-                {{ client.clienteId }} - {{ client.nombre }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente
-              válido.</mat-error>
+          <mat-form-field appearance="fill">
+            <mat-label>Área/Departamento</mat-label>
+            <input matInput formControlName="areaContactoCliente" />
           </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Necesidad -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Necesidad</mat-label>
-            <input matInput formControlName="necesidad" />
-          </mat-form-field>
-
-          <!-- Categoria -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Categoría</mat-label>
-            <mat-select formControlName="categoria">
-              <mat-option *ngFor="let cat of categorias" [value]="cat.categoriaId">
-                {{ cat.nombre }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Nombre Contacto -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Nombre de Contacto</mat-label>
-            <input matInput formControlName="nombreContacto" />
-          </mat-form-field>
-
-          <!-- Teléfono -->
-          <mat-form-field appearance="fill" class="w-full">
+          <mat-form-field appearance="fill">
             <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefono" />
+            <input matInput formControlName="telefonoContactoCliente" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Correo</mat-label>
+            <input matInput formControlName="correoContactoCliente" />
           </mat-form-field>
         </div>
 
+        <!-- Contacto Supervisor en Campo (Cliente) -->
+        <h3 class="font-semibold text-lg mt-4">Supervisor en Campo (Cliente)</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-
-          <!-- Levantamiento -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Levantamiento</mat-label>
-            <input matInput formControlName="levantamiento" />
+          <mat-form-field appearance="fill">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombreSupervisorCliente" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Área/Departamento</mat-label>
+            <input matInput formControlName="areaSupervisorCliente" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefonoSupervisorCliente" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Correo</mat-label>
+            <input matInput formControlName="correoSupervisorCliente" />
           </mat-form-field>
         </div>
 
+        <!-- Responsable del Proyecto JR -->
+        <h3 class="font-semibold text-lg mt-4">Responsable del Proyecto JR</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Plano Arquitectónico -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Plano Arquitectónico</mat-label>
-            <input matInput formControlName="planoArquitectonico" />
+          <mat-form-field appearance="fill">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombreResponsableJR" />
           </mat-form-field>
-
-          <!-- Diagrama Isométrico -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Diagrama Isométrico</mat-label>
-            <input matInput formControlName="diagramaIsometrico" />
+          <mat-form-field appearance="fill">
+            <mat-label>Área/Departamento</mat-label>
+            <input matInput formControlName="areaResponsableJR" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefonoResponsableJR" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Correo</mat-label>
+            <input matInput formControlName="correoResponsableJR" />
           </mat-form-field>
         </div>
 
+        <!-- Responsable Campo JR -->
+        <h3 class="font-semibold text-lg mt-4">Responsable de Campo JR</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Diagrama Unifilar -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Diagrama Unifilar</mat-label>
-            <input matInput formControlName="diagramaUnifilar" />
+          <mat-form-field appearance="fill">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombreCampoJR" />
           </mat-form-field>
-
-          <!-- Materiales Catálogo -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Materiales Catálogo</mat-label>
-            <input matInput formControlName="materialesCatalogo" />
+          <mat-form-field appearance="fill">
+            <mat-label>Área/Departamento</mat-label>
+            <input matInput formControlName="areaCampoJR" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefonoCampoJR" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Correo</mat-label>
+            <input matInput formControlName="correoCampoJR" />
           </mat-form-field>
         </div>
 
+        <!-- Integrantes del Equipo Ejecutor -->
+        <h3 class="font-semibold text-lg mt-4">Integrantes del Equipo Ejecutor</h3>
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Integrantes del Equipo</mat-label>
+          <mat-chip-list #chipList aria-label="Seleccionar personas">
+            <mat-chip *ngFor="let persona of personasSeleccionadas" [removable]="true"
+              (removed)="removePersona(persona)">
+              {{ persona.nombreUsuario }}
+              <button matChipRemove>
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
+            <input matInput [matAutocomplete]="auto" [formControl]="personasControl" placeholder="Buscar usuario" />
+          </mat-chip-list>
+          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPersonaFromAutoComplete($event)">
+            <mat-option *ngFor="let usuario of filteredUsers | async" [value]="usuario">
+              {{ usuario.nombreUsuario }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <!-- Archivos después (Programa de trabajo a Comentarios) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Materiales Presupuestados -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Materiales Presupuestados</mat-label>
-            <input matInput formControlName="materialesPresupuestados" />
-          </mat-form-field>
-
-          <!-- Inventario Final -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Inventario Final</mat-label>
-            <input matInput formControlName="inventarioFinal" />
-          </mat-form-field>
+          <ng-container *ngFor="let categoria of categoriasInputsParte2">
+            <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+              <mat-label>{{ categoria.label }}</mat-label>
+              <input matInput [value]="getArchivoNombre(categoria.key)" readonly />
+              <button mat-icon-button type="button"
+                (click)="hasArchivoGuardado(categoria.key) ? descargarArchivoGuardado(categoria.key) : fileInputs[categoria.key].click()">
+                <mat-icon>{{ hasArchivoGuardado(categoria.key) ? 'cloud_download' : 'attach_file' }}</mat-icon>
+              </button>
+              <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="warn" type="button"
+                (click)="eliminarArchivo(categoria.key)">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <input type="file" [attr.data-key]="categoria.key" #fileInput
+                (change)="onFileSelectedOne($event, categoria.key)" hidden />
+            </mat-form-field>
+          </ng-container>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Cuadro Comparativo -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Cuadro Comparativo</mat-label>
-            <input matInput formControlName="cuadroComparativo" />
-          </mat-form-field>
-
-          <!-- Proveedor -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Proveedor</mat-label>
-            <input matInput formControlName="proveedor" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Mano de Obra -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Mano de Obra</mat-label>
-            <input matInput formControlName="manoDeObra" />
-          </mat-form-field>
-
-          <!-- Personas Participantes -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Personas Participantes</mat-label>
-
-            <!-- Mat Chip List para mostrar las personas seleccionadas -->
-            <mat-chip-list #chipList aria-label="Seleccionar personas">
-              <mat-chip *ngFor="let persona of personasSeleccionadas" [removable]="true"
-                (removed)="removePersona(persona)" class="mdc-list-item__primary-text">
-                <!-- Mostrar el avatar si existe -->
-                <mat-icon matChipAvatar *ngIf="!persona.avatar" class="avatar-icon">person</mat-icon>
-                <img *ngIf="persona.avatar" matChipAvatar [src]="persona.avatar" alt="{{ persona.nombreUsuario }}" />
-
-                <!-- Mostrar el nombre de la persona -->
-                {{ persona.nombreUsuario }}
-
-                <!-- Icono para remover el chip -->
-                <button matChipRemove [attr.aria-label]="'remove ' + persona.nombreUsuario">
-                  <mat-icon>cancel</mat-icon>
-                </button>
-              </mat-chip>
-
-              <!-- Input para agregar más personas -->
-              <input matInput [matAutocomplete]="auto" [formControl]="personasControl"
-                (matChipInputTokenEnd)="addPersona($event)" placeholder="Buscar usuario" />
-            </mat-chip-list>
-
-            <!-- Mat Autocomplete para la búsqueda de personas -->
-            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPersonaFromAutoComplete($event)">
-              <mat-option *ngFor="let usuario of filteredUsers | async" [value]="usuario">
-                <!-- Avatar en el autocomplete -->
-                <img *ngIf="usuario.avatar" [src]="usuario.avatar" alt="{{ usuario.nombreUsuario }}" class="avatar-img"
-                  style="margin-right: 15px" />
-                <mat-icon matListIcon *ngIf="!usuario.avatar">person</mat-icon>
-                {{ usuario.nombreUsuario }}
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Equipos -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Equipos</mat-label>
-            <input matInput formControlName="equipos" />
-          </mat-form-field>
-
-          <!-- Herramientas -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Herramientas</mat-label>
-            <input matInput formControlName="herramientas" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Indirectos Costos -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Indirectos Costos</mat-label>
-            <input matInput type="number" formControlName="indirectosCostos" />
-          </mat-form-field>
-
-          <!-- Fianzas -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Fianzas</mat-label>
-            <input matInput type="number" formControlName="fianzas" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Anticipo -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Anticipo</mat-label>
-            <input matInput type="number" formControlName="anticipo" />
-          </mat-form-field>
-
-          <!-- Cotización -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Cotización</mat-label>
-            <input matInput type="number" formControlName="cotizacion" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Orden de Compra -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Orden de Compra</mat-label>
-            <input matInput formControlName="ordenDeCompra" />
-          </mat-form-field>
-
-          <!-- Contrato -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Contrato</mat-label>
-            <input matInput formControlName="contrato" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Programa de Trabajo -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Programa de Trabajo</mat-label>
-            <input matInput formControlName="programaDeTrabajo" />
-          </mat-form-field>
-
-          <!-- Avances y Reportes -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Avances y Reportes</mat-label>
-            <input matInput formControlName="avancesReportes" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Comentarios -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Comentarios</mat-label>
-            <input matInput formControlName="comentarios" />
-          </mat-form-field>
-
-          <!-- Hallazgos -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Hallazgos</mat-label>
-            <input matInput formControlName="hallazgos" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Dosier -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Dosier</mat-label>
-            <input matInput formControlName="dosier" />
-          </mat-form-field>
-
-          <!-- Ruta Crítica -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Ruta Crítica</mat-label>
-            <input matInput formControlName="rutaCritica" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Factura -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Factura</mat-label>
-            <input matInput formControlName="factura" />
-          </mat-form-field>
-
-          <!-- Pago -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Pago</mat-label>
-            <input matInput type="number" formControlName="pago" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Utilidad Programada -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Utilidad Programada</mat-label>
-            <input matInput type="number" formControlName="utilidadProgramada" />
-          </mat-form-field>
-
-          <!-- Utilidad Real -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Utilidad Real</mat-label>
-            <input matInput type="number" formControlName="utilidadReal" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Financiamiento -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Financiamiento</mat-label>
-            <input matInput type="number" formControlName="financiamiento" />
-          </mat-form-field>
-
-          <!-- Cierre Proyecto Acta Entrega -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Cierre Proyecto Acta Entrega</mat-label>
-            <input matInput formControlName="cierreProyectoActaEntrega" />
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Estatus -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Estatus</mat-label>
-            <mat-select formControlName="estatus">
-              <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
-                cat.nombre
-                }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <!-- Líder de Proyecto -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Líder de Proyecto</mat-label>
-            <mat-select formControlName="liderProyectoId">
-              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
-                {{ user.nombreUsuario }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4
-        ">
-          <!-- Entregables -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Entregables</mat-label>
-            <input matInput formControlName="entregables" placeholder="Lista de entregables" />
-          </mat-form-field>
-
-          <!-- Cronograma -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Cronograma</mat-label>
-            <input matInput formControlName="cronograma" placeholder="Fechas clave" />
-          </mat-form-field>
-        </div>
-
-       
       </form>
+
     </mat-tab>
+
 
     <!-- TAB 2: Archivos del Proyecto -->
     <mat-tab label="Archivos del Proyecto" [disabled]="disabledArchivos">
@@ -732,15 +478,15 @@
       </div>
     </mat-tab>
   </mat-tab-group>
-   <!-- Botones -->
-        <div class="flex justify-end gap-2 mb-4 btn-float z-99">
-          <button mat-raised-button color="primary" type="submit" (click)="saveProject()">
-            Guardar
-          </button>
-          <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">
-            Cancelar
-          </button>
-        </div>
+  <!-- Botones -->
+  <div class="flex justify-end gap-2 mb-4 btn-float z-99">
+    <button mat-raised-button color="primary" type="submit" (click)="saveProject()">
+      Guardar
+    </button>
+    <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/project'])">
+      Cancelar
+    </button>
+  </div>
 </div>
 <ng-template #editTaskDialog let-data>
   <h2 mat-dialog-title>Editar Tarea</h2>
