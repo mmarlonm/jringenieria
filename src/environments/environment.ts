@@ -4,7 +4,7 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-   apiUrl: 'https://excel-selective-media-beautifully.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
-   apiUrlSignal: 'https://excel-selective-media-beautifully.trycloudflare.com',
+   apiUrl: 'https://brief-jennifer-environment-airplane.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+   apiUrlSignal: 'https://brief-jennifer-environment-airplane.trycloudflare.com',
    apiKeyGoogle: 'AIzaSyCnhkYFNO57qkBrvOaIFJwZy6vDYtJMncg'
   };
