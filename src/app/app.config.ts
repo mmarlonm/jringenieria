@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { APP_INITIALIZER, ApplicationConfig, inject } from '@angular/core';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
-import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
     PreloadAllModules,
@@ -19,6 +19,15 @@ import { mockApiServices } from 'app/mock-api';
 import { firstValueFrom } from 'rxjs';
 import { TranslocoHttpLoader } from './core/transloco/transloco.http-loader';
 
+// 👇 Soporte para idioma español
+import { Settings } from 'luxon';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+
+// Registramos el idioma español
+registerLocaleData(localeEs, 'es');
+Settings.defaultLocale = 'es'; // Luxon usará español globalmente
+
 export const appConfig: ApplicationConfig = {
     providers: [
         provideAnimations(),
@@ -27,23 +36,23 @@ export const appConfig: ApplicationConfig = {
             appRoutes,
             withPreloading(PreloadAllModules),
             withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
-            withHashLocation() // Agrega esta opción para habilitar hash
+            withHashLocation()
         ),
 
-        // Material Date Adapter
+        // 👇 Ajuste importante: forzar locale "es" en LuxonDateAdapter
+        { provide: MAT_DATE_LOCALE, useValue: 'es' },
         {
             provide: DateAdapter,
             useClass: LuxonDateAdapter,
+            deps: [MAT_DATE_LOCALE],
         },
         {
             provide: MAT_DATE_FORMATS,
             useValue: {
-                parse: {
-                    dateInput: 'D',
-                },
+                parse: { dateInput: 'D' },
                 display: {
                     dateInput: 'DDD',
-                    monthYearLabel: 'LLL yyyy',
+                    monthYearLabel: 'LLLL yyyy',
                     dateA11yLabel: 'DD',
                     monthYearA11yLabel: 'LLLL yyyy',
                 },
@@ -54,14 +63,8 @@ export const appConfig: ApplicationConfig = {
         provideTransloco({
             config: {
                 availableLangs: [
-                    {
-                        id: 'en',
-                        label: 'English',
-                    },
-                    {
-                        id: 'tr',
-                        label: 'Turkish',
-                    },
+                    { id: 'en', label: 'English' },
+                    { id: 'tr', label: 'Turkish' },
                 ],
                 defaultLang: 'en',
                 fallbackLang: 'en',
@@ -71,13 +74,11 @@ export const appConfig: ApplicationConfig = {
             loader: TranslocoHttpLoader,
         }),
         {
-            // Preload the default language before the app starts to prevent empty/jumping content
             provide: APP_INITIALIZER,
             useFactory: () => {
                 const translocoService = inject(TranslocoService);
                 const defaultLang = translocoService.getDefaultLang();
                 translocoService.setActiveLang(defaultLang);
-
                 return () => firstValueFrom(translocoService.load(defaultLang));
             },
             multi: true,
@@ -87,45 +88,19 @@ export const appConfig: ApplicationConfig = {
         provideAuth(),
         provideIcons(),
         provideFuse({
-            mockApi: {
-                delay: 0,
-                services: mockApiServices,
-            },
+            mockApi: { delay: 0, services: mockApiServices },
             fuse: {
                 layout: 'classy',
                 scheme: 'light',
-                screens: {
-                    sm: '600px',
-                    md: '960px',
-                    lg: '1280px',
-                    xl: '1440px',
-                },
+                screens: { sm: '600px', md: '960px', lg: '1280px', xl: '1440px' },
                 theme: 'theme-default',
                 themes: [
-                    {
-                        id: 'theme-default',
-                        name: 'Default',
-                    },
-                    {
-                        id: 'theme-brand',
-                        name: 'Brand',
-                    },
-                    {
-                        id: 'theme-teal',
-                        name: 'Teal',
-                    },
-                    {
-                        id: 'theme-rose',
-                        name: 'Rose',
-                    },
-                    {
-                        id: 'theme-purple',
-                        name: 'Purple',
-                    },
-                    {
-                        id: 'theme-amber',
-                        name: 'Amber',
-                    },
+                    { id: 'theme-default', name: 'Default' },
+                    { id: 'theme-brand', name: 'Brand' },
+                    { id: 'theme-teal', name: 'Teal' },
+                    { id: 'theme-rose', name: 'Rose' },
+                    { id: 'theme-purple', name: 'Purple' },
+                    { id: 'theme-amber', name: 'Amber' },
                 ],
             },
         }),
