@@ -40,7 +40,7 @@ import { map, startWith } from "rxjs/operators";
 import { MatChipsModule } from "@angular/material/chips";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { MatChipInputEvent } from "@angular/material/chips";
-import { set } from "lodash";
+import { eq, set } from "lodash";
 import { MatSnackBar } from '@angular/material/snack-bar'; // Asegúrate de tenerlo importado
 import Swal from 'sweetalert2';
 import Gantt from "frappe-gantt";
@@ -99,9 +99,14 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   // Lista de personas seleccionadas
   personasSeleccionadas: any[] = [];
 
+  // Lista de personas seleccionadas
+  personasSeleccionadasGantt: any[] = [];
+
   // Control de búsqueda de personas
   personasControl = new FormControl();
+  personasControlGantt = new FormControl();
   filteredUsers: Observable<any[]>; // Lista filtrada de usuarios
+  filteredUsersGantt: Observable<any[]>; // Lista filtrada de usuarios
   disabledArchivos: boolean = true;
 
   taskForm: FormGroup;
@@ -171,6 +176,12 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   ) {
     // Filtrar los usuarios a medida que se escribe en el campo
     this.filteredUsers = this.personasControl.valueChanges.pipe(
+      startWith(""),
+      map((value) => this._filter(value))
+    );
+
+    // Filtrar los usuarios a medida que se escribe en el campo (Gantt)
+    this.filteredUsersGantt = this.personasControlGantt.valueChanges.pipe(
       startWith(""),
       map((value) => this._filter(value))
     );
@@ -318,7 +329,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
         this.disabledArchivos = false;
         setTimeout(() => {
           this.progressValue = this.getPagoProgreso();
-          console.log("Progreso inicial:", this.progressValue);
         }, 1000); // Espera un poco para que se cargue el Gantt
       }
     });
@@ -390,6 +400,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
           dependencies: foundTask.dependencies || [],
           estatus: foundTask.estatus || '2'
         });
+        
 
         this.openEditDialog(task);
       },
@@ -474,7 +485,10 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
           start: new Date(task.startDate),
           end: new Date(task.endDate),
           TempId: task.tempId || task.id, // mantén el id temporal si existe
-          dependencies: task.dependencies ? task.dependencies.split(',') : []
+          dependencies: task.dependencies ? task.dependencies.split(',') : [],
+          estatus: task.estatus.toString(),
+          custom_class: this.getClassByStatus(task.estatus.toString()),
+          equipo: task.equipo || ''
         }));
 
         if (project) {
@@ -621,6 +635,25 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     }
   }
 
+
+  personasSeleccionadadloadGantt(): void {
+    // Obtenemos los IDs de personasParticipantes desde el formulario
+    const personasParticipantes = this.editForm.get('equipo')?.value;
+    if (personasParticipantes) {
+      // Dividimos los IDs concatenados en un array
+      const personasIds = personasParticipantes.split(",");
+      // Creamos un array de objetos con los usuarios basados en esos IDs
+      this.personasSeleccionadasGantt = personasIds
+        .map((id) => {
+          const user = this.getUserById(id); // Buscar usuario por ID (debe haber un método o lista para esto)
+          return user ? user : null; // Si se encuentra el usuario, lo agregamos al array
+        })
+        .filter((persona) => persona !== null); // Filtramos cualquier valor nulo
+      // Si quieres también actualizar el formulario con los usuarios
+      this.updatePersonasParticipantesFieldGantt();
+    }
+  }
+
   saveProject(): void {
     if (this.projectForm.invalid) {
       Swal.fire({
@@ -657,7 +690,8 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
         progress: task.progress ?? 0,
         dependencies: task.dependencies?.join(",") ?? "",
         equipo: task.equipo ?? "",
-        TempId: task.id
+        TempId: task.id,
+        estatus: task.estatus ?? "2"
       }))
     };
 
@@ -859,7 +893,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   deleteFile(proyectoId: number, categoria: string, nombreArchivo: string): void {
     this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe({
       next: (res: any) => {
-        console.log(res);
         if (res.code === 200) {
           this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
             duration: 3000,
@@ -893,6 +926,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
         (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
       );
       this.personasSeleccionadadload();
+      this.personasSeleccionadadloadGantt();
     });
   }
 
@@ -931,6 +965,8 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     this.personasControl.setValue(null);
   }
 
+
+
   // Agregar una persona desde el autocomplete
   addPersonaFromAutoComplete(event: any): void {
     const selectedPersona = event.option.value;
@@ -945,6 +981,20 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Agregar una persona desde el autocomplete
+  addPersonaFromAutoCompleteGantt(event: any): void {
+    const selectedPersona = event.option.value;
+    if (
+      !this.personasSeleccionadasGantt.find(
+        (p) => p.usuarioId === selectedPersona.usuarioId
+      )
+    ) {
+      this.personasSeleccionadasGantt.push(selectedPersona);
+      this.personasControlGantt.setValue(null);
+      this.updatePersonasParticipantesFieldGantt(); // Actualizar el campo
+    }
+  }
+
   updatePersonasParticipantesField(): void {
     // Concatenar los IDs de las personas seleccionadas y guardarlos en el campo personasParticipantes
     const selectedIds = this.personasSeleccionadas.map(
@@ -953,6 +1003,17 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     const idsConcatenados = selectedIds.join(","); // Concatenar los IDs separados por coma
     this.projectForm.patchValue({
       personasParticipantes: idsConcatenados, // Guardar los IDs como una cadena separada por comas
+    });
+  }
+
+  updatePersonasParticipantesFieldGantt(): void {
+    // Concatenar los IDs de las personas seleccionadas y guardarlos en el campo personasParticipantes
+    const selectedIds = this.personasSeleccionadasGantt.map(
+      (persona) => persona.usuarioId
+    );
+    const idsConcatenados = selectedIds.join(","); // Concatenar los IDs separados por coma
+    this.editForm.patchValue({
+      equipo: idsConcatenados, // Guardar los IDs como una cadena separada por comas
     });
   }
 
@@ -966,6 +1027,14 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     if (index >= 0) {
       this.personasSeleccionadas.splice(index, 1); // Eliminar del array
       this.updatePersonasParticipantesField();     // 🔸 Actualizar los IDs concatenados en el form
+    }
+  }
+
+  removePersonaGantt(persona: any): void {
+    const index = this.personasSeleccionadasGantt.indexOf(persona);
+    if (index >= 0) {
+      this.personasSeleccionadasGantt.splice(index, 1); // Eliminar del array
+      this.updatePersonasParticipantesFieldGantt();     // 🔸 Actualizar los IDs concatenados en el form
     }
   }
 
@@ -992,8 +1061,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       estatus: formValue.estatus || '2', // Por defecto "En Proceso"
       custom_class: this.getClassByStatus(formValue.estatus || '2')
     };
-
-    console.log("Añadiendo tarea:", newTask);
 
     this.tasks.push(newTask);
 
@@ -1056,6 +1123,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     this.selectedTask = task;
 
     this.dialogRef = this.dialog.open(this.editTaskDialog);
+    this.personasSeleccionadadloadGantt();
 
     this.dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -1127,8 +1195,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
   deleteTask(): void {
     if (!this.selectedTask) return;
-    console.log("Eliminando tarea:", this.selectedTask);
-    console.log("Tareas antes de eliminar:", this.tasks);
     // Si las tareas están en un array: this.tasks
     this.tasks = this.tasks.filter(t => t.id !== this.selectedTask.id);
 
@@ -1158,7 +1224,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   }
 
   descargarArchivoGuardado(categoria: string): void {
-    console.log("archivos ", this.files);
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
     if (!archivo) return;
 

@@ -100,21 +100,21 @@
   user-select: none;
 }
 /* Intenta apuntar directamente al RECT que tiene la clase 'bar' y tu clase 'bar-wrapper' */
-.gantt-container .bar-wrapper.verde rect.bar {
+::ng-deep .gantt-container .bar-wrapper.verde rect.bar {
     fill: #28a745 !important;
 }
 
-.gantt-container .bar-wrapper.amarillo rect.bar {
+::ng-deep .gantt-container .bar-wrapper.amarillo rect.bar {
     fill: yellow !important;
 }
 
 /* Repite para 'naranja', 'rojo', y 'gris' */
-.gantt-container .bar-wrapper.naranja rect.bar {
+::ng-deep .gantt-container .bar-wrapper.naranja rect.bar {
     fill: #fd7e14 !important;
 }
-.gantt-container .bar-wrapper.rojo rect.bar {
+::ng-deep .gantt-container .bar-wrapper.rojo rect.bar {
     fill: #dc3545 !important;
 }
-.gantt-container .bar-wrapper.gris rect.bar {
+::ng-deep .gantt-container .bar-wrapper.gris rect.bar {
     fill: #6c757d !important;
 }

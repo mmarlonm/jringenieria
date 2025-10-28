@@ -529,9 +529,22 @@
     </mat-form-field>
 
     <!-- Equipo -->
-    <mat-form-field appearance="fill" style="width: 100%;">
+    <mat-form-field appearance="fill" class="w-full">
       <mat-label>Equipo</mat-label>
-      <input matInput formControlName="equipo" />
+      <mat-chip-list #chipList aria-label="Seleccionar personas">
+        <mat-chip *ngFor="let persona of personasSeleccionadasGantt" [removable]="true" (removed)="removePersonaGantt(persona)">
+          {{ persona.nombreUsuario }}
+          <button matChipRemove>
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip>
+        <input matInput [matAutocomplete]="auto" [formControl]="personasControlGantt" placeholder="Buscar usuario" />
+      </mat-chip-list>
+      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPersonaFromAutoCompleteGantt($event)">
+        <mat-option *ngFor="let usuario of filteredUsersGantt | async" [value]="usuario">
+          {{ usuario.nombreUsuario }}
+        </mat-option>
+      </mat-autocomplete>
     </mat-form-field>
 
     <!-- Dependencias -->
