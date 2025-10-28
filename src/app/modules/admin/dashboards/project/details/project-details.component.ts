@@ -180,29 +180,61 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     this.projectForm = this.fb.group({
       proyectoId: [0],
       nombre: [null, Validators.required],
+
+      // 🔑 CAMPO CORREGIDO: 'categoria' coincide con ProyectoDTO
       categoria: [null, Validators.required],
-      lugar: ["NA"],
+
+      lugar: ['NA'],
+
+      // 🔑 CAMPO CORREGIDO: 'unidadDeNegocio' coincide con ProyectoDTO
       unidadDeNegocio: [null, Validators.required],
+
       fechaInicio: [null, Validators.required],
       fechaFin: [null],
-      estado: ["NA"],
+      estado: ['NA'],
 
       cliente: [0, [Validators.required, this.noZeroValidator]],
       necesidad: [null],
       direccion: [null],
 
-      // --- CONTACTOS ---
+      // --- CONTACTOS INTERNOS EXISTENTES ---
+      // Estos campos coinciden con el DTO
       nombreContacto: [null],
       telefono: [null],
       empresa: [null],
 
-      // Nuevos campos agregados
-      nombreContactoResponsable: [null],
-      telefonoResponsable: [null],
-      empresaResponsable: [null],
-      nombreContactoSupervisor: [null],
-      telefonoSupervisor: [null],
-      empresaSupervisor: [null],
+      // ⚠️ CAMPOS ELIMINADOS/NO MAPPABLES:
+      // Eliminé 'nombreContactoResponsable', 'telefonoResponsable', 'empresaResponsable',
+      // 'nombreContactoSupervisor', 'telefonoSupervisor', 'empresaSupervisor'
+      // ya que no existen en tu ProyectoDTO. Usaremos los nuevos campos abajo.
+
+      // --- CONTACTO RESPONSABLE DE PROYECTO CLIENTE ---
+      // Estos campos coinciden con el DTO
+      nombreContactoCliente: [null],
+      areaContactoCliente: [null],
+      telefonoContactoCliente: [null],
+      correoContactoCliente: [null],
+
+      // --- SUPERVISOR EN CAMPO (CLIENTE) ---
+      // 🔑 CAMPO CORREGIDO: Coincide con NombreSupervisorCampo (NO 'Cliente')
+      nombreSupervisorCampo: [null],
+      areaSupervisorCampo: [null],
+      telefonoSupervisorCampo: [null],
+      correoSupervisorCampo: [null],
+
+      // --- RESPONSABLE DEL PROYECTO JR ---
+      // 🔑 CAMPO CORREGIDO: Coincide con NombreResponsableProyectoJR (NO 'JR' a secas)
+      nombreResponsableProyectoJR: [null],
+      areaResponsableProyectoJR: [null],
+      telefonoResponsableProyectoJR: [null],
+      correoResponsableProyectoJR: [null],
+
+      // --- RESPONSABLE DE CAMPO JR ---
+      // 🔑 CAMPO CORREGIDO: Coincide con NombreResponsableCampoJR (NO 'CampoJR' a secas)
+      nombreResponsableCampoJR: [null],
+      areaResponsableCampoJR: [null],
+      telefonoResponsableCampoJR: [null],
+      correoResponsableCampoJR: [null],
 
       // --- DOCUMENTOS Y ARCHIVOS ---
       levantamiento: [null],
@@ -248,6 +280,9 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       utilidadProgramada: [0],
       utilidadReal: [0],
       financiamiento: [0],
+      pagoTotal: [0],
+      // 🔑 CAMPO CORREGIDO: Se ajusta el valor inicial de string a null
+      anticipoList: [null],
 
       // --- CIERRE ---
       cierreProyectoActaEntrega: [null],
@@ -256,10 +291,13 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       liderProyectoId: [null],
       entregables: [null],
       cronograma: [null],
-      pagoTotal: [0],
-      anticipoList: [0]
-    });
 
+      // 🔑 CAMPO AÑADIDO: Coincide con la propiedad 'Active' del DTO
+      active: [true],
+
+      // 🔑 CAMPO AÑADIDO: Coincide con la propiedad 'GanttTasks' del DTO
+      ganttTasks: [[]]
+    });
 
     this.getCategorias();
     this.getUnidadesDeNegocio();
@@ -291,6 +329,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       end: [null, Validators.required],
       equipo: [null],
       dependencies: [[]], // como array inicialmente
+      estatus: ["2"]
     });
 
 
@@ -300,7 +339,8 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       start: [null],
       end: [null],
       equipo: [''],
-      dependencies: ['']
+      dependencies: [''],
+      estatus: [null]
     });
 
     // Inicializa valores del form con formato
@@ -322,26 +362,24 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
   initGantt(): void {
     const container = document.getElementById("gantt");
-    if (!container) {
-      console.error("No se encontró el contenedor Gantt");
-      return;
-    }
+    if (!container) return;
 
-    // Limpiar contenido anterior para evitar duplicados o errores visuales
     container.innerHTML = "";
 
-    // Si previamente añadiste listener global de input, remuévelo para evitar duplicados
-    // Para hacerlo correctamente deberías guardar la referencia del handler
-    // Aquí asumimos que sólo se llama initGantt una vez o se controla de otra forma
+    // Asegurarse de que cada tarea tenga su custom_class
+    const tasksWithClass = this.tasks.map(t => ({
+      ...t,
+      custom_class: t.custom_class || this.getClassByStatus(t.estatus)
+    }));
 
-    this.gantt = new Gantt(container, this.tasks, {
+    this.gantt = new Gantt(container, tasksWithClass, {
       view_mode: this.viewMode,
       language: 'es',
       popup: '',
       on_click: (task) => {
         const foundTask = this.tasks.find(t => t.id === task.id);
         if (!foundTask) return;
-        console.log("Tarea encontrada:", foundTask);
+
         this.selectedTaskId = task.id;
         this.editForm.setValue({
           name: foundTask.name,
@@ -349,50 +387,42 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
           start: foundTask.start ? new Date(foundTask.start) : null,
           end: foundTask.end ? new Date(foundTask.end) : null,
           equipo: foundTask.equipo || '',
-          dependencies: foundTask.dependencies || []
+          dependencies: foundTask.dependencies || [],
+          estatus: foundTask.estatus || '2'
         });
 
         this.openEditDialog(task);
       },
-
-      on_date_change: (task, start, end) => {
-        console.log("Fecha cambiada:", task, start, end);
-      },
-      on_progress_change: (task, progress) => {
-        console.log("Progreso cambiado:", task, progress);
-      },
-      on_view_change: (mode) => {
-        console.log("Modo de vista cambiado:", mode);
-      },
     });
 
-    setTimeout(() => {
-      this.addHoverListeners();
-    }, 100); // Esperamos que el DOM renderice
-
-    // Agregar listener global solo UNA vez para evitar multiples listeners.
-    // Para eso, verificamos si ya está agregado, si no, lo agregamos:
+    // Listener global de progreso
     if (!container.hasAttribute('data-progress-listener')) {
       container.addEventListener("input", (event) => {
         const target = event.target as HTMLInputElement;
         if (target && target.type === "range" && target.id.startsWith("progress-input-")) {
           const taskId = target.id.replace("progress-input-", "");
           const newProgress = Number(target.value);
-
-          // Actualiza el span con el valor actual
           const span = document.getElementById(`${target.id}-value`);
           if (span) span.textContent = newProgress.toString();
-
-          // Actualiza progreso en el gantt
-          if (this.gantt) {
-            this.gantt.progress(taskId, newProgress);
-            console.log(`Progreso actualizado para tarea ${taskId}: ${newProgress}%`);
-          }
+          if (this.gantt) this.gantt.progress(taskId, newProgress);
         }
       });
       container.setAttribute('data-progress-listener', 'true');
     }
   }
+
+
+  // 🔹 Función para retornar color hexadecimal según estatus
+  getHexColorByStatus(status: string): string {
+    switch (status) {
+      case '1': return "#28a745"; // verde
+      case '2': return "#ffc107"; // amarillo
+      case '3': return "#fd7e14"; // naranja
+      case '4': return "#dc3545"; // rojo
+      default: return "#6c757d"; // gris
+    }
+  }
+
 
   getEstatus(): void {
     this.projectService.getEstatus().subscribe((data) => (this.estatus = data));
@@ -449,16 +479,17 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
         if (project) {
           this.projectForm.patchValue({
-            proyectoId: project.proyectoId, // 🔹 Ahora se incluye el ID
+            proyectoId: project.proyectoId,
             nombre: project.nombre,
-            categoria: project.categoriaId,
+            // 🔑 Mapeo corregido a 'categoria' y 'unidadDeNegocio' (del DTO)
+            categoria: project.categoria,
             lugar: project.lugar,
-            unidadDeNegocio: project.unidadDeNegocioId,
+            unidadDeNegocio: project.unidadDeNegocio,
             fechaInicio: project.fechaInicio,
             fechaFin: project.fechaFin,
             estado: project.estado,
 
-            // Nuevas propiedades
+            // Nuevas propiedades base
             cliente: project.cliente,
             necesidad: project.necesidad,
             direccion: project.direccion,
@@ -466,31 +497,63 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
             telefono: project.telefono,
             empresa: project.empresa,
 
+            // =======================================================
+            // 🔑 CAMPOS DE CONTACTO AGREGADOS (COINCIDEN CON FORMULARIO Y DTO)
+            // Contacto Responsable del Proyecto (Cliente)
+            nombreContactoCliente: project.nombreContactoCliente,
+            areaContactoCliente: project.areaContactoCliente,
+            telefonoContactoCliente: project.telefonoContactoCliente,
+            correoContactoCliente: project.correoContactoCliente,
+
+            // Supervisor en Campo (Cliente)
+            nombreSupervisorCampo: project.nombreSupervisorCampo,
+            areaSupervisorCampo: project.areaSupervisorCampo,
+            telefonoSupervisorCampo: project.telefonoSupervisorCampo,
+            correoSupervisorCampo: project.correoSupervisorCampo,
+
+            // Responsable del Proyecto JR
+            nombreResponsableProyectoJR: project.nombreResponsableProyectoJR,
+            areaResponsableProyectoJR: project.areaResponsableProyectoJR,
+            telefonoResponsableProyectoJR: project.telefonoResponsableProyectoJR,
+            correoResponsableProyectoJR: project.correoResponsableProyectoJR,
+
+            // Responsable de Campo JR
+            nombreResponsableCampoJR: project.nombreResponsableCampoJR,
+            areaResponsableCampoJR: project.areaResponsableCampoJR,
+            telefonoResponsableCampoJR: project.telefonoResponsableCampoJR,
+            correoResponsableCampoJR: project.correoResponsableCampoJR,
+            // =======================================================
+
+            // Documentos y Levantamientos
             levantamiento: project.levantamiento,
             planoArquitectonico: project.planoArquitectonico,
             diagramaIsometrico: project.diagramaIsometrico,
             diagramaUnifilar: project.diagramaUnifilar,
 
+            // Materiales
             materialesCatalogo: project.materialesCatalogo,
             materialesPresupuestados: project.materialesPresupuestados,
             inventarioFinal: project.inventarioFinal,
             cuadroComparativo: project.cuadroComparativo,
-
             proveedor: project.proveedor,
 
+            // Recursos
             manoDeObra: project.manoDeObra,
             personasParticipantes: project.personasParticipantes,
             equipos: project.equipos,
             herramientas: project.herramientas,
 
+            // Costos
             indirectosCostos: project.indirectosCostos,
             fianzas: project.fianzas,
             anticipo: project.anticipo,
             cotizacion: project.cotizacion,
 
+            // Contratos y Documentos
             ordenDeCompra: project.ordenDeCompra,
             contrato: project.contrato,
 
+            // Seguimiento
             programaDeTrabajo: project.programaDeTrabajo,
             avancesReportes: project.avancesReportes,
             comentarios: project.comentarios,
@@ -498,28 +561,35 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
             dosier: project.dosier,
             rutaCritica: project.rutaCritica,
 
+            // Finanzas
             factura: project.factura,
             pago: project.pago,
             utilidadProgramada: project.utilidadProgramada,
             utilidadReal: project.utilidadReal,
             financiamiento: project.financiamiento,
 
+            // Cierre
             cierreProyectoActaEntrega: project.cierreProyectoActaEntrega,
             estatus: project.estatus,
             liderProyectoId: project.liderProyectoId,
             entregables: project.entregables,
             cronograma: project.cronograma,
+
+            // Metadatos y Totales
             pagoTotal: project.pagoTotal || 0,
-            anticipoList: project.anticipoList || 0
+            // Mapea la cadena (e.g., "100;50;200") directamente
+            anticipoList: project.anticipoList || null,
+            active: project.active // 🔑 AGREGADO: Carga el estado activo
           });
 
+          // Lógica de visualización y cálculo de anticipos (se mantiene)
           const pagoTotal = project.pagoTotal || 0;
-          this.pagoTotalDisplay = this.currencyPipe.transform(pagoTotal, 'MXN', 'symbol', '1.2-2') || '';
-          // Convertir "100;50;200" → [100, 50, 200] y sumar
-          const totalAnticipos = project.anticipoList
-            .split(';')
+          this.pagoTotalDisplay = this.currencyPipe.transform(pagoTotal, 'MXN', 'symbol', '1.2-2', 'es-MX') || '';
+
+          const totalAnticipos = (project.anticipoList as string)
+            ?.split(';')
             .map(v => Number(v.trim()) || 0)
-            .reduce((acc, val) => acc + val, 0);
+            .reduce((acc, val) => acc + val, 0) || 0;
           this.anticipoDisplay = this.currencyPipe.transform(totalAnticipos, 'MXN', 'symbol', '1.2-2') || '';
         }
       } else {
@@ -751,21 +821,39 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     categoria: string,
     nombreArchivo: string
   ): void {
-    this.projectService
-      .downloadFile(proyectoId, categoria, nombreArchivo)
-      .subscribe(
-        (response: Blob) => {
-          const a = document.createElement("a");
-          const objectUrl = URL.createObjectURL(response);
-          a.href = objectUrl;
-          a.download = nombreArchivo;
-          a.click();
-          URL.revokeObjectURL(objectUrl); // Limpiar el objeto URL
-        },
-        (error) => {
-          console.error("Error al descargar el archivo:", error);
-        }
-      );
+    if (categoria.toLowerCase() === 'cotizacion') {
+      this.projectService
+        .downloadFileCotizacion(proyectoId, categoria, nombreArchivo)
+        .subscribe(
+          (response: Blob) => {
+            const a = document.createElement("a");
+            const objectUrl = URL.createObjectURL(response);
+            a.href = objectUrl;
+            a.download = nombreArchivo;
+            a.click();
+            URL.revokeObjectURL(objectUrl); // Limpiar el objeto URL
+          },
+          (error) => {
+            console.error("Error al descargar el archivo:", error);
+          }
+        );
+    } else {
+      this.projectService
+        .downloadFile(proyectoId, categoria, nombreArchivo)
+        .subscribe(
+          (response: Blob) => {
+            const a = document.createElement("a");
+            const objectUrl = URL.createObjectURL(response);
+            a.href = objectUrl;
+            a.download = nombreArchivo;
+            a.click();
+            URL.revokeObjectURL(objectUrl); // Limpiar el objeto URL
+          },
+          (error) => {
+            console.error("Error al descargar el archivo:", error);
+          }
+        );
+    }
   }
 
   deleteFile(proyectoId: number, categoria: string, nombreArchivo: string): void {
@@ -886,12 +974,11 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
     const formValue = this.taskForm.value;
 
-    // Obtener el número más alto de ID actual
+    // Obtener el siguiente ID
     const maxId = this.tasks
       .map(t => parseInt(t.id.replace('task-', '')))
       .filter(n => !isNaN(n))
       .reduce((max, n) => Math.max(max, n), 0);
-
     const nextId = maxId + 1;
 
     const newTask: any = {
@@ -901,20 +988,24 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       end: this.formatDate(formValue.end),
       progress: 0,
       dependencies: (formValue.dependencies || []).join(','),
-      equipo: formValue.equipo
+      equipo: formValue.equipo,
+      estatus: formValue.estatus || '2', // Por defecto "En Proceso"
+      custom_class: this.getClassByStatus(formValue.estatus || '2')
     };
+
+    console.log("Añadiendo tarea:", newTask);
 
     this.tasks.push(newTask);
 
     if (this.gantt) {
       this.gantt.refresh(this.tasks);
+      setTimeout(() => { this.applyTaskColors(); }, 100);
     } else {
       this.initGantt();
     }
 
     this.taskForm.reset();
   }
-
 
   // Formatea la fecha a string yyyy-mm-dd para Frappe Gantt
   formatDate(date: Date): string {
@@ -931,20 +1022,25 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       this.gantt.change_view_mode(view);
     }
   }
-  saveTaskEdit() {
+  saveTaskEdit(): void {
     if (this.editForm.invalid) return;
 
     const index = this.tasks.findIndex(t => t.id === this.selectedTaskId);
     if (index !== -1) {
-      this.tasks[index] = {
-        ...this.tasks[index],
-        ...this.editForm.value
-      };
-      this.gantt.refresh(this.tasks);
+      const edited = { ...this.tasks[index], ...this.editForm.value };
+
+      // Actualizar custom_class según estatus
+      if (edited.estatus) {
+        edited.custom_class = this.getClassByStatus(edited.estatus);
+      }
+
+      this.tasks[index] = edited;
+      if (this.gantt) this.gantt.refresh(this.tasks); setTimeout(() => { this.applyTaskColors(); }, 100);
     }
 
     this.dialogRef.close();
   }
+
 
   openEditDialog(task: any) {
     this.editForm.setValue({
@@ -953,7 +1049,8 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       start: task.start ? new Date(task.start) : null,
       end: task.end ? new Date(task.end) : null,
       equipo: task.equipo || '',
-      dependencies: task.dependencies || []
+      dependencies: task.dependencies || [],
+      estatus: task.estatus || '2'
     });
     this.selectedTaskId = task.id;
     this.selectedTask = task;
@@ -1061,10 +1158,11 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   }
 
   descargarArchivoGuardado(categoria: string): void {
+    console.log("archivos ", this.files);
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
     if (!archivo) return;
 
-    this.downloadFile(archivo.proyectoId, archivo.categoria, archivo.nombreArchivo);
+    this.downloadFile(archivo.categoria === "cotizacion" ? archivo.cotizacionId : archivo.proyectoId, categoria, archivo.nombreArchivo);
   }
   eliminarArchivo(categoria: string): void {
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
@@ -1125,33 +1223,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onPagoTotalInput(event: any) {
-    const rawValue = this.cleanNumber(event.target.value);
-    this.projectForm.get('pagoTotal')?.setValue(rawValue);
-    this.pagoTotalDisplay = event.target.value;
-  }
-
-  onPagoTotalBlur(event: any) {
-    const rawValue = this.cleanNumber(event.target.value);
-    this.pagoTotalDisplay = this.currencyPipe.transform(rawValue, 'MXN', 'symbol', '1.2-2') || '';
-  }
-
-  onAnticipoInput(event: any) {
-    const rawValue = this.cleanNumber(event.target.value);
-    this.nuevoAnticipo = rawValue;
-    this.anticipoDisplay = event.target.value;
-  }
-
-  onAnticipoBlur(event: any) {
-    const rawValue = this.cleanNumber(event.target.value);
-    this.anticipoDisplay = this.currencyPipe.transform(rawValue, 'MXN', 'symbol', '1.2-2') || '';
-  }
-
-  // Utilidad para limpiar valores
-  private cleanNumber(value: string): number {
-    return parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0;
-  }
-
   getPagoProgreso(): number {
     const pagoTotal = Number(this.projectForm.get('pagoTotal')?.value) || 0;
     const anticipoListStr = this.projectForm.get('anticipoList')?.value || '';
@@ -1170,6 +1241,85 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
     // Limitar a máximo 100% para evitar desbordes visuales
     return Math.min(Math.round(porcentaje), 100);
+  }
+
+  // Input: solo actualizamos el form control y guardamos el valor literal
+  onPagoTotalInput(event: any) {
+    const rawValue = this.parseSpanishNumber(event.target.value);
+    this.projectForm.get('pagoTotal')?.setValue(rawValue, { emitEvent: false });
+    this.pagoTotalDisplay = event.target.value; // No formateamos aquí
+  }
+
+  onPagoTotalBlur(event: any) {
+    const rawValue = this.projectForm.get('pagoTotal')?.value || 0;
+    // Formateamos como MXN al perder foco
+    this.pagoTotalDisplay =
+      this.currencyPipe.transform(rawValue, 'MXN', 'symbol', '1.2-2', 'es-MX') || '';
+  }
+
+  onAnticipoInput(event: any) {
+    const rawValue = this.parseSpanishNumber(event.target.value);
+    this.projectForm.get('anticipo')?.setValue(rawValue, { emitEvent: false });
+    this.nuevoAnticipo = rawValue;
+    this.anticipoDisplay = event.target.value;
+  }
+
+  onAnticipoBlur(event: any) {
+    const rawValue = this.projectForm.get('anticipo')?.value || 0;
+    this.anticipoDisplay =
+      this.currencyPipe.transform(rawValue, 'MXN', 'symbol', '1.2-2', 'es-MX') || '';
+  }
+
+  // Helper para convertir string español a número
+  parseSpanishNumber(value: string): number {
+    if (!value) return 0;
+    const clean = value.replace(/[^0-9.,-]/g, '').replace(/\./g, '').replace(',', '.');
+    return parseFloat(clean) || 0;
+  }
+
+
+  getColorByStatus(status: string): string {
+    switch (status) {
+      case '1':
+        return 'verde';
+      case '2':
+        return 'amarillo';
+      case '3':
+        return 'naranja';
+      case '4':
+        return 'rojo';
+      default:
+        return 'gris';
+    }
+  }
+
+  // Opcional, solo si el CSS no funciona inmediatamente
+  applyTaskColors(): void {
+    this.tasks.forEach(task => {
+      // 1. Asegúrate de que la clase esté en la tarea
+      const cssClass = this.getClassByStatus(task.estatus);
+
+      // 2. Encuentra el elemento de la barra de Gantt por el ID
+      const barWrapper = document.querySelector(`.bar-wrapper[data-id="${task.id}"]`);
+
+      if (barWrapper && !barWrapper.classList.contains(cssClass)) {
+        // 3. Limpia otras clases de color para evitar conflictos (opcional)
+        barWrapper.classList.remove('verde', 'amarillo', 'naranja', 'rojo', 'gris');
+
+        // 4. Añade la nueva clase
+        barWrapper.classList.add(cssClass);
+      }
+    });
+  }
+
+  getClassByStatus(status: string): string {
+    switch (status) {
+      case '1': return 'verde';
+      case '2': return 'amarillo';
+      case '3': return 'naranja';
+      case '4': return 'rojo';
+      default: return 'gris';
+    }
   }
 
 }

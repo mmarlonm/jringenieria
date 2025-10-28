@@ -8,6 +8,7 @@ import { environment } from 'environments/environment'; // Asegúrate de tener l
 })
 export class ProjectService {
   private apiUrl = `${environment.apiUrl}/Proyecto`; // Asegúrate de que esto sea correcto
+  private apiUrlCotizacion = `${environment.apiUrl}/Cotizacion`; // Asegúrate de que esto sea correcto
 
   constructor(private http: HttpClient) { }
 
@@ -59,6 +60,11 @@ export class ProjectService {
 
   downloadFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
     const url = `${this.apiUrl}/DescargarArchivo/${proyectoId}/${categoria}/${nombreArchivo}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  downloadFileCotizacion(proyectoId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrlCotizacion}/DescargarArchivoCotizacion/${proyectoId}/${categoria}/${nombreArchivo}`;
     return this.http.get(url, { responseType: 'blob' });
   }
 

@@ -16,21 +16,23 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Pago Total</mat-label>
-            <input matInput type="text" [value]="pagoTotalDisplay" (blur)="onPagoTotalBlur($event)"
-              (input)="onPagoTotalInput($event)" />
+            <input matInput type="text" [value]="pagoTotalDisplay" (input)="onPagoTotalInput($event)"
+              (blur)="onPagoTotalBlur($event)" />
           </mat-form-field>
 
           <div class="flex items-center gap-2">
             <mat-form-field appearance="fill" class="flex-1">
               <mat-label>Anticipo</mat-label>
-              <input matInput type="text" [value]="anticipoDisplay" (blur)="onAnticipoBlur($event)"
-                (input)="onAnticipoInput($event)" />
+              <input matInput type="text" [value]="anticipoDisplay" (input)="onAnticipoInput($event)"
+                (blur)="onAnticipoBlur($event)" />
             </mat-form-field>
             <button mat-icon-button color="primary" (click)="mostrarHistorial = !mostrarHistorial">
               <mat-icon>history</mat-icon>
             </button>
           </div>
         </div>
+
+
 
         <!-- Nombre de Proyecto -->
         <mat-form-field appearance="fill" class="w-full">
@@ -87,7 +89,6 @@
           </mat-form-field>
         </div>
 
-        <!-- Contacto Responsable del Proyecto (Cliente) -->
         <h3 class="font-semibold text-lg mt-4">Contacto Responsable del Proyecto (Cliente)</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill">
@@ -108,66 +109,63 @@
           </mat-form-field>
         </div>
 
-        <!-- Contacto Supervisor en Campo (Cliente) -->
         <h3 class="font-semibold text-lg mt-4">Supervisor en Campo (Cliente)</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill">
             <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombreSupervisorCliente" />
+            <input matInput formControlName="nombreSupervisorCampo" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Área/Departamento</mat-label>
-            <input matInput formControlName="areaSupervisorCliente" />
+            <input matInput formControlName="areaSupervisorCampo" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefonoSupervisorCliente" />
+            <input matInput formControlName="telefonoSupervisorCampo" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Correo</mat-label>
-            <input matInput formControlName="correoSupervisorCliente" />
+            <input matInput formControlName="correoSupervisorCampo" />
           </mat-form-field>
         </div>
 
-        <!-- Responsable del Proyecto JR -->
         <h3 class="font-semibold text-lg mt-4">Responsable del Proyecto JR</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill">
             <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombreResponsableJR" />
+            <input matInput formControlName="nombreResponsableProyectoJR" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Área/Departamento</mat-label>
-            <input matInput formControlName="areaResponsableJR" />
+            <input matInput formControlName="areaResponsableProyectoJR" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefonoResponsableJR" />
+            <input matInput formControlName="telefonoResponsableProyectoJR" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Correo</mat-label>
-            <input matInput formControlName="correoResponsableJR" />
+            <input matInput formControlName="correoResponsableProyectoJR" />
           </mat-form-field>
         </div>
 
-        <!-- Responsable Campo JR -->
         <h3 class="font-semibold text-lg mt-4">Responsable de Campo JR</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <mat-form-field appearance="fill">
             <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombreCampoJR" />
+            <input matInput formControlName="nombreResponsableCampoJR" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Área/Departamento</mat-label>
-            <input matInput formControlName="areaCampoJR" />
+            <input matInput formControlName="areaResponsableCampoJR" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefonoCampoJR" />
+            <input matInput formControlName="telefonoResponsableCampoJR" />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Correo</mat-label>
-            <input matInput formControlName="correoCampoJR" />
+            <input matInput formControlName="correoResponsableCampoJR" />
           </mat-form-field>
         </div>
 
@@ -452,6 +450,16 @@
               <mat-option *ngFor="let t of tasks" [value]="t.id">{{ t.name }}</mat-option>
             </mat-select>
           </mat-form-field>
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Estatus</mat-label>
+            <mat-select formControlName="estatus">
+              <mat-option value="1">Terminada</mat-option>
+              <mat-option value="2">En proceso</mat-option>
+              <mat-option value="3">En pausa</mat-option>
+              <mat-option value="4">Detenida</mat-option>
+            </mat-select>
+          </mat-form-field>
+
 
 
 
@@ -533,6 +541,18 @@
         <mat-option *ngFor="let t of tasks" [value]="t.id">{{ t.name }}</mat-option>
       </mat-select>
     </mat-form-field>
+
+    <!-- Estatus -->
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>Estatus</mat-label>
+      <mat-select formControlName="estatus">
+        <mat-option value="1">Terminada</mat-option>
+        <mat-option value="2">En proceso</mat-option>
+        <mat-option value="3">En pausa</mat-option>
+        <mat-option value="4">Detenida</mat-option>
+      </mat-select>
+    </mat-form-field>
+
 
   </mat-dialog-content>
 
