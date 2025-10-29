@@ -210,6 +210,59 @@
           </ng-container>
         </div>
 
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+            <mat-label>Compra de materiales</mat-label>
+            <input matInput [value]="getArchivoNombre('compraMateriales')" readonly />
+            <button mat-icon-button type="button"
+              (click)="hasArchivoGuardado('compraMateriales') ? descargarArchivoGuardado('compraMateriales') : fileInputs['compraMateriales'].click()">
+              <mat-icon>{{ hasArchivoGuardado('compraMateriales') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            </button>
+            <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="warn" type="button"
+              (click)="eliminarArchivo('compraMateriales')">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <input type="file" [attr.data-key]="'compraMateriales'" #fileInput
+              (change)="onFileSelectedOne($event, 'compraMateriales')" hidden />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Responsable compra de materiales</mat-label>
+            <mat-select formControlName="responsableCompraMateriales">
+              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
+                {{ user.nombreUsuario }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+            <mat-label>Almacén en Campo</mat-label>
+            <input matInput [value]="getArchivoNombre('almacenCampo')" readonly />
+            <button mat-icon-button type="button"
+              (click)="hasArchivoGuardado('almacenCampo') ? descargarArchivoGuardado('almacenCampo') : fileInputs['almacenCampo'].click()">
+              <mat-icon>{{ hasArchivoGuardado('almacenCampo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            </button>
+            <button *ngIf="hasArchivoGuardado('almacenCampo')" mat-icon-button color="warn" type="button"
+              (click)="eliminarArchivo('almacenCampo')">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <input type="file" [attr.data-key]="'almacenCampo'" #fileInput
+              (change)="onFileSelectedOne($event, 'almacenCampo')" hidden />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Responsable almacén en campo</mat-label>
+            <mat-select formControlName="responsableAlmacenCampo">
+              <mat-option *ngFor="let user of user" [value]="user.usuarioId">
+                {{ user.nombreUsuario }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
       </form>
 
     </mat-tab>
@@ -532,7 +585,8 @@
     <mat-form-field appearance="fill" class="w-full">
       <mat-label>Equipo</mat-label>
       <mat-chip-list #chipList aria-label="Seleccionar personas">
-        <mat-chip *ngFor="let persona of personasSeleccionadasGantt" [removable]="true" (removed)="removePersonaGantt(persona)">
+        <mat-chip *ngFor="let persona of personasSeleccionadasGantt" [removable]="true"
+          (removed)="removePersonaGantt(persona)">
           {{ persona.nombreUsuario }}
           <button matChipRemove>
             <mat-icon>cancel</mat-icon>

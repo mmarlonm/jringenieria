@@ -137,10 +137,10 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     { key: 'memorandos', label: 'Memorandos' },
     { key: 'anticiposPagos', label: 'Anticipos/Pagos' },
     { key: 'listadoMateriales', label: 'Listado de materiales' },
-    { key: 'compraMateriales', label: 'Compra de materiales' },
+    //{ key: 'compraMateriales', label: 'Compra de materiales' },
     { key: 'equiposHerramientas', label: 'Equipos/Herramientas' },
     { key: 'reportes', label: 'Reportes' },
-    { key: 'almacenCampo', label: 'Almacén en campo' },
+    //{ key: 'almacenCampo', label: 'Almacén en campo' },
     { key: 'entregaRecepcion', label: 'Entrega recepción' },
     { key: 'dossier', label: 'Dossier' },
     { key: 'cierreFianza', label: 'Cierre de fianza' },
@@ -307,7 +307,9 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       active: [true],
 
       // 🔑 CAMPO AÑADIDO: Coincide con la propiedad 'GanttTasks' del DTO
-      ganttTasks: [[]]
+      ganttTasks: [[]],
+      responsableCompraMateriales: [null],
+      responsableAlmacenCampo: [null]
     });
 
     this.getCategorias();
@@ -593,7 +595,9 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
             pagoTotal: project.pagoTotal || 0,
             // Mapea la cadena (e.g., "100;50;200") directamente
             anticipoList: project.anticipoList || null,
-            active: project.active // 🔑 AGREGADO: Carga el estado activo
+            active: project.active, // 🔑 AGREGADO: Carga el estado activo
+            responsableCompraMateriales: project.responsableCompraMateriales,
+            responsableAlmacenCampo: project.responsableAlmacenCampo
           });
 
           // Lógica de visualización y cálculo de anticipos (se mantiene)
