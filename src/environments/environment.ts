@@ -6,6 +6,6 @@ export const environment = {
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
    apiUrl: 'https://smoke-batteries-contributing-keys.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
    apiUrlSignal: 'https://smoke-batteries-contributing-keys.trycloudflare.com',
-   apiOnlyOffice: 'http://host.docker.internal:8080/',
+   apiOnlyOffice: 'https://blond-lot-manufacture-radical.trycloudflare.com',
    apiKeyGoogle: 'AIzaSyCnhkYFNO57qkBrvOaIFJwZy6vDYtJMncg'
   };

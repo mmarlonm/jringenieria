@@ -58,14 +58,22 @@
             <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
               <mat-label>{{ categoria.label }}</mat-label>
               <input matInput [value]="getArchivoNombre(categoria.key)" readonly />
+
               <button mat-icon-button type="button"
                 (click)="hasArchivoGuardado(categoria.key) ? descargarArchivoGuardado(categoria.key) : fileInputs[categoria.key].click()">
                 <mat-icon>{{ hasArchivoGuardado(categoria.key) ? 'cloud_download' : 'attach_file' }}</mat-icon>
               </button>
+
+              <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="primary" type="button"
+                (click)="editarArchivoGuardado(categoria.key)">
+                <mat-icon>edit</mat-icon>
+              </button>
+
               <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="warn" type="button"
                 (click)="eliminarArchivo(categoria.key)">
                 <mat-icon>delete</mat-icon>
               </button>
+
               <input type="file" [attr.data-key]="categoria.key" #fileInput
                 (change)="onFileSelectedOne($event, categoria.key)" hidden />
             </mat-form-field>
@@ -200,6 +208,10 @@
                 (click)="hasArchivoGuardado(categoria.key) ? descargarArchivoGuardado(categoria.key) : fileInputs[categoria.key].click()">
                 <mat-icon>{{ hasArchivoGuardado(categoria.key) ? 'cloud_download' : 'attach_file' }}</mat-icon>
               </button>
+              <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="primary" type="button"
+                (click)="editarArchivoGuardado(categoria.key)">
+                <mat-icon>edit</mat-icon>
+              </button>
               <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="warn" type="button"
                 (click)="eliminarArchivo(categoria.key)">
                 <mat-icon>delete</mat-icon>
@@ -219,6 +231,10 @@
               (click)="hasArchivoGuardado('compraMateriales') ? descargarArchivoGuardado('compraMateriales') : fileInputs['compraMateriales'].click()">
               <mat-icon>{{ hasArchivoGuardado('compraMateriales') ? 'cloud_download' : 'attach_file' }}</mat-icon>
             </button>
+            <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="primary" type="button"
+                (click)="editarArchivoGuardado('compraMateriales')">
+                <mat-icon>edit</mat-icon>
+              </button>
             <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="warn" type="button"
               (click)="eliminarArchivo('compraMateriales')">
               <mat-icon>delete</mat-icon>

@@ -47,7 +47,10 @@ import Gantt from "frappe-gantt";
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { TemplateRef, ViewChild } from '@angular/core';
 import { NeumorphicProgressComponent } from '@fuse/components/neumorphic-progress/neumorphic-progress.component';
+import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { CurrencyPipe } from '@angular/common';
+import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
+import {DocumentEditorModule, type IConfig} from "@onlyoffice/document-editor-angular";
 
 registerLocaleData(localeEs);
 @Component({
@@ -71,7 +74,8 @@ registerLocaleData(localeEs);
     MatIconModule,
     MatChipsModule,
     MatAutocompleteModule,
-    NeumorphicProgressComponent
+    NeumorphicProgressComponent,
+    DocumentEditorModule
   ],
   providers: [
     CurrencyPipe,
@@ -161,6 +165,9 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   anticipoDisplay: string = '';
 
   progressValue: number;
+
+  onlyOfficeDocsUrl: any = environment.apiOnlyOffice; // URL pública del Servidor de Documentos
+  onlyOfficeApiUrl: any = `${environment.apiUrl}/Proyecto`; // URL pública de la API de OnlyOffice
 
   constructor(
     private fb: FormBuilder,
@@ -402,7 +409,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
           dependencies: foundTask.dependencies || [],
           estatus: foundTask.estatus || '2'
         });
-        
+
 
         this.openEditDialog(task);
       },
@@ -488,8 +495,8 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
           end: new Date(task.endDate),
           TempId: task.tempId || task.id, // mantén el id temporal si existe
           dependencies: task.dependencies ? task.dependencies.split(',') : [],
-          estatus: task.estatus.toString(),
-          custom_class: this.getClassByStatus(task.estatus.toString()),
+          estatus: task.estatus ? task.estatus.toString() : '2',
+          custom_class: this.getClassByStatus(task.estatus ? task.estatus.toString() : '2'),
           equipo: task.equipo || ''
         }));
 
@@ -1264,6 +1271,69 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       }
     });
   }
+
+  /**
+ * 1. Obtiene la metadata del archivo.
+ * 2. Construye el objeto de configuración del editor de OnlyOffice.
+ * 3. Abre un modal para mostrar el editor.
+ */
+  editarArchivoGuardado(categoria: string): void {
+    // 1. Encontrar el archivo
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    if (!archivo) {
+      console.error('Archivo no encontrado para editar.');
+      return;
+    }
+
+    // Determinar el ID a usar (proyectoId o cotizacionId)
+    const id = archivo.categoria === "cotizacion" ? archivo.cotizacionId : archivo.proyectoId;
+
+    // Determinar el tipo de documento para OnlyOffice (necesitas una lógica más robusta aquí)
+    const fileExtension = archivo.nombreArchivo.split('.').pop();
+    const documentType = this.getDocumentType(fileExtension);
+
+    if (!documentType) {
+      console.error(`Tipo de documento no soportado para: ${fileExtension}`);
+      return;
+    }
+    // Reemplaza cualquier carácter no alfanumérico por "__", excepto el punto final de la extensión
+const safeFileName = archivo.nombreArchivo.replace(/[^a-zA-Z0-9_.-]/g, "__")  // '_' y '-' permitidos
+                                         .replace(/\.(?=[^\.]+$)/, "--");     // reemplaza solo el último punto (de la extensión)
+    this.projectService.getToken(id, categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
+      if (tokenResponse && tokenResponse.token) {
+        console.log('Token obtenido para OnlyOffice:', tokenResponse);
+        // 3. Abrir el modal del editor
+        const nombreSinExt = archivo.nombreArchivo.split('.').slice(0, -1).join('.');
+
+        this.dialog.open(OnlyOfficeEditorComponent, {
+          width: '90vw',
+          height: '90vh',
+          data: {
+            documentServerUrl: this.onlyOfficeDocsUrl,
+            editorConfig: {
+              document: {
+                fileType: fileExtension,
+                key: `${id}_${categoria}_${safeFileName}`, // Clave única para el documento
+                title: archivo.nombreArchivo,
+                // ✅ Sí codificar aquí (solo en URL del backend)
+                url: `${this.onlyOfficeApiUrl}/editfile?proyectoId=${id}&categoria=${categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+              },
+              documentType: documentType,
+              editorConfig: {
+                callbackUrl: `${this.onlyOfficeApiUrl}/callback`
+              }
+            }
+          }
+        });
+
+
+      } else {
+        console.error('No se pudo obtener el token para OnlyOffice.');
+        return;
+      }
+    });
+  }
+
   getArchivoNombre(categoria: string): string {
     return this[`${categoria}File`]?.name || this.getNombreArchivoGuardado(categoria) || '';
   }
@@ -1389,6 +1459,23 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       case '4': return 'rojo';
       default: return 'gris';
     }
+  }
+
+  /**
+ * Función auxiliar para mapear la extensión a un tipo de documento de OnlyOffice
+ */
+  private getDocumentType(ext: string): 'word' | 'cell' | 'presentation' | null {
+    ext = ext?.toLowerCase();
+    if (['docx', 'doc', 'odt'].includes(ext)) {
+      return 'word';
+    }
+    if (['xlsx', 'xls', 'ods'].includes(ext)) {
+      return 'cell';
+    }
+    if (['pptx', 'ppt', 'odp'].includes(ext)) {
+      return 'presentation';
+    }
+    return null;
   }
 
 }

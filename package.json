@@ -33,6 +33,7 @@
         "@fullcalendar/interaction": "^6.1.18",
         "@microsoft/signalr": "^8.0.7",
         "@ngneat/transloco": "6.0.4",
+        "@onlyoffice/document-editor-angular": "^7.5.1",
         "angular-calendar": "^0.31.1",
         "angular-star-rating": "^7.0.0",
         "angularx-flatpickr": "^8.1.0",

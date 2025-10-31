@@ -1,0 +1,16 @@
+<h2 mat-dialog-title>Editando: {{ editorConfig.document.title }}</h2>
+
+<mat-dialog-content>
+    <document-editor 
+        id="docxEditor" 
+        [documentServerUrl]="documentServerUrl" 
+        [config]="editorConfig"
+        [events_onDocumentReady]="onDocumentReady" 
+        [onLoadComponentError]="onLoadComponentError"
+        [events_onDocumentStateChange]="onDocumentStateChange">
+    </document-editor>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cerrar Editor</button>
+</mat-dialog-actions>

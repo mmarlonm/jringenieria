@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
 
@@ -9,6 +9,7 @@ import { environment } from 'environments/environment'; // Asegúrate de tener l
 export class ProjectService {
   private apiUrl = `${environment.apiUrl}/Proyecto`; // Asegúrate de que esto sea correcto
   private apiUrlCotizacion = `${environment.apiUrl}/Cotizacion`; // Asegúrate de que esto sea correcto
+  private apiUrlAuth = `${environment.apiUrl}/Auth`;
 
   constructor(private http: HttpClient) { }
 
@@ -67,6 +68,23 @@ export class ProjectService {
     const url = `${this.apiUrlCotizacion}/DescargarArchivoCotizacion/${proyectoId}/${categoria}/${nombreArchivo}`;
     return this.http.get(url, { responseType: 'blob' });
   }
+
+
+  getToken(proyectoId: number, categoria: string, nombreArchivo: string): Observable<any> {
+    
+    // 1. Define los parámetros de consulta
+    let params = new HttpParams()
+        .set('proyectoId', proyectoId)
+        .set('categoria', categoria)
+        .set('nombreArchivo', nombreArchivo);
+
+    // 2. Construye la URL base del endpoint
+    // Suponiendo que tu endpoint está en: [Route("api/onlyoffice")] y [HttpGet("token")]
+    const url = `${this.apiUrlAuth}/token`; 
+
+    // 3. Envía la solicitud con los parámetros
+    return this.http.get<any>(url, { params: params });
+}
 
   removeFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<any> {
     const encodedFileName = encodeURIComponent(nombreArchivo); // Manejo de caracteres especiales
