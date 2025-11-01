@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>Historial de Archivos del Proyecto</h2>
+
+<div style="max-height: 400px; overflow: auto;">
+  <table mat-table [dataSource]="dataSource" class="w-full">
+
+    <!-- Nombre Archivo -->
+    <ng-container matColumnDef="nombreArchivo">
+      <th mat-header-cell *matHeaderCellDef> Archivo </th>
+      <td mat-cell *matCellDef="let row"> {{ row.nombreArchivo }} </td>
+    </ng-container>
+
+    <!-- Categoría -->
+    <ng-container matColumnDef="categoria">
+      <th mat-header-cell *matHeaderCellDef> Categoría </th>
+      <td mat-cell *matCellDef="let row"> {{ row.categoria }} </td>
+    </ng-container>
+
+    <!-- Usuario -->
+    <ng-container matColumnDef="usuarioNombre">
+      <th mat-header-cell *matHeaderCellDef> Usuario </th>
+      <td mat-cell *matCellDef="let row"> {{ row.usuarioNombre }} </td>
+    </ng-container>
+
+    <!-- Fecha de Edición -->
+    <ng-container matColumnDef="fechaEdicion">
+      <th mat-header-cell *matHeaderCellDef> Fecha de edición </th>
+      <td mat-cell *matCellDef="let row"> {{ row.fechaEdicion | date:'short' }} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close color="primary">Cerrar</button>
+</div>

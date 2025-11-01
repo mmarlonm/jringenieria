@@ -74,6 +74,11 @@
                 <mat-icon>delete</mat-icon>
               </button>
 
+              <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="success" type="button"
+                (click)="historialArchivo(categoria.key)">
+                <mat-icon>history</mat-icon>
+              </button>
+
               <input type="file" [attr.data-key]="categoria.key" #fileInput
                 (change)="onFileSelectedOne($event, categoria.key)" hidden />
             </mat-form-field>
@@ -216,6 +221,11 @@
                 (click)="eliminarArchivo(categoria.key)">
                 <mat-icon>delete</mat-icon>
               </button>
+
+              <button *ngIf="hasArchivoGuardado(categoria.key)" mat-icon-button color="success" type="button"
+                (click)="historialArchivo(categoria.key)">
+                <mat-icon>history</mat-icon>
+              </button>
               <input type="file" [attr.data-key]="categoria.key" #fileInput
                 (change)="onFileSelectedOne($event, categoria.key)" hidden />
             </mat-form-field>
@@ -261,10 +271,19 @@
               (click)="hasArchivoGuardado('almacenCampo') ? descargarArchivoGuardado('almacenCampo') : fileInputs['almacenCampo'].click()">
               <mat-icon>{{ hasArchivoGuardado('almacenCampo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
             </button>
+            <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="primary" type="button"
+                (click)="editarArchivoGuardado('compraMateriales')">
+                <mat-icon>edit</mat-icon>
+              </button>
             <button *ngIf="hasArchivoGuardado('almacenCampo')" mat-icon-button color="warn" type="button"
               (click)="eliminarArchivo('almacenCampo')">
               <mat-icon>delete</mat-icon>
             </button>
+
+            <button *ngIf="hasArchivoGuardado('almacenCampo')" mat-icon-button color="success" type="button"
+                (click)="historialArchivo('almacenCampo')">
+                <mat-icon>history</mat-icon>
+              </button>
             <input type="file" [attr.data-key]="'almacenCampo'" #fileInput
               (change)="onFileSelectedOne($event, 'almacenCampo')" hidden />
           </mat-form-field>

@@ -97,6 +97,10 @@ export class ProjectService {
     return this.http.get<any>(`${this.apiUrl}/historial-estatus/${projectId}`);
   }
 
+  getArchivoHistorial(archivoProjectId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/getArchivoHistorial/${archivoProjectId}`);
+  }
+
   enviarEncuesta(dto: any): Observable<any> {
   return this.http.post(`${this.apiUrl}/enviar-correo`, dto);
 }

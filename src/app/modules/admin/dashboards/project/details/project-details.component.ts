@@ -51,6 +51,7 @@ import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/o
 import { CurrencyPipe } from '@angular/common';
 import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
 import {DocumentEditorModule, type IConfig} from "@onlyoffice/document-editor-angular";
+import { HistorialComponent } from '../historial-archivo/historial.component';
 
 registerLocaleData(localeEs);
 @Component({
@@ -1272,6 +1273,27 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     });
   }
 
+ historialArchivo(categoria: string): void {
+  const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+  console.log('lista usuarios:', this.user);
+
+  if (!archivo) return;
+
+  this.projectService.getArchivoHistorial(archivo.id).subscribe((history) => {
+    if (history && history.length > 0) {
+      console.log('Historial del archivo:', history);
+      this.dialog.open(HistorialComponent, {
+        width: '600px',
+        data: {
+          historial: history,
+          usuarios: this.user // 👈 pasamos también los usuarios
+        }
+      });
+    }
+  });
+}
+
+
   /**
  * 1. Obtiene la metadata del archivo.
  * 2. Construye el objeto de configuración del editor de OnlyOffice.
@@ -1299,12 +1321,12 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     // Reemplaza cualquier carácter no alfanumérico por "__", excepto el punto final de la extensión
 const safeFileName = archivo.nombreArchivo.replace(/[^a-zA-Z0-9_.-]/g, "__")  // '_' y '-' permitidos
                                          .replace(/\.(?=[^\.]+$)/, "--");     // reemplaza solo el último punto (de la extensión)
+
+    var userID = JSON.parse(localStorage.getItem('userInformation')).usuario.id;                             
     this.projectService.getToken(id, categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
       if (tokenResponse && tokenResponse.token) {
         console.log('Token obtenido para OnlyOffice:', tokenResponse);
         // 3. Abrir el modal del editor
-        const nombreSinExt = archivo.nombreArchivo.split('.').slice(0, -1).join('.');
-
         this.dialog.open(OnlyOfficeEditorComponent, {
           width: '90vw',
           height: '90vh',
@@ -1313,7 +1335,7 @@ const safeFileName = archivo.nombreArchivo.replace(/[^a-zA-Z0-9_.-]/g, "__")  //
             editorConfig: {
               document: {
                 fileType: fileExtension,
-                key: `${id}_${categoria}_${safeFileName}`, // Clave única para el documento
+                key: `${archivo.id}_${userID}_${id}_${categoria}_${safeFileName}`, // Clave única para el documento
                 title: archivo.nombreArchivo,
                 // ✅ Sí codificar aquí (solo en URL del backend)
                 url: `${this.onlyOfficeApiUrl}/editfile?proyectoId=${id}&categoria=${categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
