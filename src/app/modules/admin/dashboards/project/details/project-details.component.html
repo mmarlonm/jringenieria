@@ -242,9 +242,9 @@
               <mat-icon>{{ hasArchivoGuardado('compraMateriales') ? 'cloud_download' : 'attach_file' }}</mat-icon>
             </button>
             <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="primary" type="button"
-                (click)="editarArchivoGuardado('compraMateriales')">
-                <mat-icon>edit</mat-icon>
-              </button>
+              (click)="editarArchivoGuardado('compraMateriales')">
+              <mat-icon>edit</mat-icon>
+            </button>
             <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="warn" type="button"
               (click)="eliminarArchivo('compraMateriales')">
               <mat-icon>delete</mat-icon>
@@ -272,18 +272,18 @@
               <mat-icon>{{ hasArchivoGuardado('almacenCampo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
             </button>
             <button *ngIf="hasArchivoGuardado('compraMateriales')" mat-icon-button color="primary" type="button"
-                (click)="editarArchivoGuardado('compraMateriales')">
-                <mat-icon>edit</mat-icon>
-              </button>
+              (click)="editarArchivoGuardado('compraMateriales')">
+              <mat-icon>edit</mat-icon>
+            </button>
             <button *ngIf="hasArchivoGuardado('almacenCampo')" mat-icon-button color="warn" type="button"
               (click)="eliminarArchivo('almacenCampo')">
               <mat-icon>delete</mat-icon>
             </button>
 
             <button *ngIf="hasArchivoGuardado('almacenCampo')" mat-icon-button color="success" type="button"
-                (click)="historialArchivo('almacenCampo')">
-                <mat-icon>history</mat-icon>
-              </button>
+              (click)="historialArchivo('almacenCampo')">
+              <mat-icon>history</mat-icon>
+            </button>
             <input type="file" [attr.data-key]="'almacenCampo'" #fileInput
               (change)="onFileSelectedOne($event, 'almacenCampo')" hidden />
           </mat-form-field>
@@ -538,6 +538,7 @@
               <mat-option *ngFor="let t of tasks" [value]="t.id">{{ t.name }}</mat-option>
             </mat-select>
           </mat-form-field>
+
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Estatus</mat-label>
             <mat-select formControlName="estatus">
@@ -548,14 +549,18 @@
             </mat-select>
           </mat-form-field>
 
+          <!-- Botones -->
+          <div class="button-group" style="margin-top: 15px;">
+            <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">
+              Agregar tarea
+            </button>
 
+            <button mat-raised-button color="accent" type="button" (click)="enviarNotificacionTarea()">
+              Enviar notificación
+            </button>
+          </div>
 
-
-          <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">
-            Agregar tarea
-          </button>
-
-          <mat-form-field appearance="fill">
+          <mat-form-field appearance="fill" style="margin-top: 15px;">
             <mat-label>Modo de vista</mat-label>
             <mat-select [(value)]="viewMode" (selectionChange)="changeView($event.value)">
               <mat-option value="Day">Día</mat-option>
@@ -573,9 +578,11 @@
         </div>
       </div>
     </mat-tab>
+
   </mat-tab-group>
   <!-- Botones -->
   <div class="flex justify-end gap-2 mb-4 btn-float z-99">
+    <button mat-raised-button color="success" (click)="enviarNotificacion()">Enviar Notificación</button>
     <button mat-raised-button color="primary" type="submit" (click)="saveProject()">
       Guardar
     </button>

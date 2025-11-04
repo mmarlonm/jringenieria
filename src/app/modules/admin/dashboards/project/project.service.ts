@@ -10,6 +10,7 @@ export class ProjectService {
   private apiUrl = `${environment.apiUrl}/Proyecto`; // Asegúrate de que esto sea correcto
   private apiUrlCotizacion = `${environment.apiUrl}/Cotizacion`; // Asegúrate de que esto sea correcto
   private apiUrlAuth = `${environment.apiUrl}/Auth`;
+  private apiUrlNotificaciones = `${environment.apiUrl}/Notificacion`;
 
   constructor(private http: HttpClient) { }
 
@@ -71,20 +72,20 @@ export class ProjectService {
 
 
   getToken(proyectoId: number, categoria: string, nombreArchivo: string): Observable<any> {
-    
+
     // 1. Define los parámetros de consulta
     let params = new HttpParams()
-        .set('proyectoId', proyectoId)
-        .set('categoria', categoria)
-        .set('nombreArchivo', nombreArchivo);
+      .set('proyectoId', proyectoId)
+      .set('categoria', categoria)
+      .set('nombreArchivo', nombreArchivo);
 
     // 2. Construye la URL base del endpoint
     // Suponiendo que tu endpoint está en: [Route("api/onlyoffice")] y [HttpGet("token")]
-    const url = `${this.apiUrlAuth}/token`; 
+    const url = `${this.apiUrlAuth}/token`;
 
     // 3. Envía la solicitud con los parámetros
     return this.http.get<any>(url, { params: params });
-}
+  }
 
   removeFile(proyectoId: number, categoria: string, nombreArchivo: string): Observable<any> {
     const encodedFileName = encodeURIComponent(nombreArchivo); // Manejo de caracteres especiales
@@ -102,6 +103,14 @@ export class ProjectService {
   }
 
   enviarEncuesta(dto: any): Observable<any> {
-  return this.http.post(`${this.apiUrl}/enviar-correo`, dto);
-}
+    return this.http.post(`${this.apiUrl}/enviar-correo`, dto);
+  }
+
+  enviarNotificacion(dto: any): Observable<any> {
+    return this.http.post(`${this.apiUrlNotificaciones}/enviar-notificacion-miembro`, dto);
+  }
+
+  enviarNotificacionTarea(dto: any): Observable<any> {
+    return this.http.post(`${this.apiUrlNotificaciones}/enviar-notificacion-tareas`, dto);
+  }
 }

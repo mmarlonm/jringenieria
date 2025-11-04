@@ -4,8 +4,8 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-   apiUrl: 'https://outputs-struck-sea-local.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
-   apiUrlSignal: 'https://outputs-struck-sea-local.trycloudflare.com',
-   apiOnlyOffice: 'https://influences-targeted-oem-airlines.trycloudflare.com',
+   apiUrl: 'https://explicitly-moral-asus-donors.trycloudflare.com/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+   apiUrlSignal: 'https://explicitly-moral-asus-donors.trycloudflare.com',
+   apiOnlyOffice: 'https://serial-commodities-renewable-jun.trycloudflare.com',
    apiKeyGoogle: 'AIzaSyCnhkYFNO57qkBrvOaIFJwZy6vDYtJMncg'
   };

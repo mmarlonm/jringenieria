@@ -50,7 +50,7 @@ import { NeumorphicProgressComponent } from '@fuse/components/neumorphic-progres
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { CurrencyPipe } from '@angular/common';
 import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
-import {DocumentEditorModule, type IConfig} from "@onlyoffice/document-editor-angular";
+import { DocumentEditorModule, type IConfig } from "@onlyoffice/document-editor-angular";
 import { HistorialComponent } from '../historial-archivo/historial.component';
 
 registerLocaleData(localeEs);
@@ -398,7 +398,24 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       popup: '',
       on_click: (task) => {
         const foundTask = this.tasks.find(t => t.id === task.id);
+        console.log('Tarea clickeada:', task);
         if (!foundTask) return;
+
+        const personasParticipantes = foundTask.equipo;
+        if (personasParticipantes) {
+          // Dividimos los IDs concatenados en un array
+          const personasIds = personasParticipantes.split(",");
+          // Creamos un array de objetos con los usuarios basados en esos IDs
+          this.personasSeleccionadasGantt = personasIds
+            .map((id) => {
+              const user = this.getUserById(id); // Buscar usuario por ID (debe haber un método o lista para esto)
+              return user ? user : null; // Si se encuentra el usuario, lo agregamos al array
+            })
+            .filter((persona) => persona !== null); // Filtramos cualquier valor nulo
+        }
+        else {
+          this.personasSeleccionadasGantt = [];
+        }
 
         this.selectedTaskId = task.id;
         this.editForm.setValue({
@@ -935,7 +952,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   getUsers(): void {
     this._usersService.getUsers().subscribe((users) => {
       this.user = users.filter(
-        (user) => user.rolId !== 1 && user.rolId !== 3 && user.activo !== false
+        (user) => user.rolId !== 1 && user.activo !== false
       );
       this.personasSeleccionadadload();
       this.personasSeleccionadadloadGantt();
@@ -1273,25 +1290,25 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     });
   }
 
- historialArchivo(categoria: string): void {
-  const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
-  console.log('lista usuarios:', this.user);
+  historialArchivo(categoria: string): void {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    console.log('lista usuarios:', this.user);
 
-  if (!archivo) return;
+    if (!archivo) return;
 
-  this.projectService.getArchivoHistorial(archivo.id).subscribe((history) => {
-    if (history && history.length > 0) {
-      console.log('Historial del archivo:', history);
-      this.dialog.open(HistorialComponent, {
-        width: '600px',
-        data: {
-          historial: history,
-          usuarios: this.user // 👈 pasamos también los usuarios
-        }
-      });
-    }
-  });
-}
+    this.projectService.getArchivoHistorial(archivo.id).subscribe((history) => {
+      if (history && history.length > 0) {
+        console.log('Historial del archivo:', history);
+        this.dialog.open(HistorialComponent, {
+          width: '600px',
+          data: {
+            historial: history,
+            usuarios: this.user // 👈 pasamos también los usuarios
+          }
+        });
+      }
+    });
+  }
 
 
   /**
@@ -1319,10 +1336,10 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       return;
     }
     // Reemplaza cualquier carácter no alfanumérico por "__", excepto el punto final de la extensión
-const safeFileName = archivo.nombreArchivo.replace(/[^a-zA-Z0-9_.-]/g, "__")  // '_' y '-' permitidos
-                                         .replace(/\.(?=[^\.]+$)/, "--");     // reemplaza solo el último punto (de la extensión)
+    const safeFileName = archivo.nombreArchivo.replace(/[^a-zA-Z0-9_.-]/g, "__")  // '_' y '-' permitidos
+      .replace(/\.(?=[^\.]+$)/, "--");     // reemplaza solo el último punto (de la extensión)
 
-    var userID = JSON.parse(localStorage.getItem('userInformation')).usuario.id;                             
+    var userID = JSON.parse(localStorage.getItem('userInformation')).usuario.id;
     this.projectService.getToken(id, categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
       if (tokenResponse && tokenResponse.token) {
         console.log('Token obtenido para OnlyOffice:', tokenResponse);
@@ -1499,5 +1516,132 @@ const safeFileName = archivo.nombreArchivo.replace(/[^a-zA-Z0-9_.-]/g, "__")  //
     }
     return null;
   }
+
+
+  enviarNotificacion(): void {
+    // Obtenemos los valores del formulario
+    const form = this.projectForm.value;
+
+    // Construimos la lista de involucrados con nombre y correo
+    const involucrados = [
+      { rol: 'Contacto Cliente', nombre: form.nombreContactoCliente, correo: form.correoContactoCliente },
+      { rol: 'Supervisor Campo Cliente', nombre: form.nombreSupervisorCampo, correo: form.correoSupervisorCampo },
+      { rol: 'Responsable Proyecto JR', nombre: form.nombreResponsableProyectoJR, correo: form.correoResponsableProyectoJR },
+      { rol: 'Responsable Campo JR', nombre: form.nombreResponsableCampoJR, correo: form.correoResponsableCampoJR },
+    ];
+
+    // Integrantes del equipo (de mat-chip-list)
+    if (this.personasSeleccionadas?.length) {
+      this.personasSeleccionadas.forEach(p => {
+        involucrados.push({
+          rol: 'Integrante del equipo',
+          nombre: p.nombreUsuario,
+          correo: p.correoElectronico || p.email || '' // depende de tu modelo
+        });
+      });
+    }
+
+    // Opcionales: responsables de compra o almacén (de selects)
+    const responsableCompra = this.user?.find(u => u.usuarioId === form.responsableCompraMateriales);
+    if (responsableCompra) {
+      involucrados.push({
+        rol: 'Responsable compra materiales',
+        nombre: responsableCompra.nombreUsuario,
+        correo: responsableCompra.correoElectronico || ''
+      });
+    }
+
+    const responsableAlmacen = this.user?.find(u => u.usuarioId === form.responsableAlmacenCampo);
+    if (responsableAlmacen) {
+      involucrados.push({
+        rol: 'Responsable almacén campo',
+        nombre: responsableAlmacen.nombreUsuario,
+        correo: responsableAlmacen.correoElectronico || ''
+      });
+    }
+
+    // Filtramos solo los que tengan correo válido
+    const destinatarios = involucrados.filter(p => p.correo && p.correo.includes('@'));
+
+    // Construimos el payload a enviar a tu API
+    const payload = {
+      proyectoId: this.projectId, // si lo tienes en contexto
+      asunto: `Notificación del Proyecto: ${form.nombre}`,
+      mensaje: `Se ha actualizado información del proyecto "${form.nombre}"`,
+      destinatarios
+    };
+
+    console.log('📬 Enviando notificación con:', payload);
+
+    // Llamada a tu API de notificación (ejemplo)
+    this.projectService.enviarNotificacion(payload).subscribe({
+      next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
+      error: (err) => {
+        console.error('Error al enviar notificación:', err);
+        this.snackBar.open('Error al enviar la notificación', 'Cerrar', { duration: 3000 });
+      }
+    });
+  }
+
+  enviarNotificacionTarea(): void {
+    const destinatarios = this.getAllUsersWithTasks().map(u => ({
+      rol: u.rolNombre || 'Integrante',
+      nombre: u.nombreUsuario,
+      correo: u.email || u.correo,
+      nombreNotificacion: u.tareas.join(', ') // Aquí concatenamos todas las tareas del usuario
+    }));
+
+    const form = this.projectForm.value;
+
+    if (destinatarios.length === 0) return;
+
+    const payload = {
+      proyectoId: this.projectId,
+      asunto: `Notificación del Proyecto: ${form.nombre || 'Proyecto JR'}`,
+      mensaje: `Se ha actualizado información de las tareas del proyecto.`,
+      destinatarios
+    };
+
+    console.log('📬 Enviando notificación a todo el equipo del proyecto:', payload);
+
+    this.projectService.enviarNotificacionTarea(payload).subscribe({
+      next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
+      error: (err) => {
+        console.error('Error al enviar notificación:', err);
+        this.snackBar.open('Error al enviar la notificación', 'Cerrar', { duration: 3000 });
+      }
+    });
+  }
+
+
+  getAllUsersWithTasks(): any[] {
+    if (!this.tasks || this.tasks.length === 0) return [];
+
+    const userMap: { [usuarioId: string]: any } = {};
+
+    this.tasks.forEach(task => {
+      if (!task.equipo) return;
+      const idsArray = task.equipo.split(',');
+
+      idsArray.forEach(id => {
+        const user = this.user.find(u => u.usuarioId.toString() === id);
+        if (user) {
+          if (!userMap[id]) {
+            userMap[id] = {
+              usuarioId: user.usuarioId,
+              nombreUsuario: user.nombreUsuario,
+              email: user.email || user.correo,
+              rol: user.rolNombre || 'Integrante',
+              tareas: [] as string[]
+            };
+          }
+          userMap[id].tareas.push(task.name); // Guardamos el nombre de la tarea
+        }
+      });
+    });
+
+    return Object.values(userMap);
+  }
+
 
 }
