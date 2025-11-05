@@ -9,4 +9,5 @@ export interface Task {
   links?: string[];
   usuarioIds: number[]; // IDs de usuarios asignados a la tarea (equipo)
   creadorId: number; // 👈 importante
+  estatus: number; // 👈 nuevo campo de estatus
 }

@@ -56,7 +56,7 @@ import { Subject, takeUntil } from "rxjs";
     ],
 })
 export class TaskListComponent implements OnInit, AfterViewInit {
-    displayedColumns: string[] = ["id", "nombre", "fechaInicioEstimada", "fechaFinEstimada","comentarios", "actions"];
+    displayedColumns: string[] = ["id", "nombre", "fechaInicioEstimada", "fechaFinEstimada", "estatus", "comentarios", "actions"];
     dataSource = new MatTableDataSource<Task>();
     @ViewChild(MatPaginator) paginator: MatPaginator;
     @ViewChild(MatSort) sort: MatSort;
@@ -80,7 +80,6 @@ export class TaskListComponent implements OnInit, AfterViewInit {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
                 this.user = user["usuario"];
-                console.log("informacion de usuario", this.user)
             });
         this.loadTasks();
     }
@@ -93,7 +92,6 @@ export class TaskListComponent implements OnInit, AfterViewInit {
     loadTasks(): void {
         this.taskService.getTasks(Number(this.user.id)).subscribe({
             next: (tasks) => {
-                console.log(tasks);
                 this.dataSource.data = tasks;
             },
             error: () => {
@@ -178,4 +176,23 @@ export class TaskListComponent implements OnInit, AfterViewInit {
         });
     }
 
+    getClassByStatus(status: number): string {
+        switch (status) {
+            case 1: return 'verde';      // Terminada
+            case 2: return 'amarillo';   // En proceso
+            case 3: return 'naranja';    // En pausa
+            case 4: return 'rojo';       // Detenida
+            default: return 'gris';
+        }
+    }
+
+    getStatusName(status: number): string {
+        switch (status) {
+            case 1: return 'Terminada';
+            case 2: return 'En proceso';
+            case 3: return 'En pausa';
+            case 4: return 'Detenida';
+            default: return 'Sin estatus';
+        }
+    }
 }

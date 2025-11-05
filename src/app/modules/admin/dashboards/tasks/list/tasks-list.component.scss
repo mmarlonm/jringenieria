@@ -64,3 +64,29 @@
     flex: none;
     width: 100px;
 }
+
+
+::ng-deep tr.verde {
+  background-color: #d4edda !important; /* Verde suave */
+}
+
+::ng-deep tr.amarillo {
+  background-color: #fff3cd !important; /* Amarillo suave */
+}
+
+::ng-deep tr.naranja {
+  background-color: #ffe5b4 !important; /* Naranja suave */
+}
+
+::ng-deep tr.rojo {
+  background-color: #f8d7da !important; /* Rojo suave */
+}
+
+::ng-deep tr.gris {
+  background-color: #e2e3e5 !important; /* Gris suave */
+}
+
+/* Opcional: efecto hover */
+::ng-deep tr:hover {
+  filter: brightness(0.97);
+}

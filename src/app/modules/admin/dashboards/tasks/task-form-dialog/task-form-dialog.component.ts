@@ -78,7 +78,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             fechaFinReal: [null],
             usuarioIds: [[]],
             links: this.fb.array([]),
-            CreadorId: [null] // ID del usuario que crea la tarea
+            CreadorId: [null], // ID del usuario que crea la tarea
+            estatus : [2, Validators.required] // Nuevo campo de estatus con valor por defecto 1
         });
     }
 
@@ -87,9 +88,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         this._userService.user$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
-                console.log("informacion de usuario", user);
                 this.user = user["usuario"];
-                console.log("informacion de usuario", this.user)
                 this.form.get("CreadorId").setValue(this.user.id); // Setea el usuario logueado como creador por defecto
             });
         this.getUsers();
@@ -138,7 +137,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 fechaInicioReal: task.fechaInicioReal ? new Date(task.fechaInicioReal) : null,
                 fechaFinReal: task.fechaFinReal ? new Date(task.fechaFinReal) : null,
                 usuarioIds: task.usuarioIds ?? [],
-                CreadorId: this.user.id // Asigna el ID del usuario logueado
+                CreadorId: this.user.id, // Asigna el ID del usuario logueado
+                estatus: task.estatus
             });
 
             // Actualiza manualmente flatpickr con las fechas ya parseadas

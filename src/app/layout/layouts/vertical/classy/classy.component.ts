@@ -111,7 +111,6 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             });
 
         this.tareasService.getTasks(Number(this.user.id)).subscribe((data) => {
-            console.log("Tareas del usuario:", data);
             this.misTareas = data;
         });
     }
