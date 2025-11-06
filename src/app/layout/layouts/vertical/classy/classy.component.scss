@@ -1,0 +1,124 @@
+.google-btn {
+  background-color: #fff !important;
+  color: #3c4043 !important;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3),
+              0 1px 2px rgba(60, 64, 67, 0.15);
+  transition: all 0.2s ease;
+}
+
+.google-btn img {
+  width: 20px;
+  height: 20px;
+}
+
+.google-btn:hover {
+  background-color: #f8f9fa !important;
+  box-shadow: 0 2px 6px rgba(60, 64, 67, 0.3);
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-width: 2px;
+  border-radius: 6px;
+  font-weight: 500;
+  background-color: #fff;
+  transition: all 0.3s ease;
+
+  .google-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .google-text {
+    flex: 1; // ocupa el espacio restante
+  }
+
+  .status-icon {
+    font-size: 20px;
+  }
+}
+
+/* Sobrescribir bordes de Material MDC */
+.google-logged-in.mat-mdc-outlined-button:not([disabled]) {
+  --tw-border-opacity: 1 !important;
+  border-color: rgba(76, 175, 80, var(--tw-border-opacity)) !important; // verde
+  color: #4caf50;
+  &:hover {
+    background-color: #e8f5e9;
+  }
+}
+
+.google-expired.mat-mdc-outlined-button:not([disabled]) {
+  --tw-border-opacity: 1 !important;
+  border-color: rgba(255, 152, 0, var(--tw-border-opacity)) !important; // naranja
+  color: #ff9800;
+  &:hover {
+    background-color: #fff3e0;
+  }
+}
+
+.google-not-logged.mat-mdc-outlined-button:not([disabled]) {
+  --tw-border-opacity: 1 !important;
+  border-color: rgba(244, 67, 54, var(--tw-border-opacity)) !important; // rojo
+  color: #f44336;
+  &:hover {
+    background-color: #ffebee;
+  }
+}
+
+
+
+.google-btn {
+  border-width: 2px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.25s ease-in-out;
+  min-width: 160px;
+}
+
+.google-btn .google-calendar-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Estado activo (sesión válida) */
+.google-logged-in {
+  border-color: #34a853 !important;
+  color: #34a853 !important;
+}
+
+.google-logged-in:hover {
+  background-color: rgba(52, 168, 83, 0.1);
+}
+
+/* Estado expirado */
+.google-expired {
+  border-color: #ea4335 !important;
+  color: #ea4335 !important;
+}
+
+.google-expired:hover {
+  background-color: rgba(234, 67, 53, 0.1);
+}
+
+/* Estado no vinculado */
+.google-not-logged {
+  border-color: #9e9e9e !important;
+  color: #9e9e9e !important;
+}
+
+.google-not-logged:hover {
+  background-color: rgba(158, 158, 158, 0.1);
+}

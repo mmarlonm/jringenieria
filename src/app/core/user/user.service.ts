@@ -9,6 +9,7 @@ export class UserService {
     private apiUrl = `${environment.apiUrl}/profile`; // Asegúrate de que esto sea correcto
     private _httpClient = inject(HttpClient);
     private _user: ReplaySubject<User> = new ReplaySubject<User>(1);
+    private apiUrlGoogle = `${environment.apiUrl}/Auth`; // Asegúrate de que esto sea correcto
 
     // Inicializar con un objeto vacío para evitar errores
     constructor() {
@@ -34,7 +35,7 @@ export class UserService {
 
     get userInformation(): string {
         return localStorage.getItem("userInformation") ?? "";
-      }
+    }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Public methods
@@ -72,7 +73,7 @@ export class UserService {
     // UserService
     updateAvatar(id: string, formData: FormData): Observable<any> {
         formData.append('usuarioId', id);
-    
+
         const headers = new HttpHeaders({
             Authorization: `Bearer ${localStorage.getItem('accessToken')}`, // Obtener el token almacenado
         });
@@ -83,7 +84,7 @@ export class UserService {
                 map((res: any) => {
                     if (res.avatarBase64) {
                         const updatedAvatar = res.avatarBase64;
-    
+
                         // Actualizar avatar en localStorage
                         const user = JSON.parse(
                             localStorage.getItem('userInformation') || '{}'
@@ -93,11 +94,11 @@ export class UserService {
                             'userInformation',
                             JSON.stringify(user)
                         );
-    
+
                         // Emitir usuario actualizado
                         this._user.next(user);
                     }
-    
+
                     return res;
                 })
             );
@@ -131,5 +132,49 @@ export class UserService {
             newPassword,
             ConfirmPassword,
         });
+    }
+
+
+    // -----------------------------------------------------------------------------------------------------
+    // @ Login con Google
+    // -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Inicia sesión con Google (obtiene URL de autenticación del backend)
+     */
+    loginWithGoogle(usuarioId: number): void {
+        this._httpClient.get<{ url: string }>(`${this.apiUrlGoogle}/google/login?usuarioId=${usuarioId}`)
+            .subscribe({
+                next: (res) => {
+                    if (res.url) {
+                        console.log('Redirigiendo a:', res.url);
+                        window.location.href = res.url; // 🔹 Redirige a Google
+                    } else {
+                        console.error('No se recibió una URL válida desde el servidor.');
+                    }
+                },
+                error: (err) => {
+                    console.error('Error al iniciar sesión con Google:', err);
+                }
+            });
+    }
+
+
+    /**
+ * Verifica si el usuario sigue logeado con Google o si su sesión expiró
+ */
+    checkGoogleStatus(usuarioId: number): Observable<any> {
+        return this._httpClient.get<any>(
+            `${this.apiUrlGoogle}/google/status/${usuarioId}`
+        );
+    }
+
+    /**
+ * Verifica si el usuario sigue logeado con Google o si su sesión expiró
+ */
+    getCalendar(usuarioId: number): Observable<any> {
+        return this._httpClient.get<any>(
+            `${this.apiUrlGoogle}/events/${usuarioId}`
+        );
     }
 }

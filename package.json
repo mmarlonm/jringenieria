@@ -63,6 +63,9 @@
         "snapsvg": "^0.5.1",
         "sweetalert2": "^11.19.1",
         "tslib": "2.6.2",
+        "tui-calendar": "^1.15.3",
+        "tui-date-picker": "^4.3.3",
+        "tui-time-picker": "^2.1.6",
         "zone.js": "0.14.6"
     },
     "devDependencies": {

@@ -71,6 +71,28 @@
             <button class="lg:hidden" mat-icon-button (click)="quickChat.toggle()">
                 <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
             </button>
+
+            <!-- 🔹 Nuevo botón: Iniciar sesión con Google -->
+            <button mat-stroked-button class="google-btn" [ngClass]="{
+                'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
+                'google-expired': googleStatus?.isExpired,
+                'google-not-logged': !googleStatus?.isLoggedIn
+            }" (click)="loginWithGoogle()">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon" />
+            </button>
+
+            <button mat-stroked-button class="google-btn flex items-center justify-center space-x-2" [ngClass]="{
+                'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
+                'google-expired': googleStatus?.isExpired,
+                'google-not-logged': !googleStatus?.isLoggedIn
+            }" (click)="openGoogleEventsModal()" matTooltip="Abrir eventos de Google Calendar">
+                <img src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="Google Calendar"
+                    class="google-calendar-icon" />
+            </button>
+
+
+
+
         </div>
     </div>
 
@@ -92,9 +114,114 @@
 <!-- Quick chat -->
 <quick-chat #quickChat="quickChat"></quick-chat>
 
-<mat-menu #calendarMenu="matMenu" (menuOpened)="onCalendarMenuOpened()">
-  <div style="width: 700px; height: 600px;" (click)="$event.stopPropagation()" class="p-4">
-    <app-tareas-calendar #fullCalendar [tareas]="misTareas"></app-tareas-calendar>
-  </div>
-</mat-menu>
+<!-- Modal de eventos de Google -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" *ngIf="showGoogleModal">
+    <div
+        class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-[95%] max-w-[900px] max-h-[90vh] flex flex-col overflow-hidden relative">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
+            <div class="flex items-center space-x-3">
+                <mat-icon svgIcon="logos:google-calendar" style="color: #4285F4"></mat-icon>
+                <h2 class="text-xl font-semibold">Google Calendar</h2>
+            </div>
+            <button mat-icon-button (click)="closeGoogleEventsModal()"
+                class="text-gray-500 hover:text-red-500 transition">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
 
+        <!-- Toolbar -->
+        <div
+            class="flex flex-wrap items-center justify-between gap-3 px-6 py-3 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+            <div class="flex flex-wrap gap-2">
+                <button mat-raised-button color="primary" (click)="prev()">◀️ Anterior</button>
+                <button mat-raised-button color="accent" (click)="today()">📅 Hoy</button>
+                <button mat-raised-button color="primary" (click)="next()">Siguiente ▶️</button>
+            </div>
+
+            <div class="text-center text-lg font-semibold text-gray-700 dark:text-gray-200">
+                {{ currentDateLabel }}
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button mat-stroked-button color="primary" (click)="changeView('month')">Mes</button>
+                <button mat-stroked-button color="primary" (click)="changeView('week')">Semana</button>
+                <button mat-stroked-button color="primary" (click)="changeView('day')">Día</button>
+                <button mat-flat-button color="warn" (click)="openAddEventForm()">
+                    <mat-icon>add</mat-icon> Nuevo evento
+                </button>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="flex-1 overflow-auto p-4">
+            <!-- Cargando -->
+            <div *ngIf="isLoadingGoogleEvents" class="flex flex-col items-center justify-center py-8">
+                <mat-spinner diameter="40"></mat-spinner>
+                <p class="mt-3 text-gray-500">Cargando eventos...</p>
+            </div>
+
+            <!-- Sin eventos -->
+            <div *ngIf="!isLoadingGoogleEvents && (!googleEvents?.items || googleEvents.items.length === 0)"
+                class="text-center text-gray-400 py-6">
+                No se encontraron eventos en tu calendario.
+            </div>
+
+            <!-- Calendario -->
+            <div #tuiCalendarContainer id="tui-calendar"
+                class="w-full min-h-[600px] rounded-lg shadow-inner bg-white dark:bg-gray-800"></div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nuevo evento -->
+    <div *ngIf="showAddEventForm"
+        class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[10000]">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[95%] max-w-[500px] p-6 relative">
+            <button mat-icon-button class="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+                (click)="closeAddEventForm()">
+                <mat-icon>close</mat-icon>
+            </button>
+
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <mat-icon>event</mat-icon> Nuevo evento
+            </h3>
+
+            <form (ngSubmit)="saveNewEvent()" #eventForm="ngForm" class="space-y-4">
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Título</mat-label>
+                    <input matInput [(ngModel)]="newEvent.title" name="title" required />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Fecha inicio</mat-label>
+                    <input matInput type="datetime-local" [(ngModel)]="newEvent.start" name="start" required />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Fecha fin</mat-label>
+                    <input matInput type="datetime-local" [(ngModel)]="newEvent.end" name="end" required />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Descripción</mat-label>
+                    <textarea matInput [(ngModel)]="newEvent.description" name="description"></textarea>
+                </mat-form-field>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button mat-stroked-button color="warn" type="button" (click)="closeAddEventForm()">
+                        Cancelar
+                    </button>
+                    <button mat-flat-button color="primary" type="submit">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<mat-menu #calendarMenu="matMenu" (menuOpened)="onCalendarMenuOpened()">
+    <div style="width: 700px; height: 600px;" (click)="$event.stopPropagation()" class="p-4">
+        <app-tareas-calendar #fullCalendar [tareas]="misTareas"></app-tareas-calendar>
+    </div>
+</mat-menu>
