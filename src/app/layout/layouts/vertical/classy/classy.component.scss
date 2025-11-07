@@ -127,3 +127,32 @@
 .google-not-logged:hover {
   background-color: rgba(158, 158, 158, 0.1);
 }
+
+
+
+/* 🔧 Ajusta el popup de detalle del calendario */
+.tui-full-calendar-popup-detail {
+  max-width: 320px !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  z-index: 9999 !important;
+}
+
+/* 🔹 Asegura que los títulos largos se ajusten */
+.tui-full-calendar-popup-detail .tui-full-calendar-content {
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/* 🔹 Evita que el popup se corte por el viewport */
+.tui-full-calendar-popup-container {
+  overflow: visible !important;
+}
+
+/* 🔹 Asegura que el contenedor no se esconda detrás de otros elementos */
+.tui-full-calendar-popup {
+  z-index: 9999 !important;
+}

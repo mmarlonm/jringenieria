@@ -266,42 +266,67 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
     // ✅ Carga eventos de Google
     loadGoogleEventsToCalendar(): void {
-    if (!this.calendarEvents || !this.calendarInstance) return;
+        if (!this.calendarEvents || !this.calendarInstance) return;
 
-    // Asegúrate de que los eventos existan en la propiedad 'items'
-    const items = this.calendarEvents.items || [];
+        const items = this.calendarEvents.items || [];
+        console.log('📅 Cargando eventos en TUI Calendar...', items);
 
-    console.log('📅 Cargando eventos en TUI Calendar...', items);
+        const colorMap: { [key: string]: string } = {
+            '1': '#a4bdfc',
+            '2': '#7ae7bf',
+            '3': '#dbadff',
+            '4': '#ff887c',
+            '5': '#fbd75b',
+            '6': '#ffb878',
+            '7': '#46d6db',
+            '8': '#e1e1e1',
+            '9': '#5484ed',
+            '10': '#51b749',
+            '11': '#dc2127'
+        };
 
-    // Mapear eventos de Google a formato TUI Calendar
-    const mappedEvents = items.map((ev: any) => ({
-        id: ev.id,
-        calendarId: '1',
-        title: ev.summary || '(Sin título)',
-        category: ev.start?.dateTime ? 'time' : 'allday', // usa 'allday' si solo trae "date"
-        start: ev.start?.dateTime || ev.start?.date,
-        end: ev.end?.dateTime || ev.end?.date,
-        location: ev.location || '',
-        body: ev.description || '',
-        isReadOnly: true,
-        raw: {
-            htmlLink: ev.htmlLink,
-            creator: ev.creator?.email,
-            organizer: ev.organizer?.email,
-            eventType: ev.eventType
-        }
-    }));
+        const mappedEvents = items.map((ev: any) => {
+            const color = ev.backgroundColor || colorMap[ev.colorId] || '#5484ed';
+            const textColor = ev.foregroundColor || '#fff';
 
-    // Limpia el calendario antes de recargar
-    this.calendarInstance.clear();
-    this.calendarInstance.createSchedules(mappedEvents);
+            let start = ev.start?.dateTime || ev.start?.date;
+            let end = ev.end?.dateTime || ev.end?.date;
 
-    this.updateDateLabel();
+            // 🔧 Ajustar el fin si es evento de día completo (allday)
+            if (ev.start?.date && ev.end?.date) {
+                const adjustedEnd = new Date(end);
+                adjustedEnd.setDate(adjustedEnd.getDate() - 1);
+                end = adjustedEnd.toISOString().split('T')[0]; // mantener formato YYYY-MM-DD
+            }
 
-    console.log('✅ Eventos cargados en TUI Calendar:', mappedEvents);
-}
+            return {
+                id: ev.id,
+                calendarId: '1',
+                title: ev.summary || '(Sin título)',
+                category: ev.start?.dateTime ? 'time' : 'allday',
+                start,
+                end,
+                location: ev.location || '',
+                body: ev.description || '',
+                isReadOnly: true,
+                bgColor: color,
+                borderColor: color,
+                color: textColor,
+                raw: {
+                    htmlLink: ev.htmlLink,
+                    creator: ev.creator?.email,
+                    organizer: ev.organizer?.email,
+                    eventType: ev.eventType
+                }
+            };
+        });
 
+        this.calendarInstance.clear();
+        this.calendarInstance.createSchedules(mappedEvents);
+        this.updateDateLabel();
 
+        console.log('✅ Eventos con color y fechas ajustadas:', mappedEvents);
+    }
 
     // ✅ Cambia vista (month/week/day)
     changeView(view: 'month' | 'week' | 'day'): void {
