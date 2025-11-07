@@ -93,6 +93,7 @@
         "karma-jasmine": "5.1.0",
         "karma-jasmine-html-reporter": "2.1.0",
         "lodash": "4.17.21",
+        "patch-package": "^8.0.1",
         "postcss": "8.4.38",
         "prettier": "3.3.0",
         "prettier-plugin-organize-imports": "3.2.4",
