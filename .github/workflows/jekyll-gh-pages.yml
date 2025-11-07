@@ -42,7 +42,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Ensure patch-package is available
-        run: npx patch-package || echo "Skipping patch-package if none
+        run: npx patch-package || echo "Skipping patch-package if none exist"
 
       - name: Construir aplicación Angular
         run: ng build --configuration production --base-href /jringenieria/
