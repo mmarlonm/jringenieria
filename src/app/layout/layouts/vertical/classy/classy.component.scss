@@ -127,12 +127,10 @@
 .google-not-logged:hover {
   background-color: rgba(158, 158, 158, 0.1);
 }
-/* 🔧 Aumentar ancho del popup de detalle en TUI Calendar */
 .tui-full-calendar-popup-container {
   width: 500px !important;
   max-width: 600px !important;
 }
-/* Centrar y ajustar bien el modal principal */
 .google-calendar-modal {
   display: flex;
   align-items: center;
