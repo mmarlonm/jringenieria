@@ -4,8 +4,8 @@ export const environment = {
     //apiUrl: 'http://localhost:5162/api',  // Aquí va la URL de tu API (ajusta según sea necesario)
     //apiUrlSignal: 'http://localhost:5162'  // chat real time
     //apiUrl: 'http://54.85.248.65/api'  // Aquí va la URL de tu API (ajusta según sea necesario)
-   apiUrl: 'api.mgm-technologies-group.org/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
-   apiUrlSignal: 'api.mgm-technologies-group.org',
-   apiOnlyOffice: 'app.mgm-technologies-group.org',
+   apiUrl: 'https://api.mgm-technologies-group.org/api',  // Aquí va la URL de tu API (ajusta según sea necesario) 
+   apiUrlSignal: 'https://api.mgm-technologies-group.org',
+   apiOnlyOffice: 'https://app.mgm-technologies-group.org',
    apiKeyGoogle: 'AIzaSyCnhkYFNO57qkBrvOaIFJwZy6vDYtJMncg'
   };
