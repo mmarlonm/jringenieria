@@ -256,13 +256,39 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             useCreationPopup: false,
             useDetailPopup: true,
             template: {
-                monthDayname: (dayname) => `<span class="tui-full-calendar-dayname-name">${dayname.label}</span>`
-            }
+                monthDayname: (dayname) =>
+                    `<span class="tui-full-calendar-dayname-name">${dayname.label}</span>`,
+
+                // ✅ Formato de fecha legible en español para el popup de detalle
+                popupDetailDate: (isAllDay, start:any, end:any) => {
+                    // Normaliza fechas: si vienen con _date (formato TUI)
+                    const startDate = new Date(start?._date || start);
+                    const endDate = new Date(end?._date || end);
+
+                    // Configuración de formato: "7 de noviembre de 2025"
+                    const formatOptions: Intl.DateTimeFormatOptions = {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                    };
+
+                    const formattedStart = startDate.toLocaleDateString('es-MX', formatOptions);
+                    const formattedEnd = endDate.toLocaleDateString('es-MX', formatOptions);
+
+                    // Si es evento de un solo día, no muestres el rango
+                    if (formattedStart === formattedEnd) {
+                        return formattedStart;
+                    } else {
+                        return `${formattedStart} - ${formattedEnd}`;
+                    }
+                },
+            },
         });
 
         this.updateDateLabel();
         this.loadGoogleEventsToCalendar();
     }
+
 
     // ✅ Carga eventos de Google
     loadGoogleEventsToCalendar(): void {
