@@ -118,3 +118,13 @@
 ::ng-deep .gantt-container .bar-wrapper.gris rect.bar {
     fill: #6c757d !important;
 }
+
+.progress-text {
+    /* Color predeterminado */
+    fill: #495057; 
+    font-size: 10px; /* Un poco más pequeño para ser menos intrusivo */
+    
+    /* Nota: 'dominant-baseline: middle' ya no es tan necesario ya que no está centrado en la barra */
+    text-anchor: start; 
+    font-weight: bold;
+}
