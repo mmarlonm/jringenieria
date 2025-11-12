@@ -234,6 +234,14 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     // ✅ Modal con TUI Calendar
     openGoogleEventsModal(): void {
         this.showGoogleModal = true;
+        if (this.googleStatus?.isLoggedIn && !this.googleStatus?.isExpired) {
+            this._userService.getCalendar(Number(this.user.id)).subscribe({
+                next: (calendar) => {
+                    this.calendarEvents = calendar;
+                },
+                error: (err) => console.error('❌ Error al obtener calendario:', err)
+            });
+        }
         setTimeout(() => this.initializeTuiCalendar(), 100);
     }
 
@@ -261,7 +269,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
         // ✅ Eventos del calendario
         this.calendarInstance.on('clickSchedule', (event) => this.onEventClick(event));
-        this.calendarInstance.on('beforeCreateSchedule', (event) => this.onDayClick(event));
+        this.calendarInstance.on('beforeCreateSchedule', (event) => this.saveNewEvent(event));
         this.calendarInstance.on('beforeUpdateSchedule', (event) => this.onBeforeUpdateSchedule(event));
 
 
@@ -403,25 +411,25 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             allDay: schedule.category === 'allday',
         };
     }
-    saveNewEvent() {
-        if (!this.newEvent.title || !this.newEvent.start || !this.newEvent.end) {
+    saveNewEvent(event: any) {
+        if (!event.title || !event.start || !event.end) {
             Swal.fire('Campos incompletos', 'Completa los campos requeridos', 'warning');
             return;
         }
 
         const payload = {
             id: this.selectedEventId,
-            title: this.newEvent.title,
-            body: this.newEvent.description,
-            start: new Date(this.newEvent.start).toISOString(),
-            end: new Date(this.newEvent.end).toISOString(),
-            location: this.newEvent.location,
-            category: this.newEvent.category,
+            title: event.title,
+            body: event.description,
+            start: new Date(event.start).toISOString(),
+            end: new Date(event.end).toISOString(),
+            location: event.location,
+            category: event.category,
             usuarioId: Number(this.user.id)
         };
 
         this._userService.createEvent(payload).subscribe({
-            next: (res) => {
+            next: (res: any) => {
                 Swal.fire({
                     icon: 'success',
                     title: this.selectedEventId ? 'Evento actualizado' : 'Evento creado',
@@ -429,8 +437,28 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                     showConfirmButton: false
                 });
 
-                // 🔁 Refrescar lista
-                this.loadGoogleEventsToCalendar();
+                // ✅ Ajustar fecha final si es evento de todo el día
+                let start = new Date(res.start || event.start);
+                let end = new Date(res.end || event.end);
+
+                end.setDate(end.getDate() - 1);
+
+                const newEvent = {
+                    id: res.id || crypto.randomUUID(),
+                    calendarId: res.calendarId || '1',
+                    title: res.title || event.title,
+                    category: res.category || event.category,
+                    start,
+                    end,
+                    location: res.location || event.location,
+                    bgColor: res.bgColor || '#047bfe',
+                    borderColor: res.borderColor || '#047bfe',
+                    color: res.color || '#fff'
+                };
+
+                this.calendarInstance.createSchedules([newEvent]);
+                this.calendarInstance.render();
+
                 this.showAddEventForm = false;
                 this.selectedEventId = null;
             },
@@ -439,8 +467,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                 Swal.fire('Error', 'No se pudo guardar el evento', 'error');
             }
         });
-    }
 
+    }
 
     onBeforeUpdateSchedule(event: any): void {
         const { schedule, changes } = event;
