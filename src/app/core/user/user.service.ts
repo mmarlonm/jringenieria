@@ -177,4 +177,13 @@ export class UserService {
             `${this.apiUrlGoogle}/events/${usuarioId}`
         );
     }
+
+
+    /**
+     * Verifica si el usuario sigue logeado con Google o si su sesión expiró
+    */
+    createEvent(event: any) {
+        return this._httpClient.post(`${this.apiUrlGoogle}/events/create`, event);
+    }
+
 }

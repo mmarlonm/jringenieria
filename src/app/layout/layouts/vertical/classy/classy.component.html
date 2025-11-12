@@ -220,8 +220,6 @@
     </div>
 </div>
 
-
-
 <mat-menu #calendarMenu="matMenu" (menuOpened)="onCalendarMenuOpened()">
     <div style="width: 700px; height: 600px;" (click)="$event.stopPropagation()" class="p-4">
         <app-tareas-calendar #fullCalendar [tareas]="misTareas"></app-tareas-calendar>

@@ -128,6 +128,9 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
     currentView = 'month';
     currentDateLabel = '';
+    newEvent: any;
+    showAddEventForm: boolean;
+    selectedEventId: any;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -193,12 +196,10 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         this._userService.checkGoogleStatus(Number(this.user.id)).subscribe({
             next: (res) => {
                 this.googleStatus = res;
-                console.log('Estado de Google:', res);
 
                 if (res.isLoggedIn && !res.isExpired) {
                     this._userService.getCalendar(Number(this.user.id)).subscribe({
                         next: (calendar) => {
-                            console.log('📅 Eventos del calendario de Google:', calendar);
                             this.calendarEvents = calendar;
                         },
                         error: (err) => console.error('❌ Error al obtener calendario:', err)
@@ -253,49 +254,25 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             defaultView: this.currentView,
             taskView: false,
             scheduleView: ['time'],
-            useCreationPopup: false,
-            useDetailPopup: true,
-            template: {
-                monthDayname: (dayname) =>
-                    `<span class="tui-full-calendar-dayname-name">${dayname.label}</span>`,
-
-                // ✅ Formato de fecha legible en español para el popup de detalle
-                popupDetailDate: (isAllDay, start:any, end:any) => {
-                    // Normaliza fechas: si vienen con _date (formato TUI)
-                    const startDate = new Date(start?._date || start);
-                    const endDate = new Date(end?._date || end);
-
-                    // Configuración de formato: "7 de noviembre de 2025"
-                    const formatOptions: Intl.DateTimeFormatOptions = {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                    };
-
-                    const formattedStart = startDate.toLocaleDateString('es-MX', formatOptions);
-                    const formattedEnd = endDate.toLocaleDateString('es-MX', formatOptions);
-
-                    // Si es evento de un solo día, no muestres el rango
-                    if (formattedStart === formattedEnd) {
-                        return formattedStart;
-                    } else {
-                        return `${formattedStart} - ${formattedEnd}`;
-                    }
-                },
-            },
+            useCreationPopup: true,  // 🔹 habilita popup de creación
+            useDetailPopup: true,    // 🔹 habilita popup de edición
         });
+
+
+        // ✅ Eventos del calendario
+        this.calendarInstance.on('clickSchedule', (event) => this.onEventClick(event));
+        this.calendarInstance.on('beforeCreateSchedule', (event) => this.onDayClick(event));
+        this.calendarInstance.on('beforeUpdateSchedule', (event) => this.onBeforeUpdateSchedule(event));
+
 
         this.updateDateLabel();
         this.loadGoogleEventsToCalendar();
     }
-
-
     // ✅ Carga eventos de Google
     loadGoogleEventsToCalendar(): void {
         if (!this.calendarEvents || !this.calendarInstance) return;
 
         const items = this.calendarEvents.items || [];
-        console.log('📅 Cargando eventos en TUI Calendar...', items);
 
         const colorMap: { [key: string]: string } = {
             '1': '#a4bdfc',
@@ -334,7 +311,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                 end,
                 location: ev.location || '',
                 body: ev.description || '',
-                isReadOnly: true,
+                isReadOnly: false,
                 bgColor: color,
                 borderColor: color,
                 color: textColor,
@@ -350,10 +327,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         this.calendarInstance.clear();
         this.calendarInstance.createSchedules(mappedEvents);
         this.updateDateLabel();
-
-        console.log('✅ Eventos con color y fechas ajustadas:', mappedEvents);
     }
-
     // ✅ Cambia vista (month/week/day)
     changeView(view: 'month' | 'week' | 'day'): void {
         if (this.calendarInstance) {
@@ -362,7 +336,6 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             this.updateDateLabel();
         }
     }
-
     // ✅ Navegar entre fechas
     prev(): void {
         if (this.calendarInstance) {
@@ -370,21 +343,18 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             this.updateDateLabel();
         }
     }
-
     next(): void {
         if (this.calendarInstance) {
             this.calendarInstance.next();
             this.updateDateLabel();
         }
     }
-
     today(): void {
         if (this.calendarInstance) {
             this.calendarInstance.today();
             this.updateDateLabel();
         }
     }
-
     updateDateLabel(): void {
         if (!this.calendarInstance) return;
         const date = this.calendarInstance.getDate();
@@ -393,4 +363,144 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             month: 'long'
         });
     }
+    // 🆕 Cuando el usuario hace clic en un espacio vacío (crear nuevo evento)
+    onDayClick(event: any): void {
+
+        this.selectedEventId = null;
+        this.showAddEventForm = true;
+
+        // Determinar fechas (usando _date si viene de TUI)
+        const start = event.start?._date ? new Date(event.start._date) : new Date();
+        const end = event.end?._date ? new Date(event.end._date) : new Date(start.getTime() + 60 * 60 * 1000);
+
+        this.newEvent = {
+            title: '',
+            description: '',
+            location: '',
+            start: start.toISOString().slice(0, 16), // formato yyyy-MM-ddTHH:mm
+            end: end.toISOString().slice(0, 16),
+            allDay: event.isAllDay || false,
+        };
+    }
+    // ✏️ Cuando el usuario hace clic en un evento existente (editar)
+    onEventClick(event: any): void {
+
+        const schedule = event.schedule;
+        if (!schedule) return;
+
+        this.selectedEventId = schedule.id;
+        this.showAddEventForm = true;
+
+        const start = schedule.start?._date || schedule.start;
+        const end = schedule.end?._date || schedule.end;
+
+        this.newEvent = {
+            title: schedule.title,
+            description: schedule.body || '',
+            location: schedule.location || '',
+            start: new Date(start).toISOString().slice(0, 16),
+            end: new Date(end).toISOString().slice(0, 16),
+            allDay: schedule.category === 'allday',
+        };
+    }
+    saveNewEvent() {
+        if (!this.newEvent.title || !this.newEvent.start || !this.newEvent.end) {
+            Swal.fire('Campos incompletos', 'Completa los campos requeridos', 'warning');
+            return;
+        }
+
+        const payload = {
+            id: this.selectedEventId,
+            title: this.newEvent.title,
+            body: this.newEvent.description,
+            start: new Date(this.newEvent.start).toISOString(),
+            end: new Date(this.newEvent.end).toISOString(),
+            location: this.newEvent.location,
+            category: this.newEvent.category,
+            usuarioId: Number(this.user.id)
+        };
+
+        this._userService.createEvent(payload).subscribe({
+            next: (res) => {
+                Swal.fire({
+                    icon: 'success',
+                    title: this.selectedEventId ? 'Evento actualizado' : 'Evento creado',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // 🔁 Refrescar lista
+                this.loadGoogleEventsToCalendar();
+                this.showAddEventForm = false;
+                this.selectedEventId = null;
+            },
+            error: (err) => {
+                console.error('Error al guardar evento:', err);
+                Swal.fire('Error', 'No se pudo guardar el evento', 'error');
+            }
+        });
+    }
+
+
+    onBeforeUpdateSchedule(event: any): void {
+        const { schedule, changes } = event;
+
+        // Combinar cambios con datos existentes
+        const updated = {
+            ...schedule,
+            ...changes,
+            start: changes.start ? changes.start._date : schedule.start,
+            end: changes.end ? changes.end._date : schedule.end,
+        };
+
+        // 🧠 Construir payload para backend
+        const payload = {
+            id: updated.id,
+            title: updated.title,
+            body: updated.description,
+            start: new Date(this.newEvent.start).toISOString(),
+            end: new Date(this.newEvent.end).toISOString(),
+            location: updated.location,
+            category: updated.category,
+            usuarioId: Number(this.user.id)
+        };
+
+        // 🔄 Llamar a tu API (.NET)
+        this._userService.createEvent(payload).subscribe({
+            next: (response: any) => {
+                // ✅ Actualizar en el calendario local
+                const isAllDay = response.category === 'allday';
+                let start: any;
+                let end: any;
+
+                if (isAllDay) {
+                    start = response.start; // Ej: '2025-11-07'
+
+                    // ✅ Restamos un día al end porque Google usa el siguiente día como límite
+                    const endDate = new Date(response.end);
+                    endDate.setDate(endDate.getDate() - 1);
+                    end = endDate.toISOString().split('T')[0];
+                } else {
+                    start = new Date(response.start);
+                    end = new Date(response.end);
+                }
+
+                this.calendarInstance.updateSchedule(schedule.id, schedule.calendarId, {
+                    ...changes,
+                    title: response.title,
+                    start,
+                    end,
+                });
+            },
+            error: (err) => {
+                console.error('Error al actualizar evento', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo actualizar el evento.',
+                });
+            },
+        });
+    }
+
 }
