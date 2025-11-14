@@ -781,6 +781,7 @@ addProgressText(): void {
         text: "Por favor, completa los campos obligatorios",
         draggable: true
       });
+      this.projectForm.markAllAsTouched();
       return;
     }
 

@@ -38,6 +38,9 @@
         <mat-form-field appearance="fill" class="w-full">
           <mat-label>Nombre del Proyecto</mat-label>
           <input matInput formControlName="nombre" />
+          <mat-error *ngIf="projectForm.get('nombre')?.hasError('required')">
+            Este campo es requerido
+          </mat-error>
         </mat-form-field>
 
         <!-- Dirección -->
