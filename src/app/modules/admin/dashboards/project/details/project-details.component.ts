@@ -201,7 +201,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       nombre: [null, Validators.required],
 
       // 🔑 CAMPO CORREGIDO: 'categoria' coincide con ProyectoDTO
-      categoria: [null, Validators.required],
+      categoria: [1],
 
       lugar: ['NA'],
 
@@ -212,7 +212,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       fechaFin: [null],
       estado: ['NA'],
 
-      cliente: [0, [Validators.required, this.noZeroValidator]],
+      cliente: [0, [this.noZeroValidator]],
       necesidad: [null],
       direccion: [null],
 
