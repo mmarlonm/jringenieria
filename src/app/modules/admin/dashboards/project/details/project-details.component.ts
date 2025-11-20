@@ -212,7 +212,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
       fechaFin: [null],
       estado: ['NA'],
 
-      cliente: [0, [this.noZeroValidator]],
+      cliente: [null],
       necesidad: [null],
       direccion: [null],
 
