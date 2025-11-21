@@ -52,6 +52,9 @@ import { CurrencyPipe } from '@angular/common';
 import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
 import { DocumentEditorModule, type IConfig } from "@onlyoffice/document-editor-angular";
 import { HistorialComponent } from '../historial-archivo/historial.component';
+import { AvanceDialogComponent } from "../avance/avance-dialog.component";
+import { MatTableModule } from '@angular/material/table';
+
 
 registerLocaleData(localeEs);
 @Component({
@@ -76,7 +79,8 @@ registerLocaleData(localeEs);
     MatChipsModule,
     MatAutocompleteModule,
     NeumorphicProgressComponent,
-    DocumentEditorModule
+    DocumentEditorModule,
+    MatTableModule
   ],
   providers: [
     CurrencyPipe,
@@ -169,6 +173,9 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
   onlyOfficeDocsUrl: any = environment.apiOnlyOffice; // URL pública del Servidor de Documentos
   onlyOfficeApiUrl: any = `${environment.apiUrl}/Proyecto`; // URL pública de la API de OnlyOffice
+
+  displayedAvanceColumns = ['descripcion', 'valor', 'acciones'];
+  avances: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -324,8 +331,6 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     this.getUnidadesDeNegocio();
     this.getClientes();
     this.getEstatus();
-
-
     this.route.paramMap.subscribe((params) => {
       const id = params.get("id");
       if (!id || id === "new") {
@@ -340,6 +345,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
         setTimeout(() => {
           this.progressValue = this.getPagoProgreso();
         }, 1000); // Espera un poco para que se cargue el Gantt
+        this.cargarAvances();
       }
     });
 
@@ -1084,9 +1090,6 @@ addProgressText(): void {
     input.value = "";
     this.personasControl.setValue(null);
   }
-
-
-
   // Agregar una persona desde el autocomplete
   addPersonaFromAutoComplete(event: any): void {
     const selectedPersona = event.option.value;
@@ -1734,5 +1737,36 @@ addProgressText(): void {
     return Object.values(userMap);
   }
 
+cargarAvances() {
+  this.projectService.getAvance(this.projectId)
+    .subscribe((res: any) => this.avances = res);
+}
 
+openAvanceDialog(avance?: any) {
+  const dialogRef = this.dialog.open(AvanceDialogComponent, {
+    width: '600px',
+    data: avance ? { ...avance } : null
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (!result) return;
+
+    const payload = {
+      avanceId: result.avanceId ?? 0,
+      proyectoId: this.projectId,
+      descripcion: result.descripcion,
+      valor: result.valor
+    };
+
+    this.projectService.saveAvance(payload)
+      .subscribe(() => this.cargarAvances());
+  });
+}
+
+eliminarAvance(id: number) {
+  if (!confirm('¿Eliminar avance?')) return;
+
+  this.projectService.deleteAvance(id)
+    .subscribe(() => this.cargarAvances());
+}
 }

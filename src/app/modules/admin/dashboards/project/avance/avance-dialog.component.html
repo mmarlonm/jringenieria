@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>{{ data ? 'Editar Avance' : 'Nuevo Avance' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+
+    <mat-form-field appearance="fill" class="w-100">
+      <mat-label>Descripción</mat-label>
+      <input matInput formControlName="descripcion">
+      <mat-error *ngIf="form.controls.descripcion.invalid">Ingrese una descripción</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="w-100">
+      <mat-label>Valor (%)</mat-label>
+      <input matInput type="number" formControlName="valor">
+      <mat-hint>0 - 100</mat-hint>
+      <mat-error *ngIf="form.controls.valor.invalid">Debe ser un número de 0 a 100</mat-error>
+    </mat-form-field>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="guardar()">Guardar</button>
+</mat-dialog-actions>

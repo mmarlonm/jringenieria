@@ -113,4 +113,16 @@ export class ProjectService {
   enviarNotificacionTarea(dto: any): Observable<any> {
     return this.http.post(`${this.apiUrlNotificaciones}/enviar-notificacion-tareas`, dto);
   }
+
+  getAvance(proyectoId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/avance/listar/${proyectoId}`);
+  }
+
+  saveAvance(dto: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/avance/guardar`, dto);
+  }
+
+  deleteAvance(avanceId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/avance/eliminar/${avanceId}`);
+  }
 }
