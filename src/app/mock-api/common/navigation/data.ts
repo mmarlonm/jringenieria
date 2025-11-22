@@ -93,6 +93,22 @@ export const defaultNavigation: FuseNavigationItem[] = [
         ],
     },
     {
+        id: 'reports',
+        title: 'Reportes',
+        subtitle: 'Administracion de reportes',
+        type: 'collapsable',
+        icon: 'heroicons_outline:book-open',
+        children: [
+            {
+                id: 'reports.project-progress',
+                title: 'Reporte avance de proyectos',
+                type: 'basic',
+                icon: 'heroicons_outline:user',
+                link: '/reports/project-progress',
+            }
+        ],
+    },
+    {
         id: 'apps',
         title: 'Securidad',
         subtitle: 'Configuracion de seguridad',
@@ -114,7 +130,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 link: '/security/roles',
             }
         ],
-    }
+    },
+    
 ];
 export const compactNavigation: FuseNavigationItem[] = [
     {

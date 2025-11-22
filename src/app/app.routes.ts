@@ -91,6 +91,9 @@ export const appRoutes: Route[] = [
                 {path: 'clients', loadChildren: () => import('app/modules/admin/catalogs/clients/clients.routes')},
                 {path: 'products', loadChildren: () => import('app/modules/admin/catalogs/products/products.routes')}
             ]},
+            {path: 'reports', children: [
+                {path: 'project-progress', loadChildren: () => import('app/modules/reports/project-progress/project-progress.routes')},
+            ]},
             {path: 'security', children: [
                 {path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes')},
                 {path: 'roles', loadChildren: () => import('app/modules/admin/security/roles/roles.routes')}

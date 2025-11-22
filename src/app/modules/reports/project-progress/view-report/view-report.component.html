@@ -1,0 +1,169 @@
+<div class="project-report-container mat-elevation-z2">
+
+    <!-- 🔍 BUSCADOR DE PROYECTO -->
+    <div class="search-box">
+        <mat-form-field appearance="outline" floatLabel="auto" class="search-field">
+            <mat-label>ID del Proyecto</mat-label>
+            <input 
+                matInput 
+                type="number"
+                placeholder="Ingrese el ID"
+                [(ngModel)]="searchProjectId"
+                (keyup.enter)="loadProjectData()">
+
+            <button mat-icon-button matSuffix color="primary" (click)="loadProjectData()">
+                <mat-icon>search</mat-icon>
+            </button>
+        </mat-form-field>
+    </div>
+
+    <!-- 1. ENCABEZADO -->
+    <header class="report-header">
+        <h1>{{ projectName }}</h1>
+        <span class="status-badge {{ projectStatusClass }}">{{ projectStatus }}</span>
+    </header>
+
+    <mat-divider></mat-divider>
+
+    <!-- 2. DATOS GENERALES -->
+    <section class="metadata-bar">
+        <div class="data-item">
+            <mat-icon color="primary">location_on</mat-icon>
+            <p matTooltip="{{ location }}">
+                <strong>Ubicación:</strong> {{ location }}
+            </p>
+        </div>
+
+        <div class="data-item">
+            <mat-icon color="primary">calendar_today</mat-icon>
+            <p>
+                <strong>Inicio:</strong> {{ startDate | date:'shortDate' }}
+                |
+                <strong>Entrega:</strong>
+                <span class="due-date">
+                    {{ dueDate ? (dueDate | date:'shortDate') : 'No definida' }}
+                </span>
+            </p>
+        </div>
+    </section>
+
+    <!-- 3. AVANCE GENERAL + FINANZAS -->
+    <section class="kpis-section">
+
+        <!-- Gráfico circular -->
+        <mat-card class="progress-card mat-elevation-z1">
+            <div class="circular-chart"
+                [style.background]="'conic-gradient(#007bff ' + anticipoPercent + '%, #e0e0e0 0%)'">
+
+                <div class="inner-circle">
+                    <p class="percentage improved-percent">
+                        {{ anticipoPercent | number:'1.1-1' }}<small>%</small>
+                    </p>
+
+                    <div class="finance-breakdown improved-breakdown">
+                        <p><strong>Avance:</strong> {{ financials.projectValue | currency:'MXN' }}</p>
+                        <p><strong>Pendiente:</strong> {{ financials.pendingPayment | currency:'MXN' }}</p>
+                    </div>
+                </div>
+            </div>
+        </mat-card>
+
+        <!-- Finanzas -->
+        <div class="financial-metrics">
+            <mat-card class="metric-card">
+                <h3>Valor del Proyecto</h3>
+                <p class="value">{{ financials.projectValue | currency:'USD':'symbol':'1.2-2' }}</p>
+            </mat-card>
+
+            <mat-card class="metric-card warning">
+                <h3>Pago Pendiente</h3>
+                <p class="value warning-text">
+                    {{ financials.pendingPayment | currency:'USD':'symbol':'1.2-2' }}
+                </p>
+            </mat-card>
+
+            <mat-card class="metric-card accent">
+                <h3>Total de Anticipo</h3>
+                <p class="value accent-text">
+                    {{ financials.totalAnticipo | currency:'USD':'symbol':'1.2-2' }}
+                </p>
+            </mat-card>
+        </div>
+
+    </section>
+
+    <!-- 4. AVANCES POR ÁREA + SUMINISTROS -->
+    <div class="detail-sections-wrapper">
+
+        <!-- ÁREAS -->
+        <mat-card class="area-progress-card mat-elevation-z1">
+            <h2>Avances del Proyecto por Área</h2>
+
+            <div *ngIf="projectAreas.length === 0" class="no-data">
+                No hay avances registrados.
+            </div>
+
+            <div *ngFor="let area of projectAreas" class="progress-item">
+                <p>{{ area.name }} - {{ area.progress }}%</p>
+                <mat-progress-bar mode="determinate" [value]="area.progress"></mat-progress-bar>
+            </div>
+
+            <mat-divider class="small-divider"></mat-divider>
+
+            <div class="team-member-small">
+                <mat-icon color="accent">build</mat-icon>
+                <div>
+                    <h3>Responsables Operativos</h3>
+                    <p>{{ operationalLeaders }}</p>
+                </div>
+            </div>
+        </mat-card>
+
+        <!-- SUMINISTROS -->
+        <mat-card class="supply-detail-card mat-elevation-z1">
+            <h2>Detalle de Suministros y Costos</h2>
+
+            <div class="mat-table-container">
+                <table mat-table [dataSource]="suppliesData">
+
+                    <!-- Componente -->
+                    <ng-container matColumnDef="component">
+                        <th mat-header-cell *matHeaderCellDef> Componente </th>
+                        <td mat-cell *matCellDef="let el"> {{ el.component }} </td>
+                    </ng-container>
+
+                    <!-- Valor -->
+                    <ng-container matColumnDef="value">
+                        <th mat-header-cell *matHeaderCellDef> Valor </th>
+                        <td mat-cell *matCellDef="let el">
+                            {{ el.value | currency:'USD':'symbol':'1.2-2' }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Avance -->
+                    <ng-container matColumnDef="progress">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">% Avance</th>
+                        <td mat-cell *matCellDef="let el" class="text-center">
+                            <span class="progress-chip" [ngClass]="getProgressClass(el.progress)">
+                                {{ el.progress }}%
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+            </div>
+
+            <mat-divider class="small-divider"></mat-divider>
+
+            <div class="team-member-small">
+                <mat-icon color="primary">engineering</mat-icon>
+                <div>
+                    <h3>Equipo del Proyecto</h3>
+                    <p>{{ projectLeaders }}</p>
+                </div>
+            </div>
+        </mat-card>
+    </div>
+</div>
