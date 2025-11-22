@@ -56,6 +56,16 @@
         <div class="overflow-auto" style="max-height: 400px; overflow-y: auto">
           <table mat-table [dataSource]="dataSource" matSort class="w-full">
             <!-- ID -->
+             <ng-container matColumnDef="proyectoId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                ID Proyecto
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('proyectoId')">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let project">{{ project.proyectoId }}</td>
+            </ng-container>
+
             <ng-container matColumnDef="ordenDeCompra">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>
                 Orden de compra
