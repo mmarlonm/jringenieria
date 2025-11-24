@@ -979,9 +979,10 @@ addProgressText(): void {
   downloadFile(
     proyectoId: number,
     categoria: string,
-    nombreArchivo: string
+    nombreArchivo: string,
+    categoriaSecond
   ): void {
-    if (categoria.toLowerCase() === 'cotizacion') {
+    if (categoriaSecond.toLowerCase() === 'cotizacion') {
       this.projectService
         .downloadFileCotizacion(proyectoId, categoria, nombreArchivo)
         .subscribe(
@@ -1350,7 +1351,11 @@ addProgressText(): void {
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
     if (!archivo) return;
 
-    this.downloadFile(archivo.categoria === "cotizacion" ? archivo.cotizacionId : archivo.proyectoId, categoria, archivo.nombreArchivo);
+    this.downloadFile(archivo.categoria === "cotizacion"
+  ? (archivo.cotizacionId && archivo.cotizacionId !== 0
+        ? archivo.cotizacionId
+        : archivo.proyectoId)   // usa proyectoId cuando cotizacionId es 0/null
+  : archivo.proyectoId, categoria, archivo.nombreArchivo, archivo.cotizacionId && archivo.cotizacionId !== 0 ? 'cotizacion' : 'proyecto');
   }
   eliminarArchivo(categoria: string): void {
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
