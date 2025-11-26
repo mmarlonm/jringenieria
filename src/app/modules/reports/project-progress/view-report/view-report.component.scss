@@ -3,22 +3,39 @@ $warning-color: #f0ad4e;
 $success-color: #5cb85c;
 $light-grey: #f5f5f5;
 
+/* 1. ESTILOS GLOBALES PARA LA VISTA COMPLETA */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Evita el scroll global */
+}
+
 .project-report-container {
     width: 100%;
-    max-width: 900px;        /* 🔥 AUMENTA EL ANCHO TOTAL DE LA CARD */
-    margin: 0 auto;           /* 🔥 Centrar */
-    padding: 24px 32px;       /* 🔥 Más respiración */
+    max-width: 900px; /* Ancho máximo del contenedor */
+    margin: 0 auto; 
+    padding: 24px 32px; 
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.15);
 
+    /* HABILITAR DISTRIBUCIÓN VERTICAL COMPLETA */
+    height: calc(100vh - 48px); /* 100% de la vista menos un margen/header */
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* El scroll lo maneja el wrapper interno */
+
     @media (max-width: 1400px) {
-        max-width: 1200px;    /* Ajuste en pantallas medianas */
+        max-width: 1100px; 
     }
 
     @media (max-width: 1024px) {
         padding: 20px;
         max-width: 95%;
+        height: auto; /* Deshabilitar en móvil para scroll natural */
+        max-height: none;
     }
 
     @media (max-width: 768px) {
@@ -27,15 +44,26 @@ $light-grey: #f5f5f5;
     }
 }
 
+// WRAPPER PARA EL CONTENIDO PRINCIPAL
+.report-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Ocupa todo el espacio vertical restante */
+    overflow-y: auto; /* Permite scroll solo en el contenido si es necesario */
+    padding-top: 16px; 
+}
 
 // --- 1. Encabezado ---
 .report-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 16px; 
+}
 
-    h1 { font-size: 1.8rem; font-weight: 600; color: #333; }
+.report-header mat-select {
+    flex: 1; 
+    min-width: 250px; 
 }
 
 .status-badge {
@@ -45,69 +73,111 @@ $light-grey: #f5f5f5;
     color: white;
     font-size: 0.9rem;
     line-height: 1;
-
-    &.en-progreso { background-color: $primary-color; }
+    display: inline-block;
 }
+
+/* 🟡 Pendiente */
+.status-pendiente {
+    background-color: #fbc02d; 
+    color: #000;
+}
+
+/* 🟢 Aprobada */
+.status-aprobada {
+    background-color: #2ecc71; 
+}
+
+/* 🔴 Rechazada */
+.status-rechazada {
+    background-color: #e74c3c; 
+}
+
+/* 🔵 En proceso */
+.status-en-proceso {
+    background-color: #3498db; 
+}
+
+/* ⚫ Finalizada */
+.status-finalizada {
+    background-color: #7f8c8d; 
+}
+
 
 // --- 2. Metadatos ---
 .metadata-bar {
     display: flex;
-    flex-wrap: wrap; // Permite que los elementos pasen a la siguiente línea en móvil
+    flex-wrap: wrap;
     gap: 30px; 
-    padding: 16px 0;
+    padding: 8px 0;
     font-size: 0.9rem;
     color: #555;
+    flex-shrink: 0; 
 }
 
 .data-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    /* Truncamiento para ubicación larga */
     p {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 40vw; /* Limita el ancho para evitar desbordamiento */
+        max-width: 40vw; 
     }
     .due-date { font-weight: bold; color: #d9534f; }
 }
 
-// --- 3. KPIs y Avance Total (Usando GRID) ---
-.kpis-section {
+/* --- 3. CONTENEDOR DE CUADRANTES 2x2 --- */
+/* --- 3. CONTENEDOR DE CUADRANTES 2x2 --- */
+.quadrant-grid {
     display: grid;
-    /* Escritorio: 280px para el gráfico, 1fr para las métricas */
-    grid-template-columns: 380px 1fr;
-    gap: 24px;
-    margin: 24px 0;
-    align-items: start; /* Asegura que las tarjetas se alineen en la parte superior */
+    /* Las columnas se mantienen 1fr 1fr */
+    grid-template-columns: 1fr 1fr; 
+    
+    /* 🔥 CAMBIO AQUÍ: La primera fila (top) usa menos espacio que la segunda (bottom) */
+    grid-template-rows: 4.5fr 5.5fr; /* 40% para la primera fila, 60% para la segunda */
+    // Puedes usar 1fr 1.5fr o 2fr 3fr, dependiendo de la proporción deseada.
+    
+    gap: 10px;
+    flex-grow: 1; 
+    min-height: 0; 
 
     @media (max-width: 900px) {
-        /* Móvil/Tablet: Poner el gráfico y las métricas en una sola columna */
-        grid-template-columns: 1fr; 
+        /* En móvil se mantiene la columna única (auto) */
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        flex-grow: 0;
     }
+    
+    > mat-card {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto; 
+        padding: 10px;
+        box-sizing: border-box;
+    }
+}
+
+// --- Estilos específicos de las tarjetas ---
+.progress-card, .financial-metrics-card, .area-progress-card, .supply-detail-card {
+    h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 10px; }
 }
 
 .progress-card {
-    width: 380px; 
-    height: 250px;
+    /* Mantenemos el centrado del gráfico */
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding: 0;
-    box-sizing: border-box;
-
-    @media (max-width: 900px) {
-        /* En móvil, el gráfico se centra y ocupa todo el ancho disponible */
-        width: 100%;
-        height: 250px;
-    }
+    justify-content: center; 
+    flex-direction: column;
+    height: 90%;
 }
 
-// Gráfico Circular (Simulación CSS)
+// Gráfico Circular 
 .circular-chart {
-    width: 180px;
-    height: 180px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
     position: relative;
     display: flex;
@@ -116,8 +186,8 @@ $light-grey: #f5f5f5;
 
     .inner-circle {
         background-color: white;
-        width: 140px;
-        height: 140px;
+        width: 200px;
+        height: 200px;
         border-radius: 50%;
         position: absolute;
         display: flex;
@@ -139,18 +209,21 @@ $light-grey: #f5f5f5;
     }
 }
 
-// Métricas Financieras
+// Métricas Financieras (dentro de financial-metrics-card)
 .financial-metrics {
     display: flex;
-    flex-direction: column;   /* 🔥 Siempre columna */
-    gap: 16px;
+    flex-direction: column; 
+    gap: 10px;
     width: 100%;
-    margin-top: 16px;
+    flex-grow: 1; /* Ocupa el espacio restante de la card */
+}
+.financial-metrics-card {
+    height: 90%;
 }
 
 .metric-card {
     width: 100%;
-    padding: 16px;
+    padding: 4px;
     text-align: center;
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
@@ -181,33 +254,15 @@ $light-grey: #f5f5f5;
     }
 }
 
-
-// --- 4. Secciones de Detalle ---
-.detail-sections-wrapper {
-    display: grid;
-    /* 2 columnas iguales */
-    grid-template-columns: 1fr 1fr; 
-    gap: 24px;
-    margin-top: 24px;
-
-    @media (max-width: 900px) {
-        /* 1 columna en móvil */
-        grid-template-columns: 1fr; 
-    }
-}
-
-.area-progress-card, .supply-detail-card {
-    h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; }
-}
-
 // Estilos de la tabla de suministros
 .mat-table-container {
-    overflow-x: auto; /* Permite desplazamiento horizontal si la tabla es muy ancha */
+    overflow-x: auto; 
+    flex-grow: 1; /* Permite que la tabla ocupe el espacio vertical restante dentro de la card */
 }
 .mat-table {
     width: 100%;
-    min-width: 500px; /* Asegura que no se comprima demasiado */
-    // ... otros estilos de tabla
+    min-width: 500px;
+    // ... otros estilos de tabla (no definidos en el original, pero aquí irían)
 }
 
 .progress-chip {
@@ -217,7 +272,7 @@ $light-grey: #f5f5f5;
     font-weight: bold;
     color: white;
     display: inline-block;
-    min-width: 50px; /* Ancho mínimo para consistencia */
+    min-width: 50px; 
     text-align: center;
 
     &.in-progress { background-color: $primary-color; }
@@ -226,12 +281,16 @@ $light-grey: #f5f5f5;
 }
 
 // Responsables
-.small-divider { margin: 16px 0; }
+.small-divider { 
+    margin: 16px 0; 
+    flex-shrink: 0; /* Asegura que la línea divisora no se comprima */
+}
 .team-member-small {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 8px 0;
+    flex-shrink: 0; 
     
     mat-icon { font-size: 24px; width: 24px; height: 24px; }
     h3 { font-size: 1rem; margin: 0; font-weight: 500; }
@@ -266,4 +325,18 @@ $light-grey: #f5f5f5;
 
 .improved-breakdown p {
     margin: 2px 0;
+}
+
+
+.select-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
 }

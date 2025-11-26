@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
 
 import { ProjectProgressService } from '../project-progress.service';
 
@@ -41,7 +42,8 @@ import { ProjectProgressService } from '../project-progress.service';
     // **NUEVOS IMPORTS**
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSelectModule
   ]
 })
 export class ProjectsReportViewComponent implements OnInit {
@@ -78,14 +80,24 @@ export class ProjectsReportViewComponent implements OnInit {
 
   searchProjectId: number | null = null;
 
+  projectlist: any[] = [];
+
   constructor(private projectService: ProjectProgressService) {}
 
   ngOnInit(): void {
-    this.loadProjectData();
+    this.getProjectsList();
+  }
+
+  getProjectsList(): void {
+    this.projectService.getProjects().subscribe((projects: any) => {
+      console.log('Lista de proyectos:', projects);
+      this.projectlist = projects.data || [];
+    });
   }
 
   loadProjectData() {
     this.projectService.getProjectById(this.searchProjectId ?? 0).subscribe((data: any) => {
+      console.log('Datos del proyecto:', data);
 
         this.projectName = data.nombre || 'N/A';
         this.location = data.ubicacion || 'Sin ubicación';
@@ -93,6 +105,9 @@ export class ProjectsReportViewComponent implements OnInit {
         this.dueDate = data.fechaFin ? new Date(data.fechaFin) : null;
         this.projectStatus = data.estadoProyecto || 'EN PROGRESO';
         this.overallProgress = data.avanceGeneral ?? 0;
+        this.projectStatus = data.estatus || 'EN PROGRESO';
+        this.projectLeaders = data.responsableProyecto || 'N/A';
+        this.operationalLeaders = data.responsableOperativo || 'N/A';
 
         const totalProyecto = data.pagoTotal ?? 0;
 
@@ -131,8 +146,13 @@ export class ProjectsReportViewComponent implements OnInit {
   }
 
   get projectStatusClass(): string {
-    return this.projectStatus.toLowerCase().replace(/ /g, '-');
-  }
+    if (!this.projectStatus) return '';
+
+    const normalized = this.projectStatus.toLowerCase().replace(/\s+/g, '-');
+
+    return `status-${normalized}`;
+}
+
 
   getProgressClass(progress: number): string {
     if (progress === 100) return 'complete';

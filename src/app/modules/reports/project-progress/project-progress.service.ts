@@ -14,4 +14,9 @@ export class ProjectProgressService {
   getProjectById(projectId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/report/avances/${projectId}`);
   }
+
+  // Obtener todos los proyectos
+  getProjects(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/proyectos`);
+  }
 }
