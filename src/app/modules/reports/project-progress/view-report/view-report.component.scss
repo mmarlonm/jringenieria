@@ -13,7 +13,7 @@ html, body {
 
 .project-report-container {
     width: 100%;
-    max-width: 900px; /* Ancho máximo del contenedor */
+    max-width: 1200px; /* Ancho máximo del contenedor */
     margin: 0 auto; 
     padding: 24px 32px; 
     background: #fff;
@@ -21,7 +21,7 @@ html, body {
     box-shadow: 0 4px 18px rgba(0,0,0,0.15);
 
     /* HABILITAR DISTRIBUCIÓN VERTICAL COMPLETA */
-    height: calc(100vh - 48px); /* 100% de la vista menos un margen/header */
+    height: calc(100vh - 65px); /* 100% de la vista menos un margen/header */
     max-height: calc(100vh - 48px);
     display: flex;
     flex-direction: column;
@@ -339,4 +339,46 @@ html, body {
     align-items: center;
     gap: 10px;
     margin-top: 12px;
+}
+
+
+.semi-donut-chart {
+    width: 95%;
+    height: 260px;
+    position: relative;
+}
+
+.donut-center-text {
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.donut-center-text .percentage {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.finance-breakdown {
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+
+.area-chart-wrapper {
+  max-height: 300px;   /* 🔥 Ajusta la altura visible */
+  overflow-y: auto;    /* 🔥 Scroll vertical */
+  padding-right: 8px;  /* Evita que tape el scroll */
+}
+
+#areasBarChartContainer {
+  width: 100%;
+  min-height: 240px; /* Esto permite barras delgadas sin aplastar el chart */
+}
+
+.area-progress-card {
+  padding-bottom: 0;
 }

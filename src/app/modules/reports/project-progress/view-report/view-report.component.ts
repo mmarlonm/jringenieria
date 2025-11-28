@@ -9,14 +9,20 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
-// **IMPORTS FALTANTES PARA mat-form-field, mat-label, matInput y mat-button**
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ProjectProgressService } from '../project-progress.service';
+
+import * as Highcharts from 'highcharts';
+import HighchartsMore from 'highcharts/highcharts-more';
+import SolidGauge from 'highcharts/modules/solid-gauge';
+
+// Inicializar módulos (orden importante)
+HighchartsMore(Highcharts);
+SolidGauge(Highcharts);
 
 @Component({
   selector: 'app-projects-report-view',
@@ -38,8 +44,6 @@ import { ProjectProgressService } from '../project-progress.service';
     MatProgressBarModule,
     MatTableModule,
     MatTooltipModule,
-
-    // **NUEVOS IMPORTS**
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -62,7 +66,7 @@ export class ProjectsReportViewComponent implements OnInit {
     totalAnticipo: 0
   };
 
-  projectAreas: any[] = []; // ← aquí se mapearán los avances
+  projectAreas: any[] = [];
 
   suppliesData = [
     { component: 'Estructura Metálica', value: 12500, progress: 80 },
@@ -82,7 +86,11 @@ export class ProjectsReportViewComponent implements OnInit {
 
   projectlist: any[] = [];
 
-  constructor(private projectService: ProjectProgressService) {}
+  areasChart: Highcharts.Chart | null = null;
+
+  private anticipoChart: Highcharts.Chart | null = null;
+
+  constructor(private projectService: ProjectProgressService) { }
 
   ngOnInit(): void {
     this.getProjectsList();
@@ -90,58 +98,182 @@ export class ProjectsReportViewComponent implements OnInit {
 
   getProjectsList(): void {
     this.projectService.getProjects().subscribe((projects: any) => {
-      console.log('Lista de proyectos:', projects);
       this.projectlist = projects.data || [];
     });
   }
 
+  // 🔥🔥🔥 FUNCIÓN PARA CARGAR EL GAUGE HIGHCHARTS
+  loadAnticipoGauge() {
+    if (this.anticipoChart) {
+      try { this.anticipoChart.destroy(); } catch { }
+      this.anticipoChart = null;
+    }
+
+    const options: Highcharts.Options = {
+      chart: {
+        type: 'pie',
+        backgroundColor: 'transparent',
+        height: 260
+      },
+      title: null,
+      tooltip: { enabled: false },
+      plotOptions: {
+        pie: {
+          startAngle: -90,
+          endAngle: 90,
+          center: ['50%', '100%'],
+          size: '190%',
+          innerSize: '80%',
+          dataLabels: { enabled: false }
+        }
+      },
+      legend: {
+      enabled: true,
+      align: 'center',
+      verticalAlign: 'bottom',
+      layout: 'horizontal',
+      itemStyle: {
+        color: '#333',
+        fontSize: '13px'
+      },
+      labelFormatter: function () {
+        return `${this.name}: ${(this as any).y?.toFixed(1)}%`;
+      }
+    },
+      series: [{
+        type: 'pie',
+        name: 'Anticipo',
+        data: [
+          {
+            name: 'Anticipo',
+            y: this.anticipoPercent,
+            color: '#1976d2'
+          },
+          {
+            name: 'Pendiente',
+            y: 100 - this.anticipoPercent,
+            color: '#e0e0e0'
+          }
+        ]
+      }],
+      credits: { enabled: false }
+    };
+
+    this.anticipoChart = (Highcharts as any).chart('anticipoSemiDonutContainer', options);
+  }
+
+  loadAreasBarChart() {
+  if (this.areasChart) {
+    try { this.areasChart.destroy(); } catch {}
+    this.areasChart = null;
+  }
+
+  const categories = this.projectAreas.map(a => a.name);
+  const values = this.projectAreas.map(a => a.progress);
+
+  const options: Highcharts.Options = {
+    chart: {
+      type: 'bar',
+      backgroundColor: 'transparent',
+      height: 240, 
+      // 🔥 Ajusta la altura según número de áreas
+    },
+    title: null,
+    xAxis: {
+      categories,
+      labels: {
+        style: { fontSize: '11px', color: '#333' }
+      }
+    },
+    yAxis: {
+      min: 0,
+      max: 100,
+      title: null
+    },
+    legend: { enabled: false },
+    tooltip: { valueSuffix: '%' },
+    plotOptions: {
+      series: {
+        dataLabels: {
+          enabled: true,
+          format: '{y}%',
+          style: {
+            fontSize: '11px',
+            fontWeight: 'bold'
+          }
+        }
+      },
+      bar: {
+        pointWidth: 14,  // 🔥 barras más delgadas
+        borderWidth: 0,
+        color: '#1976d2'
+      }
+    },
+    series: [{
+      type: 'bar',
+      name: 'Avance',
+      data: values
+    }],
+    credits: { enabled: false }
+  };
+
+  this.areasChart = Highcharts.chart('areasBarChartContainer', options);
+}
+
+
+
+
+  // 🔥🔥🔥 LLAMADA AUTOMÁTICA AL CARGAR LOS DATOS
   loadProjectData() {
     this.projectService.getProjectById(this.searchProjectId ?? 0).subscribe((data: any) => {
-      console.log('Datos del proyecto:', data);
 
-        this.projectName = data.nombre || 'N/A';
-        this.location = data.ubicacion || 'Sin ubicación';
-        this.startDate = data.fechaInicio ? new Date(data.fechaInicio) : null;
-        this.dueDate = data.fechaFin ? new Date(data.fechaFin) : null;
-        this.projectStatus = data.estadoProyecto || 'EN PROGRESO';
-        this.overallProgress = data.avanceGeneral ?? 0;
-        this.projectStatus = data.estatus || 'EN PROGRESO';
-        this.projectLeaders = data.responsableProyecto || 'N/A';
-        this.operationalLeaders = data.responsableOperativo || 'N/A';
+      this.projectName = data.nombre || 'N/A';
+      this.location = data.ubicacion || 'Sin ubicación';
+      this.startDate = data.fechaInicio ? new Date(data.fechaInicio) : null;
+      this.dueDate = data.fechaFin ? new Date(data.fechaFin) : null;
+      this.projectStatus = data.estatus || 'EN PROGRESO';
+      this.overallProgress = data.avanceGeneral ?? 0;
 
-        const totalProyecto = data.pagoTotal ?? 0;
+      this.projectLeaders = data.responsableProyecto || 'N/A';
+      this.operationalLeaders = data.responsableOperativo || 'N/A';
 
-        // Convertir anticipos si vienen separados por comas
-        let totalAnticipo = 0;
+      const totalProyecto = data.pagoTotal ?? 0;
 
-        if (data.anticipoList) {
-          totalAnticipo = data.anticipoList
-            .split(',')
-            .map(x => Number(x.trim()))
-            .reduce((a, b) => a + b, 0);
-        }
+      // Convertir anticipos
+      let totalAnticipo = 0;
 
-        const pendiente = totalProyecto - totalAnticipo;
+      if (data.anticipoList) {
+        totalAnticipo = data.anticipoList
+          .split(',')
+          .map(x => Number(x.trim()))
+          .reduce((a, b) => a + b, 0);
+      }
 
-        this.financials = {
-          projectValue: totalProyecto,
-          totalAnticipo: totalAnticipo,
-          pendingPayment: pendiente < 0 ? 0 : pendiente
-        };
+      const pendiente = totalProyecto - totalAnticipo;
 
-        // % avance gráfico
-        this.anticipoPercent = totalProyecto > 0
-          ? (totalAnticipo / totalProyecto) * 100
-          : 0;
+      this.financials = {
+        projectValue: totalProyecto,
+        totalAnticipo: totalAnticipo,
+        pendingPayment: pendiente < 0 ? 0 : pendiente
+      };
 
-        // 🔥🔥🔥 MAPEAMOS LOS AVANCES AL FRONTEND
-        this.projectAreas = Array.isArray(data.avances)
-          ? data.avances.map((a: any) => ({
-              name: a.descripcion,
-              progress: a.valor
-            }))
-          : [];
+      this.anticipoPercent = totalProyecto > 0
+        ? (totalAnticipo / totalProyecto) * 100
+        : 0;
 
+      // Avances
+      this.projectAreas = Array.isArray(data.avances)
+        ? data.avances.map((a: any) => ({
+          name: a.descripcion,
+          progress: a.valor
+        }))
+        : [];
+
+      // 🔥🔥🔥 Cargar el Gauge
+      setTimeout(() => {
+        this.loadAnticipoGauge();
+        this.loadAreasBarChart();
+      }, 200);
     });
   }
 
@@ -149,10 +281,8 @@ export class ProjectsReportViewComponent implements OnInit {
     if (!this.projectStatus) return '';
 
     const normalized = this.projectStatus.toLowerCase().replace(/\s+/g, '-');
-
     return `status-${normalized}`;
-}
-
+  }
 
   getProgressClass(progress: number): string {
     if (progress === 100) return 'complete';

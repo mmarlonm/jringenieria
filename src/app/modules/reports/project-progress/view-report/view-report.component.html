@@ -1,17 +1,14 @@
 <div class="project-report-container mat-elevation-z2">
 
     <header class="report-header">
-        <mat-select placeholder="Selecciona un proyecto"
-                    [(value)]="searchProjectId"
-                    (selectionChange)="loadProjectData()">
-            <mat-option *ngFor="let project of projectlist"
-                        [value]="project.proyectoId">
+        <mat-select placeholder="Selecciona un proyecto" [(value)]="searchProjectId"
+            (selectionChange)="loadProjectData()">
+            <mat-option *ngFor="let project of projectlist" [value]="project.proyectoId">
                 {{ project.nombre }}
             </mat-option>
         </mat-select>
 
-        <span *ngIf="searchProjectId"
-              class="status-badge {{ projectStatusClass }}">
+        <span *ngIf="searchProjectId" class="status-badge {{ projectStatusClass }}">
             {{ projectStatus }}
         </span>
     </header>
@@ -24,7 +21,7 @@
     </div>
 
     <ng-container *ngIf="searchProjectId">
-        
+
         <div class="report-content-wrapper">
 
             <section class="metadata-bar">
@@ -52,20 +49,17 @@
 
                 <mat-card class="progress-card mat-elevation-z1">
                     <h2>Avance General del Proyecto</h2>
-                    <div class="circular-chart"
-                        [style.background]="'conic-gradient(#007bff ' + anticipoPercent + '%, #e0e0e0 0%)'">
+                    <div id="anticipoSemiDonutContainer" class="semi-donut-chart"></div>
 
-                        <div class="inner-circle">
-                            <p class="percentage improved-percent">
-                                {{ anticipoPercent | number:'1.1-1' }}<small>%</small>
-                            </p>
-                            <div class="finance-breakdown improved-breakdown">
-                        <p><strong>Total Proyecto:</strong> {{ financials.projectValue | currency:'MXN' }}</p>
-                        <p><strong>Total Pendiente:</strong> {{ financials.pendingPayment | currency:'MXN' }}</p>
-                    </div>
+                    <div class="donut-center-text">
+                        <p class="percentage">{{ anticipoPercent | number:'1.1-1' }}%</p>
+                        <div class="finance-breakdown">
+                            <p><strong>Total Proyecto:</strong> {{ financials.projectValue | currency:'MXN' }}</p>
+                            <p><strong>Total Pendiente:</strong> {{ financials.pendingPayment | currency:'MXN' }}</p>
                         </div>
                     </div>
-                    
+
+
                 </mat-card>
 
                 <mat-card class="financial-metrics-card mat-elevation-z1">
@@ -95,13 +89,9 @@
                 <mat-card class="area-progress-card mat-elevation-z1">
                     <h2>Avances del Proyecto por Área</h2>
 
-                    <div *ngIf="projectAreas.length === 0" class="no-data">
-                        No hay avances registrados.
-                    </div>
-
-                    <div *ngFor="let area of projectAreas" class="progress-item">
-                        <p>{{ area.name }} - {{ area.progress }}%</p>
-                        <mat-progress-bar mode="determinate" [value]="area.progress"></mat-progress-bar>
+                    <!-- Contenedor Scroll -->
+                    <div class="area-chart-wrapper">
+                        <div id="areasBarChartContainer"></div>
                     </div>
 
                     <mat-divider class="small-divider"></mat-divider>
@@ -114,6 +104,7 @@
                         </div>
                     </div>
                 </mat-card>
+
 
                 <mat-card class="supply-detail-card mat-elevation-z1">
                     <h2>Detalle de Suministros y Costos</h2>
@@ -155,6 +146,8 @@
                     </div>
                 </mat-card>
 
-            </div> </div> </ng-container>
+            </div>
+        </div>
+    </ng-container>
 
 </div>
