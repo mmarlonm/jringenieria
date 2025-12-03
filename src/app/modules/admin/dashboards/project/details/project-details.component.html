@@ -109,7 +109,7 @@
               </mat-option>
 
               <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
-                {{ client.clienteId }} - {{ client.nombre }}
+                {{ client.clienteId }} - {{ client.nombre }} - {{ client.tipoPersona }}
               </mat-option>
             </mat-select>
             <mat-error *ngIf="projectForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente
