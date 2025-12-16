@@ -1,0 +1,149 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
+    <!-- Main -->
+    <div class="flex-auto">
+
+        <!-- Header -->
+        <div class="flex flex-auto flex-col justify-between px-6 sm:flex-col md:px-8">
+
+            <!-- Title -->
+            <div>
+                <div class="text-4xl font-extrabold leading-none tracking-tight">
+                    Accesos de Usuarios
+                </div>
+
+                <div class="text-secondary ml-0.5 font-medium">
+                    @if (logsCount > 0) {
+                    {{ logsCount }}
+                    }
+                    {{
+                    logsCount
+                    | i18nPlural : {
+                    '=0': 'Sin accesos',
+                    '=1': 'acceso registrado',
+                    other: 'accesos registrados'
+                    }
+                    }}
+                </div>
+            </div>
+
+            <!-- Main actions -->
+            <div class="mt-4 flex items-center gap-4 sm:mt-0 md:mt-4">
+
+                <!-- Search -->
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded flex-1 min-w-0" subscriptSizing="dynamic">
+                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput (keyup)="applyFilter($event)" autocomplete="off"
+                        placeholder="Buscar usuario o IP" />
+                </mat-form-field>
+                usuarios
+                <!-- Select Usuario -->
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-60 shrink-0" subscriptSizing="dynamic">
+                    <mat-select [(ngModel)]="usuarioSeleccionado" (selectionChange)="onUsuarioChange($event.value)">
+                        <mat-option value="">Todos</mat-option>
+                        <mat-option *ngFor="let user of usuarios" [value]="user">
+                            {{ user }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+            </div>
+
+        </div>
+
+        <!-- Logs list -->
+        <div class="flex flex-auto flex-col justify-between px-6 py-8 sm:flex-col md:px-8">
+
+            @if (logsCount > 0) {
+
+            <div class="mat-elevation-z8">
+
+                <div class="overflow-auto" style="max-height: 450px; overflow-y: auto;">
+                    <table mat-table [dataSource]="dataSource" matSort class="w-full">
+
+                        <!-- Usuario -->
+                        <ng-container matColumnDef="usuario">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Usuario
+                            </th>
+                            <td mat-cell *matCellDef="let log">
+                                {{ log.nombreUsuario }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Fecha -->
+                        <ng-container matColumnDef="fecha">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                                Fecha
+                            </th>
+                            <td mat-cell *matCellDef="let log">
+                                {{ log.fecha | date:'dd/MM/yyyy HH:mm' }}
+                            </td>
+                        </ng-container>
+                        <!-- Navegador -->
+                        <ng-container matColumnDef="navegador">
+                            <th mat-header-cell *matHeaderCellDef>
+                                Navegador
+                            </th>
+                            <td mat-cell *matCellDef="let log">
+                                {{ log.navegador }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Dispositivo -->
+                        <ng-container matColumnDef="dispositivo">
+                            <th mat-header-cell *matHeaderCellDef>
+                                Dispositivo
+                            </th>
+                            <td mat-cell *matCellDef="let log">
+                                {{ log.dispositivo }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Ubicación -->
+                        <ng-container matColumnDef="ubicacion">
+                            <th mat-header-cell *matHeaderCellDef>
+                                Ubicación
+                            </th>
+                            <td mat-cell *matCellDef="let log">
+                                {{ log.ubicacion }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Estado -->
+                        <ng-container matColumnDef="estado">
+                            <th mat-header-cell *matHeaderCellDef>
+                                Estado
+                            </th>
+                            <td mat-cell *matCellDef="let log">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="{
+                                            'bg-green-100 text-green-800': log.exitoso,
+                                            'bg-red-100 text-red-800': !log.exitoso
+                                        }">
+                                    {{ log.exitoso ? 'Exitoso' : 'Fallido' }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Filas -->
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                    </table>
+                </div>
+
+                <!-- Paginador -->
+                <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+
+            </div>
+
+            } @else {
+
+            <div class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16">
+                Sin accesos registrados
+            </div>
+
+            }
+
+        </div>
+    </div>
+</div>

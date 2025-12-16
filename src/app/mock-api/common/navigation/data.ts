@@ -105,6 +105,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:user',
                 link: '/reports/project-progress',
+            },
+            {
+                id: 'reports.login-logs',
+                title: 'Historial de Inicios de Sesión',
+                type: 'basic',
+                icon: 'heroicons_outline:history',
+                link: '/reports/login-logs',
             }
         ],
     },
