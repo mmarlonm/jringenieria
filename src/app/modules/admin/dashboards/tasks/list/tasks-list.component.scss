@@ -90,3 +90,8 @@
 ::ng-deep tr:hover {
   filter: brightness(0.97);
 }
+
+
+::ng-deep .task-dialog .mat-mdc-dialog-surface {
+    border-radius: 16px;
+}

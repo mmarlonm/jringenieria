@@ -39,4 +39,22 @@ export class TaskService {
   getTaskById(id: number): Observable<Task> {
     return this.http.get<Task>(`${this.apiUrl}/${id}`);
   }
+
+  uploadFile(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/SubirArchivoTarea`,formData);
+  }
+
+  getFiles(tareaId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/ObtenerArchivosTarea/${tareaId}`);
+  }
+
+  downloadFile(tareaId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrl}/DescargarArchivoTarea/${tareaId}/${categoria}/${nombreArchivo}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  removeFile(tareaId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
+    const url = `${this.apiUrl}/EliminarArchivoTarea/${tareaId}/${categoria}/${nombreArchivo}`;
+    return this.http.delete(url, { responseType: 'blob' });
+  }
 }

@@ -34,10 +34,13 @@ import {
 import flatpickr from 'flatpickr';
 import { User } from 'app/core/user/user.types';
 import { Subject, takeUntil } from 'rxjs';
+import { MatDialogModule } from '@angular/material/dialog';
+
 
 @Component({
     selector: 'app-task-form-dialog',
     templateUrl: './task-form-dialog.component.html',
+    styleUrls: ['./task-form-dialog.component.scss'],
     standalone: true,
     imports: [
         CommonModule,
@@ -47,7 +50,8 @@ import { Subject, takeUntil } from 'rxjs';
         MatInputModule,
         MatButtonModule,
         MatIconModule,
-        MatSelectModule
+        MatSelectModule,
+        MatDialogModule
     ]
 })
 export class TaskFormDialogComponent implements OnInit, AfterViewInit {
@@ -60,6 +64,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     //informacion de usuario logeado
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     user: User;
+
+    // ============================
+    // ARCHIVOS
+    // ============================
+    tareaId!: number;
+    files: any[] = [];
+    selectedFile: File | null = null;
+    categoriaArchivo: string = '';
+
 
     constructor(
         private dialogRef: MatDialogRef<TaskFormDialogComponent>,
@@ -79,8 +92,9 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             usuarioIds: [[]],
             links: this.fb.array([]),
             CreadorId: [null], // ID del usuario que crea la tarea
-            estatus : [2, Validators.required] // Nuevo campo de estatus con valor por defecto 1
+            estatus: [2, Validators.required] // Nuevo campo de estatus con valor por defecto 1
         });
+        this.tareaId = data?.id;
     }
 
     ngOnInit(): void {
@@ -95,6 +109,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
         if (this.data?.id) {
             this.loadTask(this.data.id);
+            this.tareaId = this.data.id;
+            this.loadFiles();
         }
         if (this.data?.readOnly) {
             this.form.disable(); // Desactiva todo el formulario
@@ -202,8 +218,10 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 this.dialogRef.close('refresh');
             });
         } else {
-            this.taskService.createTask(task).subscribe(() => {
+            this.taskService.createTask(task).subscribe((id: number) => {
                 this.loading = false;
+                this.tareaId = id;
+                this.loadFiles();
                 this.dialogRef.close('refresh');
             });
         }
@@ -219,4 +237,70 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             this.userList = users.filter(u => u.rolId !== 3 && u.activo !== false);
         });
     }
+
+    onFileSelected(event: any): void {
+        const files: FileList = event.target.files;
+        if (!files?.length || !this.tareaId) return;
+
+        Array.from(files).forEach(file => {
+            const formData = new FormData();
+            formData.append('tareaId', this.tareaId.toString());
+            formData.append('categoria', 'General'); // 👈 fija o dinámica
+            formData.append('archivo', file);
+
+            this.taskService.uploadFile(formData).subscribe({
+                next: () => this.loadFiles(),
+                error: err => console.error('Error al subir archivo', err)
+            });
+        });
+
+        // Reset input para permitir subir el mismo archivo otra vez
+        event.target.value = '';
+    }
+
+
+    uploadFile(): void {
+        if (!this.selectedFile || !this.categoriaArchivo || !this.tareaId) return;
+
+        const formData = new FormData();
+        formData.append('tareaId', this.tareaId.toString());
+        formData.append('categoria', this.categoriaArchivo);
+        formData.append('archivo', this.selectedFile);
+
+        this.taskService.uploadFile(formData).subscribe(() => {
+            this.loadFiles();
+            this.selectedFile = null;
+            this.categoriaArchivo = '';
+        });
+    }
+    loadFiles(): void {
+        if (!this.tareaId) return;
+
+        this.taskService.getFiles(this.tareaId).subscribe(res => {
+            this.files = res;
+        });
+    }
+
+    download(file: any): void {
+        this.taskService
+            .downloadFile(this.tareaId, file.categoria, file.nombreArchivo)
+            .subscribe(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.nombreArchivo;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            });
+    }
+
+    remove(file: any): void {
+        if (!confirm('¿Eliminar archivo?')) return;
+
+        this.taskService
+            .removeFile(this.tareaId, file.categoria, file.nombreArchivo)
+            .subscribe(() => this.loadFiles());
+    }
+
+
 }

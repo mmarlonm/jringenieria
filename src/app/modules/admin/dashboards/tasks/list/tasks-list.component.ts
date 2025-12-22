@@ -102,7 +102,10 @@ export class TaskListComponent implements OnInit, AfterViewInit {
 
     openTaskDialog(taskId?: number, readOnly: boolean = false): void {
         const dialogRef = this.dialog.open(TaskFormDialogComponent, {
-            width: '500px',
+            width: '100%',
+            maxWidth: '900px',
+            maxHeight: '90vh',
+            panelClass: 'task-dialog',
             data: taskId ? { id: taskId, readOnly } : null
         });
 
