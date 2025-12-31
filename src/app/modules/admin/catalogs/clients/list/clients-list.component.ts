@@ -34,7 +34,7 @@ import Swal from "sweetalert2";
   ]
 })
 export class ClientsListComponent implements OnInit {
-  displayedColumns: string[] = ['clienteId', 'nombre', 'telefono', 'email', 'empresa', 'acciones'];
+  displayedColumns: string[] = ['clienteId', 'nombre', 'telefono', 'email', 'empresa', 'tipoPersona', 'acciones'];
   dataSource = new MatTableDataSource<any>();
   clientsCount: number = 0;
   searchText: string = '';
@@ -102,7 +102,6 @@ export class ClientsListComponent implements OnInit {
   obtenerPermisos(): void {
     const userInformation = localStorage.getItem('userInformation');
     if (!userInformation) {
-      console.warn('No se encontró información de usuario en localStorage.');
       return;
     }
 
