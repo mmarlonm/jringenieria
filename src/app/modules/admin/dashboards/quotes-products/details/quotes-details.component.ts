@@ -202,7 +202,6 @@ export class QuoteDetailsComponent implements OnInit {
     this.quotesService.getQuoteById(id).subscribe((res) => {
       if (res && res.code === 200) {
         const quotes = res.data;
-        console.log("Cargando cotización:", quotes);
         this.productos = quotes.detalles || [];
         this.cotizacion = quotes;
         this.quotesForm.patchValue({
@@ -225,7 +224,6 @@ export class QuoteDetailsComponent implements OnInit {
           estatus: quotes.estatus,
           observaciones: quotes.observaciones,
         });
-        console.log("Datos de la cotización cargados:", this.productos);
         this.dataSource.data = this.productos; // inicial
         this.calcularTotales();
       } else {
@@ -354,7 +352,6 @@ export class QuoteDetailsComponent implements OnInit {
 
   onClienteSelected(cliente: any): void {
     this.clientsService.getClientById(cliente).subscribe((data) => {
-      console.log("Cliente seleccionado:", data);
       if (data) {
         this.quotesForm.patchValue({
           direccionCompleta: data.direccion || "",
@@ -419,7 +416,6 @@ export class QuoteDetailsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((producto) => {
-      console.log("Producto seleccionado:", producto);
       if (producto) {
         this.productos.push(producto);
         this.dataSource.data = [...this.productos]; // ← forzar refresh

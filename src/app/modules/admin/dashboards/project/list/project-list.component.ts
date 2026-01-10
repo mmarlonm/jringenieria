@@ -281,7 +281,8 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
         emails: emails,
         clienteNombre: project.clienteNombre || '',
         proyectoNombre: project.nombre || '',
-        urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey/${project.proyectoId}`
+        urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey/${project.proyectoId}`,
+        telefono: project.telefonoContactoCliente || '',
       };
 
       this.projectService.enviarEncuesta(dto).subscribe({
