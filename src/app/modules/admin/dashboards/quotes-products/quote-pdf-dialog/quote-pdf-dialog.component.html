@@ -58,7 +58,7 @@
           <div class="col-span-12 my-4 border-b"></div>
 
           <ng-container *ngFor="let item of data?.detalles">
-            <div class="col-span-8 text-lg font-medium">{{ item?.nombreProducto }}</div>
+            <div class="col-span-8 text-lg font-medium">{{ item.producto?.nombreProducto }}</div>
             <div class="self-center text-right">{{ item?.precioUnitario | currency:'MXN':'symbol':'1.2-2' }}</div>
             <div class="self-center text-right">{{ item?.cantidad }}</div>
             <div class="col-span-2 self-center text-right">
