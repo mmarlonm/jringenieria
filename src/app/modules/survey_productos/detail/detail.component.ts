@@ -1,13 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  FormsModule
+} from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSliderModule } from '@angular/material/slider';
-import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -22,48 +26,46 @@ import { MatButtonModule } from '@angular/material/button';
     ReactiveFormsModule,
     HttpClientModule,
 
-    // Angular Material
+    // Material
     MatFormFieldModule,
     MatInputModule,
-    MatSliderModule,
-    MatSelectModule,
     MatRadioModule,
     MatButtonModule
   ]
 })
 export class DetailComponent implements OnInit {
-  form: FormGroup;
-  proyectoId: number = 0;
-  fields = [
-  {
-    label: '¿Cómo calificarías el servicio del personal que te atendió?',
-    control: 'servicioPersonal',
-    razon: 'razonServicio'
-  },
-  {
-    label: '¿Qué posibilidades hay de que recomiendes nuestros productos?',
-    control: 'recomendarProductos',
-    razon: 'razonRecomendar'
-  },
-  {
-    label: '¿En qué medida los productos ayudaron a resolver tu problema?',
-    control: 'ayudaProducto',
-    razon: 'razonAyuda'
-  },
-  {
-    label: '¿Nuestro equipo comprendió tus necesidades?',
-    control: 'comprensionNecesidades',
-    razon: 'razonComprension'
-  },
-  {
-    label: '¿Cómo evalúas calidad y tiempo de entrega?',
-    control: 'tiempoEntrega',
-    razon: 'razonEntrega'
-  }
-];
+  form!: FormGroup;
+  proyectoId = 0;
 
+  /** Variable usada por TODAS las caritas (según HTML actual) */
   calificacion: number | null = null;
 
+  fields = [
+    {
+      label: '¿Cómo calificarías el servicio del personal que te atendió?',
+      control: 'servicioPersonal'
+    },
+    {
+      label: '¿Qué posibilidades hay de que recomiendes nuestros productos?',
+      control: 'recomendarProductos',
+      razon: 'razonRecomendar'
+    },
+    {
+      label: '¿En qué medida los productos ayudaron a resolver tu problema?',
+      control: 'ayudaProducto'
+    },
+    {
+      label: '¿Nuestro equipo comprendió tus necesidades?',
+      control: 'comprensionNecesidades'
+    },
+    {
+      label: '¿Cómo evalúas calidad y tiempo de entrega?',
+      control: 'tiempoEntrega'
+    }
+  ];
+
+
+  /** Escala visual */
   scale = [
     { value: 0, emoji: '☹️' },
     { value: 1, emoji: '☹️' },
@@ -75,72 +77,96 @@ export class DetailComponent implements OnInit {
     { value: 7, emoji: '😐' },
     { value: 8, emoji: '😐' },
     { value: 9, emoji: '😊' },
-    { value: 10, emoji: '😊' },
+    { value: 10, emoji: '😊' }
   ];
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-  this.proyectoId = +this.route.snapshot.paramMap.get('proyectoId')!;
+    this.proyectoId = Number(
+      this.route.snapshot.paramMap.get('proyectoId')
+    );
 
-  this.form = this.fb.group({
-    nombre: [''],
-    empresa: [''],
-    email: [''],
-    telefono: [''],
+    this.form = this.fb.group({
+      sucursal: [''],
+      nombre: [''],
+      empresa: [''],
+      email: [''],
+      telefono: [''],
+      cargo: [''],
 
-    servicioPersonal: [5],
-    recomendarProductos: [5],
-    ayudaProducto: [5],
-    comprensionNecesidades: [5],
-    tiempoEntrega: [5],
+      // Ratings
+      servicioPersonal: [null],
+      recomendarProductos: [null],
+      ayudaProducto: [null],
+      comprensionNecesidades: [null],
+      tiempoEntrega: [null],
 
-    razonServicio: [''],
-    razonRecomendar: [''],
-    razonAyuda: [''],
-    razonComprension: [''],
-    razonEntrega: [''],
+      // Razones
+      razonServicio: [''],
+      razonRecomendar: [''],
+      razonAyuda: [''],
+      razonComprension: [''],
+      razonEntrega: [''],
 
-    frecuencia: [''],
-    productosDeseados: [''],
-    comoConocio: ['']
-  });
-
-  // Debug extra
-  setTimeout(() => {
-    console.log('Form keys:', Object.keys(this.form.controls));
-  });
-}
+      productosDeseados: [''],
+      comoConocio: ['']
+    });
 
 
-  getEmoji(valor: number): string {
-    if (valor <= 3) return '😠';
-    if (valor <= 6) return '😐';
-    return '😄';
+    // Debug inicial
+    console.log('Formulario inicializado:', this.form.value);
   }
 
-  getColor(valor: number): string {
-    if (valor <= 3) return 'red';
-    if (valor <= 6) return 'orange';
-    return 'green';
+  /**
+   * Selección de carita
+   * NOTA: según el HTML actual, esta calificación
+   * se replica en las 4 preguntas
+   */
+  select(value: number): void {
+    this.calificacion = value;
+
+    // Guardamos el mismo valor en las 4 preguntas
+    this.form.patchValue({
+      servicioPersonal: value,
+      recomendarProductos: value,
+      ayudaProducto: value,
+      tiempoEntrega: value
+    });
+
+    console.log('Calificación seleccionada:', value);
   }
 
-  enviar() {
-    const data = {
+  /**
+   * Envío de encuesta
+   */
+  enviar(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const payload = {
       proyectoId: this.proyectoId,
       ...this.form.value
     };
-    this.http.post('/api/encuesta/guardar', data).subscribe(() => {
-      alert('Gracias por tu respuesta');
-      this.form.reset();
+
+    console.log('Payload enviado:', payload);
+    return;
+    this.http.post('/api/encuesta/guardar', payload).subscribe({
+      next: () => {
+        alert('Gracias por tu respuesta 🙌');
+        this.form.reset();
+        this.calificacion = null;
+      },
+      error: (err) => {
+        console.error('Error al enviar encuesta', err);
+        alert('Ocurrió un error al enviar la encuesta');
+      }
     });
   }
-
-  select(value: number) {
-    this.calificacion = value;
-    console.log('Calificación seleccionada:', value);
-  } 
 }

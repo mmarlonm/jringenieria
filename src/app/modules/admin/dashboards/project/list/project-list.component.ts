@@ -279,10 +279,11 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
     if (emails && emails.length > 0) {
       const dto = {
         emails: emails,
-        clienteNombre: project.clienteNombre || '',
+        clienteNombre: project.nombreContactoCliente || '',
         proyectoNombre: project.nombre || '',
         urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey/${project.proyectoId}`,
         telefono: project.telefonoContactoCliente || '',
+        proyectoId: project.proyectoId || 0
       };
 
       this.projectService.enviarEncuesta(dto).subscribe({

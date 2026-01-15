@@ -1,9 +1,4 @@
-<form
-  *ngIf="form"
-  [formGroup]="form"
-  (ngSubmit)="enviar()"
-  class="p-6 max-w-4xl mx-auto space-y-6"
->
+<form *ngIf="form" [formGroup]="form" (ngSubmit)="enviar()" class="p-6 max-w-4xl mx-auto space-y-6">
   <!-- Título -->
   <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
     ENCUESTA DE SATISFACCIÓN DE servicios/proyectos
@@ -12,16 +7,10 @@
   <!-- Datos de contacto -->
   <div class="flex items-center justify-center">
     <mat-label>Que sucursal le atendió:</mat-label>
-    <mat-radio-group [(ngModel)]="labelPosition">
-      <mat-radio-button class="example-margin" value="after"
-        >Pachuca</mat-radio-button
-      >
-      <mat-radio-button class="example-margin" value="before"
-        >Queretaro</mat-radio-button
-      >
-      <mat-radio-button class="example-margin" value="before"
-        >Puebla</mat-radio-button
-      >
+    <mat-radio-group formControlName="sucursal">
+      <mat-radio-button class="example-margin" value="after">Pachuca</mat-radio-button>
+      <mat-radio-button class="example-margin" value="before">Queretaro</mat-radio-button>
+      <mat-radio-button class="example-margin" value="before">Puebla</mat-radio-button>
     </mat-radio-group>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -66,236 +55,96 @@
     </div>
   </div>
 
-  <!-- Pregunta 1 -->
-  <div class="p-4 grid grid-cols-5  border rounded space-y-2">
-  <div class="col-span-3 ">
-    <label class="font-semibold"
-      >¿Cómo calificarías el servicio de parte del personal que te atendió?</label>
-      <div class="emoji-rating">
-      <div
-        class="emoji-block"
-        *ngFor="let item of scale"
-        [ngClass]="{
-          low: item.value <= 6,
-          medium: item.value === 7 || item.value === 8,
-          high: item.value >= 9,
-          selected: calificacion === item.value,
-        }"
-        (click)="select(item.value)"
-      >
-        <div class="emoji">{{ item.emoji }}</div>
-        <div class="number">{{ item.value }}</div>
+  <!-- Preguntas + Comentarios -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+    <!-- Columna izquierda: preguntas -->
+    <div class="md:col-span-3 space-y-4">
+
+      <div *ngFor="let field of fields" class="border rounded space-y-4">
+        <div class="grid grid-cols-1">
+
+          <!-- Pregunta -->
+          <div class="md:col-span-3">
+            <label class="font-semibold block mb-2">
+              {{ field.label }}
+            </label>
+
+            <div class="flex flex-wrap gap-1 justify-start">
+              <div class="emoji-block" *ngFor="let item of scale" [ngClass]="{
+            low: item.value <= 6,
+            medium: item.value === 7 || item.value === 8,
+            high: item.value >= 9,
+            selected: form.get(field.control)?.value === item.value
+          }" (click)="form.get(field.control)?.setValue(item.value)">
+                <div class="emoji">{{ item.emoji }}</div>
+                <div class="number">{{ item.value }}</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+    </div>
+
+    <!-- Columna derecha: comentarios -->
+    <div class="md:col-span-2">
+      <div class="p-4 border rounded h-full">
+        <label class="font-semibold block">
+          ¿Qué podemos mejorar para brindarte una mejor experiencia?
+        </label>
+        <mat-form-field appearance="outline" class="w-full h-[95%]">
+          <textarea matInput rows="22" formControlName="razonServicio"></textarea>
+        </mat-form-field>
       </div>
     </div>
-    </div>
-    <div class="col-span-2 ">
+
+
+  </div>
+
+  <!-- Pregunta: Productos deseados -->
+  <div class="p-4 border rounded mt-6">
+    <label class="font-semibold block mb-2">
+      ¿Qué servicios le gustaría que agreguemos a nuestro catálogo?
+    </label>
+
     <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
+      <textarea matInput rows="3" formControlName="productosDeseados"></textarea>
     </mat-form-field>
   </div>
-  </div>
 
-  <!-- Pregunta 2 -->
-  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
-    <div class="col-span-3">
-    <label class="font-semibold"
-      >¿Cuáles son las posibilidades que recomiendes nuestros servicios a <br />familiares, amigos y colegas?</label
-    >
-    <div class="emoji-rating">
-      <div
-        class="emoji-block"
-        *ngFor="let item of scale"
-        [ngClass]="{
-          low: item.value <= 6,
-          medium: item.value === 7 || item.value === 8,
-          high: item.value >= 9,
-          selected: calificacion === item.value,
-        }"
-        (click)="select(item.value)"
-      >
-        <div class="emoji">{{ item.emoji }}</div>
-        <div class="number">{{ item.value }}</div>
-      </div>
-    </div>
-    </div>
-    <div class="col-span-2">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
-    </mat-form-field>
-  </div>
-</div>
+  <!-- Pregunta: ¿Cómo conoció JR Ingeniería? -->
+  <div class="p-4 border rounded mt-4">
+    <label class="font-semibold block mb-3">
+      ¿Cómo conociste JR Ingeniería?
+    </label>
 
-  <!-- Pregunta 3 -->
-  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
-    <div class="col-span-3">
-    <label class="font-semibold"
-      >¿En que medida los servicios adquiridos de JR, ayudaron a resolver tu problema?</label>
-    <div class="emoji-rating">
-      <div
-        class="emoji-block"
-        *ngFor="let item of scale"
-        [ngClass]="{
-          low: item.value <= 6,
-          medium: item.value === 7 || item.value === 8,
-          high: item.value >= 9,
-          selected: calificacion === item.value,
-        }"
-        (click)="select(item.value)"
-      >
-        <div class="emoji">{{ item.emoji }}</div>
-        <div class="number">{{ item.value }}</div>
-      </div>
-    </div>
-    </div>
-    <div class="col-span-2 ">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
-    </mat-form-field>
-  </div>
-  </div>
+    <mat-radio-group formControlName="comoConocio" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <mat-radio-button value="Recomendación">
+        Recomendación de un conocido
+      </mat-radio-button>
 
-  <!-- Pregunta 4 -->
-  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
-    <div class="col-span-3"> 
-     <label class="font-semibold"
-      >¿Cómo evalúa el desarrollo de nuestros proyectos/servicios?</label
-    >
-    <div class="emoji-rating">
-      <div
-        class="emoji-block"
-        *ngFor="let item of scale"
-        [ngClass]="{
-          low: item.value <= 6,
-          medium: item.value === 7 || item.value === 8,
-          high: item.value >= 9,
-          selected: calificacion === item.value,
-        }"
-        (click)="select(item.value)"
-      >
-        <div class="emoji">{{ item.emoji }}</div>
-        <div class="number">{{ item.value }}</div>
-      </div>
-    </div>
-    </div>
-    <div class="col-span-2 ">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
-    </mat-form-field>
-  </div>
-</div>
+      <mat-radio-button value="VisitaTienda">
+        Visita a la tienda
+      </mat-radio-button>
 
-  <!-- Pregunta 5 -->
-  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
-    <div class="col-span-3">
-    <label class="font-semibold"
-      >¿Nuestro equipo comprendió sus necesidades y le brindó atención personalizada?</label>
-    <div class="emoji-rating">
-      <div
-        class="emoji-block"
-        *ngFor="let item of scale"
-        [ngClass]="{
-          low: item.value <= 6,
-          medium: item.value === 7 || item.value === 8,
-          high: item.value >= 9,
-          selected: calificacion === item.value,
-        }"
-        (click)="select(item.value)"
-      >
-        <div class="emoji">{{ item.emoji }}</div>
-        <div class="number">{{ item.value }}</div>
-      </div>
-    </div>
-    </div>
-    <div class="col-span-2 ">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
-    </mat-form-field>
-  </div>
-  </div>
+      <mat-radio-button value="BusquedaInternet">
+        Búsqueda en internet
+      </mat-radio-button>
 
-   <!-- Pregunta 6 -->
-  <div class="p-4 grid grid-cols-5 border rounded space-y-2">
-  <div class="col-span-3">
-    <label class="font-semibold"
-      >¿Cómo evalúa el cumplimiento en cuanto a calidad y tiempo de entrega?</label>
-    <div class="emoji-rating">
-      <div
-        class="emoji-block"
-        *ngFor="let item of scale"
-        [ngClass]="{
-          low: item.value <= 6,
-          medium: item.value === 7 || item.value === 8,
-          high: item.value >= 9,
-          selected: calificacion === item.value,
-        }"
-        (click)="select(item.value)"
-      >
-        <div class="emoji">{{ item.emoji }}</div>
-        <div class="number">{{ item.value }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-span-2 ">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-      <textarea matInput rows="2" formControlName="razonServicio"></textarea>
-    </mat-form-field>
-  </div>
-  </div>
+      <mat-radio-button value="Espectaculares">
+        Espectaculares
+      </mat-radio-button>
 
-  <!-- Frecuencia -->
-  <div class="p-4 border rounded space-y-2">
-    <label class="font-semibold"
-      >¿Con que frecuencia solicitas servicios de la empresa?</label
-    >
+      <mat-radio-button value="Evento">
+        Encuentro en evento
+      </mat-radio-button>
 
-    <div class="flex">
-      <mat-radio-group>
-        <mat-radio-button class="example-margin" value="after"
-          >1ra vez</mat-radio-button
-        >
-        <mat-radio-button class="example-margin" value="before"
-          >1 o mas veces al mes</mat-radio-button
-        >
-        <mat-radio-button class="example-margin" value="before"
-          >2 o 3 veces al año</mat-radio-button
-        >
-        <mat-radio-button class="example-margin" value="before"
-          >1 vez al año</mat-radio-button
-        >
-      </mat-radio-group>
-    </div>
-  </div>
-  <!-- Productos deseados -->
-  <mat-form-field appearance="outline" class="w-full">
-    <mat-label
-      >¿Qué servicios le gustaría que agreguemos a nuestro catálogo?</mat-label
-    >
-    <textarea matInput rows="2" formControlName="productosDeseados"></textarea>
-  </mat-form-field>
-
-  <!-- Cómo conoció -->
-  <div class="space-y-2">
-    <label class="font-semibold block">¿Cómo conociste JR Ingeniería?</label>
-    <mat-radio-group
-      formControlName="comoConocio"
-      class="grid grid-cols-3 gap-2"
-    >
-      <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
-      <mat-radio-button value="Recomendación"
-        >Busqueda en internet</mat-radio-button
-      >
-      <mat-radio-button value="Recomendación">Espectaculares</mat-radio-button>
-      <mat-radio-button value="Tienda">Visita tienda</mat-radio-button>
-      <mat-radio-button value="Facebook">Facebook</mat-radio-button>
-      <mat-radio-button value="Instagram">Instagram</mat-radio-button>
-      <mat-radio-button value="LinkedIn">LinkedIn</mat-radio-button>
-      <mat-radio-button value="Web">Página Web</mat-radio-button>
+      <mat-radio-button value="RedesSociales">
+        Redes sociales
+      </mat-radio-button>
     </mat-radio-group>
   </div>
 
