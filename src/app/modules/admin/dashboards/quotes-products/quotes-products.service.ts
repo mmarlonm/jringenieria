@@ -50,4 +50,9 @@ getEstatus(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/historial-estatus/${quoteId}`);
   }
 
+  enviarEncuesta(dto: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/enviar-correo`, dto);
+  }
+
+
 }

@@ -45,163 +45,189 @@
     </div>
 
     <!-- Cotizaciones list -->
-    <div class="flex flex-auto flex-col justify-between px-6 py-8 sm:flex-col md:flex- md:px-8">
-      <div class="mat-elevation-z8" *ngIf="quotesCount > 0; else noQuotes">
-        <!-- Tabla -->
-        <div class="overflow-auto" style="max-height: 400px; overflow-y: auto">
-          <div class="table-container">
-            <table mat-table [dataSource]="dataSource" matSort class="w-full">
-              <!-- ID -->
-              <ng-container matColumnDef="cotizacionProductosId">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  ID
-                  <button mat-icon-button [matMenuTriggerFor]="filterMenu"
-                    (click)="openFilterMenu('cotizacionProductosId')">
-                    <mat-icon>filter_list</mat-icon>
-                  </button>
-                </th>
-                <td mat-cell *matCellDef="let quote">
-                  {{ quote.cotizacionProductosId }}
-                </td>
-              </ng-container>
+    <div class="flex flex-col min-h-screen h-screen w-full px-3 py-4 sm:px-6 sm:py-6 md:px-8">
 
-              <!-- Cliente -->
-              <ng-container matColumnDef="nombreCliente">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  Cliente
-                  <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('nombreCliente')">
-                    <mat-icon>filter_list</mat-icon>
-                  </button>
-                </th>
-                <td mat-cell *matCellDef="let quote">
-                  {{ quote.nombreCliente }}
-                </td>
-              </ng-container>
+      <!-- CONTENEDOR PRINCIPAL -->
+      <div class="mat-elevation-z8 flex flex-col flex-auto overflow-hidden" *ngIf="quotesCount > 0; else noQuotes">
 
-              <!-- Empresa -->
-              <ng-container matColumnDef="unidadDeNegocioNombre">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  Unidad de Negocio
-                  <button mat-icon-button [matMenuTriggerFor]="filterMenu"
-                    (click)="openFilterMenu('unidadDeNegocioNombre')">
-                    <mat-icon>filter_list</mat-icon>
-                  </button>
-                </th>
-                <td mat-cell *matCellDef="let quote">
-                  {{ quote.unidadDeNegocio?.nombre }}
-                </td>
-              </ng-container>
+        <!-- ===================== -->
+        <!-- VISTA DESKTOP / TABLET -->
+        <!-- ===================== -->
+        <div class="hidden sm:block flex-auto relative overflow-x-auto overflow-y-auto"
+          style="max-height: calc(100vh - 280px)">
 
-              <!-- Fecha Entrega -->
-              <ng-container matColumnDef="createdDate">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  Fecha Creación
-                  <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('createdDate')">
-                    <mat-icon>filter_list</mat-icon>
-                  </button>
-                </th>
-                <td mat-cell *matCellDef="let quote">
-                  {{ quote.createdDate | date: "yyyy-MM-dd" }}
-                </td>
-              </ng-container>
+          <table mat-table [dataSource]="dataSource" matSort class="min-w-[900px] w-full">
 
-              <!-- Estatus -->
-              <ng-container matColumnDef="requisitosEspeciales">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  Requisitos Especiales
-                  <button mat-icon-button [matMenuTriggerFor]="filterMenu"
-                    (click)="openFilterMenu('requisitosEspeciales')">
-                    <mat-icon>filter_list</mat-icon>
-                  </button>
-                </th>
-                <td mat-cell *matCellDef="let quote">
-                  {{
-                  quote.requisitosEspeciales === true || quote.requisitosEspeciales === "true"
-                  ? "Sí"
-                  : "No"
-                  }}
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="total">
-                <th mat-header-cell *matHeaderCellDef>Monto</th>
-                <td mat-cell *matCellDef="let quote">
-                  {{ quote.total | currency:'MXN':'symbol':'1.2-2' }}
-                </td>
-              </ng-container>
-
-              <!-- Acciones -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef style="min-width: 150px">
-                  Acciones
-                </th>
-                <td mat-cell *matCellDef="let quote" style="min-width: 150px">
-                  <button mat-icon-button color="accent" class="small-icon-button"
-                    (click)="editQuote(quote.cotizacionProductosId)" *ngIf="tienePermiso('btnEdit')">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" class="small-icon-button"
-                    (click)="deleteQuote(quote.cotizacionProductosId)" *ngIf="tienePermiso('btnDelete')">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                  <button mat-icon-button color="grey" matTooltip="Ver historial de estatus" class="small-icon-button"
-                    (click)="getHistorial(quote.cotizacionProductosId)">
-                    <mat-icon>history</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-            </table>
-          </div>
-
-          <!-- Menu de Filtros -->
-          <mat-menu #filterMenu="matMenu" class="filter-menu">
-            <div class="filter-container">
-              <ng-container *ngIf="currentFilterColumn">
-                <!-- Filtro de texto -->
-                <mat-form-field *ngIf="isTextFilter(currentFilterColumn)" appearance="outline" class="filter-field">
-                  <mat-label>Filtro</mat-label>
-                  <input matInput [(ngModel)]="filterValue" (input)="applyFilter()"
-                    (click)="$event.stopPropagation()" />
-                </mat-form-field>
-
-                <!-- Filtro de selección -->
-                <mat-form-field *ngIf="isSelectFilter(currentFilterColumn)" appearance="outline" class="filter-field">
-                  <mat-label>Filtro</mat-label>
-                  <mat-select (selectionChange)="applySelect()" [(ngModel)]="filterValue">
-                    <mat-option *ngFor="
-                        let option of getFilterOptions(currentFilterColumn)
-                      " [value]="option">
-                      {{
-                      currentFilterColumn === "createdDate"
-                      ? (option | date: "yyyy-MM-dd")
-                      : option
-                      }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <!-- Botón de reset -->
-                <button mat-stroked-button color="primary" class="reset-button" (click)="resetFilter()">
-                  Reset
+            <!-- ID -->
+            <ng-container matColumnDef="cotizacionProductosId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                ID
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu"
+                  (click)="openFilterMenu('cotizacionProductosId')">
+                  <mat-icon>filter_list</mat-icon>
                 </button>
-              </ng-container>
+              </th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.cotizacionProductosId }}
+              </td>
+            </ng-container>
+
+            <!-- Cliente -->
+            <ng-container matColumnDef="nombreCliente">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Cliente
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('nombreCliente')">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.nombreCliente }}
+              </td>
+            </ng-container>
+
+            <!-- Unidad de Negocio -->
+            <ng-container matColumnDef="unidadDeNegocioNombre">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Unidad de Negocio
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu"
+                  (click)="openFilterMenu('unidadDeNegocioNombre')">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.unidadDeNegocio?.nombre }}
+              </td>
+            </ng-container>
+
+            <!-- Fecha -->
+            <ng-container matColumnDef="createdDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Fecha Creación
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu" (click)="openFilterMenu('createdDate')">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.createdDate | date:'yyyy-MM-dd' }}
+              </td>
+            </ng-container>
+
+            <!-- Requisitos -->
+            <ng-container matColumnDef="requisitosEspeciales">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Requisitos Especiales
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu"
+                  (click)="openFilterMenu('requisitosEspeciales')">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.requisitosEspeciales ? 'Sí' : 'No' }}
+              </td>
+            </ng-container>
+
+            <!-- Total -->
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef>Monto</th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.total | currency:'MXN':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <!-- Acciones (STICKY) -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="sticky right-0 bg-white z-10 min-w-[160px]">
+                Acciones
+              </th>
+              <td mat-cell *matCellDef="let quote" class="sticky right-0 bg-white z-10 min-w-[160px]">
+                <button mat-icon-button color="accent" (click)="editQuote(quote.cotizacionProductosId)"
+                  *ngIf="tienePermiso('btnEdit')">
+                  <mat-icon>edit</mat-icon>
+                </button>
+
+                <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
+                  *ngIf="tienePermiso('btnDelete')">
+                  <mat-icon>delete</mat-icon>
+                </button>
+
+                <button mat-icon-button color="primary" matTooltip="Enviar encuesta" (click)="enviarEncuesta(quote)">
+                  <mat-icon>send</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+
+          <!-- MENU FILTROS -->
+          <mat-menu #filterMenu="matMenu" class="filter-menu">
+            <div class="p-3">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Filtro</mat-label>
+                <input matInput [(ngModel)]="filterValue" (input)="applyFilter()" (click)="$event.stopPropagation()" />
+              </mat-form-field>
+
+              <button mat-stroked-button color="primary" class="w-full mt-2" (click)="resetFilter()">
+                Reset
+              </button>
             </div>
           </mat-menu>
         </div>
 
-        <!-- Paginador -->
-        <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+        <!-- ============ -->
+        <!-- VISTA MÓVIL -->
+        <!-- ============ -->
+        <div class="block sm:hidden space-y-4 overflow-y-auto px-1">
+
+          <div *ngFor="let quote of dataSource.data" class="border rounded-xl p-4 shadow-sm bg-white">
+            <div class="text-xs text-gray-500">ID</div>
+            <div class="font-semibold">{{ quote.cotizacionProductosId }}</div>
+
+            <div class="mt-2 text-xs text-gray-500">Cliente</div>
+            <div>{{ quote.nombreCliente }}</div>
+
+            <div class="mt-2 text-xs text-gray-500">Unidad</div>
+            <div>{{ quote.unidadDeNegocio?.nombre }}</div>
+
+            <div class="mt-2 text-xs text-gray-500">Fecha</div>
+            <div>{{ quote.createdDate | date:'yyyy-MM-dd' }}</div>
+
+            <div class="mt-2 text-xs text-gray-500">Monto</div>
+            <div class="font-bold">
+              {{ quote.total | currency:'MXN' }}
+            </div>
+
+            <div class="flex gap-2 mt-4">
+              <button mat-icon-button color="accent" (click)="editQuote(quote.cotizacionProductosId)">
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)">
+                <mat-icon>delete</mat-icon>
+              </button>
+
+              <button mat-icon-button color="primary" (click)="enviarEncuesta(quote)">
+                <mat-icon>send</mat-icon>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PAGINADOR -->
+        <mat-paginator class="sticky bottom-0 bg-white" [pageSizeOptions]="[5, 10, 20]"
+          showFirstLastButtons></mat-paginator>
       </div>
 
-      <!-- No Cotizaciones -->
+      <!-- SIN DATOS -->
       <ng-template #noQuotes>
-        <div class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16">
+        <div class="border-t p-8 text-center text-2xl font-semibold">
           Sin Cotizaciones
         </div>
       </ng-template>
+
     </div>
+
   </div>
 </div>

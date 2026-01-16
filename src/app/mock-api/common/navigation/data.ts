@@ -65,7 +65,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/dashboards/surveys',
             },
-            
+            {
+                id: 'dashboards.surveys-products',
+                title: 'Encuesta de Productos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/dashboards/surveys-products',
+            },
         ],
     },
     {
@@ -110,8 +116,15 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 id: 'reports.login-logs',
                 title: 'Historial de Inicios de Sesión',
                 type: 'basic',
-                icon: 'heroicons_outline:history',
+                icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/login-logs',
+            },
+            {
+                id: 'reports.product-satisfaction-survey',
+                title: 'Encuesta de Satisfacción de Productos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/reports/product-satisfaction-survey',
             }
         ],
     },

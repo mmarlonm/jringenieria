@@ -14,7 +14,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
-
+import { EncuestaProductosDTO, SurveyProductosService } from 'app/modules/survey_productos/survey-productos.service';
+import Swal from 'sweetalert2';
 @Component({
   selector: 'app-survey-productos-detail',
   templateUrl: './detail.component.html',
@@ -35,7 +36,7 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class DetailComponent implements OnInit {
   form!: FormGroup;
-  proyectoId = 0;
+  cotizacionProductoId: number = 0;
 
   /** Variable usada por TODAS las caritas (según HTML actual) */
   calificacion: number | null = null;
@@ -80,16 +81,17 @@ export class DetailComponent implements OnInit {
     { value: 10, emoji: '😊' }
   ];
 
+  encuestaYaRespondida = false;
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private http: HttpClient
+    private http: HttpClient,
+    private surveyService: SurveyProductosService
   ) { }
 
   ngOnInit(): void {
-    this.proyectoId = Number(
-      this.route.snapshot.paramMap.get('proyectoId')
-    );
+    this.cotizacionProductoId = +this.route.snapshot.paramMap.get('id')!;
 
     this.form = this.fb.group({
       sucursal: [''],
@@ -108,16 +110,18 @@ export class DetailComponent implements OnInit {
 
       // Razones
       razonServicio: [''],
-      razonRecomendar: [''],
-      razonAyuda: [''],
-      razonComprension: [''],
-      razonEntrega: [''],
 
       productosDeseados: [''],
       comoConocio: ['']
     });
 
+    this.surveyService.existeEncuestaProducto(this.cotizacionProductoId).subscribe((existe) => {
+      this.encuestaYaRespondida = existe;
 
+      if (existe) {
+        this.form.disable(); // Desactiva el formulario si ya fue respondido
+      }
+    });
     // Debug inicial
     console.log('Formulario inicializado:', this.form.value);
   }
@@ -151,22 +155,59 @@ export class DetailComponent implements OnInit {
     }
 
     const payload = {
-      proyectoId: this.proyectoId,
-      ...this.form.value
+      cotizacionProductoId: this.cotizacionProductoId, // 🔴 IMPORTANTE
+      sucursal: this.form.value.sucursal,
+
+      nombre: this.form.value.nombre,
+      empresa: this.form.value.empresa,
+      email: this.form.value.email,
+      telefono: this.form.value.telefono,
+      cargo: this.form.value.cargo,
+
+      servicioPersonal: this.form.value.servicioPersonal,
+      recomendarProductos: this.form.value.recomendarProductos,
+      ayudaProducto: this.form.value.ayudaProducto,
+      comprensionNecesidades: this.form.value.comprensionNecesidades,
+      tiempoEntrega: this.form.value.tiempoEntrega,
+
+      razonServicio: this.form.value.razonServicio,
+
+      productosDeseados: this.form.value.productosDeseados,
+      comoConocio: this.form.value.comoConocio
     };
 
     console.log('Payload enviado:', payload);
-    return;
-    this.http.post('/api/encuesta/guardar', payload).subscribe({
-      next: () => {
-        alert('Gracias por tu respuesta 🙌');
-        this.form.reset();
-        this.calificacion = null;
+
+    this.surveyService.guardarEncuestaProducto(payload).subscribe({
+      next: (res) => {
+        if (res.code === 200) {
+          Swal.fire({
+            icon: 'success',
+            title: '¡Gracias!',
+            text: 'Encuesta guardada exitosamente.',
+            confirmButtonText: 'Aceptar'
+          });
+
+          window.location.reload();
+
+          this.form.reset();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: res.message || 'Ocurrió un error al guardar la encuesta.'
+          });
+        }
       },
-      error: (err) => {
-        console.error('Error al enviar encuesta', err);
-        alert('Ocurrió un error al enviar la encuesta');
+      error: (error) => {
+        console.error('Error al guardar la encuesta:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Ocurrió un error al enviar la encuesta. Por favor, inténtalo de nuevo más tarde.'
+        });
       }
     });
   }
+
 }

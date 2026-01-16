@@ -86,6 +86,7 @@ export const appRoutes: Route[] = [
                 {path: 'quote-products', loadChildren: () => import('app/modules/admin/dashboards/quotes-products/quotes-products.routes')},
                 {path: 'tasks', loadChildren: () => import('app/modules/admin/dashboards/tasks/tasks.routes')},
                 {path: 'surveys', loadChildren: () => import('app/modules/admin/dashboards/surveys/surveys.routes')},
+                {path: 'surveys-products', loadChildren: () => import('app/modules/admin/dashboards/surveys-products/surveys.routes')},
             ]},
             {path: 'catalogs', children: [
                 {path: 'clients', loadChildren: () => import('app/modules/admin/catalogs/clients/clients.routes')},
@@ -94,6 +95,7 @@ export const appRoutes: Route[] = [
             {path: 'reports', children: [
                 {path: 'project-progress', loadChildren: () => import('app/modules/reports/project-progress/project-progress.routes')},
                 {path: 'login-logs', loadChildren: () => import('app/modules/reports/login-logs/login-logs.routes')},
+                {path: 'product-satisfaction-survey', loadChildren: () => import('app/modules/reports/product-satisfaction-survey/product-satisfaction-survey.routes')},
             ]},
             {path: 'security', children: [
                 {path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes')},

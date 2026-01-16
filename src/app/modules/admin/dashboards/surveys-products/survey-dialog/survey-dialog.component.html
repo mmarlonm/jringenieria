@@ -1,0 +1,202 @@
+<div class="min-h-screen bg-gray-50 flex justify-center">
+  <form
+    *ngIf="form"
+    [formGroup]="form"
+    (ngSubmit)="enviar()"
+    class="
+      w-full
+      max-w-6xl
+      mx-auto
+      p-4 sm:p-6
+      space-y-6
+      overflow-y-auto
+      max-h-screen
+    "
+  >
+
+    <!-- TÍTULO -->
+    <h1 class="text-center text-2xl font-bold mb-2 uppercase text-green-800">
+      ENCUESTA DE SATISFACCIÓN PRODUCTOS
+    </h1>
+
+    <!-- MENSAJE: ENCUESTA YA RESPONDIDA -->
+    <div
+      *ngIf="encuestaYaRespondida"
+      class="max-w-2xl mx-auto my-8 bg-green-100 border border-green-400 rounded-2xl p-2 shadow-lg flex flex-col items-center text-center"
+    >
+      <div class="text-green-700 mb-4">
+        <svg class="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 011.5 0v.5a.75.75 0 01-1.5 0v-.5zM10 6a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 6z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </div>
+
+      <h2 class="text-lg sm:text-xl font-bold text-green-800 mb-2">
+        Encuesta ya respondida
+      </h2>
+      <p class="text-green-900 text-sm">
+        Esta encuesta ya fue contestada anteriormente. Gracias por tu participación.<br />
+        El formulario se encuentra en modo lectura.
+      </p>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div *ngIf="!encuestaYaRespondida" class="space-y-6">
+
+      <!-- SUCURSAL -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-2">
+        <mat-label class="font-semibold">¿Qué sucursal le atendió?</mat-label>
+        <mat-radio-group
+          formControlName="sucursal"
+          class="flex flex-col sm:flex-row gap-3"
+        >
+          <mat-radio-button [value]="3">Pachuca</mat-radio-button>
+          <mat-radio-button [value]="1">Querétaro</mat-radio-button>
+          <mat-radio-button [value]="2">Puebla</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <!-- DATOS DE CONTACTO -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Empresa</mat-label>
+          <input matInput formControlName="empresa" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Teléfono</mat-label>
+          <input matInput formControlName="telefono" />
+        </mat-form-field>
+      </div>
+
+      <div class="flex justify-center">
+        <mat-form-field appearance="outline" class="w-full md:w-1/2">
+          <mat-label>Cargo / Puesto</mat-label>
+          <input matInput formControlName="cargo" />
+        </mat-form-field>
+      </div>
+
+      <!-- MENSAJE BIENVENIDA -->
+      <div class="bg-[#419486] rounded">
+        <div class="p-4 space-y-2">
+          <p class="text-white font-bold">
+            Estimado cliente.<br />
+            En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
+          </p>
+          <p class="text-black font-bold">
+            Por favor indica tu respuesta en una escala del 0 al 10, donde 0
+            representa el nivel más bajo y 10 el más alto
+          </p>
+        </div>
+      </div>
+
+      <!-- PREGUNTAS + COMENTARIOS -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <!-- PREGUNTAS -->
+        <div class="lg:col-span-3 space-y-4">
+          <div
+            *ngFor="let field of fields"
+            class="border rounded-lg p-4 space-y-3"
+          >
+            <label class="font-semibold block">
+              {{ field.label }}
+            </label>
+
+            <div class="flex flex-wrap gap-2">
+              <div
+                class="emoji-block"
+                *ngFor="let item of scale"
+                [ngClass]="{
+                  low: item.value <= 6,
+                  medium: item.value === 7 || item.value === 8,
+                  high: item.value >= 9,
+                  selected: form.get(field.control)?.value === item.value
+                }"
+                (click)="form.get(field.control)?.setValue(item.value)"
+              >
+                <div class="emoji">{{ item.emoji }}</div>
+                <div class="number">{{ item.value }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMENTARIOS -->
+        <div class="lg:col-span-2">
+          <div class="p-4 border rounded-lg h-full flex flex-col">
+            <label class="font-semibold mb-2">
+              ¿Qué podemos mejorar para brindarte una mejor experiencia?
+            </label>
+            <mat-form-field appearance="outline" class="flex-1">
+              <textarea
+                matInput
+                rows="18"
+                formControlName="razonServicio"
+              ></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTOS DESEADOS -->
+      <div class="border rounded-lg p-4">
+        <label class="font-semibold block mb-2">
+          ¿Qué servicios le gustaría que agreguemos a nuestro catálogo?
+        </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <textarea
+            matInput
+            rows="3"
+            formControlName="productosDeseados"
+          ></textarea>
+        </mat-form-field>
+      </div>
+
+      <!-- CÓMO CONOCIÓ -->
+      <div class="border rounded-lg p-4">
+        <label class="font-semibold block mb-3">
+          ¿Cómo conociste JR Ingeniería?
+        </label>
+
+        <mat-radio-group
+          formControlName="comoConocio"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+        >
+          <mat-radio-button value="Recomendación">
+            Recomendación de un conocido
+          </mat-radio-button>
+          <mat-radio-button value="VisitaTienda">
+            Visita a la tienda
+          </mat-radio-button>
+          <mat-radio-button value="BusquedaInternet">
+            Búsqueda en internet
+          </mat-radio-button>
+          <mat-radio-button value="Espectaculares">
+            Espectaculares
+          </mat-radio-button>
+          <mat-radio-button value="Evento">
+            Encuentro en evento
+          </mat-radio-button>
+          <mat-radio-button value="RedesSociales">
+            Redes sociales
+          </mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+    </div>
+  </form>
+</div>

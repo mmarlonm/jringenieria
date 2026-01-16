@@ -18,6 +18,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
+import { SendSurveyComponent } from '../send-survey/send-survey.component';
 
 @Component({
   selector: 'app-quotes-list',
@@ -293,6 +294,49 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
           panelClass: ['snackbar-error']
         });
       }
+    });
+  }
+
+  enviarEncuesta(quote: any): void {
+    const dialogRef = this.dialog.open(SendSurveyComponent, {
+      width: '500px',
+      data: {
+        nombre: quote.nombreCliente || null,
+        telefono: quote.telefono || null,
+        email: quote.correo,
+        cargo: null,
+        sucursal: null
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((data: any) => {
+      const dto = {
+        email: data.email,
+        clienteNombre: data.nombre || '',
+        empresaNombre: quote.nombreEmpresa || '',
+        urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey-productos/${quote.cotizacionProductosId}`,
+        telefono: data.telefono || '',
+        unidadDeNegocioId: data.sucursal || 0,
+        cotizacionProductosId: quote.cotizacionProductosId || 0
+      };
+      console.log('DTO de encuesta:', dto);
+
+      this.quotesService.enviarEncuesta(dto).subscribe({
+        next: () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Encuesta enviada',
+            text: 'Se envió correctamente al cliente.',
+          });
+        },
+        error: () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar la encuesta. Intenta más tarde.',
+          });
+        }
+      });
     });
   }
 }

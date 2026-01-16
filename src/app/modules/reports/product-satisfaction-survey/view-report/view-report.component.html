@@ -1,0 +1,175 @@
+<div class="w-full flex flex-col gap-6">
+
+    <!-- ================= FILTROS ================= -->
+    <mat-card>
+        <mat-card-title class="text-lg font-semibold">
+            Reporte de Satisfacción de Productos
+        </mat-card-title>
+
+        <mat-card-content>
+            <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                <!-- Fecha inicio -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Fecha inicio</mat-label>
+                    <input matInput [matDatepicker]="pickerInicio" formControlName="fechaInicio" />
+                    <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerInicio></mat-datepicker>
+                </mat-form-field>
+
+                <!-- Fecha fin -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Fecha fin</mat-label>
+                    <input matInput [matDatepicker]="pickerFin" formControlName="fechaFin" />
+                    <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFin></mat-datepicker>
+                </mat-form-field>
+
+                <!-- Botón alineado -->
+                <div class="flex items-center w-full">
+                    <button mat-flat-button color="primary" class="w-full h-[56px]" (click)="getData()">
+                        <mat-icon>search</mat-icon>
+                        Consultar
+                    </button>
+                </div>
+
+            </form>
+        </mat-card-content>
+    </mat-card>
+
+
+    <!-- ================= RESUMEN GENERAL ================= -->
+    <div *ngIf="reportData.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+
+        <mat-card class="text-center">
+            <mat-card-subtitle>Total respuestas</mat-card-subtitle>
+            <mat-card-content class="text-3xl font-bold">
+                {{ reportData.length }}
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="text-center">
+            <mat-card-subtitle>Promotores</mat-card-subtitle>
+            <mat-card-content class="text-2xl text-green-600">
+                {{ promotores }}
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="text-center">
+            <mat-card-subtitle>Neutros</mat-card-subtitle>
+            <mat-card-content class="text-2xl text-yellow-500">
+                {{ neutros }}
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="text-center">
+            <mat-card-subtitle>Detractores</mat-card-subtitle>
+            <mat-card-content class="text-2xl text-red-500">
+                {{ detractores }}
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="text-center">
+            <mat-card-subtitle>NPS General</mat-card-subtitle>
+            <mat-card-content class="text-3xl font-bold">
+                {{ npsGeneral }}
+            </mat-card-content>
+        </mat-card>
+
+    </div>
+
+    <!-- ================= GRÁFICA NPS GENERAL ================= -->
+    <mat-card *ngIf="reportData.length">
+        <mat-card-title>NPS General</mat-card-title>
+
+        <mat-card-content class="flex justify-center">
+            <highcharts-chart [Highcharts]="Highcharts" [options]="npsChartOptions"
+                style="width: 100%; max-width: 420px; height: 290px; display: block;">
+            </highcharts-chart>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- ================= DETALLE POR SUCURSAL ================= -->
+    <mat-card *ngIf="reportData.length">
+        <mat-card-title>Detalle por sucursal</mat-card-title>
+
+        <mat-card-content class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <mat-card *ngFor="let item of reportData" class="border border-gray-200">
+                <mat-card-title class="text-base font-semibold">
+                    Sucursal {{ getSucursalNombre(item.sucursal) }}
+                </mat-card-title>
+
+                <mat-divider class="my-2"></mat-divider>
+
+                <!-- Indicadores -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-4">
+
+                    <div>
+                        <div class="text-xs text-gray-500">Respuestas</div>
+                        <div class="text-lg font-bold">{{ item.totalRespuestas }}</div>
+                    </div>
+
+                    <div class="text-green-600">
+                        <div class="text-xs">Promotores</div>
+                        <div class="text-lg font-bold">{{ item.promotores }}</div>
+                    </div>
+
+                    <div class="text-yellow-500">
+                        <div class="text-xs">Neutros</div>
+                        <div class="text-lg font-bold">{{ item.neutros }}</div>
+                    </div>
+
+                    <div class="text-red-500">
+                        <div class="text-xs">Detractores</div>
+                        <div class="text-lg font-bold">{{ item.detractores }}</div>
+                    </div>
+
+                </div>
+
+                <!-- NPS -->
+                <div class="text-center mb-4">
+                    <span class="text-sm text-gray-500">NPS</span>
+                    <div class="text-2xl font-bold">
+                        {{ item.nps }}
+                    </div>
+                </div>
+
+                <!-- Promedios -->
+                <div class="flex flex-col gap-3">
+
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Servicio del personal</span>
+                            <strong>{{ item.servicioPersonal }}/10</strong>
+                        </div>
+                        <mat-progress-bar mode="determinate" [value]="item.servicioPersonal * 10"
+                            color="primary"></mat-progress-bar>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Ayuda del producto</span>
+                            <strong>{{ item.ayudaProducto }}/10</strong>
+                        </div>
+                        <mat-progress-bar mode="determinate" [value]="item.ayudaProducto * 10"
+                            color="accent"></mat-progress-bar>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Tiempo de entrega</span>
+                            <strong>{{ item.tiempoEntrega }}/10</strong>
+                        </div>
+                        <mat-progress-bar mode="determinate" [value]="item.tiempoEntrega * 10"
+                            color="warn"></mat-progress-bar>
+                    </div>
+
+                </div>
+
+            </mat-card>
+
+        </mat-card-content>
+    </mat-card>
+
+</div>

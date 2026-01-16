@@ -1,0 +1,93 @@
+<h2 mat-dialog-title class="text-center font-bold text-green-800 uppercase">
+  Confirmar envío de encuesta
+</h2>
+
+<form
+  *ngIf="form"
+  [formGroup]="form"
+  (ngSubmit)="enviar()"
+  class="space-y-6 overflow-y-auto max-h-[70vh] px-1"
+>
+
+  <p class="text-center text-gray-600 text-sm">
+    Confirma o edita la información antes de enviar la encuesta.
+  </p>
+
+  <!-- Datos -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre del cliente</mat-label>
+      <input matInput formControlName="nombre" />
+      <mat-error *ngIf="form.get('nombre')?.hasError('required')">
+        Campo requerido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Teléfono</mat-label>
+      <input matInput formControlName="telefono" />
+      <mat-error *ngIf="form.get('telefono')?.hasError('required')">
+        Campo requerido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" />
+      <mat-error *ngIf="form.get('email')?.invalid">
+        Email inválido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Cargo / Puesto</mat-label>
+      <input matInput formControlName="cargo" />
+      <mat-error *ngIf="form.get('cargo')?.hasError('required')">
+        Campo requerido
+      </mat-error>
+    </mat-form-field>
+
+  </div>
+
+  <!-- Sucursal -->
+  <div class="border rounded-xl p-4">
+    <label class="font-semibold block mb-3">
+      ¿Qué sucursal le atendió?
+    </label>
+
+    <mat-radio-group
+      formControlName="sucursal"
+      class="flex flex-col sm:flex-row gap-4"
+    >
+      <mat-radio-button [value]="3">Pachuca</mat-radio-button>
+      <mat-radio-button [value]="1">Querétaro</mat-radio-button>
+      <mat-radio-button [value]="2">Puebla</mat-radio-button>
+    </mat-radio-group>
+
+    <!-- Error MANUAL (no mat-error) -->
+    <div
+      *ngIf="form.get('sucursal')?.invalid && form.get('sucursal')?.touched"
+      class="text-red-600 text-sm mt-2"
+    >
+      Selecciona una sucursal
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="flex justify-end gap-3 pt-4">
+    <button mat-stroked-button type="button" (click)="cancelar()">
+      Cancelar
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="form.invalid"
+    >
+      Enviar encuesta
+    </button>
+  </div>
+
+</form>
