@@ -43,15 +43,18 @@ export interface ResponseDTO {
 export class SurveyService {
   private apiUrl = `${environment.apiUrl}/Encuesta`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   guardarEncuesta(encuesta: EncuestaDTO): Observable<ResponseDTO> {
     return this.http.post<ResponseDTO>(`${this.apiUrl}/guardar`, encuesta);
   }
 
   existeEncuesta(proyectoId: number): Observable<boolean> {
-  return this.http.get<ResponseDTO>(`${this.apiUrl}/existe/${proyectoId}`)
-    .pipe(map(res => res.code === 200));
-}
+    return this.http.get<ResponseDTO>(`${this.apiUrl}/existe/${proyectoId}`)
+      .pipe(map(res => res.code === 200));
+  }
 
+  getUnidadesDeNegocio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/unidades-negocio`);
+  }
 }

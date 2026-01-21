@@ -1,125 +1,126 @@
 <div class="max-h-[90vh] overflow-y-auto">
-    <form [formGroup]="form" class="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
-        <!-- Título -->
-        <h1 class="text-center text-xl sm:text-2xl font-bold mb-4 uppercase text-green-800">
-            ENCUESTA DE SATISFACCIÓN DE SERVICIOS/PROYECTOS
-        </h1>
+  <form [formGroup]="form" class="p-6 max-w-4xl mx-auto space-y-6">
 
-        <!-- Encuesta ya respondida -->
-        <div *ngIf="encuestaYaRespondida"
-            class="max-w-xl mx-auto my-8 bg-green-100 border border-green-400 rounded-2xl p-6 shadow-lg flex flex-col items-center text-center">
-            <div class="text-green-700 mb-4">
-                <svg class="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 011.5 0v.5a.75.75 0 01-1.5 0v-.5zM10 6a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 6z"
-                        clip-rule="evenodd" />
-                </svg>
-            </div>
-            <h2 class="text-lg sm:text-xl font-bold text-green-800 mb-2">Encuesta ya respondida</h2>
-            <p class="text-green-900 text-sm">
-                Esta encuesta ya fue contestada anteriormente. Gracias por tu participación.<br />
-                El formulario se encuentra en modo lectura.
-            </p>
+    <!-- TÍTULO -->
+    <h1 class="text-center text-2xl font-bold uppercase text-green-800">
+      Encuesta de Satisfacción de Servicios / Proyectos
+    </h1>
+
+    <!-- ================= DATOS GENERALES ================= -->
+    <section class="border rounded p-4 space-y-4">
+      <h2 class="font-bold text-lg text-green-700">Datos del cliente</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Empresa</mat-label>
+          <input matInput formControlName="empresa">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Teléfono</mat-label>
+          <input matInput formControlName="telefono">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Puesto</mat-label>
+          <input matInput formControlName="puesto">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Sucursal</mat-label>
+          <input matInput formControlName="sucursal">
+        </mat-form-field>
+      </div>
+    </section>
+
+    <!-- ================= SERVICIOS RECIBIDOS ================= -->
+    <section class="border rounded p-4 space-y-3">
+      <h2 class="font-bold text-lg text-green-700">
+        ¿Qué servicios te han sido proporcionados?
+      </h2>
+
+      <mat-radio-group formControlName="serviciosRecibidos" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <mat-radio-button value="Calidad de energía">Calidad de energía</mat-radio-button>
+        <mat-radio-button value="Instalaciones eléctricas">Instalaciones eléctricas</mat-radio-button>
+        <mat-radio-button value="Construcción de obra electromecánica">Construcción de obra electromecánica</mat-radio-button>
+        <mat-radio-button value="Mantenimiento preventivo y correctivo">Mantenimiento preventivo y correctivo</mat-radio-button>
+        <mat-radio-button value="Integración de centros de carga">Integración de centros de carga</mat-radio-button>
+        <mat-radio-button value="Código de red">Código de red</mat-radio-button>
+        <mat-radio-button value="Pruebas a transformadores">Pruebas a transformadores</mat-radio-button>
+        <mat-radio-button value="Pruebas a cable VLF">Pruebas a cable VLF</mat-radio-button>
+        <mat-radio-button value="Termografía">Termografía</mat-radio-button>
+        <mat-radio-button value="Pararrayos">Pararrayos</mat-radio-button>
+        <mat-radio-button value="Sistemas de tierras">Sistemas de tierras</mat-radio-button>
+        <mat-radio-button value="Trámites y gestiones">Trámites y gestiones</mat-radio-button>
+        <mat-radio-button value="Arc Flash">Arc Flash</mat-radio-button>
+        <mat-radio-button value="Coordinación de protecciones">Coordinación de protecciones</mat-radio-button>
+        <mat-radio-button value="Estudios de iluminación">Estudios de iluminación</mat-radio-button>
+        <mat-radio-button value="Sistemas de monitoreo">Sistemas de monitoreo</mat-radio-button>
+      </mat-radio-group>
+    </section>
+
+    <!-- ================= ESCALA 0 - 10 ================= -->
+    <section class="space-y-6">
+      <h2 class="font-bold text-lg text-green-700">
+        Califica nuestro servicio (0 = más bajo, 10 = más alto)
+      </h2>
+
+      <div *ngFor="let field of fields" class="border rounded p-4 space-y-3">
+        <label class="font-semibold block">{{ field.label }}</label>
+
+        <div class="flex flex-wrap gap-2">
+          <div
+            *ngFor="let item of scale"
+            class="w-10 h-10 flex flex-col items-center justify-center rounded cursor-default border"
+            [class.bg-green-300]="form.get(field.control)?.value === item.value"
+          >
+            <span>{{ item.emoji }}</span>
+            <small>{{ item.value }}</small>
+          </div>
         </div>
+      </div>
+    </section>
 
-        <!-- Formulario activo -->
-        <div *ngIf="!encuestaYaRespondida">
+    <!-- ================= MEJORAS ================= -->
+    <section class="border rounded p-4 space-y-2">
+      <h2 class="font-bold text-lg text-green-700">¿Qué podemos mejorar?</h2>
+      <mat-form-field appearance="outline" class="w-full">
+        <textarea matInput rows="3" formControlName="mejoras"></textarea>
+      </mat-form-field>
+    </section>
 
-            <!-- Datos de contacto -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Nombre</mat-label>
-                    <input matInput formControlName="nombre" />
-                </mat-form-field>
+    <!-- ================= SERVICIOS DESEADOS ================= -->
+    <section class="border rounded p-4 space-y-2">
+      <h2 class="font-bold text-lg text-green-700">
+        Servicios que le gustaría que agreguemos
+      </h2>
+      <mat-form-field appearance="outline" class="w-full">
+        <textarea matInput rows="2" formControlName="productosDeseados"></textarea>
+      </mat-form-field>
+    </section>
 
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Empresa</mat-label>
-                    <input matInput formControlName="empresa" />
-                </mat-form-field>
+    <!-- ================= COMO CONOCIO ================= -->
+    <section class="border rounded p-4 space-y-2">
+      <h2 class="font-bold text-lg text-green-700">¿Cómo nos conoció?</h2>
+      <mat-radio-group formControlName="comoConocio" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
+        <mat-radio-button value="Busqueda en internet">Búsqueda en internet</mat-radio-button>
+        <mat-radio-button value="Facebook">Facebook</mat-radio-button>
+        <mat-radio-button value="Instagram">Instagram</mat-radio-button>
+        <mat-radio-button value="LinkedIn">LinkedIn</mat-radio-button>
+        <mat-radio-button value="Web">Página Web</mat-radio-button>
+      </mat-radio-group>
+    </section>
 
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Email</mat-label>
-                    <input matInput formControlName="email" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Teléfono</mat-label>
-                    <input matInput formControlName="telefono" />
-                </mat-form-field>
-            </div>
-
-            <!-- Leyenda -->
-            <div class="bg-[#419486] p-4 rounded text-white space-y-2">
-                <p class="font-bold">
-                    Estimado cliente.<br />En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
-                </p>
-                <p class="text-black font-bold">
-                    Por favor indica tu respuesta en una escala del 0 al 10, donde 0 representa el nivel más bajo y 10
-                    el más alto.
-                </p>
-            </div>
-
-            <!-- Preguntas -->
-            <div *ngFor="let field of fields" class="p-4 border rounded space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
-                    <!-- Pregunta -->
-                    <div class="md:col-span-3">
-                        <label class="font-semibold block mb-2">{{ field.label }}</label>
-                        <div class="flex flex-wrap gap-1 justify-start">
-                            <div class="emoji-block" *ngFor="let item of scale" [ngClass]="{
-                low: item.value <= 6,
-                medium: item.value === 7 || item.value === 8,
-                high: item.value >= 9,
-                selected: form.get(field.control)?.value === item.value
-              }" (click)="form.get(field.control)?.setValue(item.value)">
-                                <div class="emoji">{{ item.emoji }}</div>
-                                <div class="number">{{ item.value }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Razonamiento -->
-                    <div class="md:col-span-2">
-                        <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>¿Qué razones influyeron en tu calificación?</mat-label>
-                            <textarea matInput rows="2" [formControlName]="field.razon"></textarea>
-                        </mat-form-field>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Frecuencia -->
-            <div class="p-4 border rounded space-y-2">
-                <label class="font-semibold block">¿Con qué frecuencia solicitas servicios de la empresa?</label>
-                <mat-radio-group formControlName="frecuencia" class="flex flex-wrap gap-4">
-                    <mat-radio-button value="1ra vez">1ra vez</mat-radio-button>
-                    <mat-radio-button value="1 o más veces al mes">1 o más veces al mes</mat-radio-button>
-                    <mat-radio-button value="2 o 3 veces al año">2 o 3 veces al año</mat-radio-button>
-                    <mat-radio-button value="1 vez al año">1 vez al año</mat-radio-button>
-                </mat-radio-group>
-            </div>
-
-            <!-- Servicios deseados -->
-            <mat-form-field appearance="outline" class="w-full">
-                <mat-label>¿Qué servicios le gustaría que agreguemos a nuestro catálogo?</mat-label>
-                <textarea matInput rows="2" formControlName="productosDeseados"></textarea>
-            </mat-form-field>
-
-            <!-- ¿Cómo conociste JR? -->
-            <div class="space-y-2">
-                <label class="font-semibold block">¿Cómo conociste JR Ingeniería?</label>
-                <mat-radio-group formControlName="comoConocio"
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
-                    <mat-radio-button value="Busqueda en internet">Búsqueda en internet</mat-radio-button>
-                    <mat-radio-button value="Espectaculares">Espectaculares</mat-radio-button>
-                    <mat-radio-button value="Tienda">Visita tienda</mat-radio-button>
-                    <mat-radio-button value="Facebook">Facebook</mat-radio-button>
-                    <mat-radio-button value="Instagram">Instagram</mat-radio-button>
-                    <mat-radio-button value="LinkedIn">LinkedIn</mat-radio-button>
-                    <mat-radio-button value="Web">Página Web</mat-radio-button>
-                </mat-radio-group>
-            </div>
-        </div>
-    </form>
+  </form>
 </div>

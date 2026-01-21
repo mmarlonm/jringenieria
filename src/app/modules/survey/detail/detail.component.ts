@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -35,35 +35,21 @@ import { EncuestaDTO, SurveyService } from 'app/modules/survey/survey.service';
   ]
 })
 export class DetailComponent implements OnInit {
-  form: FormGroup;
-  proyectoId: number = 0;
+
+  form!: FormGroup;
+  proyectoId = 0;
+
+  /** 👉 CONTROL DE PASOS */
+  step = 1;
+
+  encuestaYaRespondida = false;
 
   fields = [
-    {
-      label: '¿Cómo calificarías el servicio del personal que te atendió?',
-      control: 'servicioPersonal',
-      razon: 'razonServicio'
-    },
-    {
-      label: '¿Qué posibilidades hay de que recomiendes nuestros productos?',
-      control: 'recomendarProductos',
-      razon: 'razonRecomendar'
-    },
-    {
-      label: '¿En qué medida los productos ayudaron a resolver tu problema?',
-      control: 'ayudaProducto',
-      razon: 'razonAyuda'
-    },
-    {
-      label: '¿Nuestro equipo comprendió tus necesidades?',
-      control: 'comprensionNecesidades',
-      razon: 'razonComprension'
-    },
-    {
-      label: '¿Cómo evalúas calidad y tiempo de entrega?',
-      control: 'tiempoEntrega',
-      razon: 'razonEntrega'
-    }
+    { label: '¿Cómo calificarías el servicio del personal que te atendió?', control: 'servicioPersonal', razon: 'razonServicio' },
+    { label: '¿Qué posibilidades hay de que recomiendes nuestros productos?', control: 'recomendarProductos', razon: 'razonRecomendar' },
+    { label: '¿En qué medida los productos ayudaron a resolver tu problema?', control: 'ayudaProducto', razon: 'razonAyuda' },
+    { label: '¿Nuestro equipo comprendió tus necesidades?', control: 'comprensionNecesidades', razon: 'razonComprension' },
+    { label: '¿Cómo evalúas calidad y tiempo de entrega?', control: 'tiempoEntrega', razon: 'razonEntrega' }
   ];
 
   scale = [
@@ -80,82 +66,87 @@ export class DetailComponent implements OnInit {
     { value: 10, emoji: '🤩' }
   ];
 
-  encuestaYaRespondida = false;
+  unidadesDeNegocio: any[] = [];
+  escalaNumerica: number[] = Array.from({ length: 11 }, (_, i) => i);
 
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private http: HttpClient,
     private surveyService: SurveyService
   ) { }
 
   ngOnInit(): void {
-    this.proyectoId = +this.route.snapshot.paramMap.get('id')!;
+    this.proyectoId = Number(this.route.snapshot.paramMap.get('id'));
+
+    /** ✅ FORMULARIO COMPLETO */
     this.form = this.fb.group({
+      // Paso 1
       nombre: [''],
       empresa: [''],
       email: [''],
       telefono: [''],
+      puesto: [''],
+      sucursal: [''],
 
-      servicioPersonal: [5],
-      recomendarProductos: [5],
-      ayudaProducto: [5],
-      comprensionNecesidades: [5],
-      tiempoEntrega: [5],
+      // Paso 2
+      serviciosRecibidos: [''],
 
-      razonServicio: [''],
-      razonRecomendar: [''],
-      razonAyuda: [''],
-      razonComprension: [''],
-      razonEntrega: [''],
+      // Paso 3
+      servicioPersonal: [null],
+      recomendarServicios: [null],
+      ayudaProblema: [null],
+      desarrolloServicios: [null],
+      calidadTiempo: [null],
+      mejoras: [''],
 
-      frecuencia: [''],
+      // Paso 4
       productosDeseados: [''],
       comoConocio: ['']
     });
 
-    this.surveyService.existeEncuesta(this.proyectoId).subscribe((existe) => {
-    this.encuestaYaRespondida = existe;
 
-    if (existe) {
-      this.form.disable(); // Desactiva el formulario si ya fue respondido
-    }
-  });
+    /** ✅ VALIDAR SI YA EXISTE */
+    this.surveyService.existeEncuesta(this.proyectoId).subscribe(existe => {
+      this.encuestaYaRespondida = existe;
+      if (existe) {
+        this.form.disable();
+      }
+    });
+
+    this.getUnidadesDeNegocio();
   }
 
-  enviar() {
-  const data: EncuestaDTO = {
-    proyectoId: this.proyectoId,
-    ...this.form.value
-  };
-
-  this.surveyService.guardarEncuesta(data).subscribe({
-    next: (res) => {
-      if (res.code === 200) {
-        Swal.fire({
-          icon: 'success',
-          title: '¡Gracias!',
-          text: 'Encuesta guardada exitosamente.',
-          confirmButtonText: 'Aceptar'
-        });
-        this.form.reset();
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: res.message || 'Ocurrió un error al guardar la encuesta.'
-        });
-      }
-    },
-    error: (error) => {
-      console.error('Error al guardar la encuesta:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Ocurrió un error al enviar la encuesta. Por favor, inténtalo de nuevo más tarde.'
-      });
+  enviar(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
     }
-  });
-}
+
+    const data: EncuestaDTO = {
+      proyectoId: this.proyectoId,
+      ...this.form.value
+    };
+
+    this.surveyService.guardarEncuesta(data).subscribe({
+      next: res => {
+        if (res.code === 200) {
+          Swal.fire('¡Gracias!', 'Encuesta guardada exitosamente.', 'success');
+          this.form.reset();
+          this.step = 1;
+        } else {
+          Swal.fire('Error', res.message || 'Error al guardar encuesta', 'error');
+        }
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo enviar la encuesta.', 'error');
+      }
+    });
+  }
+
+  getUnidadesDeNegocio(): void {
+    this.surveyService
+      .getUnidadesDeNegocio()
+      .subscribe((data) => (this.unidadesDeNegocio = data));
+  }
 }
