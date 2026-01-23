@@ -102,7 +102,7 @@ export class DetailComponent implements OnInit {
 
       // Paso 4
       productosDeseados: [''],
-      comoConocio: ['']
+      comoConocio: [null, Validators.required]
     });
 
 
