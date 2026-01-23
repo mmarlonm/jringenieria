@@ -20,6 +20,19 @@
   <!-- FORMULARIO ACTIVO -->
   <ng-container *ngIf="!encuestaYaRespondida">
 
+    <div class="w-full">
+      <div class="bg-white rounded-2xl shadow-lg p-6
+           flex justify-center items-center
+           transition transform hover:scale-[1.01] hover:shadow-2xl">
+        <img src="images/logo/survey-logo.webp" alt="Logo de la encuesta" class="h-24 object-contain" />
+      </div>
+    </div>
+
+    <div>
+      <span class="text-red-400">* Indica que la pregunta es obligatoria</span>
+    </div>
+
+
     <!-- ================= PASO 1 ================= -->
     <div *ngIf="step === 1" class="space-y-4">
 
@@ -91,7 +104,7 @@
       </div>
 
       <h2 class="text-lg font-bold text-green-700">
-        ¿Qué servicios te han sido proporcionados?
+        ¿Qué servicios te han sido proporcionados? <span class="text-red-400">*</span>
       </h2>
 
       <!-- SERVICIOS (CHECKBOX / RADIO SEGÚN IMAGEN) -->
@@ -190,7 +203,7 @@
       <!-- PREGUNTA 1 -->
       <div class="p-4 border rounded space-y-2">
         <label class="font-semibold block">
-          ¿Cómo calificarías el servicio de parte del personal que te atendió?
+          ¿Cómo calificarías el servicio de parte del personal que te atendió? <span class="text-red-400">*</span>
         </label>
 
         <mat-radio-group formControlName="servicioPersonal" class="grid grid-cols-11 gap-1">
@@ -203,7 +216,7 @@
       <!-- PREGUNTA 2 -->
       <div class="p-4 border rounded space-y-2">
         <label class="font-semibold block">
-          ¿Cuáles son las posibilidades de que recomiendes nuestros servicios a familiares, amigos y colegas?
+          ¿Cuáles son las posibilidades de que recomiendes nuestros servicios a familiares, amigos y colegas? <span class="text-red-400">*</span>
         </label>
 
         <mat-radio-group formControlName="recomendarServicios" class="grid grid-cols-11 gap-1">
@@ -216,7 +229,7 @@
       <!-- PREGUNTA 3 -->
       <div class="p-4 border rounded space-y-2">
         <label class="font-semibold block">
-          ¿En qué medida los servicios adquiridos a JR ayudaron a resolver tu problema?
+          ¿En qué medida los servicios adquiridos a JR ayudaron a resolver tu problema? <span class="text-red-400">*</span>
         </label>
 
         <mat-radio-group formControlName="ayudaProblema" class="grid grid-cols-11 gap-1">
@@ -229,7 +242,7 @@
       <!-- PREGUNTA 4 -->
       <div class="p-4 border rounded space-y-2">
         <label class="font-semibold block">
-          ¿Cómo evalúas el desarrollo de nuestros servicios/proyectos?
+          ¿Cómo evalúas el desarrollo de nuestros servicios/proyectos? <span class="text-red-400">*</span>
         </label>
 
         <mat-radio-group formControlName="desarrolloServicios" class="grid grid-cols-11 gap-1">
@@ -242,7 +255,7 @@
       <!-- PREGUNTA 5 -->
       <div class="p-4 border rounded space-y-2">
         <label class="font-semibold block">
-          ¿Cómo evalúas el cumplimiento en cuanto a calidad y tiempos de entrega?
+          ¿Cómo evalúas el cumplimiento en cuanto a calidad y tiempos de entrega? <span class="text-red-400">*</span>
         </label>
 
         <mat-radio-group formControlName="calidadTiempo" class="grid grid-cols-11 gap-1">

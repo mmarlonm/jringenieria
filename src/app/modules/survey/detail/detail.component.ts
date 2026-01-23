@@ -82,22 +82,22 @@ export class DetailComponent implements OnInit {
     /** ✅ FORMULARIO COMPLETO */
     this.form = this.fb.group({
       // Paso 1
-      nombre: [''],
-      empresa: [''],
-      email: [''],
-      telefono: [''],
-      puesto: [''],
-      sucursal: [''],
+      nombre: [null, Validators.required],
+      empresa: [null, Validators.required],
+      email: [null, [Validators.required, Validators.email]],
+      telefono: [null, Validators.required],
+      puesto: [null, Validators.required],
+      sucursal: [null, Validators.required],
 
       // Paso 2
-      serviciosRecibidos: [''],
+      serviciosRecibidos: [null, Validators.required],
 
       // Paso 3
-      servicioPersonal: [null],
-      recomendarServicios: [null],
-      ayudaProblema: [null],
-      desarrolloServicios: [null],
-      calidadTiempo: [null],
+      servicioPersonal: [null, Validators.required],
+      recomendarServicios: [null, Validators.required],
+      ayudaProblema: [null, Validators.required],
+      desarrolloServicios: [null, Validators.required],
+      calidadTiempo: [null, Validators.required],
       mejoras: [''],
 
       // Paso 4
