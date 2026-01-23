@@ -125,6 +125,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/product-satisfaction-survey',
+            },
+            {
+                id: 'reports.project-satisfaction-survey',
+                title: 'Encuesta de Satisfacción de Proyectos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/reports/project-satisfaction-survey',
             }
         ],
     },
