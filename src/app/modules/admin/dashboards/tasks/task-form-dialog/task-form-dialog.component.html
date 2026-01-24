@@ -46,7 +46,7 @@
             <mat-label>Asignar usuarios</mat-label>
             <mat-select formControlName="usuarioIds" multiple>
                 <mat-option *ngFor="let u of userList" [value]="u.usuarioId">
-                    {{ u.nombre }}
+                    {{ u.nombreUsuario }}
                 </mat-option>
             </mat-select>
         </mat-form-field>
