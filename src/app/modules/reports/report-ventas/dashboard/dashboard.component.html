@@ -1,0 +1,205 @@
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-6">
+
+  <!-- 🔹 HEADER -->
+  <div class="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
+      Dashboard de Ventas
+    </h1>
+
+    <button
+      mat-raised-button
+      color="primary"
+      class="w-full sm:w-auto"
+      (click)="exportarPDF()">
+      <mat-icon>picture_as_pdf</mat-icon>
+      Exportar PDF
+    </button>
+  </div>
+
+  <!-- 🔹 FILTROS -->
+  <div
+    class="w-full bg-white rounded-xl shadow p-4
+           grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <div class="w-full">
+      <label class="text-sm text-gray-500">Sucursal</label>
+      <select
+        class="w-full mt-1 p-2 border rounded-lg"
+        [(ngModel)]="sucursal">
+        <option value="Factura PACHUCA">Pachuca</option>
+        <option value="Factura Puebla">Puebla</option>
+        <option value="Factura Queretaro">Querétaro</option>
+      </select>
+    </div>
+
+    <div class="w-full">
+      <label class="text-sm text-gray-500">Fecha inicio</label>
+      <input
+        type="date"
+        class="w-full mt-1 p-2 border rounded-lg"
+        [(ngModel)]="fechaInicio">
+    </div>
+
+    <div class="w-full">
+      <label class="text-sm text-gray-500">Fecha fin</label>
+      <input
+        type="date"
+        class="w-full mt-1 p-2 border rounded-lg"
+        [(ngModel)]="fechaFin">
+    </div>
+
+    <div class="w-full flex items-end">
+      <button
+        (click)="consultar()"
+        class="w-full px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
+        Consultar
+      </button>
+    </div>
+
+  </div>
+
+  <!-- 🔹 CONTENIDO EXPORTABLE -->
+  <div id="pdf-content" class="w-full space-y-6">
+
+    <!-- 🔹 KPIs -->
+    <!-- 🔹 KPIs -->
+<div
+  class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+  <!-- Ventas Totales -->
+  <div class="bg-white rounded-xl shadow p-4">
+    <p class="text-sm text-gray-500">Ventas Totales</p>
+    <p class="text-xl sm:text-2xl font-bold text-gray-800">
+      {{ kpis.totalVentas | currency:'MXN' }}
+    </p>
+  </div>
+
+  <!-- Facturas -->
+  <div class="bg-white rounded-xl shadow p-4">
+    <p class="text-sm text-gray-500">Facturas</p>
+    <p class="text-xl sm:text-2xl font-bold text-gray-800">
+      {{ kpis.totalFacturas }}
+    </p>
+  </div>
+
+  <!-- Clientes -->
+  <div class="bg-white rounded-xl shadow p-4">
+    <p class="text-sm text-gray-500">Clientes</p>
+    <p class="text-xl sm:text-2xl font-bold text-gray-800">
+      {{ kpis.totalClientes }}
+    </p>
+  </div>
+
+  <!-- Venta Promedio -->
+  <div class="bg-white rounded-xl shadow p-4">
+    <p class="text-sm text-gray-500">Venta Promedio</p>
+    <p class="text-xl sm:text-2xl font-bold text-gray-800">
+      {{ kpis.ventaPromedio | currency:'MXN' }}
+    </p>
+  </div>
+
+  <!-- 🔹 NUEVA: Utilidad Bruta -->
+  <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
+    <p class="text-sm text-gray-500">Utilidad Bruta</p>
+    <p class="text-xl sm:text-2xl font-bold text-green-600">
+      {{ kpis.utilidadBruta | currency:'MXN' }}
+    </p>
+  </div>
+
+</div>
+
+
+    <!-- 🔹 GRÁFICAS -->
+    <div
+      class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="bg-white rounded-xl shadow p-4">
+        <h2 class="text-base sm:text-lg font-semibold mb-2">
+          Ventas por Mes
+        </h2>
+        <div id="chartVentasMes" class="w-full h-[260px] sm:h-80"></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4">
+        <h2 class="text-base sm:text-lg font-semibold mb-2">
+          Top Productos
+        </h2>
+        <div id="chartTopProductos" class="w-full h-[260px] sm:h-80"></div>
+      </div>
+
+    </div>
+
+    <!-- 🔹 GRÁFICA + TABLA -->
+    <div
+      class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="bg-white rounded-xl shadow p-4">
+        <h2 class="text-base sm:text-lg font-semibold mb-2">
+          Ventas por Vendedor
+        </h2>
+        <div id="chartTopVendedores" class="w-full h-[260px] sm:h-80"></div>
+      </div>
+
+      <!-- 🔹 DETALLE -->
+      <div class="bg-white rounded-xl shadow p-4 flex flex-col">
+
+        <h2 class="text-base sm:text-lg font-semibold mb-2">
+          Detalle de Ventas
+        </h2>
+
+        <!-- Scroll horizontal + vertical -->
+        <div
+          class="w-full overflow-auto max-h-[420px] border rounded-lg">
+
+          <table class="min-w-[900px] w-full text-sm">
+            <thead class="bg-gray-100 sticky top-0 z-10">
+              <tr>
+                <th class="p-2 text-left">Fecha</th>
+                <th class="p-2 text-left">Sucursal</th>
+                <th class="p-2 text-left">Folio</th>
+                <th class="p-2 text-left">Cliente</th>
+                <th class="p-2 text-left">Vendedor</th>
+                <th class="p-2 text-right">Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr
+                *ngFor="let row of detalleVentas"
+                class="border-b hover:bg-gray-50">
+                <td class="p-2 whitespace-nowrap">
+                  {{ row.fecha | date:'dd/MM/yyyy' }}
+                </td>
+                <td class="p-2 whitespace-nowrap">
+                  {{ row.sucursal }}
+                </td>
+                <td class="p-2 whitespace-nowrap">
+                  {{ row.folio }}
+                </td>
+                <td class="p-2">
+                  {{ row.cliente }}
+                </td>
+                <td class="p-2">
+                  {{ row.vendedor }}
+                </td>
+                <td class="p-2 text-right whitespace-nowrap">
+                  {{ row.totalDocumento | currency:'MXN' }}
+                </td>
+              </tr>
+
+              <tr *ngIf="detalleVentas.length === 0">
+                <td colspan="6" class="p-4 text-center text-gray-400">
+                  Sin información
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

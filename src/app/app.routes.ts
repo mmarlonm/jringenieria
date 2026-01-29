@@ -97,6 +97,7 @@ export const appRoutes: Route[] = [
                 {path: 'login-logs', loadChildren: () => import('app/modules/reports/login-logs/login-logs.routes')},
                 {path: 'product-satisfaction-survey', loadChildren: () => import('app/modules/reports/product-satisfaction-survey/product-satisfaction-survey.routes')},
                 {path: 'project-satisfaction-survey', loadChildren: () => import('app/modules/reports/project-satisfaction-survey/project-satisfaction-survey.routes')},
+                {path: 'report-venta', loadChildren: () => import('app/modules/reports/report-ventas/report-ventas.routes')},
             ]},
             {path: 'security', children: [
                 {path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes')},

@@ -132,6 +132,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/project-satisfaction-survey',
+            },
+            {
+                id: 'reports.report-ventas',
+                title: 'Reporte de Ventas',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/reports/report-venta',
             }
         ],
     },
