@@ -24,7 +24,7 @@ export class ReportVentasDashboardComponent implements OnInit {
     Highcharts: typeof Highcharts = Highcharts;
 
     // 🔹 Filtros
-    sucursal: string = 'Factura PACHUCA';
+    sucursal: string = 'PACHUCA';
     fechaInicio!: string;
     fechaFin!: string;
 
