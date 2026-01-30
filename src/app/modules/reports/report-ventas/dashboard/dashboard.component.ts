@@ -40,6 +40,9 @@ export class ReportVentasDashboardComponent implements OnInit {
     // 🔹 Drilldown
     detalleVentas: any[] = [];
 
+    esMoral: boolean = false; // default persona física
+
+
     constructor(private reportVentasService: ReportVentasService) { }
 
     ngOnInit(): void {
@@ -56,7 +59,8 @@ export class ReportVentasDashboardComponent implements OnInit {
             .getDashboardVentas(
                 this.sucursal,
                 new Date(this.fechaInicio),
-                new Date(this.fechaFin)
+                new Date(this.fechaFin),
+                this.esMoral
             )
             .subscribe({
                 next: resp => {

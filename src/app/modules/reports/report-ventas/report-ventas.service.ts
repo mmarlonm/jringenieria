@@ -21,13 +21,15 @@ export class ReportVentasService {
   getDashboardVentas(
     sucursal: string,
     fechaInicio: Date,
-    fechaFin: Date
+    fechaFin: Date,
+    esMoral: boolean
   ): Observable<any> {
 
     const params = new HttpParams()
       .set('sucursal', sucursal)
       .set('fechaInicio', fechaInicio.toISOString())
-      .set('fechaFin', fechaFin.toISOString());
+      .set('fechaFin', fechaFin.toISOString())
+      .set('esMoral', esMoral.toString());
 
     return this.http.get<any>(`${this.apiUrl}/reporte-ventas`, { params });
   }
