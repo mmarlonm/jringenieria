@@ -333,7 +333,6 @@
               <span *ngIf="cotizacionFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
               <input
                 type="file"
-                accept=".pdf,.doc,.docx,.xlsx"
                 #cotizacionInput
                 (change)="onFileSelected($event, 'cotizacion')"
                 hidden

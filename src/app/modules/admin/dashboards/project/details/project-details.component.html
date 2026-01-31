@@ -370,7 +370,7 @@
                 Subir archivo
               </button>
               <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #planoArquitectonicoInput
+              <input type="file" #planoArquitectonicoInput
                 (change)="onFileSelected($event, 'plano arquitectonico')" hidden />
             </div>
 
@@ -381,7 +381,7 @@
                 Subir archivo
               </button>
               <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #diagramaUnifilarInput
+              <input type="file" #diagramaUnifilarInput
                 (change)="onFileSelected($event, 'diagrama unifilar')" hidden />
             </div>
 
@@ -393,7 +393,7 @@
                 Subir archivo
               </button>
               <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #diagramaIsometricoInput
+              <input type="file" #diagramaIsometricoInput
                 (change)="onFileSelected($event, 'diagrama isometrico')" hidden />
             </div>
 
@@ -415,7 +415,7 @@
                 Subir archivo
               </button>
               <span *ngIf="levantamientoFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-              <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" #levantamientoInput
+              <input type="file" #levantamientoInput
                 (change)="onFileSelected($event, 'levantamiento')" hidden />
             </div>
 
