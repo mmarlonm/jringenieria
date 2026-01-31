@@ -41,8 +41,6 @@ export class ReportVentasDashboardComponent implements OnInit {
     detalleVentas: any[] = [];
 
     esMoral: boolean = false; // default persona física
-
-
     constructor(private reportVentasService: ReportVentasService) { }
 
     ngOnInit(): void {
