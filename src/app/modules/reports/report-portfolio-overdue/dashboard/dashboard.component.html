@@ -13,49 +13,48 @@
         </button>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
-    
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Sucursal</mat-label>
-        <mat-select [(ngModel)]="sucursal">
-            <mat-option value="PACHUCA">Pachuca</mat-option>
-            <mat-option value="PUEBLA">Puebla</mat-option>
-            <mat-option value="QUERETARO">Querétaro</mat-option>
-        </mat-select>
-    </mat-form-field>
+    <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Tipo de Persona</mat-label>
-        <mat-select [(ngModel)]="esMoral">
-            <mat-option [value]="false">Persona Física</mat-option>
-            <mat-option [value]="true">Persona Moral</mat-option>
-        </mat-select>
-    </mat-form-field>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Sucursal</mat-label>
+            <mat-select [(ngModel)]="sucursal">
+                <mat-option value="PACHUCA">Pachuca</mat-option>
+                <mat-option value="PUEBLA">Puebla</mat-option>
+                <mat-option value="QUERETARO">Querétaro</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Fecha inicio</mat-label>
-        <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
-        <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
-        <mat-datepicker #pickerInicio></mat-datepicker>
-    </mat-form-field>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Tipo de Persona</mat-label>
+            <mat-select [(ngModel)]="esMoral">
+                <mat-option [value]="false">Persona Física</mat-option>
+                <mat-option [value]="true">Persona Moral</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Fecha fin</mat-label>
-        <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
-        <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
-        <mat-datepicker #pickerFin></mat-datepicker>
-    </mat-form-field>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Fecha inicio</mat-label>
+            <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+            <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
 
-    <div class="flex items-center h-[56px]"> 
-        <button
-            (click)="consultar()"
-            [disabled]="loading"
-            class="w-full bg-blue-600 text-white rounded-lg h-[48px] shadow hover:bg-blue-700 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
-            <mat-icon *ngIf="!loading">search</mat-icon>
-            <span class="font-medium">{{ loading ? 'Cargando...' : 'Consultar' }}</span>
-        </button>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Fecha fin</mat-label>
+            <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+            <mat-datepicker #pickerFin></mat-datepicker>
+        </mat-form-field>
+
+        <div class="flex items-center h-[56px]">
+            <button (click)="consultar()" [disabled]="loading"
+                class="w-full bg-blue-600 text-white rounded-lg h-[48px] shadow hover:bg-blue-700 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
+                <mat-icon *ngIf="!loading">search</mat-icon>
+                <span class="font-medium">{{ loading ? 'Cargando...' : 'Consultar' }}</span>
+            </button>
+        </div>
     </div>
-</div>
 
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl shadow-sm p-4 border-t-4 border-blue-500">
@@ -93,10 +92,12 @@
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="p-3 font-semibold text-gray-600">Sucursal</th>
-                    <th class="p-3 font-semibold text-gray-600">Agente</th> <th class="p-3 font-semibold text-gray-600">Cliente</th>
+                    <th class="p-3 font-semibold text-gray-600">Agente</th>
+                    <th class="p-3 font-semibold text-gray-600">Cliente</th>
                     <th class="p-3 font-semibold text-gray-600">Documento</th>
                     <th class="p-3 text-center font-semibold text-gray-600">Días</th>
-                    <th class="p-3 text-right font-semibold text-gray-600">Saldo</th>
+                    <th class="p-3 text-right font-semibold text-gray-600">Saldo Total</th>
+                    <th class="p-3 text-right font-semibold text-gray-600">Pendiente</th>
                     <th class="p-3 text-center font-semibold text-gray-600">Estatus</th>
                 </tr>
             </thead>
@@ -110,7 +111,12 @@
                         [ngClass]="row.diasVencido > 0 ? 'text-red-600 font-bold' : 'text-green-600'">
                         {{ row.diasVencido }}
                     </td>
-                    <td class="p-3 text-right font-bold text-gray-900">{{ row.saldoPendiente | currency:'MXN' }}</td>
+                    <td class="p-3 text-right text-gray-500 font-medium">
+                        {{ row.totalFactura | currency:'MXN' }}
+                    </td>
+                    <td class="p-3 text-right font-bold text-gray-900">
+                        {{ row.saldoPendiente | currency:'MXN' }}
+                    </td>
                     <td class="p-3 text-center">
                         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                             [ngClass]="row.estatus === 'VENCIDO' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
