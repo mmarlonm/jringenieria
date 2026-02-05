@@ -142,7 +142,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             },
             {
                 id: 'reports.report-portfolio-overdue',
-                title: 'Reporte Ventas por Cobrar',
+                title: 'Reporte Cuentas por Cobrar',
                 type: 'basic',
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/report-portfolio-overdue',
