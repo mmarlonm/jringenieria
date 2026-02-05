@@ -139,6 +139,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/report-venta',
+            },
+            {
+                id: 'reports.report-portfolio-overdue',
+                title: 'Reporte de Cartera Vencida',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/reports/report-portfolio-overdue',
             }
         ],
     },

@@ -4,69 +4,44 @@
   </h1>
   <mat-tab-group class="h-full flex-1 overflow-hidden">
     <mat-tab label="Información General">
-      <form
-        [formGroup]="quotesForm"
-        class="flex flex-col gap-4 overflow-auto"
-      >
+      <form [formGroup]="quotesForm" class="flex flex-col gap-4 overflow-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Cliente -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cliente</mat-label>
-            <mat-select
-              [formControl]="quotesForm.get('cliente')"
-              #clienteSelect
-              panelClass="custom-select-panel"
-              (selectionChange)="onClienteSelected($event.value)"
-            >
+            <mat-select [formControl]="quotesForm.get('cliente')" #clienteSelect panelClass="custom-select-panel"
+              (selectionChange)="onClienteSelected($event.value)">
               <mat-option [value]="null">— Ninguno —</mat-option>
               <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="clienteFiltro"
-                  placeholderLabel="Buscar cliente..."
+                <ngx-mat-select-search [formControl]="clienteFiltro" placeholderLabel="Buscar cliente..."
                   noEntriesFoundLabel="No se encontraron resultados"
-                  clearSearchInputLabel="Limpiar búsqueda"
-                ></ngx-mat-select-search>
+                  clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
               </mat-option>
 
-              <mat-option
-                *ngFor="let client of filteredClients"
-                [value]="client.clienteId"
-              >
+              <mat-option *ngFor="let client of filteredClients" [value]="client.clienteId">
                 {{ client.clienteId }} - {{ client.nombre }}
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="quotesForm.get('cliente')?.hasError('noZero')"
-              >Debe seleccionar un cliente válido.</mat-error
-            >
+            <mat-error *ngIf="quotesForm.get('cliente')?.hasError('noZero')">Debe seleccionar un cliente
+              válido.</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Prospecto</mat-label>
-            <mat-select
-              [formControl]="quotesForm.get('prospecto')"
-              #clienteSelect
-              panelClass="custom-select-panel"
-            >
+            <mat-select [formControl]="quotesForm.get('prospecto')" #clienteSelect panelClass="custom-select-panel">
               <mat-option [value]="null">— Ninguno —</mat-option>
               <mat-option>
-                <ngx-mat-select-search
-                  [formControl]="prospectFiltro"
-                  placeholderLabel="Buscar prospecto..."
+                <ngx-mat-select-search [formControl]="prospectFiltro" placeholderLabel="Buscar prospecto..."
                   noEntriesFoundLabel="No se encontraron resultados"
-                  clearSearchInputLabel="Limpiar búsqueda"
-                ></ngx-mat-select-search>
+                  clearSearchInputLabel="Limpiar búsqueda"></ngx-mat-select-search>
               </mat-option>
 
-              <mat-option
-                *ngFor="let prospect of filteredProspects"
-                [value]="prospect.prospectoId"
-              >
+              <mat-option *ngFor="let prospect of filteredProspects" [value]="prospect.prospectoId">
                 {{ prospect.prospectoId }} - {{ prospect.empresa }}
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="quotesForm.get('prospecto')?.hasError('noZero')"
-              >Debe seleccionar un prospecto válido.</mat-error
-            >
+            <mat-error *ngIf="quotesForm.get('prospecto')?.hasError('noZero')">Debe seleccionar un prospecto
+              válido.</mat-error>
           </mat-form-field>
 
           <!-- Nombre de Contacto -->
@@ -102,47 +77,82 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Cotizacion -->
-          <mat-form-field appearance="fill" class="w-full">
+          <!-- <mat-form-field appearance="fill" class="w-full">
             <mat-label>Cotización</mat-label>
             <input matInput formControlName="cotizacion" />
+          </mat-form-field> -->
+
+          <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+            <mat-label>Cotización Archivo:</mat-label>
+            <input matInput [value]="getArchivoNombre('cotizacionArchivo')" readonly />
+
+            <button mat-icon-button type="button"
+              (click)="hasArchivoGuardado('cotizacionArchivo') ? descargarArchivoGuardado('cotizacionArchivo') : cotizacionInput.click()">
+              <mat-icon>{{ hasArchivoGuardado('cotizacionArchivo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            </button>
+            <button *ngIf="hasArchivoGuardado('cotizacionArchivo')" mat-icon-button color="warn" type="button"
+              (click)="eliminarArchivo('cotizacionArchivo')">
+              <mat-icon>delete</mat-icon>
+            </button>
+
+            <input type="file" #cotizacionInput (change)="onFileSelected($event, 'cotizacionArchivo')" hidden />
           </mat-form-field>
 
+          <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
+            <mat-label>Levantamiento:</mat-label>
+            <input matInput [value]="getArchivoNombre('levantamientoArchivo')" readonly />
+
+            <button mat-icon-button type="button"
+              (click)="hasArchivoGuardado('levantamientoArchivo') ? descargarArchivoGuardado('levantamientoArchivo') : levantamientoInput.click()">
+              <mat-icon>{{ hasArchivoGuardado('levantamientoArchivo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            </button>
+            <button *ngIf="hasArchivoGuardado('levantamientoArchivo')" mat-icon-button color="warn" type="button"
+              (click)="eliminarArchivo('levantamientoArchivo')">
+              <mat-icon>delete</mat-icon>
+            </button>
+
+            <input type="file" #levantamientoInput (change)="onFileSelected($event, 'levantamientoArchivo')" hidden />
+          </mat-form-field>
+
+          
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Necesidad -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Necesidad</mat-label>
             <textarea matInput formControlName="necesidad"></textarea>
           </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Dirección -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Dirección</mat-label>
             <input matInput formControlName="direccion" />
           </mat-form-field>
 
+          
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Orden de Compra -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Orden de Compra</mat-label>
             <input matInput formControlName="ordenCompra" />
           </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Contrato -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Contrato</mat-label>
             <input matInput formControlName="contrato" />
           </mat-form-field>
 
+          
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Proveedor -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Proveedor</mat-label>
             <input matInput formControlName="proveedor" />
           </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Vendedor -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Vendedor</mat-label>
@@ -166,17 +176,19 @@
 
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Fecha de Registro</mat-label>
-            <input
-              matInput
-              [matDatepicker]="picker2"
-              formControlName="fechaRegistro"
-              disabled
-            />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="picker2"
-            ></mat-datepicker-toggle>
+            <input matInput [matDatepicker]="picker2" formControlName="fechaRegistro" disabled />
+            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
             <mat-datepicker #picker2></mat-datepicker>
+          </mat-form-field>
+
+          <!-- Estatus -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Estatus</mat-label>
+            <mat-select formControlName="estatus">
+              <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
+                cat.nombre
+                }}</mat-option>
+            </mat-select>
           </mat-form-field>
         </div>
 
@@ -240,15 +252,7 @@
         </div> -->
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Estatus -->
-          <mat-form-field appearance="fill" class="w-full">
-            <mat-label>Estatus</mat-label>
-            <mat-select formControlName="estatus">
-              <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
-                cat.nombre
-              }}</mat-option>
-            </mat-select>
-          </mat-form-field>
+          
         </div>
 
         <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,11 +300,8 @@
           <!-- Comentarios, Notas -->
           <mat-form-field appearance="fill" class="w-full">
             <mat-label>Comentarios o Notas</mat-label>
-            <textarea
-              matInput
-              formControlName="comentarios"
-              placeholder="Notas adicionales sobre la cotización"
-            ></textarea>
+            <textarea matInput formControlName="comentarios"
+              placeholder="Notas adicionales sobre la cotización"></textarea>
           </mat-form-field>
         </div>
       </form>
@@ -313,108 +314,80 @@
             <!-- Cada input en una celda de la grid -->
             <!-- Archivo Cotización -->
             <div class="flex items-center gap-2">
-                <label class="w-40">Cotización:</label>
-                <button mat-stroked-button type="button" (click)="cotizacionInput.click()">
+              <label class="w-40">Cotización:</label>
+              <button mat-stroked-button type="button" (click)="cotizacionInput.click()">
                 Subir Archivo
-                </button>
+              </button>
               <span *ngIf="cotizacionFile?.name" class="text-sm text-gray-600 truncate max-w-[200px]"></span>
-              <input
-                type="file"
-                #cotizacionInput
-                (change)="onFileSelected($event, 'cotizacion')"
-                hidden
-              />
+              <input type="file" #cotizacionInput (change)="onFileSelected($event, 'cotizacion')" hidden />
             </div>
           </div>
 
           <!-- Lista de Archivos -->
           <div class="space-y-8 p-6 md:p-8">
             @if (files.length > 0) {
-              <div>
-                <div class="font-medium">Files</div>
-                <div class="-m-2 mt-2 flex flex-wrap">
-                  @for (file of files; track trackByFn($index, file)) {
-                    <div class="relative m-2">
-                      <!-- Card de archivo -->
-                      <a
-                        class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8"
-                        (click)="
+            <div>
+              <div class="font-medium">Files</div>
+              <div class="-m-2 mt-2 flex flex-wrap">
+                @for (file of files; track trackByFn($index, file)) {
+                <div class="relative m-2">
+                  <!-- Card de archivo -->
+                  <a class="absolute right-1.5 top-1.5 z-20 h-10 min-h-10 w-8" (click)="
                           deleteFile(
                             file.cotizacionId,
                             file.categoria,
                             file.nombreArchivo
                           )
-                        "
-                        mat-icon-button
-                      >
-                        <mat-icon
-                          class="icon-size-5"
-                          [svgIcon]="'heroicons_solid:trash'"
-                        ></mat-icon>
-                      </a>
-                      <a
-                        class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow"
-                        (click)="
+                        " mat-icon-button>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                  </a>
+                  <a class="bg-card flex h-40 w-50 cursor-pointer flex-col rounded-2xl p-4 shadow" (click)="
                           downloadFile(
                             file.cotizacionId,
                             file.categoria,
                             file.nombreArchivo
                           )
-                        "
-                      >
-                        <div class="aspect-[9/6]">
-                          {{ file.categoria }}
-                          <div class="flex h-full items-center justify-center">
-                            <div class="relative">
-                              <mat-icon
-                                class="text-hint opacity-50 icon-size-14"
-                                [svgIcon]="'heroicons_solid:document'"
-                              ></mat-icon>
-                              <div
-                                class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
-                                [class.bg-red-600]="file.type === 'PDF'"
-                                [class.bg-blue-600]="file.type === 'DOC'"
-                                [class.bg-green-600]="file.type === 'XLS'"
-                                [class.bg-gray-600]="file.type === 'TXT'"
-                                [class.bg-amber-600]="file.type === 'JPG'"
-                                [class.bg-orange-600]="file.type === 'PNG'"
-                              >
-                                {{ file.type.toUpperCase() }}
-                              </div>
-                            </div>
+                        ">
+                    <div class="aspect-[9/6]">
+                      {{ file.categoria }}
+                      <div class="flex h-full items-center justify-center">
+                        <div class="relative">
+                          <mat-icon class="text-hint opacity-50 icon-size-14"
+                            [svgIcon]="'heroicons_solid:document'"></mat-icon>
+                          <div
+                            class="absolute bottom-0 left-0 rounded px-1.5 text-sm font-semibold leading-5 text-white"
+                            [class.bg-red-600]="file.type === 'PDF'" [class.bg-blue-600]="file.type === 'DOC'"
+                            [class.bg-green-600]="file.type === 'XLS'" [class.bg-gray-600]="file.type === 'TXT'"
+                            [class.bg-amber-600]="file.type === 'JPG'" [class.bg-orange-600]="file.type === 'PNG'">
+                            {{ file.type.toUpperCase() }}
                           </div>
                         </div>
-                        <div
-                          class="flex flex-auto flex-col justify-center text-center text-sm font-medium"
-                        >
-                          <div class="truncate" [matTooltip]="file.name">
-                            {{ file.nombreArchivo }}
-                          </div>
-                        </div>
-                      </a>
+                      </div>
                     </div>
-                  }
+                    <div class="flex flex-auto flex-col justify-center text-center text-sm font-medium">
+                      <div class="truncate" [matTooltip]="file.name">
+                        {{ file.nombreArchivo }}
+                      </div>
+                    </div>
+                  </a>
                 </div>
+                }
               </div>
+            </div>
             }
           </div>
         </div>
       </div>
     </mat-tab>
   </mat-tab-group>
-   <!-- Botones -->
+  <!-- Botones -->
 
-        <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
-          <button mat-raised-button color="primary" type="submit" (click)="saveQuotes()">
-            Guardar
-          </button>
-          <button
-            mat-button
-            color="warn"
-            type="button"
-            (click)="router.navigate(['/dashboards/quote'])"
-          >
-            Cancelar
-          </button>
-        </div>
+  <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
+    <button mat-raised-button color="primary" type="submit" (click)="saveQuotes()">
+      Guardar
+    </button>
+    <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/quote'])">
+      Cancelar
+    </button>
+  </div>
 </div>

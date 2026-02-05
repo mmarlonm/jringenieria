@@ -105,25 +105,59 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 📈 Ventas por mes
     private graficaVentasPorMes(data: any[]): void {
-        Highcharts.chart('chartVentasMes', {
-            chart: { type: 'line' },
-            title: { text: '' },
-            xAxis: {
-                categories: data.map(x => `${x.mes}/${x.anio}`)
+    const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    // 1. Separar los datos por periodo
+    const datosActual = data.filter(x => x.periodo === 'Actual');
+    const datosAnterior = data.filter(x => x.periodo === 'Anterior');
+
+    // 2. Obtener los meses (categorías) presentes en el periodo actual
+    const categorias = datosActual.map(x => mesesNombres[x.mes - 1]);
+
+    Highcharts.chart('chartVentasMes', {
+        chart: { 
+            type: 'areaspline', 
+            backgroundColor: 'transparent' 
+        },
+        title: { text: '' },
+        xAxis: {
+            categories: categorias,
+            crosshair: true
+        },
+        yAxis: {
+            title: { text: 'Venta Mensual ($)' },
+            labels: { format: '${value:,.0f}' }
+        },
+        tooltip: {
+            shared: true,
+            valuePrefix: '$',
+            valueDecimals: 2
+        },
+        plotOptions: {
+            areaspline: {
+                fillOpacity: 0.1,
+                lineWidth: 3,
+                marker: { enabled: true, radius: 4 }
+            }
+        },
+        series: [
+            {
+                name: 'Año Anterior',
+                type: 'areaspline',
+                color: '#10b981', // Verde (Emerald-500)
+                dashStyle: 'ShortDot', // Línea punteada para diferenciarlo como histórico
+                data: datosAnterior.map(x => x.totalMes)
             },
-            yAxis: {
-                title: { text: 'Ventas ($)' }
-            },
-            tooltip: {
-                pointFormat: '<b>${point.y:,.2f}</b>'
-            },
-            series: [{
-                name: 'Ventas',
-                type: 'line',
-                data: data.map(x => x.totalMes)
-            }]
-        });
-    }
+            {
+                name: 'Año Actual',
+                type: 'areaspline',
+                color: '#3b82f6', // Azul (Blue-500)
+                data: datosActual.map(x => x.totalMes)
+            }
+        ],
+        credits: { enabled: false }
+    });
+}   
 
     // 📊 Top productos
     private graficaTopProductos(data: any[]): void {

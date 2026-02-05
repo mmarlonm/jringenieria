@@ -1,4 +1,4 @@
-import { Component, OnInit, LOCALE_ID } from "@angular/core";
+import { Component, OnInit, LOCALE_ID, ElementRef, QueryList, ViewChildren } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { QuotesService } from "../quotes.service";
 import {
@@ -37,7 +37,7 @@ import { ProjectService } from "../../project/project.service";
 @Component({
   selector: "app-quotes-details",
   templateUrl: "./quotes-details.component.html",
-  styleUrls:["./quotes-details.component.scss"],
+  styleUrls: ["./quotes-details.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
@@ -85,7 +85,7 @@ export class QuoteDetailsComponent implements OnInit {
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef,
     private projectService: ProjectService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.quotesForm = this.fb.group({
@@ -95,7 +95,7 @@ export class QuoteDetailsComponent implements OnInit {
       usuarioCreadorId: [0, Validators.required], // 🔹 Cambiar de '' a 0
       necesidad: [null, [Validators.required, Validators.maxLength(500)]],
       direccion: [null, [Validators.maxLength(255)]],
-      nombreContacto: [null, [Validators.required,Validators.maxLength(255)]],
+      nombreContacto: [null, [Validators.required, Validators.maxLength(255)]],
       telefono: [null, [Validators.maxLength(50)]],
       empresa: [null, [Validators.maxLength(255)]],
       cotizacion: [null, [Validators.maxLength(255)]],
@@ -117,7 +117,7 @@ export class QuoteDetailsComponent implements OnInit {
       montoTotal: [0],
       ajustesCostos: [null],
       comentarios: [null],
-      unidadId : [null]
+      unidadId: [null]
     });
     this.getEstatus();
     this.getClientes();
@@ -168,7 +168,7 @@ export class QuoteDetailsComponent implements OnInit {
   loadQuotes(id: number): void {
     this.quotesService.getQuoteById(id).subscribe((res) => {
       if (res) {
-        if(res.code==200){
+        if (res.code == 200) {
           var quotes = res.data;
           this.quotesForm.patchValue({
             cotizacionId: quotes.cotizacionId, // 🔹 Ahora se incluye el ID
@@ -202,90 +202,89 @@ export class QuoteDetailsComponent implements OnInit {
             unidadId: quotes.unidadId
           });
         }
-        else
-        {
+        else {
           Swal.fire({
             icon: "error",
-            title:"Opps",
-            text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+            title: "Opps",
+            text: "Hubo un error en el sistema, contacte al administrador del sistema.",
             draggable: true
           });
 
         }
-        
+
       }
     });
   }
 
   saveQuotes(): void {
-  if (this.quotesForm.invalid) {
-    Swal.fire({
-      icon: "error",
-      title:"Opps",
-      text:"Por favor, completa los campos obligatorios",
-      draggable: true
-    });   
-    return;                   
-  }
+    if (this.quotesForm.invalid) {
+      Swal.fire({
+        icon: "error",
+        title: "Opps",
+        text: "Por favor, completa los campos obligatorios",
+        draggable: true
+      });
+      return;
+    }
 
-  const quotesData: any = this.quotesForm.value;
+    const quotesData: any = this.quotesForm.value;
 
-  // Función para guardar la cotización (create o update)
-  const guardarCotizacion = () => {
-    if (this.quotesId) {
-      // Actualizar
-      quotesData.cotizacionId = this.quotesId;
-      this.quotesService.updateQuote(quotesData).subscribe((res) => {
-        if(res.code == 200){
-          this.router.navigate(["/dashboards/quote"]);
-          this.snackBar.open('Cotización actualizada correctamente', 'Cerrar', { duration: 3000 });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title:"Opps",
-            text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-            draggable: true
-          }); 
+    // Función para guardar la cotización (create o update)
+    const guardarCotizacion = () => {
+      if (this.quotesId) {
+        // Actualizar
+        quotesData.cotizacionId = this.quotesId;
+        this.quotesService.updateQuote(quotesData).subscribe((res) => {
+          if (res.code == 200) {
+            this.router.navigate(["/dashboards/quote"]);
+            this.snackBar.open('Cotización actualizada correctamente', 'Cerrar', { duration: 3000 });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Opps",
+              text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+              draggable: true
+            });
+          }
+        });
+      } else {
+        // Crear nuevo
+        this.quotesService.createQuote(quotesData).subscribe((res) => {
+          if (res.code == 200) {
+            this.router.navigate(["/dashboards/quote"]);
+            this.snackBar.open('Cotización guardada correctamente', 'Cerrar', { duration: 3000 });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Opps",
+              text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+              draggable: true
+            });
+          }
+        });
+      }
+    };
+
+    // Si el estatus es 2 (Aprobada), mostrar confirmación
+    if (quotesData.estatus == 2) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cotización Aprobada",
+        text: "Esta cotización está aprobada y se migrará a proyecto. ¿Desea continuar?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, guardar",
+        cancelButtonText: "Cancelar",
+        allowOutsideClick: false
+      }).then((result) => {
+        if (result.isConfirmed) {
+          guardarCotizacion();
         }
       });
     } else {
-      // Crear nuevo
-      this.quotesService.createQuote(quotesData).subscribe((res) => {
-        if(res.code == 200){
-          this.router.navigate(["/dashboards/quote"]);
-          this.snackBar.open('Cotización guardada correctamente', 'Cerrar', { duration: 3000 });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title:"Opps",
-            text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-            draggable: true
-          });
-        }
-      });
+      // Guardar directamente si no está aprobada
+      guardarCotizacion();
     }
-  };
-
-  // Si el estatus es 2 (Aprobada), mostrar confirmación
-  if (quotesData.estatus == 2) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cotización Aprobada",
-      text: "Esta cotización está aprobada y se migrará a proyecto. ¿Desea continuar?",
-      showCancelButton: true,
-      confirmButtonText: "Sí, guardar",
-      cancelButtonText: "Cancelar",
-      allowOutsideClick: false
-    }).then((result) => {
-      if (result.isConfirmed) {
-        guardarCotizacion();
-      }
-    });
-  } else {
-    // Guardar directamente si no está aprobada
-    guardarCotizacion();
   }
-}
 
 
   updateValue(event: Event, controlName: string) {
@@ -318,7 +317,7 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   getProspects(): void {
-    this.prospectsService.getProspectos().subscribe((res:any) => {
+    this.prospectsService.getProspectos().subscribe((res: any) => {
       this.prospects = res.data;
       this.filteredProspects = this.prospects;
 
@@ -342,10 +341,10 @@ export class QuoteDetailsComponent implements OnInit {
         this.quotesForm.patchValue({
           direccion: data.direccion,
         });
-    
+
         // Forzar la detección de cambios
         this.cdr.detectChanges();
-      }else{
+      } else {
         this.quotesForm.patchValue({
           direccion: "",
         });
@@ -382,8 +381,8 @@ export class QuoteDetailsComponent implements OnInit {
       error: (err) => {
         Swal.fire({
           icon: "error",
-          title:"Opps",
-          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
           draggable: true
         });
       },
@@ -397,16 +396,16 @@ export class QuoteDetailsComponent implements OnInit {
     this.quotesService.getFiles(this.quotesId).subscribe((files) => {
 
       // Mapear los archivos y asignarles un tipo basado en su nombreArchivo
-      if(files.length > 0){
+      if (files.length > 0) {
         this.files = files.map((file) => ({
           ...file,
           type: this.getFileType(file.nombreArchivo), // Asigna el tipo basado en el nombreArchivo
         }));
       }
-      else{
+      else {
         this.files = [];
       }
-      console.log("files ",this.files);
+      console.log("files ", this.files);
     });
   }
 
@@ -470,17 +469,17 @@ export class QuoteDetailsComponent implements OnInit {
           duration: 3000,
           panelClass: ['snackbar-success']
         });
-  
+
         // Si necesitas actualizar la lista después de eliminar:
         this.getFilesAll(); // Opcional: recargar lista de archivos
       },
       (error) => {
         Swal.fire({
           icon: "error",
-          title:"Opps",
-          text:"Ocurrio un error al eliminar el archivo",
+          title: "Opps",
+          text: "Ocurrio un error al eliminar el archivo",
           draggable: true
-        });       
+        });
       }
     );
   }
@@ -489,5 +488,44 @@ export class QuoteDetailsComponent implements OnInit {
     this.projectService
       .getUnidadesDeNegocio()
       .subscribe((data) => (this.unidadesDeNegocio = data));
+  }
+
+  getNombreArchivoGuardado(categoria: string): string | null {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    return archivo?.nombreArchivo || null;
+  }
+  hasArchivoGuardado(categoria: string): boolean {
+    return !!this.getNombreArchivoGuardado(categoria);
+  }
+
+  descargarArchivoGuardado(categoria: string): void {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+    if (!archivo) return;
+
+    this.downloadFile(archivo.cotizacionId, archivo.categoria, archivo.nombreArchivo);
+  }
+  eliminarArchivo(categoria: string): void {
+    const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
+
+    if (!archivo) return;
+
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Se eliminará el archivo permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.deleteFile(archivo.cotizacionId, archivo.categoria, archivo.nombreArchivo);
+      }
+    });
+  }
+
+  getArchivoNombre(categoria: string): string {
+    return this[`${categoria}File`]?.name || this.getNombreArchivoGuardado(categoria) || '';
   }
 }

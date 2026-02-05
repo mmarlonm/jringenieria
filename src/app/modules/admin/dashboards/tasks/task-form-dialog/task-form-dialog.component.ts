@@ -234,7 +234,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
     getUsers(): void {
         this.usersService.getUsers().subscribe(users => {
-            this.userList = users.filter(u => u.rolId !== 3 && u.activo !== false);
+            this.userList = users.filter(u =>  u.activo !== false);
         });
     }
 
