@@ -7,6 +7,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { ReportVentasService } from '../report-ventas.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { HighchartsChartModule } from 'highcharts-angular';
 @Component({
     selector: 'app-reporte-ventas-dashboard',
     standalone: true,
@@ -15,13 +16,20 @@ import html2canvas from 'html2canvas';
     imports: [
         CommonModule,
         FormsModule,
-        MatIconModule
+        MatIconModule,
+        HighchartsChartModule
     ]
 })
 export class ReportVentasDashboardComponent implements OnInit {
 
     // 🔹 Highcharts
-    Highcharts: typeof Highcharts = Highcharts;
+    public Highcharts: typeof Highcharts = Highcharts;
+    // En la declaración de variables de tu componente
+    public chartOptions: Highcharts.Options = {
+        title: { text: '' },
+        series: [{ type: 'column', data: [] }] // Estructura mínima
+    };
+    public updateFlag: boolean = false;
 
     // 🔹 Filtros
     sucursal: string = 'PACHUCA';
@@ -103,61 +111,76 @@ export class ReportVentasDashboardComponent implements OnInit {
         }
     }
 
-    // 📈 Ventas por mes
+
+    /**
+ * Renderiza la gráfica comparativa usando el ID del contenedor.
+ * @param data Lista de ventas agrupadas.
+ */
     private graficaVentasPorMes(data: any[]): void {
-    const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-    // 1. Separar los datos por periodo
-    const datosActual = data.filter(x => x.periodo === 'Actual');
-    const datosAnterior = data.filter(x => x.periodo === 'Anterior');
+        // 1. Preparar arrays de 12 posiciones con ceros
+        const valoresActual = new Array(12).fill(0);
+        const valoresAnterior = new Array(12).fill(0);
 
-    // 2. Obtener los meses (categorías) presentes en el periodo actual
-    const categorias = datosActual.map(x => mesesNombres[x.mes - 1]);
-
-    Highcharts.chart('chartVentasMes', {
-        chart: { 
-            type: 'areaspline', 
-            backgroundColor: 'transparent' 
-        },
-        title: { text: '' },
-        xAxis: {
-            categories: categorias,
-            crosshair: true
-        },
-        yAxis: {
-            title: { text: 'Venta Mensual ($)' },
-            labels: { format: '${value:,.0f}' }
-        },
-        tooltip: {
-            shared: true,
-            valuePrefix: '$',
-            valueDecimals: 2
-        },
-        plotOptions: {
-            areaspline: {
-                fillOpacity: 0.1,
-                lineWidth: 3,
-                marker: { enabled: true, radius: 4 }
+        // 2. Procesar la data (Case-insensitive y acumulativo)
+        data.forEach(item => {
+            const idx = item.mes - 1;
+            if (idx >= 0 && idx < 12) {
+                const p = item.periodo.toLowerCase();
+                if (p === 'actual') valoresActual[idx] += item.totalMes;
+                else if (p === 'anterior') valoresAnterior[idx] += item.totalMes;
             }
-        },
-        series: [
-            {
-                name: 'Año Anterior',
-                type: 'areaspline',
-                color: '#10b981', // Verde (Emerald-500)
-                dashStyle: 'ShortDot', // Línea punteada para diferenciarlo como histórico
-                data: datosAnterior.map(x => x.totalMes)
+        });
+
+        // 3. Renderizado directo al ID (usando 'as any' para evitar el error de overload)
+        Highcharts.chart('chartComparativaMes' as any, {
+            chart: {
+                type: 'column',
+                backgroundColor: 'transparent'
             },
-            {
-                name: 'Año Actual',
-                type: 'areaspline',
-                color: '#3b82f6', // Azul (Blue-500)
-                data: datosActual.map(x => x.totalMes)
-            }
-        ],
-        credits: { enabled: false }
-    });
-}   
+            title: { text: '' },
+            xAxis: {
+                categories: mesesNombres,
+                crosshair: true
+            },
+            yAxis: {
+                min: 0,
+                title: { text: 'Ventas ($)' },
+                labels: { format: '${value:,.0f}' }
+            },
+            plotOptions: {
+                column: {
+                    grouping: true,        // Fuerza barras lado a lado
+                    pointPadding: 0.1,     // Espacio entre barras del mismo mes
+                    groupPadding: 0.2,     // Espacio entre grupos de meses
+                    borderWidth: 0,
+                    borderRadius: 3,
+                    minPointLength: 5
+                }
+            },
+            series: [
+                {
+                    name: 'Periodo Anterior',
+                    type: 'column',
+                    color: '#10b981', // Verde
+                    data: valoresAnterior
+                },
+                {
+                    name: 'Periodo Actual',
+                    type: 'column',
+                    color: '#3b82f6', // Azul
+                    data: valoresActual
+                }
+            ],
+            tooltip: {
+                shared: true,
+                valuePrefix: '$',
+                valueDecimals: 2
+            },
+            credits: { enabled: false }
+        });
+    }
 
     // 📊 Top productos
     private graficaTopProductos(data: any[]): void {

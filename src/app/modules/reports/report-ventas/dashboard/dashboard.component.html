@@ -114,12 +114,11 @@
 
         <!-- 🔹 GRÁFICAS -->
         <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
-
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
-                    Ventas por Mes
+                    Ventas por Vendedor
                 </h2>
-                <div id="chartVentasMes" class="w-full h-[260px] sm:h-80"></div>
+                <div id="chartTopVendedores" class="w-full h-[260px] sm:h-80"></div>
             </div>
 
             <div class="bg-white rounded-xl shadow p-4">
@@ -130,16 +129,17 @@
             </div>
 
         </div>
+        <div class="w-full grid grid-cols-1 lg:grid-cols-1 gap-12">
+            <div class="bg-white rounded-xl shadow p-4 border border-gray-100">
+                <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
+                    Comparativa de Ventas
+                </h2>
+                <div id="chartComparativaMes" class="w-full h-[260px] sm:h-80"></div>
+            </div>
+        </div>
 
         <!-- 🔹 GRÁFICA + TABLA -->
-        <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            <div class="bg-white rounded-xl shadow p-4">
-                <h2 class="text-base sm:text-lg font-semibold mb-2">
-                    Ventas por Vendedor
-                </h2>
-                <div id="chartTopVendedores" class="w-full h-[260px] sm:h-80"></div>
-            </div>
+        <div class="w-full grid grid-cols-1 lg:grid-cols-1 gap-12">
 
             <!-- 🔹 DETALLE -->
             <div class="bg-white rounded-xl shadow p-4 flex flex-col">
