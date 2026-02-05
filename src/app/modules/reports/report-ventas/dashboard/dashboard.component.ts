@@ -2,12 +2,24 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+// 🔹 Highcharts
 import * as Highcharts from 'highcharts';
+import { HighchartsChartModule } from 'highcharts-angular';
+
+// 🔹 Angular Material
 import { MatIconModule } from "@angular/material/icon";
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+
+// 🔹 Servicios y Librerías Externas
 import { ReportVentasService } from '../report-ventas.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { HighchartsChartModule } from 'highcharts-angular';
+
 @Component({
     selector: 'app-reporte-ventas-dashboard',
     standalone: true,
@@ -17,7 +29,13 @@ import { HighchartsChartModule } from 'highcharts-angular';
         CommonModule,
         FormsModule,
         MatIconModule,
-        HighchartsChartModule
+        HighchartsChartModule, // Corregido: se eliminó la coma doble
+        MatFormFieldModule,
+        MatSelectModule,
+        MatInputModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatButtonModule
     ]
 })
 export class ReportVentasDashboardComponent implements OnInit {
@@ -32,9 +50,10 @@ export class ReportVentasDashboardComponent implements OnInit {
     public updateFlag: boolean = false;
 
     // 🔹 Filtros
-    sucursal: string = 'PACHUCA';
-    fechaInicio!: string;
-    fechaFin!: string;
+    public esMoral: boolean = false;
+    public sucursal: string = 'PACHUCA';
+    public fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1); // 1 de Enero
+    public fechaFin: Date = new Date();
 
     // 🔹 KPIs (alineados al JSON)
     kpis = {
@@ -47,15 +66,9 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 🔹 Drilldown
     detalleVentas: any[] = [];
-
-    esMoral: boolean = false; // default persona física
     constructor(private reportVentasService: ReportVentasService) { }
 
     ngOnInit(): void {
-        const today = new Date();
-        this.fechaInicio = today.toISOString().substring(0, 10);
-        this.fechaFin = today.toISOString().substring(0, 10);
-
         this.consultar();
     }
 
@@ -113,73 +126,93 @@ export class ReportVentasDashboardComponent implements OnInit {
 
 
     /**
- * Renderiza la gráfica comparativa usando el ID del contenedor.
- * @param data Lista de ventas agrupadas.
+ * Genera la gráfica comparativa alineando cronológicamente el periodo actual vs el anterior.
+ * @param data Array de objetos con { anio: number, mes: number, periodo: string, totalMes: number }
  */
     private graficaVentasPorMes(data: any[]): void {
         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-        // 1. Preparar arrays de 12 posiciones con ceros
-        const valoresActual = new Array(12).fill(0);
-        const valoresAnterior = new Array(12).fill(0);
+        setTimeout(() => {
+            // 1. Identificar la línea de tiempo basada EXCLUSIVAMENTE en los registros "Actual"
+            // Esto define cuántos grupos de barras veremos (Ene 25, Feb 25... Ene 26)
+            const lineaTiempo = data
+                .filter(d => d.periodo.toLowerCase() === 'actual')
+                .map(d => ({ anio: d.anio, mes: d.mes }))
+                .sort((a, b) => (a.anio - b.anio) || (a.mes - b.mes));
 
-        // 2. Procesar la data (Case-insensitive y acumulativo)
-        data.forEach(item => {
-            const idx = item.mes - 1;
-            if (idx >= 0 && idx < 12) {
-                const p = item.periodo.toLowerCase();
-                if (p === 'actual') valoresActual[idx] += item.totalMes;
-                else if (p === 'anterior') valoresAnterior[idx] += item.totalMes;
+            // 2. Crear las etiquetas del eje X (ej. "Ene 25", "Feb 26")
+            const categorias = lineaTiempo.map(p => `${mesesNombres[p.mes - 1]} ${p.anio.toString().slice(-2)}`);
+
+            // 3. Construir las series buscando el match exacto con la data del SP
+            const serieActual = lineaTiempo.map(p => {
+                const item = data.find(d =>
+                    d.anio === p.anio &&
+                    d.mes === p.mes &&
+                    d.periodo.toLowerCase() === 'actual'
+                );
+                return item ? item.totalMes : 0;
+            });
+
+            const serieAnterior = lineaTiempo.map(p => {
+                // Gracias al ajuste en el SP, el registro 'Anterior' viene con el mismo Año 
+                // que su pareja 'Actual' para facilitar esta búsqueda
+                const item = data.find(d =>
+                    d.anio === p.anio &&
+                    d.mes === p.mes &&
+                    d.periodo.toLowerCase() === 'anterior'
+                );
+                return item ? item.totalMes : 0;
+            });
+
+            // 4. Renderizado al contenedor
+            const container = document.getElementById('chartComparativaMes');
+            if (container) {
+                (Highcharts as any).chart(container, {
+                    chart: {
+                        type: 'column',
+                        backgroundColor: 'transparent'
+                    },
+                    title: { text: '' },
+                    xAxis: {
+                        categories: categorias,
+                        crosshair: true
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: { text: 'Monto ($)' },
+                        labels: { format: '${value:,.0f}' }
+                    },
+                    plotOptions: {
+                        column: {
+                            grouping: true,        // Barras una al lado de la otra
+                            pointPadding: 0.1,
+                            groupPadding: 0.2,
+                            borderWidth: 0,
+                            borderRadius: 3,
+                            minPointLength: 5      // Asegura que montos pequeños sean visibles
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'Año Anterior',
+                            color: '#10b981', // Verde
+                            data: serieAnterior
+                        },
+                        {
+                            name: 'Año Actual',
+                            color: '#3b82f6', // Azul
+                            data: serieActual
+                        }
+                    ],
+                    tooltip: {
+                        shared: true,
+                        valuePrefix: '$',
+                        valueDecimals: 2
+                    },
+                    credits: { enabled: false }
+                });
             }
-        });
-
-        // 3. Renderizado directo al ID (usando 'as any' para evitar el error de overload)
-        Highcharts.chart('chartComparativaMes' as any, {
-            chart: {
-                type: 'column',
-                backgroundColor: 'transparent'
-            },
-            title: { text: '' },
-            xAxis: {
-                categories: mesesNombres,
-                crosshair: true
-            },
-            yAxis: {
-                min: 0,
-                title: { text: 'Ventas ($)' },
-                labels: { format: '${value:,.0f}' }
-            },
-            plotOptions: {
-                column: {
-                    grouping: true,        // Fuerza barras lado a lado
-                    pointPadding: 0.1,     // Espacio entre barras del mismo mes
-                    groupPadding: 0.2,     // Espacio entre grupos de meses
-                    borderWidth: 0,
-                    borderRadius: 3,
-                    minPointLength: 5
-                }
-            },
-            series: [
-                {
-                    name: 'Periodo Anterior',
-                    type: 'column',
-                    color: '#10b981', // Verde
-                    data: valoresAnterior
-                },
-                {
-                    name: 'Periodo Actual',
-                    type: 'column',
-                    color: '#3b82f6', // Azul
-                    data: valoresActual
-                }
-            ],
-            tooltip: {
-                shared: true,
-                valuePrefix: '$',
-                valueDecimals: 2
-            },
-            credits: { enabled: false }
-        });
+        }, 200);
     }
 
     // 📊 Top productos

@@ -13,49 +13,44 @@
     </div>
 
     <!-- 🔹 FILTROS -->
-    <div class="w-full bg-white rounded-xl shadow p-4
-         grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div
+        class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
 
-        <div class="w-full">
-            <label class="text-sm text-gray-500">Tipo de persona</label>
-            <select class="w-full mt-1 p-2 border rounded-lg" [(ngModel)]="esMoral">
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Tipo de persona</mat-label>
+            <mat-select [(ngModel)]="esMoral">
+                <mat-option [value]="false">Jesús Méndez Arrillaga</mat-option>
+                <mat-option [value]="true">JR Ingeniería Eléctrica</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-                <!-- Persona Física -->
-                <option [ngValue]="false">
-                    Jesús Méndez Arrillaga
-                </option>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Sucursal</mat-label>
+            <mat-select [(ngModel)]="sucursal">
+                <mat-option value="PACHUCA">Pachuca</mat-option>
+                <mat-option value="Puebla">Puebla</mat-option>
+                <mat-option value="Queretaro">Querétaro</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-                <!-- Persona Moral -->
-                <option [ngValue]="true">
-                    JR Ingeniería Eléctrica
-                </option>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Fecha inicio</mat-label>
+            <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+            <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+            <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
 
-            </select>
-        </div>
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Fecha fin</mat-label>
+            <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+            <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+            <mat-datepicker #pickerFin></mat-datepicker>
+        </mat-form-field>
 
-
-        <div class="w-full">
-            <label class="text-sm text-gray-500">Sucursal</label>
-            <select class="w-full mt-1 p-2 border rounded-lg" [(ngModel)]="sucursal">
-                <option value="PACHUCA">Pachuca</option>
-                <option value="Puebla">Puebla</option>
-                <option value="Queretaro">Querétaro</option>
-            </select>
-        </div>
-
-        <div class="w-full">
-            <label class="text-sm text-gray-500">Fecha inicio</label>
-            <input type="date" class="w-full mt-1 p-2 border rounded-lg" [(ngModel)]="fechaInicio">
-        </div>
-
-        <div class="w-full">
-            <label class="text-sm text-gray-500">Fecha fin</label>
-            <input type="date" class="w-full mt-1 p-2 border rounded-lg" [(ngModel)]="fechaFin">
-        </div>
-
-        <div class="w-full flex items-end">
-            <button (click)="consultar()"
-                class="w-full px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
+        <div class="w-full pb-5">
+            <button mat-flat-button color="primary"
+                class="w-full h-[50px] !bg-green-600 hover:!bg-green-700 !text-white !rounded-lg" (click)="consultar()">
+                <mat-icon class="mr-2">search</mat-icon>
                 Consultar
             </button>
         </div>

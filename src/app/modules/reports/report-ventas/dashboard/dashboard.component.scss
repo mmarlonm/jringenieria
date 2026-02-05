@@ -64,3 +64,12 @@
     flex: none;
     width: 100px;
 }
+
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none; /* Elimina el espacio de error/pista para que el grid sea simétrico */
+}
+
+/* Para asegurar que el botón verde de Material respete tu color */
+.mat-flat-button.mat-primary {
+    --mdc-filled-button-container-color: #16a34a; 
+}
