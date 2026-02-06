@@ -22,6 +22,7 @@ interface ProductoNode {
     producto: string;
     cantidad: number;
     total: number;
+    codigo: string;
 }
 
 interface CategoriaNode {
@@ -233,7 +234,8 @@ export class ReportVentasProductDashboardComponent implements OnInit {
             cat.productos.push({
                 producto: r.nombreProducto,
                 cantidad: r.cantidadVendida,
-                total: r.totalVendido
+                total: r.totalVendido,
+                codigo : r.codigoProducto
             });
 
             // SUMAS
