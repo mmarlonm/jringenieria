@@ -1,7 +1,7 @@
-<div class="w-full h-screen bg-gray-50 flex flex-col overflow-hidden p-2 sm:p-6 gap-2">
+<div class="w-full min-h-screen bg-gray-50 flex flex-col overflow-hidden p-2 sm:p-6 gap-3">
 
     <!-- ================= HEADER ================= -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 shrink-0">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shrink-0">
 
         <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
             Reporte de Ventas por Producto
@@ -16,7 +16,7 @@
 
 
     <!-- ================= FILTROS ================= -->
-    <div class="bg-white rounded-xl shadow p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1 shrink-0">
+    <div class="bg-white rounded-xl shadow p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 shrink-0">
 
         <mat-form-field appearance="outline">
             <mat-label>Tipo persona</mat-label>
@@ -58,27 +58,21 @@
 
 
     <!-- ================= KPIs ================= -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 shrink-0">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
 
         <div class="bg-white rounded-xl shadow p-4">
             <p class="text-xs text-gray-500">Venta Total</p>
-            <p class="text-xl font-bold">
-                {{ totalVentas | currency:'MXN' }}
-            </p>
+            <p class="text-xl font-bold">{{ totalVentas | currency:'MXN' }}</p>
         </div>
 
         <div class="bg-white rounded-xl shadow p-4">
             <p class="text-xs text-gray-500">Cantidad</p>
-            <p class="text-xl font-bold">
-                {{ totalCantidad }}
-            </p>
+            <p class="text-xl font-bold">{{ totalCantidad }}</p>
         </div>
 
         <div class="bg-white rounded-xl shadow p-4">
             <p class="text-xs text-gray-500">Productos</p>
-            <p class="text-xl font-bold">
-                {{ totalProductos }}
-            </p>
+            <p class="text-xl font-bold">{{ totalProductos }}</p>
         </div>
 
         <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
@@ -91,100 +85,87 @@
     </div>
 
 
+    <!-- ================= TABLA ================= -->
+            <div class="bg-white rounded-xl shadow p-4 flex flex-col">
 
-    <!-- ================= CONTENIDO FLEX ================= -->
-    <!-- 🔥 ocupa TODO el alto restante -->
-    <div class="flex-1 flex flex-col gap-2 overflow-hidden">
+                <h2 class="font-semibold mb-3 shrink-0">
+                    Ventas por Clasificación
+                </h2>
 
+                <!-- 🔥 ALTURA BASE + SCROLL AUTOMÁTICO -->
+                <div class="overflow-auto border rounded-lg shadow-inner bg-gray-50/30
+                   min-h-[500px] max-h-[40vh]">
 
-        <!-- ================= TABLA ================= -->
-        <div class="bg-white rounded-xl shadow p-4 flex flex-col overflow-hidden flex-1">
+                    <table class="w-full text-sm table-auto">
 
-            <h2 class="font-semibold mb-3 shrink-0">
-                Ventas por Clasificación
-            </h2>
+                        <thead class="bg-gray-100 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-2 text-left w-[35%]">Clasificación</th>
+                                <th class="p-2 text-left w-[40%]">Producto</th>
+                                <th class="p-2 text-right w-[12%]">Cantidad</th>
+                                <th class="p-2 text-right w-[13%]">Total</th>
+                            </tr>
+                        </thead>
 
-            <!-- 🔥 SOLO AQUÍ hay scroll -->
-            <div class="flex-1 overflow-auto border rounded-lg">
+                        <tbody>
 
-                <table class="w-full text-sm table-auto">
-
-                    <thead class="bg-gray-100 sticky top-0 z-10">
-                        <tr>
-                            <th class="p-2 text-left w-[35%]">Clasificación</th>
-                            <th class="p-2 text-left w-[40%]">Producto</th>
-                            <th class="p-2 text-right w-[12%]">Cantidad</th>
-                            <th class="p-2 text-right w-[13%]">Total</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        <tr *ngIf="tablaJerarquica.length === 0">
-                            <td colspan="4" class="p-4 text-center text-gray-400">
-                                Sin información
-                            </td>
-                        </tr>
-
-                        <ng-container *ngFor="let padre of tablaJerarquica">
-
-                            <!-- PADRE -->
-                            <tr class="bg-gray-200 font-bold cursor-pointer hover:bg-gray-300"
-                                (click)="togglePadre(padre.nombre)">
-                                <td class="p-2 flex items-center gap-2">
-                                    <mat-icon>
-                                        {{ expandedPadres.has(padre.nombre) ? 'remove' : 'add' }}
-                                    </mat-icon>
-                                    {{ padre.nombre }}
+                            <tr *ngIf="tablaJerarquica.length === 0">
+                                <td colspan="4" class="p-6 text-center text-gray-400">
+                                    Sin información
                                 </td>
-                                <td></td>
-                                <td class="text-right">{{ padre.cantidad }}</td>
-                                <td class="text-right">{{ padre.total | currency:'MXN' }}</td>
                             </tr>
 
-                            <!-- SUB -->
-                            <ng-container *ngIf="expandedPadres.has(padre.nombre)">
+                            <ng-container *ngFor="let padre of tablaJerarquica">
 
-                                <ng-container *ngFor="let cat of padre.categorias">
+                                <tr class="bg-gray-200 font-bold cursor-pointer hover:bg-gray-300"
+                                    (click)="togglePadre(padre.nombre)">
+                                    <td class="p-2 flex items-center gap-2">
+                                        <mat-icon>
+                                            {{ expandedPadres.has(padre.nombre) ? 'remove' : 'add' }}
+                                        </mat-icon>
+                                        {{ padre.nombre }}
+                                    </td>
+                                    <td></td>
+                                    <td class="text-right pr-2">{{ padre.cantidad }}</td>
+                                    <td class="text-right pr-2">{{ padre.total | currency:'MXN' }}</td>
+                                </tr>
 
-                                    <tr class="bg-gray-100 cursor-pointer hover:bg-gray-200"
-                                        (click)="toggleCategoria(getCategoriaKey(padre.nombre, cat.nombre))">
+                                <ng-container *ngIf="expandedPadres.has(padre.nombre)">
 
-                                        <td class="pl-10 flex items-center gap-2">
-                                            <mat-icon>
-                                                {{ expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre)) ?
-                                                'remove' : 'add' }}
-                                            </mat-icon>
-                                            {{ cat.nombre }}
-                                        </td>
+                                    <ng-container *ngFor="let cat of padre.categorias">
 
-                                        <td></td>
-                                        <td class="text-right">{{ cat.cantidad }}</td>
-                                        <td class="text-right font-medium">{{ cat.total | currency:'MXN' }}</td>
+                                        <tr class="bg-gray-100 cursor-pointer hover:bg-gray-200"
+                                            (click)="toggleCategoria(getCategoriaKey(padre.nombre, cat.nombre))">
 
-                                    </tr>
-
-                                    <!-- PRODUCTOS -->
-                                    <ng-container
-                                        *ngIf="expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre))">
-
-                                        <tr *ngFor="let prod of cat.productos" class="border-b hover:bg-gray-50">
+                                            <td class="pl-10 flex items-center gap-2">
+                                                <mat-icon>
+                                                    {{ expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre))
+                                                    ? 'remove' : 'add' }}
+                                                </mat-icon>
+                                                {{ cat.nombre }}
+                                            </td>
 
                                             <td></td>
-
-                                            <td class="truncate">
-                                                {{ prod.producto }}
+                                            <td class="text-right pr-2">{{ cat.cantidad }}</td>
+                                            <td class="text-right font-medium pr-2">{{ cat.total | currency:'MXN' }}
                                             </td>
-
-                                            <td class="text-right">
-                                                {{ prod.cantidad }}
-                                            </td>
-
-                                            <td class="text-right text-green-700">
-                                                {{ prod.total | currency:'MXN' }}
-                                            </td>
-
                                         </tr>
+
+                                        <ng-container
+                                            *ngIf="expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre))">
+
+                                            <tr *ngFor="let prod of cat.productos" class="border-b hover:bg-gray-50">
+
+                                                <td></td>
+                                                <td class="truncate">{{ prod.producto }}</td>
+                                                <td class="text-right pr-2">{{ prod.cantidad }}</td>
+                                                <td class="text-right text-green-700 pr-2">
+                                                    {{ prod.total | currency:'MXN' }}
+                                                </td>
+
+                                            </tr>
+
+                                        </ng-container>
 
                                     </ng-container>
 
@@ -192,30 +173,26 @@
 
                             </ng-container>
 
-                        </ng-container>
+                        </tbody>
 
-                    </tbody>
+                    </table>
 
-                </table>
+                </div>
 
             </div>
 
-        </div>
 
 
+            <!-- ================= GRÁFICA ================= -->
+            <div class="bg-white rounded-xl shadow p-4 flex flex-col">
 
-        <!-- ================= GRÁFICA ================= -->
-        <div class="bg-white rounded-xl shadow p-4 flex flex-col h-[320px]">
+                <h2 class="font-semibold mb-3">
+                    Top 10 Productos
+                </h2>
 
-            <h2 class="font-semibold mb-3 shrink-0">
-                Top 10 Productos
-            </h2>
+                <div id="chartComparativaMes" class="flex-1 w-full"></div>
 
-            <div id="chartComparativaMes" class="flex-1 w-full"></div>
-
-        </div>
-
-    </div>
+            </div>
 
 
 </div>
