@@ -99,6 +99,7 @@ export const appRoutes: Route[] = [
                 {path: 'project-satisfaction-survey', loadChildren: () => import('app/modules/reports/project-satisfaction-survey/project-satisfaction-survey.routes')},
                 {path: 'report-venta', loadChildren: () => import('app/modules/reports/report-ventas/report-ventas.routes')},
                 {path: 'report-portfolio-overdue', loadChildren: () => import('app/modules/reports/report-portfolio-overdue/report-portfolio-overdue.routes')},
+                {path: 'report-venta-product', loadChildren: () => import('app/modules/reports/report-ventas-product/report-ventas-product.routes')},
             ]},
             {path: 'security', children: [
                 {path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes')},

@@ -1,0 +1,221 @@
+<div class="w-full h-screen bg-gray-50 flex flex-col overflow-hidden p-2 sm:p-6 gap-2">
+
+    <!-- ================= HEADER ================= -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 shrink-0">
+
+        <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
+            Reporte de Ventas por Producto
+        </h1>
+
+        <button mat-raised-button color="primary" (click)="exportarPDF()">
+            <mat-icon>picture_as_pdf</mat-icon>
+            Exportar PDF
+        </button>
+
+    </div>
+
+
+    <!-- ================= FILTROS ================= -->
+    <div class="bg-white rounded-xl shadow p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1 shrink-0">
+
+        <mat-form-field appearance="outline">
+            <mat-label>Tipo persona</mat-label>
+            <mat-select [(ngModel)]="esMoral">
+                <mat-option [value]="false">Física</mat-option>
+                <mat-option [value]="true">Moral</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Sucursal</mat-label>
+            <mat-select [(ngModel)]="sucursal">
+                <mat-option value="SANTA JULIA">Pachuca</mat-option>
+                <mat-option value="Puebla">Puebla</mat-option>
+                <mat-option value="Queretaro">Querétaro</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Fecha inicio</mat-label>
+            <input matInput [matDatepicker]="fi" [(ngModel)]="fechaInicio">
+            <mat-datepicker-toggle matSuffix [for]="fi"></mat-datepicker-toggle>
+            <mat-datepicker #fi></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Fecha fin</mat-label>
+            <input matInput [matDatepicker]="ff" [(ngModel)]="fechaFin">
+            <mat-datepicker-toggle matSuffix [for]="ff"></mat-datepicker-toggle>
+            <mat-datepicker #ff></mat-datepicker>
+        </mat-form-field>
+
+        <button mat-flat-button class="!bg-green-600 !text-white h-[50px]" (click)="consultar()">
+            <mat-icon>search</mat-icon>
+            Consultar
+        </button>
+
+    </div>
+
+
+    <!-- ================= KPIs ================= -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 shrink-0">
+
+        <div class="bg-white rounded-xl shadow p-4">
+            <p class="text-xs text-gray-500">Venta Total</p>
+            <p class="text-xl font-bold">
+                {{ totalVentas | currency:'MXN' }}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4">
+            <p class="text-xs text-gray-500">Cantidad</p>
+            <p class="text-xl font-bold">
+                {{ totalCantidad }}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4">
+            <p class="text-xs text-gray-500">Productos</p>
+            <p class="text-xl font-bold">
+                {{ totalProductos }}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
+            <p class="text-xs text-gray-500">Clasificaciones</p>
+            <p class="text-xl font-bold text-green-600">
+                {{ totalClasificaciones }}
+            </p>
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= CONTENIDO FLEX ================= -->
+    <!-- 🔥 ocupa TODO el alto restante -->
+    <div class="flex-1 flex flex-col gap-2 overflow-hidden">
+
+
+        <!-- ================= TABLA ================= -->
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col overflow-hidden flex-1">
+
+            <h2 class="font-semibold mb-3 shrink-0">
+                Ventas por Clasificación
+            </h2>
+
+            <!-- 🔥 SOLO AQUÍ hay scroll -->
+            <div class="flex-1 overflow-auto border rounded-lg">
+
+                <table class="w-full text-sm table-auto">
+
+                    <thead class="bg-gray-100 sticky top-0 z-10">
+                        <tr>
+                            <th class="p-2 text-left w-[35%]">Clasificación</th>
+                            <th class="p-2 text-left w-[40%]">Producto</th>
+                            <th class="p-2 text-right w-[12%]">Cantidad</th>
+                            <th class="p-2 text-right w-[13%]">Total</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <tr *ngIf="tablaJerarquica.length === 0">
+                            <td colspan="4" class="p-4 text-center text-gray-400">
+                                Sin información
+                            </td>
+                        </tr>
+
+                        <ng-container *ngFor="let padre of tablaJerarquica">
+
+                            <!-- PADRE -->
+                            <tr class="bg-gray-200 font-bold cursor-pointer hover:bg-gray-300"
+                                (click)="togglePadre(padre.nombre)">
+                                <td class="p-2 flex items-center gap-2">
+                                    <mat-icon>
+                                        {{ expandedPadres.has(padre.nombre) ? 'remove' : 'add' }}
+                                    </mat-icon>
+                                    {{ padre.nombre }}
+                                </td>
+                                <td></td>
+                                <td class="text-right">{{ padre.cantidad }}</td>
+                                <td class="text-right">{{ padre.total | currency:'MXN' }}</td>
+                            </tr>
+
+                            <!-- SUB -->
+                            <ng-container *ngIf="expandedPadres.has(padre.nombre)">
+
+                                <ng-container *ngFor="let cat of padre.categorias">
+
+                                    <tr class="bg-gray-100 cursor-pointer hover:bg-gray-200"
+                                        (click)="toggleCategoria(getCategoriaKey(padre.nombre, cat.nombre))">
+
+                                        <td class="pl-10 flex items-center gap-2">
+                                            <mat-icon>
+                                                {{ expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre)) ?
+                                                'remove' : 'add' }}
+                                            </mat-icon>
+                                            {{ cat.nombre }}
+                                        </td>
+
+                                        <td></td>
+                                        <td class="text-right">{{ cat.cantidad }}</td>
+                                        <td class="text-right font-medium">{{ cat.total | currency:'MXN' }}</td>
+
+                                    </tr>
+
+                                    <!-- PRODUCTOS -->
+                                    <ng-container
+                                        *ngIf="expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre))">
+
+                                        <tr *ngFor="let prod of cat.productos" class="border-b hover:bg-gray-50">
+
+                                            <td></td>
+
+                                            <td class="pl-16 truncate">
+                                                {{ prod.producto }}
+                                            </td>
+
+                                            <td class="text-right">
+                                                {{ prod.cantidad }}
+                                            </td>
+
+                                            <td class="text-right text-green-700">
+                                                {{ prod.total | currency:'MXN' }}
+                                            </td>
+
+                                        </tr>
+
+                                    </ng-container>
+
+                                </ng-container>
+
+                            </ng-container>
+
+                        </ng-container>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ================= GRÁFICA ================= -->
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col h-[320px]">
+
+            <h2 class="font-semibold mb-3 shrink-0">
+                Top 10 Productos
+            </h2>
+
+            <div id="chartComparativaMes" class="flex-1 w-full"></div>
+
+        </div>
+
+    </div>
+
+
+</div>

@@ -146,6 +146,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/report-portfolio-overdue',
+            },
+            {
+                id: 'reports.report-ventas-product',
+                title: 'Reporte de Ventas por Producto',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/reports/report-venta-product',
             }
         ],
     },
