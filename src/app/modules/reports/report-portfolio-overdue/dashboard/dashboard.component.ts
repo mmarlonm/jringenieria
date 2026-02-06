@@ -63,7 +63,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
 
     // Parámetros de Filtro (Inputs)
     // Se inicializan con tipos compatibles con Angular Material
-    sucursal: string = 'PACHUCA';
+    sucursal: string = 'SANTA JULIA';
     fechaInicio: Date = new Date();
     fechaFin: Date = new Date();
     esMoral: boolean = false;
