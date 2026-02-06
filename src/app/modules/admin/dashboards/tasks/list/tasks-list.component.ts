@@ -181,9 +181,9 @@ export class TaskListComponent implements OnInit, AfterViewInit {
 
     getClassByStatus(status: number): string {
         switch (status) {
-            case 1: return 'verde';      // Terminada
-            case 2: return 'amarillo';   // En proceso
-            case 3: return 'naranja';    // En pausa
+            case 1: return 'gris';      // Pendiente
+            case 2: return 'naranja';   // En proceso
+            case 3: return 'verde';    // Completada
             case 4: return 'rojo';       // Detenida
             default: return 'gris';
         }
@@ -191,9 +191,9 @@ export class TaskListComponent implements OnInit, AfterViewInit {
 
     getStatusName(status: number): string {
         switch (status) {
-            case 1: return 'Terminada';
+            case 1: return 'Pendiente';
             case 2: return 'En proceso';
-            case 3: return 'En pausa';
+            case 3: return 'Completada';
             case 4: return 'Detenida';
             default: return 'Sin estatus';
         }
