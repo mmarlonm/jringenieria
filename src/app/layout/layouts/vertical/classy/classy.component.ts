@@ -77,6 +77,9 @@ import {
     takeUntil
 } from 'rxjs';
 import {
+    TaskViewConfigService
+} from 'app/modules/admin/dashboards/tasks/services/task-view-config.service';
+import {
     CommonModule
 } from '@angular/common';
 import Swal from 'sweetalert2';
@@ -139,7 +142,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private _userService: UserService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
         private _fuseNavigationService: FuseNavigationService,
-        private tareasService: TaskService
+        private tareasService: TaskService,
+        private _taskConfigService: TaskViewConfigService
     ) { }
 
     // ----------------------------------------------------------
@@ -182,7 +186,12 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
     toggleNavigation(name: string): void {
         const navigation = this._fuseNavigationService.getComponent<FuseVerticalNavigationComponent>(name);
-        if (navigation) navigation.toggle();
+        if (navigation) {
+            navigation.toggle();
+            // User requested that toggling/closing the sidebar also saves configuration
+            const config = this._taskConfigService.getConfig();
+            this._taskConfigService.saveConfig(config);
+        }
     }
 
     onCalendarMenuOpened(): void {
@@ -413,65 +422,65 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     }
 
     saveNewEvent(event: any) {
-    if (!event.title || !event.start || !event.end) {
-        Swal.fire('Campos incompletos', 'Completa los campos requeridos', 'warning');
-        return;
-    }
-
-    const payload = {
-        id: this.selectedEventId,
-        title: event.title,
-        body: event.description,
-        start: new Date(event.start).toISOString(),
-        end: new Date(event.end).toISOString(),
-        location: event.location,
-        category: event.category,
-        usuarioId: Number(this.user.id)
-    };
-
-    this._userService.createEvent(payload).subscribe({
-        next: (res: any) => {
-            Swal.fire({
-                icon: 'success',
-                title: this.selectedEventId ? 'Evento actualizado' : 'Evento creado',
-                timer: 2000,
-                showConfirmButton: false
-            });
-
-            // ✅ Ajuste de fechas (restar 1 día a ambas)
-            let start = new Date(res.start);
-            let end = new Date(res.end);
-
-            // 🔧 Restar siempre un día
-            start.setDate(start.getDate() - 1);
-            end.setDate(end.getDate() - 1);
-
-            const newEvent = {
-                id: res.id || crypto.randomUUID(),
-                calendarId: res.calendarId || '1',
-                title: res.title || event.title,
-                category: res.category || event.category || 'time',
-                start,
-                end,
-                location: res.location || event.location,
-                bgColor: res.bgColor || '#047bfe',
-                borderColor: res.borderColor || '#047bfe',
-                color: res.color || '#fff'
-            };
-
-            // 🗓️ Agregar al calendario localmente
-            this.calendarInstance.createSchedules([newEvent]);
-            this.calendarInstance.render();
-
-            this.showAddEventForm = false;
-            this.selectedEventId = null;
-        },
-        error: (err) => {
-            console.error('Error al guardar evento:', err);
-            Swal.fire('Error', 'No se pudo guardar el evento', 'error');
+        if (!event.title || !event.start || !event.end) {
+            Swal.fire('Campos incompletos', 'Completa los campos requeridos', 'warning');
+            return;
         }
-    });
-}
+
+        const payload = {
+            id: this.selectedEventId,
+            title: event.title,
+            body: event.description,
+            start: new Date(event.start).toISOString(),
+            end: new Date(event.end).toISOString(),
+            location: event.location,
+            category: event.category,
+            usuarioId: Number(this.user.id)
+        };
+
+        this._userService.createEvent(payload).subscribe({
+            next: (res: any) => {
+                Swal.fire({
+                    icon: 'success',
+                    title: this.selectedEventId ? 'Evento actualizado' : 'Evento creado',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // ✅ Ajuste de fechas (restar 1 día a ambas)
+                let start = new Date(res.start);
+                let end = new Date(res.end);
+
+                // 🔧 Restar siempre un día
+                start.setDate(start.getDate() - 1);
+                end.setDate(end.getDate() - 1);
+
+                const newEvent = {
+                    id: res.id || crypto.randomUUID(),
+                    calendarId: res.calendarId || '1',
+                    title: res.title || event.title,
+                    category: res.category || event.category || 'time',
+                    start,
+                    end,
+                    location: res.location || event.location,
+                    bgColor: res.bgColor || '#047bfe',
+                    borderColor: res.borderColor || '#047bfe',
+                    color: res.color || '#fff'
+                };
+
+                // 🗓️ Agregar al calendario localmente
+                this.calendarInstance.createSchedules([newEvent]);
+                this.calendarInstance.render();
+
+                this.showAddEventForm = false;
+                this.selectedEventId = null;
+            },
+            error: (err) => {
+                console.error('Error al guardar evento:', err);
+                Swal.fire('Error', 'No se pudo guardar el evento', 'error');
+            }
+        });
+    }
 
 
     onBeforeUpdateSchedule(event: any): void {

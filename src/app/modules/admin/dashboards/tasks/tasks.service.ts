@@ -8,16 +8,16 @@ import { environment } from 'environments/environment';
   providedIn: 'root'
 })
 export class TaskService {
-  private apiUrl = `${environment.apiUrl}/Tareas`;
+  public apiUrl = `${environment.apiUrl}/Tareas`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Obtener todas las tareas
   getTasks(userId: number): Observable<Task[]> {
-  return this.http.get<Task[]>(`${this.apiUrl}/mis-tareas`, {
-    params: { userId: userId.toString() }
-  });
-}
+    return this.http.get<Task[]>(`${this.apiUrl}/mis-tareas`, {
+      params: { userId: userId.toString() }
+    });
+  }
 
 
   // Crear nueva tarea
@@ -41,20 +41,26 @@ export class TaskService {
   }
 
   uploadFile(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/SubirArchivoTarea`,formData);
+    return this.http.post<any>(`${this.apiUrl}/SubirArchivoTarea`, formData);
   }
 
   getFiles(tareaId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/ObtenerArchivosTarea/${tareaId}`);
   }
 
-  downloadFile(tareaId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
-    const url = `${this.apiUrl}/DescargarArchivoTarea/${tareaId}/${categoria}/${nombreArchivo}`;
-    return this.http.get(url, { responseType: 'blob' });
+  downloadFile(tareaId: number, categoria: string, nombreArchivo: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/DescargarArchivoTarea`, {
+      params: {
+        tareaId: tareaId.toString(),
+        categoria: categoria,
+        nombreArchivo: nombreArchivo
+      }
+    });
   }
 
-  removeFile(tareaId: number, categoria: string, nombreArchivo: string): Observable<Blob> {
-    const url = `${this.apiUrl}/EliminarArchivoTarea/${tareaId}/${categoria}/${nombreArchivo}`;
-    return this.http.delete(url, { responseType: 'blob' });
+  removeFile(tareaId: number, categoria: string, nombreArchivo: string): Observable<any> {
+    const encodedCat = encodeURIComponent(categoria);
+    const encodedFile = encodeURIComponent(nombreArchivo);
+    return this.http.delete(`${this.apiUrl}/EliminarArchivoTarea/${tareaId}/${encodedCat}/${encodedFile}`, { responseType: 'text' });
   }
 }

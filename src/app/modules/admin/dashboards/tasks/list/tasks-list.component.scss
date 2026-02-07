@@ -1,97 +1,272 @@
-.filter-menu {
-    .filter-container {
-      padding: 20px;
-      width: 320px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+/* ==========================================================================
+   ESTRUCTURA BASE DE LA TABLA (FLEX-BASED)
+   ========================================================================== */
+::ng-deep table.mat-table {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+    /* Permite que la tabla se expanda horizontalmente si las columnas crecen */
+    min-width: max-content !important;
+    border-collapse: collapse;
+
+    tr.mat-header-row,
+    tr.mat-row {
+        display: flex !important;
+        align-items: stretch;
+        /* Asegura que todas las celdas tengan la misma altura */
+        width: fit-content !important;
+        /* El row se ajusta al total de sus celdas */
+        min-width: 100%;
+        box-sizing: border-box;
     }
-  
-    .filter-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-      text-align: center;
+
+    tr.mat-header-row {
+        height: 42px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e5e7eb;
+        position: sticky;
+        top: 0;
+        z-index: 100;
     }
-  
-    .filter-field {
-      width: 100%;
+
+    tr.mat-row {
+        min-height: 48px;
+        background: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.1s ease;
+
+        &:hover {
+            background-color: #f9fafb !important;
+        }
     }
-  
-    .filter-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 12px;
+}
+
+/* ==========================================================================
+   CELDAS Y COMPORTAMIENTO DE REDIMENSIONAMIENTO
+   ========================================================================== */
+::ng-deep th.mat-header-cell,
+td.mat-cell {
+    display: flex !important;
+    align-items: center;
+    padding: 0 12px;
+    box-sizing: border-box;
+    position: relative;
+    /* Importante: Evita que el contenido rompa el ancho manual */
+    overflow: hidden;
+
+    // Cuando el ancho es inyectado por el TS (ej: width: 200px), 
+    // el navegador ignorará flex-grow gracias a esta regla:
+    &[style*="width"] {
+        flex: none !important;
     }
-  
-    .reset-button {
-      background: #fef2f2;
-      color: #d32f2f;
-      border: 1px solid #d32f2f;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      &:hover {
-        background: #fcdede;
-      }
+
+    &.border-r {
+        border-right: 1px solid #e5e7eb;
     }
-  
-    .apply-button {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+}
+
+::ng-deep th.mat-header-cell {
+    overflow: visible !important;
+    /* El resizer handle debe sobresalir */
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    user-select: none;
+}
+
+/* ==========================================================================
+   EL RESIZER (EL "MANGO" PARA ARRASTRAR)
+   ========================================================================== */
+::ng-deep .resizer {
+    position: absolute;
+    right: -4px;
+    /* Centrado sobre el borde derecho */
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    /* Área de contacto para el mouse */
+    cursor: col-resize;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto !important;
+    touch-action: none;
+
+    /* Icono visual (tres puntos verticales) */
+    &::after {
+        content: '⋮';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #94a3b8;
+        width: 12px;
+        height: 24px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 3px;
+        opacity: 0;
+        /* Oculto por defecto */
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
-  }
-  .small-icon-button {
-   width: 30px !important;
-   height: 30px !important;
-   line-height: 30px !important;
 
-   .mat-icon {
-      width: 20px !important;
-      height: 20px !important;
-      line-height: 20px !important;
-   }
-   .material-icons {
-      font-size: 20px !important;
-   }
-}
-.mat-column-actions {
-    flex: none;
-    width: 100px;
+    &:hover::after,
+    .is-resizing &::after {
+        opacity: 1;
+        border-color: #3b82f6;
+        color: #3b82f6;
+        transform: scale(1.1);
+    }
 }
 
-
-::ng-deep tr.verde {
-  background-color: #d4edda !important; /* Verde suave */
+/* Línea guía azul que aparece mientras arrastras */
+::ng-deep .is-resizing .resizer::before {
+    content: '';
+    position: absolute;
+    right: 4px;
+    top: 0;
+    width: 2px;
+    height: 100vh;
+    /* Línea larga que cruza toda la tabla */
+    background: #3b82f6;
+    z-index: 2000;
 }
 
-::ng-deep tr.amarillo {
-  background-color: #fff3cd !important; /* Amarillo suave */
+/* ==========================================================================
+   ESTADOS DE ARRASTRE Y OTROS
+   ========================================================================== */
+.is-resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+
+    * {
+        pointer-events: none !important;
+        /* Evita tooltips o clicks mientras arrastras */
+    }
 }
 
-::ng-deep tr.naranja {
-  background-color: #ffe5b4 !important; /* Naranja suave */
+::ng-deep .column-drag-handle {
+    cursor: grab;
+    margin-right: 8px;
+    color: #cbd5e1;
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    &:hover {
+        color: #64748b;
+    }
 }
 
-::ng-deep tr.rojo {
-  background-color: #f8d7da !important; /* Rojo suave */
+/* ==========================================================================
+   SCROLLBAR PERSONALIZADO
+   ========================================================================== */
+::ng-deep .overflow-y-auto,
+::ng-deep .overflow-x-auto {
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+        border: 2px solid #f1f5f9;
+
+        &:hover {
+            background: #94a3b8;
+        }
+    }
 }
 
-::ng-deep tr.gris {
-  background-color: #e2e3e5 !important; /* Gris suave */
+::ng-deep .resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    /* Área de contacto */
+    cursor: col-resize;
+    z-index: 50;
+    /* Por encima del texto del header */
+    pointer-events: auto !important;
+    /* Forzar que reciba clicks */
 }
 
-/* Opcional: efecto hover */
-::ng-deep tr:hover {
-  filter: brightness(0.97);
+/* Evita que Angular Material corte el mango del resizer */
+::ng-deep .mat-header-cell {
+    overflow: visible !important;
 }
 
+::ng-deep th[style*="width"],
+::ng-deep td[style*="width"] {
+    flex: none !important;
+    /* Bloquea el estiramiento automático de Flexbox */
+}
 
-::ng-deep .task-dialog .mat-mdc-dialog-surface {
-    border-radius: 16px;
+.group-table-wrapper {
+    .mat-header-cell {
+        position: relative;
+        overflow: visible !important; // Para que el mango se vea
+
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            width: 8px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 1000 !important; // Por encima de CDK Drag
+            transition: background-color 0.2s;
+
+            &:hover {
+                background-color: #3b82f6; // Azul Tailwind para feedback visual
+            }
+        }
+    }
+}
+
+// Bloquea la selección de texto mientras haces resize
+.is-resizing {
+    user-select: none;
+    cursor: col-resize;
+}
+
+/* En tu archivo de estilos .scss */
+
+.mat-header-cell,
+.mat-cell {
+    /* Permite que el contenido se oculte si la columna es más pequeña que el texto */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    /* Resetear comportamientos de flex que fuerzan tamaños mínimos */
+    flex: none !important;
+    box-sizing: border-box !important;
+}
+
+/* El contenedor interno debe permitir el encogimiento */
+.mat-header-cell>div {
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+table {
+    table-layout: fixed;
+    /* Esto acelera el renderizado y respeta estrictamente los anchos */
+    width: min-content;
+    /* Permite que la tabla crezca horizontalmente si hay muchas columnas */
 }

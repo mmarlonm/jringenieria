@@ -1,0 +1,61 @@
+:host {
+    display: block;
+}
+
+.max-h-screen-90 {
+    max-height: 90vh;
+}
+
+.bg-card {
+    background-color: #ffffff;
+}
+
+// Aspect ratio utility
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+// Custom animations for the gallery
+.group:hover {
+    .group-hover\:bg-opacity-30 {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    .group-hover\:opacity-100 {
+        opacity: 1;
+    }
+}
+
+// Adjust colors for better contrast
+.text-on-primary {
+    color: #ffffff;
+}
+
+.bg-primary {
+    background-color: #3b82f6; // Blue 500
+}
+
+.icon-size-12 {
+    width: 48px;
+    height: 48px;
+}
+
+.icon-size-16 {
+    width: 64px;
+    height: 64px;
+}
+
+.icon-size-7 {
+    width: 28px;
+    height: 28px;
+}
+
+.icon-size-5 {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-size-4 {
+    width: 16px;
+    height: 16px;
+}

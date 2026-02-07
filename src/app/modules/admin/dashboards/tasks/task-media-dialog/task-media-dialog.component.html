@@ -1,0 +1,90 @@
+<div class="flex flex-col max-w-240 md:min-w-160 max-h-screen-90 overflow-hidden bg-card">
+
+    <!-- Header -->
+    <div class="flex flex-0 items-center justify-between h-16 pr-3 sm:pr-5 pl-6 sm:pl-8 bg-primary text-on-primary">
+        <div class="text-lg font-medium">Archivos Multimedia - {{task.nombre}}</div>
+        <button mat-icon-button (click)="close()" [tabIndex]="-1">
+            <mat-icon class="text-current" svgIcon="heroicons_outline:x-mark"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col flex-auto p-6 sm:p-8 overflow-y-auto min-h-120">
+
+        <!-- Upload Section -->
+        <div class="mb-8">
+            <div class="text-md font-semibold mb-2">Agregar nuevos archivos</div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button mat-stroked-button (click)="fileInput.click()" class="w-full sm:w-auto">
+                        <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:paper-clip"></mat-icon>
+                        {{ selectedFile ? selectedFile.name : 'Seleccionar Archivo' }}
+                    </button>
+                    <button mat-flat-button color="primary" [disabled]="!selectedFile" (click)="uploadFile()">
+                        Subir
+                    </button>
+                </div>
+            </div>
+
+            <input #fileInput type="file" multiple class="hidden" (change)="onFileSelected($event)">
+        </div>
+
+        <mat-divider class="mb-8"></mat-divider>
+
+        <!-- Gallery Section -->
+        <div>
+            <div class="text-md font-semibold mb-4 flex items-center justify-between">
+                <span>Archivos Adjuntos</span>
+                <span class="text-xs text-secondary">{{files.length}} archivos</span>
+            </div>
+
+            <div *ngIf="files.length > 0; else noFiles" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div *ngFor="let file of files; let i = index"
+                    class="relative group flex flex-col rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shadow-sm transition-transform hover:scale-[1.02]">
+                    <!-- Preview Container with Icon -->
+                    <div class="relative aspect-square flex items-center justify-center overflow-hidden bg-gray-50">
+                        <mat-icon [svgIcon]="getFileIcon(file.nombreArchivo)"
+                            [ngClass]="getIconColor(file.nombreArchivo)" class="icon-size-16"></mat-icon>
+
+                        <div
+                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
+                            <button mat-icon-button
+                                class="text-white bg-blue-500 bg-opacity-80 hover:bg-blue-600 rounded-full"
+                                (click)="download(file)" matTooltip="Descargar">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:cloud-arrow-down"></mat-icon>
+                            </button>
+                            <button mat-icon-button
+                                class="text-white bg-red-500 bg-opacity-80 hover:bg-red-600 rounded-full"
+                                (click)="remove(file)" matTooltip="Eliminar">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:trash"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- File Info -->
+                    <div class="p-2 border-t bg-white">
+                        <div class="text-xs font-bold truncate text-center" [matTooltip]="file.nombreArchivo">
+                            {{file.nombreArchivo}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #noFiles>
+                <div
+                    class="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                    <mat-icon class="icon-size-12 text-gray-300 mb-2" svgIcon="heroicons_outline:photo"></mat-icon>
+                    <p class="text-sm text-gray-400">No hay archivos adjuntos a esta tarea.</p>
+                </div>
+            </ng-template>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end h-16 px-6 sm:px-8 border-t bg-gray-50">
+        <button mat-button (click)="close()">Cerrar</button>
+        <button mat-flat-button color="primary" class="ml-4" (click)="close()">
+            Aceptar
+        </button>
+    </div>
+</div>

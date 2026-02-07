@@ -16,25 +16,65 @@
 
 
 .mat-mdc-menu-panel {
-    min-width: 112px;
-    max-width: 800px !important;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    box-sizing: border-box;
-    outline: 0;
-    border-radius: var(--mat-menu-container-shape);
-    background-color: var(--mat-menu-container-color);
-    will-change: transform, opacity;
+  min-width: 112px;
+  max-width: 800px !important;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  outline: 0;
+  border-radius: var(--mat-menu-container-shape);
+  background-color: var(--mat-menu-container-color);
+  will-change: transform, opacity;
 }
 
 .gantt-container {
-  height: 500px !important; /* fallback de 500px si no está definida */
-  width: 100% !important; /* fallback de 100% si no está definida */
+  height: 500px !important;
+  /* fallback de 500px si no está definida */
+  width: 100% !important;
+  /* fallback de 100% si no está definida */
   border: 1px solid #ccc;
   overflow: auto;
 }
+
 @media (max-width: 768px) {
   .button-text {
     display: none;
   }
+}
+
+
+/* Estilo del mango generado por la directiva */
+.native-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1000 !important;
+  /* Por encima de cdkDrag */
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #3b82f6;
+    /* Azul Tailwind */
+  }
+}
+
+/* Evita selección de texto y bugs de cursor durante el arrastre */
+body.is-resizing-column {
+  cursor: col-resize !important;
+  user-select: none !important;
+
+  * {
+    pointer-events: none !important;
+  }
+
+  /* Pero permitimos los eventos en el objeto que escala si fuera necesario */
+}
+
+/* Forzar overflow visible en los headers de material */
+.mat-header-cell {
+  position: relative !important;
+  overflow: visible !important;
 }
