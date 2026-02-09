@@ -66,19 +66,31 @@
             <h3>Links</h3>
 
             <div formArrayName="links">
-                <div *ngFor="let link of links.controls; let i = index" class="link-row">
+
+                <div *ngFor="let ctrl of links.controls; let i = index" class="link-row flex items-center gap-2">
+
                     <mat-form-field appearance="outline" class="w-full">
                         <input matInput [formControlName]="i" placeholder="https://..." />
                     </mat-form-field>
 
+                    <!-- abrir link -->
+                    <button mat-icon-button type="button" color="primary" *ngIf="links.at(i).value"
+                        (click)="openLink(links.at(i).value)">
+                        <mat-icon>open_in_new</mat-icon>
+                    </button>
+
+                    <!-- eliminar -->
                     <button mat-icon-button color="warn" type="button" (click)="removeLink(i)"
                         [disabled]="data?.readOnly">
                         <mat-icon>delete</mat-icon>
                     </button>
+
                 </div>
+
             </div>
 
             <button mat-stroked-button type="button" color="primary" (click)="addLink()" [disabled]="data?.readOnly">
+
                 <mat-icon>add</mat-icon>
                 Agregar link
             </button>

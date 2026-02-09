@@ -165,9 +165,12 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 }
             });
 
-            if (task.links?.length) {
-                task.links.forEach(link => this.links.push(this.fb.control(link)));
-            }
+            this.form.setControl(
+                'links',
+                this.fb.array((task.links || []).map(l => this.fb.control(l)))
+            );
+
+
         });
     }
 
@@ -234,7 +237,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
     getUsers(): void {
         this.usersService.getUsers().subscribe(users => {
-            this.userList = users.filter(u =>  u.activo !== false);
+            this.userList = users.filter(u => u.activo !== false);
         });
     }
 
