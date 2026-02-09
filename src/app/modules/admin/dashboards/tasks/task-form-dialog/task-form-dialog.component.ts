@@ -186,6 +186,10 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         this.links.removeAt(index);
     }
 
+    openLink(url: string): void {
+  window.open(url, '_blank');
+}
+
     save(): void {
         if (this.form.invalid) return;
 
