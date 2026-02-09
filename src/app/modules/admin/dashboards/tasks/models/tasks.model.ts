@@ -1,6 +1,8 @@
 export interface Task {
   id?: number;
   nombre: string;
+  responsable?: any; // Puede ser un objeto Usuario con foto
+  asignados?: any[]; // Array de usuarios asignados
   comentarios?: string;
   fechaInicioEstimada?: Date;
   fechaFinEstimada?: Date;

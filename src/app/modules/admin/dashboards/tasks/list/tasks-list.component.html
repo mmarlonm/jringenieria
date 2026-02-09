@@ -173,6 +173,64 @@
               </td>
             </ng-container>
 
+            <ng-container matColumnDef="responsable">
+              <th mat-header-cell *matHeaderCellDef class="border-r text-center"
+                [ngStyle]="getColumnWidth('responsable')">
+                Responsable
+              </th>
+              <td mat-cell *matCellDef="let task" class="border-r" [ngStyle]="getColumnWidth('responsable')">
+                <div class="flex items-center justify-center h-full">
+                  <ng-container *ngIf="getUserData(task.creadorId) as res">
+                    <div
+                      class="w-8 h-8 rounded-full overflow-hidden border border-gray-200 shadow-sm transition-transform hover:scale-110 cursor-help"
+                      [matTooltip]="getUserFullName(task.creadorId)">
+
+                      <img *ngIf="res.avatar" [src]="res.avatar" class="w-full h-full object-cover" alt="avatar">
+
+                      <div *ngIf="!res.avatar"
+                        class="w-full h-full flex items-center justify-center text-white text-[10px] font-bold"
+                        [style.background-color]="getUserColor(task.creadorId)">
+                        {{ getUserInitials(res.nombreUsuario || res.nombre) }}
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="asignados">
+              <th mat-header-cell *matHeaderCellDef class="border-r text-center"
+                [ngStyle]="getColumnWidth('asignados')">
+                Asignados
+              </th>
+              <td mat-cell *matCellDef="let task" class="border-r" [ngStyle]="getColumnWidth('asignados')">
+                <div class="flex items-center justify-center -space-x-2 overflow-hidden py-1">
+
+                  <ng-container *ngFor="let uid of task.usuarioIds">
+                    <div *ngIf="getUserData(uid) as asignado"
+                      class="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-sm transition-all hover:z-10 hover:scale-125 cursor-help"
+                      [matTooltip]="getUserFullName(uid)">
+
+                      <img *ngIf="asignado.avatar" [src]="asignado.avatar" class="w-full h-full object-cover"
+                        alt="avatar">
+
+                      <div *ngIf="!asignado.avatar"
+                        class="w-full h-full flex items-center justify-center text-white text-[9px] font-bold"
+                        [style.background-color]="getUserColor(uid)">
+                        {{ getUserInitials(asignado.nombreUsuario || asignado.nombre) }}
+                      </div>
+                    </div>
+                  </ng-container>
+
+                  <div *ngIf="!task.usuarioIds?.length"
+                    class="w-7 h-7 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-300 hover:bg-gray-50 cursor-pointer"
+                    (click)="openTaskDialog(task.id)">
+                    <mat-icon class="icon-size-3">add</mat-icon>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
             <!-- Fecha Inicio Column -->
             <ng-container matColumnDef="fechaInicioEstimada">
               <th mat-header-cell *matHeaderCellDef class="border-r" [ngStyle]="getColumnWidth('fechaInicioEstimada')"

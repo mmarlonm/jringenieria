@@ -270,3 +270,25 @@ table {
     width: min-content;
     /* Permite que la tabla crezca horizontalmente si hay muchas columnas */
 }
+
+td.mat-column-asignados,
+td.mat-column-responsable {
+    padding: 0 8px !important;
+}
+
+.cursor-help {
+    cursor: help;
+}
+
+// Estilo para que los avatares se vean nítidos
+.rounded-full {
+    user-select: none;
+
+    &.bg-slate-500 {
+        background-color: #64748b;
+    }
+
+    &.bg-indigo-600 {
+        background-color: #4f46e5;
+    }
+}

@@ -35,6 +35,7 @@ import Sortable from 'sortablejs';
 import { TaskMediaDialogComponent } from "../task-media-dialog/task-media-dialog.component";
 import { ResizeColumnDirective } from './resize-column.directive';
 import { ResizableDirective, ResizeHandleDirective, ResizeEvent } from 'angular-resizable-element';
+import { UsersService } from "app/modules/admin/security/users/users.service";
 
 interface GroupedTasks {
     groupName: string;
@@ -80,7 +81,18 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild(MatPaginator) paginator: MatPaginator;
     @ViewChild(MatSort) sort: MatSort;
 
-    allColumns: string[] = ['id', 'nombre', 'fechaInicioEstimada', 'fechaFinEstimada', 'estatus', 'comentarios', 'media', 'acciones'];
+    allColumns: string[] = [
+        'id',
+        'nombre',
+        'responsable',
+        'asignados',
+        'fechaInicioEstimada',
+        'fechaFinEstimada',
+        'estatus',
+        'comentarios',
+        'media',
+        'acciones'
+    ];
     displayedColumns: string[] = [];
 
     // Grouping
@@ -119,27 +131,34 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     filterValue: string = '';
     hideCompleted: boolean = false;
 
+    // Nuevas variables de clase
+    userMap = new Map<number, any>();
+    userColors: { [key: string]: string } = {};
+    private palette = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#ff9800'];
+    userList: any[] = [];
+
     constructor(
         private taskService: TaskService,
         public configService: TaskViewConfigService, // Public for usage in template
         private snackBar: MatSnackBar,
         private dialog: MatDialog,
         private _userService: UserService,
-        private _cdr: ChangeDetectorRef
+        private _cdr: ChangeDetectorRef,
+        private usersService: UsersService,
     ) { }
 
     ngOnInit(): void {
-        // 1. Load User Config First
         this.loadConfig();
 
-        // 2. Load User Info
+        // 2. Cargamos usuarios primero para tener el Map listo
+        this.getUsers();
+
         this._userService.user$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
                 this.user = user["usuario"];
             });
 
-        // 3. Initial Load of Tasks
         this.loadTasks();
     }
 
@@ -193,52 +212,49 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     loadConfig(): void {
         this.viewConfig = this.configService.getConfig();
 
-        // Initialize column widths if missing or incomplete
-        if (!this.viewConfig.columnWidths) {
-            this.viewConfig.columnWidths = { ...this.configService.DEFAULT_CONFIG.columnWidths };
-        } else {
-            // Ensure all default columns have a width if not present in saved config
-            this.viewConfig.columnWidths = {
-                ...this.configService.DEFAULT_CONFIG.columnWidths,
-                ...this.viewConfig.columnWidths
-            };
-        }
+        // 1. Limpiar rastro de 'actions' y asegurar nuevas columnas en la config guardada
+        if (this.viewConfig.visibleColumns) {
+            this.viewConfig.visibleColumns = this.viewConfig.visibleColumns.map(col => col === 'actions' ? 'acciones' : col);
 
-        // Restore Columns and Their Order
-        this.displayedColumns = [...this.viewConfig.visibleColumns];
-
-        // Migración: Si aún tiene 'actions', lo cambiamos a 'acciones'
-        const oldActionsIndex = this.displayedColumns.indexOf('actions');
-        if (oldActionsIndex > -1) {
-            this.displayedColumns.splice(oldActionsIndex, 1, 'acciones');
-            if (!this.displayedColumns.includes('media')) {
-                this.displayedColumns.splice(oldActionsIndex, 0, 'media');
+            if (!this.viewConfig.visibleColumns.includes('responsable')) {
+                const idx = this.viewConfig.visibleColumns.indexOf('nombre');
+                this.viewConfig.visibleColumns.splice(idx + 1, 0, 'responsable', 'asignados');
             }
         }
 
-        // Migración recursiva para grupos guardados
+        // 2. Aplicar anchos por defecto
+        this.viewConfig.columnWidths = {
+            'responsable': '100px',
+            'asignados': '120px',
+            ...this.configService.DEFAULT_CONFIG.columnWidths,
+            ...this.viewConfig.columnWidths
+        };
+
+        // 3. Restaurar columnas visibles
+        this.displayedColumns = [...this.viewConfig.visibleColumns];
+
+        // 4. Migración recursiva para grupos (Aquí es donde solía esconderse el error 'actions')
         if (this.viewConfig.groupColumns) {
             Object.keys(this.viewConfig.groupColumns).forEach(key => {
-                let cols = this.viewConfig.groupColumns[key];
-                const actIdx = cols.indexOf('actions');
-                if (actIdx > -1) {
-                    cols.splice(actIdx, 1, 'acciones');
-                    if (!cols.includes('media')) {
-                        cols.splice(actIdx, 0, 'media');
-                    }
+                let cols = this.viewConfig.groupColumns[key].map(c => c === 'actions' ? 'acciones' : c);
+
+                if (!cols.includes('responsable')) {
+                    const nIdx = cols.indexOf('nombre');
+                    cols.splice(nIdx + 1, 0, 'responsable', 'asignados');
                 }
-                // Asegurar columnas requeridas en grupos
+
+                // Garantizar columnas mínimas
                 if (!cols.includes('acciones')) cols.push('acciones');
-                if (!cols.includes('nombre') && this.allColumns.includes('nombre')) cols.unshift('nombre');
+                if (!cols.includes('nombre')) cols.unshift('nombre');
+
                 this.viewConfig.groupColumns[key] = [...cols];
             });
         }
 
-        // Asegurarnos de que las columnas obligatorias/nuevas existan en el global
+        // 5. Garantía final para el global
         if (!this.displayedColumns.includes('acciones')) this.displayedColumns.push('acciones');
         if (!this.displayedColumns.includes('nombre')) this.displayedColumns.unshift('nombre');
 
-        // Restore Filters
         this.filterValue = this.viewConfig.filters['search'] || '';
         this.hideCompleted = this.viewConfig.filters['hideCompleted'] === true;
     }
@@ -304,7 +320,6 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     groupTasksByStatus(tasks: Task[]): void {
-        // Refined statuses: Pending, In Progress, Completed. Removed 'Detenido'.
         const statuses = [
             { id: 1, name: 'Pendiente', color: 'border-l-4 border-gray-400' },
             { id: 2, name: 'En Proceso', color: 'border-l-4 border-orange-400' },
@@ -315,29 +330,14 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         statuses.forEach(status => {
             if (this.hideCompleted && status.id === 3) return;
-
             const groupTasks = tasks.filter(t => t.estatus === status.id);
-
-            // Apply saved task order if exists
             const groupKey = `status-${status.id}`;
-            const savedOrder = this.viewConfig.groupTaskOrder?.[groupKey];
-            if (savedOrder && savedOrder.length > 0) {
-                groupTasks.sort((a, b) => {
-                    const idxA = savedOrder.indexOf(a.id!);
-                    const idxB = savedOrder.indexOf(b.id!);
-                    if (idxA === -1 && idxB === -1) return 0;
-                    if (idxA === -1) return 1;
-                    if (idxB === -1) return -1;
-                    return idxA - idxB;
-                });
-            }
 
-            // If filtering, hide groups with 0 tasks
             if (this.filterValue && groupTasks.length === 0) return;
 
-            // Filter the saved group columns to only include those that are currently visible globally
+            // Recuperar columnas del grupo y filtrar para que solo existan las reales
             const groupColumns = (this.viewConfig.groupColumns?.[groupKey] || [...this.displayedColumns])
-                .filter(col => this.displayedColumns.includes(col));
+                .filter(col => this.allColumns.includes(col));
 
             this.groupedTasks.push({
                 groupName: status.name,
@@ -348,37 +348,6 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 displayedColumns: groupColumns
             });
         });
-
-        // Tasks without status or other non-filtered status
-        const otherTasks = tasks.filter(t => !t.estatus || (t.estatus !== 1 && t.estatus !== 2 && t.estatus !== 3));
-        if (otherTasks.length > 0) {
-            const groupKey = 'status-0';
-            // Filter the saved group columns to only include those that are currently visible globally
-            const groupColumns = (this.viewConfig.groupColumns?.[groupKey] || [...this.displayedColumns])
-                .filter(col => this.displayedColumns.includes(col));
-
-            // Apply saved task order if exists
-            const savedOrder = this.viewConfig.groupTaskOrder?.[groupKey];
-            if (savedOrder && savedOrder.length > 0) {
-                otherTasks.sort((a, b) => {
-                    const idxA = savedOrder.indexOf(a.id!);
-                    const idxB = savedOrder.indexOf(b.id!);
-                    if (idxA === -1 && idxB === -1) return 0;
-                    if (idxA === -1) return 1;
-                    if (idxB === -1) return -1;
-                    return idxA - idxB;
-                });
-            }
-
-            this.groupedTasks.push({
-                groupName: 'Sin Estatus / Otros',
-                groupKey: groupKey,
-                tasks: new MatTableDataSource(otherTasks),
-                count: otherTasks.length,
-                color: 'border-l-4 border-gray-200',
-                displayedColumns: groupColumns
-            });
-        }
     }
 
     // Toggle Group Expansion
@@ -778,5 +747,71 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         // Forzamos detección de cambios
         this._cdr.detectChanges();
+    }
+
+    /**
+     * Busca un usuario en la lista local por su ID.
+     * @param userId - ID del usuario a buscar.
+     * @returns El objeto usuario o undefined.
+     */
+    getUserById(userId: number | string): any {
+        return this.userList.find(u => u.id === Number(userId));
+    }
+
+    getUserInitialsById(userId: number | string): string {
+        const user = this.getUserData(userId);
+        if (!user) return '?';
+        const name = (user.nombre || user.name || '').trim();
+        const names = name.split(/\s+/);
+        return names.length >= 2
+            ? (names[0][0] + names[1][0]).toUpperCase()
+            : names[0][0]?.toUpperCase() || '?';
+    }
+
+    getUsers(): void {
+        this.usersService.getUsers().subscribe(users => {
+            this.userList = users.filter(u => u.activo !== false);
+            this.userMap.clear();
+
+            this.userList.forEach(u => {
+                // Usamos usuarioId según tu JSON de usuarios
+                const id = Number(u.usuarioId || u.id);
+                const name = u.nombreUsuario || u.nombre || 'Usuario';
+                this.userMap.set(id, u);
+
+                // Generar color de respaldo basado en el nombre
+                if (!this.userColors[name]) {
+                    const hash = name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+                    const colorIdx = Math.abs(hash) % this.palette.length;
+                    this.userColors[name] = this.palette[colorIdx];
+                }
+            });
+            this.processTasks(); // Refrescar para vincular avatares
+            this._cdr.detectChanges();
+        });
+    }
+
+    getUserData(userId: number | string): any {
+        return this.userMap.get(Number(userId));
+    }
+
+    getUserInitials(name: string): string {
+        if (!name) return '?';
+        const names = name.trim().split(/\s+/);
+        if (names.length >= 2) {
+            return (names[0][0] + names[1][0]).toUpperCase();
+        }
+        return names[0][0] ? names[0][0].toUpperCase() : '?';
+    }
+
+    getUserFullName(userId: number | string): string {
+        const user = this.getUserData(userId);
+        return user ? (user.nombreUsuario || user.nombre) : 'No asignado';
+    }
+
+    getUserColor(userId: number | string): string {
+        const user = this.getUserData(userId);
+        if (!user) return '#cbd5e0';
+        return this.userColors[user.nombreUsuario || user.nombre] || '#64748b';
     }
 }
