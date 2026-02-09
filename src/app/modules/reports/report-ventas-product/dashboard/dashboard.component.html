@@ -7,11 +7,17 @@
             Reporte de Ventas por Producto
         </h1>
 
-        <button mat-raised-button color="primary" (click)="exportarPDF()">
-            <mat-icon>picture_as_pdf</mat-icon>
-            Exportar PDF
-        </button>
+        <div class="flex gap-2 w-full sm:w-auto">
+            <button mat-raised-button class="!bg-green-700 !text-white" (click)="exportarExcel()">
+                <mat-icon>grid_on</mat-icon>
+                Exportar Excel (CSV)
+            </button>
 
+            <button mat-raised-button color="primary" (click)="exportarPDF()">
+                <mat-icon>picture_as_pdf</mat-icon>
+                Exportar PDF
+            </button>
+        </div>
     </div>
 
 

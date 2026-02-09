@@ -235,7 +235,7 @@ export class ReportVentasProductDashboardComponent implements OnInit {
                 producto: r.nombreProducto,
                 cantidad: r.cantidadVendida,
                 total: r.totalVendido,
-                codigo : r.codigoProducto
+                codigo: r.codigoProducto
             });
 
             // SUMAS
@@ -293,4 +293,54 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     }
 
 
+    // Agrega esta función dentro de tu clase ReportVentasProductDashboardComponent
+    exportarExcel(): void {
+        if (!this.detalle || this.detalle.length === 0) return;
+
+        const headers = [
+            'Clasificacion Padre',
+            'Clasificacion',
+            'Codigo Producto',
+            'Producto',
+            'Cantidad Vendida',
+            'Total Vendido'
+        ];
+
+        // Función para limpiar texto y evitar saltos de columna
+        const cleanText = (text: any) => {
+            if (text === null || text === undefined) return '';
+            let str = String(text);
+            // 1. Eliminar saltos de línea
+            str = str.replace(/\r?\n|\r/g, " ");
+            // 2. Escapar comillas dobles (reemplazar " por "")
+            str = str.replace(/"/g, '""');
+            // 3. Envolver en comillas dobles para que las comas internas no separen columnas
+            return `"${str}"`;
+        };
+
+        const rows = this.detalle.map(r => [
+            cleanText(r.clasificacionPadre),
+            cleanText(r.clasificacion),
+            cleanText(r.codigoProducto),
+            cleanText(r.nombreProducto),
+            r.cantidadVendida,
+            r.totalVendido
+        ]);
+
+        // Usamos 'sep=,' para que Excel reconozca la coma como separador oficial inmediatamente
+        const csvContent = 'sep=,\n' + '\ufeff' + [
+            headers.join(','),
+            ...rows.map(e => e.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const fileName = `Ventas_Planas_${this.sucursal}_${Date.now()}.csv`;
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
