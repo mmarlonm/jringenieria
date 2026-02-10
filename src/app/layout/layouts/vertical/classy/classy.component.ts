@@ -85,6 +85,8 @@ import {
 import Swal from 'sweetalert2';
 import Calendar from 'tui-calendar';
 import 'tui-calendar/dist/tui-calendar.css';
+import { FuseConfigService } from '@fuse/services/config';
+import { FuseConfig } from '@fuse/services/config/config.types';
 
 @Component({
     selector: 'classy-layout',
@@ -135,6 +137,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     showAddEventForm: boolean;
     selectedEventId: any;
 
+    config: FuseConfig;
+    isDark: boolean;
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
@@ -142,6 +146,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private _userService: UserService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
         private _fuseNavigationService: FuseNavigationService,
+        private _fuseConfigService: FuseConfigService,
         private tareasService: TaskService,
         private _taskConfigService: TaskViewConfigService
     ) { }
@@ -151,6 +156,11 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     // ----------------------------------------------------------
 
     ngOnInit(): void {
+        this._fuseConfigService.config$.subscribe((config: FuseConfig) => {
+            this.config = config;
+            this.isDark = config.scheme === 'dark';
+        });
+
         this._navigationService.navigation$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((navigation: Navigation) => (this.navigation = navigation));
@@ -172,6 +182,14 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         });
 
         this.checkGoogleStatus();
+    }
+
+    /**
+     * Alternar el modo oscuro
+     */
+    toggleScheme(): void {
+        const scheme = this.isDark ? 'light' : 'dark';
+        this._fuseConfigService.config = { scheme };
     }
 
     ngOnDestroy(): void {

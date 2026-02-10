@@ -1,0 +1,42 @@
+:host {
+  .mat-mdc-row {
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+
+    // Clase que se activa con el mouse
+    &.row-active {
+      background-color: #f1f5f9 !important; // Gris azulado tenue
+
+      // Resaltamos el total aún más en el hover
+      .mat-column-total {
+        background-color: #dbeafe !important;
+        color: #1e40af !important;
+      }
+    }
+  }
+
+  // Opcional: Quitar la línea de borde de Material para un look más limpio
+  .mdc-data-table__cell {
+    border-bottom: none !important;
+  }
+}
+
+.scroll-container {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+}

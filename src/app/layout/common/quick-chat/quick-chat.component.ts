@@ -84,7 +84,7 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
     private _usersService: UsersService,
     private dialog: MatDialog,
     private signalRService: SignalRService
-  ) {}
+  ) { }
 
   @HostBinding('class') get classList(): any {
     return {
@@ -106,34 +106,34 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     const userData = JSON.parse(this._quickChatService.userInformation);
     this.usuarioActualId = userData.usuario.id;
-  
+
     this._quickChatService.getChats(this.usuarioActualId).subscribe();
-  
+
     this._quickChatService.chat$
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((chat: Chat) => {
         this.chat = chat;
         this.selectedChat = chat;
       });
-  
+
     this._quickChatService.chats$
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((chats: Chat[]) => {
         this.chats = chats;
       });
-  
+
     // Inicia conexión SignalR
     this.signalRService.startConnection(this.usuarioActualId.toString());
-  
-    this.signalRService.onMensajeRecibido()
-  .pipe(takeUntil(this._unsubscribeAll))
-  .subscribe((nuevoMensaje) => {
-    // Asegúrate que venga remitenteId
-    nuevoMensaje.isMine = Number(nuevoMensaje.contactId) === this.usuarioActualId;
 
-    // Opcional: solo agregar si pertenece al chat activo
-      this.chat.messages.push(nuevoMensaje);
-  });
+    this.signalRService.onMensajeRecibido()
+      .pipe(takeUntil(this._unsubscribeAll))
+      .subscribe((nuevoMensaje) => {
+        // Asegúrate que venga remitenteId
+        nuevoMensaje.isMine = Number(nuevoMensaje.contactId) === this.usuarioActualId;
+
+        // Opcional: solo agregar si pertenece al chat activo
+        this.chat.messages.push(nuevoMensaje);
+      });
   }
 
   ngAfterViewInit(): void {
@@ -160,11 +160,11 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
     this._mutationObserver.disconnect();
     this._unsubscribeAll.next(null);
     this._unsubscribeAll.complete();
-  
+
     if (this.chat) {
       this.signalRService.salirDelChat(Number(this.chat.id));
     }
-  
+
     // Opcional: si quieres cerrar la conexión globalmente
     // this.signalRService.stopConnection();
   }
@@ -193,9 +193,8 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
     this.contactoSeleccionado = idContact;
     this.signalRService.unirseAlChat(id);
     this._quickChatService.getChatById1(id, this.usuarioActualId).subscribe(() => {
-        console.log("chat", this.chat);
     });
-    
+
   }
 
   trackByFn(index: number, item: any): any {

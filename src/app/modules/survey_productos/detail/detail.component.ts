@@ -122,8 +122,6 @@ export class DetailComponent implements OnInit {
         this.form.disable(); // Desactiva el formulario si ya fue respondido
       }
     });
-    // Debug inicial
-    console.log('Formulario inicializado:', this.form.value);
   }
 
   /**
@@ -142,7 +140,6 @@ export class DetailComponent implements OnInit {
       tiempoEntrega: value
     });
 
-    console.log('Calificación seleccionada:', value);
   }
 
   /**
@@ -175,8 +172,6 @@ export class DetailComponent implements OnInit {
       productosDeseados: this.form.value.productosDeseados,
       comoConocio: this.form.value.comoConocio
     };
-
-    console.log('Payload enviado:', payload);
 
     this.surveyService.guardarEncuestaProducto(payload).subscribe({
       next: (res) => {

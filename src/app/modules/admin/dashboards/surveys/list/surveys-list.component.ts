@@ -83,7 +83,6 @@ export class SurveysListComponent implements OnInit, AfterViewInit {
     getProjects(): void {
         this.surveysService.getSurveys().subscribe((surveys: any) => {
             if (surveys.code == 200) {
-                console.log(surveys);
                 this.surveysCount = surveys.data.length;
                 this.dataSource = new MatTableDataSource(surveys.data);
                 this.dataSource.paginator = this.paginator;

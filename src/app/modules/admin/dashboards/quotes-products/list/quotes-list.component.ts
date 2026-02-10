@@ -319,7 +319,6 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
         unidadDeNegocioId: data.sucursal || 0,
         cotizacionProductosId: quote.cotizacionProductosId || 0
       };
-      console.log('DTO de encuesta:', dto);
 
       this.quotesService.enviarEncuesta(dto).subscribe({
         next: () => {

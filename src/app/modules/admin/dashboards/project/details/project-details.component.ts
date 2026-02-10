@@ -394,61 +394,60 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
     // 1. Prepara las tareas (como ya lo haces)
     const tasksWithClass = this.tasks.map(t => ({
-        ...t,
-        custom_class: t.custom_class || this.getClassByStatus(t.estatus)
+      ...t,
+      custom_class: t.custom_class || this.getClassByStatus(t.estatus)
     }));
 
     this.gantt = new Gantt(container, tasksWithClass, {
-        view_mode: this.viewMode,
-        language: 'es',
-        popup: '',
-        
-        // 2. Llama a la función de inyección de texto después de cambiar el modo de vista
-        on_view_change: () => this.addProgressText(), 
-        
-        on_click: (task) => {
-            // ... (Tu lógica de on_click se mantiene igual)
-            const foundTask = this.tasks.find(t => t.id === task.id);
-            console.log('Tarea clickeada:', task);
-            if (!foundTask) return;
+      view_mode: this.viewMode,
+      language: 'es',
+      popup: '',
 
-            const personasParticipantes = foundTask.equipo;
-            if (personasParticipantes) {
-                const personasIds = personasParticipantes.split(",");
-                this.personasSeleccionadasGantt = personasIds
-                    .map((id) => {
-                        const user = this.getUserById(id);
-                        return user ? user : null;
-                    })
-                    .filter((persona) => persona !== null);
-            }
-            else {
-                this.personasSeleccionadasGantt = [];
-            }
+      // 2. Llama a la función de inyección de texto después de cambiar el modo de vista
+      on_view_change: () => this.addProgressText(),
 
-            this.selectedTaskId = task.id;
-            this.editForm.setValue({
-                name: foundTask.name,
-                progress: foundTask.progress,
-                start: foundTask.start ? new Date(foundTask.start) : null,
-                end: foundTask.end ? new Date(foundTask.end) : null,
-                equipo: foundTask.equipo || '',
-                dependencies: foundTask.dependencies || [],
-                estatus: foundTask.estatus || '2'
-            });
+      on_click: (task) => {
+        // ... (Tu lógica de on_click se mantiene igual)
+        const foundTask = this.tasks.find(t => t.id === task.id);
+        if (!foundTask) return;
 
-
-            this.openEditDialog(task);
-        },
-        // 3. Llama a la función de inyección de texto después de un cambio de progreso (arrastrar)
-        on_progress_change: (task, progress) => {
-             // Opcional: Actualizar el progreso en tu modelo de datos si es necesario
-             const modelTask = this.tasks.find(t => t.id === task.id);
-             if (modelTask) {
-                 modelTask.progress = progress;
-             }
-             this.addProgressText();
+        const personasParticipantes = foundTask.equipo;
+        if (personasParticipantes) {
+          const personasIds = personasParticipantes.split(",");
+          this.personasSeleccionadasGantt = personasIds
+            .map((id) => {
+              const user = this.getUserById(id);
+              return user ? user : null;
+            })
+            .filter((persona) => persona !== null);
         }
+        else {
+          this.personasSeleccionadasGantt = [];
+        }
+
+        this.selectedTaskId = task.id;
+        this.editForm.setValue({
+          name: foundTask.name,
+          progress: foundTask.progress,
+          start: foundTask.start ? new Date(foundTask.start) : null,
+          end: foundTask.end ? new Date(foundTask.end) : null,
+          equipo: foundTask.equipo || '',
+          dependencies: foundTask.dependencies || [],
+          estatus: foundTask.estatus || '2'
+        });
+
+
+        this.openEditDialog(task);
+      },
+      // 3. Llama a la función de inyección de texto después de un cambio de progreso (arrastrar)
+      on_progress_change: (task, progress) => {
+        // Opcional: Actualizar el progreso en tu modelo de datos si es necesario
+        const modelTask = this.tasks.find(t => t.id === task.id);
+        if (modelTask) {
+          modelTask.progress = progress;
+        }
+        this.addProgressText();
+      }
     });
 
     // 4. Llama a la función justo después de la inicialización para dibujar el texto inicial
@@ -456,94 +455,94 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
     // Listener global de progreso (se mantiene igual, solo actualiza el modelo y redibuja el texto)
     if (!container.hasAttribute('data-progress-listener')) {
-        container.addEventListener("input", (event) => {
-            const target = event.target as HTMLInputElement;
-            if (target && target.type === "range" && target.id.startsWith("progress-input-")) {
-                const taskId = target.id.replace("progress-input-", "");
-                const newProgress = Number(target.value);
-                
-                // Actualizar el modelo de datos (IMPORTANTE para que addProgressText() funcione)
-                const modelTask = this.tasks.find(t => t.id === taskId);
-                if (modelTask) {
-                    modelTask.progress = newProgress;
-                }
-                
-                const span = document.getElementById(`${target.id}-value`);
-                if (span) span.textContent = newProgress.toString();
-                
-                if (this.gantt) this.gantt.progress(taskId, newProgress);
-                
-                // Redibujar el texto después de la actualización de progreso
-                this.addProgressText(); 
-            }
-        });
-        container.setAttribute('data-progress-listener', 'true');
+      container.addEventListener("input", (event) => {
+        const target = event.target as HTMLInputElement;
+        if (target && target.type === "range" && target.id.startsWith("progress-input-")) {
+          const taskId = target.id.replace("progress-input-", "");
+          const newProgress = Number(target.value);
+
+          // Actualizar el modelo de datos (IMPORTANTE para que addProgressText() funcione)
+          const modelTask = this.tasks.find(t => t.id === taskId);
+          if (modelTask) {
+            modelTask.progress = newProgress;
+          }
+
+          const span = document.getElementById(`${target.id}-value`);
+          if (span) span.textContent = newProgress.toString();
+
+          if (this.gantt) this.gantt.progress(taskId, newProgress);
+
+          // Redibujar el texto después de la actualización de progreso
+          this.addProgressText();
+        }
+      });
+      container.setAttribute('data-progress-listener', 'true');
     }
-}
+  }
 
 
-// Nuevo método dentro de tu clase/componente
-addProgressText(): void {
+  // Nuevo método dentro de tu clase/componente
+  addProgressText(): void {
     // Retraso para asegurar que Frappe Gantt ha renderizado todos los elementos SVG
     setTimeout(() => {
-        const barGroups = document.querySelectorAll('.gantt-container .bar-wrapper'); 
+      const barGroups = document.querySelectorAll('.gantt-container .bar-wrapper');
 
-        barGroups.forEach((group) => {
-            const taskId = group.getAttribute('data-id');
-            const task = this.tasks.find(t => t.id === taskId);
-            
-            if (!task) return;
+      barGroups.forEach((group) => {
+        const taskId = group.getAttribute('data-id');
+        const task = this.tasks.find(t => t.id === taskId);
 
-            const progress = task.progress;
+        if (!task) return;
 
-            // 1. Eliminar textos previos
-            group.querySelectorAll('.progress-text').forEach(t => t.remove());
+        const progress = task.progress;
 
-            // 2. Solo agregar el texto si el progreso es > 0
-            if (progress > 0) {
-                const progressBar = group.querySelector('.bar-progress');
-                
-                if (progressBar) {
-                    // Obtener dimensiones de la barra principal (NO SOLO EL PROGRESO)
-                    const barElement = group.querySelector('.bar'); 
-                    if (!barElement) return;
+        // 1. Eliminar textos previos
+        group.querySelectorAll('.progress-text').forEach(t => t.remove());
 
-                    // Usaremos las coordenadas de la barra principal para el posicionamiento
-                    const barX = parseFloat(barElement.getAttribute('x') || '0');
-                    const barY = parseFloat(barElement.getAttribute('y') || '0');
-                    const barHeight = parseFloat(barElement.getAttribute('height') || '0');
-                    const barWidth = parseFloat(barElement.getAttribute('width') || '0');
-                    
-                    // --- ZONA DE AJUSTE CLAVE ---
-                    
-                    // a) Posición X: Al final de la barra principal (NO la de progreso)
-                    // Coloca el texto en el borde derecho de la barra de la tarea
-                    const textX = barX + barWidth + 5; 
-                    
-                    // b) Posición Y: Desplazada verticalmente debajo de la barra
-                    // Ajuste: Posiciona el texto justo debajo del centro de la barra.
-                    // El + (barHeight / 2) lo centra, y el + 10 lo baja (el ajuste vertical)
-                    const textY = barY + barHeight / 2 + 5; 
-                    
-                    // --- FIN DE LA ZONA DE AJUSTE CLAVE ---
+        // 2. Solo agregar el texto si el progreso es > 0
+        if (progress > 0) {
+          const progressBar = group.querySelector('.bar-progress');
 
-                    // 4. Crear y configurar el elemento de texto SVG
-                    const svgNS = 'http://www.w3.org/2000/svg';
-                    const textElement = document.createElementNS(svgNS, 'text');
-                    
-                    textElement.setAttribute('x', textX.toString());
-                    textElement.setAttribute('y', textY.toString());
-                    textElement.setAttribute('class', 'progress-text');
-                    textElement.setAttribute('text-anchor', 'start'); // El texto se expande hacia la derecha
-                    textElement.textContent = `${progress}%`;
+          if (progressBar) {
+            // Obtener dimensiones de la barra principal (NO SOLO EL PROGRESO)
+            const barElement = group.querySelector('.bar');
+            if (!barElement) return;
 
-                    // 5. Inyectar el texto
-                    group.appendChild(textElement);
-                }
-            }
-        });
-    }, 100); 
-}
+            // Usaremos las coordenadas de la barra principal para el posicionamiento
+            const barX = parseFloat(barElement.getAttribute('x') || '0');
+            const barY = parseFloat(barElement.getAttribute('y') || '0');
+            const barHeight = parseFloat(barElement.getAttribute('height') || '0');
+            const barWidth = parseFloat(barElement.getAttribute('width') || '0');
+
+            // --- ZONA DE AJUSTE CLAVE ---
+
+            // a) Posición X: Al final de la barra principal (NO la de progreso)
+            // Coloca el texto en el borde derecho de la barra de la tarea
+            const textX = barX + barWidth + 5;
+
+            // b) Posición Y: Desplazada verticalmente debajo de la barra
+            // Ajuste: Posiciona el texto justo debajo del centro de la barra.
+            // El + (barHeight / 2) lo centra, y el + 10 lo baja (el ajuste vertical)
+            const textY = barY + barHeight / 2 + 5;
+
+            // --- FIN DE LA ZONA DE AJUSTE CLAVE ---
+
+            // 4. Crear y configurar el elemento de texto SVG
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const textElement = document.createElementNS(svgNS, 'text');
+
+            textElement.setAttribute('x', textX.toString());
+            textElement.setAttribute('y', textY.toString());
+            textElement.setAttribute('class', 'progress-text');
+            textElement.setAttribute('text-anchor', 'start'); // El texto se expande hacia la derecha
+            textElement.textContent = `${progress}%`;
+
+            // 5. Inyectar el texto
+            group.appendChild(textElement);
+          }
+        }
+      });
+    }, 100);
+  }
 
 
   // 🔹 Función para retornar color hexadecimal según estatus
@@ -1352,10 +1351,10 @@ addProgressText(): void {
     if (!archivo) return;
 
     this.downloadFile(archivo.categoria === "cotizacion"
-  ? (archivo.cotizacionId && archivo.cotizacionId !== 0
+      ? (archivo.cotizacionId && archivo.cotizacionId !== 0
         ? archivo.cotizacionId
         : archivo.proyectoId)   // usa proyectoId cuando cotizacionId es 0/null
-  : archivo.proyectoId, categoria, archivo.nombreArchivo, archivo.cotizacionId && archivo.cotizacionId !== 0 ? 'cotizacion' : 'proyecto');
+      : archivo.proyectoId, categoria, archivo.nombreArchivo, archivo.cotizacionId && archivo.cotizacionId !== 0 ? 'cotizacion' : 'proyecto');
   }
   eliminarArchivo(categoria: string): void {
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
@@ -1391,13 +1390,11 @@ addProgressText(): void {
 
   historialArchivo(categoria: string): void {
     const archivo = this.files.find(f => f.categoria.toLowerCase() === categoria.toLowerCase());
-    console.log('lista usuarios:', this.user);
 
     if (!archivo) return;
 
     this.projectService.getArchivoHistorial(archivo.id).subscribe((history) => {
       if (history && history.length > 0) {
-        console.log('Historial del archivo:', history);
         this.dialog.open(HistorialComponent, {
           width: '600px',
           data: {
@@ -1441,7 +1438,6 @@ addProgressText(): void {
     var userID = JSON.parse(localStorage.getItem('userInformation')).usuario.id;
     this.projectService.getToken(id, categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
       if (tokenResponse && tokenResponse.token) {
-        console.log('Token obtenido para OnlyOffice:', tokenResponse);
         // 3. Abrir el modal del editor
         this.dialog.open(OnlyOfficeEditorComponent, {
           width: '90vw',
@@ -1670,8 +1666,6 @@ addProgressText(): void {
       destinatarios
     };
 
-    console.log('📬 Enviando notificación con:', payload);
-
     // Llamada a tu API de notificación (ejemplo)
     this.projectService.enviarNotificacion(payload).subscribe({
       next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
@@ -1700,8 +1694,6 @@ addProgressText(): void {
       mensaje: `Se ha actualizado información de las tareas del proyecto.`,
       destinatarios
     };
-
-    console.log('📬 Enviando notificación a todo el equipo del proyecto:', payload);
 
     this.projectService.enviarNotificacionTarea(payload).subscribe({
       next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
@@ -1742,36 +1734,36 @@ addProgressText(): void {
     return Object.values(userMap);
   }
 
-cargarAvances() {
-  this.projectService.getAvance(this.projectId)
-    .subscribe((res: any) => this.avances = res);
-}
+  cargarAvances() {
+    this.projectService.getAvance(this.projectId)
+      .subscribe((res: any) => this.avances = res);
+  }
 
-openAvanceDialog(avance?: any) {
-  const dialogRef = this.dialog.open(AvanceDialogComponent, {
-    width: '600px',
-    data: avance ? { ...avance } : null
-  });
+  openAvanceDialog(avance?: any) {
+    const dialogRef = this.dialog.open(AvanceDialogComponent, {
+      width: '600px',
+      data: avance ? { ...avance } : null
+    });
 
-  dialogRef.afterClosed().subscribe(result => {
-    if (!result) return;
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
 
-    const payload = {
-      avanceId: result.avanceId ?? 0,
-      proyectoId: this.projectId,
-      descripcion: result.descripcion,
-      valor: result.valor
-    };
+      const payload = {
+        avanceId: result.avanceId ?? 0,
+        proyectoId: this.projectId,
+        descripcion: result.descripcion,
+        valor: result.valor
+      };
 
-    this.projectService.saveAvance(payload)
+      this.projectService.saveAvance(payload)
+        .subscribe(() => this.cargarAvances());
+    });
+  }
+
+  eliminarAvance(id: number) {
+    if (!confirm('¿Eliminar avance?')) return;
+
+    this.projectService.deleteAvance(id)
       .subscribe(() => this.cargarAvances());
-  });
-}
-
-eliminarAvance(id: number) {
-  if (!confirm('¿Eliminar avance?')) return;
-
-  this.projectService.deleteAvance(id)
-    .subscribe(() => this.cargarAvances());
-}
+  }
 }

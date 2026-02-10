@@ -390,7 +390,6 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   getFilesAll(): void {
-    console.log("getFilesAll", this.quotesId);
     if (!this.quotesId) return;
 
     this.quotesService.getFiles(this.quotesId).subscribe((files) => {
@@ -405,7 +404,6 @@ export class QuoteDetailsComponent implements OnInit {
       else {
         this.files = [];
       }
-      console.log("files ", this.files);
     });
   }
 

@@ -1,0 +1,196 @@
+<div class="w-full p-6 bg-default min-h-screen">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-black text-main tracking-tighter uppercase flex items-center gap-2 m-0">
+                <mat-icon class="text-blue-600 dark:text-blue-400 scale-125">swap_horiz</mat-icon>
+                Gestión de Traspasos
+            </h1>
+            <p class="text-secondary text-sm italic">Control de movimientos entre sucursales y almacenes.</p>
+        </div>
+        <button mat-flat-button color="primary" class="!rounded-xl !h-11 shadow-lg hover:scale-105 transition-transform"
+            (click)="consultar()">
+            <mat-icon>refresh</mat-icon> ACTUALIZAR
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div
+            class="bg-card p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex justify-between items-center group hover:border-blue-200 dark:hover:border-blue-500/50 transition-colors">
+            <div>
+                <p class="text-secondary text-xs font-bold uppercase tracking-widest">Total Historial</p>
+                <h2 class="text-3xl font-black m-0 text-main">{{transfers.length}}</h2>
+            </div>
+            <mat-icon
+                class="text-slate-100 dark:text-gray-800 scale-[2.5] group-hover:text-blue-50 dark:group-hover:text-blue-900/30 transition-colors">inventory_2</mat-icon>
+        </div>
+        <div
+            class="bg-card p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex justify-between items-center group hover:border-amber-200 dark:hover:border-amber-500/50 transition-colors">
+            <div>
+                <p class="text-secondary text-xs font-bold uppercase tracking-widest text-amber-500">Pendientes por
+                    recibir</p>
+                <h2 class="text-3xl font-black m-0 text-amber-500">{{ pendingCount }}</h2>
+            </div>
+            <mat-icon
+                class="text-amber-50 dark:text-amber-900/20 group-hover:text-amber-100 dark:group-hover:text-amber-800/40 scale-[2.5] transition-colors">pending_actions</mat-icon>
+        </div>
+    </div>
+
+    <div class="bg-card rounded-3xl shadow-sm border dark:border-gray-800 overflow-hidden">
+        <table mat-table [dataSource]="transfers" class="w-full bg-transparent">
+
+            <ng-container matColumnDef="folio">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs">Folio</th>
+                <td mat-cell *matCellDef="let row" class="p-4">
+                    <span
+                        class="font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg border border-blue-100 dark:border-blue-800 text-[11px]">
+                        #{{row.folio}}
+                    </span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="envia">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs">Solicita
+                </th>
+                <td mat-cell *matCellDef="let row" class="p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black text-white shadow-inner ring-2 ring-card overflow-hidden"
+                            [style.background-color]="getUserDisplay(row.idUsuarioEnvia).color"
+                            [matTooltip]="getUserDisplay(row.idUsuarioEnvia).name">
+
+                            <img *ngIf="getUserDisplay(row.idUsuarioEnvia).avatar"
+                                [src]="getUserDisplay(row.idUsuarioEnvia).avatar" class="w-full h-full object-cover">
+
+                            <span *ngIf="!getUserDisplay(row.idUsuarioEnvia).avatar">
+                                {{ getUserDisplay(row.idUsuarioEnvia).initials }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="text-[9px] font-bold text-hint uppercase tracking-tighter leading-none mb-1">Origen</span>
+                            <span class="text-[10px] font-bold text-main truncate max-w-[100px]">{{
+                                row.almacenOrigenNombre }}</span>
+                        </div>
+                    </div>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="recibe">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs">Destinatario
+                </th>
+                <td mat-cell *matCellDef="let row" class="p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black text-white shadow-inner ring-2 ring-card overflow-hidden"
+                            [style.background-color]="getUserDisplay(row.idUsuarioDestino).color"
+                            [matTooltip]="getUserDisplay(row.idUsuarioDestino).name">
+
+                            <img *ngIf="getUserDisplay(row.idUsuarioDestino).avatar"
+                                [src]="getUserDisplay(row.idUsuarioDestino).avatar" class="w-full h-full object-cover">
+
+                            <span *ngIf="!getUserDisplay(row.idUsuarioDestino).avatar">
+                                {{ getUserDisplay(row.idUsuarioDestino).initials }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="text-[9px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-tighter leading-none mb-1">Destino</span>
+                            <span
+                                class="text-[10px] font-black text-blue-900 dark:text-blue-200 truncate max-w-[100px]">{{
+                                row.almacenDestinoNombre }}</span>
+                        </div>
+                    </div>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="product">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs">Productos
+                </th>
+                <td mat-cell *matCellDef="let row" class="p-4">
+                    <div *ngFor="let det of row.detalles" class="flex flex-col mb-2 last:mb-0">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="text-[10px] font-black text-main uppercase leading-tight max-w-[180px] truncate">
+                                {{ det.nombreProducto }}
+                            </span>
+                            <span
+                                class="bg-gray-100 dark:bg-gray-700 text-secondary text-[9px] px-1.5 py-0.5 rounded-md font-bold border dark:border-gray-600">
+                                x{{ det.cantidadEnviada }}
+                            </span>
+                        </div>
+                        <span class="text-[9px] text-hint font-mono italic">{{ det.codigoProducto }}</span>
+                    </div>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="logistics">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs">Logística
+                </th>
+                <td mat-cell *matCellDef="let row" class="p-4 text-main">
+                    <div *ngIf="row.guiaRastreo || row.transportista; else noGuia" class="flex flex-col gap-1">
+                        <span class="flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter">
+                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-blue-500">local_shipping</mat-icon>
+                            {{ row.transportista || 'Paquetería' }}
+                        </span>
+                        <span
+                            class="text-[9px] font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded border border-blue-100 dark:border-blue-800 w-fit">
+                            {{ row.guiaRastreo || 'S/G' }}
+                        </span>
+                    </div>
+                    <ng-template #noGuia>
+                        <span class="text-[9px] text-hint italic uppercase font-bold tracking-widest">Sin asignar</span>
+                    </ng-template>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs text-center">
+                    Estado</th>
+                <td mat-cell *matCellDef="let row" class="p-4 text-center">
+                    <span [ngClass]="getStatusClass(row.estadoId)"
+                        class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm">
+                        {{ row.estadoNombre }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef
+                    class="!bg-gray-50 dark:!bg-gray-800/50 p-4 font-bold text-secondary uppercase text-xs text-center">
+                    Gestión</th>
+                <td mat-cell *matCellDef="let row" class="p-4 text-center">
+                    <button *ngIf="row.estadoId === 1" mat-flat-button color="primary"
+                        class="!rounded-lg !text-[10px] !h-8 !px-4 hover:shadow-md transition-shadow"
+                        (click)="approveTransfer(row)">
+                        <mat-icon class="!text-xs !w-3 !h-3">check_circle</mat-icon> RECIBIR
+                    </button>
+                    <div *ngIf="row.estadoId !== 1"
+                        class="text-emerald-500 dark:text-emerald-400 text-[10px] font-black uppercase tracking-tighter flex items-center justify-center gap-1">
+                        <mat-icon class="scale-75 align-middle">task_alt</mat-icon> RECIBIDO
+                    </div>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                class="hover:bg-hover transition-colors border-b dark:border-gray-800"></tr>
+        </table>
+
+        <div *ngIf="loading" class="p-16 flex flex-col items-center justify-center gap-3 bg-card">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            <span class="text-xs font-bold text-hint uppercase tracking-widest font-mono">Sincronizando...</span>
+        </div>
+
+        <div *ngIf="transfers.length === 0 && !loading"
+            class="p-20 text-center flex flex-col items-center justify-center bg-card">
+            <mat-icon class="text-hint opacity-20 scale-[4] mb-12">inventory</mat-icon>
+            <p class="text-hint uppercase text-[10px] font-black tracking-[0.3em]">No hay actividad de traspasos</p>
+        </div>
+    </div>
+</div>

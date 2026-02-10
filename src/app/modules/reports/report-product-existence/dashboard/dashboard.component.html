@@ -1,0 +1,160 @@
+<div class="w-full min-h-screen bg-gray-100 dark:bg-transparent p-4 sm:p-8 flex flex-col gap-6" id="pdf-content">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-main tracking-tight m-0">Existencias por Sucursal</h1>
+            <p class="text-secondary text-sm italic">Inventario consolidado en tiempo real</p>
+        </div>
+        <div class="flex gap-3">
+            <button mat-flat-button class="!bg-emerald-600 !text-white !rounded-xl shadow-lg shadow-emerald-200"
+                (click)="exportarExcel()">
+                <mat-icon>grid_on</mat-icon> Excel
+            </button>
+            <button mat-flat-button class="!bg-rose-600 !text-white !rounded-xl shadow-lg shadow-rose-200"
+                (click)="exportarPDF()">
+                <mat-icon>picture_as_pdf</mat-icon> PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl"><mat-icon>inventory_2</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Total QRO</p>
+                <p class="text-xl font-black text-main">{{totalQRO}}</p>
+            </div>
+        </div>
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl"><mat-icon>location_on</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Total PCH</p>
+                <p class="text-xl font-black text-main">{{totalPCH}}</p>
+            </div>
+        </div>
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl"><mat-icon>store</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Total PUE</p>
+                <p class="text-xl font-black text-main">{{totalPUE}}</p>
+            </div>
+        </div>
+        <div class="bg-emerald-600 p-4 rounded-2xl shadow-lg shadow-emerald-100 flex items-center gap-4 text-white">
+            <div class="p-3 bg-white/20 rounded-xl"><mat-icon>functions</mat-icon></div>
+            <div>
+                <p class="text-[10px] uppercase font-bold opacity-80">Existencia Total</p>
+                <p class="text-xl font-black">{{totalGeneral}}</p>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="bg-card rounded-2xl shadow-sm border dark:border-gray-800 p-2 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        <mat-form-field appearance="outline" class="md:col-span-3 !mb-[-1.25em]">
+            <mat-label>Razón Social</mat-label>
+            <mat-select [(ngModel)]="esMoral">
+                <mat-option [value]="false">Física</mat-option>
+                <mat-option [value]="true">Moral</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="md:col-span-3 !mb-[-1.25em]">
+            <mat-label>Fecha de Corte</mat-label>
+            <input matInput [matDatepicker]="fc" [(ngModel)]="fechaCorte">
+            <mat-datepicker-toggle matSuffix [for]="fc"></mat-datepicker-toggle>
+            <mat-datepicker #fc></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="md:col-span-4 !mb-[-1.25em]">
+            <mat-label>Buscar producto...</mat-label>
+            <input matInput [(ngModel)]="filtroTexto" (keyup)="aplicarFiltro()">
+            <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+        <button mat-flat-button
+            class="md:col-span-2 !h-[50px] !rounded-xl !bg-slate-800 dark:!bg-blue-600 !text-white shadow-md"
+            (click)="consultar()">
+            <mat-icon class="mr-2">sync</mat-icon> Consultar
+        </button>
+    </div>
+
+    <div class="bg-card rounded-2xl shadow-xl border dark:border-gray-800 overflow-hidden flex flex-col h-[650px]">
+        <div class="overflow-auto flex-grow scroll-container">
+            <table mat-table [dataSource]="dataSource" matSort matSortActive="total" matSortDirection="desc"
+                class="w-full bg-transparent">
+
+                <ng-container matColumnDef="codigo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 w-32 text-xs uppercase tracking-widest sticky top-0 z-20">
+                        CÓDIGO</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 font-mono text-blue-700 dark:text-blue-400 font-bold border-b dark:border-gray-800 uppercase">
+                        {{row.codigoProducto}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="descripcion">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase tracking-widest sticky top-0 z-20">
+                        DESCRIPCIÓN</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 text-main text-[11px] font-medium border-b dark:border-gray-800 uppercase leading-tight">
+                        {{row.nombreProducto}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="qro">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-emerald-700 !text-white text-center text-[10px] font-black w-16 uppercase sticky top-0 z-20">
+                        QRO</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="text-center font-bold text-main border-b dark:border-gray-800">
+                        {{row.qro}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="pach">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-emerald-700 !text-white text-center text-[10px] font-black w-16 uppercase sticky top-0 z-20">
+                        PCH</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="text-center font-bold text-main border-b dark:border-gray-800">
+                        {{row.pach}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="pue">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-emerald-700 !text-white text-center text-[10px] font-black w-16 uppercase sticky top-0 z-20">
+                        PUE</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="text-center font-bold text-main border-b dark:border-gray-800">
+                        {{row.pue}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="total">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-emerald-800 !text-white text-center text-[10px] font-black w-20 uppercase sticky top-0 z-20">
+                        TOTAL</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="text-center font-black bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-400 border-b dark:border-gray-800">
+                        {{row.total}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-800 !text-white text-center text-xs font-bold w-28 uppercase sticky top-0 z-20">
+                        ACCIONES</th>
+                    <td mat-cell *matCellDef="let row" class="p-2 border-b dark:border-gray-800 text-center">
+                        <button mat-flat-button
+                            class="!bg-blue-600 !text-white !rounded-lg !px-3 !py-1 !h-9 shadow-sm hover:!bg-blue-700 transition-all active:scale-95"
+                            (click)="abrirTraspaso(row)">
+                            <mat-icon class="!mr-1 !text-base">swap_horiz</mat-icon>
+                            <span class="text-[10px] font-bold tracking-tighter">TRASPASO</span>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-hover transition-colors">
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

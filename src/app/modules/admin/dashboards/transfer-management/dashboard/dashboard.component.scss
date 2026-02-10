@@ -1,0 +1,11 @@
+.status-pending {
+  @apply bg-amber-50 text-amber-600 border-amber-200;
+}
+
+.status-completed {
+  @apply bg-emerald-50 text-emerald-600 border-emerald-200;
+}
+
+.status-rejected {
+  @apply bg-rose-50 text-rose-600 border-rose-200;
+}

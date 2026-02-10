@@ -75,12 +75,12 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     rol: any;
     contactForm: UntypedFormGroup;
     roles: any[];
-    permisos:any[];
+    permisos: any[];
     private _tagsPanelOverlayRef: OverlayRef;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     navigation: FuseNavigationItem[] = [];
-    selectedPermissions:any;
+    selectedPermissions: any;
     /**
      * Constructor
      */
@@ -95,7 +95,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _overlay: Overlay,
         private _viewContainerRef: ViewContainerRef
-    ) {}
+    ) { }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
@@ -117,44 +117,39 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
 
         // Get the roles
         this._rolService.rol$
-    .pipe(takeUntil(this._unsubscribeAll))
-    .subscribe((rol: any) => {
-        this._usersListComponent.matDrawer.open();
-        this.rol = rol;
-        console.log("Información de rol recibida: ", rol);
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((rol: any) => {
+                this._usersListComponent.matDrawer.open();
+                this.rol = rol;
 
-        // Transformar vistas y permisos en un formato adecuado para el formulario
-        const vistasConPermisos = (rol.vistas || []).map(vista => ({
-            vistaId: vista.vistaId,
-            nombreVista: vista.nombreVista,
-            permisos: (rol.permisos || [])
-                .filter(p => p.vista?.vistaId === vista.vistaId)
-                .map(p => p.permisoId) // Extraemos solo los IDs de permisos
-        }));
+                // Transformar vistas y permisos en un formato adecuado para el formulario
+                const vistasConPermisos = (rol.vistas || []).map(vista => ({
+                    vistaId: vista.vistaId,
+                    nombreVista: vista.nombreVista,
+                    permisos: (rol.permisos || [])
+                        .filter(p => p.vista?.vistaId === vista.vistaId)
+                        .map(p => p.permisoId) // Extraemos solo los IDs de permisos
+                }));
 
-        console.log("Vistas con permisos asignados: ", vistasConPermisos);
+                // Crear estructura de permisos para <app-role-navigation>
+                const permisosSeleccionados = {};
+                vistasConPermisos.forEach(vista => {
+                    permisosSeleccionados[vista.nombreVista] = vista.permisos;
+                });
 
-        // Crear estructura de permisos para <app-role-navigation>
-        const permisosSeleccionados = {};
-        vistasConPermisos.forEach(vista => {
-            permisosSeleccionados[vista.nombreVista] = vista.permisos; 
-        });
+                // Asignar valores al formulario
+                this.contactForm.patchValue({
+                    rolId: rol.rolId,
+                    nombreRol: rol.nombreRol,
+                    vistas: vistasConPermisos
+                });
 
-        console.log("Permisos seleccionados: ", permisosSeleccionados);
+                // Asignar los permisos ya existentes a la navegación
+                this.selectedPermissions = permisosSeleccionados;
 
-        // Asignar valores al formulario
-        this.contactForm.patchValue({
-            rolId: rol.rolId,
-            nombreRol: rol.nombreRol,
-            vistas: vistasConPermisos
-        });
-
-        // Asignar los permisos ya existentes a la navegación
-        this.selectedPermissions = permisosSeleccionados;
-
-        // Marcar cambios
-        this._changeDetectorRef.markForCheck();
-    });
+                // Marcar cambios
+                this._changeDetectorRef.markForCheck();
+            });
 
         // Get the rol
         this._rolService.rol$
@@ -165,7 +160,6 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
 
                 // Get the rol
                 this.rol = rol;
-                console.log("informacion de rol ", rol);
 
                 // Patch values to the form
                 this.contactForm.patchValue(rol);
@@ -177,12 +171,10 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
                 this._changeDetectorRef.markForCheck();
             });
 
-            this._rolService.getNavigation().subscribe(data => {
-                console.log("data navigation", data)
-                this.navigation = data.default2 || []; // ✅ Asegurar que siempre sea un array
-                console.log("navigation data ", this.navigation)
-                this._changeDetectorRef.markForCheck();
-            });
+        this._rolService.getNavigation().subscribe(data => {
+            this.navigation = data.default2 || []; // ✅ Asegurar que siempre sea un array
+            this._changeDetectorRef.markForCheck();
+        });
     }
 
     /**
@@ -232,7 +224,6 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     updateContact(): void {
         // Get the rol object
         const rol = this.contactForm.getRawValue();
-        console.log("Nuevo rol ", rol)
         // Update the rol on the server
         this._rolService
             .updateRoles(rol)
@@ -321,13 +312,12 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
 
     actualizarPermisos(permisos: any[]): void {
         this.contactForm.patchValue({ vistas: permisos });
-        console.log("Permisos actualizados en el formulario:", this.contactForm.value);
     }
 
     togglePermiso(vistaId: string, permisoId: number, isChecked: boolean): void {
-        const vista:any = this.navigation.find(v => v.id === vistaId);
+        const vista: any = this.navigation.find(v => v.id === vistaId);
         if (!vista) return;
-    
+
         if (isChecked) {
             if (!vista.permisosSeleccionados.includes(permisoId)) {
                 vista.permisosSeleccionados.push(permisoId);
@@ -335,7 +325,5 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         } else {
             vista.permisosSeleccionados = vista.permisosSeleccionados.filter(id => id !== permisoId);
         }
-    
-        console.log("Permisos seleccionados:", this.navigation);
     }
 }

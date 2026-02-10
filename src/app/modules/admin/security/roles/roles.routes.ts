@@ -23,7 +23,6 @@ const contactResolver = (
 ) => {
     const rolesService = inject(RolService);
     const router = inject(Router);
-    console.log("parametro ", route.paramMap.get('id'))
 
     return rolesService.getUserById(route.paramMap.get('id')).pipe(
         // Error here means the requested contact is not available

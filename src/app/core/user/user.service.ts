@@ -77,7 +77,6 @@ export class UserService {
         const headers = new HttpHeaders({
             Authorization: `Bearer ${localStorage.getItem('accessToken')}`, // Obtener el token almacenado
         });
-        console.log(headers)
         return this._httpClient
             .post(`${this.apiUrl}/upload-avatar`, formData, { headers }) // Agregar headers a la solicitud
             .pipe(
@@ -147,7 +146,6 @@ export class UserService {
             .subscribe({
                 next: (res) => {
                     if (res.url) {
-                        console.log('Redirigiendo a:', res.url);
                         window.location.href = res.url; // 🔹 Redirige a Google
                     } else {
                         console.error('No se recibió una URL válida desde el servidor.');

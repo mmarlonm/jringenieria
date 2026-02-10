@@ -93,8 +93,6 @@ export class AnalyticsService {
       Longitud: p.lon
     }));
 
-    console.log("Enviando prospectos a optimizar:", body);
-
     return this._httpClient.post<any[]>(`${this.apiUrl}/optimizar-ruta`, body);
   }
 

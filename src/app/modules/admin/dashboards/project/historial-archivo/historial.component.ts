@@ -31,8 +31,6 @@ export class HistorialComponent {
     public dialogRef: MatDialogRef<HistorialComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
-    console.log('📄 Datos recibidos en modal:', data);
-
     const historial = data.historial || [];
     const usuarios = data.usuarios || [];
 

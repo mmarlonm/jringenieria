@@ -440,7 +440,6 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     async copyTextToClipboard(text: string): Promise<void> {
         try {
             await navigator.clipboard.writeText(text);
-            console.log('Texto copiado al portapapeles');
             // Aquí podrías mostrar un mensaje al usuario, por ejemplo:
             // alert('Texto copiado al portapapeles!');
         } catch (err) {

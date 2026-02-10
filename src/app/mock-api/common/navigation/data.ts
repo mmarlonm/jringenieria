@@ -72,6 +72,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/dashboards/surveys-products',
             },
+            {
+                id: 'dashboards.transfer-management',
+                title: 'Gestion de Traspasos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/dashboards/transfer-management',
+            },
         ],
     },
     {
@@ -95,7 +102,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:user',
                 link: '/catalogs/products',
             }
-            
+
         ],
     },
     {
@@ -153,6 +160,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/reports/report-venta-product',
+            },
+            {
+                id: 'reports.report-product-existence',
+                title: 'Reporte de Existencia de Productos',
+                type: 'basic',
+                icon: 'heroicons_outline:clipboard-document-list',
+                link: '/reports/report-product-existence',
             }
         ],
     },
@@ -179,7 +193,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             }
         ],
     },
-    
+
 ];
 export const compactNavigation: FuseNavigationItem[] = [
     {

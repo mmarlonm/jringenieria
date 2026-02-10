@@ -78,3 +78,86 @@ body.is-resizing-column {
   position: relative !important;
   overflow: visible !important;
 }
+
+/* 🎨 RESET GLOBAL DE MODO OSCURO */
+.dark {
+
+  // 1. Forzar el fondo de la página y contenedores base
+  body,
+  .bg-default,
+  .bg-white,
+  .bg-slate-50,
+  .bg-gray-50 {
+    background-color: var(--fuse-bg-default) !important;
+  }
+
+  // 2. FORZAR CARDS (Cualquier cosa que actúe como tarjeta)
+  .bg-card,
+  .mat-mdc-card,
+  .mat-card,
+  [class*="bg-white"] {
+    background-color: var(--fuse-bg-card) !important;
+    --mdc-filled-card-container-color: var(--fuse-bg-card) !important;
+    --mdc-elevated-card-container-color: var(--fuse-bg-card) !important;
+    border-color: var(--fuse-border) !important;
+  }
+
+  // 3. TEXTOS (Solución para letras oscuras)
+  // Atacamos directamente los elementos para que no hereden el negro
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  span,
+  p,
+  div,
+  mat-icon,
+  .text-main,
+  .text-slate-800,
+  .text-gray-900 {
+    &:not(.text-white):not(.text-blue-500):not(.text-emerald-500) {
+      color: var(--fuse-text-default) !important;
+    }
+  }
+
+  // 4. SELECTS, INPUTS Y FILTROS (MDC Components)
+  .mat-mdc-form-field {
+    // Color del texto que escribes
+    --mdc-filled-textField-input-text-color: var(--fuse-text-default) !important;
+    --mdc-outlined-textField-input-text-color: var(--fuse-text-default) !important;
+
+    // Color de la etiqueta (Label)
+    --mdc-filled-textField-label-text-color: var(--fuse-text-secondary) !important;
+    --mdc-outlined-textField-label-text-color: var(--fuse-text-secondary) !important;
+
+    // Color del icono y flecha del select
+    .mat-mdc-select-arrow,
+    .mat-datepicker-toggle,
+    .mat-icon {
+      color: var(--fuse-text-secondary) !important;
+    }
+  }
+
+  // El valor seleccionado dentro del Select
+  .mat-mdc-select-value-text {
+    color: var(--fuse-text-default) !important;
+  }
+
+  // 5. TABLAS DE REPORTES (Ventas, etc.)
+  .mat-mdc-table {
+    background: var(--fuse-bg-card) !important;
+
+    .mat-mdc-header-cell {
+      background-color: var(--fuse-bg-default) !important;
+      color: var(--fuse-text-secondary) !important;
+      font-weight: bold;
+    }
+
+    .mat-mdc-cell {
+      color: var(--fuse-text-default) !important;
+      border-bottom-color: var(--fuse-border) !important;
+    }
+  }
+}

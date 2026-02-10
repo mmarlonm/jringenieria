@@ -1,0 +1,110 @@
+<div class="p-6 flex flex-col gap-6 max-w-[500px] overflow-hidden">
+    <div class="flex items-center justify-between">
+        <h2 class="text-xl font-black text-gray-800 flex items-center gap-2 m-0 uppercase tracking-tighter">
+            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <mat-icon>swap_horiz</mat-icon>
+            </div>
+            Gestión de Traspaso
+        </h2>
+        <button mat-icon-button mat-dialog-close class="text-gray-400">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <div class="bg-slate-800 p-4 rounded-2xl shadow-inner text-white">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex-grow">
+                <p class="text-[9px] uppercase font-bold text-slate-400 leading-none mb-1 tracking-widest">Producto
+                    seleccionado</p>
+                <p class="font-bold text-sm leading-tight uppercase">{{data.producto.nombreProducto}}</p>
+            </div>
+            <span
+                class="bg-white/10 text-white text-[10px] px-2 py-1 rounded font-mono font-bold border border-white/20">
+                {{data.producto.codigoProducto}}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
+            <div class="text-center">
+                <p class="text-[8px] text-slate-400 font-bold uppercase">QRO</p>
+                <p class="text-xs font-black" [class.text-emerald-400]="traspaso.idAlmacenOrigen === 1">
+                    {{data.producto.qro}}</p>
+            </div>
+            <div class="text-center border-x border-white/10">
+                <p class="text-[8px] text-slate-400 font-bold uppercase">PCH</p>
+                <p class="text-xs font-black" [class.text-emerald-400]="traspaso.idAlmacenOrigen === 2">
+                    {{data.producto.pach}}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-[8px] text-slate-400 font-bold uppercase">PUE</p>
+                <p class="text-xs font-black" [class.text-emerald-400]="traspaso.idAlmacenOrigen === 3">
+                    {{data.producto.pue}}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col gap-4">
+
+        <div class="grid grid-cols-2 gap-4">
+            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                <mat-label>Origen</mat-label>
+                <mat-select [(ngModel)]="traspaso.idAlmacenOrigen" (selectionChange)="onOrigenChange()" name="origen">
+                    <mat-option [value]="1">QUERÉTARO</mat-option>
+                    <mat-option [value]="2">PACHUCA</mat-option>
+                    <mat-option [value]="3">PUEBLA</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                <mat-label>Destino</mat-label>
+                <mat-select [(ngModel)]="traspaso.idAlmacenDestino" (selectionChange)="onDestinoChange()"
+                    name="destino">
+                    <mat-option [value]="1" [disabled]="traspaso.idAlmacenOrigen === 1">QUERÉTARO</mat-option>
+                    <mat-option [value]="2" [disabled]="traspaso.idAlmacenOrigen === 2">PACHUCA</mat-option>
+                    <mat-option [value]="3" [disabled]="traspaso.idAlmacenOrigen === 3">PUEBLA</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+            <mat-label>Cantidad a enviar</mat-label>
+            <input matInput type="number" [(ngModel)]="traspaso.cantidad" [disabled]="!traspaso.idAlmacenOrigen"
+                name="cantidad">
+
+            <mat-icon matSuffix [class.text-rose-500]="traspaso.cantidad > stockDisponible"
+                [class.text-emerald-500]="traspaso.cantidad <= stockDisponible && traspaso.cantidad > 0">
+                {{ traspaso.cantidad > stockDisponible ? 'warning' : 'inventory' }}
+            </mat-icon>
+
+            <mat-hint *ngIf="traspaso.idAlmacenOrigen" class="!text-[11px] font-bold">
+                <span [class.text-rose-600]="traspaso.cantidad > stockDisponible"
+                    [class.text-emerald-600]="traspaso.cantidad <= stockDisponible">
+                    {{ traspaso.cantidad > stockDisponible ? 'Excede el stock disponible: ' : 'Máximo a traspasar: ' }}
+                    {{stockDisponible}}
+                </span>
+            </mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+            <mat-label>Responsable en Destino</mat-label>
+            <mat-select [(ngModel)]="traspaso.idUsuarioDestino" name="usuarioDestino">
+                <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">
+                    {{user.nombreUsuario}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    <div class="flex flex-col gap-3 mt-4">
+        <button mat-flat-button class="!h-14 !rounded-2xl !text-white shadow-xl transition-all duration-300"
+            [class.!bg-slate-300]="esInvalido || loading" [class.!bg-blue-700]="!esInvalido && !loading"
+            [disabled]="esInvalido || loading" (click)="confirmarTraspaso()">
+
+            <div class="flex items-center justify-center gap-3" *ngIf="!loading">
+                <mat-icon>send</mat-icon>
+                <span class="font-black tracking-widest text-xs">EJECUTAR TRASPASO</span>
+            </div>
+            <mat-spinner diameter="24" *ngIf="loading" class="mx-auto" color="accent"></mat-spinner>
+        </button>
+    </div>
+</div>

@@ -255,7 +255,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((user: User) => {
         this.user = user["usuario"];
-        console.log("informacion de usuario", this.user)
       });
 
     // Attach SVG fill fixer to all ApexCharts
@@ -999,8 +998,6 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     if (!fechaInicio || !fechaFin) return;
 
-    console.log('Buscando datos del:', fechaInicio, 'al:', fechaFin, 'para unidad:', unidadId);
-
     this._projectService.getDataGraf(fechaInicio, fechaFin)
       .subscribe((response: any[]) => {
         this.datosEmbudo = response || [];
@@ -1127,96 +1124,94 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     );
   }
 
-optimizarRuta() {
-  const prospectos = this.marcadores.map((m, i) => ({
-    nombre: m.getPopup()?.getContent() || `Prospecto ${i + 1}`,
-    lat: m.getLatLng().lat,
-    lon: m.getLatLng().lng,
-    categoria: "desconocida"
-  }));
-  const prospectosSugeridos = prospectos.filter(p =>
+  optimizarRuta() {
+    const prospectos = this.marcadores.map((m, i) => ({
+      nombre: m.getPopup()?.getContent() || `Prospecto ${i + 1}`,
+      lat: m.getLatLng().lat,
+      lon: m.getLatLng().lng,
+      categoria: "desconocida"
+    }));
+    const prospectosSugeridos = prospectos.filter(p =>
       String(p.nombre).includes("⚡ Prospecto sugerido")
     );
 
-  console.log("Prospectos para optimizar:", prospectosSugeridos);
 
-  this._projectService.optimizarRuta(prospectosSugeridos).subscribe({
-    next: (resp:any) => {
-      try {
-        console.log("Respuesta IA:", resp);
-        const rutaOrdenada = JSON.parse(resp); // Ajusta si tu backend devuelve JSON string
-        this.dibujarRuta(rutaOrdenada);
-      } catch (e) {
-        console.error("Error procesando respuesta IA, usando TSP local:", e);
+    this._projectService.optimizarRuta(prospectosSugeridos).subscribe({
+      next: (resp: any) => {
+        try {
+          const rutaOrdenada = JSON.parse(resp); // Ajusta si tu backend devuelve JSON string
+          this.dibujarRuta(rutaOrdenada);
+        } catch (e) {
+          console.error("Error procesando respuesta IA, usando TSP local:", e);
+          const rutaLocal = this.tspLocal(prospectosSugeridos);
+          this.dibujarRuta(rutaLocal);
+        }
+      },
+      error: err => {
+        console.warn("Error DeepSeek, fallback TSP local:", err);
         const rutaLocal = this.tspLocal(prospectosSugeridos);
         this.dibujarRuta(rutaLocal);
       }
-    },
-    error: err => {
-      console.warn("Error DeepSeek, fallback TSP local:", err);
-      const rutaLocal = this.tspLocal(prospectosSugeridos);
-      this.dibujarRuta(rutaLocal);
-    }
-  });
-}
-
-private dibujarRuta(ruta: any[]) {
-  if (this.rutaLayer) this.map.removeLayer(this.rutaLayer);
-
-  const coords = ruta.map(r => [r.lat, r.lon]) as [number, number][];
-  this.rutaLayer = L.polyline(coords, { color: 'blue', weight: 4 }).addTo(this.map);
-
-  ruta.forEach((p, idx) => {
-    L.marker([p.lat, p.lon], {
-      icon: L.divIcon({
-        className: 'numero-icon',
-        html: `<div style="background:#007bff;color:white;border-radius:50%;width:24px;height:24px;
-                    display:flex;align-items:center;justify-content:center;font-size:12px;">${idx + 1}</div>`
-      })
-    }).addTo(this.map)
-      .bindPopup(`<b>${p.nombre}</b><br/>Orden: ${idx + 1}<br/>${p.categoria}`);
-  });
-
-  this.map.fitBounds(this.rutaLayer.getBounds().pad(0.2));
-}
-
-
-
-// Reordenar prospectos por distancia (Nearest Neighbor)
-private tspLocal(prospectos: any[]): any[] {
-  if (!prospectos.length) return [];
-
-  const visitados = new Set<number>();
-  const ruta: any[] = [];
-
-  let actual = 0; // comenzamos con el primer prospecto
-  visitados.add(actual);
-  ruta.push({ ...prospectos[actual], orden: 1 });
-
-  while (ruta.length < prospectos.length) {
-    let nextIndex = -1;
-    let minDist = Infinity;
-
-    prospectos.forEach((p, i) => {
-      if (!visitados.has(i)) {
-        const dx = prospectos[actual].lat - p.lat;
-        const dy = prospectos[actual].lon - p.lon;
-        const dist = dx * dx + dy * dy;
-        if (dist < minDist) {
-          minDist = dist;
-          nextIndex = i;
-        }
-      }
     });
-
-    if (nextIndex === -1) break;
-
-    visitados.add(nextIndex);
-    ruta.push({ ...prospectos[nextIndex], orden: ruta.length + 1 });
-    actual = nextIndex;
   }
 
-  return ruta;
-}
+  private dibujarRuta(ruta: any[]) {
+    if (this.rutaLayer) this.map.removeLayer(this.rutaLayer);
+
+    const coords = ruta.map(r => [r.lat, r.lon]) as [number, number][];
+    this.rutaLayer = L.polyline(coords, { color: 'blue', weight: 4 }).addTo(this.map);
+
+    ruta.forEach((p, idx) => {
+      L.marker([p.lat, p.lon], {
+        icon: L.divIcon({
+          className: 'numero-icon',
+          html: `<div style="background:#007bff;color:white;border-radius:50%;width:24px;height:24px;
+                    display:flex;align-items:center;justify-content:center;font-size:12px;">${idx + 1}</div>`
+        })
+      }).addTo(this.map)
+        .bindPopup(`<b>${p.nombre}</b><br/>Orden: ${idx + 1}<br/>${p.categoria}`);
+    });
+
+    this.map.fitBounds(this.rutaLayer.getBounds().pad(0.2));
+  }
+
+
+
+  // Reordenar prospectos por distancia (Nearest Neighbor)
+  private tspLocal(prospectos: any[]): any[] {
+    if (!prospectos.length) return [];
+
+    const visitados = new Set<number>();
+    const ruta: any[] = [];
+
+    let actual = 0; // comenzamos con el primer prospecto
+    visitados.add(actual);
+    ruta.push({ ...prospectos[actual], orden: 1 });
+
+    while (ruta.length < prospectos.length) {
+      let nextIndex = -1;
+      let minDist = Infinity;
+
+      prospectos.forEach((p, i) => {
+        if (!visitados.has(i)) {
+          const dx = prospectos[actual].lat - p.lat;
+          const dy = prospectos[actual].lon - p.lon;
+          const dist = dx * dx + dy * dy;
+          if (dist < minDist) {
+            minDist = dist;
+            nextIndex = i;
+          }
+        }
+      });
+
+      if (nextIndex === -1) break;
+
+      visitados.add(nextIndex);
+      ruta.push({ ...prospectos[nextIndex], orden: ruta.length + 1 });
+      actual = nextIndex;
+    }
+
+    return ruta;
+  }
 
 }

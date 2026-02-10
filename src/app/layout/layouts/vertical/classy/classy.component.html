@@ -59,6 +59,13 @@
         <!-- Components -->
         <div class="ml-auto flex items-center space-x-0.5 pl-2 sm:space-x-2">
             <!---languages></languages-->
+            <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
+                @if (!isDark) {
+                <mat-icon class="text-amber-500" [svgIcon]="'heroicons_outline:sun'"></mat-icon>
+                } @else {
+                <mat-icon class="text-blue-400" [svgIcon]="'heroicons_outline:moon'"></mat-icon>
+                }
+            </button>
             <fuse-fullscreen class="hidden md:block"></fuse-fullscreen>
             <!--search [appearance]="'bar'"></search-->
             <!--shortcuts></shortcuts>

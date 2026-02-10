@@ -73,7 +73,7 @@ export class SalesDetailsComponent implements OnInit {
     public router: Router,
     public projectService: ProjectService,
     private snackBar: MatSnackBar,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.salesForm = this.fb.group({
@@ -113,43 +113,42 @@ export class SalesDetailsComponent implements OnInit {
 
   loadVenta(id: number): void {
     this.salesService.getVentaById(id).subscribe((res) => {
-      if(res.code == 200 ){
-      var venta = res.data;
-      if (venta) this.salesForm.patchValue(venta);
-    }else{
-      Swal.fire({
-                    icon: "error",
-                    title:"Opps",
-                    text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                    draggable: true
-                  });
-    }
+      if (res.code == 200) {
+        var venta = res.data;
+        if (venta) this.salesForm.patchValue(venta);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
+          draggable: true
+        });
+      }
     });
   }
 
   saveVenta(): void {
-    console.log(this.salesForm);
-   if (this.salesForm.invalid) {
-     Swal.fire({
-                           icon: "error",
-                           title:"Opps",
-                           text:"Por favor, completa los campos obligatorios",
-                           draggable: true
-                         });   
-                         return;                   
-   }
+    if (this.salesForm.invalid) {
+      Swal.fire({
+        icon: "error",
+        title: "Opps",
+        text: "Por favor, completa los campos obligatorios",
+        draggable: true
+      });
+      return;
+    }
 
     const data = this.salesForm.value;
     this.salesService.createVenta(data).subscribe((res) => {
-      if(res.code == 200){
-      this.router.navigate(["/dashboards/sales"]);
-      const message = this.ventaId ? 'Cotización actualizada correctamente' : 'Cotización guardada correctamente';
-      this.snackBar.open(message, 'Cerrar', { duration: 3000 });
-      }else{
+      if (res.code == 200) {
+        this.router.navigate(["/dashboards/sales"]);
+        const message = this.ventaId ? 'Cotización actualizada correctamente' : 'Cotización guardada correctamente';
+        this.snackBar.open(message, 'Cerrar', { duration: 3000 });
+      } else {
         Swal.fire({
           icon: "error",
-          title:"Opps",
-          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
+          title: "Opps",
+          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
           draggable: true
         });
       }
@@ -163,7 +162,7 @@ export class SalesDetailsComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.projectService.getProjects().subscribe((proyects:any) => {
+    this.projectService.getProjects().subscribe((proyects: any) => {
       this.proyects = proyects.data
     });
   }
