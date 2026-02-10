@@ -380,10 +380,17 @@
               </th>
               <td mat-cell *matCellDef="let task" class="border-b dark:border-gray-800 text-center"
                 [style.background-color]="getFillColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('acciones')">
-                <button mat-icon-button class="icon-size-7 text-primary hover:bg-primary/10"
-                  (click)="openTaskDialog(task.id)">
-                  <mat-icon class="icon-size-4" svgIcon="heroicons_solid:pencil"></mat-icon>
-                </button>
+                <div class="flex items-center justify-center gap-1">
+                  <button mat-icon-button class="icon-size-7 text-primary hover:bg-primary/10" matTooltip="Editar Tarea"
+                    (click)="openTaskDialog(task.id)">
+                    <mat-icon class="icon-size-4" svgIcon="heroicons_solid:pencil"></mat-icon>
+                  </button>
+
+                  <button mat-icon-button class="icon-size-7 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    matTooltip="Eliminar Tarea" (click)="deleteTask(task.id)">
+                    <mat-icon class="icon-size-4" svgIcon="heroicons_solid:trash"></mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
 
