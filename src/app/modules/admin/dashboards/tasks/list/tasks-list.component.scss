@@ -292,3 +292,154 @@ td.mat-column-responsable {
         background-color: #4f46e5;
     }
 }
+
+.group-container {
+    transition: all 0.2s ease-in-out;
+
+    // Quitar el padding por defecto para que la tabla llegue a los bordes
+    .group-table-wrapper {
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+    }
+
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+
+        // Estilo para las celdas del cuerpo
+        td.mat-cell {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            border-right: 1px solid rgba(0, 0, 0, 0.03);
+            transition: background-color 0.2s;
+
+            &:last-child {
+                border-right: none;
+            }
+        }
+
+        // Resaltar la fila completa en hover
+        tr.mat-row:hover td {
+            background-color: rgba(0, 0, 0, 0.02) !important;
+        }
+
+        // Estilo especial para la columna de ESTATUS
+        .mat-column-estatus {
+            padding: 0 !important; // Para que el color llene toda la celda
+
+            .status-cell-fill {
+                height: 100%;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 600;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+        }
+    }
+}
+
+/* ==========================================================================
+   TIPOGRAFÍA Y VISIBILIDAD DE TEXTOS
+   ========================================================================== */
+
+::ng-deep th.mat-header-cell {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 11px;
+    /* Un poco más pequeño para el estilo uppercase premium */
+    font-weight: 800;
+    /* Extra bold para headers */
+    color: #475569;
+    /* Gris pizarra oscuro para contraste */
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    /* Más espaciado entre letras para facilitar lectura */
+}
+
+::ng-deep td.mat-cell {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 13px;
+    /* Tamaño ideal para lectura de datos */
+    font-weight: 500;
+    /* Medium para que la letra no se pierda en el fondo de color */
+    color: #1e293b;
+    /* Casi negro para máximo contraste */
+    line-height: 1.5;
+}
+
+/* Estilo para los nombres de tareas (específico) */
+.font-medium.text-gray-700 {
+    font-weight: 600 !important;
+    /* Un poco más de peso */
+    color: #334155 !important;
+}
+
+/* Mejora la visibilidad del texto dentro del estatus sólido */
+::ng-deep .mat-column-estatus .status-cell-fill {
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    /* Texto muy grueso para resaltar sobre el color */
+    letter-spacing: 0.05em;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    /* Sombra sutil para despegar la letra del fondo */
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   AJUSTES DE CONTRASTE EN FILAS
+   ========================================================================== */
+
+::ng-deep table.mat-table {
+    /* ... tu código flex ... */
+
+    tr.mat-row {
+        /* Aumentamos la altura para dar más "aire" al texto */
+        min-height: 52px !important;
+
+        // Bordes más visibles pero suaves
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+    }
+}
+
+/* Evita el efecto de texto "borroso" en pantallas de baja resolución */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   TIPOGRAFÍA Y VISIBILIDAD DE TEXTOS
+   ========================================================================== */
+
+::ng-deep td.mat-cell {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    /* Gris azulado muy oscuro (mejor que negro puro) */
+}
+
+/* Columna de estatus ajustada: Texto Oscuro sobre Fondo Pastel */
+::ng-deep .mat-column-estatus {
+    .status-cell-fill {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Quitamos el text-shadow y el color blanco */
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        /* El color se inyectará desde el TS o puedes usar clases */
+    }
+}
+
+/* Mejoramos el hover para que sea sutil */
+::ng-deep tr.mat-row:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}

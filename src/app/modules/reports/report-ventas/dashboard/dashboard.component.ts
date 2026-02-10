@@ -126,57 +126,40 @@ export class ReportVentasDashboardComponent implements OnInit {
 
 
     /**
- * Genera la gráfica comparativa alineando cronológicamente el periodo actual vs el anterior.
- * @param data Array de objetos con { anio: number, mes: number, periodo: string, totalMes: number }
+ * Genera la gráfica comparativa alineando cronológicamente el periodo actual vs el anterior
+ * e incluye el cálculo de porcentaje de crecimiento en el tooltip.
+ * @param {any[]} data - Array de objetos con { anio: number, mes: number, periodo: string, totalMes: number }.
+ * @returns {void}
  */
     private graficaVentasPorMes(data: any[]): void {
         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         setTimeout(() => {
-            // 1. Identificar la línea de tiempo basada EXCLUSIVAMENTE en los registros "Actual"
-            // Esto define cuántos grupos de barras veremos (Ene 25, Feb 25... Ene 26)
+            // 1. Identificar la línea de tiempo (Actual)
             const lineaTiempo = data
                 .filter(d => d.periodo.toLowerCase() === 'actual')
                 .map(d => ({ anio: d.anio, mes: d.mes }))
                 .sort((a, b) => (a.anio - b.anio) || (a.mes - b.mes));
 
-            // 2. Crear las etiquetas del eje X (ej. "Ene 25", "Feb 26")
             const categorias = lineaTiempo.map(p => `${mesesNombres[p.mes - 1]} ${p.anio.toString().slice(-2)}`);
 
-            // 3. Construir las series buscando el match exacto con la data del SP
+            // 2. Construir las series
             const serieActual = lineaTiempo.map(p => {
-                const item = data.find(d =>
-                    d.anio === p.anio &&
-                    d.mes === p.mes &&
-                    d.periodo.toLowerCase() === 'actual'
-                );
+                const item = data.find(d => d.anio === p.anio && d.mes === p.mes && d.periodo.toLowerCase() === 'actual');
                 return item ? item.totalMes : 0;
             });
 
             const serieAnterior = lineaTiempo.map(p => {
-                // Gracias al ajuste en el SP, el registro 'Anterior' viene con el mismo Año 
-                // que su pareja 'Actual' para facilitar esta búsqueda
-                const item = data.find(d =>
-                    d.anio === p.anio &&
-                    d.mes === p.mes &&
-                    d.periodo.toLowerCase() === 'anterior'
-                );
+                const item = data.find(d => d.anio === p.anio && d.mes === p.mes && d.periodo.toLowerCase() === 'anterior');
                 return item ? item.totalMes : 0;
             });
 
-            // 4. Renderizado al contenedor
             const container = document.getElementById('chartComparativaMes');
             if (container) {
                 (Highcharts as any).chart(container, {
-                    chart: {
-                        type: 'column',
-                        backgroundColor: 'transparent'
-                    },
+                    chart: { type: 'column', backgroundColor: 'transparent' },
                     title: { text: '' },
-                    xAxis: {
-                        categories: categorias,
-                        crosshair: true
-                    },
+                    xAxis: { categories: categorias, crosshair: true },
                     yAxis: {
                         min: 0,
                         title: { text: 'Monto ($)' },
@@ -184,31 +167,56 @@ export class ReportVentasDashboardComponent implements OnInit {
                     },
                     plotOptions: {
                         column: {
-                            grouping: true,        // Barras una al lado de la otra
+                            grouping: true,
                             pointPadding: 0.1,
                             groupPadding: 0.2,
                             borderWidth: 0,
-                            borderRadius: 3,
-                            minPointLength: 5      // Asegura que montos pequeños sean visibles
+                            borderRadius: 3
+                        }
+                    },
+                    // --- SECCIÓN MODIFICADA: TOOLTIP CON CÁLCULO DE CRECIMIENTO ---
+                    tooltip: {
+                        shared: true,
+                        useHTML: true,
+                        formatter: function (this: any) {
+                            // Obtenemos los valores de los puntos (0: Anterior, 1: Actual)
+                            const anterior = this.points[0]?.y || 0;
+                            const actual = this.points[1]?.y || 0;
+
+                            // Cálculo de crecimiento: ((A - B) / B) * 100
+                            let crecimientoHtml = '';
+                            if (anterior > 0) {
+                                const porcentaje = ((actual - anterior) / anterior) * 100;
+                                const color = porcentaje >= 0 ? '#10b981' : '#ef4444'; // Verde si sube, Rojo si baja
+                                const icono = porcentaje >= 0 ? '▲' : '▼';
+
+                                crecimientoHtml = `
+                                <div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #EEE;">
+                                    <span style="color: ${color}; font-weight: bold;">
+                                        Crecimiento: ${icono} ${porcentaje.toFixed(2)}%
+                                    </span>
+                                </div>`;
+                            } else if (actual > 0) {
+                                // Si el año anterior fue 0 y el actual tiene ventas, el crecimiento es infinito
+                                crecimientoHtml = `
+                                <div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #EEE;">
+                                    <span style="color: #10b981; font-weight: bold;">Crecimiento: N/A (Nuevo)</span>
+                                </div>`;
+                            }
+
+                            // Construcción del Tooltip
+                            let s = `<span style="font-size: 10px; font-weight: bold;">${this.x}</span><br/>`;
+                            this.points.forEach((point: any) => {
+                                s += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>$${point.y.toLocaleString()}</b><br/>`;
+                            });
+
+                            return s + crecimientoHtml;
                         }
                     },
                     series: [
-                        {
-                            name: 'Año Anterior',
-                            color: '#10b981', // Verde
-                            data: serieAnterior
-                        },
-                        {
-                            name: 'Año Actual',
-                            color: '#3b82f6', // Azul
-                            data: serieActual
-                        }
+                        { name: 'Año Anterior', color: '#94a3b8', data: serieAnterior }, // Gris mate
+                        { name: 'Año Actual', color: '#3b82f6', data: serieActual }      // Azul mate
                     ],
-                    tooltip: {
-                        shared: true,
-                        valuePrefix: '$',
-                        valueDecimals: 2
-                    },
                     credits: { enabled: false }
                 });
             }

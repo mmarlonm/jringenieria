@@ -36,6 +36,8 @@ import { TaskMediaDialogComponent } from "../task-media-dialog/task-media-dialog
 import { ResizeColumnDirective } from './resize-column.directive';
 import { ResizableDirective, ResizeHandleDirective, ResizeEvent } from 'angular-resizable-element';
 import { UsersService } from "app/modules/admin/security/users/users.service";
+import { HighchartsChartModule } from 'highcharts-angular';
+import * as Highcharts from 'highcharts';
 
 interface GroupedTasks {
     groupName: string;
@@ -74,7 +76,8 @@ interface GroupedTasks {
         TaskMediaDialogComponent,
         ResizeColumnDirective,
         ResizableDirective,
-        ResizeHandleDirective
+        ResizeHandleDirective,
+        HighchartsChartModule
     ],
 })
 export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -106,9 +109,9 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     user: User;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+    updateFlag: boolean;
 
     openMediaDialog(task: Task): void {
-        console.log('Opening Media Dialog for task:', task);
         const dialogRef = this.dialog.open(TaskMediaDialogComponent, {
             data: { task: { ...task } },
             width: '800px',
@@ -137,6 +140,17 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     private palette = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#ff9800'];
     userList: any[] = [];
 
+    public Highcharts: typeof Highcharts = Highcharts;
+
+    // Cambia el tipo a Highcharts.Options explícitamente
+    public statusChartOptions: Highcharts.Options = {};
+    public userChartOptions: Highcharts.Options = {};
+
+    /**
+ * Estado de visibilidad del panel de métricas.
+ */
+    public isChartsExpanded: boolean = true;
+
     constructor(
         private taskService: TaskService,
         public configService: TaskViewConfigService, // Public for usage in template
@@ -149,6 +163,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnInit(): void {
         this.loadConfig();
+        this.initChartsExpansion();
 
         // 2. Cargamos usuarios primero para tener el Map listo
         this.getUsers();
@@ -316,13 +331,14 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         // 5. Re-initialize column sorting for the newly rendered tables
+        this.initHighcharts(this.groupedTasks);
         this.initColumnSorting();
     }
 
     groupTasksByStatus(tasks: Task[]): void {
         const statuses = [
-            { id: 1, name: 'Pendiente', color: 'border-l-4 border-gray-400' },
-            { id: 2, name: 'En Proceso', color: 'border-l-4 border-orange-400' },
+            { id: 1, name: 'Pendiente', color: 'border-l-4 border-yellow-500' },
+            { id: 2, name: 'En Proceso', color: 'border-l-4 border-orange-500' },
             { id: 3, name: 'Completada', color: 'border-l-4 border-green-500' }
         ];
 
@@ -454,29 +470,25 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Row Drag & Drop
     /**
- * Maneja el evento de soltar una fila, actualizando el orden persistente y el estatus.
- * @param event - Evento de CdkDragDrop con el array de tareas.
- * @param targetGroupKey - Identificador del grupo destino (ej: '1', '2', '3').
- * @returns void
+ * Gestiona el evento de soltar una fila y actualiza las gráficas.
+ * @param {CdkDragDrop<Task[]>} event - Evento de arrastre de Angular CDK.
+ * @param {string} targetGroupKey - Identificador del grupo donde cayó la tarea.
+ * @returns {void}
  */
     onRowDropped(event: CdkDragDrop<Task[]>, targetGroupKey: string): void {
         if (event.previousContainer === event.container) {
             // 1. Mover el ítem en el array de datos
             moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
 
-            // 2. Persistir el nuevo orden de los IDs
+            // 2. Persistir el nuevo orden
             const taskIds = event.container.data.map(t => t.id).filter(id => id !== undefined) as number[];
             this.configService.updateGroupTaskOrder(targetGroupKey, taskIds);
 
-            // 3. ¡CRÍTICO! Notificar a la tabla que los datos cambiaron
-            // Buscamos el grupo en tu array de grupos
             const group = this.groupedTasks.find(g => g.groupKey === targetGroupKey);
             if (group) {
-                // Refrescamos la referencia para que Angular detecte el cambio
                 group.tasks.data = [...event.container.data];
             }
         } else {
-            // Lógica para mover a OTRO grupo
             const task = event.item.data as Task;
             const newStatusId = this.parseStatusIdFromGroupKey(targetGroupKey);
 
@@ -484,7 +496,6 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 const oldStatus = task.estatus;
                 task.estatus = newStatusId;
 
-                // Mover el item entre arrays
                 transferArrayItem(
                     event.previousContainer.data,
                     event.container.data,
@@ -492,18 +503,21 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                     event.currentIndex
                 );
 
-                // Notificar a ambos DataSources (Origen y Destino)
                 this.refreshTableDataSources();
-
-                // Guardar órdenes y llamar al servicio
                 this.saveAllGroupOrders();
+
                 this.taskService.updateTask(task.id, task).subscribe({
                     next: () => {
                         this.snackBar.open(`Tarea movida`, "Cerrar", { duration: 2000 });
+
+                        // ACTUALIZACIÓN DE GRÁFICAS: 
+                        // Se llama aquí porque el cambio de estatus afecta el pastel y la carga de usuario
+                        this.initHighcharts(this.groupedTasks);
+                        this.updateFlag = true;
                     },
                     error: () => {
                         task.estatus = oldStatus;
-                        this.loadTasks(); // Revertir
+                        this.loadTasks();
                     }
                 });
             }
@@ -581,7 +595,6 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
  * @param columnId - El identificador único de la columna (string).
  */
     onColumnResizeEnd(event: ResizeEvent, columnId: string): void {
-        console.log(event);
         if (event.rectangle.width) {
             const newWidth = `${Math.round(event.rectangle.width)}px`;
 
@@ -710,25 +723,56 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
-    getStatusColor(groupKey: string): string {
-        if (groupKey.includes('1')) return '#808080'; // Gray (Pending)
-        if (groupKey.includes('2')) return '#ffcb00'; // Yellow/Orange (In Progress)
-        if (groupKey.includes('3')) return '#00c875'; // Green (Completed)
-        return '#cbd5e0';
+    /**
+     * 🔹 MÉTODO FALTANTE 1: Color de fondo para la cabecera (suave)
+     */
+    getStatusBGColor(groupKey: string): string {
+        if (groupKey.includes('1')) return 'rgba(251, 39, 93, 0.09)';
+        if (groupKey.includes('2')) return 'rgba(255, 203, 0, 0.09)';
+        if (groupKey.includes('3')) return 'rgba(0, 200, 117, 0.09)';
+        return 'rgba(241, 245, 249, 1)';
     }
 
-    getStatusBadgeColor(status: number): string {
-        switch (status) {
-            case 1: return '#c4c4c4'; // Gray
-            case 2: return '#fdab3d'; // Orange
-            case 3: return '#00c875'; // Green
-            default: return '#cbd5e0';
-        }
+    /**
+     * 🔹 MÉTODO FALTANTE 2: Color de fondo para las celdas de la tabla (ultra suave)
+     */
+    getTableFillColor(groupKey: string): string {
+        if (groupKey.includes('1')) return 'rgba(251, 39, 93, 0.04)';
+        if (groupKey.includes('2')) return 'rgba(255, 203, 0, 0.04)';
+        if (groupKey.includes('3')) return 'rgba(0, 200, 117, 0.04)';
+        return 'transparent';
+    }
+
+    /**
+     * Color sólido para el contorno del grupo
+     */
+    getStatusColor(groupKey: string): string {
+        if (groupKey.includes('1')) return '#D9534F';
+        if (groupKey.includes('2')) return '#F0AD4E';
+        if (groupKey.includes('3')) return '#5CB85C';
+        return '#94A3B8';
     }
     onResizeEnd(event: ResizeEvent): void {
-        console.log('Element was resized', event);
     }
 
+
+    /**
+ * Retorna el color sólido según el ID del estatus de la tarea
+ */
+    getColorByEstatusId(estatusId: number): string {
+        if (estatusId === 1) return '#FB275D'; // Rojo (Pendiente)
+        if (estatusId === 2) return '#FFCB00'; // Amarillo (En Proceso)
+        if (estatusId === 3) return '#00C875'; // Verde (Completada)
+        return '#C4C4C4';
+    }
+
+    /**
+     * Retorna el fondo sutil según el ID del estatus (aprox 6% opacidad)
+     */
+    getFillColorByEstatusId(estatusId: number): string {
+        const color = this.getColorByEstatusId(estatusId);
+        return color + '10'; // 10 en Hex es aprox 6% de opacidad
+    }
     /**
      * Procesa el evento de redimensionamiento nativo.
      * @param event - Contiene el width final en px y el ID de la columna.
@@ -813,5 +857,136 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         const user = this.getUserData(userId);
         if (!user) return '#cbd5e0';
         return this.userColors[user.nombreUsuario || user.nombre] || '#64748b';
+    }
+
+
+    /**
+ * Procesa la lista de tareas agrupadas para generar los datos de las gráficas.
+ * @param {any[]} groups - El arreglo de tareas agrupadas (groupedTasks).
+ * @returns {Object} Un objeto con los datos formateados para las gráficas de Estatus y Usuarios.
+ */
+    getChartsData(groups: any[]): { statusSeries: number[], statusLabels: string[], userSeries: any[] } {
+        const statusCounts = { 'Pendiente': 0, 'En Proceso': 0, 'Completada': 0 };
+        const userMap = new Map<string, number>();
+
+        groups.forEach(group => {
+            // 1. Datos para Estatus (Pie Chart)
+            if (group.groupKey.includes('1')) statusCounts['Pendiente'] += group.count;
+            if (group.groupKey.includes('2')) statusCounts['En Proceso'] += group.count;
+            if (group.groupKey.includes('3')) statusCounts['Completada'] += group.count;
+
+            // 2. Datos por Usuario (Bar Chart)
+            group.tasks.data.forEach((task: any) => {
+                const userName = this.getUserFullName(task.creadorId) || 'Sin Asignar';
+                userMap.set(userName, (userMap.get(userName) || 0) + 1);
+            });
+        });
+
+        return {
+            statusSeries: Object.values(statusCounts),
+            statusLabels: Object.keys(statusCounts),
+            userSeries: Array.from(userMap, ([name, value]) => ({ x: name, y: value }))
+        };
+    }
+
+    /**
+ * Inicializa las gráficas extrayendo los datos reales de los DataSources.
+ * @param {any[]} groups - Array de grupos con MatTableDataSource.
+ * @returns {void}
+ */
+    initHighcharts(groups: any[]): void {
+        if (!groups || groups.length === 0) return;
+
+        const statusColors = ['#94A3B8', '#F59E0B', '#10B981'];
+
+        // CORRECCIÓN: Extraer el conteo real de filteredData
+        const getSafeCount = (statusKey: string) => {
+            const group = groups.find(g => g.groupKey === `status-${statusKey}`);
+            return group ? group.tasks.filteredData.length : 0;
+        };
+
+        this.statusChartOptions = {
+            chart: { type: 'pie', height: 200, backgroundColor: 'transparent' },
+            title: { text: '' },
+            credits: { enabled: false },
+            plotOptions: {
+                pie: { innerSize: '65%', borderWidth: 0, showInLegend: true, dataLabels: { enabled: false } }
+            },
+            series: [{
+                type: 'pie',
+                name: 'Tareas',
+                data: [
+                    { name: 'Pendientes', y: getSafeCount('1'), color: statusColors[0] },
+                    { name: 'En Proceso', y: getSafeCount('2'), color: statusColors[1] },
+                    { name: 'Completadas', y: getSafeCount('3'), color: statusColors[2] }
+                ]
+            }]
+        } as Highcharts.Options;
+
+        // CORRECCIÓN: Pasar los grupos a la función de usuarios
+        this.userChartOptions = {
+            chart: { type: 'column', height: 200, backgroundColor: 'transparent' },
+            title: { text: '' },
+            credits: { enabled: false },
+            xAxis: { type: 'category' },
+            yAxis: { min: 0, title: { text: '' }, gridLineDashStyle: 'Dash' },
+            series: [{
+                type: 'column',
+                name: 'Tareas',
+                color: '#6366F1',
+                data: this.getTasksByUser(groups) // Llamamos a la función corregida abajo
+            }]
+        } as Highcharts.Options;
+
+        this.updateFlag = true;
+    }
+
+    /**
+ * Mapea las tareas extrayendo el nombre real del usuario en lugar del ID.
+ * @param {any[]} groups - Colección de grupos que contienen los MatTableDataSource.
+ * @returns {any[]} Un array de arreglos con formato [NombreUsuario, Conteo] para Highcharts.
+ */
+    private getTasksByUser(groups: any[]): any[] {
+        const userMap = new Map<string, number>();
+
+        groups.forEach(group => {
+            // Accedemos al array de datos real dentro del MatTableDataSource
+            const rawTasks = group.tasks.filteredData || [];
+
+            rawTasks.forEach((task: any) => {
+                // Utilizamos tu función existente para obtener el nombre
+                // Si no devuelve nada, usamos 'Desconocido' o el ID como respaldo
+                const userName = this.getUserFullName(task.creadorId) || `Usuario ${task.creadorId}`;
+
+                const currentCount = userMap.get(userName) || 0;
+                userMap.set(userName, currentCount + 1);
+            });
+        });
+
+        // Retornamos el formato que Highcharts requiere para series de tipo 'column'
+        return Array.from(userMap, ([name, count]) => [name, count]);
+    }
+
+    /**
+ * Inicializa la configuración guardada del panel.
+ * Se debe llamar en el ngOnInit.
+ */
+    private initChartsExpansion(): void {
+        const savedState = localStorage.getItem('charts_expanded');
+        // Si existe una configuración guardada, la usamos; si no, por defecto es true.
+        this.isChartsExpanded = savedState !== null ? JSON.parse(savedState) : true;
+    }
+
+    /**
+     * Alterna la visibilidad del panel y guarda la preferencia en el storage.
+     */
+    toggleChartsExpansion(): void {
+        this.isChartsExpanded = !this.isChartsExpanded;
+        localStorage.setItem('charts_expanded', JSON.stringify(this.isChartsExpanded));
+
+        // Al expandir, Highcharts necesita un pequeño empujón para recalcular su ancho
+        if (this.isChartsExpanded) {
+            setTimeout(() => { this.updateFlag = true; }, 100);
+        }
     }
 }

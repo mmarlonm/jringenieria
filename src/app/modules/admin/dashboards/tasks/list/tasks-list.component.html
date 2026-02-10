@@ -91,104 +91,146 @@
     </div>
   </div>
 
+  <div class="mb-6 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+    <div
+      class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50/50 transition-colors select-none"
+      (click)="toggleChartsExpansion()">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-indigo-50 rounded-lg">
+          <mat-icon class="icon-size-5 text-indigo-600" svgIcon="heroicons_outline:chart-bar"></mat-icon>
+        </div>
+        <div>
+          <h3 class="text-sm font-black text-gray-700 uppercase tracking-widest">Panel de Métricas</h3>
+          <p class="text-[10px] text-gray-400 font-medium">Resumen visual de tareas y equipo</p>
+        </div>
+      </div>
+
+      <button mat-icon-button class="text-gray-400">
+        <mat-icon class="transition-transform duration-300" [ngClass]="{'rotate-180': isChartsExpanded}"
+          svgIcon="heroicons_mini:chevron-down">
+        </mat-icon>
+      </button>
+    </div>
+
+    <div class="transition-all duration-300 ease-in-out overflow-hidden"
+      [style.max-height]="isChartsExpanded ? '800px' : '0px'" [style.opacity]="isChartsExpanded ? '1' : '0'">
+
+      <div class="p-6 pt-0">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *ngIf="statusChartOptions && userChartOptions">
+
+          <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/30">
+            <highcharts-chart *ngIf="statusChartOptions.series" [Highcharts]="Highcharts" [options]="statusChartOptions"
+              [(update)]="updateFlag" style="width: 100%; height: 500px; display: block;">
+            </highcharts-chart>
+          </div>
+
+          <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/30">
+            <highcharts-chart *ngIf="userChartOptions.series" [Highcharts]="Highcharts" [options]="userChartOptions"
+              [(update)]="updateFlag" style="width: 100%; height: 500px; display: block;">
+            </highcharts-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Content (Scrollable) -->
   <div class="flex-auto overflow-y-auto p-6 md:p-8 bg-gray-50/50" cdkDropListGroup>
 
     <ng-container *ngIf="groupedTasks.length > 0; else noTasks">
-      <!-- Iterate over Groups -->
-      <div *ngFor="let group of groupedTasks" class="mb-10 group-container">
 
-        <!-- Group Header (Monday.com Style) -->
-        <div class="flex items-center gap-3 p-2 cursor-pointer select-none group-header-v2"
-          (click)="toggleGroup(group.groupKey)">
+      <div *ngFor="let group of groupedTasks"
+        class="mb-10 group-container rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-white">
 
-          <div class="flex items-center justify-center w-6 h-6 rounded transition-colors hover:bg-gray-100">
+        <div class="flex items-center gap-3 p-3 cursor-pointer select-none transition-all border-b group-header-v2"
+          [style.border-bottom]="'3px solid ' + getStatusColor(group.groupKey)" (click)="toggleGroup(group.groupKey)">
+
+          <div class="flex items-center justify-center w-6 h-6 rounded-md hover:bg-black/5 transition-colors">
             <mat-icon class="icon-size-5 transition-transform duration-200"
-              [ngClass]="{'rotate-[-90deg]': !isGroupExpanded(group.groupKey)}" svgIcon="heroicons_mini:chevron-down">
+              [ngClass]="{'rotate-[-90deg]': !isGroupExpanded(group.groupKey)}"
+              [style.color]="getStatusColor(group.groupKey)" svgIcon="heroicons_mini:chevron-down">
             </mat-icon>
           </div>
 
-          <h2 class="text-lg font-bold tracking-tight" [ngStyle]="{'color': getStatusColor(group.groupKey)}">
+          <h2 class="text-sm font-extrabold uppercase tracking-wider" [style.color]="getStatusColor(group.groupKey)">
             {{ group.groupName }}
           </h2>
 
-          <div
-            class="flex items-center gap-2 text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+          <div class="flex items-center gap-2 text-[10px] font-bold px-2 py-0.5 rounded-md border bg-white"
+            [style.color]="getStatusColor(group.groupKey)" [style.border-color]="getStatusColor(group.groupKey) + '40'">
             <span>{{ group.count }}</span>
-            <span class="uppercase tracking-widest text-[9px]">Tareas</span>
+            <span class="uppercase tracking-tighter">Tareas</span>
           </div>
 
-          <!-- Quick Actions on hover -->
           <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
-            <button mat-icon-button class="icon-size-8 text-gray-300 hover:text-blue-500">
+            <button mat-icon-button class="icon-size-8 text-gray-400">
               <mat-icon class="icon-size-4" svgIcon="heroicons_mini:ellipsis-horizontal"></mat-icon>
             </button>
           </div>
         </div>
 
-        <!-- Group Content (Collapsible) -->
-        <div *ngIf="isGroupExpanded(group.groupKey)"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto ml-2 transition-all group-table-wrapper"
+        <div *ngIf="isGroupExpanded(group.groupKey)" class="overflow-x-auto transition-all group-table-wrapper"
           [class.is-resizing]="resizingColumn"
-          [ngStyle]="{'border-left-width': '6px', 'border-left-color': getStatusColor(group.groupKey)}">
+          [ngStyle]="{'border-left': '6px solid ' + getStatusColor(group.groupKey)}">
 
-          <table mat-table [dataSource]="group.tasks" class="w-full" cdkDropList [cdkDropListData]="group.tasks.data"
-            (cdkDropListDropped)="onRowDropped($event, group.groupKey)">
+          <table mat-table [dataSource]="group.tasks" class="w-full border-none" cdkDropList
+            [cdkDropListData]="group.tasks.data" (cdkDropListDropped)="onRowDropped($event, group.groupKey)">
 
-            <!-- ID Column -->
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'id'" (resizeEnd)="onNativeResize($event)"
-                [ngStyle]="getColumnWidth('id')" class="border-r">
-
-                <div class="flex items-center">
+                [ngStyle]="getColumnWidth('id')" class="border-r bg-gray-50/50">
+                <div class="flex items-center font-bold text-gray-500 text-[11px] uppercase">
                   <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
                     svgIcon="heroicons_solid:bars-2"></mat-icon>
                   ID
                 </div>
               </th>
-              <td mat-cell *matCellDef="let task" class="border-r font-mono text-xs" [ngStyle]="getColumnWidth('id')">
-                <span class="flex-shrink-0">{{ task.id }}</span>
+              <td mat-cell *matCellDef="let task"
+                class="border-r border-b border-white font-mono text-[10px] text-gray-400 text-center"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('id')">
+                {{ task.id }}
               </td>
             </ng-container>
 
-            <!-- Nombre Column -->
             <ng-container matColumnDef="nombre">
-              <th mat-header-cell *matHeaderCellDef class="border-r" [ngStyle]="getColumnWidth('nombre')" mwlResizable
-                [enableGhostResize]="true" [resizeEdges]="{right: true}"
-                (resizeEnd)="onColumnResizeEnd($event, 'nombre')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                Tarea / Actividad
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
-              </th>
-              <td mat-cell *matCellDef="let task" class="border-r" [ngStyle]="getColumnWidth('nombre')">
-                <div class="flex items-center gap-2 group/task truncate w-full">
-                  <span class="hover:text-blue-600 cursor-pointer transition-colors truncate"
-                    (click)="openTaskDialog(task.id, true)">
-                    {{ task.nombre }}
-                  </span>
-                  <mat-icon *ngIf="task.descripcion" class="icon-size-4 text-gray-400 flex-shrink-0"
-                    [matTooltip]="task.descripcion" svgIcon="heroicons_solid:information-circle"></mat-icon>
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'nombre'" (resizeEnd)="onNativeResize($event)"
+                [ngStyle]="getColumnWidth('nombre')" class="border-r bg-gray-50/50">
+                <div class="flex items-center">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  <span class="font-bold text-gray-500 text-[11px] uppercase">Tarea</span>
                 </div>
+              </th>
+              <td mat-cell *matCellDef="let task" class="border-r border-b border-white px-4"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('nombre')">
+                <span
+                  class="font-medium text-gray-700 hover:text-blue-600 cursor-pointer transition-colors truncate block"
+                  (click)="openTaskDialog(task.id, true)">
+                  {{ task.nombre }}
+                </span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="responsable">
-              <th mat-header-cell *matHeaderCellDef class="border-r text-center"
-                [ngStyle]="getColumnWidth('responsable')">
-                Responsable
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'responsable'"
+                (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('responsable')"
+                class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center font-bold text-gray-500 text-[11px] uppercase text-center">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  Resp.
+                </div>
               </th>
-              <td mat-cell *matCellDef="let task" class="border-r" [ngStyle]="getColumnWidth('responsable')">
-                <div class="flex items-center justify-center h-full">
+              <td mat-cell *matCellDef="let task" class="border-r border-b border-white text-center"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                [ngStyle]="getColumnWidth('responsable')">
+                <div class="flex justify-center items-center h-full">
                   <ng-container *ngIf="getUserData(task.creadorId) as res">
-                    <div
-                      class="w-8 h-8 rounded-full overflow-hidden border border-gray-200 shadow-sm transition-transform hover:scale-110 cursor-help"
-                      [matTooltip]="getUserFullName(task.creadorId)">
-
-                      <img *ngIf="res.avatar" [src]="res.avatar" class="w-full h-full object-cover" alt="avatar">
-
+                    <div class="w-7 h-7 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                      <img *ngIf="res.avatar" [src]="res.avatar" class="w-full h-full object-cover">
                       <div *ngIf="!res.avatar"
-                        class="w-full h-full flex items-center justify-center text-white text-[10px] font-bold"
+                        class="w-full h-full flex items-center justify-center text-white text-[8px] font-bold"
                         [style.background-color]="getUserColor(task.creadorId)">
                         {{ getUserInitials(res.nombreUsuario || res.nombre) }}
                       </div>
@@ -199,236 +241,178 @@
             </ng-container>
 
             <ng-container matColumnDef="asignados">
-              <th mat-header-cell *matHeaderCellDef class="border-r text-center"
-                [ngStyle]="getColumnWidth('asignados')">
-                Asignados
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'asignados'" (resizeEnd)="onNativeResize($event)"
+                [ngStyle]="getColumnWidth('asignados')" class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center font-bold text-gray-500 text-[11px] uppercase">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  Asignados
+                </div>
               </th>
-              <td mat-cell *matCellDef="let task" class="border-r" [ngStyle]="getColumnWidth('asignados')">
-                <div class="flex items-center justify-center -space-x-2 overflow-hidden py-1">
-
+              <td mat-cell *matCellDef="let task" class="border-r border-b border-white text-center"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                [ngStyle]="getColumnWidth('asignados')">
+                <div class="flex items-center justify-center -space-x-1.5 py-1">
                   <ng-container *ngFor="let uid of task.usuarioIds">
                     <div *ngIf="getUserData(uid) as asignado"
-                      class="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-sm transition-all hover:z-10 hover:scale-125 cursor-help"
+                      class="w-6 h-6 rounded-full border-2 border-white overflow-hidden shadow-sm transition-transform hover:scale-125 hover:z-10"
                       [matTooltip]="getUserFullName(uid)">
-
-                      <img *ngIf="asignado.avatar" [src]="asignado.avatar" class="w-full h-full object-cover"
-                        alt="avatar">
-
-                      <div *ngIf="!asignado.avatar"
-                        class="w-full h-full flex items-center justify-center text-white text-[9px] font-bold"
-                        [style.background-color]="getUserColor(uid)">
-                        {{ getUserInitials(asignado.nombreUsuario || asignado.nombre) }}
-                      </div>
+                      <img *ngIf="asignado.avatar" [src]="asignado.avatar" class="w-full h-full object-cover">
                     </div>
                   </ng-container>
-
-                  <div *ngIf="!task.usuarioIds?.length"
-                    class="w-7 h-7 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-300 hover:bg-gray-50 cursor-pointer"
-                    (click)="openTaskDialog(task.id)">
-                    <mat-icon class="icon-size-3">add</mat-icon>
-                  </div>
                 </div>
               </td>
             </ng-container>
 
-            <!-- Fecha Inicio Column -->
-            <ng-container matColumnDef="fechaInicioEstimada">
-              <th mat-header-cell *matHeaderCellDef class="border-r" [ngStyle]="getColumnWidth('fechaInicioEstimada')"
-                mwlResizable [enableGhostResize]="true" [resizeEdges]="{right: true}"
-                (resizeEnd)="onColumnResizeEnd($event, 'fechaInicioEstimada')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                Inicio Est.
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
-              </th>
-              <td mat-cell *matCellDef="let task" class="border-r text-xs text-secondary italic"
-                [ngStyle]="getColumnWidth('fechaInicioEstimada')">
-                <span *ngIf="task.fechaInicioEstimada">{{ task.fechaInicioEstimada | date: 'dd/MM/yyyy' }}</span>
-                <span *ngIf="!task.fechaInicioEstimada" class="text-gray-300">Sin fecha</span>
-              </td>
-            </ng-container>
-
-            <!-- Fecha Fin Column -->
-            <ng-container matColumnDef="fechaFinEstimada">
-              <th mat-header-cell *matHeaderCellDef class="border-r" [ngStyle]="getColumnWidth('fechaFinEstimada')"
-                mwlResizable [enableGhostResize]="true" [resizeEdges]="{right: true}"
-                (resizeEnd)="onColumnResizeEnd($event, 'fechaFinEstimada')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                Fin Est.
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
-              </th>
-              <td mat-cell *matCellDef="let task" class="border-r text-xs text-secondary italic"
-                [ngStyle]="getColumnWidth('fechaFinEstimada')">
-                <span *ngIf="task.fechaFinEstimada">{{ task.fechaFinEstimada | date: 'dd/MM/yyyy' }}</span>
-                <span *ngIf="!task.fechaFinEstimada" class="text-gray-300">Sin fecha</span>
-              </td>
-            </ng-container>
-
-            <!-- Estatus Column -->
             <ng-container matColumnDef="estatus">
-              <th mat-header-cell *matHeaderCellDef class="border-r" [ngStyle]="getColumnWidth('estatus')" mwlResizable
-                [enableGhostResize]="true" [resizeEdges]="{right: true}"
-                (resizeEnd)="onColumnResizeEnd($event, 'estatus')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                Estatus
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
-              </th>
-              <td mat-cell *matCellDef="let task" class="border-r px-4" [ngStyle]="getColumnWidth('estatus')">
-                <div class="flex items-center">
-                  <div class="status-pill cursor-pointer" [ngClass]="'status-' + task.estatus"
-                    [matMenuTriggerFor]="statusMenu">
-                    {{ getStatusName(task.estatus) }}
-                  </div>
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'estatus'" (resizeEnd)="onNativeResize($event)"
+                [ngStyle]="getColumnWidth('estatus')" class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center font-bold text-gray-500 text-[11px] uppercase">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  Estatus
                 </div>
-
-                <!-- Status Change Menu -->
+              </th>
+              <td mat-cell *matCellDef="let task" class="border-b border-white text-center p-0 cursor-pointer"
+                [style.background-color]="getColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('estatus')"
+                [matMenuTriggerFor]="statusMenu">
+                <div
+                  class="flex items-center justify-center h-full text-[10px] font-extrabold text-white uppercase tracking-wider px-2 py-3">
+                  {{ getStatusName(task.estatus) }}
+                </div>
                 <mat-menu #statusMenu="matMenu">
-                  <button mat-menu-item (click)="updateTaskStatus(task, 1)">
-                    <div class="flex items-center gap-2">
-                      <div class="w-3 h-3 rounded-full bg-slate-300"></div>
-                      <span>Pendiente</span>
-                    </div>
-                  </button>
-                  <button mat-menu-item (click)="updateTaskStatus(task, 2)">
-                    <div class="flex items-center gap-2">
-                      <div class="w-3 h-3 rounded-full bg-orange-400"></div>
-                      <span>En proceso</span>
-                    </div>
-                  </button>
-                  <button mat-menu-item (click)="updateTaskStatus(task, 3)">
-                    <div class="flex items-center gap-2">
-                      <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span>Completada</span>
-                    </div>
-                  </button>
+                  <button mat-menu-item (click)="updateTaskStatus(task, 1)">Pendiente</button>
+                  <button mat-menu-item (click)="updateTaskStatus(task, 2)">En Proceso</button>
+                  <button mat-menu-item (click)="updateTaskStatus(task, 3)">Completada</button>
                 </mat-menu>
               </td>
             </ng-container>
 
-            <!-- Comentarios Column -->
-            <ng-container matColumnDef="comentarios">
-              <th mat-header-cell *matHeaderCellDef class="border-r" [ngStyle]="getColumnWidth('comentarios')"
-                mwlResizable [enableGhostResize]="true" [resizeEdges]="{right: true}"
-                (resizeEnd)="onColumnResizeEnd($event, 'comentarios')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                Comentarios
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
-              </th>
-              <td mat-cell *matCellDef="let task" class="border-r truncate text-sm text-secondary"
-                [matTooltip]="task.comentarios" [ngStyle]="getColumnWidth('comentarios')">
-                <span class="truncate">{{ task.comentarios || '-' }}</span>
-              </td>
-            </ng-container>
-
-            <!-- Media Column (Notifications & Images) -->
-            <ng-container matColumnDef="media">
-              <th mat-header-cell *matHeaderCellDef class="border-r justify-center" [ngStyle]="getColumnWidth('media')"
-                [style.z-index]="getZIndex('media', group.groupKey)" mwlResizable [enableGhostResize]="true"
-                [resizeEdges]="{right: true}" (resizeEnd)="onColumnResizeEnd($event, 'media')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                <span>Multimedia</span>
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
-              </th>
-              <td mat-cell *matCellDef="let task" class="border-r justify-center" [ngStyle]="getColumnWidth('media')">
-                <div class="flex items-center gap-1">
-                  <button mat-icon-button class="icon-size-8 text-gray-400 hover:bg-gray-200 rounded relative"
-                    (click)="openMediaDialog(task)" [style.z-index]="getZIndex('media', group.groupKey)">
-                    <mat-icon class="icon-size-5" svgIcon="heroicons_solid:photo"></mat-icon>
-                    <span *ngIf="task.imagenes && task.imagenes.length > 0"
-                      class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                      {{ task.imagenes.length }}
-                    </span>
-                  </button>
+            <ng-container matColumnDef="fechaInicioEstimada">
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'fechaInicioEstimada'"
+                (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('fechaInicioEstimada')"
+                class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center font-bold text-gray-500 text-[11px] uppercase">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  Inicio
                 </div>
+              </th>
+              <td mat-cell *matCellDef="let task"
+                class="border-r border-b border-white text-center text-[10px] text-gray-500 px-2"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                [ngStyle]="getColumnWidth('fechaInicioEstimada')">
+                {{ task.fechaInicioEstimada | date: 'dd MMM' }}
               </td>
             </ng-container>
 
-            <!-- Acciones Column (Edit & Delete) -->
+            <ng-container matColumnDef="fechaFinEstimada">
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'fechaFinEstimada'"
+                (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('fechaFinEstimada')"
+                class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center font-bold text-gray-500 text-[11px] uppercase">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  Fin
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let task"
+                class="border-r border-b border-white text-center text-[10px] text-gray-500 px-2"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                [ngStyle]="getColumnWidth('fechaFinEstimada')">
+                {{ task.fechaFinEstimada | date: 'dd MMM' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="comentarios">
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'comentarios'"
+                (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('comentarios')"
+                class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center font-bold text-gray-500 text-[11px] uppercase">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  Obs.
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let task"
+                class="border-r border-b border-white px-2 truncate text-[11px] text-gray-400"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                [ngStyle]="getColumnWidth('comentarios')" [matTooltip]="task.comentarios">
+                {{ task.comentarios || '-' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="media">
+              <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'media'" (resizeEnd)="onNativeResize($event)"
+                [ngStyle]="getColumnWidth('media')" class="border-r bg-gray-50/50 text-center">
+                <div class="flex items-center justify-center">
+                  <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
+                    svgIcon="heroicons_solid:bars-2"></mat-icon>
+                  <mat-icon class="icon-size-4 text-gray-400" svgIcon="heroicons_solid:photo"></mat-icon>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let task" class="border-r border-b border-white text-center"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('media')">
+                <button mat-icon-button class="icon-size-7 text-gray-400" (click)="openMediaDialog(task)">
+                  <mat-icon class="icon-size-4" svgIcon="heroicons_solid:photo"></mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
             <ng-container matColumnDef="acciones">
-              <th mat-header-cell *matHeaderCellDef class="justify-center" [ngStyle]="getColumnWidth('acciones')"
-                [style.z-index]="getZIndex('acciones', group.groupKey)" mwlResizable [enableGhostResize]="true"
-                [resizeEdges]="{right: true}" (resizeEnd)="onColumnResizeEnd($event, 'acciones')">
-                <mat-icon class="icon-size-4 mr-2 text-gray-300 cursor-move column-drag-handle"
-                  svgIcon="heroicons_solid:bars-2"></mat-icon>
-                <button mat-icon-button [matMenuTriggerFor]="localColumnMenu"
-                  class="icon-size-8 text-gray-400 hover:bg-gray-200 rounded">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="getColumnWidth('acciones')"
+                class="bg-gray-50/50 text-center">
+                <button mat-icon-button [matMenuTriggerFor]="localColumnMenu" class="icon-size-8 text-gray-400">
                   <mat-icon class="icon-size-5" svgIcon="heroicons_mini:plus"></mat-icon>
                 </button>
                 <mat-menu #localColumnMenu="matMenu">
-                  <div
-                    class="px-4 py-2 font-semibold text-xs text-gray-400 uppercase tracking-widest border-b border-gray-100 mb-1">
-                    Columnas ({{group.groupName}})</div>
-
                   <div *ngFor="let col of allColumns" class="px-2">
                     <button mat-menu-item *ngIf="col !== 'acciones'"
                       (click)="toggleColumn(col, group.groupKey); $event.stopPropagation()">
-                      <div class="flex items-center">
-                        <mat-checkbox [checked]="isColumnVisible(col, group.groupKey)" [disabled]="col === 'nombre'"
-                          class="pointer-events-none">
-                          <span class="text-sm">{{ col | titlecase }}</span>
-                        </mat-checkbox>
-                      </div>
+                      <mat-checkbox [checked]="isColumnVisible(col, group.groupKey)" [disabled]="col === 'nombre'">
+                        {{ col | titlecase }}
+                      </mat-checkbox>
                     </button>
                   </div>
                 </mat-menu>
-                <div class="resizer" mwlResizeHandle [resizeEdges]="{right: true}"></div>
               </th>
-              <td mat-cell *matCellDef="let task" class="justify-center" [ngStyle]="getColumnWidth('acciones')">
-                <div class="flex items-center gap-1">
-                  <button mat-icon-button class="icon-size-8 text-blue-500 hover:bg-blue-50 rounded"
-                    (click)="openTaskDialog(task.id)">
-                    <mat-icon class="icon-size-5" svgIcon="heroicons_solid:pencil"></mat-icon>
-                  </button>
-                  <button mat-icon-button class="icon-size-8 text-red-500 hover:bg-red-50 rounded"
-                    (click)="deleteTask(task.id)">
-                    <mat-icon class="icon-size-5" svgIcon="heroicons_solid:trash"></mat-icon>
-                  </button>
-                </div>
+              <td mat-cell *matCellDef="let task" class="border-b border-white text-center"
+                [style.background-color]="getFillColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('acciones')">
+                <button mat-icon-button class="icon-size-7 text-blue-500 hover:bg-blue-50"
+                  (click)="openTaskDialog(task.id)">
+                  <mat-icon class="icon-size-4" svgIcon="heroicons_solid:pencil"></mat-icon>
+                </button>
               </td>
             </ng-container>
 
-            <!-- Header Row -->
-            <tr mat-header-row *matHeaderRowDef="group.displayedColumns" class="header-row-sortable"
+            <tr mat-header-row *matHeaderRowDef="group.displayedColumns" class="h-10 header-row-sortable"
               [attr.data-group]="group.groupKey"></tr>
-
             <tr mat-row *matRowDef="let row; columns: group.displayedColumns;"
-              class="hover:bg-blue-50/30 transition-colors group cursor-default" cdkDrag [cdkDragData]="row">
-            </tr>
-
-            <!-- Placeholder for dragging -->
-            <div class="cdk-drag-placeholder" *cdkDragPlaceholder></div>
+              class="h-10 hover:brightness-95 transition-all cursor-default" cdkDrag [cdkDragData]="row"></tr>
           </table>
-
-          <!-- Footer Summary (Monday.com style) -->
-          <div class="h-8 bg-gray-50/50 flex items-center px-4 border-t border-gray-100">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Total: {{ group.count }} Items en {{ group.groupName }}
-            </span>
-          </div>
         </div>
 
-        <!-- Empty Group State -->
-        <div *ngIf="group.tasks.data.length === 0" class="p-4 text-center text-secondary italic text-sm">
-          No hay tareas en este grupo
+        <div *ngIf="group.tasks.data.length > 0" class="h-7 bg-gray-50/30 flex items-center px-4">
+          <span class="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Total: {{ group.count }}
+            Items</span>
         </div>
-        <!-- Group Footer Input Stub (For 'Add Item' look) -->
-        <div class="border-t px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center text-gray-400 group-add"
-          (click)="openTaskDialog()">
-          <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:plus"></mat-icon>
-          <span class="text-sm font-medium">Agregar tarea</span>
+
+        <div *ngIf="group.tasks.data.length === 0" class="p-4 text-center text-gray-400 italic text-xs">
+          No hay tareas pendientes en este estatus.
         </div>
+
       </div>
     </ng-container>
 
     <ng-template #noTasks>
-      <div class="flex flex-col items-center justify-center h-full p-8 text-center text-gray-400">
-        <mat-icon class="icon-size-12 mb-4" svgIcon="heroicons_outline:clipboard-document-list"></mat-icon>
-        <div class="text-xl font-semibold">No se encontraron tareas</div>
-        <div class="text-secondary mt-1">Intenta ajustar los filtros o agrega una nueva tarea.</div>
+      <div
+        class="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-white rounded-xl border-2 border-dashed border-gray-200 m-6 shadow-sm">
+        <mat-icon class="icon-size-16 text-gray-200 mb-4"
+          svgIcon="heroicons_outline:clipboard-document-list"></mat-icon>
+        <h3 class="text-xl font-semibold text-gray-700 uppercase tracking-tight">No hay tareas</h3>
+        <button mat-flat-button color="primary" class="mt-6 px-8 rounded-full shadow-lg" (click)="openTaskDialog()">
+          CREAR TAREA
+        </button>
       </div>
     </ng-template>
 
