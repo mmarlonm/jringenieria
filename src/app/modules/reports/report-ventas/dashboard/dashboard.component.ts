@@ -279,6 +279,10 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 🧑‍💼 Top vendedores
     private graficaTopVendedores(data: any[]): void {
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#FFFFFF' : '#333333';
+        const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
+
         Highcharts.chart('chartTopVendedores', {
             chart: {
                 type: 'pie',
@@ -291,25 +295,32 @@ export class ReportVentasDashboardComponent implements OnInit {
                 y: 10,
                 style: {
                     fontSize: '14px',
-                    fontWeight: '600'
+                    fontWeight: '600',
+                    color: textColor
                 }
             },
             tooltip: {
-                pointFormat: '<b>${point.y:,.2f}</b>'
+                backgroundColor: tooltipBg,
+                style: { color: textColor },
+                pointFormat: 'Monto: <b>${point.y:,.2f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
             },
-            credits: {
-                enabled: false
-            },
+            credits: { enabled: false },
             plotOptions: {
                 pie: {
                     innerSize: '65%',
-                    borderWidth: 0,
+                    borderWidth: isDark ? 2 : 1,
+                    borderColor: isDark ? '#1E293B' : '#FFFFFF',
                     dataLabels: {
                         enabled: true,
-                        format: '{point.name}<br><span style="opacity:.7">${point.y:,.0f}</span>',
+                        // 💡 Colocamos el porcentaje junto al nombre en una sola línea limpia
+                        format: '<span style="color:' + textColor + '; font-weight: bold;">{point.name} ({point.percentage:.0f}%)</span><br>' +
+                            '<span style="opacity:.6; color:' + textColor + '">${point.y:,.0f}</span>',
+                        connectorColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
+                        connectorPadding: 5,
+                        distance: 20,
                         style: {
                             fontSize: '11px',
-                            fontWeight: '500'
+                            textOutline: 'none'
                         }
                     },
                     states: {

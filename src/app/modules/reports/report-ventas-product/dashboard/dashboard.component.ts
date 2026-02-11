@@ -141,60 +141,85 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     }
 
     private renderGraficaProductos(): void {
-
         const container = document.getElementById('chartComparativaMes');
         if (!container) return;
 
-        // 🔹 agrupar por producto
-        const map = new Map<string, number>();
+        // 🔹 Detectar si estamos en Modo Oscuro
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#FFFFFF' : '#333333';
+        const secondaryTextColor = isDark ? '#FFFFFF' : '#666666'; // Gris para etiquetas
+        const gridColor = isDark ? '#334155' : '#E6E6E6'; // Color de las líneas de fondo
+
+        // 🔹 Agrupar por producto
+        const map = new Map<string, { total: number, cantidad: number }>();
 
         this.detalle.forEach(r => {
-            const total = map.get(r.nombreProducto) || 0;
-            map.set(r.nombreProducto, total + Number(r.totalVendido));
+            const current = map.get(r.nombreProducto) || { total: 0, cantidad: 0 };
+            map.set(r.nombreProducto, {
+                total: current.total + Number(r.totalVendido),
+                cantidad: current.cantidad + Number(r.cantidadVendida)
+            });
         });
 
-        // 🔹 top 10 ordenados
-        const data = Array.from(map.entries())
-            .sort((a, b) => b[1] - a[1])
+        // 🔹 Top 10 ordenados por Monto Total
+        const sortedData = Array.from(map.entries())
+            .sort((a, b) => b[1].total - a[1].total)
             .slice(0, 10);
 
         Highcharts.chart('chartComparativaMes', {
-
             chart: {
-                type: 'column'
+                type: 'column',
+                backgroundColor: 'transparent' // 👈 Importante para que use el fondo de Fuse
             },
-
-            title: {
-                text: ''
-            },
-
+            title: { text: '' },
             xAxis: {
-                categories: data.map(x => x[0]),
+                categories: sortedData.map(x => x[0]),
                 labels: {
                     style: {
-                        fontSize: '11px'
+                        fontSize: '11px',
+                        color: secondaryTextColor // 👈 Color adaptativo
                     }
-                }
+                },
+                lineColor: gridColor,
+                tickColor: gridColor
             },
-
             yAxis: {
+                gridLineColor: gridColor, // 👈 Líneas de fondo adaptativas
                 title: {
-                    text: 'Ventas'
+                    text: 'Ventas',
+                    style: { color: secondaryTextColor }
+                },
+                labels: {
+                    style: { color: secondaryTextColor }
                 }
             },
-
             tooltip: {
-                pointFormat: '<b>${point.y:,.2f}</b>'
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF', // Fondo del tooltip
+                style: { color: textColor },
+                pointFormat: 'Monto: <b>${point.y:,.2f}</b><br/>Cantidad: <b>{point.cantidad} pzs</b>'
             },
-
             series: [{
                 type: 'column',
                 name: 'Ventas',
-                data: data.map(x => x[1])
+                data: sortedData.map(x => ({
+                    y: x[1].total,
+                    cantidad: x[1].cantidad
+                })),
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.cantidad} pzs',
+                    style: {
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        textOutline: 'none',
+                        color: textColor // 👈 Texto sobre la barra adaptativo
+                    }
+                }
             }],
-
+            legend: {
+                itemStyle: { color: textColor }
+            },
             credits: { enabled: false }
-
         });
     }
 

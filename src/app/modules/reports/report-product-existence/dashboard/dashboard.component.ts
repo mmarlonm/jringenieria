@@ -46,6 +46,8 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     // Cambia esto en tu clase del componente
     public displayedColumns: string[] = [
         'codigo',
+        'marca',
+        'linea',
         'descripcion',
         'qro',
         'pach',
@@ -101,6 +103,8 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
 
         const headers = [
             'Codigo Producto',
+            'Marca',
+            'Linea',
             'Producto',
             'QRO',
             'PCH',
@@ -120,6 +124,8 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
         // Mapeamos los datos de la tabla de existencias
         const rows = this.dataSource.data.map(r => [
             cleanText(r.codigoProducto),
+            cleanText(r.marca),
+            cleanText(r.linea),
             cleanText(r.nombreProducto),
             r.qro,
             r.pach,

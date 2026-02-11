@@ -31,7 +31,7 @@
             </div>
             <div>
                 <p class="text-[10px] uppercase font-bold text-hint">Total PCH</p>
-                <p class="text-xl font-black text-main">{{totalPCH}}</p>
+                <p class="text-xl font-black text-main">{{totalPCH | number:'1.2-2'}}</p>
             </div>
         </div>
         <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
@@ -82,14 +82,31 @@
         <div class="overflow-auto flex-grow scroll-container">
             <table mat-table [dataSource]="dataSource" matSort matSortActive="total" matSortDirection="desc"
                 class="w-full bg-transparent">
-
                 <ng-container matColumnDef="codigo">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header
-                        class="!bg-slate-700 !text-white font-bold p-4 w-32 text-xs uppercase tracking-widest sticky top-0 z-20">
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase tracking-widest sticky top-0 z-20">
                         CÓDIGO</th>
                     <td mat-cell *matCellDef="let row"
                         class="p-4 font-mono text-blue-700 dark:text-blue-400 font-bold border-b dark:border-gray-800 uppercase">
                         {{row.codigoProducto}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="marca">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase tracking-widest sticky top-0 z-20">
+                        MARCA</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 font-mono dark:text-blue-400 font-bold border-b dark:border-gray-800 uppercase">
+                        {{row.marca}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="linea">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase tracking-widest sticky top-0 z-20">
+                        LÍNEA</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 font-mono dark:text-blue-400 font-bold border-b dark:border-gray-800 uppercase">
+                        {{row.linea}}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="descripcion">

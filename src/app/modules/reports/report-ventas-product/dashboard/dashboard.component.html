@@ -1,9 +1,7 @@
-<div class="w-full min-h-screen bg-gray-50 flex flex-col overflow-hidden p-2 sm:p-6 gap-3">
+<div class="w-full min-h-screen bg-default p-2 sm:p-6 flex flex-col overflow-hidden gap-3">
 
-    <!-- ================= HEADER ================= -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shrink-0">
-
-        <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
+        <h1 class="text-lg sm:text-2xl font-bold text-main">
             Reporte de Ventas por Producto
         </h1>
 
@@ -21,9 +19,8 @@
     </div>
 
 
-    <!-- ================= FILTROS ================= -->
-    <div class="bg-white rounded-xl shadow p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 shrink-0">
-
+    <div
+        class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 shrink-0">
         <mat-form-field appearance="outline">
             <mat-label>Tipo persona</mat-label>
             <mat-select [(ngModel)]="esMoral">
@@ -59,62 +56,57 @@
             <mat-icon>search</mat-icon>
             Consultar
         </button>
-
     </div>
 
 
-    <!-- ================= KPIs ================= -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
-
-        <div class="bg-white rounded-xl shadow p-4">
-            <p class="text-xs text-gray-500">Venta Total</p>
-            <p class="text-xl font-bold">{{ totalVentas | currency:'MXN' }}</p>
+        <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4">
+            <p class="text-xs text-secondary">Venta Total</p>
+            <p class="text-xl font-bold text-main">{{ totalVentas | currency:'MXN' }}</p>
         </div>
 
-        <div class="bg-white rounded-xl shadow p-4">
-            <p class="text-xs text-gray-500">Cantidad</p>
-            <p class="text-xl font-bold">{{ totalCantidad }}</p>
+        <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4">
+            <p class="text-xs text-secondary">Cantidad</p>
+            <p class="text-xl font-bold text-main">{{ totalCantidad }}</p>
         </div>
 
-        <div class="bg-white rounded-xl shadow p-4">
-            <p class="text-xs text-gray-500">Productos</p>
-            <p class="text-xl font-bold">{{ totalProductos }}</p>
+        <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4">
+            <p class="text-xs text-secondary">Productos</p>
+            <p class="text-xl font-bold text-main">{{ totalProductos }}</p>
         </div>
 
-        <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
-            <p class="text-xs text-gray-500">Clasificaciones</p>
-            <p class="text-xl font-bold text-green-600">
+        <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 border-l-4 border-green-500">
+            <p class="text-xs text-secondary">Clasificaciones</p>
+            <p class="text-xl font-bold text-green-600 dark:text-green-400">
                 {{ totalClasificaciones }}
             </p>
         </div>
-
     </div>
 
 
-    <!-- ================= TABLA ================= -->
-    <div class="bg-white rounded-xl shadow p-4 flex flex-col flex-1 lg:min-h-[85vh]">
-
-        <h2 class="font-semibold mb-3 shrink-0 flex justify-between items-center">
+    <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 flex flex-col flex-1 lg:min-h-[85vh]">
+        <h2 class="font-semibold mb-3 shrink-0 flex justify-between items-center text-main">
             Ventas por Clasificación
-            <span class="text-xs font-normal text-gray-500 italic">Jerarquía: Clasificación > Sub > Producto</span>
+            <span class="text-xs font-normal text-secondary italic">Jerarquía: Clasificación > Sub > Producto</span>
         </h2>
 
-        <div class="flex-1 overflow-auto border rounded-lg shadow-inner bg-gray-50/30 min-h-[600px] lg:h-[1000px]">
-
+        <div
+            class="flex-1 overflow-auto border dark:border-gray-800 rounded-lg shadow-inner bg-default/30 min-h-[600px] lg:h-[1000px]">
             <table class="w-full text-sm table-auto border-collapse min-w-[750px] sm:min-w-full">
-                <thead class="bg-gray-100 sticky top-0 z-20 shadow-sm">
+                <thead class="bg-gray-100 dark:bg-gray-800 sticky top-0 z-20 shadow-sm">
                     <tr>
-                        <th class="p-3 text-left w-[30%] border-b">Clasificación</th>
-                        <th class="p-3 text-left w-[10%] border-b">Código</th>
-                        <th class="p-3 text-left w-[40%] border-b">Producto</th>
-                        <th class="p-3 text-right w-[15%] border-b">Cantidad</th>
-                        <th class="p-3 text-right w-[15%] border-b">Total</th>
+                        <th class="p-3 text-left w-[30%] border-b dark:border-gray-700 text-secondary">Clasificación
+                        </th>
+                        <th class="p-3 text-left w-[10%] border-b dark:border-gray-700 text-secondary">Código</th>
+                        <th class="p-3 text-left w-[40%] border-b dark:border-gray-700 text-secondary">Producto</th>
+                        <th class="p-3 text-right w-[15%] border-b dark:border-gray-700 text-secondary">Cantidad</th>
+                        <th class="p-3 text-right w-[15%] border-b dark:border-gray-700 text-secondary">Total</th>
                     </tr>
                 </thead>
 
-                <tbody class="bg-white">
+                <tbody class="bg-card">
                     <tr *ngIf="tablaJerarquica.length === 0">
-                        <td colspan="4" class="p-20 text-center text-gray-400">
+                        <td colspan="5" class="p-20 text-center text-hint">
                             <mat-icon class="block mx-auto mb-2 opacity-20"
                                 style="font-size: 40px; width: 40px; height: 40px;">search_off</mat-icon>
                             Sin información disponible
@@ -122,10 +114,10 @@
                     </tr>
 
                     <ng-container *ngFor="let padre of tablaJerarquica">
-                        <tr class="bg-gray-200 font-bold cursor-pointer hover:bg-gray-300 transition-colors"
+                        <tr class="bg-gray-200 dark:bg-gray-700/50 font-bold cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-main"
                             (click)="togglePadre(padre.nombre)">
                             <td class="p-3 flex items-center gap-2">
-                                <mat-icon class="text-gray-600">
+                                <mat-icon class="text-secondary">
                                     {{ expandedPadres.has(padre.nombre) ? 'remove' : 'add' }}
                                 </mat-icon>
                                 {{ padre.nombre }}
@@ -133,15 +125,16 @@
                             <td></td>
                             <td></td>
                             <td class="text-right p-3">{{ padre.cantidad | number }}</td>
-                            <td class="text-right p-3">{{ padre.total | currency:'MXN' }}</td>
+                            <td class="text-right p-3 text-green-600 dark:text-green-400">{{ padre.total |
+                                currency:'MXN' }}</td>
                         </tr>
 
                         <ng-container *ngIf="expandedPadres.has(padre.nombre)">
                             <ng-container *ngFor="let cat of padre.categorias">
-                                <tr class="bg-gray-100 cursor-pointer hover:bg-gray-200 transition-colors"
+                                <tr class="bg-gray-100 dark:bg-gray-800/40 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-main"
                                     (click)="toggleCategoria(getCategoriaKey(padre.nombre, cat.nombre))">
-                                    <td class="pl-10 p-2 flex items-center gap-2 text-gray-700">
-                                        <mat-icon class="scale-90 text-gray-400">
+                                    <td class="pl-10 p-2 flex items-center gap-2 text-secondary">
+                                        <mat-icon class="scale-90 opacity-50">
                                             {{ expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre)) ?
                                             'remove' : 'add' }}
                                         </mat-icon>
@@ -149,29 +142,29 @@
                                     </td>
                                     <td></td>
                                     <td></td>
-                                    <td class="text-right p-2">{{ cat.cantidad | number }}</td>
+                                    <td class="text-right p-2 text-secondary">{{ cat.cantidad | number }}</td>
                                     <td class="text-right p-2 font-medium">{{ cat.total | currency:'MXN' }}</td>
                                 </tr>
 
                                 <ng-container *ngIf="expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre))">
                                     <tr *ngFor="let prod of cat.productos"
-                                        class="border-b hover:bg-blue-50/40 transition-colors">
+                                        class="border-b dark:border-gray-800 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors">
                                         <td></td>
-                                        <td><span class="font-medium text-gray-800">{{ prod.codigo }}</span></td>
-                                        <td class="p-2">
+                                        <td class="p-2"><span class="font-medium text-main">{{ prod.codigo }}</span>
+                                        </td>
+                                        <td class="p-2 text-main">
                                             <div class="flex flex-col">
-                                                <span class="font-medium text-gray-800">{{ prod.producto }}</span>
+                                                <span>{{ prod.producto }}</span>
                                             </div>
                                         </td>
-                                        <td class="text-right p-2 text-gray-600 font-mono">
+                                        <td class="text-right p-2 text-secondary font-mono">
                                             {{ prod.cantidad | number }}
                                         </td>
-                                        <td class="text-right p-2 text-green-700 font-bold">
+                                        <td class="text-right p-2 text-green-700 dark:text-green-400 font-bold">
                                             {{ prod.total | currency:'MXN' }}
                                         </td>
                                     </tr>
                                 </ng-container>
-
                             </ng-container>
                         </ng-container>
                     </ng-container>
@@ -181,17 +174,10 @@
     </div>
 
 
-
-    <!-- ================= GRÁFICA ================= -->
-    <div class="bg-white rounded-xl shadow p-4 flex flex-col">
-
-        <h2 class="font-semibold mb-3">
+    <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 flex flex-col">
+        <h2 class="font-semibold mb-3 text-main">
             Top 10 Productos
         </h2>
-
-        <div id="chartComparativaMes" class="flex-1 w-full"></div>
-
+        <div id="chartComparativaMes" class="flex-1 w-full min-h-[400px]"></div>
     </div>
-
-
 </div>

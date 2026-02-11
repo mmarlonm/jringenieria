@@ -1,11 +1,9 @@
 /* ----------------------------------------------------------------------------------------------------- */
-/*  @ Import/write your custom styles here.
-/*  @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
+/* @ Import/write your custom styles here.
+/* @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
 /* ----------------------------------------------------------------------------------------------------- */
 @import '../../node_modules/css-star-rating/css/star-rating.css';
-// En styles.scss
 @import 'flatpickr/dist/flatpickr.min.css';
-
 
 ::ng-deep .calendar-menu-panel {
   width: 700px !important;
@@ -13,7 +11,6 @@
   overflow: hidden;
   padding: 0 !important;
 }
-
 
 .mat-mdc-menu-panel {
   min-width: 112px;
@@ -29,9 +26,7 @@
 
 .gantt-container {
   height: 500px !important;
-  /* fallback de 500px si no está definida */
   width: 100% !important;
-  /* fallback de 100% si no está definida */
   border: 1px solid #ccc;
   overflow: auto;
 }
@@ -42,8 +37,7 @@
   }
 }
 
-
-/* Estilo del mango generado por la directiva */
+/* Estilo del mango de redimensionamiento */
 .native-resizer {
   position: absolute;
   right: 0;
@@ -52,16 +46,13 @@
   height: 100%;
   cursor: col-resize;
   z-index: 1000 !important;
-  /* Por encima de cdkDrag */
   transition: background-color 0.2s;
 
   &:hover {
     background-color: #3b82f6;
-    /* Azul Tailwind */
   }
 }
 
-/* Evita selección de texto y bugs de cursor durante el arrastre */
 body.is-resizing-column {
   cursor: col-resize !important;
   user-select: none !important;
@@ -69,11 +60,8 @@ body.is-resizing-column {
   * {
     pointer-events: none !important;
   }
-
-  /* Pero permitimos los eventos en el objeto que escala si fuera necesario */
 }
 
-/* Forzar overflow visible en los headers de material */
 .mat-header-cell {
   position: relative !important;
   overflow: visible !important;
@@ -82,7 +70,7 @@ body.is-resizing-column {
 /* 🎨 RESET GLOBAL DE MODO OSCURO */
 .dark {
 
-  // 1. Forzar el fondo de la página y contenedores base
+  // 1. Fondos Base
   body,
   .bg-default,
   .bg-white,
@@ -91,7 +79,7 @@ body.is-resizing-column {
     background-color: var(--fuse-bg-default) !important;
   }
 
-  // 2. FORZAR CARDS (Cualquier cosa que actúe como tarjeta)
+  // 2. Cards y Contenedores
   .bg-card,
   .mat-mdc-card,
   .mat-card,
@@ -102,8 +90,7 @@ body.is-resizing-column {
     border-color: var(--fuse-border) !important;
   }
 
-  // 3. TEXTOS (Solución para letras oscuras)
-  // Atacamos directamente los elementos para que no hereden el negro
+  // 3. Textos e Iconos
   h1,
   h2,
   h3,
@@ -117,47 +104,138 @@ body.is-resizing-column {
   .text-main,
   .text-slate-800,
   .text-gray-900 {
-    &:not(.text-white):not(.text-blue-500):not(.text-emerald-500) {
+    &:not(.text-white):not(.text-blue-500):not(.text-emerald-500):not(.text-green-600) {
       color: var(--fuse-text-default) !important;
     }
   }
 
-  // 4. SELECTS, INPUTS Y FILTROS (MDC Components)
+  // 4. Form Fields (Inputs, Selects, Labels) - REFORZADO
   .mat-mdc-form-field {
-    // Color del texto que escribes
+    // Colores de texto e input
     --mdc-filled-textField-input-text-color: var(--fuse-text-default) !important;
     --mdc-outlined-textField-input-text-color: var(--fuse-text-default) !important;
+    --mdc-filled-textField-idle-line-color: var(--fuse-border) !important;
+    --mdc-outlined-textField-idle-outline-color: var(--fuse-border) !important;
 
-    // Color de la etiqueta (Label)
+    // MAT-LABEL: Estados del texto flotante
     --mdc-filled-textField-label-text-color: var(--fuse-text-secondary) !important;
     --mdc-outlined-textField-label-text-color: var(--fuse-text-secondary) !important;
+    --mdc-filled-textField-focus-label-text-color: var(--fuse-primary) !important;
+    --mdc-outlined-textField-focus-label-text-color: var(--fuse-primary) !important;
+    --mdc-filled-textField-disabled-label-text-color: var(--fuse-text-hint) !important;
 
-    // Color del icono y flecha del select
+    .mat-mdc-form-field-input-control {
+      color: var(--fuse-text-default) !important;
+      caret-color: var(--fuse-primary) !important;
+    }
+
     .mat-mdc-select-arrow,
     .mat-datepicker-toggle,
     .mat-icon {
       color: var(--fuse-text-secondary) !important;
     }
+
+    // Forzar el color del label dentro del componente
+    .mat-mdc-floating-label mat-label {
+      color: inherit !important;
+    }
   }
 
-  // El valor seleccionado dentro del Select
   .mat-mdc-select-value-text {
     color: var(--fuse-text-default) !important;
   }
 
-  // 5. TABLAS DE REPORTES (Ventas, etc.)
+  // 5. Tablas
   .mat-mdc-table {
     background: var(--fuse-bg-card) !important;
 
     .mat-mdc-header-cell {
       background-color: var(--fuse-bg-default) !important;
       color: var(--fuse-text-secondary) !important;
-      font-weight: bold;
     }
 
     .mat-mdc-cell {
       color: var(--fuse-text-default) !important;
       border-bottom-color: var(--fuse-border) !important;
+    }
+  }
+
+  // 6. Calendario (Datepicker)
+  .mat-datepicker-content {
+    background-color: var(--fuse-bg-card) !important;
+    color: var(--fuse-text-default) !important;
+    border: 1px solid var(--fuse-border);
+  }
+
+  .mat-calendar {
+    background-color: var(--fuse-bg-card) !important;
+
+    .mat-calendar-body-label,
+    .mat-calendar-body-cell-content {
+      color: var(--fuse-text-default) !important;
+    }
+
+    .mat-calendar-table-header,
+    .mat-calendar-abbr {
+      color: var(--fuse-text-secondary) !important;
+    }
+
+    .mat-calendar-previous-button,
+    .mat-calendar-next-button,
+    .mat-calendar-period-button {
+      color: var(--fuse-text-default) !important;
+    }
+
+    // DÍA SELECCIONADO: Círculo y Texto
+    .mat-calendar-body-selected {
+      background-color: var(--fuse-primary) !important;
+      color: var(--fuse-primary-text) !important;
+    }
+
+    .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+      border-color: var(--fuse-primary) !important;
+    }
+
+    // Hover en días
+    .mat-calendar-body-cell:not(.mat-calendar-body-disabled):hover>.mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+      background-color: var(--fuse-bg-hover) !important;
+    }
+  }
+
+  .mat-mdc-form-field {
+
+    // 1. Forzar color de la etiqueta cuando está flotando (arriba) o en reposo (dentro)
+    .mdc-floating-label,
+    .mat-mdc-floating-label,
+    .mat-mdc-floating-label mat-label {
+      color: var(--fuse-text-secondary) !important;
+    }
+
+    // 2. Forzar color cuando el campo tiene el foco (clic activo)
+    &.mat-focused {
+
+      .mdc-floating-label,
+      .mat-mdc-floating-label,
+      .mat-mdc-floating-label mat-label {
+        color: var(--fuse-primary) !important;
+      }
+    }
+
+    // 3. Forzar color cuando hay un error (opcional pero recomendado)
+    &.mat-form-field-invalid {
+
+      .mdc-floating-label,
+      .mat-mdc-floating-label,
+      .mat-mdc-floating-label mat-label {
+        color: var(--fuse-error) !important;
+      }
+    }
+
+    // 4. Arreglo para el texto de ayuda (hint) y contador si los usas
+    .mat-mdc-form-field-hint,
+    .mat-mdc-form-field-error,
+    .mat-mdc-form-field-helper-text {
+      color: var(--fuse-text-hint) !important;
     }
   }
 }
