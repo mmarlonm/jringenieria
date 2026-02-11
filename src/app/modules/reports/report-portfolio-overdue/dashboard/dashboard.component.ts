@@ -44,13 +44,13 @@ export interface CarteraVencidaDto {
         { provide: MAT_DATE_LOCALE, useValue: 'es-MX' } // Calendario en español
     ],
     imports: [
-        CommonModule, 
-        FormsModule, 
-        MatIconModule, 
-        HighchartsChartModule, 
-        MatDatepickerModule, 
-        MatFormFieldModule, 
-        MatInputModule, 
+        CommonModule,
+        FormsModule,
+        MatIconModule,
+        HighchartsChartModule,
+        MatDatepickerModule,
+        MatFormFieldModule,
+        MatInputModule,
         MatNativeDateModule,
         MatSelectModule
     ],
@@ -126,7 +126,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         const totalFacturas = rows.length;
         const totalClientes = new Set(rows.map(x => x.cliente)).size;
         const totalSaldo = rows.reduce((sum, x) => sum + x.saldoPendiente, 0);
-        
+
         const totalVencido = rows
             .filter(x => x.diasVencido > 0)
             .reduce((sum, x) => sum + x.saldoPendiente, 0);
@@ -168,7 +168,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
             plotOptions: {
                 bar: {
                     dataLabels: { enabled: true, format: '${point.y:,.2f}' },
-                    color: '#3b82f6' 
+                    color: '#3b82f6'
                 }
             },
             legend: { enabled: false },
@@ -195,7 +195,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
             const imgData = canvas.toDataURL('image/png');
 
             const pdf = new jsPDF('l', 'mm', 'a4');
-            const pdfWidth = 297; 
+            const pdfWidth = 297;
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);

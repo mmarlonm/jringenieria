@@ -28,77 +28,71 @@ export class NavigationMockApi {
         this.registerHandlers();
     }
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Public methods
-    // -----------------------------------------------------------------------------------------------------
-
-    /**
-     * Register Mock API handlers
-     */
     registerHandlers(): void {
         this._fuseMockApiService.onGet('api/common/navigation').reply(() => {
-            // 🔹 Obtener los datos del usuario desde localStorage
+
+            // 1. Obtener los datos del usuario
             const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const vistasPermitidas: string[] = storedData.vistas?.map(v => v.nombreVista) || [];
 
-            // Fill compact navigation children using the default navigation
-            this._compactNavigation.forEach((compactNavItem) => {
-                this._defaultNavigation.forEach((defaultNavItem) => {
-                    if (defaultNavItem.id === compactNavItem.id) {
-                        compactNavItem.children = cloneDeep(
-                            defaultNavItem.children
-                        );
+            // 🔹 MAPEO CORRECTO: Extraemos 'nombreVista' del array de objetos 'permisos'
+            // Esto nos dará algo como ["dashboards.analytics", "dashboards.project", ...]
+            const vistasPermitidas: string[] = storedData.permisos?.map(p => p.vista?.nombreVista) || [];
+
+            // 2. Llenar hijos de navegación (Compact, Futuristic, Horizontal)
+            [this._compactNavigation, this._futuristicNavigation, this._horizontalNavigation].forEach(nav => {
+                nav.forEach(navItem => {
+                    const defaultItem = this._defaultNavigation.find(d => d.id === navItem.id);
+                    if (defaultItem) {
+                        navItem.children = cloneDeep(defaultItem.children);
                     }
                 });
             });
 
-            // Fill futuristic navigation children using the default navigation
-            this._futuristicNavigation.forEach((futuristicNavItem) => {
-                this._defaultNavigation.forEach((defaultNavItem) => {
-                    if (defaultNavItem.id === futuristicNavItem.id) {
-                        futuristicNavItem.children = cloneDeep(
-                            defaultNavItem.children
-                        );
-                    }
-                });
-            });
+            /**
+             * 🔹 Función de filtrado inteligente
+             */
+            const filtrarNavegacion = (navigation: FuseNavigationItem[]): FuseNavigationItem[] => {
+                return navigation
+                    .map(item => {
+                        const newItem = cloneDeep(item);
 
-            // Fill horizontal navigation children using the default navigation
-            this._horizontalNavigation.forEach((horizontalNavItem) => {
-                this._defaultNavigation.forEach((defaultNavItem) => {
-                    if (defaultNavItem.id === horizontalNavItem.id) {
-                        horizontalNavItem.children = cloneDeep(
-                            defaultNavItem.children
-                        );
-                    }
-                });
-            });
-    
-            // 🔹 Función para filtrar la navegación
-            const filtrarNavegacion = (navigation: FuseNavigationItem[]) => {
-                return navigation.map(group => ({
-                    ...group,
-                    children: group.children
-                        ? group.children.filter(item => vistasPermitidas.includes(item.id))
-                        : []
-                })).filter(group => group.children.length > 0); // Eliminar grupos vacíos
+                        // Si tiene hijos, filtramos los hijos primero
+                        if (newItem.children && newItem.children.length > 0) {
+                            newItem.children = filtrarNavegacion(newItem.children);
+                        }
+
+                        // Lógica para GRUPOS o COLAPSABLES: 
+                        // Se muestran solo si terminaron con hijos permitidos después del filtro
+                        if (newItem.type === 'group' || newItem.type === 'collapsable' || newItem.type === 'aside') {
+                            return (newItem.children && newItem.children.length > 0) ? newItem : null;
+                        }
+
+                        // Lógica para ITEMS FINALES (vistas):
+                        // Comparamos el final del ID para que coincida aunque el prefijo cambie
+                        const tienePermiso = vistasPermitidas.some(permiso => {
+                            if (!permiso) return false;
+
+                            // Obtenemos la última parte (ej: de 'dashboards.quote' sacamos 'quote')
+                            const basePermiso = permiso.split('.').pop();
+                            const baseItemId = newItem.id.split('.').pop();
+
+                            // 💡 Caso especial para IDs con guiones como 'quote-products' o 'transfer-management'
+                            return basePermiso === baseItemId || permiso === newItem.id;
+                        });
+
+                        return tienePermiso ? newItem : null;
+                    })
+                    .filter(item => item !== null); // Eliminamos los que no pasaron el filtro
             };
-    
-            const compactNav = filtrarNavegacion(cloneDeep(this._compactNavigation));
-            const defaultNav = filtrarNavegacion(cloneDeep(this._defaultNavigation));
-            const defaultNav2 = cloneDeep(this._defaultNavigation);
-            const futuristicNav = filtrarNavegacion(cloneDeep(this._futuristicNavigation));
-            const horizontalNav = filtrarNavegacion(cloneDeep(this._horizontalNavigation));
-    
-            // 🔹 Devolver la navegación filtrada
+
+            // 3. Generar la respuesta filtrada
             return [
                 200,
                 {
-                    compact: compactNav,
-                    default: defaultNav,
-                    default2: defaultNav2,
-                    futuristic: futuristicNav,
-                    horizontal: horizontalNav,
+                    compact: filtrarNavegacion(cloneDeep(this._compactNavigation)),
+                    default: filtrarNavegacion(cloneDeep(this._defaultNavigation)),
+                    futuristic: filtrarNavegacion(cloneDeep(this._futuristicNavigation)),
+                    horizontal: filtrarNavegacion(cloneDeep(this._horizontalNavigation)),
                 },
             ];
         });
