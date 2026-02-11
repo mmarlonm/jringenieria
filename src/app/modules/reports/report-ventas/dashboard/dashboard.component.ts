@@ -280,8 +280,12 @@ export class ReportVentasDashboardComponent implements OnInit {
     // 🧑‍💼 Top vendedores
     private graficaTopVendedores(data: any[]): void {
         const isDark = document.body.classList.contains('dark');
+
+        // Colores base
         const textColor = isDark ? '#FFFFFF' : '#333333';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
+        // Color del borde del tooltip: gris claro en modo día, azul oscuro en modo noche
+        const tooltipBorder = isDark ? '#1E293B' : '#E2E8F0';
 
         Highcharts.chart('chartTopVendedores', {
             chart: {
@@ -301,8 +305,14 @@ export class ReportVentasDashboardComponent implements OnInit {
             },
             tooltip: {
                 backgroundColor: tooltipBg,
-                style: { color: textColor },
-                pointFormat: 'Monto: <b>${point.y:,.2f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+                borderColor: tooltipBorder, // 👈 Borde para contraste
+                borderWidth: 1,
+                style: {
+                    color: textColor // Fallback de estilo
+                },
+                // 💡 Inyectamos el textColor directamente en el HTML para asegurar que se vea
+                pointFormat: '<span style="color:' + textColor + '">Monto: <b>${point.y:,.2f}</b></span><br>' +
+                    '<span style="color:' + textColor + '">Participación: <b>{point.percentage:.1f}%</b></span>'
             },
             credits: { enabled: false },
             plotOptions: {
@@ -312,7 +322,6 @@ export class ReportVentasDashboardComponent implements OnInit {
                     borderColor: isDark ? '#1E293B' : '#FFFFFF',
                     dataLabels: {
                         enabled: true,
-                        // 💡 Colocamos el porcentaje junto al nombre en una sola línea limpia
                         format: '<span style="color:' + textColor + '; font-weight: bold;">{point.name} ({point.percentage:.0f}%)</span><br>' +
                             '<span style="opacity:.6; color:' + textColor + '">${point.y:,.0f}</span>',
                         connectorColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
