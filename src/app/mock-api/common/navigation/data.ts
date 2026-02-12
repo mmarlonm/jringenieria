@@ -175,7 +175,15 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:shield-check',
         children: [
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
-            { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' }
+            { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' },
+            ,
+            {
+                id: 'reports.login-logs', // ID Original según tu localStorage
+                title: 'Historial de Inicios de Sesión',
+                type: 'basic',
+                icon: 'heroicons_outline:finger-print',
+                link: '/reports/login-logs'
+            }
         ]
     }
 ];
