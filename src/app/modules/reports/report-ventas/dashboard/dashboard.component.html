@@ -19,14 +19,16 @@
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Tipo de persona</mat-label>
             <mat-select [(ngModel)]="esMoral">
-                <mat-option [value]="false">Jesús Méndez Arrillaga</mat-option>
-                <mat-option [value]="true">JR Ingeniería Eléctrica</mat-option>
+                <mat-option value="3">Todas</mat-option>
+                <mat-option value="1">Persona física</mat-option>
+                <mat-option value="2">Persona moral</mat-option>
             </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Sucursal</mat-label>
             <mat-select [(ngModel)]="sucursal">
+                <mat-option value="TODAS">Todas</mat-option>
                 <mat-option value="PACHUCA">Pachuca</mat-option>
                 <mat-option value="Puebla">Puebla</mat-option>
                 <mat-option value="Queretaro">Querétaro</mat-option>

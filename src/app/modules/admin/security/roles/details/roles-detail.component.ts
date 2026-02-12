@@ -105,76 +105,72 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
      * On init
      */
     ngOnInit(): void {
-        // Open the drawer
         this._usersListComponent.matDrawer.open();
 
-        // Create the rol form
         this.contactForm = this._formBuilder.group({
             rolId: [''],
             nombreRol: ['', [Validators.required]],
-            vistas: [[]]  // Aquí se guardarán las vistas con permisos
+            vistas: [[]]
         });
 
-        // Get the roles
         this._rolService.rol$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((rol: any) => {
-                this._usersListComponent.matDrawer.open();
+                if (!rol) return;
+
                 this.rol = rol;
 
-                // Transformar vistas y permisos en un formato adecuado para el formulario
-                const vistasConPermisos = (rol.vistas || []).map(vista => ({
-                    vistaId: vista.vistaId,
-                    nombreVista: vista.nombreVista,
-                    permisos: (rol.permisos || [])
-                        .filter(p => p.vista?.vistaId === vista.vistaId)
-                        .map(p => p.permisoId) // Extraemos solo los IDs de permisos
-                }));
-
-                // Crear estructura de permisos para <app-role-navigation>
+                // 🔹 TRANSFORMACIÓN DINÁMICA DE PERMISOS
+                // Creamos un diccionario donde la llave es el "Base ID" (ej: 'tasks')
+                // Esto asegura que si tiene permiso para 'dashboards.tasks', se marque en el nuevo menú.
                 const permisosSeleccionados = {};
-                vistasConPermisos.forEach(vista => {
-                    permisosSeleccionados[vista.nombreVista] = vista.permisos;
-                });
 
-                // Asignar valores al formulario
+                if (rol.permisos) {
+                    rol.permisos.forEach(p => {
+                        const vistaNombre = p.vista?.nombreVista;
+                        if (vistaNombre) {
+                            // Extraemos la parte final (ej: 'tasks')
+                            const baseId = vistaNombre.includes('.') ? vistaNombre.split('.').pop() : vistaNombre;
+
+                            if (!permisosSeleccionados[baseId]) {
+                                permisosSeleccionados[baseId] = [];
+                            }
+                            permisosSeleccionados[baseId].push(p.permisoId);
+
+                            // También mantenemos el original por compatibilidad
+                            permisosSeleccionados[vistaNombre] = permisosSeleccionados[vistaNombre] || [];
+                            permisosSeleccionados[vistaNombre].push(p.permisoId);
+                        }
+                    });
+                }
+
                 this.contactForm.patchValue({
                     rolId: rol.rolId,
                     nombreRol: rol.nombreRol,
-                    vistas: vistasConPermisos
+                    vistas: rol.vistas || []
                 });
 
-                // Asignar los permisos ya existentes a la navegación
+                // Asignamos el objeto normalizado al componente de navegación de roles
                 this.selectedPermissions = permisosSeleccionados;
 
-                // Marcar cambios
                 this._changeDetectorRef.markForCheck();
             });
 
-        // Get the rol
-        this._rolService.rol$
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((rol: any) => {
-                // Open the drawer in case it is closed
-                this._usersListComponent.matDrawer.open();
-
-                // Get the rol
-                this.rol = rol;
-
-                // Patch values to the form
-                this.contactForm.patchValue(rol);
-
-                // Toggle the edit mode off
-                this.toggleEditMode(false);
-
-                // Mark for check
-                this._changeDetectorRef.markForCheck();
-            });
-
+        // Carga de la estructura del menú (default2 que es el clon del original)
         this._rolService.getNavigation().subscribe(data => {
-            this.navigation = data.default2 || []; // ✅ Asegurar que siempre sea un array
+            this.navigation = data.default || [];
             this._changeDetectorRef.markForCheck();
         });
+    }
+
+    /**
+     * 🔹 Al actualizar, debemos limpiar los prefijos para guardar en la BD
+     * con el formato que el sistema espera (ej: dashboards.nombre)
+     */
+    actualizarPermisos(permisosDesdeComponente: any): void {
+        // Aquí recibes el objeto del componente <app-role-navigation>
+        // Debes asegurarte de que lo que envías al servicio coincida con tu DTO de backend
+        this.contactForm.patchValue({ vistas: permisosDesdeComponente });
     }
 
     /**
@@ -308,10 +304,6 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
      */
     trackByFn(index: number, item: any): any {
         return item.id || index;
-    }
-
-    actualizarPermisos(permisos: any[]): void {
-        this.contactForm.patchValue({ vistas: permisos });
     }
 
     togglePermiso(vistaId: string, permisoId: number, isChecked: boolean): void {

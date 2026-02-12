@@ -8,7 +8,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'INGENIERIA',
         subtitle: 'Gestión técnica y proyectos',
         type: 'group',
-        icon: 'heroicons_outline:cog',
+        icon: 'heroicons_outline:home',
         children: [
             {
                 id: 'dashboards.quote',
