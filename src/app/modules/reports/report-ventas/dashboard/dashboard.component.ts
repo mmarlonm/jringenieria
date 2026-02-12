@@ -83,15 +83,55 @@ export class ReportVentasDashboardComponent implements OnInit {
             )
             .subscribe({
                 next: resp => {
-                    if (!resp) return;
+
+                    // ✅ Si no hay respuesta o viene vacío → reset
+                    if (!resp || !resp.detalle || resp.detalle.length === 0) {
+                        this.resetDashboard();
+                        return;
+                    }
 
                     this.mapearKPIs(resp);
                     this.mapearGraficas(resp);
-                    this.detalleVentas = resp.detalle ?? [];
+                    this.detalleVentas = resp.detalle;
                 },
-                error: err => console.error('Error dashboard ventas', err)
+                error: err => {
+                    console.error('Error dashboard ventas', err);
+                    this.resetDashboard(); // también limpia si hay error
+                }
             });
     }
+
+    private resetDashboard(): void {
+
+        // 🔹 KPIs
+        this.kpis = {
+            totalVentas: 0,
+            totalFacturas: 0,
+            totalClientes: 0,
+            ventaPromedio: 0,
+            utilidadBruta: 0
+        };
+
+        // 🔹 Tabla
+        this.detalleVentas = [];
+
+        // 🔹 Highcharts (estructura mínima vacía)
+        this.chartOptions = {
+            title: { text: '' },
+            series: [{ type: 'column', data: [] }]
+        };
+
+        this.updateFlag = true;
+
+        // 🔹 Limpia contenedores directos (porque usas Highcharts.chart manual)
+        ['chartComparativaMes', 'chartTopProductos', 'chartTopVendedores']
+            .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '';
+            });
+    }
+
+
 
     // =============================
     // 🔹 KPIs
