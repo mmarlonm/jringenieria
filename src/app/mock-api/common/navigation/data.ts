@@ -54,7 +54,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 children: [
                     {
                         id: 'reports.report-product-existence',
-                        title: 'Reporte de Inventarios',
+                        title: 'Reporte de Existencias',
                         type: 'basic',
                         icon: 'heroicons_outline:list-bullet', // Icono añadido
                         link: '/reports/report-product-existence'
@@ -126,7 +126,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
                     { id: 'reports.login-logs', title: 'Reporte de Vendedores', type: 'basic', icon: 'heroicons_outline:identification', link: '/reports/login-logs' },
                     { id: 'reports.report-portfolio-overdue', title: 'Reporte de Cuentas por cobrar', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-portfolio-overdue' },
                     { id: 'reports.report-ventas-product', title: 'Reporte de ventas por producto', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/reports/report-venta-product' },
-                    { id: 'reports.report-product-existence', title: 'Reporte de Inventario', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/reports/report-product-existence' }
+                    { id: 'reports.report-product-existence', title: 'Reporte de Existencias', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/reports/report-product-existence' }
                 ]
             }
         ]
