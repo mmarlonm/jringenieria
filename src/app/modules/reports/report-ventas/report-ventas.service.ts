@@ -10,7 +10,7 @@ export class ReportVentasService {
 
   private apiUrl = `${environment.apiUrl}/ReportDashboard`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Obtiene la información del dashboard de ventas
@@ -22,14 +22,14 @@ export class ReportVentasService {
     sucursal: string,
     fechaInicio: Date,
     fechaFin: Date,
-    esMoral: boolean
+    esMoral: string
   ): Observable<any> {
 
     const params = new HttpParams()
       .set('sucursal', sucursal)
       .set('fechaInicio', fechaInicio.toISOString())
       .set('fechaFin', fechaFin.toISOString())
-      .set('esMoral', esMoral.toString());
+      .set('esMoral', esMoral);
 
     return this.http.get<any>(`${this.apiUrl}/reporte-ventas`, { params });
   }
