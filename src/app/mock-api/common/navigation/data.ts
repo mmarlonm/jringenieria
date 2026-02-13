@@ -47,8 +47,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:clipboard-document-list',
                 children: [
-                    // Usa ID original: 'reports.report-product-existence'
-                    { id: 'reports.report-product-existence', title: 'Reporte de Existencia de Productos', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
                     // Usa ID original: 'dashboards.analytics'
                     { id: 'dashboards.analytics', title: 'Analytics', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/dashboards/analytics' },
                     // Usa ID original: 'dashboards.project'
