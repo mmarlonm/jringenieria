@@ -18,7 +18,7 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export class RolService {
     private apiUrl = `${environment.apiUrl}/Rol`; // Asegúrate de que esto sea correcto
 
-    private apiUrlNav = 'api/common/navigation/all  '; // URL del Mock API
+    private apiUrlNav = 'api/common/navigation/all'; // URL del Mock API
 
     // Private
     private _rol: BehaviorSubject<any | null> = new BehaviorSubject(
