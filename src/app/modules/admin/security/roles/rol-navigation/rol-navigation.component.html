@@ -1,35 +1,62 @@
-<div class="navigation">
-  <!-- Iteramos sobre los grupos principales -->
-  <div *ngFor="let group of navigation" class="group mt-4">
-    <!-- Checkbox para seleccionar/desmarcar todas las vistas del grupo -->
-    <label class="font-bold flex items-center">
-      <input type="checkbox" [checked]="isGroupFullySelected(group)" (change)="toggleGroup(group)">
-      <span class="ml-2">{{ group.title }}</span>
-    </label>
+<div class="flex flex-col w-full">
 
-    <ul class="ml-6 mt-2 border-l-2 border-gray-300 pl-4">
-      <!-- Iteramos sobre las vistas dentro del grupo -->
-      <li *ngFor="let item of group.children" class="mb-2">
+  <ng-container *ngFor="let group of navigation">
+
+    <div *ngIf="group.type === 'group'"
+      class="mb-6 rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
+
+      <div
+        class="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-transparent">
+        <mat-icon class="icon-size-5 text-primary" [svgIcon]="group.icon"></mat-icon>
+        <div class="ml-3">
+          <div class="text-md font-bold uppercase tracking-wider text-gray-800 dark:text-gray-100">
+            {{ group.title }}
+          </div>
+          <div *ngIf="group.subtitle" class="text-xs text-secondary mt-0.5">{{ group.subtitle }}</div>
+        </div>
+      </div>
+
+      <div class="p-4 flex flex-col gap-1">
+        <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: group.children }"></ng-container>
+      </div>
+
+    </div>
+  </ng-container>
+
+</div>
+
+<ng-template #recursiveTree let-nodes>
+  <div class="flex flex-col w-full">
+    <ng-container *ngFor="let node of nodes">
+
+      <div *ngIf="node.type === 'collapsable'" class="mt-2 mb-2">
+        <div class="flex items-center px-2 py-1 text-secondary select-none">
+          <mat-icon class="icon-size-4 mr-2" [svgIcon]="node.icon"></mat-icon>
+          <span class="text-sm font-semibold italic">{{ node.title }}</span>
+        </div>
+        <div class="ml-3 pl-3 border-l-2 border-gray-300 dark:border-gray-600 space-y-1">
+          <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: node.children }"></ng-container>
+        </div>
+      </div>
+
+      <div *ngIf="node.type === 'basic'"
+        class="group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+
         <div class="flex items-center">
-          <!-- Checkbox para seleccionar la vista -->
-          <mat-checkbox 
-            [checked]="selectedPermissions[item.id]?.length > 0" 
-            (change)="togglePermission(item.id, 1)">
-            {{ item.title }}
-          </mat-checkbox>
+          <mat-icon class="icon-size-4 mr-3 text-secondary group-hover:text-primary transition-colors"
+            [svgIcon]="node.icon"></mat-icon>
+          <span
+            class="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white leading-none">
+            {{ node.title }}
+          </span>
         </div>
 
-        <!-- Mostramos los permisos asociados a la vista -->
-        <ul class="ml-6 mt-1" *ngIf="permisos.length > 0">
-          <li *ngFor="let permiso of permisos">
-            <mat-checkbox 
-              [checked]="selectedPermissions[item.id]?.includes(permiso.permisoId)"
-              (change)="togglePermission(item.id, permiso.permisoId)">
-              {{ permiso.descripcionPermiso }}
-            </mat-checkbox>
-          </li>
-        </ul>
-      </li>
-    </ul>
+        <mat-checkbox [color]="'primary'" [checked]="!!selectedPermissions[node.id]"
+          (change)="onPermissionChange(node.id, $event.checked)">
+        </mat-checkbox>
+
+      </div>
+
+    </ng-container>
   </div>
-</div>
+</ng-template>

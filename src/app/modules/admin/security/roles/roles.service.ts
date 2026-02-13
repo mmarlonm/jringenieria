@@ -18,7 +18,7 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export class RolService {
     private apiUrl = `${environment.apiUrl}/Rol`; // Asegúrate de que esto sea correcto
 
-    private apiUrlNav = 'api/common/navigation'; // URL del Mock API
+    private apiUrlNav = 'api/common/navigation/all  '; // URL del Mock API
 
     // Private
     private _rol: BehaviorSubject<any | null> = new BehaviorSubject(
@@ -31,7 +31,7 @@ export class RolService {
     /**
      * Constructor
      */
-    constructor(private _httpClient: HttpClient) {}
+    constructor(private _httpClient: HttpClient) { }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Accessors
@@ -78,7 +78,7 @@ export class RolService {
                     const updatedRoles = roles.some(r => r.rolId === updatedRol.rolId)
                         ? roles.map(r => (r.rolId === updatedRol.rolId ? updatedRol : r))
                         : [...roles, updatedRol];
-    
+
                     // Emitir la nueva lista de roles
                     this._roles.next(updatedRoles);
                 });
@@ -119,13 +119,13 @@ export class RolService {
             map((roles) => {
                 // Crear un nuevo usuario con valores predeterminados
                 const newRol = {
-                    rolId:0,
-                    nombreRol:""
+                    rolId: 0,
+                    nombreRol: ""
                 };
-    
+
                 // Actualizar la lista de roles agregando el nuevo usuario
                 this._roles.next([newRol, ...roles]);
-    
+
                 // Retornar el nuevo usuario
                 return newRol;
             })
@@ -139,13 +139,13 @@ export class RolService {
             roles.rolId.toLowerCase().includes(query.toLowerCase()) ||
             roles.nombreRol.toLowerCase().includes(query.toLowerCase())
         );
-    
+
         // Devolver el resultado como un observable
         return new Observable<any[]>((observer) => {
-          observer.next(filteredContacts);
-          observer.complete();
+            observer.next(filteredContacts);
+            observer.complete();
         });
-      }
+    }
 
 
     /**
@@ -161,5 +161,5 @@ export class RolService {
      */
     getPermisos(): Observable<any[]> {
         return this._httpClient.get<any[]>(`${this.apiUrl}/permisos`);
-      }
+    }
 }

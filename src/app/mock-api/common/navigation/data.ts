@@ -1,8 +1,9 @@
 /* eslint-disable */
 import { FuseNavigationItem } from '@fuse/components/navigation';
-
 export const defaultNavigation: FuseNavigationItem[] = [
-    // --- SECCIÓN INGENIERÍA ---
+    // ==========================================================================================
+    // SECCIÓN: INGENIERÍA
+    // ==========================================================================================
     {
         id: 'ingenieria',
         title: 'INGENIERIA',
@@ -10,13 +11,15 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:home',
         children: [
+            // Usa ID original: 'dashboards.quote'
             {
                 id: 'dashboards.quote',
-                title: 'Cotización de Proyectos',
+                title: 'Cotizaciones de Proyectos',
                 type: 'basic',
                 icon: 'heroicons_outline:banknotes',
                 link: '/dashboards/quote'
             },
+            // Usa ID original (con error de dedo preservado): 'dashboards.tasjks'
             {
                 id: 'dashboards.tasjks',
                 title: 'Tareas',
@@ -30,20 +33,12 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:book-open',
                 children: [
-                    {
-                        id: 'catalogs.clients',
-                        title: 'Clientes',
-                        type: 'basic',
-                        icon: 'heroicons_outline:user', // Icono añadido
-                        link: '/catalogs/clients'
-                    },
-                    {
-                        id: 'dashboards.prospects',
-                        title: 'Prospectos',
-                        type: 'basic',
-                        icon: 'heroicons_outline:user-group', // Icono añadido
-                        link: '/dashboards/prospects'
-                    }
+                    // Usa ID original: 'catalogs.clients'
+                    { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
+                    // Usa ID original: 'catalogs.products'
+                    { id: 'catalogs.products', title: 'Productos', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/catalogs/products' },
+                    // Usa ID original: 'dashboards.prospects'
+                    { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' }
                 ]
             },
             {
@@ -52,26 +47,20 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:clipboard-document-list',
                 children: [
-                    {
-                        id: 'reports.report-product-existence',
-                        title: 'Reporte de Existencias',
-                        type: 'basic',
-                        icon: 'heroicons_outline:list-bullet', // Icono añadido
-                        link: '/reports/report-product-existence'
-                    },
-                    {
-                        id: 'dashboards.analytics',
-                        title: 'Analytics',
-                        type: 'basic',
-                        icon: 'heroicons_outline:chart-pie', // Icono añadido
-                        link: '/dashboards/analytics'
-                    }
+                    // Usa ID original: 'reports.report-product-existence'
+                    { id: 'reports.report-product-existence', title: 'Reporte de Existencia de Productos', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
+                    // Usa ID original: 'dashboards.analytics'
+                    { id: 'dashboards.analytics', title: 'Analytics', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/dashboards/analytics' },
+                    // Usa ID original: 'dashboards.project'
+                    { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/project' }
                 ]
             }
         ]
     },
 
-    // --- SECCIÓN COMERCIALIZACIÓN ---
+    // ==========================================================================================
+    // SECCIÓN: COMERCIALIZACIÓN
+    // ==========================================================================================
     {
         id: 'comercializacion',
         title: 'COMERCIALIZACION',
@@ -79,13 +68,23 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:briefcase',
         children: [
+            // Usa ID original: 'dashboards.quote-products'
             {
                 id: 'dashboards.quote-products',
-                title: 'Cotización',
+                title: 'Cotizaciones de Productos',
                 type: 'basic',
                 icon: 'heroicons_outline:banknotes',
                 link: '/dashboards/quote-products'
             },
+            // Usa ID original: 'dashboards.sales'
+            {
+                id: 'dashboards.sales',
+                title: 'Ventas',
+                type: 'basic',
+                icon: 'heroicons_outline:shopping-cart',
+                link: '/dashboards/sales'
+            },
+            // Usa ID original: 'dashboards.tasjks'
             {
                 id: 'dashboards.tasjks',
                 title: 'Tareas',
@@ -99,20 +98,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:book-open',
                 children: [
-                    {
-                        id: 'catalogs.clients',
-                        title: 'Clientes',
-                        type: 'basic',
-                        icon: 'heroicons_outline:user', // Icono añadido
-                        link: '/catalogs/clients'
-                    },
-                    {
-                        id: 'dashboards.prospects',
-                        title: 'Prospectos',
-                        type: 'basic',
-                        icon: 'heroicons_outline:user-group', // Icono añadido
-                        link: '/dashboards/prospects'
-                    }
+                    { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
+                    { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' }
                 ]
             },
             {
@@ -121,18 +108,26 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:chart-bar',
                 children: [
+                    // Usa ID original: 'reports.report-ventas'
                     { id: 'reports.report-ventas', title: 'Reporte de Ventas', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/reports/report-venta' },
-                    { id: 'reports.project-progress', title: 'Reporte de Clientes', type: 'basic', icon: 'heroicons_outline:document-chart-bar', link: '/reports/project-progress' },
-                    { id: 'reports.login-logs', title: 'Reporte de Vendedores', type: 'basic', icon: 'heroicons_outline:identification', link: '/reports/login-logs' },
-                    { id: 'reports.report-portfolio-overdue', title: 'Reporte de Cuentas por cobrar', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-portfolio-overdue' },
-                    { id: 'reports.report-ventas-product', title: 'Reporte de ventas por producto', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/reports/report-venta-product' },
-                    { id: 'reports.report-product-existence', title: 'Reporte de Existencias', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/reports/report-product-existence' }
+                    // Usa ID original: 'reports.project-progress'
+                    { id: 'reports.project-progress', title: 'Reporte avance de proyectos', type: 'basic', icon: 'heroicons_outline:document-chart-bar', link: '/reports/project-progress' },
+                    // Usa ID original: 'reports.report-portfolio-overdue'
+                    { id: 'reports.report-portfolio-overdue', title: 'Reporte Cuentas por Cobrar', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-portfolio-overdue' },
+                    // Usa ID original: 'reports.report-ventas-product'
+                    { id: 'reports.report-ventas-product', title: 'Reporte de Ventas por Producto', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/reports/report-venta-product' },
+                    // Usa ID original: 'dashboards.transfer-management' (Movido a reportes o dashboards según lógica)
+                    { id: 'dashboards.transfer-management', title: 'Gestion de Traspasos', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/dashboards/transfer-management' },
+                    // Usa ID original: 'reports.report-customers'
+                    { id: 'reports.report-customers', title: 'Reporte de Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers' }
                 ]
             }
         ]
     },
 
-    // --- SECCIÓN MARKETING ---
+    // ==========================================================================================
+    // SECCIÓN: MARKETING
+    // ==========================================================================================
     {
         id: 'marketing',
         title: 'MARKETING',
@@ -140,6 +135,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:megaphone',
         children: [
+            // Usa ID original: 'dashboards.surveys'
             {
                 id: 'dashboards.surveys',
                 title: 'Encuestas',
@@ -147,42 +143,45 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:clipboard-document-list',
                 link: '/dashboards/surveys'
             },
+            // Usa ID original: 'dashboards.surveys-products'
             {
-                id: 'dashboards.tasjks',
-                title: 'Tareas',
+                id: 'dashboards.surveys-products',
+                title: 'Encuesta de Productos',
                 type: 'basic',
-                icon: 'heroicons_outline:check-circle',
-                link: '/dashboards/tasks'
+                icon: 'heroicons_outline:clipboard-document-check',
+                link: '/dashboards/surveys-products'
             },
             {
-                id: 'marketing.catalogos',
-                title: 'Catalogos',
+                id: 'marketing.reportes',
+                title: 'Reportes de Satisfacción',
                 type: 'collapsable',
-                icon: 'heroicons_outline:book-open',
+                icon: 'heroicons_outline:chart-bar-square',
                 children: [
-                    { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
-                    { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' }
+                    // Usa ID original: 'reports.product-satisfaction-survey'
+                    { id: 'reports.product-satisfaction-survey', title: 'Encuesta de Satisfacción (Productos)', type: 'basic', icon: 'heroicons_outline:star', link: '/reports/product-satisfaction-survey' },
+                    // Usa ID original: 'reports.project-satisfaction-survey'
+                    { id: 'reports.project-satisfaction-survey', title: 'Encuesta de Satisfacción (Proyectos)', type: 'basic', icon: 'heroicons_outline:star', link: '/reports/project-satisfaction-survey' }
                 ]
             }
         ]
     },
 
-    // --- SECCIÓN SEGURIDAD ---
+    // ==========================================================================================
+    // SECCIÓN: SEGURIDAD
+    // ==========================================================================================
     {
-        id: 'apps',
-        title: 'Seguridad',
+        id: 'apps', // ID Original para el grupo de seguridad
+        title: 'SEGURIDAD',
+        subtitle: 'Configuración del sistema',
         type: 'group',
         icon: 'heroicons_outline:shield-check',
         children: [
+            // Usa ID original: 'apps.contacts'
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
+            // Usa ID original: 'apps.roles'
             { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' },
-            {
-                id: 'reports.login-logs', // ID Original según tu localStorage
-                title: 'Historial de Inicios de Sesión',
-                type: 'basic',
-                icon: 'heroicons_outline:finger-print',
-                link: '/reports/login-logs'
-            }
+            // Usa ID original: 'reports.login-logs'
+            { id: 'reports.login-logs', title: 'Historial de Inicios de Sesión', type: 'basic', icon: 'heroicons_outline:finger-print', link: '/reports/login-logs' }
         ]
     }
 ];

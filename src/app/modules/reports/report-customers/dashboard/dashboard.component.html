@@ -1,0 +1,114 @@
+<div class="flex flex-col flex-auto min-w-0">
+
+    <div class="bg-card shadow-sm sticky top-0 z-10 p-4 border-b">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+
+            <mat-form-field class="w-full sm:w-72" subscriptSizing="dynamic">
+                <mat-label>Rango de Fechas</mat-label>
+                <mat-date-range-input [rangePicker]="picker">
+                    <input matStartDate [(ngModel)]="fechaInicio" placeholder="Inicio">
+                    <input matEndDate [(ngModel)]="fechaFin" placeholder="Fin">
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker></mat-date-range-picker>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
+                <mat-label>Sucursal</mat-label>
+                <mat-select [(ngModel)]="sucursal">
+                    <mat-option value="TODAS">TODAS</mat-option>
+                    <mat-option value="MERIDA">MERIDA</mat-option>
+                    <mat-option value="VALLADOLID">VALLADOLID</mat-option>
+                    <mat-option value="TIZIMIN">TIZIMIN</mat-option>
+                    <mat-option value="CANCUN">CANCUN</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
+                <mat-label>Tipo Cliente</mat-label>
+                <mat-select [(ngModel)]="esMoral">
+                    <mat-option [value]="false">Física</mat-option>
+                    <mat-option [value]="true">Moral</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" (click)="consultar()">
+                <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+                Consultar
+            </button>
+
+            <button mat-stroked-button (click)="exportarPDF()" class="ml-auto">
+                <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:printer"></mat-icon>
+                PDF
+            </button>
+        </div>
+    </div>
+
+    <div id="pdf-content" class="p-6 flex flex-col gap-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div
+                class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center">
+                <div class="text-secondary font-medium uppercase tracking-wider text-xs">Total Nuevos</div>
+                <div class="text-4xl font-bold text-blue-600 mt-2">{{ totalNuevos | number }}</div>
+                <div class="text-sm text-gray-400 mt-1">En el periodo</div>
+            </div>
+
+            <div
+                class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center">
+                <div class="text-secondary font-medium uppercase tracking-wider text-xs">Promedio Mensual</div>
+                <div class="text-4xl font-bold text-gray-800 dark:text-gray-100 mt-2">{{ promedioMensual | number }}
+                </div>
+                <div class="text-sm text-gray-400 mt-1">Clientes / mes</div>
+            </div>
+
+            <div
+                class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center">
+                <div class="text-secondary font-medium uppercase tracking-wider text-xs">Cartera Total (Fin Periodo)
+                </div>
+                <div class="text-4xl font-bold text-emerald-600 mt-2">{{ maxAcumulado | number }}</div>
+                <div class="text-sm text-gray-400 mt-1">Clientes Activos</div>
+            </div>
+        </div>
+
+        <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Tendencia de Crecimiento</h3>
+
+            <div class="w-full relative h-[400px]"> @if (detalle.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptions" [(update)]="updateFlag"
+                    style="width: 100%; height: 100%; display: block;">
+                </highcharts-chart>
+                } @else {
+                <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                    <mat-icon class="icon-size-10 mb-2" svgIcon="heroicons_outline:chart-bar"></mat-icon>
+                    <span>No hay datos para mostrar en este rango.</span>
+                </div>
+                }
+
+            </div>
+        </div>
+
+        <div class="bg-card rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead
+                        class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-3">Mes</th>
+                            <th class="px-6 py-3 text-right">Clientes Nuevos</th>
+                            <th class="px-6 py-3 text-right">Acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr *ngFor="let item of detalle" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 font-medium">{{ item.nombreMes }}</td>
+                            <td class="px-6 py-3 text-right text-blue-600 font-bold">+{{ item.clientesNuevos }}</td>
+                            <td class="px-6 py-3 text-right">{{ item.acumulado | number }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

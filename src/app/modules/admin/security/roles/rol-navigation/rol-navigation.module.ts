@@ -6,8 +6,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 
 @NgModule({
-    declarations: [RoleNavigationComponent],
-    imports: [CommonModule, MatCheckboxModule, MatIconModule, MatListModule],
-    exports: [RoleNavigationComponent], // Asegúrate de exportarlo
+    // ❌ ERROR ANTERIOR: declarations: [RoleNavigationComponent],
+    // Los componentes standalone NO van en declarations.
+    declarations: [],
+
+    imports: [
+        CommonModule,
+        MatCheckboxModule,
+        MatIconModule,
+        MatListModule,
+        RoleNavigationComponent // ✅ CORRECCIÓN: Se importa aquí como si fuera un módulo
+    ],
+
+    exports: [
+        RoleNavigationComponent // Se exporta para que otros lo usen
+    ],
 })
-export class RoleNavigationModule {}
+export class RoleNavigationModule { }

@@ -107,6 +107,7 @@ export const appRoutes: Route[] = [
                     { path: 'report-portfolio-overdue', loadChildren: () => import('app/modules/reports/report-portfolio-overdue/report-portfolio-overdue.routes') },
                     { path: 'report-venta-product', loadChildren: () => import('app/modules/reports/report-ventas-product/report-ventas-product.routes') },
                     { path: 'report-product-existence', loadChildren: () => import('app/modules/reports/report-product-existence/report-product-existence.routes') },
+                    { path: 'report-customers', loadChildren: () => import('app/modules/reports/report-customers/report-customers.routes') },
                 ]
             },
             {
