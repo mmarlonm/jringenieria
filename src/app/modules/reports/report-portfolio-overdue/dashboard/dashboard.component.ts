@@ -250,7 +250,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 
-                <img src="images/logo/LOGO-BN-SIN-FONDO.png" alt="Logo JR" style="max-height: 70px; max-width: 200px; object-fit: contain;">
+                <img src="images/logo/logo-new-jr.png" alt="Logo JR" style="max-height: 100px; max-width: 200px; object-fit: contain;">
                 
                 <div>
                     <h2 style="margin: 0; color: #1e3a8a; font-size: 16px;">JR INGENIERÍA ELÉCTRICA</h2>
