@@ -52,7 +52,9 @@ export const defaultNavigation: FuseNavigationItem[] = [
                     // Usa ID original: 'dashboards.analytics'
                     { id: 'dashboards.analytics', title: 'Analytics', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/dashboards/analytics' },
                     // Usa ID original: 'dashboards.project'
-                    { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/project' }
+                    { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/project' },
+                    // Usa ID original: 'reports.project-progress'
+                    { id: 'reports.project-progress', title: 'Reporte avance de proyectos', type: 'basic', icon: 'heroicons_outline:document-chart-bar', link: '/reports/project-progress' },
                 ]
             }
         ]
@@ -110,14 +112,14 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 children: [
                     // Usa ID original: 'reports.report-ventas'
                     { id: 'reports.report-ventas', title: 'Reporte de Ventas', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/reports/report-venta' },
-                    // Usa ID original: 'reports.project-progress'
-                    { id: 'reports.project-progress', title: 'Reporte avance de proyectos', type: 'basic', icon: 'heroicons_outline:document-chart-bar', link: '/reports/project-progress' },
                     // Usa ID original: 'reports.report-portfolio-overdue'
                     { id: 'reports.report-portfolio-overdue', title: 'Reporte Cuentas por Cobrar', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-portfolio-overdue' },
                     // Usa ID original: 'reports.report-ventas-product'
                     { id: 'reports.report-ventas-product', title: 'Reporte de Ventas por Producto', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/reports/report-venta-product' },
                     // Usa ID original: 'dashboards.transfer-management' (Movido a reportes o dashboards según lógica)
                     { id: 'dashboards.transfer-management', title: 'Gestion de Traspasos', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/dashboards/transfer-management' },
+                    // Usa ID original: 'reports.report-product-existence'
+                    { id: 'reports.report-product-existence', title: 'Reporte de Existencia de Productos', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
                     // Usa ID original: 'reports.report-customers'
                     { id: 'reports.report-customers', title: 'Reporte de Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers' }
                 ]
