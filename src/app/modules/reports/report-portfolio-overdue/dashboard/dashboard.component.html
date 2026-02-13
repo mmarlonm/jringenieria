@@ -6,6 +6,12 @@
             <p class="text-sm text-gray-500 italic" *ngIf="loading">Procesando datos...</p>
         </div>
 
+        <button *ngIf="filtroTexto && filtroTexto.trim() !== ''" (click)="exportarPDFEstado()"
+            class="flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-green-700 transition-all">
+            <mat-icon>receipt_long</mat-icon>
+            Exportar Estado Cuenta
+        </button>
+
         <button (click)="exportarPDF()"
             class="flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-red-700 transition-all">
             <mat-icon>picture_as_pdf</mat-icon>
@@ -14,7 +20,23 @@
     </div>
 
     <div
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-start">
+
+        <mat-form-field appearance="outline" class="w-full lg:col-span-2">
+            <mat-label>Cliente o RFC</mat-label>
+            <input matInput [(ngModel)]="filtroTexto" (keyup.enter)="consultar()"
+                placeholder="Ej. Silvestre Lopez o LOAS78...">
+
+            <button *ngIf="filtroTexto" matSuffix mat-icon-button aria-label="Limpiar" (click)="limpiarFiltroTexto()"
+                matTooltip="Limpiar filtro">
+                <mat-icon>close</mat-icon>
+            </button>
+
+            <button matSuffix mat-icon-button color="primary" aria-label="Buscar" (click)="consultar()"
+                matTooltip="Buscar">
+                <mat-icon>search</mat-icon>
+            </button>
+        </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Sucursal</mat-label>
@@ -22,14 +44,6 @@
                 <mat-option value="SANTA JULIA">Pachuca</mat-option>
                 <mat-option value="PUEBLA">Puebla</mat-option>
                 <mat-option value="QUERETARO">Querétaro</mat-option>
-            </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Tipo de Persona</mat-label>
-            <mat-select [(ngModel)]="esMoral">
-                <mat-option [value]="false">Persona Física</mat-option>
-                <mat-option [value]="true">Persona Moral</mat-option>
             </mat-select>
         </mat-form-field>
 
@@ -86,46 +100,46 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 overflow-hidden">
-    <h2 class="text-lg font-bold text-gray-800 mb-4">Detalle de Facturas</h2>
-    <div class="overflow-x-auto border rounded-lg">
-        <table class="w-full text-sm text-left border-collapse">
-            <thead class="bg-gray-50 border-b">
-                <tr>
-                    <th class="p-3 font-semibold text-gray-600">Sucursal</th>
-                    <th class="p-3 font-semibold text-gray-600">Agente</th>
-                    <th class="p-3 font-semibold text-gray-600">Cliente</th>
-                    <th class="p-3 font-semibold text-gray-600">Documento</th>
-                    <th class="p-3 text-center font-semibold text-gray-600">Días</th>
-                    <th class="p-3 text-right font-semibold text-gray-600">Saldo Total</th>
-                    <th class="p-3 text-right font-semibold text-gray-600">Pendiente</th>
-                    <th class="p-3 text-center font-semibold text-gray-600">Estatus</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let row of detalle" class="border-b hover:bg-gray-50 transition-colors">
-                    <td class="p-3 text-xs text-gray-600">{{ row.sucursal }}</td>
-                    <td class="p-3 text-xs font-medium text-indigo-600 uppercase">{{ row.agente }}</td>
-                    <td class="p-3 font-medium text-gray-800">{{ row.cliente }}</td>
-                    <td class="p-3 font-mono text-xs text-gray-500">{{ row.documento }}</td>
-                    <td class="p-3 text-center"
-                        [ngClass]="row.diasVencido > 0 ? 'text-red-600 font-bold' : 'text-green-600'">
-                        {{ row.diasVencido }}
-                    </td>
-                    <td class="p-3 text-right text-gray-500 font-medium">
-                        {{ row.totalFactura | currency:'MXN' }}
-                    </td>
-                    <td class="p-3 text-right font-bold text-gray-900">
-                        {{ row.saldoPendiente | currency:'MXN' }}
-                    </td>
-                    <td class="p-3 text-center">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                            [ngClass]="row.estatus === 'VENCIDO' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
-                            {{ row.estatus }}
-                        </span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <h2 class="text-lg font-bold text-gray-800 mb-4">Detalle de Facturas</h2>
+        <div class="overflow-x-auto border rounded-lg">
+            <table class="w-full text-sm text-left border-collapse">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="p-3 font-semibold text-gray-600">Sucursal</th>
+                        <th class="p-3 font-semibold text-gray-600">Agente</th>
+                        <th class="p-3 font-semibold text-gray-600">Cliente</th>
+                        <th class="p-3 font-semibold text-gray-600">Documento</th>
+                        <th class="p-3 text-center font-semibold text-gray-600">Días</th>
+                        <th class="p-3 text-right font-semibold text-gray-600">Saldo Total</th>
+                        <th class="p-3 text-right font-semibold text-gray-600">Pendiente</th>
+                        <th class="p-3 text-center font-semibold text-gray-600">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of detalle" class="border-b hover:bg-gray-50 transition-colors">
+                        <td class="p-3 text-xs text-gray-600">{{ row.sucursal }}</td>
+                        <td class="p-3 text-xs font-medium text-indigo-600 uppercase">{{ row.agente }}</td>
+                        <td class="p-3 font-medium text-gray-800">{{ row.cliente }}</td>
+                        <td class="p-3 font-mono text-xs text-gray-500">{{ row.documento }}</td>
+                        <td class="p-3 text-center"
+                            [ngClass]="row.diasVencido > 0 ? 'text-red-600 font-bold' : 'text-green-600'">
+                            {{ row.diasVencido }}
+                        </td>
+                        <td class="p-3 text-right text-gray-500 font-medium">
+                            {{ row.totalFactura | currency:'MXN' }}
+                        </td>
+                        <td class="p-3 text-right font-bold text-gray-900">
+                            {{ row.saldoPendiente | currency:'MXN' }}
+                        </td>
+                        <td class="p-3 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                [ngClass]="row.estatus === 'VENCIDO' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
+                                {{ row.estatus }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 </div>
