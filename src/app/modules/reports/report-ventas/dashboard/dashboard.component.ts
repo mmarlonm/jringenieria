@@ -66,6 +66,9 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 🔹 Drilldown
     detalleVentas: any[] = [];
+
+    private datosClasificacionOriginal: any[] = [];
+    public marcaSeleccionada: string | null = null;
     constructor(private reportVentasService: ReportVentasService) { }
 
     ngOnInit(): void {
@@ -93,6 +96,10 @@ export class ReportVentasDashboardComponent implements OnInit {
                     this.mapearKPIs(resp);
                     this.mapearGraficas(resp);
                     this.detalleVentas = resp.detalle;
+
+                    this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
+                    this.generarGraficaMarcas();
+                    this.generarGraficaLineas(); // Mostrará todas al inicio
                 },
                 error: err => {
                     console.error('Error dashboard ventas', err);
@@ -421,5 +428,144 @@ export class ReportVentasDashboardComponent implements OnInit {
 
             pdf.save(`reporte-ventas-${new Date().getTime()}.pdf`);
         });
+    }
+
+    // 📊 Gráfica 1: Marcas (Padre)
+    private generarGraficaMarcas(): void {
+        const dataMarcas = this.datosClasificacionOriginal.reduce((acc, curr) => {
+            const existe = acc.find(x => x.name === curr.marca);
+            if (existe) {
+                existe.y += curr.totalVendido;
+            } else {
+                acc.push({ name: curr.marca, y: curr.totalVendido });
+            }
+            return acc;
+        }, [] as any[]);
+
+        const self = this;
+
+        Highcharts.chart('chartMarcas', {
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent'
+            },
+            title: {
+                text: 'Ventas por Marca',
+                style: { fontSize: '14px', fontWeight: 'bold' }
+            },
+            subtitle: {
+                text: 'Haga clic para filtrar líneas',
+                style: { fontSize: '11px' }
+            },
+            tooltip: {
+                pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
+            },
+            credits: { enabled: false },
+            // 🔹 DESACTIVAR LEYENDA (Igual que en líneas)
+            legend: { enabled: false },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    // 🔹 ETIQUETAS CON PORCENTAJE
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
+                        distance: 20,
+                        style: {
+                            fontSize: '10px',
+                            textOutline: 'none',
+                            fontWeight: 'normal'
+                        }
+                    },
+                    showInLegend: false,
+                    point: {
+                        events: {
+                            click: function () {
+                                self.marcaSeleccionada = this.name;
+                                self.generarGraficaLineas(this.name);
+                            }
+                        }
+                    }
+                }
+            },
+            series: [{
+                name: 'Marcas',
+                type: 'pie',
+                innerSize: '60%', // 🔹 MISMO ESTILO DONUT
+                data: dataMarcas
+            }]
+        });
+    }
+
+    // 📊 Gráfica 2: Líneas (Hijo)
+    private generarGraficaLineas(marca?: string): void {
+        let filtrados = this.datosClasificacionOriginal;
+
+        if (marca) {
+            filtrados = this.datosClasificacionOriginal.filter(x => x.marca === marca);
+        }
+
+        const dataLineas = filtrados.reduce((acc, curr) => {
+            const existe = acc.find(x => x.name === curr.linea);
+            if (existe) {
+                existe.y += curr.totalVendido;
+            } else {
+                acc.push({ name: curr.linea, y: curr.totalVendido });
+            }
+            return acc;
+        }, [] as any[]);
+
+        Highcharts.chart('chartLineas', {
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent'
+            },
+            title: {
+                text: marca ? `Líneas de ${marca}` : 'Todas las Líneas',
+                style: { fontSize: '14px', fontWeight: 'bold' }
+            },
+            subtitle: {
+                text: marca ? 'Participación por venta neta' : 'Seleccione una marca para filtrar',
+                style: { fontSize: '11px' }
+            },
+            tooltip: {
+                pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
+            },
+            credits: { enabled: false },
+            // 🔹 DESACTIVAR LEYENDA
+            legend: { enabled: false },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    // 🔹 ETIQUETAS CON PORCENTAJE
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
+                        distance: 20, // Distancia de la línea a la gráfica
+                        style: {
+                            fontSize: '10px',
+                            textOutline: 'none',
+                            fontWeight: 'normal'
+                        }
+                    },
+                    // 🔹 ASEGURAR QUE NO SE MUESTREN EN LEYENDA
+                    showInLegend: false
+                }
+            },
+            series: [{
+                name: 'Líneas',
+                type: 'pie',
+                innerSize: '60%', // Estilo Donut
+                data: dataLineas
+            }]
+        });
+    }
+
+    // 🔹 Resetear filtro de marca
+    public resetFiltroMarca(): void {
+        this.marcaSeleccionada = null;
+        this.generarGraficaLineas();
     }
 }
