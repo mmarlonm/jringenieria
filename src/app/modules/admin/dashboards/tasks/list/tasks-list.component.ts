@@ -890,16 +890,15 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     /**
- * Inicializa las gráficas extrayendo los datos reales de los DataSources.
- * @param {any[]} groups - Array de grupos con MatTableDataSource.
- * @returns {void}
- */
+     * Inicializa las gráficas extrayendo los datos reales de los DataSources.
+     * @param {any[]} groups - Array de grupos con MatTableDataSource.
+     * @returns {void}
+     */
     initHighcharts(groups: any[]): void {
         if (!groups || groups.length === 0) return;
 
         const statusColors = ['#94A3B8', '#F59E0B', '#10B981'];
 
-        // CORRECCIÓN: Extraer el conteo real de filteredData
         const getSafeCount = (statusKey: string) => {
             const group = groups.find(g => g.groupKey === `status-${statusKey}`);
             return group ? group.tasks.filteredData.length : 0;
@@ -910,7 +909,21 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             title: { text: '' },
             credits: { enabled: false },
             plotOptions: {
-                pie: { innerSize: '65%', borderWidth: 0, showInLegend: true, dataLabels: { enabled: false } }
+                pie: {
+                    innerSize: '65%',
+                    borderWidth: 0,
+                    showInLegend: true,
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.percentage:.1f}%</b>', // Muestra el porcentaje
+                        distance: null, // Lo coloca dentro de las rebanadas
+                        style: {
+                            fontSize: '10px',
+                            textOutline: 'none',
+                            color: '#000000'
+                        }
+                    }
+                }
             },
             series: [{
                 type: 'pie',
@@ -923,18 +936,29 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             }]
         } as Highcharts.Options;
 
-        // CORRECCIÓN: Pasar los grupos a la función de usuarios
         this.userChartOptions = {
             chart: { type: 'column', height: 200, backgroundColor: 'transparent' },
             title: { text: '' },
             credits: { enabled: false },
             xAxis: { type: 'category' },
             yAxis: { min: 0, title: { text: '' }, gridLineDashStyle: 'Dash' },
+            plotOptions: {
+                column: {
+                    dataLabels: {
+                        enabled: true, // Muestra el número arriba de la barra
+                        format: '{point.y}',
+                        style: {
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                        }
+                    }
+                }
+            },
             series: [{
                 type: 'column',
                 name: 'Tareas',
                 color: '#6366F1',
-                data: this.getTasksByUser(groups) // Llamamos a la función corregida abajo
+                data: this.getTasksByUser(groups)
             }]
         } as Highcharts.Options;
 
