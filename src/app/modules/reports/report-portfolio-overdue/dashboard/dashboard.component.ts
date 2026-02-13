@@ -196,32 +196,31 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     }
 
     async exportarPDFEstado(): Promise<void> {
-        // 1. Usar detalleFiltrado (o detalle si no estás usando el getter)
         const data = this.detalle || [];
         if (data.length === 0) return;
 
         this.loading = true;
 
-        // 2. Helpers para formatear moneda y fechas
+        // Helpers de formato
         const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
         const formatDate = (dateStr: string) => {
             const d = new Date(dateStr);
             return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
         };
 
-        // 3. Cálculos Totales
+        // Cálculos
         const totalCargos = data.reduce((acc, curr) => acc + curr.totalFactura, 0);
         const totalSaldos = data.reduce((acc, curr) => acc + curr.saldoPendiente, 0);
-        const totalAbonos = totalCargos - totalSaldos; // Lo que ya se pagó
+        const totalAbonos = totalCargos - totalSaldos;
 
-        // Información general
+        // Info del cliente
         const cliente = data[0].cliente;
         const rfc = data[0].rfc;
         const sucursal = data[0].sucursal;
         const fInicio = formatDate(this.fechaInicio.toISOString());
         const fFin = formatDate(this.fechaFin.toISOString());
 
-        // 4. Construir las filas de la tabla dinámicamente
+        // Filas de la tabla
         let tableRows = '';
         data.forEach((item, i) => {
             const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
@@ -241,17 +240,18 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         `;
         });
 
-        // 5. Crear el contenedor temporal HTML
+        // Contenedor temporal
         const container = document.createElement('div');
         container.id = 'temp-pdf-container';
-        // Estilos del contenedor (800px de ancho fijo, fuera de la pantalla)
         container.setAttribute('style', 'width: 800px; padding: 40px; background-color: #ffffff; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; z-index: -1000;');
 
-        // 6. Inyectar el diseño fiel a la imagen
+        // HTML inyectado (CON LA RUTA DEL LOGO ACTUALIZADA)
         container.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="width: 80px; height: 80px; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; color: #1e3a8a;">LOGO JR</div>
+                
+                <img src="images/logo/LOGO-BN-SIN-FONDO.png" alt="Logo JR" style="max-height: 70px; max-width: 200px; object-fit: contain;">
+                
                 <div>
                     <h2 style="margin: 0; color: #1e3a8a; font-size: 16px;">JR INGENIERÍA ELÉCTRICA</h2>
                     <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">RFC: JRI-XXXXXX-XXX</p>
@@ -312,35 +312,30 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         </div>
     `;
 
-        // 7. Insertar temporalmente en el DOM
         document.body.appendChild(container);
 
         try {
-            // 8. Tomar captura con html2canvas
             const canvas = await html2canvas(container, {
-                scale: 3, // Alta definición
-                useCORS: true,
+                scale: 3,
+                useCORS: true, // Crucial para que Angular cargue imágenes locales en el canvas
                 logging: false,
                 backgroundColor: '#ffffff'
             });
 
             const imgData = canvas.toDataURL('image/png');
 
-            // 9. Crear el PDF en formato A4 Vertical ('p')
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-            // 10. Descargar
             const clienteClean = cliente.replace(/[^a-z0-9]/gi, '_');
             pdf.save(`Estado_Cuenta_${clienteClean}_${new Date().getTime()}.pdf`);
 
         } catch (error) {
             console.error('Error al generar PDF de Estado de Cuenta:', error);
         } finally {
-            // 11. Limpieza crucial: remover el div temporal del DOM
             document.body.removeChild(container);
             this.loading = false;
         }
