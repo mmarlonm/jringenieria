@@ -46,35 +46,44 @@
             <div class="p-3 bg-white/20 rounded-xl"><mat-icon>functions</mat-icon></div>
             <div>
                 <p class="text-[10px] uppercase font-bold opacity-80">Existencia Total</p>
-                <p class="text-xl font-black">{{totalGeneral}}</p>
+                <p class="text-xl font-black">{{totalGeneral | number:'1.2-2'}}</p>
             </div>
         </div>
     </div>
 
     <div
-        class="bg-card rounded-2xl shadow-sm border dark:border-gray-800 p-2 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-        <mat-form-field appearance="outline" class="md:col-span-3 !mb-[-1.25em]">
+        class="bg-card rounded-2xl shadow-sm border dark:border-gray-800 p-4 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+
+        <mat-form-field appearance="outline" class="md:col-span-2 !mb-[-1.25em]">
             <mat-label>Razón Social</mat-label>
             <mat-select [(ngModel)]="esMoral">
                 <mat-option [value]="false">Física</mat-option>
                 <mat-option [value]="true">Moral</mat-option>
             </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" class="md:col-span-3 !mb-[-1.25em]">
+
+        <mat-form-field appearance="outline" class="md:col-span-2 !mb-[-1.25em]">
             <mat-label>Fecha de Corte</mat-label>
             <input matInput [matDatepicker]="fc" [(ngModel)]="fechaCorte">
             <mat-datepicker-toggle matSuffix [for]="fc"></mat-datepicker-toggle>
             <mat-datepicker #fc></mat-datepicker>
         </mat-form-field>
-        <mat-form-field appearance="outline" class="md:col-span-4 !mb-[-1.25em]">
+
+        <mat-form-field appearance="outline" class="md:col-span-6 !mb-[-1.25em]">
             <mat-label>Buscar producto...</mat-label>
-            <input matInput [(ngModel)]="filtroTexto" (keyup)="aplicarFiltro()">
+            <input matInput [(ngModel)]="filtroTexto" (keyup)="aplicarFiltro()"
+                placeholder="Ej: 101,105 o 200-250 o nombre...">
             <mat-icon matSuffix>search</mat-icon>
+            <mat-hint class="text-[10px] leading-3">
+                💡 <b>Tip:</b> Usa <b>comas</b> (1,2) o <b>guion</b> (10-20).
+            </mat-hint>
         </mat-form-field>
+
         <button mat-flat-button
-            class="md:col-span-2 !h-[50px] !rounded-xl !bg-slate-800 dark:!bg-blue-600 !text-white shadow-md"
+            class="md:col-span-2 !h-[50px] !rounded-xl !bg-slate-800 dark:!bg-blue-600 !text-white shadow-md hover:opacity-90 transition-opacity"
             (click)="consultar()">
-            <mat-icon class="mr-2">sync</mat-icon> Consultar
+            <mat-icon class="mr-1">sync</mat-icon>
+            <span>Consultar</span>
         </button>
     </div>
 

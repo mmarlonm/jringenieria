@@ -65,6 +65,8 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     totalPUE: number;
     totalGeneral: number;
 
+    public productosFiltrados: any[] = [];
+
     constructor(private reportProductExistenceService: ReportProductExistenceService,
         private dialog: MatDialog) { }
 
@@ -80,21 +82,69 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
                 this.dataSource.data = resp;
                 this.dataSource.sort = this.sort;
 
-                // Cálculos para KPIs
-                this.totalQRO = resp.reduce((acc, curr) => acc + curr.qro, 0);
-                this.totalPCH = resp.reduce((acc, curr) => acc + curr.pach, 0);
-                this.totalPUE = resp.reduce((acc, curr) => acc + curr.pue, 0);
-                this.totalGeneral = resp.reduce((acc, curr) => acc + curr.total, 0);
+                // 🔹 CONFIGURACIÓN DEL FILTRO AVANZADO
+                this.dataSource.filterPredicate = (data: any, filter: string) => {
+                    const search = filter.trim().toLowerCase();
 
-                this.aplicarFiltro();
+                    // Campos sobre los que buscamos
+                    const codigo = (data.codigoProducto || '').toString().toLowerCase();
+                    const nombre = (data.nombreProducto || '').toLowerCase();
+                    const marca = (data.marca || '').toLowerCase();
+                    const linea = (data.linea || '').toLowerCase();
+
+                    // 1. Caso: Rango numérico (ej: 100-200)
+                    if (search.includes('-')) {
+                        const partes = search.split('-');
+                        const inicio = parseInt(partes[0]);
+                        const fin = parseInt(partes[1]);
+                        const codigoNum = parseInt(codigo);
+
+                        if (!isNaN(inicio) && !isNaN(fin) && !isNaN(codigoNum)) {
+                            return codigoNum >= inicio && codigoNum <= fin;
+                        }
+                    }
+
+                    // 2. Caso: Lista separada por comas (ej: 1,2,3)
+                    if (search.includes(',')) {
+                        const codigos = search.split(',')
+                            .map(c => c.trim())
+                            .filter(c => c !== '');
+                        return codigos.some(c => codigo === c);
+                    }
+
+                    // 3. Caso: Búsqueda normal (incluye nombre, marca, linea o código)
+                    return nombre.includes(search) ||
+                        codigo.includes(search) ||
+                        marca.includes(search) ||
+                        linea.includes(search);
+                };
+
+                // Cálculos para KPIs
+                this.totalQRO = resp.reduce((acc, curr) => acc + (curr.qro || 0), 0);
+                this.totalPCH = resp.reduce((acc, curr) => acc + (curr.pach || 0), 0);
+                this.totalPUE = resp.reduce((acc, curr) => acc + (curr.pue || 0), 0);
+                this.totalGeneral = resp.reduce((acc, curr) => acc + (curr.total || 0), 0);
+
+                // Aplicar filtro si ya había texto escrito
+                if (this.filtroTexto) {
+                    this.aplicarFiltro();
+                }
             });
     }
 
     /**
-     * Filtra los datos localmente por código o nombre de producto.
+     * Filtra los datos localmente por código (rango o lista), nombre, marca o línea.
      */
     aplicarFiltro(): void {
-        this.dataSource.filter = this.filtroTexto.trim().toLowerCase();
+        // Importante: No pasamos a minúsculas aquí para procesar guiones/comas íntegros
+        // el Predicate configurado arriba ya se encarga del case-insensitive
+        const filterValue = this.filtroTexto.trim();
+        this.dataSource.filter = filterValue;
+
+        // Si usas paginador (aunque no lo veo en tu ViewChild), vuelve a la pag 1
+        if (this.dataSource.paginator) {
+            this.dataSource.paginator.firstPage();
+        }
     }
 
     exportarExcel(): void {

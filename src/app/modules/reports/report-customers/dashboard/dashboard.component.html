@@ -3,14 +3,18 @@
     <div class="bg-card shadow-sm sticky top-0 z-10 p-4 border-b">
         <div class="flex flex-col sm:flex-row sm:items-end gap-4">
 
-            <mat-form-field class="w-full sm:w-72" subscriptSizing="dynamic">
-                <mat-label>Rango de Fechas</mat-label>
-                <mat-date-range-input [rangePicker]="picker">
-                    <input matStartDate [(ngModel)]="fechaInicio" placeholder="Inicio">
-                    <input matEndDate [(ngModel)]="fechaFin" placeholder="Fin">
-                </mat-date-range-input>
-                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-date-range-picker #picker></mat-date-range-picker>
+            <mat-form-field class="w-full sm:w-40" subscriptSizing="dynamic">
+                <mat-label>Fecha Inicio</mat-label>
+                <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                <mat-datepicker #pickerInicio></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-40" subscriptSizing="dynamic">
+                <mat-label>Fecha Fin</mat-label>
+                <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFin></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
