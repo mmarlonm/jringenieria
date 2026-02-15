@@ -16,7 +16,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { TaskViewConfigService, TaskViewConfig } from '../services/task-view-config.service';
 
 import { TaskFormDialogComponent } from "./../task-form-dialog/task-form-dialog.component";
@@ -28,6 +29,7 @@ import Swal from "sweetalert2";
 import { User } from "app/core/user/user.types";
 import { UserService } from "app/core/user/user.service";
 import { Subject, takeUntil, Subscription, fromEvent, merge, finalize } from "rxjs";
+import moment from "moment";
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule, CdkDragHandle } from '@angular/cdk/drag-drop';
@@ -38,6 +40,7 @@ import { ResizableDirective, ResizeHandleDirective, ResizeEvent } from 'angular-
 import { UsersService } from "app/modules/admin/security/users/users.service";
 import { HighchartsChartModule } from 'highcharts-angular';
 import * as Highcharts from 'highcharts';
+import Gantt from 'frappe-gantt';
 
 interface GroupedTasks {
     groupName: string;
@@ -145,11 +148,13 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     // Cambia el tipo a Highcharts.Options explícitamente
     public statusChartOptions: Highcharts.Options = {};
     public userChartOptions: Highcharts.Options = {};
+    private gantt: any;
 
     /**
  * Estado de visibilidad del panel de métricas.
  */
     public isChartsExpanded: boolean = true;
+    public viewMode: 'Day' | 'Week' | 'Month' = 'Day';
 
     constructor(
         private taskService: TaskService,
@@ -159,6 +164,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         private _userService: UserService,
         private _cdr: ChangeDetectorRef,
         private usersService: UsersService,
+        private projectService: ProjectService,
     ) { }
 
     ngOnInit(): void {
@@ -176,6 +182,8 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.loadTasks();
     }
+
+
 
     ngAfterViewInit(): void {
         this.initColumnSorting();
@@ -332,6 +340,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         // 5. Re-initialize column sorting for the newly rendered tables
         this.initHighcharts(this.groupedTasks);
+        this.initGanttChart(tasks);
         this.initColumnSorting();
     }
 
@@ -488,6 +497,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             if (group) {
                 group.tasks.data = [...event.container.data];
             }
+            this.initGanttChart(this.rawTasks);
         } else {
             const task = event.item.data as Task;
             const newStatusId = this.parseStatusIdFromGroupKey(targetGroupKey);
@@ -513,6 +523,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                         // ACTUALIZACIÓN DE GRÁFICAS: 
                         // Se llama aquí porque el cambio de estatus afecta el pastel y la carga de usuario
                         this.initHighcharts(this.groupedTasks);
+                        this.initGanttChart(this.rawTasks);
                         this.updateFlag = true;
                     },
                     error: () => {
@@ -992,9 +1003,164 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     /**
- * Inicializa la configuración guardada del panel.
- * Se debe llamar en el ngOnInit.
- */
+     * Inicializa el Diagrama de Gantt usando Frappe Gantt (Librería Gratuita)
+     */
+    initGanttChart(tasks: Task[]): void {
+        setTimeout(() => {
+            // 1. Mapeo inicial y filtrado de tareas sin nombre (evita errores internos de la librería)
+            let ganttTasks = tasks
+                .filter(t => t.nombre)
+                .map(task => {
+                    // Asegurar fechas válidas
+                    const start = task.fechaInicioEstimada ? moment(task.fechaInicioEstimada).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD');
+                    const end = task.fechaFinEstimada ? moment(task.fechaFinEstimada).format('YYYY-MM-DD') : moment(start).add(1, 'days').format('YYYY-MM-DD');
+
+                    // Clase CSS según estatus
+                    let customClass = 'gantt-pending';
+                    if (task.estatus === 2) customClass = 'gantt-progress';
+                    if (task.estatus === 3) customClass = 'gantt-completed';
+
+                    return {
+                        id: task.id?.toString() || Math.random().toString(),
+                        name: task.nombre,
+                        start: start,
+                        end: end,
+                        progress: task.estatus === 3 ? 100 : (task.estatus === 2 ? 50 : 0),
+                        custom_class: customClass,
+                        dependencies: task.dependencies || ''
+                    };
+                });
+
+            // 2. IMPORTANTE: Filtrar dependencias que no existen en el set de tareas actual
+            // Frappe Gantt arroja TypeError si una dependencia apunta a un ID no presente.
+            const taskIds = new Set(ganttTasks.map(t => t.id));
+            ganttTasks = ganttTasks.map(t => {
+                if (t.dependencies) {
+                    const validDeps = t.dependencies.split(',')
+                        .map(dep => dep.trim())
+                        .filter(depId => depId && taskIds.has(depId))
+                        .join(',');
+                    return { ...t, dependencies: validDeps };
+                }
+                return t;
+            });
+
+            // Limpiar contenedor previo si existe
+            const container = document.getElementById('gantt-container');
+            if (container) container.innerHTML = '';
+
+            if (ganttTasks.length > 0 && container) {
+                this.gantt = new Gantt("#gantt-container", ganttTasks, {
+                    view_mode: this.viewMode,
+                    language: 'es',
+                    custom_popup_html: (task: any) => {
+                        const t = tasks.find(x => x.id?.toString() === task.id);
+
+                        // Generar HTML de avatares
+                        let avatarsHtml = '';
+                        if (t?.usuarioIds && t.usuarioIds.length > 0) {
+                            avatarsHtml = `
+                                <div class="flex items-center -space-x-2 mb-3">
+                                    ${t.usuarioIds.map(id => {
+                                const userData = this.getUserData(id);
+                                if (userData?.avatar) {
+                                    return `<img src="${userData.avatar}" class="w-7 h-7 rounded-full border-2 border-white shadow-sm object-cover" title="${this.getUserFullName(id)}">`;
+                                } else {
+                                    const initials = this.getUserInitials(userData?.nombreUsuario || userData?.nombre || '?');
+                                    const color = this.getUserColor(id);
+                                    return `<div class="w-7 h-7 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white text-[8px] font-bold" style="background-color: ${color}" title="${this.getUserFullName(id)}">${initials}</div>`;
+                                }
+                            }).join('')}
+                                </div>
+                            `;
+                        }
+
+                        const responsablesTxt = t?.usuarioIds?.map(id => this.getUserFullName(id)).join(', ') || 'N/A';
+
+                        return `
+                        <div class="p-3 bg-white shadow-xl rounded-lg border border-gray-100 min-w-[220px]">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-[9px] font-black text-blue-600 uppercase tracking-tighter">Tarea #${task.id}</div>
+                                <div class="text-[9px] font-bold text-gray-400 uppercase">${moment(task.start).format('DD MMM')} - ${moment(task.end).format('DD MMM')}</div>
+                            </div>
+                            <div class="text-sm font-bold text-gray-800 mb-3 leading-tight">${task.name}</div>
+                            
+                            <div class="text-[9px] text-gray-400 uppercase font-bold mb-1.5 tracking-widest">Responsables:</div>
+                            ${avatarsHtml}
+                            
+                            <div class="flex items-center justify-between text-[10px] border-t pt-2 mt-1">
+                                <span class="text-gray-400 font-medium">Estado de avance:</span>
+                                <span class="font-bold text-gray-700">${task.progress}%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-blue-500" style="width: ${task.progress}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    }
+                } as any);
+            }
+        }, 0);
+    }
+
+    changeGanttView(mode: 'Day' | 'Week' | 'Month'): void {
+        if (this.gantt) {
+            this.gantt.change_view_mode(mode);
+            this.viewMode = mode;
+        }
+    }
+
+    enviarNotificacionTarea(): void {
+        const recipients = this.prepareNotificationRecipients();
+        if (recipients.length === 0) {
+            this.snackBar.open("No hay destinatarios válidos con tareas", "Cerrar", { duration: 3000 });
+            return;
+        }
+
+        const payload = {
+            proyectoId: 0, // Dashboard Global
+            asunto: `Actualización de Tareas Globales`,
+            mensaje: `Tienes tareas pendientes o actualizadas en el sistema.`,
+            destinatarios: recipients
+        };
+
+        this.projectService.enviarNotificacionTarea(payload).subscribe({
+            next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
+            error: () => this.snackBar.open('Error al enviar la notificación', 'Cerrar', { duration: 3000 })
+        });
+    }
+
+    private prepareNotificationRecipients(): any[] {
+        const userMap = new Map<number, { nombre: string, correo: string, tareas: string[] }>();
+
+        this.rawTasks.forEach(task => {
+            task.usuarioIds?.forEach(id => {
+                const userData = this.getUserData(id);
+                if (userData && (userData.correo || userData.email || userData.correoElectronico)) {
+                    if (!userMap.has(id)) {
+                        userMap.set(id, {
+                            nombre: userData.nombreUsuario || userData.nombre,
+                            correo: userData.correo || userData.email || userData.correoElectronico,
+                            tareas: []
+                        });
+                    }
+                    userMap.get(id).tareas.push(task.nombre);
+                }
+            });
+        });
+
+        return Array.from(userMap.values()).map(u => ({
+            rol: 'Integrante',
+            nombre: u.nombre,
+            correo: u.correo,
+            nombreNotificacion: u.tareas.join(', ')
+        }));
+    }
+
+    /**
+     * Inicializa la configuración guardada del panel.
+     * Se debe llamar en el ngOnInit.
+     */
     private initChartsExpansion(): void {
         const savedState = localStorage.getItem('charts_expanded');
         // Si existe una configuración guardada, la usamos; si no, por defecto es true.

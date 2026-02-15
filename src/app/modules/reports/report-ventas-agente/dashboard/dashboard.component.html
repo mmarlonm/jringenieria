@@ -1,0 +1,207 @@
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-6">
+
+    <div class="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
+            Dashboard de Ventas
+        </h1>
+
+        <button mat-raised-button color="primary" class="w-full sm:w-auto" (click)="exportarPDF()">
+            <mat-icon>picture_as_pdf</mat-icon>
+            Exportar PDF
+        </button>
+    </div>
+
+    <div
+        class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Tipo de persona</mat-label>
+            <mat-select [(ngModel)]="esMoral">
+                <mat-option value="3">Todas</mat-option>
+                <mat-option value="1">Persona física</mat-option>
+                <mat-option value="2">Persona moral</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Sucursal</mat-label>
+            <mat-select [(ngModel)]="sucursal">
+                <mat-option value="TODAS">Todas</mat-option>
+                <mat-option value="PACHUCA">Pachuca</mat-option>
+                <mat-option value="Puebla">Puebla</mat-option>
+                <mat-option value="Queretaro">Querétaro</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Agente / Vendedor</mat-label>
+            <mat-select [(ngModel)]="agenteSeleccionado">
+                <mat-option [value]="0">TODOS</mat-option>
+                <mat-option *ngFor="let ag of listaAgentes" [value]="ag.agenteId">
+                    {{ ag.nombreAgente }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Fecha inicio</mat-label>
+            <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+            <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+            <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Fecha fin</mat-label>
+            <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+            <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+            <mat-datepicker #pickerFin></mat-datepicker>
+        </mat-form-field>
+
+        <div class="w-full pb-5">
+            <button mat-flat-button color="primary"
+                class="w-full h-[50px] !bg-green-600 hover:!bg-green-700 !text-white !rounded-lg" (click)="consultar()">
+                <mat-icon class="mr-2">search</mat-icon>
+                Consultar
+            </button>
+        </div>
+
+    </div>
+
+    <div id="pdf-content" class="w-full space-y-6">
+
+        <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <p class="text-sm text-gray-500">Ventas Totales</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-800">
+                    {{ kpis.totalVentas | currency:'MXN' }}
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <p class="text-sm text-gray-500">Facturas</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-800">
+                    {{ kpis.totalFacturas }}
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <p class="text-sm text-gray-500">Clientes</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-800">
+                    {{ kpis.totalClientes }}
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <p class="text-sm text-gray-500">Venta Promedio</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-800">
+                    {{ kpis.ventaPromedio | currency:'MXN' }}
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
+                <p class="text-sm text-gray-500">Utilidad Bruta</p>
+                <p class="text-xl sm:text-2xl font-bold text-green-600">
+                    {{ kpis.utilidadBruta | currency:'MXN' }}
+                </p>
+            </div>
+
+        </div>
+
+        <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Ventas por Vendedor
+                </h2>
+                <div id="chartTopVendedores" class="w-full h-[260px] sm:h-80"></div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Top Productos
+                </h2>
+                <div id="chartTopProductos" class="w-full h-[260px] sm:h-80"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div class="bg-card shadow rounded-2xl p-4 border overflow-hidden">
+                <div id="chartMarcas" style="height: 450px; width: 100%;"></div>
+            </div>
+
+            <div class="bg-card shadow rounded-2xl p-4 border overflow-hidden relative">
+                <button *ngIf="marcaSeleccionada" (click)="resetFiltroMarca()"
+                    class="absolute top-2 right-2 z-10 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                    <mat-icon class="icon-size-5 text-gray-600">close</mat-icon>
+                </button>
+                <div id="chartLineas" style="height: 450px; width: 100%;"></div>
+            </div>
+        </div>
+
+        <div class="w-full grid grid-cols-1 lg:grid-cols-1 gap-12">
+            <div class="bg-white rounded-xl shadow p-4 border border-gray-100">
+                <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
+                    Comparativa de Ventas
+                </h2>
+                <div id="chartComparativaMes" class="w-full h-[260px] sm:h-80"></div>
+            </div>
+        </div>
+
+        <div class="w-full grid grid-cols-1 lg:grid-cols-1 gap-12">
+
+            <div class="bg-white rounded-xl shadow p-4 flex flex-col">
+
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Detalle de Ventas
+                </h2>
+
+                <div class="w-full overflow-auto max-h-[420px] border rounded-lg">
+
+                    <table class="min-w-[900px] w-full text-sm">
+                        <thead class="bg-gray-100 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-2 text-left">Fecha</th>
+                                <th class="p-2 text-left">Sucursal</th>
+                                <th class="p-2 text-left">Folio</th>
+                                <th class="p-2 text-left">Cliente</th>
+                                <th class="p-2 text-left">Vendedor</th>
+                                <th class="p-2 text-right">Total</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr *ngFor="let row of detalleVentas" class="border-b hover:bg-gray-50">
+                                <td class="p-2 whitespace-nowrap">
+                                    {{ row.fecha | date:'dd/MM/yyyy' }}
+                                </td>
+                                <td class="p-2 whitespace-nowrap">
+                                    {{ row.sucursal }}
+                                </td>
+                                <td class="p-2 whitespace-nowrap">
+                                    {{ row.folio }}
+                                </td>
+                                <td class="p-2">
+                                    {{ row.cliente }}
+                                </td>
+                                <td class="p-2">
+                                    {{ row.vendedor }}
+                                </td>
+                                <td class="p-2 text-right whitespace-nowrap">
+                                    {{ row.totalDocumento | currency:'MXN' }}
+                                </td>
+                            </tr>
+
+                            <tr *ngIf="detalleVentas.length === 0">
+                                <td colspan="6" class="p-4 text-center text-gray-400">
+                                    Sin información
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

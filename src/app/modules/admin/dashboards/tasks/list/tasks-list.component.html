@@ -379,5 +379,92 @@
       </ng-template>
     </div>
 
+    <!-- 🔹 Diagrama de Gantt Profesional -->
+    <div *ngIf="rawTasks.length > 0"
+      class="mx-4 sm:mx-6 md:mx-8 mb-10 bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div
+        class="flex items-center justify-between px-4 sm:px-6 py-4 border-b dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+            <mat-icon class="text-blue-600 dark:text-blue-400" svgIcon="heroicons_outline:calendar-days"></mat-icon>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-main uppercase tracking-wider">Gestión Táctica y Cronograma (Gantt)</h3>
+            <p class="text-[10px] text-secondary font-medium uppercase tracking-tighter opacity-70">Planificación
+              temporal y asignación de recursos</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div
+            class="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-[10px] font-bold text-secondary">
+            <span class="w-2 h-2 rounded-full bg-gray-400"></span> Pendiente
+          </div>
+          <div
+            class="flex items-center gap-2 px-3 py-1 bg-orange-100 dark:bg-orange-900/20 rounded-full text-[10px] font-bold text-orange-600">
+            <span class="w-2 h-2 rounded-full bg-orange-500"></span> En Proceso
+          </div>
+          <div
+            class="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/20 rounded-full text-[10px] font-bold text-green-600">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span> Completada
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔹 Panel de Control y Filtros del Gantt -->
+      <div
+        class="px-4 sm:px-6 py-4 border-b bg-gray-50/50 dark:bg-gray-800/5 flex flex-wrap items-center justify-between gap-4">
+
+        <!-- Controles de Vista -->
+        <div class="flex items-center gap-3">
+          <span class="text-[10px] font-bold text-secondary uppercase tracking-widest hidden sm:inline">Escala:</span>
+          <div class="flex items-center bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border shadow-inner">
+            <button (click)="changeGanttView('Day')"
+              class="px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap"
+              [class.bg-white]="viewMode === 'Day'" [class.shadow-sm]="viewMode === 'Day'"
+              [class.text-blue-600]="viewMode === 'Day'">Día</button>
+            <button (click)="changeGanttView('Week')"
+              class="px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap"
+              [class.bg-white]="viewMode === 'Week'" [class.shadow-sm]="viewMode === 'Week'"
+              [class.text-blue-600]="viewMode === 'Week'">Semana</button>
+            <button (click)="changeGanttView('Month')"
+              class="px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap"
+              [class.bg-white]="viewMode === 'Month'" [class.shadow-sm]="viewMode === 'Month'"
+              [class.text-blue-600]="viewMode === 'Month'">Mes</button>
+          </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="flex items-center gap-2">
+          <button mat-flat-button color="primary" (click)="enviarNotificacionTarea()"
+            class="rounded-lg h-[36px] px-4 font-bold text-[10px] uppercase tracking-wider">
+            <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_outline:bell-alert"></mat-icon>
+            Notificar Responsables
+          </button>
+
+          <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
+          <button mat-icon-button (click)="loadTasks()" class="text-secondary" matTooltip="Refrescar cronograma">
+            <mat-icon class="icon-size-5" svgIcon="heroicons_outline:arrow-path"></mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-6 bg-white dark:bg-transparent overflow-x-auto min-h-[550px]">
+        <div class="gantt-target w-full h-full" id="gantt-container"></div>
+
+        <div
+          class="bg-gray-50 dark:bg-gray-800/50 px-6 py-3 border-t dark:border-gray-800 flex items-center justify-between">
+          <span class="text-[10px] font-bold text-hint uppercase tracking-widest italic">Interactivo: Desplázate para
+            ver
+            el cronograma completo</span>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1.5">
+              <div class="w-8 h-2 rounded-sm bg-blue-600/20 border border-blue-600/30"></div>
+              <span class="text-[9px] text-secondary font-bold uppercase tracking-tighter">Navegador Temporal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>

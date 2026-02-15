@@ -110,6 +110,7 @@ export const appRoutes: Route[] = [
                     { path: 'report-product-existence', loadChildren: () => import('app/modules/reports/report-product-existence/report-product-existence.routes') },
                     { path: 'report-customers', loadChildren: () => import('app/modules/reports/report-customers/report-customers.routes') },
                     { path: 'report-expenses', loadChildren: () => import('app/modules/reports/report-expenses/report-expenses.routes') },
+                    { path: 'report-ventas-agente', loadChildren: () => import('app/modules/reports/report-ventas-agente/report-ventas-agente.routes') },
                 ]
             },
             {

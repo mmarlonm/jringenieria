@@ -128,7 +128,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                     // Usa ID original: 'reports.report-customers'
                     { id: 'reports.report-customers', title: 'Reporte de Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers' },
                     // Usa ID original: 'reports.report-expenses'
-                    { id: 'reports.report-expenses', title: 'Reporte de Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-expenses' }
+                    { id: 'reports.report-expenses', title: 'Reporte de Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-expenses' },
+                    { id: 'reports.report-ventas-agente', title: 'Reporte de Ventas por Agente', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-ventas-agente' }
                 ]
             }
         ]

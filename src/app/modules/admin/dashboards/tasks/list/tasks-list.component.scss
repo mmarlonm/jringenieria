@@ -1,3 +1,5 @@
+@import 'frappe-gantt';
+
 /* ==========================================================================
    ESTRUCTURA BASE DE LA TABLA (FLEX-BASED)
    ========================================================================== */
@@ -442,4 +444,96 @@ td.mat-column-responsable {
 /* Mejoramos el hover para que sea sutil */
 ::ng-deep tr.mat-row:hover {
     background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+// 🔹 Estilos Premium para Frappe Gantt
+::ng-deep {
+    .gantt-target {
+        .grid-header {
+            fill: #f8fafc;
+            stroke: #e2e8f0;
+        }
+
+        .grid-row {
+            fill: #ffffff;
+        }
+
+        .grid-row:nth-child(even) {
+            fill: #f8fafc;
+        }
+
+        .tick {
+            stroke: #e2e8f0;
+        }
+
+        .upper-text {
+            fill: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        .lower-text {
+            fill: #94a3b8;
+            font-size: 10px;
+        }
+
+        // Barras de Tareas
+        .bar {
+            fill: #94a3b8;
+        }
+
+        .bar-progress {
+            fill: #6366f1;
+        }
+
+        .bar-label {
+            fill: #1e293b !important;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        // Colores por Estatus (Sincronizados con getColorByEstatusId)
+        .gantt-pending {
+            .bar {
+                fill: rgba(251, 39, 93, 0.1);
+                stroke: #fb275d;
+            }
+
+            .bar-progress {
+                fill: #fb275d;
+            }
+        }
+
+        .gantt-progress {
+            .bar {
+                fill: rgba(255, 203, 0, 0.1);
+                stroke: #ffcb00;
+            }
+
+            .bar-progress {
+                fill: #ffcb00;
+            }
+        }
+
+        .gantt-completed {
+            .bar {
+                fill: rgba(0, 200, 117, 0.1);
+                stroke: #00c875;
+            }
+
+            .bar-progress {
+                fill: #00c875;
+            }
+        }
+
+        // Popup / Tooltip Custom
+        .details-container {
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            border: 1px solid #f1f5f9;
+        }
+    }
 }
