@@ -1,0 +1,126 @@
+<div class="flex flex-col max-h-screen overflow-hidden">
+    <div class="flex items-center justify-between p-6 border-b bg-gray-50 dark:bg-transparent">
+        <div class="flex flex-col">
+            <span class="text-xs font-semibold text-secondary uppercase tracking-wider">Módulo Comercial</span>
+            <h2 class="text-2xl font-extrabold leading-none">{{ isEdit ? 'EDITAR REGISTRO' : 'NUEVO GASTO' }}</h2>
+        </div>
+        <button mat-icon-button (click)="dialogRef.close()" [matTooltip]="'Cerrar'">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <mat-dialog-content class="p-8">
+        <form [formGroup]="expenseForm" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+            <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript">
+                <mat-label>Título o Descripción Corta</mat-label>
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                <input matInput formControlName="nombreGasto" placeholder="Ej. Pago de servicios">
+            </mat-form-field>
+
+            <div class="grid grid-cols-2 gap-4">
+                <mat-form-field class="fuse-mat-no-subscript">
+                    <mat-label>Cantidad (Subtotal)</mat-label>
+                    <span matPrefix>$&nbsp;</span>
+                    <input matInput type="number" formControlName="cantidad">
+                </mat-form-field>
+
+                <mat-form-field class="fuse-mat-no-subscript">
+                    <mat-label>Tasa IVA</mat-label>
+                    <mat-select formControlName="tasaId">
+                        <mat-option *ngFor="let tasa of catalogs?.tasas" [value]="tasa.tasaId">
+                            {{tasa.etiqueta}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Impuesto Calculado</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput formControlName="impuestos" readonly>
+                <mat-icon matSuffix class="icon-size-4 text-hint" [svgIcon]="'heroicons_outline:information-circle'"
+                    matTooltip="Se calcula automáticamente"></mat-icon>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Fecha del Gasto</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fecha">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Proveedor</mat-label>
+                <mat-select formControlName="proveedorId">
+                    <mat-option *ngFor="let item of catalogs?.proveedores"
+                        [value]="item.proveedorId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Área / Departamento</mat-label>
+                <mat-select formControlName="areaId">
+                    <mat-option *ngFor="let item of catalogs?.areas" [value]="item.areaId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Tipo de Gasto</mat-label>
+                <mat-select formControlName="tipoId">
+                    <mat-option *ngFor="let item of catalogs?.tipos" [value]="item.tipoId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Concepto</mat-label>
+                <mat-select formControlName="conceptoId">
+                    <mat-option *ngFor="let item of catalogs?.conceptos"
+                        [value]="item.conceptoId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Subtipo de Gasto</mat-label>
+                <mat-select formControlName="subtipoId">
+                    <mat-option *ngFor="let item of catalogs?.subtipos"
+                        [value]="item.subtipoId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Forma de Pago</mat-label>
+                <mat-select formControlName="formaPagoId">
+                    <mat-option *ngFor="let item of catalogs?.formasPago"
+                        [value]="item.formaPagoId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Cuenta de Egreso</mat-label>
+                <mat-select formControlName="cuentaId">
+                    <mat-option *ngFor="let item of catalogs?.cuentas"
+                        [value]="item.cuentaId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Factura</mat-label>
+                <input matInput formControlName="factura">
+            </mat-form-field>
+
+            <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript">
+                <mat-label>Descripción</mat-label>
+                <textarea matInput formControlName="descripcion" [rows]="3"></textarea>
+            </mat-form-field>
+
+        </form>
+    </mat-dialog-content>
+
+    <div class="flex items-center justify-end p-6 border-t bg-gray-50 dark:bg-transparent gap-3">
+        <button mat-button (click)="dialogRef.close()">Cancelar</button>
+        <button mat-flat-button color="primary" [disabled]="expenseForm.invalid" (click)="save()">
+            {{ isEdit ? 'Actualizar' : 'Guardar' }}
+        </button>
+    </div>
+</div>

@@ -16,6 +16,7 @@ import { environment } from 'environments/environment'; // Asegúrate de tener l
 @Injectable({ providedIn: 'root' })
 export class UsersService {
     private apiUrl = `${environment.apiUrl}/Profile`; // Asegúrate de que esto sea correcto
+    private apiUrlProyecto = `${environment.apiUrl}/Proyecto`;
     // Private
     private _user: BehaviorSubject<any | null> = new BehaviorSubject(
         null
@@ -27,7 +28,7 @@ export class UsersService {
     /**
      * Constructor
      */
-    constructor(private _httpClient: HttpClient) {}
+    constructor(private _httpClient: HttpClient) { }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Accessors
@@ -105,8 +106,8 @@ export class UsersService {
                                 avatar: null,
                                 email: "",
                                 fechaCreacion: null,
-                                nombreUsuario : "",
-                                usuarioId:0
+                                nombreUsuario: "",
+                                usuarioId: 0
                             }
                             this._users.next([newUSer, ...contacts]);
 
@@ -130,7 +131,7 @@ export class UsersService {
                     const updatedUsers = users.some(r => r.usuarioId === updatedUser.usuarioId)
                         ? users.map(r => (r.rolId === updatedUser.usuarioId ? updatedUser : r))
                         : [...users, updatedUser];
-    
+
                     // Emitir la nueva lista de users
                     this._users.next(updatedUsers);
                 });
@@ -279,17 +280,21 @@ export class UsersService {
 
 
     // Función modificada para buscar en los contactos cargados localmente
-  searchContacts(query: string): Observable<any[]> {
-    // Buscar en los datos locales en lugar de hacer una solicitud HTTP
-    const filteredContacts = this._users.value.filter(contact =>
-      contact.name.toLowerCase().includes(query.toLowerCase()) ||
-      contact.email.toLowerCase().includes(query.toLowerCase())
-    );
+    searchContacts(query: string): Observable<any[]> {
+        // Buscar en los datos locales en lugar de hacer una solicitud HTTP
+        const filteredContacts = this._users.value.filter(contact =>
+            contact.name.toLowerCase().includes(query.toLowerCase()) ||
+            contact.email.toLowerCase().includes(query.toLowerCase())
+        );
 
-    // Devolver el resultado como un observable
-    return new Observable<any[]>((observer) => {
-      observer.next(filteredContacts);
-      observer.complete();
-    });
-  }
+        // Devolver el resultado como un observable
+        return new Observable<any[]>((observer) => {
+            observer.next(filteredContacts);
+            observer.complete();
+        });
+    }
+
+    getUnidadesNegocio(): Observable<any[]> {
+        return this._httpClient.get<any[]>(`${this.apiUrlProyecto}/unidades-negocio`);
+    }
 }

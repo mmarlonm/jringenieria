@@ -38,8 +38,8 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     contactForm: UntypedFormGroup;
     navigation: FuseNavigationItem[] = [];
 
-    // Diccionario simple para la UI: { 'dashboards.quote': true }
-    selectedPermissions: { [id: string]: boolean } = {};
+    // 🔹 1. CORRECCIÓN: Ahora es un diccionario de arreglos numéricos { 'dashboards.quote': [1, 2, 3] }
+    selectedPermissions: { [id: string]: number[] } = {};
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -68,15 +68,50 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((rol: any) => {
                 if (!rol) return;
+                console.log("JSON DEL ROL DESDE C#:", rol);
                 this.rol = rol;
                 this.selectedPermissions = {};
 
-                // Analizar Vistas que vienen del Backend para pintar los Checkboxes
+                // 🔹 PROCESAR PERMISOS (Soportando la estructura de userInformation proporcionada)
+
+                // 1. Procesar array 'permisos' (Estructura: { permisoId, vista: { nombreVista } })
+                if (rol.permisos && Array.isArray(rol.permisos)) {
+                    rol.permisos.forEach((p: any) => {
+                        const idVista = p.vista?.nombreVista || p.vista?.vistaId || p.nombreVista || p.vistaId;
+                        const idPermiso = Number(p.permisoId || p.idPermiso || p.id);
+
+                        if (idVista && !isNaN(idPermiso)) {
+                            if (!this.selectedPermissions[idVista]) {
+                                this.selectedPermissions[idVista] = [];
+                            }
+                            if (!this.selectedPermissions[idVista].includes(idPermiso)) {
+                                this.selectedPermissions[idVista].push(idPermiso);
+                            }
+                        }
+                    });
+                }
+
+                // 2. Procesar array 'vistas' (Estructura: { vistaId, permisos: [...] })
                 if (rol.vistas && Array.isArray(rol.vistas)) {
                     rol.vistas.forEach((v: any) => {
-                        // El backend te devuelve 'nombreVista', lo usamos como ID
-                        if (v.nombreVista) {
-                            this.selectedPermissions[v.nombreVista] = true;
+                        const idVista = v.nombreVista || v.vistaId || v.idVista;
+                        if (!idVista) return;
+
+                        let permisosAsignados: number[] = [];
+                        if (v.permisos && Array.isArray(v.permisos)) {
+                            permisosAsignados = v.permisos.map((p: any) => {
+                                const id = typeof p === 'number' ? p : (p.permisoId || p.idPermiso || p.id);
+                                return Number(id);
+                            }).filter(id => !isNaN(id));
+                        } else if (v.permisoId || v.idPermiso || v.id) {
+                            const id = Number(v.permisoId || v.idPermiso || v.id);
+                            if (!isNaN(id)) permisosAsignados = [id];
+                        }
+
+                        if (!this.selectedPermissions[idVista]) {
+                            this.selectedPermissions[idVista] = permisosAsignados;
+                        } else {
+                            this.selectedPermissions[idVista] = [...new Set([...this.selectedPermissions[idVista], ...permisosAsignados])];
                         }
                     });
                 }
@@ -94,7 +129,6 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((nav: any) => {
                 this.navigation = nav.default || nav;
-                console.log('Navegación:', this.navigation);
                 this._changeDetectorRef.markForCheck();
             });
     }
@@ -108,10 +142,17 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         return this._rolListComponent.matDrawer.close();
     }
 
-    // Recibe el evento del componente hijo (Solo actualiza el local state)
-    actualizarPermisos(event: { [id: string]: boolean }): void {
-        this.selectedPermissions = event;
-        // No necesitamos actualizar el FormArray aquí, lo haremos al Guardar
+    // 🔹 3. CORRECCIÓN: Recibe la nueva estructura del hijo (Array de objetos)
+    // El hijo emite: [ { vistaId: 'dashboard', permisos: [1,2,3] }, ... ]
+    actualizarPermisos(eventPayload: any[]): void {
+        this.selectedPermissions = {}; // Reiniciamos el estado
+
+        eventPayload.forEach(item => {
+            if (item.vistaId && item.permisos) {
+                this.selectedPermissions[item.vistaId] = item.permisos;
+            }
+        });
+
         this._changeDetectorRef.markForCheck();
     }
 
@@ -121,31 +162,29 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * 🔹 MÉTODO CORREGIDO PARA ENVIAR AL BACKEND C#
+     * 🔹 4. CORRECCIÓN: Enviar los permisos reales al Backend C#
      */
     updateContact(): void {
         if (this.contactForm.invalid) return;
 
-        // 1. Obtener IDs que están en TRUE
-        const idsSeleccionados = Object.keys(this.selectedPermissions)
-            .filter(key => this.selectedPermissions[key] === true);
+        // Transformar el diccionario { 'vistaX': [1,2] } al formato del Backend
+        const vistasParaBackend = Object.keys(this.selectedPermissions)
+            .filter(key => this.selectedPermissions[key] && this.selectedPermissions[key].length > 0)
+            .map(key => ({
+                vistaId: key,               // Ej: "dashboards.analytics"
+                permisos: this.selectedPermissions[key] // Ej: [1, 2, 4]
+            }));
 
-        // 2. Transformar al formato que pide C# (GuardarRolRequest)
-        const vistasParaBackend = idsSeleccionados.map(id => ({
-            vistaId: id,       // Ej: "dashboards.analytics"
-            permisos: [1]      // ⚠️ HARDCODED: Asumimos permiso ID 1 (Ver) por defecto
-        }));
-
-        // 3. Construir el Payload final
+        // Construir el Payload final
         const payload = {
-            rolId: this.rol.rolId ? parseInt(this.rol.rolId) : 0, // Asegurar int
+            rolId: this.rol.rolId ? parseInt(this.rol.rolId) : 0,
             nombreRol: this.contactForm.get('nombreRol')?.value,
             vistas: vistasParaBackend
         };
 
-        console.log('Enviando a C#:', payload); // Debug para que verifiques en consola
+        console.log('Enviando a C#:', payload);
 
-        // 4. Enviar
+        // Enviar
         this._rolService.updateRoles(payload).subscribe(() => {
             this.toggleEditMode(false);
         });

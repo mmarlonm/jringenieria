@@ -40,7 +40,6 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { UsersListComponent } from 'app/modules/admin/security/users/list/users-list.component';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-//servicion para obtener roles
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
 import Swal from 'sweetalert2';
 
@@ -76,19 +75,14 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     @ViewChild('avatarFileInput') private _avatarFileInput: ElementRef;
 
     editMode: boolean = false;
-    tagsEditMode: boolean = false;
     user: any;
     contactForm: UntypedFormGroup;
     users: any[];
-    private _tagsPanelOverlayRef: OverlayRef;
+    roles: any[] = [];
+    unidades: any[] = []; // 🔹 Catálogo de sucursales
+
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
-    //asignar roles existentes en sistema
-    roles: any[] = [];
-
-    /**
-     * Constructor
-     */
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _changeDetectorRef: ChangeDetectorRef,
@@ -96,31 +90,30 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         private _usersService: UsersService,
         private _formBuilder: UntypedFormBuilder,
         private _fuseConfirmationService: FuseConfirmationService,
-        private _renderer2: Renderer2,
         private _router: Router,
-        private _overlay: Overlay,
-        private _viewContainerRef: ViewContainerRef,
         private _rolService: RolService,
-        private router: Router,
     ) { }
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Lifecycle hooks
-    // -----------------------------------------------------------------------------------------------------
+    get metasFormArray(): UntypedFormArray {
+        return this.contactForm.get('metas') as UntypedFormArray;
+    }
 
-    /**
-     * On init
-     */
     ngOnInit(): void {
-
-        //get roles
-        this._rolService.getRoles().subscribe((resolve) => {
-            this.roles = resolve;
+        // Cargar Roles
+        this._rolService.getRoles().subscribe((roles) => {
+            this.roles = roles;
+            this._changeDetectorRef.markForCheck();
         });
-        // Open the drawer
+
+        // 🔹 Cargar Unidades de Negocio (Asegúrate de tener este método en tu servicio)
+        this._usersService.getUnidadesNegocio().subscribe((unidades) => {
+            this.unidades = unidades;
+            this._changeDetectorRef.markForCheck();
+        });
+
         this._usersListComponent.matDrawer.open();
 
-        // Create the user form
+        // Inicializar el formulario
         this.contactForm = this._formBuilder.group({
             usuarioId: [''],
             avatar: [null],
@@ -128,323 +121,149 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             email: ['', [Validators.required, Validators.email]],
             telefono: ['', [Validators.required]],
             activo: [true, [Validators.required]],
-            rolId: ['', [Validators.required]]  // Campo para seleccionar el rol
+            rolId: ['', [Validators.required]],
+            unidadId: [null], // 🔹 Sucursal
+            metas: this._formBuilder.array([]) // 🔹 Metas dinámicas
         });
 
-        // Get the users
         this._usersService.users$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((users: any[]) => {
                 this.users = users;
-
-                // Mark for check
                 this._changeDetectorRef.markForCheck();
             });
 
-        // Get the user
         this._usersService.user$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: any) => {
-                // Open the drawer in case it is closed
-                this._usersListComponent.matDrawer.open();
-
-                // Get the user
+                if (!user) return;
                 this.user = user;
 
-                // Patch values to the form
+                // Limpiar metas anteriores
+                this.metasFormArray.clear();
+
+                // Llenar metas si existen
+                if (user.metas && user.metas.length > 0) {
+                    user.metas.forEach(meta => {
+                        this.addMeta(meta);
+                    });
+                }
+
                 this.contactForm.patchValue(user);
-
-                // Toggle the edit mode off
                 this.toggleEditMode(false);
-
-                // Mark for check
                 this._changeDetectorRef.markForCheck();
             });
-
-
     }
 
-    /**
-     * On destroy
-     */
     ngOnDestroy(): void {
-        // Unsubscribe from all subscriptions
         this._unsubscribeAll.next(null);
         this._unsubscribeAll.complete();
-
-        // Dispose the overlays if they are still on the DOM
-        if (this._tagsPanelOverlayRef) {
-            this._tagsPanelOverlayRef.dispose();
-        }
     }
 
-    // -----------------------------------------------------------------------------------------------------
-    // @ Public methods
-    // -----------------------------------------------------------------------------------------------------
+    // --- Gestión de Metas ---
 
     /**
-     * Close the drawer
+     * Añade una meta al FormArray
+     * @param meta Datos opcionales para inicializar
      */
+    addMeta(meta: any = { anio: new Date().getFullYear(), montoMeta: 0 }): void {
+        const metaFormGroup = this._formBuilder.group({
+            metaId: [meta.metaId || 0],
+            anio: [meta.anio, [Validators.required]],
+            montoMeta: [meta.montoMeta, [Validators.required, Validators.min(1)]]
+        });
+        this.metasFormArray.push(metaFormGroup);
+        this._changeDetectorRef.markForCheck();
+    }
+
+    /**
+     * Elimina una meta del FormArray
+     * @param index Indice del elemento
+     */
+    removeMeta(index: number): void {
+        this.metasFormArray.removeAt(index);
+        this._changeDetectorRef.markForCheck();
+    }
+
+    // --- Acciones de Formulario ---
+
+    updateContact(): void {
+        if (this.contactForm.invalid) {
+            Swal.fire({ icon: "error", title: "Opps", text: "Revisa los campos obligatorios y las metas." });
+            return;
+        }
+
+        const user = this.contactForm.getRawValue();
+
+        if (user.avatar && user.avatar.startsWith("data:image")) {
+            user.avatar = user.avatar.split(",")[1];
+        }
+
+        this._usersService.updateUsers(user).subscribe(() => {
+            Swal.fire({ icon: "success", title: "Éxito", text: "Usuario actualizado correctamente", timer: 1500 });
+            this.toggleEditMode(false);
+        });
+    }
+
+    // --- Métodos de UI ---
+
+    toggleEditMode(editMode: boolean | null = null): void {
+        this.editMode = editMode ?? !this.editMode;
+        this._changeDetectorRef.markForCheck();
+    }
+
+    uploadAvatar(fileList: FileList): void {
+        if (!fileList.length) return;
+        const file = fileList[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64String = reader.result as string;
+            this.contactForm.patchValue({ avatar: base64String });
+            this.user.avatar = base64String;
+            this._changeDetectorRef.markForCheck();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeAvatar(): void {
+        this.contactForm.get('avatar').setValue(null);
+        this._avatarFileInput.nativeElement.value = null;
+        this.user.avatar = null;
+    }
+
     closeDrawer(): Promise<MatDrawerToggleResult> {
         return this._usersListComponent.matDrawer.close();
     }
 
-    /**
-     * Toggle edit mode
-     *
-     * @param editMode
-     */
-    toggleEditMode(editMode: boolean | null = null): void {
-        if (editMode === null) {
-            this.editMode = !this.editMode;
-        } else {
-            this.editMode = editMode;
-        }
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
-    }
-
-    /**
-     * Update the user
-     */
-    updateContact(): void {
-        if (this.contactForm.invalid) {
-            Swal.fire({
-                icon: "error",
-                title: "Opps",
-                text: "Por favor, completa los campos obligatorios",
-                draggable: true
-            });
-            return;
-        }
-        // Obtener los valores del formulario
-        const user = this.contactForm.getRawValue();
-
-        // Verificar si el avatar tiene un prefijo y eliminarlo
-        if (user.avatar && user.avatar.startsWith("data:image")) {
-            user.avatar = user.avatar.split(",")[1]; // Extrae solo la parte Base64
-        }
-
-        // Enviar la data al servicio
-        this._usersService.updateUsers(user).subscribe(res => {
-        });
-    }
-
-    /**
-     * Delete the user
-     */
     deleteContact(): void {
-        // Open the confirmation dialog
         const confirmation = this._fuseConfirmationService.open({
             title: 'Delete user',
-            message:
-                'Are you sure you want to delete this user? This action cannot be undone!',
-            actions: {
-                confirm: {
-                    label: 'Delete',
-                },
-            },
+            message: 'Are you sure you want to delete this user? This action cannot be undone!',
+            actions: { confirm: { label: 'Delete' } },
         });
 
-        // Subscribe to the confirmation dialog closed action
         confirmation.afterClosed().subscribe((result) => {
-            // If the confirm button pressed...
             if (result === 'confirmed') {
-                // Get the current user's usuarioId
-                const usuarioId = this.user.usuarioId;
-
-                // Get the next/previous user's usuarioId
-                const currentContactIndex = this.users.findIndex(
-                    (item) => item.usuarioId === usuarioId
-                );
-                const nextContactIndex =
-                    currentContactIndex +
-                    (currentContactIndex === this.users.length - 1 ? -1 : 1);
-                const nextContactId =
-                    this.users.length === 1 && this.users[0].usuarioId === usuarioId
-                        ? null
-                        : this.users[nextContactIndex].usuarioId;
-
-                // Delete the user
-                this._usersService
-                    .deleteContact(usuarioId)
-                    .subscribe((isDeleted) => {
-                        // Return if the user wasn't deleted...
-                        if (!isDeleted) {
-                            return;
-                        }
-
-                        // Navigate to the next user if available
-                        if (nextContactId) {
-                            this._router.navigate(['../', nextContactId], {
-                                relativeTo: this._activatedRoute,
-                            });
-                        }
-                        // Otherwise, navigate to the parent
-                        else {
-                            this._router.navigate(['../'], {
-                                relativeTo: this._activatedRoute,
-                            });
-                        }
-
-                        // Toggle the edit mode off
-                        this.toggleEditMode(false);
-                    });
-
-                // Mark for check
-                this._changeDetectorRef.markForCheck();
+                this._usersService.deleteContact(this.user.usuarioId).subscribe(() => {
+                    this._router.navigate(['../'], { relativeTo: this._activatedRoute });
+                });
             }
         });
     }
 
-    /**
-     * Upload avatar
-     *
-     * @param fileList
-     */
-    uploadAvatar(fileList: FileList): void {
-        // Si no hay archivos, salir
-        if (!fileList.length) {
-            return;
-        }
-
-        const allowedTypes = ['image/jpeg', 'image/png'];
-        const file = fileList[0];
-
-        // Si el tipo de archivo no es permitido, salir
-        if (!allowedTypes.includes(file.type)) {
-            console.error("Tipo de archivo no permitido.");
-            return;
-        }
-
-        // Convertir a Base64
-        const reader = new FileReader();
-        reader.onload = () => {
-            const base64String = reader.result as string;
-
-            // Asignar al formulario
-            this.contactForm.patchValue({ avatar: base64String });
-            this.user.avatar = base64String;
-
-        };
-
-        reader.readAsDataURL(file); // Leer el archivo como Data URL (Base64)
-    }
-
-    /**
-     * Remove the avatar
-     */
-    removeAvatar(): void {
-        // Get the form control for 'avatar'
-        const avatarFormControl = this.contactForm.get('avatar');
-
-        // Set the avatar as null
-        avatarFormControl.setValue(null);
-
-        // Set the file input value as null
-        this._avatarFileInput.nativeElement.value = null;
-
-        // Update the user
-        this.user.avatar = null;
-    }
-
-    /**
-     * Add the email field
-     */
-    addEmailField(): void {
-        // Create an empty email form group
-        const emailFormGroup = this._formBuilder.group({
-            email: [''],
-            label: [''],
-        });
-
-        // Add the email form group to the emails form array
-        (this.contactForm.get('emails') as UntypedFormArray).push(
-            emailFormGroup
-        );
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
-    }
-
-    /**
-     * Remove the email field
-     *
-     * @param index
-     */
-    removeEmailField(index: number): void {
-        // Get form array for emails
-        const emailsFormArray = this.contactForm.get(
-            'emails'
-        ) as UntypedFormArray;
-
-        // Remove the email field
-        emailsFormArray.removeAt(index);
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
-    }
-
-    /**
-     * Add an empty phone number field
-     */
-    addPhoneNumberField(): void {
-        // Create an empty phone number form group
-        const phoneNumberFormGroup = this._formBuilder.group({
-            country: ['us'],
-            phoneNumber: [''],
-            label: [''],
-        });
-
-        // Add the phone number form group to the phoneNumbers form array
-        (this.contactForm.get('phoneNumbers') as UntypedFormArray).push(
-            phoneNumberFormGroup
-        );
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
-    }
-
-    /**
-     * Remove the phone number field
-     *
-     * @param index
-     */
-    removePhoneNumberField(index: number): void {
-        // Get form array for phone numbers
-        const phoneNumbersFormArray = this.contactForm.get(
-            'phoneNumbers'
-        ) as UntypedFormArray;
-
-        // Remove the phone number field
-        phoneNumbersFormArray.removeAt(index);
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
-    }
-
-    /**
-     * Track by function for ngFor loops
-     *
-     * @param index
-     * @param item
-     */
     trackByFn(index: number, item: any): any {
         return item.usuarioId || index;
     }
 
-    navigateToProject(id) {
-        this.router.navigate([`/dashboards/project/${id}`]);
+    navigateToProject(id: number): void {
+        this._router.navigate([`/dashboards/project/${id}`]);
     }
+
     async copyTextToClipboard(text: string): Promise<void> {
         try {
             await navigator.clipboard.writeText(text);
-            // Aquí podrías mostrar un mensaje al usuario, por ejemplo:
-            // alert('Texto copiado al portapapeles!');
         } catch (err) {
-            console.error('Error al copiar el texto: ', err);
-            // Aquí podrías mostrar un mensaje de error al usuario.
+            console.error('Error al copiar: ', err);
         }
     }
 }

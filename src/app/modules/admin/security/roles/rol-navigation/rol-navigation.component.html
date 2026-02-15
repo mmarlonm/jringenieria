@@ -39,21 +39,33 @@
         </div>
       </div>
 
-      <div *ngIf="node.type === 'basic'"
-        class="group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+      <div *ngIf="node.type === 'basic'" class="flex flex-col mb-3">
 
-        <div class="flex items-center">
-          <mat-icon class="icon-size-4 mr-3 text-secondary group-hover:text-primary transition-colors"
-            [svgIcon]="node.icon"></mat-icon>
-          <span
-            class="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white leading-none">
-            {{ node.title }}
-          </span>
+        <div
+          class="group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+          <div class="flex items-center">
+            <mat-icon class="icon-size-4 mr-3 text-secondary group-hover:text-primary transition-colors"
+              [svgIcon]="node.icon"></mat-icon>
+            <span
+              class="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white leading-none">
+              {{ node.title }}
+            </span>
+          </div>
+
+          <mat-checkbox [color]="'primary'"
+            [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].length > 0"
+            (change)="onPermissionChange(node.id, $event.checked)">
+          </mat-checkbox>
         </div>
 
-        <mat-checkbox [color]="'primary'" [checked]="!!selectedPermissions[node.id]"
-          (change)="onPermissionChange(node.id, $event.checked)">
-        </mat-checkbox>
+        <div class="ml-10 mt-1 mb-2 grid grid-cols-2 sm:grid-cols-4 gap-2" *ngIf="permisos && permisos.length > 0">
+          <mat-checkbox *ngFor="let permiso of permisos" [color]="'accent'"
+            class="text-xs text-gray-500 scale-90 origin-left"
+            [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
+            (change)="togglePermission(node.id, permiso.permisoId)">
+            {{ permiso.descripcionPermiso }}
+          </mat-checkbox>
+        </div>
 
       </div>
 

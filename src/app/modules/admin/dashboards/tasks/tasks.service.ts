@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Task } from './models/tasks.model';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
@@ -9,6 +9,7 @@ import { environment } from 'environments/environment';
 })
 export class TaskService {
   public apiUrl = `${environment.apiUrl}/Tareas`;
+  private apiUrlAuth = `${environment.apiUrl}/Auth`;
 
   constructor(private http: HttpClient) { }
 
@@ -62,5 +63,21 @@ export class TaskService {
     const encodedCat = encodeURIComponent(categoria);
     const encodedFile = encodeURIComponent(nombreArchivo);
     return this.http.delete(`${this.apiUrl}/EliminarArchivoTarea/${tareaId}/${encodedCat}/${encodedFile}`, { responseType: 'text' });
+  }
+
+  getToken(tareaId: number, categoria: string, nombreArchivo: string): Observable<any> {
+
+    // 1. Define los parámetros de consulta
+    let params = new HttpParams()
+      .set('tareaId', tareaId)
+      .set('categoria', categoria)
+      .set('nombreArchivo', nombreArchivo);
+
+    // 2. Construye la URL base del endpoint
+    // Suponiendo que tu endpoint está en: [Route("api/onlyoffice")] y [HttpGet("token")]
+    const url = `${this.apiUrlAuth}/tarea/token`;
+
+    // 3. Envía la solicitud con los parámetros
+    return this.http.get<any>(url, { params: params });
   }
 }

@@ -43,9 +43,44 @@ export class NavigationMockApi {
 
             // ... Tu lógica actual de filtrado por localStorage ...
             const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const vistasPermitidas: string[] = storedData.permisos?.map(p => p.vista?.nombreVista) || [];
 
-            // ... (El resto de tu código de filtrado que ya tenías) ...
+            // 🔹 CORRECCIÓN: Extraer permisos de forma más robusta (soportando múltiples estructuras)
+            const vistasPermitidas: string[] = (storedData.permisos || []).map(p => {
+                return p.vista?.nombreVista || p.vistaId || p.nombreVista || p.vista?.idVista || "";
+            }).filter(v => v !== "");
+
+            // Fill compact navigation children using the default navigation
+            this._compactNavigation.forEach((compactNavItem) => {
+                this._defaultNavigation.forEach((defaultNavItem) => {
+                    if (defaultNavItem.id === compactNavItem.id) {
+                        compactNavItem.children = cloneDeep(
+                            defaultNavItem.children
+                        );
+                    }
+                });
+            });
+
+            // Fill futuristic navigation children using the default navigation
+            this._futuristicNavigation.forEach((futuristicNavItem) => {
+                this._defaultNavigation.forEach((defaultNavItem) => {
+                    if (defaultNavItem.id === futuristicNavItem.id) {
+                        futuristicNavItem.children = cloneDeep(
+                            defaultNavItem.children
+                        );
+                    }
+                });
+            });
+
+            // Fill horizontal navigation children using the default navigation
+            this._horizontalNavigation.forEach((horizontalNavItem) => {
+                this._defaultNavigation.forEach((defaultNavItem) => {
+                    if (defaultNavItem.id === horizontalNavItem.id) {
+                        horizontalNavItem.children = cloneDeep(
+                            defaultNavItem.children
+                        );
+                    }
+                });
+            });
 
             // Función de filtrado (la que me pasaste)
             const filtrarNavegacion = (navigation: FuseNavigationItem[]): FuseNavigationItem[] => {

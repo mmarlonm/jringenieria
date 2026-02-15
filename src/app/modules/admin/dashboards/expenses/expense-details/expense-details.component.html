@@ -1,0 +1,91 @@
+<div class="flex flex-col" *ngIf="expense">
+    <div class="flex items-center justify-between p-6 bg-primary text-on-primary">
+        <div class="flex flex-col">
+            <span class="text-xs font-medium uppercase tracking-wider opacity-80">Detalle del Gasto</span>
+            <span class="text-xl font-bold uppercase">{{ expense.nombreGasto }}</span>
+        </div>
+        <button mat-icon-button (click)="_dialogRef.close()" class="text-white">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <mat-dialog-content class="p-0">
+        <div class="flex items-center justify-between p-8 bg-gray-50 dark:bg-gray-800/50">
+            <div class="flex flex-col">
+                <span class="text-sm font-semibold text-secondary uppercase">Monto Total</span>
+                <span class="text-4xl font-extrabold text-primary">
+                    {{ (expense.cantidad + expense.impuestos) | currency }}
+                </span>
+            </div>
+            <div class="text-right flex flex-col">
+                <span class="text-sm font-semibold text-secondary uppercase">Fecha de Gasto</span>
+                <span class="text-lg font-medium">{{ expense.fecha | date:'fullDate' }}</span>
+            </div>
+        </div>
+
+        <div class="p-8 space-y-6">
+            <div class="grid grid-cols-2 gap-x-8 gap-y-6">
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Proveedor</span>
+                    <span class="text-md font-medium">{{ expense.gastoProveedor?.nombre || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Factura / Folio</span>
+                    <span class="text-md font-medium">{{ expense.factura || 'SIN FACTURA' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Área / Departamento</span>
+                    <span class="text-md font-medium">{{ expense.gastoArea?.nombre || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Sucursal (Unidad)</span>
+                    <span class="text-md font-medium">{{ expense.unidadId }}</span>
+                </div>
+
+                <mat-divider class="col-span-2"></mat-divider>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Clasificación</span>
+                    <span class="text-md font-medium">
+                        {{ expense.gastoTipo?.nombre }} / {{ expense.gastoConcepto?.nombre }}
+                    </span>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Subtipo</span>
+                    <span class="text-md font-medium">{{ expense.gastoSubtipo?.nombre || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Método de Pago</span>
+                    <span class="text-md font-medium">{{ expense.gastoFormaPago?.nombre || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Cuenta Origen</span>
+                    <span class="text-md font-medium">{{ expense.gastoCuenta?.nombre || 'N/A' }}</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+                *ngIf="expense.descripcion">
+                <span class="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase mb-1">Descripción /
+                    Notas</span>
+                <p class="text-sm leading-relaxed italic">{{ expense.descripcion }}</p>
+            </div>
+
+            <div
+                class="pt-4 flex justify-between items-center text-[10px] text-hint uppercase tracking-widest border-t">
+                <span>Registrado por: ID-{{ expense.usuarioId }}</span>
+                <span>Sistema: {{ expense.fechaRegistro | date:'short' }}</span>
+            </div>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="p-4 bg-gray-50 dark:bg-transparent border-t flex justify-end">
+        <button mat-flat-button color="primary" (click)="_dialogRef.close()">Entendido</button>
+    </mat-dialog-actions>
+</div>

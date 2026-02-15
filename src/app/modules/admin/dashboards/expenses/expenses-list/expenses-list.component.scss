@@ -1,0 +1,122 @@
+expenses-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+    .mat-drawer-container {
+        flex: 1 1 auto;
+        height: 100%;
+    }
+
+    // Adaptabilidad del Drawer (Detalle)
+    .mat-drawer {
+        width: 100% !important;
+
+        @media (min-width: 640px) {
+            width: 480px !important;
+        }
+
+        @media (min-width: 1024px) {
+            width: 600px !important;
+        }
+
+        @media (min-width: 2560px) {
+            width: 800px !important;
+        }
+
+        // Pantallas 4K/TV
+    }
+
+    .mat-table {
+        background: transparent;
+        border-spacing: 0;
+
+        th.mat-header-cell {
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-size: 11px;
+
+            @media (min-width: 1920px) {
+                font-size: 14px;
+            }
+
+            // TV/Ultra-wide
+        }
+
+        td.mat-cell {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 13px;
+
+            @media (min-width: 1920px) {
+                font-size: 16px;
+            }
+        }
+
+        // Gestión de columnas Sticky por resolución
+        .mat-column-fecha {
+            @media (max-width: 768px) {
+                position: static !important;
+                box-shadow: none !important;
+            }
+        }
+
+        .mat-column-acciones {
+            background: white;
+            z-index: 2 !important;
+
+            @media (max-width: 768px) {
+                position: static !important;
+                box-shadow: none !important;
+                border-left: none !important;
+            }
+
+            &::before {
+                @media (min-width: 769px) {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    right: 100%;
+                    width: 20px;
+                    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.03));
+                    pointer-events: none;
+                }
+            }
+        }
+    }
+
+    // Scrollbars premium
+    .custom-scrollbar {
+        &::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 10px;
+
+            &:hover {
+                background: rgba(148, 163, 184, 0.6);
+            }
+        }
+    }
+
+    // Soporte para pantallas de gran escala (TV)
+    @media (min-width: 2560px) {
+        .text-4xl {
+            font-size: 4rem;
+        }
+
+        .icon-size-5 {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .rounded-xl {
+            border-radius: 2rem;
+        }
+    }
+}

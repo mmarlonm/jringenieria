@@ -1,0 +1,452 @@
+<mat-drawer-container class="absolute inset-0 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-transparent">
+
+    <mat-drawer #matDrawer class="dark:bg-gray-900 shadow-2xl" [mode]="'over'" [position]="'right'" [autoFocus]="false">
+        <div class="flex flex-col h-full bg-card dark:bg-transparent" *ngIf="selectedExpense">
+            <div class="flex items-center justify-between p-4 sm:p-6 border-b bg-slate-50 dark:bg-slate-800/50">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-primary uppercase tracking-widest">Ficha Técnica</span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight truncate w-48 sm:w-64">
+                        {{selectedExpense.nombreGasto}}</h2>
+                </div>
+                <button mat-icon-button (click)="matDrawer.close()">
+                    <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                </button>
+            </div>
+            <div class="flex-auto p-8 overflow-y-auto custom-scrollbar space-y-8">
+                <div
+                    class="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-primary-50 dark:bg-primary-500/10 border border-primary-100">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-primary uppercase">Monto Neto</span>
+                        <span class="text-2xl font-black text-primary">{{selectedExpense.cantidad | currency}}</span>
+                    </div>
+                    <div class="flex flex-col border-l pl-4 border-primary-200">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase">Impuestos</span>
+                        <span class="text-2xl font-black text-slate-700 dark:text-slate-200">{{selectedExpense.impuestos
+                            | currency}}</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-8 text-sm text-secondary font-medium">
+                    <div class="flex flex-col"><span
+                            class="font-bold uppercase text-[10px]">Fecha</span><span>{{selectedExpense.fecha |
+                            date:'dd/MM/yyyy'}}</span></div>
+                    <div class="flex flex-col"><span
+                            class="font-bold uppercase text-[10px]">Factura</span><span>{{selectedExpense.factura ||
+                            'N/A'}}</span></div>
+                    <div class="flex flex-col col-span-2"><span
+                            class="font-bold uppercase text-[10px]">Proveedor</span><span
+                            class="font-bold text-slate-900 dark:text-slate-100">{{getProveedorNombre(selectedExpense.proveedorId)}}</span>
+                    </div>
+                    <div class="flex flex-col"><span
+                            class="font-bold uppercase text-[10px]">Área</span><span>{{getAreaNombre(selectedExpense.areaId)}}</span>
+                    </div>
+                    <div class="flex flex-col"><span
+                            class="font-bold uppercase text-[10px]">Sucursal</span><span>{{getUnidadNombre(selectedExpense.unidadId)}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </mat-drawer>
+
+    <mat-drawer-content class="flex flex-col">
+        <div class="flex flex-col flex-0 border-b bg-card dark:bg-transparent shadow-sm z-10 transition-all">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-8 lg:px-10">
+                <div class="flex-1 min-w-0 w-full mb-4 sm:mb-0">
+                    <div
+                        class="flex items-center whitespace-nowrap space-x-2 text-[10px] sm:text-xs font-semibold uppercase">
+                        <span class="text-secondary">COMERCIAL</span>
+                        <mat-icon class="icon-size-3 sm:icon-size-4 text-hint"
+                            [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
+                        <span class="text-primary">GASTOS</span>
+                    </div>
+                    <h1
+                        class="mt-1 sm:mt-2 text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-none text-slate-900 dark:text-slate-50">
+                        Gestión Egresos
+                    </h1>
+                </div>
+
+                <div class="flex flex-wrap items-center w-full sm:w-auto gap-2 sm:gap-3">
+                    <button mat-stroked-button (click)="_resetColumnFilters(); searchInputControl.setValue('')"
+                        class="bg-white flex-1 sm:flex-none justify-center">
+                        <mat-icon class="icon-size-4 sm:icon-size-5"
+                            [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                        <span class="ml-2 text-xs sm:text-sm">Limpiar</span>
+                    </button>
+                    <button mat-flat-button color="primary"
+                        class="rounded-xl px-4 sm:px-6 shadow-lg shadow-primary/20 flex-1 sm:flex-none justify-center"
+                        (click)="addNew()" [disabled]="isAdding">
+                        <mat-icon class="icon-size-4 sm:icon-size-5 mr-1 sm:mr-2"
+                            [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon>
+                        <span class="text-xs sm:text-sm">Nuevo</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-auto overflow-hidden bg-slate-100/30">
+            <div class="h-full overflow-auto custom-scrollbar">
+                <form [formGroup]="rowForm">
+                    <table mat-table [dataSource]="dataSource"
+                        class="min-w-[1600px] sm:min-w-[2500px] lg:min-w-[3200px] w-full bg-transparent border-separate border-spacing-0">
+
+                        <ng-container matColumnDef="fecha" sticky>
+                            <th mat-header-cell *matHeaderCellDef
+                                class="bg-gray-100 p-4 border-b w-44 sticky left-0 z-30 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] max-md:!left-auto max-md:!shadow-none max-md:z-10">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Fecha</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <input matInput (keyup)="applyColumnFilter('fecha', $any($event.target).value)"
+                                        placeholder="dd/mm/aaaa">
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row"
+                                class="p-2 bg-card border-b sticky left-0 z-20 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] max-md:!static max-md:!shadow-none">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewDate">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <input matInput [matDatepicker]="picker" formControlName="fecha">
+                                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                        <mat-datepicker #picker></mat-datepicker>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewDate>{{row.fecha | date:'dd/MM/yyyy'}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="gasto">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-64">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Concepto*</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <input matInput (keyup)="applyColumnFilter('gasto', $any($event.target).value)"
+                                        placeholder="Filtrar...">
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewGasto">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><input matInput
+                                            formControlName="nombreGasto"></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewGasto><span
+                                        class="font-bold text-slate-800">{{row.nombreGasto}}</span></ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="tipo">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Tipo</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('tipo', $event.value)">
+                                        <mat-option value="">Todos</mat-option>
+                                        <mat-option *ngFor="let t of catalogs?.tipos"
+                                            [value]="t.nombre">{{t.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewTipo">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
+                                            formControlName="tipoId"><mat-option *ngFor="let t of catalogs?.tipos"
+                                                [value]="t.tipoId">{{t.nombre}}</mat-option></mat-select></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewTipo>{{getTipoNombre(row.tipoId)}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="concepto">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Concepto</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('concepto', $event.value)">
+                                        <mat-option value="">Todos</mat-option>
+                                        <mat-option *ngFor="let c of catalogs?.conceptos"
+                                            [value]="c.nombre">{{c.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewConcepto">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
+                                            formControlName="conceptoId"><mat-option
+                                                *ngFor="let c of catalogs?.conceptos"
+                                                [value]="c.conceptoId">{{c.nombre}}</mat-option></mat-select></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewConcepto>{{getConceptoNombre(row.conceptoId)}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="subtipo">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Subtipo</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('subtipo', $event.value)">
+                                        <mat-option value="">Todos</mat-option>
+                                        <mat-option *ngFor="let s of catalogs?.subtipos"
+                                            [value]="s.nombre">{{s.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewSubtipo">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
+                                            formControlName="subtipoId"><mat-option *ngFor="let s of catalogs?.subtipos"
+                                                [value]="s.subtipoId">{{s.nombre}}</mat-option></mat-select></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewSubtipo>{{getSubtipoNombre(row.subtipoId)}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="unidad">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Unidad</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('unidad', $event.value)">
+                                        <mat-option value="">Todas</mat-option>
+                                        <mat-option *ngFor="let u of unidadesNegocio"
+                                            [value]="u.nombre">{{u.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row"
+                                class="p-2 bg-card border-b text-secondary italic font-medium">
+                                {{getUnidadNombre(row.unidadId)}}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="area">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Área</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('area', $event.value)">
+                                        <mat-option value="">Todas</mat-option>
+                                        <mat-option *ngFor="let a of catalogs?.areas"
+                                            [value]="a.nombre">{{a.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewArea">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
+                                            formControlName="areaId"><mat-option *ngFor="let a of catalogs?.areas"
+                                                [value]="a.areaId">{{a.nombre}}</mat-option></mat-select></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewArea>{{getAreaNombre(row.areaId)}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="cantidad">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b text-right w-40">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Importe</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <input matInput (keyup)="applyColumnFilter('cantidad', $any($event.target).value)"
+                                        placeholder="...">
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row"
+                                class="p-2 bg-card border-b text-right pr-4 font-black text-primary">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewCant">
+                                    <mat-form-field class="w-28 fuse-mat-dense fuse-mat-no-subscript"><input matInput
+                                            type="number" formControlName="cantidad"
+                                            class="text-right"></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewCant>{{row.cantidad | currency}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="proveedor">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-64">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Proveedor</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <input matInput (keyup)="applyColumnFilter('proveedor', $any($event.target).value)"
+                                        placeholder="Buscar...">
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewProv">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
+                                            formControlName="proveedorId"><mat-option
+                                                *ngFor="let p of catalogs?.proveedores"
+                                                [value]="p.proveedorId">{{p.nombre}}</mat-option></mat-select></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewProv>{{getProveedorNombre(row.proveedorId)}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="factura">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-40">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Factura</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <input matInput (keyup)="applyColumnFilter('factura', $any($event.target).value)"
+                                        placeholder="...">
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewFact">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><input matInput
+                                            formControlName="factura"></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewFact>{{row.factura}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="tasa">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-40">
+                                <span
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Tasa</span>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewTasa">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <mat-select formControlName="tasaId">
+                                            <mat-option *ngFor="let t of catalogs?.tasas"
+                                                [value]="t.tasaId">{{t.etiqueta}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewTasa><span
+                                        class="text-xs">{{row.gastoTasa?.etiqueta}}</span></ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="formaPago">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Forma
+                                    Pago</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('formaPago', $event.value)">
+                                        <mat-option value="">Todas</mat-option>
+                                        <mat-option *ngFor="let fp of catalogs?.formasPago"
+                                            [value]="fp.nombre">{{fp.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewFP">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <mat-select formControlName="formaPagoId">
+                                            <mat-option *ngFor="let fp of catalogs?.formasPago"
+                                                [value]="fp.formaPagoId">{{fp.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewFP><span
+                                        class="text-xs text-secondary">{{getFormaPagoNombre(row.formaPagoId)}}</span></ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="cuenta">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Cuenta</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <mat-select (selectionChange)="applyColumnFilter('cuenta', $event.value)">
+                                        <mat-option value="">Todas</mat-option>
+                                        <mat-option *ngFor="let c of catalogs?.cuentas"
+                                            [value]="c.nombre">{{c.nombre}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewCuenta">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <mat-select formControlName="cuentaId">
+                                            <mat-option *ngFor="let c of catalogs?.cuentas"
+                                                [value]="c.cuentaId">{{c.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewCuenta><span
+                                        class="text-xs text-secondary">{{getCuentaNombre(row.cuentaId)}}</span></ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="descripcion">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-80">
+                                <span
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Descripción</span>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewDesc">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <input matInput formControlName="descripcion">
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewDesc><span
+                                        class="text-xs italic truncate block max-w-64">{{row.descripcion}}</span></ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="impuestos">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b text-right w-32">
+                                <span
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Impuestos</span>
+                            </th>
+                            <td mat-cell *matCellDef="let row"
+                                class="p-2 bg-card border-b text-right pr-4 text-secondary font-mono">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewImp">
+                                    {{rowForm.get('impuestos').value | currency}}
+                                </ng-container>
+                                <ng-template #viewImp>{{row.impuestos | currency}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="mes">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 border-b w-24">Mes</th>
+                            <td mat-cell *matCellDef="let row" class="bg-card border-b text-center capitalize">
+                                {{getMes(row.fecha)}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="año">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 border-b w-24">Año</th>
+                            <td mat-cell *matCellDef="let row" class="bg-card border-b text-center">
+                                {{getYear(row.fecha)}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="registro">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 border-b w-40">Registro</th>
+                            <td mat-cell *matCellDef="let row" class="bg-card border-b text-[10px] text-hint">
+                                {{row.fechaRegistro | date:'short'}}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones" stickyEnd>
+                            <th mat-header-cell *matHeaderCellDef
+                                class="bg-gray-100/90 backdrop-blur sticky right-0 z-30 border-b border-l w-40 text-center font-bold uppercase text-[10px] shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] max-md:!right-auto max-md:!shadow-none max-md:z-10">
+                                Acciones</th>
+                            <td mat-cell *matCellDef="let row"
+                                class="bg-white sticky right-0 z-20 border-b border-l shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] max-md:!static max-md:!shadow-none">
+                                <div class="flex items-center justify-center px-4 space-x-1">
+                                    <ng-container *ngIf="editingId === row.gastoId; else defaultActions">
+                                        <button mat-icon-button class="text-green-600 bg-green-50 rounded-lg"
+                                            (click)="saveRow()"><mat-icon class="icon-size-5"
+                                                [svgIcon]="'heroicons_outline:check'"></mat-icon></button>
+                                        <button mat-icon-button class="text-red-600 bg-red-50 rounded-lg"
+                                            (click)="cancelEdit()"><mat-icon class="icon-size-5"
+                                                [svgIcon]="'heroicons_outline:x-mark'"></mat-icon></button>
+                                    </ng-container>
+                                    <ng-template #defaultActions>
+                                        <button mat-icon-button class="text-slate-400 hover:text-blue-600"
+                                            (click)="viewExpense(row)"><mat-icon class="icon-size-5"
+                                                [svgIcon]="'heroicons_outline:eye'"></mat-icon></button>
+                                        <button mat-icon-button class="text-slate-400 hover:text-amber-600"
+                                            (click)="editExpense(row)"><mat-icon class="icon-size-5"
+                                                [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon></button>
+                                        <button mat-icon-button class="text-slate-400 hover:text-red-600"
+                                            (click)="deleteExpense(row.gastoId)"><mat-icon class="icon-size-5"
+                                                [svgIcon]="'heroicons_outline:trash'"></mat-icon></button>
+                                    </ng-template>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="h-24"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                            [ngClass]="{'bg-primary-50 ring-2 ring-inset ring-primary-500 z-10': editingId === row.gastoId}"
+                            class="h-16 bg-white hover:bg-slate-50 relative"></tr>
+                    </table>
+                </form>
+
+                <div *ngIf="dataSource.data.length === 0"
+                    class="flex flex-col items-center justify-center p-20 bg-card rounded-b-xl border-t">
+                    <mat-icon class="icon-size-20 text-slate-200 mb-4"
+                        [svgIcon]="'heroicons_outline:document-search'"></mat-icon>
+                    <h3 class="text-xl font-bold text-slate-400 uppercase tracking-widest text-center">Sin resultados
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </mat-drawer-content>
+</mat-drawer-container>

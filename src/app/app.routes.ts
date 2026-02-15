@@ -89,6 +89,7 @@ export const appRoutes: Route[] = [
                     { path: 'surveys', loadChildren: () => import('app/modules/admin/dashboards/surveys/surveys.routes') },
                     { path: 'surveys-products', loadChildren: () => import('app/modules/admin/dashboards/surveys-products/surveys.routes') },
                     { path: 'transfer-management', loadChildren: () => import('app/modules/admin/dashboards/transfer-management/transfer-management.routes') },
+                    { path: 'expenses', loadChildren: () => import('app/modules/admin/dashboards/expenses/expenses.routes') },
                 ]
             },
             {
@@ -108,6 +109,7 @@ export const appRoutes: Route[] = [
                     { path: 'report-venta-product', loadChildren: () => import('app/modules/reports/report-ventas-product/report-ventas-product.routes') },
                     { path: 'report-product-existence', loadChildren: () => import('app/modules/reports/report-product-existence/report-product-existence.routes') },
                     { path: 'report-customers', loadChildren: () => import('app/modules/reports/report-customers/report-customers.routes') },
+                    { path: 'report-expenses', loadChildren: () => import('app/modules/reports/report-expenses/report-expenses.routes') },
                 ]
             },
             {

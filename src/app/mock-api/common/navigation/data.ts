@@ -93,6 +93,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 link: '/dashboards/tasks'
             },
             {
+                id: 'dashboards.expenses',
+                title: 'Gastos',
+                type: 'basic',
+                icon: 'heroicons_outline:currency-dollar',
+                link: '/dashboards/expenses'
+            },
+            {
                 id: 'comercializacion.catalogos',
                 title: 'Catalogos',
                 type: 'collapsable',
@@ -119,7 +126,9 @@ export const defaultNavigation: FuseNavigationItem[] = [
                     // Usa ID original: 'reports.report-product-existence'
                     { id: 'reports.report-product-existence', title: 'Reporte de Existencia de Productos', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
                     // Usa ID original: 'reports.report-customers'
-                    { id: 'reports.report-customers', title: 'Reporte de Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers' }
+                    { id: 'reports.report-customers', title: 'Reporte de Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers' },
+                    // Usa ID original: 'reports.report-expenses'
+                    { id: 'reports.report-expenses', title: 'Reporte de Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-expenses' }
                 ]
             }
         ]
