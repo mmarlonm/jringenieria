@@ -256,8 +256,8 @@ export class TaskMediaDialogComponent implements OnInit {
  */
     abrirArchivo(file: any): void {
         const fileExtension = file.nombreArchivo.split('.').pop()?.toLowerCase() || '';
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
-        const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf'];
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'pdf'];
+        const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
 
         if (imageExtensions.includes(fileExtension)) {
             this.verImagen(file, fileExtension);
@@ -273,25 +273,41 @@ export class TaskMediaDialogComponent implements OnInit {
      * Obtiene el base64 del backend y abre el modal de imagen
      */
     verImagen(file: any, extension: string): void {
-        // Reutilizamos el endpoint de descarga que te devuelve el base64
         this._taskService.downloadFile(this.tareaId, file.categoria, file.nombreArchivo)
             .subscribe({
                 next: (resp) => {
                     if (resp && resp.data) {
-                        // Armamos el Data URL para la etiqueta <img>
-                        const imageUrl = `data:image/${extension};base64,${resp.data}`;
+                        const isPdf = extension === 'pdf';
+                        let fileData: any;
+
+                        if (isPdf) {
+                            // 🔹 CONVERSIÓN DE BASE64 A ARRAY BINARIO (Uint8Array)
+                            const binaryString = window.atob(resp.data);
+                            const len = binaryString.length;
+                            const bytes = new Uint8Array(len);
+                            for (let i = 0; i < len; i++) {
+                                bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            fileData = bytes; // Enviamos el array de bytes
+                        } else {
+                            fileData = `data:image/${extension};base64,${resp.data}`;
+                        }
 
                         this.dialog.open(ImagePreviewDialogComponent, {
-                            data: { url: imageUrl, name: file.nombreArchivo },
+                            data: {
+                                url: fileData, // Aquí va el Uint8Array si es PDF
+                                name: file.nombreArchivo,
+                                isPdf: isPdf
+                            },
                             panelClass: 'bg-transparent',
-                            // 🔹 CORRECCIÓN: Separar las clases en un arreglo
+                            maxWidth: isPdf ? '95vw' : '90vw',
+                            width: isPdf ? '1200px' : 'auto',
                             backdropClass: ['bg-black', 'bg-opacity-80']
                         });
                     }
                 },
                 error: (err) => {
-                    console.error('Error al cargar la imagen:', err);
-                    Swal.fire('Error', 'No se pudo cargar la imagen para previsualización.', 'error');
+                    console.error('Error al cargar archivo:', err);
                 }
             });
     }

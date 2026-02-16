@@ -239,3 +239,16 @@ body.is-resizing-column {
     }
   }
 }
+
+/* Asegura que el visor de PDF tenga visibilidad */
+ngx-extended-pdf-viewer {
+  display: block;
+  width: 100%;
+  background-color: #525659;
+  /* Color de fondo típico de PDF.js */
+}
+
+/* Fix para corregir el colapso de altura en Modales */
+.mat-mdc-dialog-content {
+  max-height: none !important;
+}
