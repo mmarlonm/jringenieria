@@ -251,6 +251,8 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.viewConfig.columnWidths = {
             'responsable': '100px',
             'asignados': '120px',
+            'empresa': '150px',
+            'ubicacion': '150px',
             ...this.configService.DEFAULT_CONFIG.columnWidths,
             ...this.viewConfig.columnWidths
         };
@@ -629,18 +631,21 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     getColumnWidth(columnId: string): any {
         const width = this.viewConfig?.columnWidths?.[columnId];
 
-        if (!width || width === 'auto') {
+        const safeWidth = width && width !== 'auto' ? (parseInt(width) < 70 ? '70px' : width) : 'auto';
+
+        if (safeWidth === 'auto') {
             return {
                 'position': 'relative',
                 'overflow': 'visible',
-                'box-sizing': 'border-box'
+                'box-sizing': 'border-box',
+                'min-width': '70px'
             };
         }
 
         return {
-            'width': width,
-            'min-width': width,
-            'max-width': width,
+            'width': safeWidth,
+            'min-width': safeWidth,
+            'max-width': safeWidth,
             'flex': 'none',
             'position': 'relative',
             'overflow': 'visible',

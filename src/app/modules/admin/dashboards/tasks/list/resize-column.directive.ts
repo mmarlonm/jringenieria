@@ -47,8 +47,8 @@ export class ResizeColumnDirective {
         if (!this.grabbing) return;
 
         const offset = event.pageX - this.startX;
-        // Bajamos el mínimo a 30px o incluso 20px para permitir columnas muy estrechas
-        const newWidth = Math.max(30, this.startWidth + offset);
+        // Aumentamos el mínimo a 70px para proteger la visibilidad de los títulos
+        const newWidth = Math.max(70, this.startWidth + offset);
 
         // IMPORTANTE: Debemos forzar el min-width y max-width para "romper" el layout de la tabla
         this.renderer.setStyle(this.el.nativeElement, 'width', `${newWidth}px`);

@@ -79,65 +79,7 @@ td.mat-cell {
     user-select: none;
 }
 
-/* ==========================================================================
-   EL RESIZER (EL "MANGO" PARA ARRASTRAR)
-   ========================================================================== */
-::ng-deep .resizer {
-    position: absolute;
-    right: -4px;
-    /* Centrado sobre el borde derecho */
-    top: 0;
-    bottom: 0;
-    width: 10px;
-    /* Área de contacto para el mouse */
-    cursor: col-resize;
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    pointer-events: auto !important;
-    touch-action: none;
-
-    /* Icono visual (tres puntos verticales) */
-    &::after {
-        content: '⋮';
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        color: #94a3b8;
-        width: 12px;
-        height: 24px;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 3px;
-        opacity: 0;
-        /* Oculto por defecto */
-        transition: all 0.2s;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    &:hover::after,
-    .is-resizing &::after {
-        opacity: 1;
-        border-color: #3b82f6;
-        color: #3b82f6;
-        transform: scale(1.1);
-    }
-}
-
-/* Línea guía azul que aparece mientras arrastras */
-::ng-deep .is-resizing .resizer::before {
-    content: '';
-    position: absolute;
-    right: 4px;
-    top: 0;
-    width: 2px;
-    height: 100vh;
-    /* Línea larga que cruza toda la tabla */
-    background: #3b82f6;
-    z-index: 2000;
-}
+/* Los estilos de .resizer antiguos se han eliminado para usar .native-resizer de forma consistente */
 
 /* ==========================================================================
    ESTADOS DE ARRASTRE Y OTROS
@@ -191,19 +133,6 @@ td.mat-cell {
     }
 }
 
-::ng-deep .resizer {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    /* Área de contacto */
-    cursor: col-resize;
-    z-index: 50;
-    /* Por encima del texto del header */
-    pointer-events: auto !important;
-    /* Forzar que reciba clicks */
-}
 
 /* Evita que Angular Material corte el mango del resizer */
 ::ng-deep .mat-header-cell {
@@ -221,20 +150,6 @@ td.mat-cell {
         position: relative;
         overflow: visible !important; // Para que el mango se vea
 
-        .resizer {
-            position: absolute;
-            top: 0;
-            right: -2px;
-            width: 8px;
-            height: 100%;
-            cursor: col-resize;
-            z-index: 1000 !important; // Por encima de CDK Drag
-            transition: background-color 0.2s;
-
-            &:hover {
-                background-color: #3b82f6; // Azul Tailwind para feedback visual
-            }
-        }
     }
 }
 
@@ -246,24 +161,46 @@ td.mat-cell {
 
 /* En tu archivo de estilos .scss */
 
-.mat-header-cell,
-.mat-cell {
+::ng-deep .mat-header-cell,
+::ng-deep .mat-cell {
     /* Permite que el contenido se oculte si la columna es más pequeña que el texto */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 
     /* Resetear comportamientos de flex que fuerzan tamaños mínimos */
     flex: none !important;
     box-sizing: border-box !important;
+
+    /* Evitar que las columnas desaparezcan por completo o se encimen los títulos */
+    min-width: 70px !important;
 }
 
-/* El contenedor interno debe permitir el encogimiento */
-.mat-header-cell>div {
-    overflow: hidden;
-    display: flex;
+/* El contenedor interno debe permitir el encogimiento y truncar el texto */
+::ng-deep .mat-header-cell>div {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: flex !important;
     align-items: center;
-    width: 100%;
+    width: 100% !important;
+    min-width: 0 !important;
+    /* Permite que el flex container se encoja correctamente */
+
+    // Si hay un span dentro para el texto, forzamos el truncamiento
+    span {
+        display: block !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        flex: 1;
+        min-width: 0;
+    }
+
+    // El icono no debe encogerse y debe estar oculto si no cabe
+    mat-icon {
+        flex: none !important;
+    }
 }
 
 table {
