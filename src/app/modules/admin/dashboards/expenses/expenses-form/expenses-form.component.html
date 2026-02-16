@@ -109,6 +109,26 @@
                 <input matInput formControlName="factura">
             </mat-form-field>
 
+            <mat-form-field class="fuse-mat-no-subscript">
+                <mat-label>Tipo de Movimiento</mat-label>
+                <mat-select formControlName="tipoMovimiento">
+                    <mat-option value="1">
+                        <div class="flex items-center">
+                            <mat-icon class="icon-size-4 mr-2 text-emerald-500"
+                                [svgIcon]="'heroicons_mini:arrow-trending-up'"></mat-icon>
+                            <span>Ingreso</span>
+                        </div>
+                    </mat-option>
+                    <mat-option value="2">
+                        <div class="flex items-center">
+                            <mat-icon class="icon-size-4 mr-2 text-rose-500"
+                                [svgIcon]="'heroicons_mini:arrow-trending-down'"></mat-icon>
+                            <span>Egreso</span>
+                        </div>
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
             <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript">
                 <mat-label>Descripción</mat-label>
                 <textarea matInput formControlName="descripcion" [rows]="3"></textarea>

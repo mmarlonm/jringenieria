@@ -17,6 +17,7 @@ export interface Expense {
     usuarioId: number;
     factura?: string;
     descripcion?: string;
+    tipoMovimiento?: string;
 
     fechaRegistro?: string | Date;
 

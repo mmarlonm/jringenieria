@@ -53,7 +53,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     dataSource: MatTableDataSource<Expense> = new MatTableDataSource();
     displayedColumns: string[] = [
-        'fecha', 'gasto', 'tipo', 'concepto', 'subtipo', 'unidad', 'area', 'cantidad',
+        'fecha', 'gasto', 'tipo', 'tipoMovimiento', 'concepto', 'subtipo', 'unidad', 'area', 'cantidad',
         'proveedor', 'factura', 'tasa', 'formaPago', 'cuenta', 'descripcion',
         'impuestos', 'mes', 'año', 'registro', 'acciones'
     ];
@@ -82,7 +82,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         proveedor: '',
         factura: '',
         formaPago: '',
-        cuenta: ''
+        cuenta: '',
+        tipoMovimiento: ''
     };
 
     constructor(
@@ -142,7 +143,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     // Función auxiliar para comparar filtros vacíos
     private _emptyFilter() {
-        return { fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '', unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '' };
+        return { fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '', unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '' };
     }
 
     // 🔹 NUEVO: Función para aplicar filtro desde el encabezado
@@ -174,17 +175,18 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             const matchFP = this.getFormaPagoNombre(data.formaPagoId).toLowerCase().includes(searchTerms.formaPago);
             const matchCuenta = this.getCuentaNombre(data.cuentaId).toLowerCase().includes(searchTerms.cuenta);
             const matchUnidad = this.getUnidadNombre(data.unidadId).toLowerCase().includes(searchTerms.unidad);
+            const matchTM = !searchTerms.tipoMovimiento || data.tipoMovimiento?.toString() === searchTerms.tipoMovimiento;
 
             return matchFecha && matchGasto && matchTipo && matchConcepto &&
                 matchSubtipo && matchArea && matchProveedor && matchFactura &&
-                matchFP && matchCuenta && matchUnidad;
+                matchFP && matchCuenta && matchUnidad && matchTM;
         };
     }
 
     public _resetColumnFilters(): void {
         this.filterValues = {
             fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '',
-            unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: ''
+            unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: ''
         };
     }
 
@@ -202,6 +204,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             cuentaId: [{ value: null, disabled: true }, Validators.required],
             cantidad: [0, [Validators.required, Validators.min(0.01)]],
             factura: ['', Validators.required],
+            tipoMovimiento: [''],
             tasaId: [null, Validators.required],
             descripcion: [''],
             impuestos: [{ value: 0, disabled: true }]

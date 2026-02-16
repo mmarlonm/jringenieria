@@ -75,7 +75,8 @@ export class ExpenseFormComponent implements OnInit {
             formaPagoId: [null, Validators.required],
             cuentaId: [null, Validators.required],
             factura: [''],
-            descripcion: ['']
+            descripcion: [''],
+            tipoMovimiento: ['']
         });
 
         if (this.isEdit && this.data.expense) {
