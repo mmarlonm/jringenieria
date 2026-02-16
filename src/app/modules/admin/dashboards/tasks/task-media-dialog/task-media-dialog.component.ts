@@ -257,7 +257,7 @@ export class TaskMediaDialogComponent implements OnInit {
     abrirArchivo(file: any): void {
         const fileExtension = file.nombreArchivo.split('.').pop()?.toLowerCase() || '';
         const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
-        const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+        const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf'];
 
         if (imageExtensions.includes(fileExtension)) {
             this.verImagen(file, fileExtension);

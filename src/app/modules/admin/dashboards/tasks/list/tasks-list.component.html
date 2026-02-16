@@ -165,7 +165,8 @@
               <ng-container matColumnDef="nombre">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'nombre'" (resizeEnd)="onNativeResize($event)"
                   [ngStyle]="getColumnWidth('nombre')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon>
@@ -183,7 +184,8 @@
               <ng-container matColumnDef="responsable">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'responsable'"
                   (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('responsable')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div
                     class="flex items-center justify-center font-bold text-secondary text-[11px] uppercase text-center">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
@@ -211,7 +213,8 @@
               <ng-container matColumnDef="asignados">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'asignados'"
                   (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('asignados')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center justify-center font-bold text-secondary text-[11px] uppercase">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon> Asignados
@@ -236,7 +239,8 @@
               <ng-container matColumnDef="estatus">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'estatus'" (resizeEnd)="onNativeResize($event)"
                   [ngStyle]="getColumnWidth('estatus')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center justify-center font-bold text-secondary text-[11px] uppercase">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon> Estatus
@@ -245,7 +249,7 @@
                 <td mat-cell *matCellDef="let task"
                   class="border-b dark:border-gray-800 text-center p-0 cursor-pointer whitespace-nowrap"
                   [style.background-color]="getColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('estatus')"
-                  [matMenuTriggerFor]="statusMenu">
+                  [matMenuTriggerFor]="statusMenu" translate="no">
                   <div
                     class="flex items-center justify-center h-full text-[10px] font-extrabold text-white uppercase tracking-wider px-2 py-3">
                     {{ getStatusName(task.estatus) }}</div>
@@ -260,7 +264,8 @@
               <ng-container matColumnDef="fechaInicioEstimada">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'fechaInicioEstimada'"
                   (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('fechaInicioEstimada')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center justify-center font-bold text-secondary text-[11px] uppercase">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon> Inicio
@@ -275,7 +280,8 @@
               <ng-container matColumnDef="fechaFinEstimada">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'fechaFinEstimada'"
                   (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('fechaFinEstimada')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center justify-center font-bold text-secondary text-[11px] uppercase">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon> Fin
@@ -290,7 +296,8 @@
               <ng-container matColumnDef="comentarios">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'comentarios'"
                   (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('comentarios')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center justify-center font-bold text-secondary text-[11px] uppercase">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon> Obs.
@@ -306,7 +313,8 @@
               <ng-container matColumnDef="media">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'media'" (resizeEnd)="onNativeResize($event)"
                   [ngStyle]="getColumnWidth('media')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center justify-center">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon>
@@ -324,7 +332,7 @@
 
               <ng-container matColumnDef="acciones">
                 <th mat-header-cell *matHeaderCellDef [ngStyle]="getColumnWidth('acciones')"
-                  class="bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap">
+                  class="bg-gray-50/50 dark:bg-gray-800/50 text-center whitespace-nowrap" translate="no">
                   <button mat-icon-button [matMenuTriggerFor]="localColumnMenu" class="icon-size-8 text-secondary">
                     <mat-icon class="icon-size-5" svgIcon="heroicons_mini:plus"></mat-icon>
                   </button>
@@ -340,7 +348,7 @@
                 </th>
                 <td mat-cell *matCellDef="let task" class="border-b dark:border-gray-800 text-center whitespace-nowrap"
                   [style.background-color]="getFillColorByEstatusId(task.estatus)"
-                  [ngStyle]="getColumnWidth('acciones')">
+                  [ngStyle]="getColumnWidth('acciones')" translate="no">
                   <div class="flex items-center justify-center gap-1">
                     <button mat-icon-button class="icon-size-7 text-primary hover:bg-primary/10"
                       matTooltip="Editar Tarea" (click)="openTaskDialog(task.id)"><mat-icon class="icon-size-4"
