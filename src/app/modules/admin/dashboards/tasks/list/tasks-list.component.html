@@ -149,7 +149,8 @@
               <ng-container matColumnDef="id">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'id'" (resizeEnd)="onNativeResize($event)"
                   [ngStyle]="getColumnWidth('id')"
-                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 whitespace-nowrap">
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 whitespace-nowrap"
+                  translate="no">
                   <div class="flex items-center font-bold text-secondary text-[11px] uppercase">
                     <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
                       svgIcon="heroicons_solid:bars-2"></mat-icon> ID
