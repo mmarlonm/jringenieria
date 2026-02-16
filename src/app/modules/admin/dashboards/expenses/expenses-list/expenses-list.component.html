@@ -98,53 +98,8 @@
                     </button>
                 </div>
             </div>
-
-            <!-- 📊 Panel de Métricas Rápida -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 sm:px-8 lg:px-10 pb-8">
-                <!-- KPI Ingresos -->
-                <div
-                    class="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl p-4 border border-emerald-100 dark:border-emerald-500/20 shadow-sm flex items-center space-x-4">
-                    <div class="bg-emerald-500 text-white p-2 rounded-xl">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-trending-up'"></mat-icon>
-                    </div>
-                    <div>
-                        <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Ingresos</div>
-                        <div class="text-xl font-black text-emerald-700 dark:text-emerald-400">{{ totalIngresos |
-                            currency }}</div>
-                    </div>
-                </div>
-
-                <!-- KPI Egresos -->
-                <div
-                    class="bg-rose-50 dark:bg-rose-500/10 rounded-2xl p-4 border border-rose-100 dark:border-rose-500/20 shadow-sm flex items-center space-x-4">
-                    <div class="bg-rose-500 text-white p-2 rounded-xl">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrow-trending-down'"></mat-icon>
-                    </div>
-                    <div>
-                        <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Egresos</div>
-                        <div class="text-xl font-black text-rose-700 dark:text-rose-400">{{ totalEgresos | currency }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Spline Chart - Evolución -->
-                <div
-                    class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col h-[150px]">
-                    <div class="flex justify-between items-center mb-1">
-                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Evolución Mensual
-                        </div>
-                        <div class="text-[10px] font-bold"
-                            [ngClass]="balance >= 0 ? 'text-emerald-600':'text-rose-600'">
-                            Balance: {{ balance | currency }}
-                        </div>
-                    </div>
-                    <div class="flex-auto -m-4">
-                        <highcharts-chart class="w-full h-full block" [Highcharts]="Highcharts"
-                            [options]="splineChartOptions" [(update)]="updateCharts"></highcharts-chart>
-                    </div>
-                </div>
-            </div>
         </div>
+
         <div class="flex-auto overflow-hidden bg-slate-100/30">
             <div class="h-full overflow-auto custom-scrollbar">
                 <form [formGroup]="rowForm">
