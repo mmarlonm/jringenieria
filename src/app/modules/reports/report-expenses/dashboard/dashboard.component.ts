@@ -54,6 +54,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
     filtroAreas: string[] = [];
     filtroConceptos: string[] = [];
     filtroTipos: string[] = [];
+    filtroMovimiento: string = ''; // '' = Todos, '1' = Ingresos, '2' = Egresos
 
     // 🔹 Opciones para Filtros (Cargadas de catálogos)
     areas: any[] = [];
@@ -65,8 +66,15 @@ export class ReportExpensesDashboardComponent implements OnInit {
     private fullCatalogs: ExpenseCatalogs | null = null;
     private fullData: DashboardReportResponse | null = null;
 
+    // 🔹 Datos filtrados para la tabla
+    filteredExpenses: Expense[] = [];
+
     // 🔹 KPIs
     totalGastos: number = 0;
+    totalIngresos: number = 0;
+    totalEgresos: number = 0;
+    balance: number = 0;
+    totalTransacciones: number = 0;
     proporcionGastosVentas: number = 0;
 
     // 🔹 Opciones de Gráficas (Tema Claro)
@@ -74,6 +82,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
     chartOptionsArea: Highcharts.Options = {};
     chartOptionsConcepto: Highcharts.Options = {};
     chartOptionsTipo: Highcharts.Options = {};
+    chartOptionsMovimiento: Highcharts.Options = {};
 
     // 🔹 Configuración Base (Tema Claro)
     private baseTheme: Highcharts.Options = {
@@ -106,16 +115,19 @@ export class ReportExpensesDashboardComponent implements OnInit {
         });
     }
 
-    private getNombreArea(id: number): string {
+    private getNombreArea(id: number, expense?: Expense): string {
+        if (expense?.gastoArea) return expense.gastoArea.nombre;
         return this.fullCatalogs?.areas?.find(a => a.areaId === id)?.nombre || 'S/A';
     }
 
-    private getNombreConcepto(id: number): string {
+    private getNombreConcepto(id: number, expense?: Expense): string {
+        if (expense?.gastoConcepto) return expense.gastoConcepto.nombre;
         return this.fullCatalogs?.conceptos?.find(c => c.conceptoId === id)?.nombre || 'S/C';
     }
 
-    private getNombreTipo(id: number): string {
-        return this.fullCatalogs?.tipos?.find(t => t.tipoId === id)?.etiqueta || 'S/T';
+    private getNombreTipo(id: number, expense?: Expense): string {
+        if (expense?.gastoTipo) return expense.gastoTipo.nombre;
+        return this.fullCatalogs?.tipos?.find(t => t.tipoId === id)?.nombre || 'S/T';
     }
 
     /**
@@ -159,68 +171,105 @@ export class ReportExpensesDashboardComponent implements OnInit {
             const date = moment(e.fecha);
             const matchAnio = date.year() === this.filtroAnio;
             const matchMes = this.filtroMeses.length === 0 || this.filtroMeses.includes(date.month() + 1);
-            const matchArea = this.filtroAreas.length === 0 || this.filtroAreas.includes(this.getNombreArea(e.areaId));
-            const matchConcepto = this.filtroConceptos.length === 0 || this.filtroConceptos.includes(this.getNombreConcepto(e.conceptoId));
-            const matchTipo = this.filtroTipos.length === 0 || this.filtroTipos.includes(this.getNombreTipo(e.tipoId));
+            const matchArea = this.filtroAreas.length === 0 || this.filtroAreas.includes(this.getNombreArea(e.areaId, e));
+            const matchConcepto = this.filtroConceptos.length === 0 || this.filtroConceptos.includes(this.getNombreConcepto(e.conceptoId, e));
+            const matchTipo = this.filtroTipos.length === 0 || this.filtroTipos.includes(this.getNombreTipo(e.tipoId, e));
 
-            return matchAnio && matchMes && matchArea && matchConcepto && matchTipo;
+            // Filtro de Movimiento
+            const moveType = e.tipoMovimiento?.toString() || (e.esIngreso ? '1' : '2');
+            const matchMovimiento = !this.filtroMovimiento || moveType === this.filtroMovimiento;
+
+            return matchAnio && matchMes && matchArea && matchConcepto && matchTipo && matchMovimiento;
         });
 
-        // 2. Agregación Dinámica para gráficas
-        this.totalGastos = filtered.reduce((acc, curr) => acc + curr.cantidad, 0);
+        this.filteredExpenses = filtered;
 
-        // --- Gráfica Tiempo ---
+        // 2. Agregación Dinámica para KPIs
+        this.totalTransacciones = filtered.length;
+        this.totalEgresos = filtered
+            .filter(e => e.tipoMovimiento?.toString() === '2' || e.esIngreso === false)
+            .reduce((acc, curr) => acc + curr.cantidad, 0);
+        this.totalIngresos = filtered
+            .filter(e => e.tipoMovimiento?.toString() === '1' || e.esIngreso === true)
+            .reduce((acc, curr) => acc + curr.cantidad, 0);
+
+        this.totalGastos = this.totalEgresos; // Gasto es sinónimo de Egreso en este contexto
+        this.balance = this.totalIngresos - this.totalEgresos;
+
+        // --- Gráfica Tiempo (Spline con 2 líneas) ---
         const mesesMap: { [key: number]: string } = {
             1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr', 5: 'May', 6: 'Jun',
             7: 'Jul', 8: 'Ago', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
         };
-        const tiempoData: ChartItem[] = [];
+        const tiempoDataIngresos: number[] = [];
+        const tiempoDataEgresos: number[] = [];
+        const categoriasEjeX: string[] = [];
+
         for (let i = 1; i <= 12; i++) {
-            const sum = filtered.filter(e => moment(e.fecha).month() + 1 === i).reduce((a, b) => a + b.cantidad, 0);
-            if (sum > 0 || this.filtroMeses.length === 0) {
-                tiempoData.push({ etiqueta: mesesMap[i], valor: sum });
+            const sumIngresos = filtered
+                .filter(e => moment(e.fecha).month() + 1 === i && (e.tipoMovimiento?.toString() === '1' || e.esIngreso === true))
+                .reduce((a, b) => a + b.cantidad, 0);
+
+            const sumEgresos = filtered
+                .filter(e => moment(e.fecha).month() + 1 === i && (e.tipoMovimiento?.toString() === '2' || e.esIngreso === false))
+                .reduce((a, b) => a + b.cantidad, 0);
+
+            if (sumIngresos > 0 || sumEgresos > 0 || this.filtroMeses.length === 0) {
+                categoriasEjeX.push(mesesMap[i]);
+                tiempoDataIngresos.push(sumIngresos);
+                tiempoDataEgresos.push(sumEgresos);
             }
         }
+        // --- Preparación de Datos Agrupados (Área, Concepto, Tipo) ---
+        const prepareGroupedData = (getter: (id: number, e: Expense) => string, idField: keyof Expense) => {
+            const categorias = new Set<string>();
+            const ingMap = new Map<string, number>();
+            const egrMap = new Map<string, number>();
 
-        // --- Gráfica Área ---
-        const areaDataRaw: { [key: string]: number } = {};
-        filtered.forEach(e => {
-            const name = this.getNombreArea(e.areaId);
-            areaDataRaw[name] = (areaDataRaw[name] || 0) + e.cantidad;
-        });
-        const areaData = Object.keys(areaDataRaw).map(k => ({ etiqueta: k, valor: areaDataRaw[k] }));
+            filtered.forEach(e => {
+                const name = getter.call(this, e[idField] as number, e);
+                categorias.add(name);
+                if (e.tipoMovimiento?.toString() === '1' || e.esIngreso === true) {
+                    ingMap.set(name, (ingMap.get(name) || 0) + e.cantidad);
+                } else {
+                    egrMap.set(name, (egrMap.get(name) || 0) + e.cantidad);
+                }
+            });
 
-        // --- Gráfica Concepto ---
-        const conceptoDataRaw: { [key: string]: number } = {};
-        filtered.forEach(e => {
-            const name = this.getNombreConcepto(e.conceptoId);
-            conceptoDataRaw[name] = (conceptoDataRaw[name] || 0) + e.cantidad;
-        });
-        const conceptoData = Object.keys(conceptoDataRaw).map(k => ({ etiqueta: k, valor: conceptoDataRaw[k] }));
+            const catArray = Array.from(categorias).sort();
+            return {
+                categorias: catArray,
+                ingresos: catArray.map(c => ingMap.get(c) || 0),
+                egresos: catArray.map(c => egrMap.get(c) || 0)
+            };
+        };
 
-        // --- Gráfica Tipo ---
-        const tipoDataRaw: { [key: string]: number } = {};
-        filtered.forEach(e => {
-            const name = this.getNombreTipo(e.tipoId);
-            tipoDataRaw[name] = (tipoDataRaw[name] || 0) + e.cantidad;
-        });
-        const tipoData = Object.keys(tipoDataRaw).map(k => ({ etiqueta: k, valor: tipoDataRaw[k] }));
+        const areaGroup = prepareGroupedData(this.getNombreArea, 'areaId');
+        const conceptoGroup = prepareGroupedData(this.getNombreConcepto, 'conceptoId');
+        const tipoGroup = prepareGroupedData(this.getNombreTipo, 'tipoId');
 
-        // 3. Re-renderizar
-        this.buildChartTiempo(tiempoData);
-        this.buildChartArea(areaData);
-        this.buildChartConcepto(conceptoData);
-        this.buildChartTipo(tipoData);
+        // --- Gráfica Distribución Movimiento ---
+        const movimientoData = [
+            { name: 'Ingresos', y: this.totalIngresos, color: '#10b981' },
+            { name: 'Egresos', y: this.totalEgresos, color: '#f43f5e' }
+        ];
+
+        // 3. Re-renderizar (Forzar nuevas referencias para Highcharts)
+        this.chartOptionsTiempo = this.buildChartTiempoOptions(categoriasEjeX, tiempoDataIngresos, tiempoDataEgresos);
+        this.chartOptionsArea = this.buildChartGroupedOptions('Movimientos por Área', areaGroup);
+        this.chartOptionsConcepto = this.buildChartGroupedOptions('Movimientos por Concepto', conceptoGroup);
+        this.chartOptionsTipo = this.buildChartGroupedOptions('Movimientos por Tipo', tipoGroup);
+        this.chartOptionsMovimiento = this.buildChartMovimientoOptions(movimientoData);
 
         this._changeDetectorRef.detectChanges();
     }
 
-    private buildChartTiempo(data: ChartItem[]): void {
-        this.chartOptionsTiempo = {
+    private buildChartTiempoOptions(categories: string[], ingresos: number[], egresos: number[]): Highcharts.Options {
+        return {
             ...this.baseTheme,
-            chart: { type: 'spline', backgroundColor: 'transparent' }, // Línea suavizada
+            chart: { type: 'spline', backgroundColor: 'transparent' },
             xAxis: {
-                categories: data.map(d => d.etiqueta),
+                categories: categories,
                 labels: { style: { color: '#6b7280' } },
                 lineColor: '#d1d5db'
             },
@@ -234,23 +283,36 @@ export class ReportExpensesDashboardComponent implements OnInit {
                     dataLabels: { enabled: true, format: '${y:.,0f}', style: { color: '#374151', textOutline: 'none', fontWeight: 'bold' } }
                 }
             },
-            series: [{
-                type: 'spline',
-                name: 'Gastos',
-                data: data.map(d => d.valor),
-                color: '#2563eb', // Azul primario
-                lineWidth: 3,
-                marker: { enabled: true, radius: 4 }
-            }]
+            series: [
+                {
+                    type: 'spline',
+                    name: 'Ingresos',
+                    data: ingresos,
+                    color: '#10b981', // Verde esmeralda
+                    lineWidth: 3,
+                    marker: { enabled: true, radius: 4 },
+                    visible: this.filtroMovimiento !== '2'
+                },
+                {
+                    type: 'spline',
+                    name: 'Egresos',
+                    data: egresos,
+                    color: '#f43f5e', // Rosa/Rojo
+                    lineWidth: 3,
+                    marker: { enabled: true, radius: 4 },
+                    visible: this.filtroMovimiento !== '1'
+                }
+            ]
         };
     }
 
-    private buildChartArea(data: ChartItem[]): void {
-        this.chartOptionsArea = {
+    private buildChartGroupedOptions(title: string, group: any): Highcharts.Options {
+        const isColumn = group.categorias.length <= 5;
+        return {
             ...this.baseTheme,
-            chart: { type: 'column', backgroundColor: 'transparent' }, // Columnas verticales
+            chart: { type: isColumn ? 'column' : 'bar', backgroundColor: 'transparent' },
             xAxis: {
-                categories: data.map(d => d.etiqueta),
+                categories: group.categorias,
                 labels: { style: { color: '#6b7280' } },
                 lineColor: '#d1d5db'
             },
@@ -260,57 +322,69 @@ export class ReportExpensesDashboardComponent implements OnInit {
                 gridLineColor: '#f3f4f6'
             },
             tooltip: { ...this.baseTheme.tooltip, valuePrefix: '$', valueDecimals: 2 },
-            series: [{
-                type: 'column',
-                name: 'Gastos por Área',
-                data: data.map(d => d.valor),
-                color: '#3b82f6', // Azul claro
-                borderRadius: 4
-            }]
+            plotOptions: {
+                column: { borderRadius: 4 },
+                bar: { borderRadius: 4 }
+            },
+            series: [
+                {
+                    name: 'Ingresos',
+                    data: group.ingresos,
+                    color: '#10b981',
+                    type: isColumn ? 'column' : 'bar',
+                    visible: this.filtroMovimiento !== '2'
+                },
+                {
+                    name: 'Egresos',
+                    data: group.egresos,
+                    color: '#f43f5e',
+                    type: isColumn ? 'column' : 'bar',
+                    visible: this.filtroMovimiento !== '1'
+                }
+            ]
         };
     }
 
-    private buildChartConcepto(data: ChartItem[]): void {
-        this.chartOptionsConcepto = {
+    private buildChartMovimientoOptions(data: any[]): Highcharts.Options {
+        return {
             ...this.baseTheme,
             chart: { type: 'pie', backgroundColor: 'transparent' },
+            title: { text: '' },
             tooltip: { ...this.baseTheme.tooltip, pointFormat: '<b>${point.y:,.2f}</b> ({point.percentage:.1f}%)' },
             plotOptions: {
                 pie: {
-                    innerSize: '65%', // Donut
+                    innerSize: '65%',
                     borderWidth: 2,
                     borderColor: '#ffffff',
-                    dataLabels: { enabled: true, format: '{point.name}: {point.percentage:.1f}%', style: { color: '#374151', textOutline: 'none', fontWeight: 'normal' } },
-                    showInLegend: true
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}: {point.percentage:.1f}%',
+                        style: { color: '#374151', textOutline: 'none', fontWeight: '500' },
+                        distance: 15
+                    },
+                    showInLegend: true,
+                    states: {
+                        hover: {
+                            brightness: 0.1,
+                            halo: { size: 9, opacity: 0.1 }
+                        }
+                    }
                 }
+            },
+            legend: {
+                align: 'center',
+                verticalAlign: 'bottom',
+                layout: 'horizontal',
+                itemStyle: { fontSize: '10px' }
             },
             series: [{
                 type: 'pie',
-                name: 'Conceptos',
-                data: data.map(d => ({ name: d.etiqueta, y: d.valor })),
-                colors: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6']
-            }]
-        };
-    }
-
-    private buildChartTipo(data: ChartItem[]): void {
-        this.chartOptionsTipo = {
-            ...this.baseTheme,
-            chart: { type: 'pie', backgroundColor: 'transparent' },
-            tooltip: { ...this.baseTheme.tooltip, pointFormat: '<b>${point.y:,.2f}</b> ({point.percentage:.1f}%)' },
-            plotOptions: {
-                pie: {
-                    borderWidth: 2,
-                    borderColor: '#ffffff', // Pastel normal cerrado
-                    dataLabels: { enabled: true, format: '{point.name}: {point.percentage:.1f}%', style: { color: '#374151', textOutline: 'none', fontWeight: 'normal' } },
-                    showInLegend: true
-                }
-            },
-            series: [{
-                type: 'pie',
-                name: 'Tipos',
-                data: data.map(d => ({ name: d.etiqueta, y: d.valor })),
-                colors: ['#06b6d4', '#f43f5e', '#84cc16']
+                name: 'Movimientos',
+                data: data.filter(d => {
+                    if (this.filtroMovimiento === '1') return d.name === 'Ingresos';
+                    if (this.filtroMovimiento === '2') return d.name === 'Egresos';
+                    return true;
+                })
             }]
         };
     }

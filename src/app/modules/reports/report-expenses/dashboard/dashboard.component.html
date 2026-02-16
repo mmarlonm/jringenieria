@@ -2,7 +2,7 @@
 
     <div class="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-lg sm:text-2xl font-bold text-gray-800 tracking-tight">
-            Dashboard de Gastos
+            Dashboard de Gastos y Movimientos
         </h1>
 
         <button mat-raised-button color="primary" class="w-full sm:w-auto shadow-md" (click)="exportToPDF()">
@@ -12,7 +12,7 @@
     </div>
 
     <div
-        class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+        class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 items-center">
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Año</mat-label>
@@ -43,6 +43,15 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Movimiento</mat-label>
+            <mat-select [(ngModel)]="filtroMovimiento">
+                <mat-option value="">Todos</mat-option>
+                <mat-option value="1">Ingresos</mat-option>
+                <mat-option value="2">Egresos</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
             <mat-label>Área</mat-label>
             <mat-select [(ngModel)]="filtroAreas" multiple>
                 <mat-option *ngFor="let area of areas" [value]="area.nombre">{{area.nombre}}</mat-option>
@@ -60,7 +69,7 @@
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Tipo</mat-label>
             <mat-select [(ngModel)]="filtroTipos" multiple>
-                <mat-option *ngFor="let tipo of tipos" [value]="tipo.etiqueta">{{tipo.etiqueta}}</mat-option>
+                <mat-option *ngFor="let tipo of tipos" [value]="tipo.nombre">{{tipo.nombre}}</mat-option>
             </mat-select>
         </mat-form-field>
 
@@ -82,26 +91,40 @@
 
         <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-blue-500">
-                <p class="text-sm text-gray-500 font-medium">Gastos Totales</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">
-                    {{ totalGastos | currency:'MXN' }}
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-emerald-500">
+                <p class="text-sm text-gray-500 font-medium lowercase first-letter:uppercase">Total Ingresos</p>
+                <p class="text-xl sm:text-2xl font-bold text-emerald-700 mt-1">
+                    {{ totalIngresos | currency:'MXN' }}
                 </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-amber-500">
-                <p class="text-sm text-gray-500 font-medium">Proporción s/ Ventas</p>
-                <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">
-                    {{ proporcionGastosVentas }}%
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-rose-500">
+                <p class="text-sm text-gray-500 font-medium lowercase first-letter:uppercase">Total Egresos</p>
+                <p class="text-xl sm:text-2xl font-bold text-rose-700 mt-1">
+                    {{ totalEgresos | currency:'MXN' }}
                 </p>
             </div>
 
+            <div class="bg-white rounded-xl shadow p-4 border-l-4"
+                [ngClass]="balance >= 0 ? 'border-blue-500' : 'border-amber-500'">
+                <p class="text-sm text-gray-500 font-medium lowercase first-letter:uppercase">Balance Neto</p>
+                <p class="text-xl sm:text-2xl font-bold mt-1"
+                    [ngClass]="balance >= 0 ? 'text-blue-700' : 'text-amber-700'">
+                    {{ balance | currency:'MXN' }}
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-slate-400">
+                <p class="text-sm text-gray-500 font-medium lowercase first-letter:uppercase">Transacciones</p>
+                <p class="text-xl sm:text-2xl font-bold text-slate-700 mt-1">
+                    {{ totalTransacciones }}
+                </p>
+            </div>
         </div>
-
-        <div class="w-full grid grid-cols-1 lg:grid-cols-1 gap-6">
-            <div class="bg-white rounded-xl shadow p-4">
+        <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
-                    Evolución de Gastos
+                    Evolución de Movimientos (Ingresos vs Egresos)
                 </h2>
                 <div class="w-full h-[300px]">
                     <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsTiempo"
@@ -109,13 +132,23 @@
                     </highcharts-chart>
                 </div>
             </div>
-        </div>
 
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
+                    Distribución de Movimientos
+                </h2>
+                <div class="w-full h-[300px]">
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsMovimiento"
+                        style="width: 100%; height: 100%; display: block;">
+                    </highcharts-chart>
+                </div>
+            </div>
+        </div>
         <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
-                    Gastos por Área
+                    Movimientos por Área
                 </h2>
                 <div class="w-full h-[300px]">
                     <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsArea"
@@ -126,7 +159,7 @@
 
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
-                    Gastos por Concepto
+                    Movimientos por Concepto
                 </h2>
                 <div class="w-full h-[300px]">
                     <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsConcepto"
@@ -137,7 +170,7 @@
 
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
-                    Gastos por Tipo
+                    Movimientos por Tipo
                 </h2>
                 <div class="w-full h-[300px]">
                     <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsTipo"
@@ -148,5 +181,56 @@
 
         </div>
 
+        <!-- 🔹 Nueva Tabla de Detalle -->
+        <div class="w-full bg-white rounded-xl shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Detalle de Transacciones</h2>
+                <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                    {{ filteredExpenses.length }} registros
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                            <th class="px-6 py-3 font-bold border-b">Fecha</th>
+                            <th class="px-6 py-3 font-bold border-b">Descripción</th>
+                            <th class="px-6 py-3 font-bold border-b">Tipo</th>
+                            <th class="px-6 py-3 font-bold border-b">Concepto</th>
+                            <th class="px-6 py-3 font-bold border-b">Movimiento</th>
+                            <th class="px-6 py-3 font-bold border-b text-right">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr *ngFor="let exp of filteredExpenses"
+                            class="hover:bg-gray-50/80 transition-colors text-sm text-gray-700">
+                            <td class="px-6 py-4 whitespace-nowrap">{{ exp.fecha | date:'dd/MM/yyyy' }}</td>
+                            <td class="px-6 py-4">
+                                <span class="font-medium text-gray-900">{{ exp.nombreGasto }}</span>
+                                <p class="text-xs text-gray-500 truncate max-w-[200px]">{{ exp.descripcion }}</p>
+                            </td>
+                            <td class="px-6 py-4">{{ getNombreTipo(exp.tipoId, exp) }}</td>
+                            <td class="px-6 py-4">{{ getNombreConcepto(exp.conceptoId, exp) }}</td>
+                            <td class="px-6 py-4">
+                                <span
+                                    [ngClass]="(exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
+                                    class="px-2 py-1 rounded text-[10px] font-bold uppercase">
+                                    {{ (exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'Ingreso' : 'Egreso'
+                                    }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right font-mono font-bold"
+                                [ngClass]="(exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'text-emerald-600' : 'text-rose-600'">
+                                {{ exp.cantidad | currency:'MXN' }}
+                            </td>
+                        </tr>
+                        <tr *ngIf="filteredExpenses.length === 0">
+                            <td colspan="6" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron
+                                movimientos con los filtros aplicados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>

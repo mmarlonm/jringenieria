@@ -18,6 +18,7 @@ export interface Expense {
     factura?: string;
     descripcion?: string;
     tipoMovimiento?: string;
+    esIngreso?: boolean;
 
     fechaRegistro?: string | Date;
 

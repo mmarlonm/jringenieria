@@ -14,6 +14,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatDividerModule } from '@angular/material/divider';
+import { HighchartsChartModule } from 'highcharts-angular';
+import * as Highcharts from 'highcharts';
 import { Subject, takeUntil, map, startWith, forkJoin } from 'rxjs';
 import { ExpensesService } from '../expenses.service';
 import { Expense, ExpenseCatalogs } from '../models/expenses.types';
@@ -43,6 +45,7 @@ import moment from 'moment';
         MatMomentDateModule,
         MatSidenavModule,
         MatDividerModule,
+        HighchartsChartModule,
         CurrencyPipe,
         DatePipe
     ],
@@ -68,6 +71,16 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     unidadesNegocio: any[] = [];
     currentUserUnidadId: number | null = null;
     currentUserUnidadName: string = '';
+
+    // Métricas y Gráficos
+    totalIngresos: number = 0;
+    totalEgresos: number = 0;
+    balance: number = 0;
+
+    Highcharts: typeof Highcharts = Highcharts;
+    splineChartOptions: Highcharts.Options = {};
+    sucursalChartOptions: Highcharts.Options = {};
+    updateCharts: boolean = false;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -104,6 +117,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((expenses: Expense[]) => {
                 this.dataSource.data = expenses;
+                this._calculateMetrics(expenses);
+                this._prepareCharts(expenses);
                 // Aplicar filtros existentes si los hay
                 const filterState = JSON.stringify(this.filterValues);
                 this.dataSource.filter = filterState !== JSON.stringify(this._emptyFilter()) ? filterState : '';
@@ -265,6 +280,72 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         // Cálculos de impuestos
         this.rowForm.get('cantidad').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(() => this._calculateTax());
         this.rowForm.get('tasaId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(() => this._calculateTax());
+    }
+
+    private _calculateMetrics(expenses: Expense[]): void {
+        this.totalIngresos = expenses
+            .filter(e => e.tipoMovimiento?.toString() === '1' || e.esIngreso === true)
+            .reduce((acc, curr) => acc + curr.cantidad, 0);
+
+        this.totalEgresos = expenses
+            .filter(e => e.tipoMovimiento?.toString() === '2' || e.esIngreso === false)
+            .reduce((acc, curr) => acc + curr.cantidad, 0);
+
+        this.balance = this.totalIngresos - this.totalEgresos;
+    }
+
+    private _prepareCharts(expenses: Expense[]): void {
+        // 1. Gráfica de Sucursales
+        const sucursalData: { [key: string]: number } = {};
+        expenses.forEach(e => {
+            const name = this.getUnidadNombre(e.unidadId);
+            sucursalData[name] = (sucursalData[name] || 0) + e.cantidad;
+        });
+
+        this.sucursalChartOptions = {
+            chart: { type: 'column', backgroundColor: 'transparent', height: 200 },
+            title: { text: '' },
+            xAxis: { categories: Object.keys(sucursalData), labels: { style: { fontSize: '10px' } } },
+            yAxis: { title: { text: '' }, labels: { style: { fontSize: '10px' } } },
+            legend: { enabled: false },
+            credits: { enabled: false },
+            series: [{
+                type: 'column',
+                name: 'Gasto por Sucursal',
+                data: Object.values(sucursalData),
+                color: '#6366f1'
+            }]
+        };
+
+        // 2. Gráfica Spline de Evolución
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const dataIngresos = new Array(12).fill(0);
+        const dataEgresos = new Array(12).fill(0);
+
+        expenses.forEach(e => {
+            const month = moment(e.fecha).month();
+            if (e.tipoMovimiento?.toString() === '1' || e.esIngreso === true) {
+                dataIngresos[month] += e.cantidad;
+            } else {
+                dataEgresos[month] += e.cantidad;
+            }
+        });
+
+        this.splineChartOptions = {
+            chart: { type: 'spline', backgroundColor: 'transparent', height: 200 },
+            title: { text: '' },
+            xAxis: { categories: months, labels: { style: { fontSize: '10px' } } },
+            yAxis: { title: { text: '' }, labels: { style: { fontSize: '10px' } } },
+            credits: { enabled: false },
+            plotOptions: { spline: { marker: { enabled: false } } },
+            series: [
+                { type: 'spline', name: 'Ingresos', data: dataIngresos, color: '#10b981' },
+                { type: 'spline', name: 'Egresos', data: dataEgresos, color: '#f43f5e' }
+            ]
+        };
+
+        this.updateCharts = true;
+        this._changeDetectorRef.markForCheck();
     }
 
     private _disableChain(controls: string[]): void {
