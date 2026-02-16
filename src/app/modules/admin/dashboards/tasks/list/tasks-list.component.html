@@ -309,6 +309,47 @@
                   [ngStyle]="getColumnWidth('comentarios')" [matTooltip]="task.comentarios">{{ task.comentarios || '-'
                   }}</td>
               </ng-container>
+              <ng-container matColumnDef="empresa">
+                <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'empresa'" (resizeEnd)="onNativeResize($event)"
+                  [ngStyle]="getColumnWidth('empresa')"
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 whitespace-nowrap"
+                  translate="no">
+                  <div class="flex items-center font-bold text-secondary text-[11px] uppercase">
+                    <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
+                      svgIcon="heroicons_solid:bars-2"></mat-icon> Empresa
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let task"
+                  class="border-r border-b dark:border-gray-800 px-4 whitespace-nowrap text-[11px] text-main font-medium"
+                  [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                  [ngStyle]="getColumnWidth('empresa')">
+                  <div class="flex items-center gap-2">
+                    <mat-icon class="icon-size-3.5 text-hint" svgIcon="heroicons_mini:building-office"></mat-icon>
+                    {{ task.empresa || '-' }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="ubicacion">
+                <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'ubicacion'"
+                  (resizeEnd)="onNativeResize($event)" [ngStyle]="getColumnWidth('ubicacion')"
+                  class="border-r dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 whitespace-nowrap"
+                  translate="no">
+                  <div class="flex items-center font-bold text-secondary text-[11px] uppercase">
+                    <mat-icon class="icon-size-4 mr-2 text-hint cursor-move column-drag-handle"
+                      svgIcon="heroicons_solid:bars-2"></mat-icon> Ubicación
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let task"
+                  class="border-r border-b dark:border-gray-800 px-4 whitespace-nowrap text-[11px] text-secondary"
+                  [style.background-color]="getFillColorByEstatusId(task.estatus)"
+                  [ngStyle]="getColumnWidth('ubicacion')">
+                  <div class="flex items-center gap-2">
+                    <mat-icon class="icon-size-3.5 text-hint" svgIcon="heroicons_mini:map-pin"></mat-icon>
+                    {{ task.ubicacion || '-' }}
+                  </div>
+                </td>
+              </ng-container>
 
               <ng-container matColumnDef="media">
                 <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'media'" (resizeEnd)="onNativeResize($event)"

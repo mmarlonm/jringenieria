@@ -95,6 +95,8 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         'fechaInicioEstimada',
         'fechaFinEstimada',
         'estatus',
+        'empresa',
+        'ubicacion',
         'comentarios',
         'media',
         'acciones'

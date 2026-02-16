@@ -90,6 +90,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             fechaInicioReal: [null],
             fechaFinReal: [null],
             usuarioIds: [[]],
+            empresa: [''],
+            ubicacion: [''],
             links: this.fb.array([]),
             CreadorId: [null], // ID del usuario que crea la tarea
             estatus: [2, Validators.required] // Nuevo campo de estatus con valor por defecto 1
@@ -153,6 +155,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 fechaInicioReal: task.fechaInicioReal ? new Date(task.fechaInicioReal) : null,
                 fechaFinReal: task.fechaFinReal ? new Date(task.fechaFinReal) : null,
                 usuarioIds: task.usuarioIds ?? [],
+                empresa: task.empresa,
+                ubicacion: task.ubicacion,
                 CreadorId: this.user.id, // Asigna el ID del usuario logueado
                 estatus: task.estatus
             });
@@ -187,8 +191,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     }
 
     openLink(url: string): void {
-  window.open(url, '_blank');
-}
+        window.open(url, '_blank');
+    }
 
     save(): void {
         if (this.form.invalid) return;
@@ -217,6 +221,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             fechaFinEstimada: toLocalISOString(formValue.fechaFinEstimada),
             fechaInicioReal: toLocalISOString(formValue.fechaInicioReal),
             fechaFinReal: toLocalISOString(formValue.fechaFinReal),
+            empresa: formValue.empresa,
+            ubicacion: formValue.ubicacion,
         };
 
         if (this.data?.id) {

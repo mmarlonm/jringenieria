@@ -14,4 +14,6 @@ export interface Task {
   estatus: number; // 👈 nuevo campo de estatus
   imagenes?: string[]; // 👈 nuevo campo para multimedia
   dependencies?: string; // 👈 nuevo campo para dependencias de Gantt
+  empresa: string;
+  ubicacion: string;
 }

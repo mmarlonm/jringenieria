@@ -6,42 +6,60 @@
 
     <mat-dialog-content>
 
-        <!-- Nombre -->
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Nombre de la tarea</mat-label>
             <input matInput formControlName="nombre" />
         </mat-form-field>
 
-        <!-- Comentarios -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Empresa</mat-label>
+                <input matInput formControlName="empresa" placeholder="Ej. Cliente X" />
+                <mat-icon matSuffix class="text-gray-400">business</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Ubicación</mat-label>
+                <input matInput formControlName="ubicacion" placeholder="Ej. Planta 1 / Sucursal" />
+                <mat-icon matSuffix class="text-gray-400">place</mat-icon>
+            </mat-form-field>
+        </div>
+
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Comentarios</mat-label>
             <textarea matInput rows="3" formControlName="comentarios"></textarea>
         </mat-form-field>
 
-        <!-- Fechas -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <mat-form-field appearance="outline">
                 <mat-label>Inicio estimado</mat-label>
-                <input matInput id="fechaInicioEstimada" />
+                <input matInput [matDatepicker]="pickerIE" formControlName="fechaInicioEstimada" />
+                <mat-datepicker-toggle matSuffix [for]="pickerIE"></mat-datepicker-toggle>
+                <mat-datepicker #pickerIE></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Fin estimado</mat-label>
-                <input matInput id="fechaFinEstimada" />
+                <input matInput [matDatepicker]="pickerFE" formControlName="fechaFinEstimada" />
+                <mat-datepicker-toggle matSuffix [for]="pickerFE"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFE></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Inicio real</mat-label>
-                <input matInput id="fechaInicioReal" />
+                <input matInput [matDatepicker]="pickerIR" formControlName="fechaInicioReal" />
+                <mat-datepicker-toggle matSuffix [for]="pickerIR"></mat-datepicker-toggle>
+                <mat-datepicker #pickerIR></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
                 <mat-label>Fin real</mat-label>
-                <input matInput id="fechaFinReal" />
+                <input matInput [matDatepicker]="pickerFR" formControlName="fechaFinReal" />
+                <mat-datepicker-toggle matSuffix [for]="pickerFR"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFR></mat-datepicker>
             </mat-form-field>
         </div>
 
-        <!-- Usuarios -->
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Asignar usuarios</mat-label>
             <mat-select formControlName="usuarioIds" multiple>
@@ -51,7 +69,6 @@
             </mat-select>
         </mat-form-field>
 
-        <!-- Estatus -->
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Estatus</mat-label>
             <mat-select formControlName="estatus">
@@ -61,117 +78,70 @@
             </mat-select>
         </mat-form-field>
 
-        <!-- Links -->
         <div class="links-section">
             <h3>Links</h3>
-
             <div formArrayName="links">
-
                 <div *ngFor="let ctrl of links.controls; let i = index" class="link-row flex items-center gap-2">
-
                     <mat-form-field appearance="outline" class="w-full">
                         <input matInput [formControlName]="i" placeholder="https://..." />
                     </mat-form-field>
-
-                    <!-- abrir link -->
                     <button mat-icon-button type="button" color="primary" *ngIf="links.at(i).value"
                         (click)="openLink(links.at(i).value)">
                         <mat-icon>open_in_new</mat-icon>
                     </button>
-
-                    <!-- eliminar -->
                     <button mat-icon-button color="warn" type="button" (click)="removeLink(i)"
                         [disabled]="data?.readOnly">
                         <mat-icon>delete</mat-icon>
                     </button>
-
                 </div>
-
             </div>
-
             <button mat-stroked-button type="button" color="primary" (click)="addLink()" [disabled]="data?.readOnly">
-
                 <mat-icon>add</mat-icon>
                 Agregar link
             </button>
         </div>
 
-        <!-- ================== ARCHIVOS ================== -->
         <div class="files-section mt-6" *ngIf="tareaId">
-
-            <h3 class="text-lg font-semibold mb-3">
-                Archivos
-            </h3>
-
-            <!-- Selector oculto -->
+            <h3 class="text-lg font-semibold mb-3">Archivos</h3>
             <input type="file" #fileInput multiple hidden (change)="onFileSelected($event)"
                 [disabled]="data?.readOnly" />
-
-            <!-- Botón subir -->
             <div class="mb-4 flex items-center gap-3">
                 <button mat-stroked-button color="primary" type="button" (click)="fileInput.click()"
                     [disabled]="data?.readOnly">
                     <mat-icon>attach_file</mat-icon>
                     Adjuntar archivos
                 </button>
-
-                <span class="text-sm text-gray-500">
-                    Puedes subir múltiples archivos
-                </span>
+                <span class="text-sm text-gray-500">Puedes subir múltiples archivos</span>
             </div>
-            <!-- Lista de archivos (scroll horizontal) -->
             <div *ngIf="files?.length; else noFiles" class="files-scroll">
-
                 <div *ngFor="let file of files" class="file-card">
-
-                    <!-- Info -->
                     <div class="file-info">
                         <mat-icon color="primary">description</mat-icon>
-
                         <div class="file-text">
-                            <div class="file-name" title="{{ file.nombreArchivo }}">
-                                {{ file.nombreArchivo }}
-                            </div>
-                            <div class="file-date">
-                                {{ file.fechaSubida | date:'dd/MM/yyyy HH:mm' }}
-                            </div>
+                            <div class="file-name" title="{{ file.nombreArchivo }}">{{ file.nombreArchivo }}</div>
+                            <div class="file-date">{{ file.fechaSubida | date:'dd/MM/yyyy HH:mm' }}</div>
                         </div>
                     </div>
-
-                    <!-- Acciones -->
                     <div class="file-actions">
                         <button mat-icon-button color="primary" matTooltip="Descargar" (click)="download(file)">
                             <mat-icon>download</mat-icon>
                         </button>
-
                         <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="remove(file)"
                             [disabled]="data?.readOnly">
                             <mat-icon>delete</mat-icon>
                         </button>
                     </div>
-
                 </div>
             </div>
-
-
-            <!-- Sin archivos -->
             <ng-template #noFiles>
-                <div class="text-sm text-gray-500 italic">
-                    No hay archivos adjuntos
-                </div>
+                <div class="text-sm text-gray-500 italic">No hay archivos adjuntos</div>
             </ng-template>
-
         </div>
-
 
     </mat-dialog-content>
 
-    <!-- Acciones -->
     <mat-dialog-actions align="end">
-        <button mat-button type="button" (click)="cancel()">
-            Cancelar
-        </button>
-
+        <button mat-button type="button" (click)="cancel()">Cancelar</button>
         <button mat-flat-button color="primary" type="button" (click)="save()"
             [disabled]="loading || form.invalid || data?.readOnly">
             Guardar
