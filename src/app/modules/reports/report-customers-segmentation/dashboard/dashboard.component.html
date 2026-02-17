@@ -1,0 +1,225 @@
+<div class="flex flex-col flex-auto min-w-0">
+
+    <div class="bg-card shadow-sm sticky top-0 z-10 p-4 border-b">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+
+            <mat-form-field class="w-full sm:w-40" subscriptSizing="dynamic">
+                <mat-label>Fecha Inicio</mat-label>
+                <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                <mat-datepicker #pickerInicio></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-40" subscriptSizing="dynamic">
+                <mat-label>Fecha Fin</mat-label>
+                <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFin></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
+                <mat-label>Sucursal</mat-label>
+                <mat-select [(ngModel)]="sucursal">
+                    <mat-option value="TODAS">TODAS</mat-option>
+                    <mat-option value="PACHUCA">Pachuca</mat-option>
+                    <mat-option value="Puebla">Puebla</mat-option>
+                    <mat-option value="Queretaro">Querétaro</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
+                <mat-label>Tipo Cliente</mat-label>
+                <mat-select [(ngModel)]="esMoral">
+                    <mat-option [value]="false">Física</mat-option>
+                    <mat-option [value]="true">Moral</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="w-full sm:w-64" subscriptSizing="dynamic">
+                <mat-label>Cliente</mat-label>
+                <mat-select [(ngModel)]="clienteFiltroGlobal" (selectionChange)="actualizarDashboardGlobal()">
+                    <mat-option value="TODOS">TODOS LOS CLIENTES</mat-option>
+                    <mat-option *ngFor="let cli of listaClientesOriginal" [value]="cli.nombreCliente">
+                        {{ cli.nombreCliente }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" (click)="consultar()">
+                <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+                Consultar
+            </button>
+
+            <button mat-stroked-button (click)="exportarPDF()" class="ml-auto">
+                <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:printer"></mat-icon>
+                PDF
+            </button>
+        </div>
+    </div>
+
+    <div id="pdf-content" class="p-6 flex flex-col gap-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div *ngFor="let kpi of kpis"
+                class="bg-card rounded-2xl p-4 shadow-sm border-t-4 border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-center transition-transform hover:scale-105"
+                [style.border-top-color]="getClasificacionColor(kpi.clasificacion)">
+                <div class="text-secondary font-medium uppercase tracking-wider text-[10px]">{{ kpi.clasificacion }}
+                </div>
+                <div class="text-3xl font-bold mt-1">{{ kpi.numeroClientes | number }}</div>
+                <div class="text-[11px] text-gray-400 mt-1">{{ kpi.valorSegmento | currency }}</div>
+            </div>
+        </div>
+
+        <!-- Mapas en una fila de 2 columnas -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Mapa de Calor (Ventas) -->
+            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Densidad de Ventas (México)</h3>
+                @if (chartMapHeatmap) {
+                <highcharts-chart [Highcharts]="Highcharts" [constructorType]="'mapChart'" [options]="chartMapHeatmap"
+                    [(update)]="updateFlag" style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+
+            <!-- Mapa de Resaltado (Presencia) -->
+            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Presencia en Territorio</h3>
+                @if (chartMapHighlight) {
+                <highcharts-chart [Highcharts]="Highcharts" [constructorType]="'mapChart'" [options]="chartMapHighlight"
+                    [(update)]="updateFlag" style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Distribución por Estado</h3>
+                @if (listaClientesOriginal.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartVentasEstado" [(update)]="updateFlag"
+                    style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+
+            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Lealtad de Clientes</h3>
+                @if (kpis.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartDonaLealtad" [(update)]="updateFlag"
+                    style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+
+            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Relación Valor/Volumen</h3>
+                @if (kpis.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartSplineSegmento" [(update)]="updateFlag"
+                    style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+
+            <div class="lg:col-span-1 bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Análisis de Cartera</h3>
+                <div class="flex flex-col gap-4 mt-2">
+                    <div class="flex justify-between items-center p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+                        <span class="text-sm font-medium">Ticket Promedio</span>
+                        <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                            {{ (totalVendido / (listaClientesFiltrada.length || 1)) | currency }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                        <span class="text-sm font-medium">Venta Total</span>
+                        <span class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {{ totalVendido | currency }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="lg:col-span-3 bg-card rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                @if (detallesProductos.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartTopProductos" [(update)]="updateFlag"
+                    style="width: 100%; height: 400px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+        </div>
+
+        <div class="bg-card rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700">
+            <div
+                class="p-4 border-b bg-gray-50 dark:bg-gray-800 flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <h3 class="font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">Cuentas Clave</h3>
+                    <div class="relative w-full md:w-64">
+                        <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-4 text-gray-400"
+                            svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+                        <input type="text" [(ngModel)]="filtroNombre" (ngModelChange)="aplicarFiltrosTabla()"
+                            placeholder="Buscar por nombre o RFC..."
+                            class="pl-9 pr-4 py-2 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <select [(ngModel)]="filtroClasificacion" (change)="aplicarFiltrosTabla()"
+                        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-medium px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="TODAS">Todas las Clasificaciones</option>
+                        <option value="Cliente Estratégico">Cliente Estratégico</option>
+                        <option value="Cliente Recurrente">Cliente Recurrente</option>
+                        <option value="Cliente Nuevo">Cliente Nuevo</option>
+                        <option value="Cliente Habitual">Cliente Habitual</option>
+                    </select>
+
+                    <span
+                        class="text-xs font-black px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg whitespace-nowrap">
+                        Ticket Promedio: {{ (listaClientesFiltrada.length > 0 ? totalVendido / listaClientes.length : 0)
+                        | currency }}
+                    </span>
+                </div>
+            </div>
+            <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
+                <table class="w-full text-sm text-left min-w-[800px]">
+                    <thead
+                        class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold uppercase text-xs sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-4">Cliente</th>
+                            <th class="px-6 py-4">Clasificación</th>
+                            <th class="px-6 py-4 text-center">Compras</th>
+                            <th class="px-6 py-4 text-right">Inversión</th>
+                            <th class="px-6 py-4 text-center">Última</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr *ngFor="let cli of listaClientesFiltrada"
+                            class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-main">{{ cli.nombreCliente }}</div>
+                                <div class="text-[10px] text-gray-400 font-mono">{{ cli.rfc }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="px-2 py-1 rounded-full text-[9px] font-black text-white whitespace-nowrap uppercase shadow-sm"
+                                    [style.background-color]="getClasificacionColor(cli.clasificacion)">
+                                    {{ cli.clasificacion }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center font-bold text-indigo-600">
+                                {{ cli.totalCompras }}
+                            </td>
+                            <td class="px-6 py-4 text-right font-black">
+                                {{ cli.montoTotal | currency }}
+                            </td>
+                            <td class="px-6 py-4 text-center text-secondary text-xs">
+                                {{ cli.ultimaCompra | date:'dd/MM/yyyy' }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
