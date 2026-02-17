@@ -217,26 +217,49 @@ export class ReportCustomersDashboardComponent implements OnInit {
             }
         }
 
-        const productosMap = new Map();
+        const productosMap = new Map<string, { monto: number, unidades: number }>();
+
         dataFiltrada.forEach(p => {
             const nombreProd = (p.producto || 'SIN NOMBRE').trim();
-            const actual = productosMap.get(nombreProd) || 0;
-            productosMap.set(nombreProd, actual + p.totalVendido);
+
+            /* Obtenemos el objeto actual o inicializamos uno nuevo */
+            const actual = productosMap.get(nombreProd) || { monto: 0, unidades: 0 };
+
+            productosMap.set(nombreProd, {
+                monto: actual.monto + p.totalVendido,
+                unidades: actual.unidades + (p.unidades || 0)
+            });
         });
 
+        /* Generamos el Top 10 basado en el monto */
         const top10 = Array.from(productosMap.entries())
-            .sort((a, b) => b[1] - a[1])
+            .sort((a, b) => b[1].monto - a[1].monto)
             .slice(0, 10);
 
         this.chartTopProductos = {
             chart: { type: 'bar', backgroundColor: 'transparent' },
             title: { text: 'Top 10 Productos Más Vendidos', style: { fontSize: '14px' } },
-            xAxis: { categories: top10.map(p => p[0]), labels: { style: { fontSize: '9px' } } },
+            xAxis: {
+                categories: top10.map(p => p[0]),
+                labels: { style: { fontSize: '9px' } }
+            },
             yAxis: { title: { text: 'Venta Total' } },
+
+            /* 🔹 Agregamos el formato para mostrar ambos datos */
+            tooltip: {
+                headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
+                pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>${point.y:,.2f}</b><br/>' +
+                    '<span style="color:#4ade80">\u25CF</span> Unidades: <b>{point.unidades:,.0f}</b>'
+            },
+
             series: [{
                 name: 'Ventas ($)',
-                data: top10.map(p => p[1]),
-                color: '#6366f1'
+                color: '#6366f1',
+                /* 🔹 Mapeamos como objeto para que el tooltip reconozca "unidades" */
+                data: top10.map(p => ({
+                    y: p[1].monto,
+                    unidades: p[1].unidades
+                }))
             } as any]
         };
     }
