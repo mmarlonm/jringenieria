@@ -11,15 +11,19 @@ export class QuotesService {
   private apiUrlCotizacion = `${environment.apiUrl}/Cotizacion`; // Asegúrate de que esto sea correcto
 
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   get userInformation(): string {
     return localStorage.getItem("userInformation") ?? "";
   }
 
-  // Obtener todas las cotizaciones
-  getQuotes(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl);
+  // Obtener todas las cotizaciones con paginación y filtro de fecha
+  getQuotes(page: number = 1, size: number = 10, fecha?: string): Observable<any> {
+    let params: any = { page, size };
+    if (fecha) {
+      params.fecha = fecha;
+    }
+    return this.http.get<any>(this.apiUrl, { params });
   }
 
   // Obtener una cotización por ID
@@ -38,11 +42,11 @@ export class QuotesService {
   }
 
   buscarProducto(q: string): Observable<any> {
-  return this.http.get<any>(`${this.apiUrl}/productos`, {
-    params: { q }
-  });
-}
-getEstatus(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/productos`, {
+      params: { q }
+    });
+  }
+  getEstatus(): Observable<any> {
     return this.http.get<any>(`${this.apiUrlCotizacion}/estatus`);
   }
 
@@ -52,6 +56,10 @@ getEstatus(): Observable<any> {
 
   enviarEncuesta(dto: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/enviar-correo`, dto);
+  }
+
+  cambiarEstatus(cotizacionProductosId: number, estatus: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/cambiar-estatus`, { cotizacionProductosId, estatus });
   }
 
 

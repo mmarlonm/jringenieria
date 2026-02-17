@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { QuotesService } from '../quotes-products.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -13,12 +13,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatMenuTrigger } from '@angular/material/menu';  // Importa MatMenuTrigger
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuTrigger, MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
+import moment from 'moment';
 
 @Component({
   selector: 'app-quotes-list',
@@ -36,7 +38,9 @@ import { SendSurveyComponent } from '../send-survey/send-survey.component';
     MatInputModule,
     FormsModule,
     MatMenuModule,
-    MatSelectModule
+    MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ]
 })
 export class QuoteListComponent implements OnInit, AfterViewInit {
@@ -47,6 +51,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     'createdDate',
     'requisitosEspeciales',
     'total',
+    'estatus',
     'actions'
   ];
   dataSource = new MatTableDataSource<any>();
@@ -56,6 +61,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   vistaActual: string = '';
   permisosDisponibles: string[] = [];
 
+  // Paginación y Filtro de Fecha
+  pageSize: number = 10;
+  pageIndex: number = 0;
+  totalItems: number = 0;
+  filtroFecha: Date = new Date();
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatMenuTrigger) menuTrigger: MatMenuTrigger;  // Añadir la referencia a MatMenuTrigger
@@ -71,55 +81,117 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   };
 
   historialData: any[] = [];
+  estatusList: any[] = [];
   constructor(
     private quotesService: QuotesService,
     private router: Router,
     private snackBar: MatSnackBar,
     private route: ActivatedRoute,
     private dialog: MatDialog,
+    private _changeDetectorRef: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
     this.getQuotes();
+    this.getEstatus();
     this.obtenerPermisos();
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      this.dataSource.sort = this.sort;
-      this.dataSource.paginator = this.paginator;
-    }, 1200);
+    // No asignamos paginator/sort aquí para evitar que Material sobrescriba la paginación del servidor
   }
 
   getQuotes(): void {
-    this.quotesService.getQuotes().subscribe((res: any) => {
-      if (res) {
-        if (res.code == 200) {
-          var quotes: any = res.data;
+    const fechaString = moment(this.filtroFecha).format('YYYY-MM-DD');
+    this.quotesService.getQuotes(this.pageIndex + 1, this.pageSize, fechaString).subscribe((res: any) => {
+      if (res && res.code == 200) {
+        const quotes = res.data;
+        this.totalItems = res.totalCount || res.count || quotes.length;
+        this.dataSource.data = quotes;
+        this.quotesCount = this.totalItems;
 
-          this.quotesCount = quotes.length;
-          this.dataSource = new MatTableDataSource(quotes);
-          this.dataSource.paginator = this.paginator;
-
-          this.filterOptions.createdDate = [...new Set(
-            quotes
-              .map(quote => quote.createdDate)
-              .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
-          )];
-
-          this.filterOptions.unidadDeNegocioNombre = [...new Set(
-            quotes
-              .map(quote => quote.unidadDeNegocio.nombre)
-              .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
-          )];
-          this.dataSource.sort = this.sort;
-
-          this.setCustomFilter();
-        }
+        this.filterOptions.unidadDeNegocioNombre = [...new Set(
+          quotes
+            .map(quote => quote.unidadDeNegocio?.nombre)
+            .filter(nombre => nombre !== null && nombre !== undefined)
+        )];
+        this._changeDetectorRef.markForCheck();
       }
     });
+  }
 
+  onPageChange(event: any): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.getQuotes();
+  }
+
+  onDateChange(): void {
+    this.pageIndex = 0;
+    this.getQuotes();
+  }
+
+  getEstatus(): void {
+    this.quotesService.getEstatus().subscribe((res: any) => {
+      if (res && res.code === 200) {
+        this.estatusList = res.data;
+      }
+    });
+  }
+
+  onEstatusChange(quote: any, nuevoEstatusId: number): void {
+    const estatusNuevo = this.estatusList.find(e => e.id === nuevoEstatusId);
+
+    Swal.fire({
+      title: '¿Cambiar estatus?',
+      text: `¿Estás seguro de cambiar el estatus a "${estatusNuevo?.nombre || 'Nuevo'}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.quotesService.cambiarEstatus(quote.cotizacionProductosId, nuevoEstatusId).subscribe({
+          next: (res: any) => {
+            if (res.code === 200) {
+              quote.estatus = nuevoEstatusId;
+              this.snackBar.open('Estatus actualizado correctamente', 'Cerrar', { duration: 3000 });
+              this._changeDetectorRef.markForCheck();
+            } else {
+              this.snackBar.open('Error al actualizar estatus', 'Cerrar', { duration: 3000 });
+              this.getQuotes();
+            }
+          },
+          error: () => {
+            this.snackBar.open('Error de conexión', 'Cerrar', { duration: 3000 });
+            this.getQuotes();
+          }
+        });
+      } else {
+        this.getQuotes();
+      }
+    });
+  }
+
+  getStatusName(estatusId: number): string {
+    const estatus = this.estatusList.find(e => e.id === estatusId);
+    return estatus ? estatus.nombre : 'Sin Estatus';
+  }
+
+  getColorByEstatusId(estatusId: number): string {
+    const nombre = this.getStatusName(estatusId).toLowerCase();
+    if (nombre.includes('pendiente')) return '#FB275D';
+    if (nombre.includes('proceso')) return '#FFCB00';
+    if (nombre.includes('completad') || nombre.includes('finalizad') || nombre.includes('aprobada')) return '#00C875';
+    if (nombre.includes('rechazad') || nombre.includes('cancelad')) return '#D9534F';
+    return '#C4C4C4';
+  }
+
+  getFillColorByEstatusId(estatusId: number): string {
+    const color = this.getColorByEstatusId(estatusId);
+    return color + '15';
   }
 
   /**
