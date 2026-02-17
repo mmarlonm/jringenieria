@@ -77,8 +77,8 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     // =================================================
     // 🔹 Filtros
     // =================================================
-    esMoral = false;
-    sucursal = 'SANTA JULIA';
+    esMoral = 0;
+    sucursal = 'TODAS';
     fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1);
     fechaFin: Date = new Date();
     treeData: any[] = [];

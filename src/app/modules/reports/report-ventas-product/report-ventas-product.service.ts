@@ -10,7 +10,7 @@ export class ReportVentasProductService {
 
   private apiUrl = `${environment.apiUrl}/ReportDashboard`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Obtiene la información del dashboard de ventas
@@ -22,7 +22,7 @@ export class ReportVentasProductService {
     sucursal: string,
     fechaInicio: Date,
     fechaFin: Date,
-    esMoral: boolean
+    esMoral: number
   ): Observable<any> {
 
     const params = new HttpParams()

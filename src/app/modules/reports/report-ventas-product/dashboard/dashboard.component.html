@@ -24,14 +24,16 @@
         <mat-form-field appearance="outline">
             <mat-label>Tipo persona</mat-label>
             <mat-select [(ngModel)]="esMoral">
-                <mat-option [value]="false">Física</mat-option>
-                <mat-option [value]="true">Moral</mat-option>
+                <mat-option [value]="0">Todas</mat-option>
+                <mat-option [value]="1">Persona física</mat-option>
+                <mat-option [value]="2">Persona moral</mat-option>
             </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
             <mat-label>Sucursal</mat-label>
             <mat-select [(ngModel)]="sucursal">
+                <mat-option value="TODAS">Todas</mat-option>
                 <mat-option value="SANTA JULIA">Pachuca</mat-option>
                 <mat-option value="Puebla">Puebla</mat-option>
                 <mat-option value="Queretaro">Querétaro</mat-option>
