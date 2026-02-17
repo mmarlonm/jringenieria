@@ -2,7 +2,7 @@
 
     <div class="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
-            Dashboard de Ventas
+            Dashboard de Ventas por Vendedor
         </h1>
 
         <button mat-raised-button color="primary" class="w-full sm:w-auto" (click)="exportarPDF()">
@@ -17,9 +17,9 @@
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Tipo de persona</mat-label>
             <mat-select [(ngModel)]="esMoral">
-                <mat-option value="3">Todas</mat-option>
-                <mat-option value="1">Persona física</mat-option>
-                <mat-option value="2">Persona moral</mat-option>
+                <mat-option [value]="0">Todas</mat-option>
+                <mat-option [value]="1">Persona física</mat-option>
+                <mat-option [value]="2">Persona moral</mat-option>
             </mat-select>
         </mat-form-field>
 

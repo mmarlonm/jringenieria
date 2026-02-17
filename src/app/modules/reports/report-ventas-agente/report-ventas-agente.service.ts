@@ -29,7 +29,7 @@ export class ReportVentasAgenteService {
     agente: number,
     fechaInicio: Date,
     fechaFin: Date,
-    esMoral: string
+    esMoral: number
   ): Observable<any> {
 
     const params = new HttpParams()

@@ -99,6 +99,14 @@ export class ReportCustomersDashboardComponent implements OnInit {
                 next: (resp: any) => {
                     if (resp) {
                         this.kpisOriginales = resp.resumenSegmentos || [];
+
+                        // Ordenar para que Cliente Nuevo aparezca al inicio
+                        this.kpisOriginales.sort((a, b) => {
+                            if (a.clasificacion === 'Cliente Nuevo') return -1;
+                            if (b.clasificacion === 'Cliente Nuevo') return 1;
+                            return 0;
+                        });
+
                         this.kpis = [...this.kpisOriginales];
                         this.listaClientesOriginal = resp.clientes || [];
                         this.listaClientes = [...this.listaClientesOriginal];

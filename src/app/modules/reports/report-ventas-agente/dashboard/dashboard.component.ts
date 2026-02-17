@@ -50,7 +50,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     public updateFlag: boolean = false;
 
     // 🔹 Filtros
-    public esMoral: string = '1';
+    public esMoral: number = 0;
     public sucursal: string = 'PACHUCA';
     public fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1); // 1 de Enero
     public fechaFin: Date = new Date();
