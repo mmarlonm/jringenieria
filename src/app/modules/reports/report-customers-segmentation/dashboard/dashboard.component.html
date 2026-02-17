@@ -30,8 +30,9 @@
             <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
                 <mat-label>Tipo Cliente</mat-label>
                 <mat-select [(ngModel)]="esMoral">
-                    <mat-option [value]="false">Física</mat-option>
-                    <mat-option [value]="true">Moral</mat-option>
+                    <mat-option [value]="0">Todos</mat-option>
+                    <mat-option [value]="1">Física</mat-option>
+                    <mat-option [value]="2">Moral</mat-option>
                 </mat-select>
             </mat-form-field>
 

@@ -62,7 +62,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
     chartMapHighlight: any = null;
 
     // Filtros
-    esMoral = false;
+    esMoral = 0;
     sucursal = 'TODAS';
     fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1);
     fechaFin: Date = new Date();

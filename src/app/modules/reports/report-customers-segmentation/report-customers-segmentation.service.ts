@@ -22,7 +22,7 @@ export class ReportCustomersSegmentationService {
     sucursal: string,
     fechaInicio: Date,
     fechaFin: Date,
-    esMoral: boolean
+    esMoral: number
   ): Observable<any> {
 
     const params = new HttpParams()
