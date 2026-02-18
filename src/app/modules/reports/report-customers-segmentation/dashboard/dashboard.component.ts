@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 import { ReportCustomersSegmentationService } from '../report-customers-segmentation.service';
@@ -46,6 +47,7 @@ if (typeof Drilldown === 'function') {
         MatDatepickerModule,
         MatNativeDateModule,
         MatButtonModule,
+        MatTooltipModule,
         HttpClientModule
     ]
 })
@@ -756,6 +758,168 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
         } catch (error) {
             console.error('Error al generar PDF de Estado de Cuenta:', error);
+        } finally {
+            document.body.removeChild(container);
+            this.loading = false;
+        }
+    }
+
+    /* * Nombre: exportarExcelTabla
+     * Descripción: Exporta la tabla de Cuentas Clave a CSV/Excel (sin columna Clasificación).
+     */
+    exportarExcelTabla(): void {
+        const data = this.listaClientesFiltrada || [];
+        if (data.length === 0) return;
+
+        const headers = ['Cliente', 'RFC', 'Folio', 'Importe', 'Estatus', 'Fecha Emisión', 'Fecha Vencimiento'];
+
+        const cleanText = (text: any) => {
+            if (text === null || text === undefined) return '';
+            let str = String(text);
+            str = str.replace(/\r?\n|\r/g, ' ');
+            str = str.replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = data.map(r => [
+            cleanText(r.nombreCliente),
+            cleanText(r.rfc),
+            cleanText(r.folioCompleto),
+            r.montoDocumento || 0,
+            cleanText(r.estatusPago),
+            cleanText(r.fechaDocumento),
+            cleanText(r.fechaVencimiento)
+        ]);
+
+        const csvContent = 'sep=,\n' + [
+            headers.join(','),
+            ...rows.map(e => e.join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Cuentas_Clave_${this.sucursal}_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    /* * Nombre: exportarPDFTabla
+     * Descripción: Exporta la tabla de Cuentas Clave (sin columna Clasificación) al mismo formato PDF.
+     */
+    async exportarPDFTabla(): Promise<void> {
+        const data = this.listaClientesFiltrada || [];
+        if (data.length === 0) return;
+
+        this.loading = true;
+
+        const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
+        const formatDate = (dateStr: string) => {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        };
+
+        const fInicio = formatDate(this.fechaInicio.toISOString());
+        const fFin = formatDate(this.fechaFin.toISOString());
+        const sucursal = this.sucursal || 'TODAS';
+        const totalImporte = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+
+        let tableRows = '';
+        data.forEach((item, i) => {
+            const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
+            const estatus = item.estatusPago || '';
+            const colorEstatus = estatus === 'VENCIDA' ? '#dc2626' : estatus === 'PAGADA' ? '#16a34a' : '#d97706';
+
+            tableRows += `
+            <tr style="background-color: ${bgColor}; color: #374151; font-size: 11px;">
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                    <div style="font-weight: bold;">${item.nombreCliente || ''}</div>
+                    <div style="font-size: 9px; color: #9ca3af; font-family: monospace;">${item.rfc || ''}</div>
+                </td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold; font-family: monospace;">${item.folioCompleto || '-'}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${formatCurrency(item.montoDocumento || 0)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+                    <span style="font-weight: bold; color: ${colorEstatus};">${estatus}</span>
+                    <div style="font-size: 9px; color: #9ca3af; margin-top: 2px;">Emisión: ${formatDate(item.fechaDocumento)}</div>
+                    <div style="font-size: 9px; color: ${estatus === 'VENCIDA' ? '#dc2626' : '#9ca3af'}; font-weight: ${estatus === 'VENCIDA' ? 'bold' : 'normal'};">Vence: ${item.fechaVencimiento || '-'}</div>
+                </td>
+            </tr>
+        `;
+        });
+
+        const container = document.createElement('div');
+        container.id = 'temp-pdf-tabla-container';
+        container.setAttribute('style', 'width: 800px; padding: 40px; background-color: #ffffff; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; z-index: -1000;');
+
+        container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="images/logo/logo-new-jr.png" alt="Logo JR" style="max-height: 100px; max-width: 200px; object-fit: contain;">
+                <div>
+                    <h2 style="margin: 0; color: #1e3a8a; font-size: 16px;">JR INGENIERÍA ELÉCTRICA</h2>
+                    <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">RFC: JRI-XXXXXX-XXX</p>
+                    <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">Dir: Calle Falsa 123, Pachuca, Hgo.</p>
+                    <a href="http://www.jringenieriaelectrica.com" style="margin: 2px 0; font-size: 10px; color: #2563eb; text-decoration: none;">www.jringenieriaelectrica.com</a>
+                </div>
+            </div>
+            <h1 style="margin: 0; font-size: 20px; color: #1f2937; text-transform: uppercase;">Cuentas Clave</h1>
+        </div>
+
+        <div style="background-color: #e0f2fe; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>SUCURSAL:</strong> ${sucursal}</p>
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>FILTRADO POR FECHAS:</strong> ${fInicio} - ${fFin}</p>
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>TOTAL REGISTROS:</strong> ${data.length}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #d1d5db; color: #374151; font-size: 11px;">
+                    <th style="padding: 10px; text-align: left;">CLIENTE / RFC</th>
+                    <th style="padding: 10px; text-align: center;">FOLIO</th>
+                    <th style="padding: 10px; text-align: right;">IMPORTE</th>
+                    <th style="padding: 10px; text-align: center;">ESTATUS Y VENCIMIENTO</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+            <div style="background-color: #4f46e5; padding: 15px; border-radius: 6px; min-width: 200px; text-align: center; color: white;">
+                <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">TOTAL IMPORTE</div>
+                <div style="font-size: 22px; font-weight: 900;">${formatCurrency(totalImporte)}</div>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #6b7280;">
+            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza, email: cobranza@jringenieriaelectrica.com
+        </div>
+    `;
+
+        document.body.appendChild(container);
+
+        try {
+            const canvas = await html2canvas(container, {
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Cuentas_Clave_${this.sucursal}_${new Date().getTime()}.pdf`);
+
+        } catch (error) {
+            console.error('Error al generar PDF de Cuentas Clave:', error);
         } finally {
             document.body.removeChild(container);
             this.loading = false;

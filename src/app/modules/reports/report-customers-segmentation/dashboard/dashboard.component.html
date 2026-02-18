@@ -186,6 +186,12 @@
                         Ticket Promedio: {{ (listaClientesFiltrada.length > 0 ? totalVendido / listaClientes.length : 0)
                         | currency }}
                     </span>
+
+                    <button mat-flat-button (click)="exportarExcelTabla()" [disabled]="loading"
+                        matTooltip="Exportar tabla a Excel"
+                        class="!bg-emerald-600 !text-white !rounded-xl shadow-lg shadow-emerald-200">
+                        <mat-icon>grid_on</mat-icon>
+                    </button>
                 </div>
             </div>
             <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
