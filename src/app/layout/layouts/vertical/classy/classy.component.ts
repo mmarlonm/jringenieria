@@ -5,6 +5,7 @@ import {
     ViewChild,
     ViewEncapsulation,
     ElementRef,
+    NgZone,
 } from '@angular/core';
 import {
     MatButtonModule
@@ -15,6 +16,9 @@ import {
 import {
     MatMenuModule
 } from '@angular/material/menu';
+import {
+    MatProgressSpinnerModule
+} from '@angular/material/progress-spinner';
 import {
     ActivatedRoute,
     Router,
@@ -87,6 +91,7 @@ import Calendar from 'tui-calendar';
 import 'tui-calendar/dist/tui-calendar.css';
 import { FuseConfigService } from '@fuse/services/config';
 import { FuseConfig } from '@fuse/services/config/config.types';
+import { PersonalManagementService } from 'app/modules/rrhh/personal-management/personal-management.service';
 
 @Component({
     selector: 'classy-layout',
@@ -110,6 +115,7 @@ import { FuseConfig } from '@fuse/services/config/config.types';
         QuickChatComponent,
         TareasCalendarComponent,
         MatMenuModule,
+        MatProgressSpinnerModule,
         CommonModule
     ],
 })
@@ -139,6 +145,11 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
     config: FuseConfig;
     isDark: boolean;
+
+    asistenciaStatus: 'ENTRADA' | 'SALIDA' | 'NINGUNO' = 'NINGUNO';
+    ubicacionNombre: string = 'Detectando...';
+    currentCoords: { lat: number, lon: number, lng?: number } | null = null;
+    locationPermission: 'pending' | 'granted' | 'denied' | 'unavailable' = 'pending';
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
@@ -148,7 +159,9 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private _fuseNavigationService: FuseNavigationService,
         private _fuseConfigService: FuseConfigService,
         private tareasService: TaskService,
-        private _taskConfigService: TaskViewConfigService
+        private _taskConfigService: TaskViewConfigService,
+        private _personalManagementService: PersonalManagementService,
+        private _ngZone: NgZone
     ) { }
 
     // ----------------------------------------------------------
@@ -562,4 +575,157 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Se llama al abrir el menú de asistencia.
+     * Solicita permisos de ubicación y actualiza el estado del menú.
+     */
+    solicitarPermisosUbicacion(): void {
+        if (!navigator.geolocation) {
+            this.locationPermission = 'unavailable';
+            return;
+        }
+
+        this.locationPermission = 'pending';
+        this.ubicacionNombre = 'Obteniendo GPS...';
+
+        console.log('📍 Solicitando ubicación...');
+
+        // Timeout manual para asegurar que no se quede pegado cargando
+        const manualTimeout = setTimeout(() => {
+            this._ngZone.run(() => {
+                if (this.locationPermission === 'pending') {
+                    console.warn('⚠️ Tiempo de espera agotado manualmente.');
+                    this.locationPermission = 'unavailable';
+                    this.ubicacionNombre = 'Tiempo de espera agotado';
+                }
+            });
+        }, 12000); // 12 segundos
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                clearTimeout(manualTimeout);
+                this._ngZone.run(() => {
+                    console.log('✅ Ubicación obtenida', position);
+                    this.locationPermission = 'granted';
+                    this.currentCoords = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude // Mantengo 'lon' aquí si así se definió en la interfaz, pero 'lng' es más común en Google Maps
+                    };
+                    // Estandarizar para el resto del componente:
+                    if (!this.currentCoords['lng']) {
+                        this.currentCoords['lng'] = position.coords.longitude;
+                    }
+
+                    this.ubicacionNombre = `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
+                });
+            },
+            (error) => {
+                clearTimeout(manualTimeout);
+                this._ngZone.run(() => {
+                    console.error('❌ Error al obtener ubicación', error);
+                    // Si el usuario denegó, mostrar error específico
+                    if (error.code === error.PERMISSION_DENIED) {
+                        this.locationPermission = 'denied';
+                        this.ubicacionNombre = 'Permiso denegado';
+                    } else {
+                        this.locationPermission = 'unavailable';
+                        this.ubicacionNombre = 'Error al obtener ubicación';
+                    }
+                });
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    /**
+     * Nombre: ejecutarMarcaje
+     * Descripción: Gestiona permisos de GPS, obtiene coordenadas y registra asistencia.
+     * Parámetros: tipo ('ENTRADA' | 'SALIDA')
+     */
+    ejecutarMarcaje(tipo: 'ENTRADA' | 'SALIDA'): void {
+
+        // 0. Si ya tenemos coordenadas recientes, usarlas directamente
+        if (this.currentCoords && this.locationPermission === 'granted') {
+            const coords = {
+                lat: this.currentCoords.lat,
+                lng: this.currentCoords['lng'] || this.currentCoords.lon
+            };
+            this._enviarAlServicio(tipo, coords);
+            return;
+        }
+
+        // 1. Verificar si el navegador soporta Geolocalización
+        if (!navigator.geolocation) {
+            alert('Tu navegador no soporta geolocalización. Por favor, usa uno moderno.');
+            return;
+        }
+
+        // 2. Opciones de precisión
+        const geoOptions = {
+            enableHighAccuracy: true, // Alta precisión para GPS de obra
+            timeout: 10000,           // 10 segundos máximo de espera
+            maximumAge: 0             // No usar ubicaciones en caché
+        };
+
+        // 3. Solicitar ubicación (Esto disparará el permiso del navegador si no existe)
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                this._ngZone.run(() => {
+                    // ÉXITO: Tenemos coordenadas
+                    const coords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    this._enviarAlServicio(tipo, coords);
+                });
+            },
+            (error) => {
+                this._ngZone.run(() => {
+                    // ERROR/DENEGADO: Gestionar según el código de error
+                    this._handleLocationError(error);
+                });
+            },
+            geoOptions
+        );
+    }
+
+    /**
+     * Procesa el envío final al servicio de C#
+     */
+    private _enviarAlServicio(tipo: string, coords: any): void {
+        const payload = {
+            usuarioId: Number(this.user.id),
+            tipo: tipo,
+            latitud: coords.lat,
+            longitud: coords.lng,
+            ubicacionNombre: 'Ubicación detectada por GPS' // Aquí puedes integrar Geocoding después
+        };
+
+        this._personalManagementService.registrarAsistencia(payload).subscribe({
+            next: (res) => {
+                this.asistenciaStatus = tipo === 'ENTRADA' ? 'ENTRADA' : 'NINGUNO';
+                console.log('Asistencia registrada correctamente');
+            },
+            error: (err) => {
+                console.error('Error en el servidor al registrar asistencia', err);
+            }
+        });
+    }
+
+    /**
+     * Manejo de errores de permisos y GPS
+     */
+    private _handleLocationError(error: GeolocationPositionError): void {
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                alert('Para marcar asistencia en JR Ingeniería es OBLIGATORIO permitir la ubicación. Por favor, habilítala en la configuración de tu navegador.');
+                break;
+            case error.POSITION_UNAVAILABLE:
+                alert('No se pudo determinar tu ubicación actual. Revisa tu señal de GPS.');
+                break;
+            case error.TIMEOUT:
+                alert('Se agotó el tiempo esperando la respuesta del GPS.');
+                break;
+        }
+    }
 }

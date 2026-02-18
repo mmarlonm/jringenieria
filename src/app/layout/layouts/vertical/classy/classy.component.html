@@ -58,6 +58,110 @@
         </button>
         <!-- Components -->
         <div class="ml-auto flex items-center space-x-0.5 pl-2 sm:space-x-2">
+            <div class="flex items-center ml-2 mr-1 sm:mr-4">
+                <button mat-flat-button [color]="asistenciaStatus === 'ENTRADA' ? 'warn' : 'primary'"
+                    class="rounded-full px-4 sm:px-6 h-10 transition-all duration-300 shadow-md border border-transparent active:scale-95"
+                    [matMenuTriggerFor]="asistenciaMenu" matTooltip="Click para registrar asistencia">
+
+                    <mat-icon class="icon-size-5 mr-0 sm:mr-2"
+                        [svgIcon]="asistenciaStatus === 'ENTRADA' ? 'heroicons_outline:arrow-left-on-rectangle' : 'heroicons_outline:clock'">
+                    </mat-icon>
+
+                    <span class="hidden sm:inline font-semibold tracking-tight">
+                        {{ asistenciaStatus === 'ENTRADA' ? 'MARCAR SALIDA' : 'MARCAR ENTRADA' }}
+                    </span>
+                    <span class="sm:hidden font-semibold">{{ asistenciaStatus === 'ENTRADA' ? 'SALIDA' : 'ENTRADA'
+                        }}</span>
+                </button>
+
+                <mat-menu #asistenciaMenu="matMenu" class="p-4 w-72 rounded-2xl shadow-xl border border-gray-100"
+                    (menuOpened)="solicitarPermisosUbicacion()">
+                    <div class="flex flex-col p-2" (click)="$event.stopPropagation()">
+                        <div class="text-lg font-bold mb-1 leading-tight text-gray-800 dark:text-white">Confirmar
+                            Registro</div>
+
+                        <!-- Estado: Obteniendo ubicación -->
+                        @if (locationPermission === 'pending') {
+                        <div class="flex flex-col items-center justify-center py-6 gap-3">
+                            <mat-spinner diameter="32"></mat-spinner>
+                            <span class="text-sm text-secondary text-center">Solicitando permisos de ubicación...</span>
+                        </div>
+                        }
+
+                        <!-- Estado: Permisos denegados o GPS no disponible -->
+                        @if (locationPermission === 'denied' || locationPermission === 'unavailable') {
+                        <div class="flex flex-col items-center gap-3 py-4">
+                            <div
+                                class="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900">
+                                <mat-icon class="text-red-500" [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-sm font-semibold text-red-600 dark:text-red-400">Ubicación no disponible
+                                </p>
+                                <p class="text-xs text-secondary mt-1 leading-snug">
+                                    Para registrar asistencia debes <strong>permitir el acceso a tu ubicación</strong>
+                                    en la configuración de tu navegador.
+                                </p>
+                            </div>
+                            <button mat-stroked-button color="warn" class="w-full rounded-xl text-xs"
+                                (click)="solicitarPermisosUbicacion()">
+                                <mat-icon class="icon-size-4 mr-1"
+                                    [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                Reintentar
+                            </button>
+                        </div>
+                        }
+
+                        <!-- Estado: Ubicación concedida -->
+                        @if (locationPermission === 'granted') {
+                        <div
+                            class="flex items-start mt-2 mb-4 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                            <mat-icon class="icon-size-5 mr-2 text-blue-500 shrink-0"
+                                [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-semibold uppercase text-secondary">Ubicación detectada</span>
+                                <span class="text-xs leading-tight">{{ ubicacionNombre }}</span>
+                            </div>
+                        </div>
+
+                        @if (asistenciaStatus !== 'ENTRADA') {
+                        <button mat-flat-button color="primary"
+                            class="w-full h-12 rounded-xl text-md font-bold shadow-sm"
+                            (click)="ejecutarMarcaje('ENTRADA')">
+                            CONFIRMAR ENTRADA
+                        </button>
+                        } @else {
+                        <button mat-flat-button color="warn" class="w-full h-12 rounded-xl text-md font-bold shadow-sm"
+                            (click)="ejecutarMarcaje('SALIDA')">
+                            CONFIRMAR SALIDA
+                        </button>
+                        }
+                        }
+
+                        <div class="mt-4 text-center">
+                            <span class="text-[10px] text-hint uppercase tracking-widest font-medium">JR Ingeniería
+                                Eléctrica</span>
+                        </div>
+                    </div>
+                </mat-menu>
+            </div>
+
+            <button mat-stroked-button class="google-btn" [ngClass]="{
+    'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
+    'google-expired': googleStatus?.isExpired,
+    'google-not-logged': !googleStatus?.isLoggedIn
+}" (click)="loginWithGoogle()">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon" />
+            </button>
+
+            <button mat-stroked-button class="google-btn flex items-center justify-center space-x-2" [ngClass]="{
+    'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
+    'google-expired': googleStatus?.isExpired,
+    'google-not-logged': !googleStatus?.isLoggedIn
+}" (click)="openGoogleEventsModal()" matTooltip="Abrir eventos de Google Calendar">
+                <img src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="Google Calendar"
+                    class="google-calendar-icon" />
+            </button>
             <!---languages></languages-->
             <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
                 @if (!isDark) {

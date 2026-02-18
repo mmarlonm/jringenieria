@@ -178,6 +178,21 @@ export const defaultNavigation: FuseNavigationItem[] = [
     },
 
     // ==========================================================================================
+    // SECCIÓN: RECURSOS HUMANOS
+    // ==========================================================================================
+    {
+        id: 'rrhh',
+        title: 'RECURSOS HUMANOS',
+        subtitle: 'Gestión de personal',
+        type: 'group',
+        icon: 'heroicons_outline:users',
+        children: [
+            // Usa ID original: 'rrhh.personal-management'
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }
+        ]
+    },
+
+    // ==========================================================================================
     // SECCIÓN: SEGURIDAD
     // ==========================================================================================
     {

@@ -1,0 +1,153 @@
+<div class="flex flex-col max-h-screen overflow-hidden">
+    <div class="flex flex-row items-center justify-between pl-8 pr-4 py-4 bg-primary text-on-primary">
+        <div class="flex flex-col">
+            <div class="text-2xl font-semibold tracking-tight">Configurar Empleado</div>
+            <div class="text-sm opacity-80">{{ data.nombreUsuario }} - {{ data.nombreRol }}</div>
+        </div>
+        <button mat-icon-button (click)="close()">
+            <mat-icon class="text-current" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <div class="flex-auto overflow-y-auto bg-gray-50">
+        <form [formGroup]="form">
+            <mat-tab-group class="fuse-mat-no-header-border" mat-stretch-tabs="false">
+
+                <mat-tab label="Información Laboral">
+                    <div class="p-8 space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Puesto / Cargo</mat-label>
+                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:briefcase'"></mat-icon>
+                                <input matInput formControlName="puesto">
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Departamento</mat-label>
+                                <mat-select formControlName="departamentoId">
+                                    @for (dep of departments; track dep.departamentoId) {
+                                    <mat-option [value]="dep.departamentoId">{{dep.nombre}}</mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Fecha de Ingreso</mat-label>
+                                <input matInput [matDatepicker]="pickerIngreso" formControlName="fechaIngreso">
+                                <mat-datepicker-toggle matSuffix [for]="pickerIngreso"></mat-datepicker-toggle>
+                                <mat-datepicker #pickerIngreso></mat-datepicker>
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Sueldo Base Mensual</mat-label>
+                                <span matPrefix>$</span>
+                                <input matInput type="number" formControlName="sueldoBase">
+                            </mat-form-field>
+                        </div>
+
+                        <mat-divider></mat-divider>
+
+                        <div class="text-lg font-medium mb-2 text-secondary">Información Complementaria</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Fecha de Nacimiento</mat-label>
+                                <input matInput [matDatepicker]="pickerNac" formControlName="fechaNacimiento">
+                                <mat-datepicker-toggle matSuffix [for]="pickerNac"></mat-datepicker-toggle>
+                                <mat-datepicker #pickerNac></mat-datepicker>
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                <mat-label>Sexo</mat-label>
+                                <mat-select formControlName="sexo">
+                                    <mat-option [value]="1">Masculino</mat-option>
+                                    <mat-option [value]="2">Femenino</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </mat-tab>
+
+                <mat-tab label="Horarios de Trabajo">
+                    <div class="p-8">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+                            <div class="flex flex-col">
+                                <div class="text-xl font-semibold tracking-tight">Jornada Semanal</div>
+                                <div class="text-secondary">Configura el horario de checado para el empleado.</div>
+                            </div>
+
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <button mat-stroked-button color="accent" type="button"
+                                    class="flex-auto sm:flex-none border-amber-500 text-amber-600"
+                                    (click)="addStandardWorkWeek()">
+                                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:bolt'"></mat-icon>
+                                    Horario Estándar (Lun-Sab)
+                                </button>
+
+                                <button mat-flat-button color="primary" type="button" class="flex-auto sm:flex-none"
+                                    (click)="addHorario()">
+                                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                    Manual
+                                </button>
+                            </div>
+                        </div>
+
+                        <div formArrayName="horarios" class="space-y-3">
+                            @for (h of horarios.controls; track h; let i = $index) {
+                            <div [formGroupName]="i"
+                                class="grid grid-cols-12 gap-4 items-center p-4 rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors">
+
+                                <div class="col-span-12 sm:col-span-5">
+                                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                        <mat-label>Día de la semana</mat-label>
+                                        <mat-select formControlName="diaSemana">
+                                            @for (d of daysOfWeek; track d.id) {
+                                            <mat-option [value]="d.id">{{d.name}}</mat-option>
+                                            }
+                                        </mat-select>
+                                    </mat-form-field>
+                                </div>
+
+                                <div class="col-span-5 sm:col-span-3">
+                                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                        <mat-label>Entrada</mat-label>
+                                        <input matInput type="time" formControlName="horaEntrada">
+                                    </mat-form-field>
+                                </div>
+
+                                <div class="col-span-5 sm:col-span-3">
+                                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                                        <mat-label>Salida</mat-label>
+                                        <input matInput type="time" formControlName="horaSalida">
+                                    </mat-form-field>
+                                </div>
+
+                                <div class="col-span-2 sm:col-span-1 flex justify-end">
+                                    <button mat-icon-button color="warn" type="button" (click)="removeHorario(i)"
+                                        title="Eliminar día">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                            } @empty {
+                            <div
+                                class="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl text-secondary bg-gray-50/50">
+                                <mat-icon class="icon-size-16 mb-4 opacity-20"
+                                    [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+                                <span class="text-lg font-medium">No hay horarios configurados</span>
+                                <span class="text-sm">Usa los botones superiores para empezar</span>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </mat-tab>
+            </mat-tab-group>
+        </form>
+    </div>
+
+    <div class="flex items-center justify-end px-8 py-4 border-t bg-gray-50">
+        <button mat-button type="button" (click)="close()">Cancelar</button>
+        <button class="ml-4 px-8" mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid">
+            Guardar Configuración
+        </button>
+    </div>
+</div>

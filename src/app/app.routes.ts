@@ -115,6 +115,11 @@ export const appRoutes: Route[] = [
                 ]
             },
             {
+                path: 'rrhh', children: [
+                    { path: 'personal-management', loadChildren: () => import('app/modules/rrhh/personal-management/personal-management.routes') }
+                ]
+            },
+            {
                 path: 'security', children: [
                     { path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes') },
                     { path: 'roles', loadChildren: () => import('app/modules/admin/security/roles/roles.routes') }
