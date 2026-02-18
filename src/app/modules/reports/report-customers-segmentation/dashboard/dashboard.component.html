@@ -1,7 +1,7 @@
 <div class="flex flex-col flex-auto min-w-0">
 
-    <div class="bg-card shadow-sm sticky top-0 z-10 p-4 border-b">
-        <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+    <div class="bg-card shadow-sm relative md:sticky top-0 z-10 p-4 border-b">
+        <div class="grid grid-cols-2 sm:flex sm:flex-row sm:items-end gap-4">
 
             <mat-form-field class="w-full sm:w-40" subscriptSizing="dynamic">
                 <mat-label>Fecha Inicio</mat-label>
@@ -36,7 +36,7 @@
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="w-full sm:w-64" subscriptSizing="dynamic">
+            <mat-form-field class="w-full sm:w-64 col-span-2 sm:col-auto" subscriptSizing="dynamic">
                 <mat-label>Cliente</mat-label>
                 <mat-select [(ngModel)]="clienteFiltroGlobal" (selectionChange)="actualizarDashboardGlobal()">
                     <mat-option value="TODOS">TODOS LOS CLIENTES</mat-option>
@@ -46,12 +46,12 @@
                 </mat-select>
             </mat-form-field>
 
-            <button mat-flat-button color="primary" (click)="consultar()">
+            <button mat-flat-button color="primary" (click)="consultar()" class="w-full sm:w-auto">
                 <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
                 Consultar
             </button>
 
-            <button mat-stroked-button (click)="exportarPDF()" class="ml-auto">
+            <button mat-stroked-button (click)="exportarPDF()" class="w-full sm:w-auto sm:ml-auto">
                 <mat-icon class="icon-size-5 mr-2" svgIcon="heroicons_outline:printer"></mat-icon>
                 PDF
             </button>
