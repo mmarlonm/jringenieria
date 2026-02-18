@@ -40,7 +40,7 @@
                 <mat-label>Cliente</mat-label>
                 <mat-select [(ngModel)]="clienteFiltroGlobal" (selectionChange)="actualizarDashboardGlobal()">
                     <mat-option value="TODOS">TODOS LOS CLIENTES</mat-option>
-                    <mat-option *ngFor="let cli of listaClientesOriginal" [value]="cli.nombreCliente">
+                    <mat-option *ngFor="let cli of listaClientesUnica" [value]="cli.nombreCliente">
                         {{ cli.nombreCliente }}
                     </mat-option>
                 </mat-select>
@@ -162,6 +162,13 @@
                             placeholder="Buscar por nombre o RFC..."
                             class="pl-9 pr-4 py-2 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                     </div>
+                    @if (filtroNombre.trim().length > 0 && listaClientesFiltrada.length > 0) {
+                    <button mat-flat-button color="primary" (click)="exportarPDFEstadoSegmentacion()"
+                        [disabled]="loading" class="whitespace-nowrap">
+                        <mat-icon class="icon-size-5 mr-1" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                        Estado de Cuenta
+                    </button>
+                    }
                 </div>
 
                 <div class="flex items-center gap-3 w-full md:w-auto">
@@ -182,24 +189,36 @@
                 </div>
             </div>
             <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
-                <table class="w-full text-sm text-left min-w-[800px]">
+                <table class="w-full text-sm text-left min-w-[900px]">
                     <thead
                         class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold uppercase text-xs sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-4">Cliente</th>
+                            <th class="px-6 py-4 text-center">Folio</th>
                             <th class="px-6 py-4">Clasificación</th>
-                            <th class="px-6 py-4 text-center">Compras</th>
-                            <th class="px-6 py-4 text-right">Inversión</th>
-                            <th class="px-6 py-4 text-center">Última</th>
+                            <th class="px-6 py-4 text-right">Importe</th>
+                            <th class="px-6 py-4 text-center">Estatus y Vencimiento</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         <tr *ngFor="let cli of listaClientesFiltrada"
                             class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+
                             <td class="px-6 py-4">
-                                <div class="font-bold text-main">{{ cli.nombreCliente }}</div>
-                                <div class="text-[10px] text-gray-400 font-mono">{{ cli.rfc }}</div>
+                                <div>
+                                    <div class="font-bold text-main">{{ cli.nombreCliente }}</div>
+                                    <div class="text-[10px] text-gray-400 font-mono">{{ cli.rfc }}</div>
+                                </div>
                             </td>
+
+                            <td class="px-6 py-4 text-center">
+                                <div
+                                    class="inline-flex items-center gap-1 bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-1 rounded font-mono text-xs font-bold whitespace-nowrap">
+                                    <mat-icon class="text-[12px] h-[12px] w-[12px]">receipt</mat-icon>
+                                    {{ cli.folioCompleto }}
+                                </div>
+                            </td>
+
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 rounded-full text-[9px] font-black text-white whitespace-nowrap uppercase shadow-sm"
@@ -207,14 +226,43 @@
                                     {{ cli.clasificacion }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-center font-bold text-indigo-600">
-                                {{ cli.totalCompras }}
+
+                            <td class="px-6 py-4 text-right font-black text-gray-700 dark:text-gray-200 text-base">
+                                {{ cli.montoDocumento | currency }}
                             </td>
-                            <td class="px-6 py-4 text-right font-black">
-                                {{ cli.montoTotal | currency }}
+
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex flex-col items-center gap-1">
+
+                                    <span [class]="getEstatusClass(cli.estatusPago)"
+                                        class="flex items-center gap-1 text-[10px] uppercase tracking-wider border border-transparent shadow-sm">
+
+                                        <mat-icon *ngIf="cli.estatusPago === 'VENCIDA'"
+                                            class="text-[12px] h-[12px] w-[12px]">error</mat-icon>
+                                        <mat-icon *ngIf="cli.estatusPago === 'PAGADA'"
+                                            class="text-[12px] h-[12px] w-[12px]">check_circle</mat-icon>
+                                        <mat-icon *ngIf="cli.estatusPago === 'PENDIENTE'"
+                                            class="text-[12px] h-[12px] w-[12px]">schedule</mat-icon>
+
+                                        {{ cli.estatusPago }}
+                                    </span>
+
+                                    <div class="text-[10px] flex flex-col leading-tight mt-1">
+                                        <span class="text-gray-400">Emisión: {{ cli.fechaDocumento | date:'dd/MM/yy'
+                                            }}</span>
+
+                                        <span
+                                            [ngClass]="{'text-red-600 font-bold': cli.estatusPago === 'VENCIDA', 'text-gray-500': cli.estatusPago !== 'VENCIDA'}">
+                                            Vence: {{ cli.fechaVencimiento }}
+                                        </span>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-center text-secondary text-xs">
-                                {{ cli.ultimaCompra | date:'dd/MM/yyyy' }}
+                        </tr>
+
+                        <tr *ngIf="listaClientesFiltrada.length === 0">
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                                No se encontraron facturas con los filtros seleccionados.
                             </td>
                         </tr>
                     </tbody>

@@ -77,6 +77,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
     resumenGeograficoOriginal: any[] = [];
     totalVendido: number = 0;
 
+    loading = false;
+
     // Filtros
     clienteFiltroGlobal: any = 'TODOS';
     filtroNombre: string = '';
@@ -593,6 +595,15 @@ export class ReportCustomersDashboardComponent implements OnInit {
         return mapping[e] || null;
     }
 
+    get listaClientesUnica(): any[] {
+        const seen = new Set<string>();
+        return this.listaClientesOriginal.filter(c => {
+            if (seen.has(c.nombreCliente)) return false;
+            seen.add(c.nombreCliente);
+            return true;
+        });
+    }
+
     getClasificacionColor(clasificacion: string): string {
         const colors: any = {
             'Cliente Estratégico': '#f59e0b',
@@ -602,6 +613,153 @@ export class ReportCustomersDashboardComponent implements OnInit {
             'Cliente Nuevo': '#94a3b8'
         };
         return colors[clasificacion] || '#64748b';
+    }
+
+    /* * Nombre: exportarPDFEstadoSegmentacion
+     * Descripción: Genera un PDF de Estado de Cuenta para el cliente filtrado.
+     */
+    async exportarPDFEstadoSegmentacion(): Promise<void> {
+        const data = this.listaClientesFiltrada || [];
+        if (data.length === 0) return;
+
+        this.loading = true;
+
+        const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
+        const formatDate = (dateStr: string) => {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        };
+
+        const totalCargos = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+        const totalSaldos = data.reduce((acc, curr) => {
+            // Si está PAGADA el saldo es 0, de lo contrario es el monto completo
+            return acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0));
+        }, 0);
+        const totalAbonos = totalCargos - totalSaldos;
+
+        const cliente = data[0].nombreCliente || '';
+        const rfc = data[0].rfc || '';
+        const sucursal = this.sucursal || 'TODAS';
+        const fInicio = formatDate(this.fechaInicio.toISOString());
+        const fFin = formatDate(this.fechaFin.toISOString());
+
+        let tableRows = '';
+        data.forEach((item, i) => {
+            const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
+            const cargo = item.montoDocumento || 0;
+            const saldo = item.estatusPago === 'PAGADA' ? 0 : cargo;
+            const abono = cargo - saldo;
+            const estatus = item.estatusPago || '';
+
+            tableRows += `
+            <tr style="background-color: ${bgColor}; color: #374151; font-size: 11px;">
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${formatDate(item.fechaDocumento)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold;">${item.folioCompleto || '-'}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">Venta</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">Venta de Equipos/Serv.</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(cargo)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${abono > 0 ? formatCurrency(abono) : '-'}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${formatCurrency(saldo)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold; color: ${estatus === 'VENCIDA' ? '#dc2626' : '#16a34a'};">${estatus}</td>
+            </tr>
+        `;
+        });
+
+        const container = document.createElement('div');
+        container.id = 'temp-pdf-seg-container';
+        container.setAttribute('style', 'width: 800px; padding: 40px; background-color: #ffffff; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; z-index: -1000;');
+
+        container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="images/logo/logo-new-jr.png" alt="Logo JR" style="max-height: 100px; max-width: 200px; object-fit: contain;">
+                <div>
+                    <h2 style="margin: 0; color: #1e3a8a; font-size: 16px;">JR INGENIERÍA ELÉCTRICA</h2>
+                    <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">RFC: JRI-XXXXXX-XXX</p>
+                    <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">Dir: Calle Falsa 123, Pachuca, Hgo.</p>
+                    <a href="http://www.jringenieriaelectrica.com" style="margin: 2px 0; font-size: 10px; color: #2563eb; text-decoration: none;">www.jringenieriaelectrica.com</a>
+                </div>
+            </div>
+            <h1 style="margin: 0; font-size: 22px; color: #1f2937; text-transform: uppercase;">Reporte de Estado de Cuenta</h1>
+        </div>
+
+        <div style="background-color: #e0f2fe; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>CLIENTE:</strong> ${cliente}</p>
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>RFC:</strong> ${rfc}</p>
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>SUCURSAL:</strong> ${sucursal}</p>
+            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>FILTRADO POR FECHAS:</strong> ${fInicio} - ${fFin}</p>
+        </div>
+
+        <div style="background-color: #16a34a; color: white; text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+            <div style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">SALDO PENDIENTE:</div>
+            <div style="font-size: 38px; font-weight: 900; margin-top: 5px;">${formatCurrency(totalSaldos)} MXN</div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #d1d5db; color: #374151; font-size: 11px;">
+                    <th style="padding: 10px; text-align: center;">FECHA</th>
+                    <th style="padding: 10px; text-align: center;">FOLIO</th>
+                    <th style="padding: 10px; text-align: center;">TIPO</th>
+                    <th style="padding: 10px; text-align: center;">DESCRIPCIÓN</th>
+                    <th style="padding: 10px; text-align: right;">CARGO</th>
+                    <th style="padding: 10px; text-align: right;">ABONO</th>
+                    <th style="padding: 10px; text-align: right;">SALDO</th>
+                    <th style="padding: 10px; text-align: center;">ESTATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-start; gap: 15px; margin-bottom: 40px;">
+            <div style="background-color: #e5e7eb; padding: 15px; border-radius: 6px; min-width: 160px; text-align: center;">
+                <div style="font-size: 12px; font-weight: bold; color: #374151; margin-bottom: 5px;">TOTAL CARGOS</div>
+                <div style="font-size: 18px; font-weight: 900; color: #1f2937;">${formatCurrency(totalCargos)}</div>
+            </div>
+            <div style="background-color: #e5e7eb; padding: 15px; border-radius: 6px; min-width: 160px; text-align: center;">
+                <div style="font-size: 12px; font-weight: bold; color: #374151; margin-bottom: 5px;">TOTAL ABONOS</div>
+                <div style="font-size: 18px; font-weight: 900; color: #1f2937;">${formatCurrency(totalAbonos)}</div>
+            </div>
+            <div style="background-color: #16a34a; padding: 15px; border-radius: 6px; min-width: 180px; text-align: center; color: white;">
+                <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">SALDO FINAL</div>
+                <div style="font-size: 18px; font-weight: 900;">${formatCurrency(totalSaldos)}</div>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #6b7280;">
+            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza, email: cobranza@jringenieriaelectrica.com
+        </div>
+    `;
+
+        document.body.appendChild(container);
+
+        try {
+            const canvas = await html2canvas(container, {
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            const clienteClean = cliente.replace(/[^a-z0-9]/gi, '_');
+            pdf.save(`Estado_Cuenta_${clienteClean}_${new Date().getTime()}.pdf`);
+
+        } catch (error) {
+            console.error('Error al generar PDF de Estado de Cuenta:', error);
+        } finally {
+            document.body.removeChild(container);
+            this.loading = false;
+        }
     }
 
     /* * Nombre: exportarPDF
@@ -625,5 +783,29 @@ export class ReportCustomersDashboardComponent implements OnInit {
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`reporte-segmentacion-${Date.now()}.pdf`);
         });
+    }
+
+    // 🔹 Método para asignar colores según el estatus de la factura
+    getEstatusClass(estatus: string): string {
+        // Clases base para que parezca una etiqueta (pill)
+        const base = 'px-2 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider inline-flex items-center gap-1';
+
+        switch (estatus) {
+            case 'VENCIDA':
+                // Rojo intenso con fondo suave
+                return `${base} bg-red-50 text-red-700 border-red-200`;
+
+            case 'PENDIENTE':
+                // Ámbar/Naranja para indicar espera
+                return `${base} bg-amber-50 text-amber-700 border-amber-200`;
+
+            case 'PAGADA':
+                // Verde para éxito
+                return `${base} bg-green-50 text-green-700 border-green-200`;
+
+            default:
+                // Gris para cualquier otro estado desconocido
+                return `${base} bg-gray-50 text-gray-500 border-gray-200`;
+        }
     }
 }
