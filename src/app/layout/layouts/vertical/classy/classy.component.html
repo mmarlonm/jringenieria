@@ -59,7 +59,8 @@
         <!-- Components -->
         <div class="ml-auto flex items-center space-x-0.5 pl-2 sm:space-x-2">
             <div class="flex items-center ml-2 mr-1 sm:mr-4">
-                <button mat-flat-button [color]="asistenciaStatus === 'ENTRADA' ? 'warn' : 'primary'"
+                <button mat-flat-button (click)="abrirMenuYSolicitarPermiso($event)"
+                    [color]="asistenciaStatus === 'ENTRADA' ? 'warn' : 'primary'"
                     class="rounded-full px-4 sm:px-6 h-10 transition-all duration-300 shadow-md border border-transparent active:scale-95"
                     [matMenuTriggerFor]="asistenciaMenu" matTooltip="Click para registrar asistencia">
 
@@ -70,12 +71,13 @@
                     <span class="hidden sm:inline font-semibold tracking-tight">
                         {{ asistenciaStatus === 'ENTRADA' ? 'MARCAR SALIDA' : 'MARCAR ENTRADA' }}
                     </span>
-                    <span class="sm:hidden font-semibold">{{ asistenciaStatus === 'ENTRADA' ? 'SALIDA' : 'ENTRADA'
-                        }}</span>
+                    <span class="sm:hidden font-semibold">
+                        {{ asistenciaStatus === 'ENTRADA' ? 'SALIDA' : 'ENTRADA' }}
+                    </span>
                 </button>
 
-                <mat-menu #asistenciaMenu="matMenu" class="p-4 w-72 rounded-2xl shadow-xl border border-gray-100"
-                    (menuOpened)="solicitarPermisosUbicacion()">
+
+                <mat-menu #asistenciaMenu="matMenu" class="p-4 w-72 rounded-2xl shadow-xl border border-gray-100">
                     <div class="flex flex-col p-2" (click)="$event.stopPropagation()">
                         <div class="text-lg font-bold mb-1 leading-tight text-gray-800 dark:text-white">Confirmar
                             Registro</div>
@@ -145,23 +147,6 @@
                     </div>
                 </mat-menu>
             </div>
-
-            <button mat-stroked-button class="google-btn" [ngClass]="{
-    'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
-    'google-expired': googleStatus?.isExpired,
-    'google-not-logged': !googleStatus?.isLoggedIn
-}" (click)="loginWithGoogle()">
-                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon" />
-            </button>
-
-            <button mat-stroked-button class="google-btn flex items-center justify-center space-x-2" [ngClass]="{
-    'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
-    'google-expired': googleStatus?.isExpired,
-    'google-not-logged': !googleStatus?.isLoggedIn
-}" (click)="openGoogleEventsModal()" matTooltip="Abrir eventos de Google Calendar">
-                <img src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="Google Calendar"
-                    class="google-calendar-icon" />
-            </button>
             <!---languages></languages-->
             <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
                 @if (!isDark) {

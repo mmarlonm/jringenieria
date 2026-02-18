@@ -195,6 +195,31 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         });
 
         this.checkGoogleStatus();
+        this.checkDailyStatus();
+    }
+
+    /**
+     * Verifica el estado de asistencia del día en el backend
+     */
+    checkDailyStatus(): void {
+        if (!this.user?.id) return;
+
+        this._personalManagementService.getDailyStatus(Number(this.user.id)).subscribe({
+            next: (res: any) => {
+                // Asumimos que el backend retorna: { status: 'ENTRADA' | 'SALIDA' | 'NINGUNO', ... }
+                // O tal vez retorna el último registro
+                console.log('Regreso API Status:', res);
+                if (res && res.status) {
+                    this.asistenciaStatus = res.status;
+                } else if (res && res.tipo) {
+                    // Si retorna el último movimiento registrado
+                    this.asistenciaStatus = res.tipo;
+                }
+            },
+            error: (err) => {
+                console.warn('No se pudo obtener estado asistencia (posiblemente endpoint no existe aún)', err);
+            }
+        });
     }
 
     /**
@@ -575,67 +600,113 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Se llama al abrir el menú de asistencia.
-     * Solicita permisos de ubicación y actualiza el estado del menú.
-     */
     solicitarPermisosUbicacion(): void {
+
         if (!navigator.geolocation) {
             this.locationPermission = 'unavailable';
             return;
         }
 
+        navigator.permissions.query({ name: 'geolocation' as PermissionName })
+            .then(permissionStatus => {
+
+                console.log('Estado actual permiso:', permissionStatus.state);
+
+                if (permissionStatus.state === 'granted') {
+
+                    // Si ya está concedido pero no tenemos coords
+                    if (!this.currentCoords) {
+                        this.obtenerUbicacion();
+                    } else {
+                        this.locationPermission = 'granted';
+                    }
+
+                    return;
+                }
+
+                if (permissionStatus.state === 'prompt') {
+                    // 🔥 Aquí el navegador mostrará el popup
+                    this.obtenerUbicacion();
+                    return;
+                }
+
+                if (permissionStatus.state === 'denied') {
+                    this.locationPermission = 'denied';
+                    this.ubicacionNombre = 'Permiso bloqueado en navegador';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Permiso bloqueado',
+                        text: 'Debes habilitar la ubicación manualmente en configuración del navegador.'
+                    });
+
+                    return;
+                }
+            });
+    }
+
+
+    private obtenerUbicacion(): void {
+
         this.locationPermission = 'pending';
-        this.ubicacionNombre = 'Obteniendo GPS...';
+        this.ubicacionNombre = 'Solicitando permiso...';
 
-        console.log('📍 Solicitando ubicación...');
-
-        // Timeout manual para asegurar que no se quede pegado cargando
         const manualTimeout = setTimeout(() => {
             this._ngZone.run(() => {
                 if (this.locationPermission === 'pending') {
-                    console.warn('⚠️ Tiempo de espera agotado manualmente.');
                     this.locationPermission = 'unavailable';
                     this.ubicacionNombre = 'Tiempo de espera agotado';
                 }
             });
-        }, 12000); // 12 segundos
+        }, 12000);
+
+        const geoOptions: PositionOptions = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 clearTimeout(manualTimeout);
+
                 this._ngZone.run(() => {
-                    console.log('✅ Ubicación obtenida', position);
                     this.locationPermission = 'granted';
                     this.currentCoords = {
                         lat: position.coords.latitude,
-                        lon: position.coords.longitude // Mantengo 'lon' aquí si así se definió en la interfaz, pero 'lng' es más común en Google Maps
+                        lon: position.coords.longitude,
+                        lng: position.coords.longitude
                     };
-                    // Estandarizar para el resto del componente:
-                    if (!this.currentCoords['lng']) {
-                        this.currentCoords['lng'] = position.coords.longitude;
-                    }
 
-                    this.ubicacionNombre = `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
+                    this.ubicacionNombre =
+                        `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
                 });
             },
             (error) => {
                 clearTimeout(manualTimeout);
+
                 this._ngZone.run(() => {
-                    console.error('❌ Error al obtener ubicación', error);
-                    // Si el usuario denegó, mostrar error específico
-                    if (error.code === error.PERMISSION_DENIED) {
-                        this.locationPermission = 'denied';
-                        this.ubicacionNombre = 'Permiso denegado';
-                    } else {
-                        this.locationPermission = 'unavailable';
-                        this.ubicacionNombre = 'Error al obtener ubicación';
+
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            this.locationPermission = 'denied';
+                            this.ubicacionNombre = 'Permiso denegado';
+                            break;
+
+                        case error.TIMEOUT:
+                            this.locationPermission = 'unavailable';
+                            this.ubicacionNombre = 'Tiempo agotado';
+                            break;
+
+                        default:
+                            this.locationPermission = 'unavailable';
+                            this.ubicacionNombre = 'Error al obtener ubicación';
                     }
                 });
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            geoOptions
         );
     }
+
 
     /**
      * Nombre: ejecutarMarcaje
@@ -728,4 +799,9 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                 break;
         }
     }
+
+    abrirMenuYSolicitarPermiso(event: MouseEvent): void {
+        this.solicitarPermisosUbicacion();
+    }
+
 }

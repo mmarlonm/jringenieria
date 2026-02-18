@@ -73,4 +73,12 @@ export class PersonalManagementService {
   getHorariosUsuario(usuarioId: number): Observable<any[]> {
     return this._http.get<any[]>(`${this._apiUrl}/horarios/${usuarioId}`);
   }
+
+  /**
+   * Nombre: getDailyStatus
+   * Descripción: Verifica si el usuario ya tiene registros de asistencia hoy.
+   */
+  getDailyStatus(usuarioId: number): Observable<any> {
+    return this._http.get<any>(`${this._apiUrl}/checador/status/${usuarioId}`);
+  }
 }
