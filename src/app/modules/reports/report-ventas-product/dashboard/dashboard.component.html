@@ -18,7 +18,6 @@
         </div>
     </div>
 
-
     <div
         class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 shrink-0">
         <mat-form-field appearance="outline">
@@ -60,7 +59,6 @@
         </button>
     </div>
 
-
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
         <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4">
             <p class="text-xs text-secondary">Venta Total</p>
@@ -85,7 +83,6 @@
         </div>
     </div>
 
-
     <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 flex flex-col flex-1 lg:min-h-[85vh]">
         <h2 class="font-semibold mb-3 shrink-0 flex justify-between items-center text-main">
             Ventas por Clasificación
@@ -94,21 +91,30 @@
 
         <div
             class="flex-1 overflow-auto border dark:border-gray-800 rounded-lg shadow-inner bg-default/30 min-h-[600px] lg:h-[1000px]">
-            <table class="w-full text-sm table-auto border-collapse min-w-[750px] sm:min-w-full">
+            <table class="w-full text-sm table-auto border-collapse min-w-[1000px] sm:min-w-full">
                 <thead class="bg-gray-100 dark:bg-gray-800 sticky top-0 z-20 shadow-sm">
                     <tr>
-                        <th class="p-3 text-left w-[30%] border-b dark:border-gray-700 text-secondary">Clasificación
+                        <th class="p-3 text-left w-[20%] border-b dark:border-gray-700 text-secondary">Clasificación
                         </th>
                         <th class="p-3 text-left w-[10%] border-b dark:border-gray-700 text-secondary">Código</th>
-                        <th class="p-3 text-left w-[40%] border-b dark:border-gray-700 text-secondary">Producto</th>
-                        <th class="p-3 text-right w-[15%] border-b dark:border-gray-700 text-secondary">Cantidad</th>
-                        <th class="p-3 text-right w-[15%] border-b dark:border-gray-700 text-secondary">Total</th>
+
+                        <th class="p-3 text-center w-[6%] border-b dark:border-gray-700 text-blue-600 font-semibold">QRO
+                        </th>
+                        <th class="p-3 text-center w-[6%] border-b dark:border-gray-700 text-blue-600 font-semibold">
+                            PACH</th>
+                        <th class="p-3 text-center w-[6%] border-b dark:border-gray-700 text-blue-600 font-semibold">PUE
+                        </th>
+                        <th class="p-3 text-center w-[8%] border-b dark:border-gray-700 font-bold text-main">STOCK</th>
+
+                        <th class="p-3 text-left w-[24%] border-b dark:border-gray-700 text-secondary">Producto</th>
+                        <th class="p-3 text-right w-[10%] border-b dark:border-gray-700 text-secondary">Cantidad</th>
+                        <th class="p-3 text-right w-[10%] border-b dark:border-gray-700 text-secondary">Total</th>
                     </tr>
                 </thead>
 
                 <tbody class="bg-card">
                     <tr *ngIf="tablaJerarquica.length === 0">
-                        <td colspan="5" class="p-20 text-center text-hint">
+                        <td colspan="9" class="p-20 text-center text-hint">
                             <mat-icon class="block mx-auto mb-2 opacity-20"
                                 style="font-size: 40px; width: 40px; height: 40px;">search_off</mat-icon>
                             Sin información disponible
@@ -125,10 +131,15 @@
                                 {{ padre.nombre }}
                             </td>
                             <td></td>
+                            <td class="text-center p-3 text-xs opacity-60">{{ padre.qro | number }}</td>
+                            <td class="text-center p-3 text-xs opacity-60">{{ padre.pach | number }}</td>
+                            <td class="text-center p-3 text-xs opacity-60">{{ padre.pue | number }}</td>
+                            <td class="text-center p-3 font-black">{{ padre.stockTotal | number }}</td>
                             <td></td>
                             <td class="text-right p-3">{{ padre.cantidad | number }}</td>
-                            <td class="text-right p-3 text-green-600 dark:text-green-400">{{ padre.total |
-                                currency:'MXN' }}</td>
+                            <td class="text-right p-3 text-green-600 dark:text-green-400">
+                                {{ padre.total | currency:'MXN' }}
+                            </td>
                         </tr>
 
                         <ng-container *ngIf="expandedPadres.has(padre.nombre)">
@@ -143,6 +154,10 @@
                                         {{ cat.nombre }}
                                     </td>
                                     <td></td>
+                                    <td class="text-center p-2 text-[11px]">{{ cat.qro | number }}</td>
+                                    <td class="text-center p-2 text-[11px]">{{ cat.pach | number }}</td>
+                                    <td class="text-center p-2 text-[11px]">{{ cat.pue | number }}</td>
+                                    <td class="text-center p-2 font-bold">{{ cat.stockTotal | number }}</td>
                                     <td></td>
                                     <td class="text-right p-2 text-secondary">{{ cat.cantidad | number }}</td>
                                     <td class="text-right p-2 font-medium">{{ cat.total | currency:'MXN' }}</td>
@@ -152,12 +167,34 @@
                                     <tr *ngFor="let prod of cat.productos"
                                         class="border-b dark:border-gray-800 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors">
                                         <td></td>
-                                        <td class="p-2"><span class="font-medium text-main">{{ prod.codigo }}</span>
+                                        <td class="p-2">
+                                            <span class="font-medium text-main">{{ prod.codigo }}</span>
                                         </td>
-                                        <td class="p-2 text-main">
-                                            <div class="flex flex-col">
-                                                <span>{{ prod.producto }}</span>
-                                            </div>
+
+                                        <td class="text-center p-2">
+                                            <span class="px-2 py-0.5 rounded text-[11px]"
+                                                [ngClass]="prod.qro <= 0 ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'">
+                                                {{ prod.qro | number }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center p-2">
+                                            <span class="px-2 py-0.5 rounded text-[11px]"
+                                                [ngClass]="prod.pach <= 0 ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'">
+                                                {{ prod.pach | number }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center p-2">
+                                            <span class="px-2 py-0.5 rounded text-[11px]"
+                                                [ngClass]="prod.pue <= 0 ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'">
+                                                {{ prod.pue | number }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center p-2 font-bold text-main">
+                                            {{ prod.stockTotal | number }}
+                                        </td>
+
+                                        <td class="p-2 text-main italic">
+                                            {{ prod.producto }}
                                         </td>
                                         <td class="text-right p-2 text-secondary font-mono">
                                             {{ prod.cantidad | number }}
@@ -174,7 +211,6 @@
             </table>
         </div>
     </div>
-
 
     <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 flex flex-col">
         <h2 class="font-semibold mb-3 text-main">

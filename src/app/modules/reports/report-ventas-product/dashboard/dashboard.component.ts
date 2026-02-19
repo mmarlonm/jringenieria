@@ -23,6 +23,11 @@ interface ProductoNode {
     cantidad: number;
     total: number;
     codigo: string;
+    // Nuevas columnas de existencia
+    qro: number;
+    pach: number;
+    pue: number;
+    stockTotal: number;
 }
 
 interface CategoriaNode {
@@ -30,6 +35,11 @@ interface CategoriaNode {
     cantidad: number;
     total: number;
     productos: ProductoNode[];
+    // Totales de existencia por categoría
+    qro: number;
+    pach: number;
+    pue: number;
+    stockTotal: number;
 }
 
 interface PadreNode {
@@ -37,6 +47,11 @@ interface PadreNode {
     cantidad: number;
     total: number;
     categorias: CategoriaNode[];
+    // Totales de existencia por clasificación padre
+    qro: number;
+    pach: number;
+    pue: number;
+    stockTotal: number;
 }
 
 
@@ -225,17 +240,19 @@ export class ReportVentasProductDashboardComponent implements OnInit {
 
 
     private generarTablaJerarquica(data: any[]) {
-
         const mapa = new Map<string, PadreNode>();
 
         data.forEach(r => {
-
             // PADRE
             if (!mapa.has(r.clasificacionPadre)) {
                 mapa.set(r.clasificacionPadre, {
                     nombre: r.clasificacionPadre,
                     cantidad: 0,
                     total: 0,
+                    qro: 0,      // Inicializar
+                    pach: 0,     // Inicializar
+                    pue: 0,      // Inicializar
+                    stockTotal: 0, // Inicializar
                     categorias: []
                 });
             }
@@ -250,25 +267,43 @@ export class ReportVentasProductDashboardComponent implements OnInit {
                     nombre: r.clasificacion,
                     cantidad: 0,
                     total: 0,
+                    qro: 0,      // Inicializar
+                    pach: 0,     // Inicializar
+                    pue: 0,      // Inicializar
+                    stockTotal: 0, // Inicializar
                     productos: []
                 };
                 padre.categorias.push(cat);
             }
 
             // PRODUCTO
+            // Nota: Aquí tomamos los valores tal cual vienen del DTO (qro, pach, pue, total)
             cat.productos.push({
                 producto: r.nombreProducto,
                 cantidad: r.cantidadVendida,
                 total: r.totalVendido,
-                codigo: r.codigoProducto
+                codigo: r.codigoProducto,
+                qro: r.qro || 0,
+                pach: r.pach || 0,
+                pue: r.pue || 0,
+                stockTotal: r.total || 0
             });
 
-            // SUMAS
+            // SUMAS AL PADRE
             padre.cantidad += r.cantidadVendida;
             padre.total += r.totalVendido;
+            padre.qro += (r.qro || 0);
+            padre.pach += (r.pach || 0);
+            padre.pue += (r.pue || 0);
+            padre.stockTotal += (r.total || 0);
 
+            // SUMAS A LA CATEGORIA
             cat.cantidad += r.cantidadVendida;
             cat.total += r.totalVendido;
+            cat.qro += (r.qro || 0);
+            cat.pach += (r.pach || 0);
+            cat.pue += (r.pue || 0);
+            cat.stockTotal += (r.total || 0);
         });
 
         this.tablaJerarquica = Array.from(mapa.values());
@@ -328,18 +363,17 @@ export class ReportVentasProductDashboardComponent implements OnInit {
             'Codigo Producto',
             'Producto',
             'Cantidad Vendida',
-            'Total Vendido'
+            'Total Vendido',
+            'Stock QRO',
+            'Stock PACH',
+            'Stock PUE',
+            'Stock Global'
         ];
 
-        // Función para limpiar texto y evitar saltos de columna
         const cleanText = (text: any) => {
             if (text === null || text === undefined) return '';
             let str = String(text);
-            // 1. Eliminar saltos de línea
-            str = str.replace(/\r?\n|\r/g, " ");
-            // 2. Escapar comillas dobles (reemplazar " por "")
-            str = str.replace(/"/g, '""');
-            // 3. Envolver en comillas dobles para que las comas internas no separen columnas
+            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
             return `"${str}"`;
         };
 
@@ -349,21 +383,24 @@ export class ReportVentasProductDashboardComponent implements OnInit {
             cleanText(r.codigoProducto),
             cleanText(r.nombreProducto),
             r.cantidadVendida,
-            r.totalVendido
+            r.totalVendido,
+            r.qro || 0,
+            r.pach || 0,
+            r.pue || 0,
+            r.total || 0
         ]);
 
-        // Usamos 'sep=,' para que Excel reconozca la coma como separador oficial inmediatamente
         const csvContent = 'sep=,\n' + '\ufeff' + [
             headers.join(','),
             ...rows.map(e => e.join(','))
         ].join('\n');
 
+        // ... resto del código del link para descargar ...
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const fileName = `Ventas_Planas_${this.sucursal}_${Date.now()}.csv`;
         link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
+        link.setAttribute('download', `Ventas_Existencias_${Date.now()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
