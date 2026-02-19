@@ -259,7 +259,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
                     <a href="http://www.jringenieriaelectrica.com" style="margin: 2px 0; font-size: 10px; color: #2563eb; text-decoration: none;">www.jringenieriaelectrica.com</a>
                 </div>
             </div>
-            <h1 style="margin: 0; font-size: 22px; color: #1f2937; text-transform: uppercase;">Reporte de Estado de Cuenta</h1>
+            <h1 style="margin: 0; font-size: 22px; color: #1f2937; text-transform: uppercase;">REPORTE DE CARTERA VENCIDA</h1>
         </div>
 
         <div style="background-color: #e0f2fe; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
