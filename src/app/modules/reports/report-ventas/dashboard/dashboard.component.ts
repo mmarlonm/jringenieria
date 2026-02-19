@@ -272,6 +272,12 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 📊 Top productos
     private graficaTopProductos(data: any[]): void {
+        // 🔹 1. Colores totalmente SÓLIDOS (Hexadecimales)
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#F1F5F9' : '#1E293B';
+        const tooltipBg = isDark ? '#0F172A' : '#FFFFFF'; // Fondo 100% opaco
+        const borderColor = isDark ? '#334155' : '#E2E8F0';
+
         Highcharts.chart('chartTopProductos', {
             chart: {
                 type: 'pie',
@@ -283,12 +289,53 @@ export class ReportVentasDashboardComponent implements OnInit {
                 verticalAlign: 'middle',
                 y: 10,
                 style: {
-                    fontSize: '14px',
-                    fontWeight: '600'
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    color: textColor
                 }
             },
             tooltip: {
-                pointFormat: '<b>{point.y:,.0f}</b> vendidos'
+                useHTML: true,
+                // 🔹 2. APAGAMOS EL CUADRO NATIVO DE HIGHCHARTS PARA EVITAR TRANSPARENCIAS
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                shadow: false,
+                padding: 0,
+                formatter: function (this: any) {
+                    const totalMoneda = new Intl.NumberFormat('es-MX', {
+                        style: 'currency',
+                        currency: 'MXN'
+                    }).format(this.point.totalVendido);
+
+                    // 🔹 3. CREAMOS NUESTRO PROPIO CUADRO HTML SÓLIDO Y MODERNO
+                    return `
+                    <div style="
+                        background-color: ${tooltipBg}; 
+                        color: ${textColor}; 
+                        border: 1px solid ${borderColor}; 
+                        border-radius: 8px; 
+                        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1); 
+                        padding: 12px; 
+                        min-width: 180px; 
+                        font-family: inherit;
+                        opacity: 1 !important;
+                    ">
+                        <div style="font-size: 14px; font-weight: 700; border-bottom: 1px solid ${borderColor}; padding-bottom: 8px; margin-bottom: 8px; line-height: 1.3;">
+                            ${this.point.name}
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 4px;">
+                            <span style="color: #64748b;">Unidades:</span>
+                            <span style="font-weight: 600; font-size: 14px;">${this.point.y.toLocaleString()}</span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #64748b; font-size: 13px;">Total:</span>
+                            <span style="color: #10b981; font-weight: 800; font-size: 15px;">${totalMoneda}</span>
+                        </div>
+                    </div>
+                `;
+                }
             },
             credits: {
                 enabled: false
@@ -296,13 +343,33 @@ export class ReportVentasDashboardComponent implements OnInit {
             plotOptions: {
                 pie: {
                     innerSize: '65%',
-                    borderWidth: 0,
+                    borderWidth: isDark ? 2 : 1,
+                    borderColor: isDark ? '#0F172A' : '#FFFFFF',
                     dataLabels: {
                         enabled: true,
-                        format: '{point.name}<br><span style="opacity:.7">{point.percentage:.1f}%</span>',
+                        useHTML: true,
+                        formatter: function (this: any) {
+                            const totalMoneda = new Intl.NumberFormat('es-MX', {
+                                style: 'currency',
+                                currency: 'MXN'
+                            }).format(this.point.totalVendido);
+
+                            let nombreCorto = this.point.name;
+                            if (nombreCorto.length > 15) {
+                                nombreCorto = nombreCorto.substring(0, 15) + '...';
+                            }
+
+                            return `
+                            <div style="text-align:center; color: ${textColor}; line-height: 1.4;">
+                                <b title="${this.point.name}" style="font-size: 12px;">${nombreCorto}</b><br>
+                                <span style="opacity:.7; font-size: 11px;">${this.point.percentage.toFixed(1)}%</span><br>
+                                <span style="color:#10b981; font-weight: bold; font-size: 12px;">${totalMoneda}</span>
+                            </div>
+                        `;
+                        },
                         style: {
-                            fontSize: '11px',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            textOutline: 'none'
                         }
                     },
                     states: {
@@ -317,13 +384,12 @@ export class ReportVentasDashboardComponent implements OnInit {
                 type: 'pie',
                 data: data.map(x => ({
                     name: x.producto,
-                    y: x.cantidadVendida
+                    y: x.cantidadVendida,
+                    totalVendido: x.totalVendido
                 }))
-            }]
+            } as any]
         });
     }
-
-
     // 🧑‍💼 Top vendedores
     private graficaTopVendedores(data: any[]): void {
         const isDark = document.body.classList.contains('dark');

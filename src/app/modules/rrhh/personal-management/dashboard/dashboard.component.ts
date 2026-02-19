@@ -55,8 +55,38 @@ export class PersonalManagementDashboardComponent implements OnInit {
     ngOnInit(): void {
         this.personalManagementService.getUsers().subscribe((users) => {
             this.users = users;
+            // Calcular cumpleaños
+            this.calculateBirthdays();
             console.log(this.users);
             this._changeDetectorRef.markForCheck();
+        });
+    }
+
+    calculateBirthdays(): void {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+
+        this.users.forEach(user => {
+            if (!user.fechaNacimiento) {
+                user.daysUntilBirthday = null;
+                user.isBirthdayToday = false;
+                return;
+            }
+
+            const birthDate = new Date(user.fechaNacimiento);
+            const nextBirthday = new Date(birthDate);
+            nextBirthday.setFullYear(currentYear);
+
+            // Si ya pasó este año, es el siguiente
+            if (nextBirthday.getTime() < today.setHours(0, 0, 0, 0)) {
+                nextBirthday.setFullYear(currentYear + 1);
+            }
+
+            const diffTime = nextBirthday.getTime() - today.setHours(0, 0, 0, 0);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            user.daysUntilBirthday = diffDays;
+            user.isBirthdayToday = diffDays === 0;
         });
     }
 

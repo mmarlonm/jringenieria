@@ -17,25 +17,47 @@
                     <div class="relative mx-auto h-32 w-32 rounded-full">
                         <img class="h-full w-full object-cover rounded-full border-4 border-gray-100"
                             [src]="member.avatar || 'assets/images/avatars/placeholder.jpg'" alt="Avatar" />
-                        <div class="absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white"
-                            [ngClass]="member.activo ? 'bg-green-500' : 'bg-gray-400'"></div>
+
+                        <!-- Gorro de cumpleaños animado (Emoji) -->
+                        @if (member.isBirthdayToday) {
+                        <div class="absolute -top-6 -right-4 text-6xl animate-bounce filter drop-shadow-lg z-10"
+                            title="¡Feliz Cumpleaños!">
+                            🥳
+                        </div>
+                        <div class="absolute -bottom-2 -left-2 text-4xl animate-pulse z-10">
+                            🎂
+                        </div>
+                        }
+
+                        <!-- Countdown para cumpleaños cercanos (< 30 días) -->
+                        @if (!member.isBirthdayToday && member.daysUntilBirthday !== null && member.daysUntilBirthday <=
+                            30) { <div
+                            class="absolute -top-2 -right-6 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-md border border-gray-200 dark:border-gray-700 flex items-center gap-1 z-10">
+                            <span class="text-xs font-bold text-pink-500">Faltan {{ member.daysUntilBirthday }}
+                                días</span>
+                            <span class="text-sm">🎈</span>
                     </div>
+                    }
 
-                    <div class="mt-6 font-semibold text-lg leading-tight">{{ member.nombreUsuario }}</div>
-                    <div class="text-secondary font-medium">{{ member.nombreRol }}</div>
-                    <div class="mt-1 text-md text-hint">{{ member.email }}</div>
+                    <div class="absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white"
+                        [ngClass]="member.activo ? 'bg-green-500' : 'bg-gray-400'"></div>
                 </div>
 
-                <div class="flex w-full items-center divide-x border-t bg-gray-50">
-                    <button (click)="openConfigModal(member)"
-                        class="flex flex-auto items-center justify-center py-4 hover:bg-gray-100 font-medium text-primary">
-                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:cog-6-tooth'"></mat-icon>
-                        Configurar
-                    </button>
-                </div>
+                <div class="mt-6 font-semibold text-lg leading-tight">{{ member.nombreUsuario }}</div>
+                <div class="text-secondary font-medium">{{ member.nombreRol }}</div>
+                <div class="mt-1 text-md text-hint">{{ member.email }}</div>
             </div>
-            }
-            }
+
+            <div class="flex w-full items-center divide-x border-t bg-gray-50">
+                <button (click)="openConfigModal(member)"
+                    class="flex flex-auto items-center justify-center py-4 hover:bg-gray-100 font-medium text-primary">
+                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:cog-6-tooth'"></mat-icon>
+                    Configurar
+                </button>
+            </div>
         </div>
+        }
+        }
     </div>
+</div>
 </div>

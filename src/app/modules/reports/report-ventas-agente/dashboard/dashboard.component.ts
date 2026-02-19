@@ -73,6 +73,10 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     private datosClasificacionOriginal: any[] = [];
     public marcaSeleccionada: string | null = null;
 
+    public metaAnual: number = 0;
+    public ventasAgenteActual: number = 0;
+    public porcentajeMeta: number = 0;
+
     constructor(private reportVentasService: ReportVentasAgenteService) { }
 
     ngOnInit(): void {
@@ -113,6 +117,24 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                     this.mapearGraficas(resp);
                     this.detalleVentas = resp.detalle;
 
+                    if (this.agenteSeleccionado !== 0) {
+                        this.metaAnual = resp.metaAnual || 0;
+                        if (resp.topVendedores && resp.topVendedores.length > 0) {
+                            this.ventasAgenteActual = resp.topVendedores[0].totalVendido;
+                        } else {
+                            this.ventasAgenteActual = resp.kpis?.totalVentas || 0;
+                        }
+
+                        // Cálculo del porcentaje evitando división por cero
+                        if (this.metaAnual > 0) {
+                            this.porcentajeMeta = (this.ventasAgenteActual / this.metaAnual) * 100;
+                        } else {
+                            this.porcentajeMeta = 0;
+                        }
+                    }
+
+
+
                     this.datosClasificacionOriginal = resp.ventasPorClasificacion || []; // 🔹 Ajustado al nombre del DTO que definimos
                     this.generarGraficaMarcas();
                     this.generarGraficaLineas();
@@ -148,6 +170,10 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '';
             });
+
+        this.metaAnual = 0;
+        this.ventasAgenteActual = 0;
+        this.porcentajeMeta = 0;
     }
 
     // =============================
