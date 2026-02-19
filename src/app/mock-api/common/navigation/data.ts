@@ -1,6 +1,34 @@
 /* eslint-disable */
 import { FuseNavigationItem } from '@fuse/components/navigation';
 export const defaultNavigation: FuseNavigationItem[] = [
+
+    // ==========================================================================================
+    // SECCIÓN: INICIO
+    // ==========================================================================================
+    {
+        id: 'dashboards.inicio',
+        title: 'Inicio',
+        type: 'group',
+        icon: 'heroicons_outline:home',
+        children: [
+            // Usa ID original: 'dashboards.analytics'
+            {
+                id: 'dashboards.analytics',
+                title: 'Analytics',
+                type: 'basic',
+                icon: 'heroicons_outline:chart-pie',
+                link: '/dashboards/analytics'
+            },
+            {
+                id: 'dashboards.tasjks',
+                title: 'Tareas',
+                type: 'basic',
+                icon: 'heroicons_outline:check-circle',
+                link: '/dashboards/tasks'
+            },
+        ]
+    },
+
     // ==========================================================================================
     // SECCIÓN: INGENIERÍA
     // ==========================================================================================
@@ -18,14 +46,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:banknotes',
                 link: '/dashboards/quote'
-            },
-            // Usa ID original (con error de dedo preservado): 'dashboards.tasjks'
-            {
-                id: 'dashboards.tasjks',
-                title: 'Tareas',
-                type: 'basic',
-                icon: 'heroicons_outline:check-circle',
-                link: '/dashboards/tasks'
             },
             {
                 id: 'ingenieria.catalogos',
@@ -47,8 +67,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:clipboard-document-list',
                 children: [
-                    // Usa ID original: 'dashboards.analytics'
-                    { id: 'dashboards.analytics', title: 'Analytics', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/dashboards/analytics' },
                     // Usa ID original: 'dashboards.project'
                     { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/project' },
                     // Usa ID original: 'reports.project-progress'

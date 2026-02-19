@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip'; // Importante para la barra
 
 // 🔹 Servicios y Librerías Externas
 import { ReportVentasService } from '../report-ventas.service';
@@ -29,23 +30,23 @@ import html2canvas from 'html2canvas';
         CommonModule,
         FormsModule,
         MatIconModule,
-        HighchartsChartModule, // Corregido: se eliminó la coma doble
+        HighchartsChartModule,
         MatFormFieldModule,
         MatSelectModule,
         MatInputModule,
         MatDatepickerModule,
         MatNativeDateModule,
-        MatButtonModule
+        MatButtonModule,
+        MatTooltipModule // Agregado aquí
     ]
 })
 export class ReportVentasDashboardComponent implements OnInit {
 
     // 🔹 Highcharts
     public Highcharts: typeof Highcharts = Highcharts;
-    // En la declaración de variables de tu componente
     public chartOptions: Highcharts.Options = {
         title: { text: '' },
-        series: [{ type: 'column', data: [] }] // Estructura mínima
+        series: [{ type: 'column', data: [] }]
     };
     public updateFlag: boolean = false;
 
@@ -64,11 +65,17 @@ export class ReportVentasDashboardComponent implements OnInit {
         utilidadBruta: 0
     };
 
+    // 🎯 NUEVO: Variables para Metas Globales de la Sucursal (Barra Segmentada por Agentes)
+    public metaAnual: number = 0;
+    public ventasAnual: number = 0;
+    public porcentajeMetaAnual: number = 0;
+    public segmentosAgentes: any[] = []; // Array que dibujará la barra multicolor
+
     // 🔹 Drilldown
     detalleVentas: any[] = [];
-
     private datosClasificacionOriginal: any[] = [];
     public marcaSeleccionada: string | null = null;
+
     constructor(private reportVentasService: ReportVentasService) { }
 
     ngOnInit(): void {
@@ -97,20 +104,88 @@ export class ReportVentasDashboardComponent implements OnInit {
                     this.mapearGraficas(resp);
                     this.detalleVentas = resp.detalle;
 
+                    // 🎯 LÓGICA DE CÁLCULO DE METAS SUCURSAL Y SEGMENTOS POR AGENTE
+                    this.metaAnual = resp.metaAnual || 0;
+                    this.ventasAnual = resp.ventasAnual || resp.kpis?.totalVentas || 0;
+
+                    if (this.metaAnual > 0) {
+                        this.porcentajeMetaAnual = (this.ventasAnual / this.metaAnual) * 100;
+                    } else {
+                        this.porcentajeMetaAnual = 0;
+                    }
+
+                    // 🌟 CREACIÓN DE SEGMENTOS PARA LA BARRA 🌟
+                    // 🌟 CREACIÓN DE SEGMENTOS PARA LA BARRA 🌟
+                    this.segmentosAgentes = [];
+                    if (this.metaAnual > 0 && Array.isArray(resp.topVendedores)) {
+
+                        const coloresAgentes = [
+                            'bg-blue-500', 'bg-indigo-500', 'bg-purple-500',
+                            'bg-pink-500', 'bg-rose-500', 'bg-orange-500',
+                            'bg-amber-500', 'bg-yellow-500', 'bg-lime-500',
+                            'bg-green-500', 'bg-emerald-500', 'bg-teal-500'
+                        ];
+
+                        const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+                        resp.topVendedores.forEach((vendedor: any, index: number) => {
+                            const widthBarra = (vendedor.totalVendido / this.metaAnual) * 100;
+                            const participacionSucursal = this.ventasAnual > 0 ? (vendedor.totalVendido / this.ventasAnual) * 100 : 0;
+
+                            if (widthBarra > 0) {
+                                const colorAsignado = coloresAgentes[index % coloresAgentes.length];
+                                const nombreSplit = vendedor.vendedor.trim().split(' ');
+                                const nombreCorto = nombreSplit.length > 1 ? `${nombreSplit[0]} ${nombreSplit[1].charAt(0)}.` : nombreSplit[0];
+
+                                // 🔹 NUEVO: Agrupar ventas por mes desde el detalle para este vendedor
+                                const ventasMensualesMap = new Map<number, number>();
+
+                                if (Array.isArray(resp.detalle)) {
+                                    resp.detalle.forEach((d: any) => {
+                                        if (d.vendedor === vendedor.vendedor) {
+                                            const fechaObj = new Date(d.fecha);
+                                            const mesIndex = fechaObj.getMonth();
+                                            // Sumamos el netoMovimiento (venta real de ese renglón)
+                                            const venta = d.netoMovimiento || 0;
+                                            ventasMensualesMap.set(mesIndex, (ventasMensualesMap.get(mesIndex) || 0) + venta);
+                                        }
+                                    });
+                                }
+
+                                // Convertimos el mapa a un arreglo y lo ordenamos por mes (Enero a Diciembre)
+                                const ventasMensuales = Array.from(ventasMensualesMap.entries())
+                                    .map(([mesIndex, total]) => ({
+                                        mesNombre: mesesNombres[mesIndex],
+                                        mesNumero: mesIndex,
+                                        total: total
+                                    }))
+                                    .sort((a, b) => a.mesNumero - b.mesNumero);
+
+                                this.segmentosAgentes.push({
+                                    nombreCorto: nombreCorto,
+                                    nombreCompleto: vendedor.vendedor,
+                                    totalVendido: vendedor.totalVendido,
+                                    anchoPorcentaje: widthBarra,
+                                    porcentajeParticipacion: participacionSucursal,
+                                    colorClass: colorAsignado,
+                                    ventasMensuales: ventasMensuales // 👈 Inyectamos el desglose aquí
+                                });
+                            }
+                        });
+                    }
+
                     this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
                     this.generarGraficaMarcas();
-                    this.generarGraficaLineas(); // Mostrará todas al inicio
+                    this.generarGraficaLineas();
                 },
                 error: err => {
                     console.error('Error dashboard ventas', err);
-                    this.resetDashboard(); // también limpia si hay error
+                    this.resetDashboard();
                 }
             });
     }
 
     private resetDashboard(): void {
-
-        // 🔹 KPIs
         this.kpis = {
             totalVentas: 0,
             totalFacturas: 0,
@@ -119,10 +194,12 @@ export class ReportVentasDashboardComponent implements OnInit {
             utilidadBruta: 0
         };
 
-        // 🔹 Tabla
         this.detalleVentas = [];
+        this.metaAnual = 0;
+        this.ventasAnual = 0;
+        this.porcentajeMetaAnual = 0;
+        this.segmentosAgentes = [];
 
-        // 🔹 Highcharts (estructura mínima vacía)
         this.chartOptions = {
             title: { text: '' },
             series: [{ type: 'column', data: [] }]
@@ -130,15 +207,12 @@ export class ReportVentasDashboardComponent implements OnInit {
 
         this.updateFlag = true;
 
-        // 🔹 Limpia contenedores directos (porque usas Highcharts.chart manual)
-        ['chartComparativaMes', 'chartTopProductos', 'chartTopVendedores']
+        ['chartComparativaMes', 'chartTopProductos', 'chartTopVendedores', 'chartMarcas', 'chartLineas']
             .forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '';
             });
     }
-
-
 
     // =============================
     // 🔹 KPIs
@@ -163,7 +237,8 @@ export class ReportVentasDashboardComponent implements OnInit {
         }
 
         if (Array.isArray(data.topProductos) && data.topProductos.length) {
-            this.graficaTopProductos(data.topProductos);
+            this.graficaTopProductosMonto(data.topProductos);
+            this.graficaTopProductosPiezas(data.topProductos);
         }
 
         if (Array.isArray(data.topVendedores) && data.topVendedores.length) {
@@ -171,18 +246,10 @@ export class ReportVentasDashboardComponent implements OnInit {
         }
     }
 
-
-    /**
- * Genera la gráfica comparativa alineando cronológicamente el periodo actual vs el anterior
- * e incluye el cálculo de porcentaje de crecimiento en el tooltip.
- * @param {any[]} data - Array de objetos con { anio: number, mes: number, periodo: string, totalMes: number }.
- * @returns {void}
- */
     private graficaVentasPorMes(data: any[]): void {
         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         setTimeout(() => {
-            // 1. Identificar la línea de tiempo (Actual)
             const lineaTiempo = data
                 .filter(d => d.periodo.toLowerCase() === 'actual')
                 .map(d => ({ anio: d.anio, mes: d.mes }))
@@ -190,7 +257,6 @@ export class ReportVentasDashboardComponent implements OnInit {
 
             const categorias = lineaTiempo.map(p => `${mesesNombres[p.mes - 1]} ${p.anio.toString().slice(-2)}`);
 
-            // 2. Construir las series
             const serieActual = lineaTiempo.map(p => {
                 const item = data.find(d => d.anio === p.anio && d.mes === p.mes && d.periodo.toLowerCase() === 'actual');
                 return item ? item.totalMes : 0;
@@ -221,20 +287,17 @@ export class ReportVentasDashboardComponent implements OnInit {
                             borderRadius: 3
                         }
                     },
-                    // --- SECCIÓN MODIFICADA: TOOLTIP CON CÁLCULO DE CRECIMIENTO ---
                     tooltip: {
                         shared: true,
                         useHTML: true,
                         formatter: function (this: any) {
-                            // Obtenemos los valores de los puntos (0: Anterior, 1: Actual)
                             const anterior = this.points[0]?.y || 0;
                             const actual = this.points[1]?.y || 0;
 
-                            // Cálculo de crecimiento: ((A - B) / B) * 100
                             let crecimientoHtml = '';
                             if (anterior > 0) {
                                 const porcentaje = ((actual - anterior) / anterior) * 100;
-                                const color = porcentaje >= 0 ? '#10b981' : '#ef4444'; // Verde si sube, Rojo si baja
+                                const color = porcentaje >= 0 ? '#10b981' : '#ef4444';
                                 const icono = porcentaje >= 0 ? '▲' : '▼';
 
                                 crecimientoHtml = `
@@ -244,14 +307,12 @@ export class ReportVentasDashboardComponent implements OnInit {
                                     </span>
                                 </div>`;
                             } else if (actual > 0) {
-                                // Si el año anterior fue 0 y el actual tiene ventas, el crecimiento es infinito
                                 crecimientoHtml = `
                                 <div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #EEE;">
                                     <span style="color: #10b981; font-weight: bold;">Crecimiento: N/A (Nuevo)</span>
                                 </div>`;
                             }
 
-                            // Construcción del Tooltip
                             let s = `<span style="font-size: 10px; font-weight: bold;">${this.x}</span><br/>`;
                             this.points.forEach((point: any) => {
                                 s += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>$${point.y.toLocaleString()}</b><br/>`;
@@ -261,8 +322,8 @@ export class ReportVentasDashboardComponent implements OnInit {
                         }
                     },
                     series: [
-                        { name: 'Año Anterior', color: '#94a3b8', data: serieAnterior }, // Gris mate
-                        { name: 'Año Actual', color: '#3b82f6', data: serieActual }      // Azul mate
+                        { name: 'Año Anterior', color: '#94a3b8', data: serieAnterior },
+                        { name: 'Año Actual', color: '#3b82f6', data: serieActual }
                     ],
                     credits: { enabled: false }
                 });
@@ -270,21 +331,20 @@ export class ReportVentasDashboardComponent implements OnInit {
         }, 200);
     }
 
-    // 📊 Top productos
-    private graficaTopProductos(data: any[]): void {
-        // 🔹 1. Colores totalmente SÓLIDOS (Hexadecimales)
+    // 📊 1. Gráfica Top Productos (SOLO PIEZAS / UNIDADES)
+    private graficaTopProductosPiezas(data: any[]): void {
         const isDark = document.body.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
-        const tooltipBg = isDark ? '#0F172A' : '#FFFFFF'; // Fondo 100% opaco
+        const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const borderColor = isDark ? '#334155' : '#E2E8F0';
 
-        Highcharts.chart('chartTopProductos', {
+        Highcharts.chart('chartTopProductosPiezas', { // 👈 Asegúrate de tener este ID en tu HTML
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent'
             },
             title: {
-                text: 'Top Productos',
+                text: 'Top Productos (Unidades)',
                 align: 'center',
                 verticalAlign: 'middle',
                 y: 10,
@@ -296,18 +356,11 @@ export class ReportVentasDashboardComponent implements OnInit {
             },
             tooltip: {
                 useHTML: true,
-                // 🔹 2. APAGAMOS EL CUADRO NATIVO DE HIGHCHARTS PARA EVITAR TRANSPARENCIAS
                 backgroundColor: 'transparent',
                 borderWidth: 0,
                 shadow: false,
                 padding: 0,
                 formatter: function (this: any) {
-                    const totalMoneda = new Intl.NumberFormat('es-MX', {
-                        style: 'currency',
-                        currency: 'MXN'
-                    }).format(this.point.totalVendido);
-
-                    // 🔹 3. CREAMOS NUESTRO PROPIO CUADRO HTML SÓLIDO Y MODERNO
                     return `
                     <div style="
                         background-color: ${tooltipBg}; 
@@ -324,22 +377,112 @@ export class ReportVentasDashboardComponent implements OnInit {
                             ${this.point.name}
                         </div>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 4px;">
-                            <span style="color: #64748b;">Unidades:</span>
-                            <span style="font-weight: 600; font-size: 14px;">${this.point.y.toLocaleString()}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                            <span style="color: #64748b;">Unidades vendidas:</span>
+                            <span style="font-weight: 800; color: #3b82f6; font-size: 15px;">${this.point.y.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+                }
+            },
+            credits: { enabled: false },
+            plotOptions: {
+                pie: {
+                    innerSize: '65%',
+                    borderWidth: isDark ? 2 : 1,
+                    borderColor: isDark ? '#0F172A' : '#FFFFFF',
+                    dataLabels: {
+                        enabled: true,
+                        useHTML: true,
+                        formatter: function (this: any) {
+                            let nombreCorto = this.point.name;
+                            if (nombreCorto.length > 15) {
+                                nombreCorto = nombreCorto.substring(0, 15) + '...';
+                            }
+
+                            return `
+                            <div style="text-align:center; color: ${textColor}; line-height: 1.4;">
+                                <b title="${this.point.name}" style="font-size: 12px;">${nombreCorto}</b><br>
+                                <span style="opacity:.7; font-size: 11px;">${this.point.percentage.toFixed(1)}%</span><br>
+                                <span style="color:#3b82f6; font-weight: bold; font-size: 12px;">${this.point.y.toLocaleString()} pz</span>
+                            </div>
+                        `;
+                        },
+                        style: { fontWeight: '500', textOutline: 'none' }
+                    },
+                    states: { hover: { brightness: 0.05 } }
+                }
+            },
+            series: [{
+                name: 'Unidades',
+                type: 'pie',
+                data: data.map(x => ({
+                    name: x.producto,
+                    y: x.cantidadVendida // 👈 El pastel se divide por cantidad de piezas
+                }))
+            } as any]
+        });
+    }
+
+    // 📊 2. Gráfica Top Productos (SOLO MONTO / DINERO)
+    private graficaTopProductosMonto(data: any[]): void {
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#F1F5F9' : '#1E293B';
+        const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
+        const borderColor = isDark ? '#334155' : '#E2E8F0';
+
+        Highcharts.chart('chartTopProductosMonto', { // 👈 Asegúrate de tener este ID en tu HTML
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent'
+            },
+            title: {
+                text: 'Top Productos (Ingresos)',
+                align: 'center',
+                verticalAlign: 'middle',
+                y: 10,
+                style: {
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    color: textColor
+                }
+            },
+            tooltip: {
+                useHTML: true,
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                shadow: false,
+                padding: 0,
+                formatter: function (this: any) {
+                    const totalMoneda = new Intl.NumberFormat('es-MX', {
+                        style: 'currency', currency: 'MXN'
+                    }).format(this.point.y); // Usamos 'y' porque ahora 'y' es el dinero
+
+                    return `
+                    <div style="
+                        background-color: ${tooltipBg}; 
+                        color: ${textColor}; 
+                        border: 1px solid ${borderColor}; 
+                        border-radius: 8px; 
+                        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1); 
+                        padding: 12px; 
+                        min-width: 180px; 
+                        font-family: inherit;
+                        opacity: 1 !important;
+                    ">
+                        <div style="font-size: 14px; font-weight: 700; border-bottom: 1px solid ${borderColor}; padding-bottom: 8px; margin-bottom: 8px; line-height: 1.3;">
+                            ${this.point.name}
                         </div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b; font-size: 13px;">Total:</span>
+                            <span style="color: #64748b; font-size: 13px;">Total generado:</span>
                             <span style="color: #10b981; font-weight: 800; font-size: 15px;">${totalMoneda}</span>
                         </div>
                     </div>
                 `;
                 }
             },
-            credits: {
-                enabled: false
-            },
+            credits: { enabled: false },
             plotOptions: {
                 pie: {
                     innerSize: '65%',
@@ -350,9 +493,8 @@ export class ReportVentasDashboardComponent implements OnInit {
                         useHTML: true,
                         formatter: function (this: any) {
                             const totalMoneda = new Intl.NumberFormat('es-MX', {
-                                style: 'currency',
-                                currency: 'MXN'
-                            }).format(this.point.totalVendido);
+                                style: 'currency', currency: 'MXN'
+                            }).format(this.point.y);
 
                             let nombreCorto = this.point.name;
                             if (nombreCorto.length > 15) {
@@ -367,37 +509,26 @@ export class ReportVentasDashboardComponent implements OnInit {
                             </div>
                         `;
                         },
-                        style: {
-                            fontWeight: '500',
-                            textOutline: 'none'
-                        }
+                        style: { fontWeight: '500', textOutline: 'none' }
                     },
-                    states: {
-                        hover: {
-                            brightness: 0.05
-                        }
-                    }
+                    states: { hover: { brightness: 0.05 } }
                 }
             },
             series: [{
-                name: 'Productos',
+                name: 'Ingresos',
                 type: 'pie',
                 data: data.map(x => ({
                     name: x.producto,
-                    y: x.cantidadVendida,
-                    totalVendido: x.totalVendido
+                    y: x.totalVendido // 👈 El pastel se divide por el dinero generado
                 }))
             } as any]
         });
     }
-    // 🧑‍💼 Top vendedores
+
     private graficaTopVendedores(data: any[]): void {
         const isDark = document.body.classList.contains('dark');
-
-        // Colores base
         const textColor = isDark ? '#FFFFFF' : '#333333';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
-        // Color del borde del tooltip: gris claro en modo día, azul oscuro en modo noche
         const tooltipBorder = isDark ? '#1E293B' : '#E2E8F0';
 
         Highcharts.chart('chartTopVendedores', {
@@ -418,12 +549,11 @@ export class ReportVentasDashboardComponent implements OnInit {
             },
             tooltip: {
                 backgroundColor: tooltipBg,
-                borderColor: tooltipBorder, // 👈 Borde para contraste
+                borderColor: tooltipBorder,
                 borderWidth: 1,
                 style: {
-                    color: textColor // Fallback de estilo
+                    color: textColor
                 },
-                // 💡 Inyectamos el textColor directamente en el HTML para asegurar que se vea
                 pointFormat: '<span style="color:' + textColor + '">Monto: <b>${point.y:,.2f}</b></span><br>' +
                     '<span style="color:' + textColor + '">Participación: <b>{point.percentage:.1f}%</b></span>'
             },
@@ -463,7 +593,6 @@ export class ReportVentasDashboardComponent implements OnInit {
         });
     }
 
-
     exportarPDF(): void {
         const element = document.getElementById('pdf-content');
         if (!element) {
@@ -472,7 +601,7 @@ export class ReportVentasDashboardComponent implements OnInit {
         }
 
         html2canvas(element, {
-            scale: 2,           // mejora calidad
+            scale: 2,
             useCORS: true,
             scrollY: -window.scrollY
         }).then(canvas => {
@@ -496,7 +625,6 @@ export class ReportVentasDashboardComponent implements OnInit {
         });
     }
 
-    // 📊 Gráfica 1: Marcas (Padre)
     private generarGraficaMarcas(): void {
         const dataMarcas = this.datosClasificacionOriginal.reduce((acc, curr) => {
             const existe = acc.find(x => x.name === curr.marca);
@@ -527,13 +655,11 @@ export class ReportVentasDashboardComponent implements OnInit {
                 pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
             },
             credits: { enabled: false },
-            // 🔹 DESACTIVAR LEYENDA (Igual que en líneas)
             legend: { enabled: false },
             plotOptions: {
                 pie: {
                     allowPointSelect: true,
                     cursor: 'pointer',
-                    // 🔹 ETIQUETAS CON PORCENTAJE
                     dataLabels: {
                         enabled: true,
                         format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
@@ -558,13 +684,12 @@ export class ReportVentasDashboardComponent implements OnInit {
             series: [{
                 name: 'Marcas',
                 type: 'pie',
-                innerSize: '60%', // 🔹 MISMO ESTILO DONUT
+                innerSize: '60%',
                 data: dataMarcas
             }]
         });
     }
 
-    // 📊 Gráfica 2: Líneas (Hijo)
     private generarGraficaLineas(marca?: string): void {
         let filtrados = this.datosClasificacionOriginal;
 
@@ -599,37 +724,33 @@ export class ReportVentasDashboardComponent implements OnInit {
                 pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
             },
             credits: { enabled: false },
-            // 🔹 DESACTIVAR LEYENDA
             legend: { enabled: false },
             plotOptions: {
                 pie: {
                     allowPointSelect: true,
                     cursor: 'pointer',
-                    // 🔹 ETIQUETAS CON PORCENTAJE
                     dataLabels: {
                         enabled: true,
                         format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
-                        distance: 20, // Distancia de la línea a la gráfica
+                        distance: 20,
                         style: {
                             fontSize: '10px',
                             textOutline: 'none',
                             fontWeight: 'normal'
                         }
                     },
-                    // 🔹 ASEGURAR QUE NO SE MUESTREN EN LEYENDA
                     showInLegend: false
                 }
             },
             series: [{
                 name: 'Líneas',
                 type: 'pie',
-                innerSize: '60%', // Estilo Donut
+                innerSize: '60%',
                 data: dataLineas
             }]
         });
     }
 
-    // 🔹 Resetear filtro de marca
     public resetFiltroMarca(): void {
         this.marcaSeleccionada = null;
         this.generarGraficaLineas();

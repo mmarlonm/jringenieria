@@ -62,7 +62,104 @@
     <!-- 🔹 CONTENIDO EXPORTABLE -->
     <div id="pdf-content" class="w-full space-y-6">
 
-        <!-- 🔹 KPIs -->
+        <div *ngIf="sucursal !== 'TODAS'"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="h-10 w-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <mat-icon>business</mat-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                            Progreso Meta Anual - {{ sucursal }}
+                        </h3>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-2xl font-black text-gray-800 dark:text-white">{{ ventasAnual | currency
+                                }}</span>
+                            <span class="text-sm font-medium text-gray-400">/ {{ metaAnual | currency }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-left sm:text-right">
+                    <span class="text-3xl font-black"
+                        [ngClass]="{'text-indigo-600': porcentajeMetaAnual < 100, 'text-green-500': porcentajeMetaAnual >= 100}">
+                        {{ porcentajeMetaAnual | number:'1.0-1' }}%
+                    </span>
+                </div>
+            </div>
+
+            <div
+                class="relative w-full h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner flex">
+                <ng-container *ngIf="metaAnual > 0">
+                    <ng-container *ngFor="let seg of segmentosAgentes">
+                        <div class="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000 ease-out border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
+                            [ngClass]="seg.colorClass" [style.width.%]="seg.anchoPorcentaje"
+                            [matTooltip]="seg.nombreCompleto + ' | Venta: ' + (seg.totalVendido | currency) + ' (' + (seg.anchoPorcentaje | number:'1.0-1') + '% de la Meta)'">
+                            <span *ngIf="seg.anchoPorcentaje > 4" class="truncate px-1 drop-shadow-md">{{
+                                seg.nombreCorto }}</span>
+                        </div>
+                    </ng-container>
+                </ng-container>
+            </div>
+
+            <div class="mt-2 text-xs text-right font-medium text-gray-400">
+                <span *ngIf="metaAnual > 0">* La barra completa representa la meta anual de toda la sucursal
+                    (100%).</span>
+                <span *ngIf="metaAnual === 0" class="text-orange-500">Esta sucursal no tiene metas configuradas para el
+                    año seleccionado.</span>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3"
+                *ngIf="segmentosAgentes.length > 0">
+                <div *ngFor="let seg of segmentosAgentes"
+                    class="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-3 flex flex-col hover:shadow-md transition-shadow">
+
+                    <div class="absolute top-0 left-0 w-full h-1" [ngClass]="seg.colorClass"></div>
+
+                    <div class="flex justify-between items-center mt-1 mb-1.5">
+                        <div class="font-bold text-sm text-gray-800 dark:text-gray-100 truncate pr-2"
+                            [title]="seg.nombreCompleto">
+                            {{ seg.nombreCorto }}
+                        </div>
+                        <div class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                            matTooltip="Aporte a la sucursal">
+                            {{ seg.porcentajeParticipacion | number:'1.0-1' }}%
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline gap-1.5 mb-2.5">
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase">Total:</span>
+                        <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
+                            {{ seg.totalVendido | currency:'MXN':'symbol':'1.0-0' }}
+                        </span>
+                    </div>
+
+                    <div
+                        class="mt-auto bg-gray-50 dark:bg-gray-900/50 rounded p-2 border border-gray-100 dark:border-gray-700">
+                        <div class="grid grid-cols-3 gap-x-2 gap-y-1.5">
+                            <div *ngFor="let vm of seg.ventasMensuales" class="flex flex-col">
+                                <span
+                                    class="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase leading-none">{{
+                                    vm.mesNombre }}</span>
+                                <span
+                                    class="text-[10px] text-gray-700 dark:text-gray-300 font-semibold leading-tight">{{
+                                    vm.total | currency:'MXN':'symbol':'1.0-0' }}</span>
+                            </div>
+                        </div>
+
+                        <div *ngIf="seg.ventasMensuales.length === 0"
+                            class="text-[10px] text-gray-400 text-center italic py-1">
+                            Sin detalle
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
         <!-- 🔹 KPIs -->
         <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
@@ -120,9 +217,15 @@
 
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
-                    Top Productos
+                    Top Productos por pieza
                 </h2>
-                <div id="chartTopProductos" class="w-full h-[260px] sm:h-80"></div>
+                <div id="chartTopProductosPiezas" class="w-full h-[260px] sm:h-80"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Top Productos por precio
+                </h2>
+                <div id="chartTopProductosMonto" class="w-full h-[260px] sm:h-80"></div>
             </div>
 
         </div>
