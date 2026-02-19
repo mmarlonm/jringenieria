@@ -16,7 +16,6 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 
 // 🔹 Servicios y Librerías Externas
-// 🔹 NUEVO: Importar la interfaz Agente
 import { ReportVentasAgenteService, Agente } from '../report-ventas-agente.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -55,7 +54,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     public fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1); // 1 de Enero
     public fechaFin: Date = new Date();
 
-    // 🔹 NUEVO: Variables para los Agentes
+    // 🔹 Agentes
     public listaAgentes: Agente[] = [];
     public agenteSeleccionado: number = 0; // 0 = TODOS
 
@@ -73,18 +72,25 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     private datosClasificacionOriginal: any[] = [];
     public marcaSeleccionada: string | null = null;
 
+    // 🎯 NUEVO: Variables para Metas Mensuales y Anuales (Barra Segmentada)
     public metaAnual: number = 0;
-    public ventasAgenteActual: number = 0;
-    public porcentajeMeta: number = 0;
+    public ventasAnual: number = 0;
+    public porcentajeMetaAnual: number = 0;
+
+    public metaMes: number = 0;
+    public ventasMes: number = 0;
+    public porcentajeMetaMes: number = 0;
+
+    // 📊 Lista para dibujar la barra de progreso dividida por meses en el HTML
+    public segmentosMeses: any[] = [];
 
     constructor(private reportVentasService: ReportVentasAgenteService) { }
 
     ngOnInit(): void {
-        this.cargarAgentes(); // 🔹 NUEVO: Precargar los agentes al iniciar
+        this.cargarAgentes();
         this.consultar();
     }
 
-    // 🔹 NUEVO: Método para obtener la lista de agentes
     cargarAgentes(): void {
         this.reportVentasService.getAgentes().subscribe({
             next: (agentes) => {
@@ -99,7 +105,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
         this.reportVentasService
             .getDashboardVentasAgente(
                 this.sucursal,
-                this.agenteSeleccionado, // 🔹 NUEVO: Se envía el ID del agente seleccionado (o 0 para todos)
+                this.agenteSeleccionado,
                 new Date(this.fechaInicio),
                 new Date(this.fechaFin),
                 this.esMoral
@@ -117,25 +123,77 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                     this.mapearGraficas(resp);
                     this.detalleVentas = resp.detalle;
 
+                    // 🎯 LÓGICA DE CÁLCULO DE METAS Y SEGMENTOS
                     if (this.agenteSeleccionado !== 0) {
+
+                        // 1. Asignar Metas
                         this.metaAnual = resp.metaAnual || 0;
+                        this.metaMes = resp.metaMes || 0;
+
+                        // 2. Asignar Ventas (Lo vendido en el periodo filtrado)
                         if (resp.topVendedores && resp.topVendedores.length > 0) {
-                            this.ventasAgenteActual = resp.topVendedores[0].totalVendido;
+                            this.ventasMes = resp.topVendedores[0].totalVendido;
                         } else {
-                            this.ventasAgenteActual = resp.kpis?.totalVentas || 0;
+                            this.ventasMes = resp.kpis?.totalVentas || 0;
                         }
 
-                        // Cálculo del porcentaje evitando división por cero
-                        if (this.metaAnual > 0) {
-                            this.porcentajeMeta = (this.ventasAgenteActual / this.metaAnual) * 100;
-                        } else {
-                            this.porcentajeMeta = 0;
+                        // Asignar Ventas Acumuladas Anuales 
+                        this.ventasAnual = resp.ventasAnual || this.ventasMes;
+
+                        // 3. Cálculos de Porcentajes Globales
+                        this.porcentajeMetaMes = this.metaMes > 0 ? (this.ventasMes / this.metaMes) * 100 : 0;
+                        this.porcentajeMetaAnual = this.metaAnual > 0 ? (this.ventasAnual / this.metaAnual) * 100 : 0;
+
+                        // 4. 🌟 CREACIÓN DE SEGMENTOS PARA LA BARRA 🌟
+                        this.segmentosMeses = [];
+                        if (this.metaAnual > 0 && Array.isArray(resp.ventasPorMes)) {
+
+                            // Filtramos solo el año actual y ordenamos por mes (Ene -> Dic)
+                            const mesesActuales = resp.ventasPorMes
+                                .filter(m => m.periodo.toLowerCase() === 'actual')
+                                .sort((a, b) => a.mes - b.mes);
+
+                            const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+                            // Paleta de colores para diferenciar cada segmento en la barra
+                            const coloresMeses = [
+                                'bg-blue-500', 'bg-indigo-500', 'bg-purple-500',
+                                'bg-pink-500', 'bg-rose-500', 'bg-orange-500',
+                                'bg-amber-500', 'bg-yellow-500', 'bg-lime-500',
+                                'bg-green-500', 'bg-emerald-500', 'bg-teal-500'
+                            ];
+
+                            mesesActuales.forEach(mes => {
+                                // ¿Cuánto representa lo vendido de este mes en el 100% anual?
+                                const widthBarra = (mes.totalMes / this.metaAnual) * 100;
+                                // ¿Logró la meta de SU mes?
+                                const metaMesCumplida = mes.totalMes >= (mes.metaMes || 0);
+                                const porcentajeDelMes = mes.metaMes > 0 ? (mes.totalMes / mes.metaMes) * 100 : 0;
+
+                                this.segmentosMeses.push({
+                                    nombre: nombresMeses[mes.mes - 1],
+                                    mesNum: mes.mes,
+                                    totalVendido: mes.totalMes,
+                                    metaMensual: mes.metaMes || 0,
+                                    anchoPorcentaje: widthBarra, // Ancho visual en la barra total
+                                    porcentajeCumplimiento: porcentajeDelMes, // Para mostrar en el tooltip o texto
+                                    metaCumplida: metaMesCumplida, // Para pintarle una palomita verde o alertita roja
+                                    colorClass: coloresMeses[mes.mes - 1]
+                                });
+                            });
                         }
+                    } else {
+                        // Limpiar si no hay agente seleccionado
+                        this.metaAnual = 0;
+                        this.metaMes = 0;
+                        this.ventasAnual = 0;
+                        this.ventasMes = 0;
+                        this.porcentajeMetaAnual = 0;
+                        this.porcentajeMetaMes = 0;
+                        this.segmentosMeses = [];
                     }
 
-
-
-                    this.datosClasificacionOriginal = resp.ventasPorClasificacion || []; // 🔹 Ajustado al nombre del DTO que definimos
+                    this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
                     this.generarGraficaMarcas();
                     this.generarGraficaLineas();
                 },
@@ -171,9 +229,14 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                 if (el) el.innerHTML = '';
             });
 
+        // Resetear metas
         this.metaAnual = 0;
-        this.ventasAgenteActual = 0;
-        this.porcentajeMeta = 0;
+        this.metaMes = 0;
+        this.ventasAnual = 0;
+        this.ventasMes = 0;
+        this.porcentajeMetaAnual = 0;
+        this.porcentajeMetaMes = 0;
+        this.segmentosMeses = [];
     }
 
     // =============================
@@ -400,13 +463,11 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                 pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
             },
             credits: { enabled: false },
-            // 🔹 DESACTIVAR LEYENDA (Igual que en líneas)
             legend: { enabled: false },
             plotOptions: {
                 pie: {
                     allowPointSelect: true,
                     cursor: 'pointer',
-                    // 🔹 ETIQUETAS CON PORCENTAJE
                     dataLabels: {
                         enabled: true,
                         format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
@@ -431,7 +492,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
             series: [{
                 name: 'Marcas',
                 type: 'pie',
-                innerSize: '60%', // 🔹 MISMO ESTILO DONUT
+                innerSize: '60%',
                 data: dataMarcas
             }]
         });
@@ -472,31 +533,28 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                 pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
             },
             credits: { enabled: false },
-            // 🔹 DESACTIVAR LEYENDA
             legend: { enabled: false },
             plotOptions: {
                 pie: {
                     allowPointSelect: true,
                     cursor: 'pointer',
-                    // 🔹 ETIQUETAS CON PORCENTAJE
                     dataLabels: {
                         enabled: true,
                         format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
-                        distance: 20, // Distancia de la línea a la gráfica
+                        distance: 20,
                         style: {
                             fontSize: '10px',
                             textOutline: 'none',
                             fontWeight: 'normal'
                         }
                     },
-                    // 🔹 ASEGURAR QUE NO SE MUESTREN EN LEYENDA
                     showInLegend: false
                 }
             },
             series: [{
                 name: 'Líneas',
                 type: 'pie',
-                innerSize: '60%', // Estilo Donut
+                innerSize: '60%',
                 data: dataLineas
             }]
         });

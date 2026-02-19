@@ -55,18 +55,18 @@
                 </div>
             </div>
 
-            <div class="mt-8 border-t pt-6" *ngIf="user.metas?.length">
-                <h3 class="text-lg font-bold mb-4">Metas de Venta Anuales</h3>
+            <div class="mt-8 border-t pt-6" *ngIf="metasAgrupadasVisualizacion?.length">
+                <h3 class="text-lg font-bold mb-4">Metas de Venta (Totalizado por Año)</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div *ngFor="let meta of user.metas"
+                    <div *ngFor="let meta of metasAgrupadasVisualizacion"
                         class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border flex justify-between items-center">
                         <div>
                             <div class="text-xs text-secondary uppercase font-semibold">Año</div>
                             <div class="text-xl font-bold">{{ meta.anio }}</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-xs text-secondary uppercase font-semibold">Objetivo</div>
-                            <div class="text-xl font-bold text-primary">{{ meta.montoMeta | currency }}</div>
+                            <div class="text-xs text-secondary uppercase font-semibold">Objetivo Anual Estimado</div>
+                            <div class="text-xl font-bold text-primary">{{ meta.total | currency }}</div>
                         </div>
                     </div>
                 </div>
@@ -108,8 +108,9 @@
     <div class="relative h-40 w-full bg-accent-100 px-8 dark:bg-accent-700 sm:h-48 sm:px-12">
         <img class="absolute inset-0 h-full w-full object-cover" src="images/pages/profile/cover.jpg" />
         <div class="mx-auto flex w-full max-w-3xl items-center justify-end pt-6">
-            <button mat-icon-button (click)="toggleEditMode(false)"><mat-icon class="text-white"
-                    [svgIcon]="'heroicons_outline:x-mark'"></mat-icon></button>
+            <button mat-icon-button (click)="toggleEditMode(false)">
+                <mat-icon class="text-white" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+            </button>
         </div>
     </div>
 
@@ -122,11 +123,12 @@
                             class="absolute inset-0 bg-black bg-opacity-40 rounded-full z-10 flex items-center justify-center gap-2">
                             <input id="avatar-file-input" class="hidden" type="file" [accept]="'image/jpeg, image/png'"
                                 (change)="uploadAvatar(avatarFileInput.files)" #avatarFileInput />
-                            <label for="avatar-file-input"
-                                class="cursor-pointer p-2 hover:bg-white/20 rounded-full"><mat-icon class="text-white"
-                                    [svgIcon]="'heroicons_outline:camera'"></mat-icon></label>
-                            <button mat-icon-button (click)="removeAvatar()"><mat-icon class="text-white"
-                                    [svgIcon]="'heroicons_outline:trash'"></mat-icon></button>
+                            <label for="avatar-file-input" class="cursor-pointer p-2 hover:bg-white/20 rounded-full">
+                                <mat-icon class="text-white" [svgIcon]="'heroicons_outline:camera'"></mat-icon>
+                            </label>
+                            <button type="button" mat-icon-button (click)="removeAvatar()">
+                                <mat-icon class="text-white" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                            </button>
                         </div>
                         <img *ngIf="user.avatar" class="h-full w-full object-cover rounded-full ring-4 ring-white"
                             [src]="user.avatar" />
@@ -174,40 +176,72 @@
                 </div>
 
                 <div class="mt-10 border-t pt-8">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-bold">Gestión de Metas Anuales</h3>
-                        <button type="button" mat-flat-button color="primary" (click)="addMeta()">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold">Gestión de Metas Mensuales</h3>
+                        <button type="button" mat-flat-button color="primary" (click)="addGrupoMetasAnio()">
                             <mat-icon class="icon-size-4 mr-2" [svgIcon]="'heroicons_solid:plus'"></mat-icon> Agregar
-                            Meta
+                            Año
                         </button>
                     </div>
 
-                    <div formArrayName="metas" class="mt-4 space-y-4">
-                        <div *ngFor="let meta of metasFormArray.controls; let i = index" [formGroupName]="i"
-                            class="flex items-center gap-4 bg-gray-50 p-3 rounded-lg border">
+                    <div formArrayName="metasAgrupadas" class="space-y-8">
+                        <div *ngFor="let grupoAnio of metasAgrupadasFormArray.controls; let i = index"
+                            [formGroupName]="i"
+                            class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border relative shadow-sm">
 
-                            <mat-form-field class="w-32" [subscriptSizing]="'dynamic'">
-                                <mat-label>Año</mat-label>
-                                <input matInput type="number" formControlName="anio">
-                            </mat-form-field>
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b pb-4 gap-4">
+                                <mat-form-field class="w-full sm:w-40" [subscriptSizing]="'dynamic'">
+                                    <mat-label>Año Objetivo</mat-label>
+                                    <input matInput type="number" formControlName="anio" placeholder="Ej: 2026">
+                                </mat-form-field>
 
-                            <mat-form-field class="flex-auto" [subscriptSizing]="'dynamic'">
-                                <mat-label>Monto Objetivo</mat-label>
-                                <span matTextPrefix>$&nbsp;</span>
-                                <input matInput type="number" formControlName="montoMeta">
-                            </mat-form-field>
+                                <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                                    <div class="text-left sm:text-right">
+                                        <div class="text-xs text-secondary font-semibold uppercase tracking-wider">Suma
+                                            Total Anual</div>
+                                        <div class="text-2xl font-black text-primary">{{ calcularTotalAnual(grupoAnio) |
+                                            currency }}</div>
+                                    </div>
+                                    <button type="button" mat-icon-button color="warn"
+                                        matTooltip="Eliminar año completo" (click)="removeGrupoMetasAnio(i)">
+                                        <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    </button>
+                                </div>
+                            </div>
 
-                            <button mat-icon-button color="warn" (click)="removeMeta(i)"><mat-icon
-                                    [svgIcon]="'heroicons_outline:trash'"></mat-icon></button>
+                            <div formArrayName="meses"
+                                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <div *ngFor="let mesCtrl of grupoAnio.get('meses').controls; let j = index"
+                                    [formGroupName]="j">
+                                    <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                                        <mat-label>{{ mesCtrl.get('nombreMes').value }}</mat-label>
+                                        <span matTextPrefix class="text-secondary opacity-70">$&nbsp;</span>
+                                        <input matInput type="number" formControlName="montoMeta" min="0"
+                                            placeholder="0">
+                                    </mat-form-field>
+                                </div>
+                            </div>
+
                         </div>
+                    </div>
+
+                    <div *ngIf="metasAgrupadasFormArray.length === 0"
+                        class="p-8 text-center border-2 border-dashed rounded-2xl text-secondary">
+                        <mat-icon class="icon-size-10 mb-2 opacity-50"
+                            [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+                        <p class="font-medium">No hay metas configuradas para este usuario.</p>
+                        <p class="text-sm">Haz clic en "Agregar Año" para comenzar a planificar sus objetivos mensuales.
+                        </p>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between mt-10 border-t pt-8">
-                    <button mat-button color="warn" (click)="deleteContact()">Eliminar Usuario</button>
+                    <button type="button" mat-button color="warn" (click)="deleteContact()">Eliminar Usuario</button>
                     <div class="flex items-center gap-3">
-                        <button mat-button (click)="toggleEditMode(false)">Cancelar</button>
-                        <button mat-flat-button color="primary" (click)="updateContact()">Guardar Cambios</button>
+                        <button type="button" mat-button (click)="toggleEditMode(false)">Cancelar</button>
+                        <button type="button" mat-flat-button color="primary" (click)="updateContact()">Guardar
+                            Cambios</button>
                     </div>
                 </div>
             </form>

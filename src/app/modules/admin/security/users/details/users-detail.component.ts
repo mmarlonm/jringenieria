@@ -81,6 +81,17 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     roles: any[] = [];
     unidades: any[] = []; // 🔹 Catálogo de sucursales
 
+    // 🔹 Catálogo de meses para generar los controles dinámicos
+    meses: { id: number, nombre: string }[] = [
+        { id: 1, nombre: 'Enero' }, { id: 2, nombre: 'Febrero' }, { id: 3, nombre: 'Marzo' },
+        { id: 4, nombre: 'Abril' }, { id: 5, nombre: 'Mayo' }, { id: 6, nombre: 'Junio' },
+        { id: 7, nombre: 'Julio' }, { id: 8, nombre: 'Agosto' }, { id: 9, nombre: 'Septiembre' },
+        { id: 10, nombre: 'Octubre' }, { id: 11, nombre: 'Noviembre' }, { id: 12, nombre: 'Diciembre' }
+    ];
+
+    // 🔹 Variable para visualizar los grupos de metas agrupados por Año en la vista de perfil (No Edit Mode)
+    metasAgrupadasVisualizacion: any[] = [];
+
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     constructor(
@@ -94,8 +105,9 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         private _rolService: RolService,
     ) { }
 
-    get metasFormArray(): UntypedFormArray {
-        return this.contactForm.get('metas') as UntypedFormArray;
+    // 🔹 Ahora el FormArray 'metasAgrupadas' contendrá un FormGroup por cada Año
+    get metasAgrupadasFormArray(): UntypedFormArray {
+        return this.contactForm.get('metasAgrupadas') as UntypedFormArray;
     }
 
     ngOnInit(): void {
@@ -105,7 +117,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             this._changeDetectorRef.markForCheck();
         });
 
-        // 🔹 Cargar Unidades de Negocio (Asegúrate de tener este método en tu servicio)
+        // 🔹 Cargar Unidades de Negocio
         this._usersService.getUnidadesNegocio().subscribe((unidades) => {
             this.unidades = unidades;
             this._changeDetectorRef.markForCheck();
@@ -113,7 +125,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
         this._usersListComponent.matDrawer.open();
 
-        // Inicializar el formulario
+        // 🔹 Inicializar el formulario con la nueva estructura de metas agrupadas
         this.contactForm = this._formBuilder.group({
             usuarioId: [''],
             avatar: [null],
@@ -123,7 +135,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             activo: [true, [Validators.required]],
             rolId: ['', [Validators.required]],
             unidadId: [null], // 🔹 Sucursal
-            metas: this._formBuilder.array([]) // 🔹 Metas dinámicas
+            metasAgrupadas: this._formBuilder.array([]) // 🔹 Metas dinámicas agrupadas
         });
 
         this._usersService.users$
@@ -140,13 +152,12 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
                 this.user = user;
 
                 // Limpiar metas anteriores
-                this.metasFormArray.clear();
+                this.metasAgrupadasFormArray.clear();
+                this.metasAgrupadasVisualizacion = [];
 
-                // Llenar metas si existen
+                // 🔹 Llenar metas si existen agrupándolas
                 if (user.metas && user.metas.length > 0) {
-                    user.metas.forEach(meta => {
-                        this.addMeta(meta);
-                    });
+                    this.procesarMetasDesdeBackend(user.metas);
                 }
 
                 this.contactForm.patchValue(user);
@@ -160,52 +171,155 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         this._unsubscribeAll.complete();
     }
 
-    // --- Gestión de Metas ---
+    // --- 🎯 Gestión de Metas Mensuales ---
 
     /**
-     * Añade una meta al FormArray
-     * @param meta Datos opcionales para inicializar
+     * Procesa la lista plana del backend y construye los FormGroups por Año
      */
-    addMeta(meta: any = { anio: new Date().getFullYear(), montoMeta: 0 }): void {
-        const metaFormGroup = this._formBuilder.group({
-            metaId: [meta.metaId || 0],
-            anio: [meta.anio, [Validators.required]],
-            montoMeta: [meta.montoMeta, [Validators.required, Validators.min(1)]]
+    procesarMetasDesdeBackend(metasPlanas: any[]): void {
+        // Agrupar por año
+        const metasPorAnio = metasPlanas.reduce((acc, curr) => {
+            if (!acc[curr.anio]) acc[curr.anio] = [];
+            acc[curr.anio].push(curr);
+            return acc;
+        }, {} as Record<string, any[]>);
+
+        // Iterar sobre los años encontrados
+        Object.keys(metasPorAnio).forEach(anioStr => {
+            const anio = parseInt(anioStr, 10);
+            const metasDelAnio = metasPorAnio[anio];
+            this.addGrupoMetasAnio(anio, metasDelAnio);
         });
-        this.metasFormArray.push(metaFormGroup);
+
+        // Actualizar la variable de visualización para la tarjeta del perfil
+        this.calcularTotalesVisualizacion();
+    }
+
+    /**
+     * Añade un nuevo bloque de "Año" con sus 12 meses
+     */
+    addGrupoMetasAnio(anio: number = new Date().getFullYear(), metasExistentes: any[] = []): void {
+        // Validar que el año no exista ya en el FormArray
+        const anioYaExiste = this.metasAgrupadasFormArray.controls.some(
+            ctrl => ctrl.get('anio')?.value === anio
+        );
+
+        if (anioYaExiste) {
+            Swal.fire({ icon: 'warning', title: 'Atención', text: `Las metas para el año ${anio} ya están en la lista.` });
+            return;
+        }
+
+        // Crear el FormArray de los 12 meses
+        const mesesFormArray = this._formBuilder.array([]);
+
+        this.meses.forEach(mes => {
+            // Buscar si ya había una meta guardada para este mes en la BD
+            const metaExistente = metasExistentes.find(m => m.mes === mes.id);
+
+            mesesFormArray.push(this._formBuilder.group({
+                metaId: [metaExistente ? metaExistente.metaId : 0],
+                mesId: [mes.id],
+                nombreMes: [mes.nombre],
+                montoMeta: [metaExistente ? metaExistente.montoMeta : 0, [Validators.min(0)]]
+            }));
+        });
+
+        // Crear el FormGroup principal del Año
+        const anioFormGroup = this._formBuilder.group({
+            anio: [anio, [Validators.required]],
+            meses: mesesFormArray
+        });
+
+        // Suscribirse a los cambios de valor para recalcular el total en vivo en el HTML
+        anioFormGroup.get('meses')?.valueChanges
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe(() => {
+                this._changeDetectorRef.markForCheck();
+            });
+
+        this.metasAgrupadasFormArray.push(anioFormGroup);
+        this.calcularTotalesVisualizacion();
         this._changeDetectorRef.markForCheck();
     }
 
     /**
-     * Elimina una meta del FormArray
-     * @param index Indice del elemento
+     * Elimina todo el bloque de metas de un Año específico
      */
-    removeMeta(index: number): void {
-        this.metasFormArray.removeAt(index);
+    removeGrupoMetasAnio(index: number): void {
+        this.metasAgrupadasFormArray.removeAt(index);
+        this.calcularTotalesVisualizacion();
         this._changeDetectorRef.markForCheck();
+    }
+
+    /**
+     * Calcula la suma total de los 12 meses para un bloque de Año específico en tiempo real
+     */
+    calcularTotalAnual(grupoAnio: UntypedFormGroup): number {
+        const meses = grupoAnio.get('meses')?.value as any[];
+        if (!meses) return 0;
+        return meses.reduce((suma, mes) => suma + (Number(mes.montoMeta) || 0), 0);
+    }
+
+    /**
+     * Prepara los datos agrupados y sumados para la vista de perfil (cuando no se está editando)
+     */
+    calcularTotalesVisualizacion(): void {
+        const valores = this.metasAgrupadasFormArray.getRawValue();
+        this.metasAgrupadasVisualizacion = valores.map((grupo: any) => {
+            return {
+                anio: grupo.anio,
+                total: grupo.meses.reduce((suma: number, m: any) => suma + (Number(m.montoMeta) || 0), 0)
+            };
+        }).sort((a: any, b: any) => b.anio - a.anio); // Ordenar del más reciente al más antiguo
     }
 
     // --- Acciones de Formulario ---
 
     updateContact(): void {
         if (this.contactForm.invalid) {
-            Swal.fire({ icon: "error", title: "Opps", text: "Revisa los campos obligatorios y las metas." });
+            Swal.fire({ icon: "error", title: "Opps", text: "Revisa los campos obligatorios." });
             return;
         }
 
-        const user = this.contactForm.getRawValue();
+        const userRaw = this.contactForm.getRawValue();
 
-        if (user.avatar && user.avatar.startsWith("data:image")) {
-            user.avatar = user.avatar.split(",")[1];
+        // 🔹 Aplanar las metas para mandarlas al backend como las espera (Lista de MetaUsuarioDto)
+        const metasParaBackend: any[] = [];
+
+        userRaw.metasAgrupadas.forEach((grupo: any) => {
+            grupo.meses.forEach((mes: any) => {
+                // Solo enviamos los meses que tienen monto mayor a 0 (o que ya existían en BD) para optimizar
+                if (Number(mes.montoMeta) > 0 || mes.metaId > 0) {
+                    metasParaBackend.push({
+                        metaId: mes.metaId,
+                        anio: grupo.anio,
+                        mes: mes.mesId,
+                        montoMeta: Number(mes.montoMeta)
+                    });
+                }
+            });
+        });
+
+        const userPayload = {
+            ...userRaw,
+            metas: metasParaBackend // Reemplazamos la estructura agrupada por la lista plana para la API
+        };
+
+        // Borramos la propiedad temporal 'metasAgrupadas' para limpiar el payload
+        delete userPayload.metasAgrupadas;
+
+        if (userPayload.avatar && userPayload.avatar.startsWith("data:image")) {
+            userPayload.avatar = userPayload.avatar.split(",")[1];
         }
 
-        this._usersService.updateUsers(user).subscribe(() => {
+        this._usersService.updateUsers(userPayload).subscribe(() => {
             Swal.fire({ icon: "success", title: "Éxito", text: "Usuario actualizado correctamente", timer: 1500 });
+            this.calcularTotalesVisualizacion(); // Refrescar totales en pantalla
             this.toggleEditMode(false);
         });
     }
 
-    // --- Métodos de UI ---
+    // --- Métodos de UI (Intactos) ---
 
     toggleEditMode(editMode: boolean | null = null): void {
         this.editMode = editMode ?? !this.editMode;
@@ -226,8 +340,10 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
     }
 
     removeAvatar(): void {
-        this.contactForm.get('avatar').setValue(null);
-        this._avatarFileInput.nativeElement.value = null;
+        this.contactForm.get('avatar')?.setValue(null);
+        if (this._avatarFileInput) {
+            this._avatarFileInput.nativeElement.value = null;
+        }
         this.user.avatar = null;
     }
 
