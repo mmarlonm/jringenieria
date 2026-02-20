@@ -84,6 +84,7 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 🔹 Consulta principal
     consultar(): void {
+        // 1. Llamada al servicio
         this.reportVentasService
             .getDashboardVentas(
                 this.sucursal,
@@ -92,52 +93,50 @@ export class ReportVentasDashboardComponent implements OnInit {
                 this.esMoral
             )
             .subscribe({
-                next: resp => {
-
-                    // ✅ Si no hay respuesta o viene vacío → reset
+                next: (resp) => {
+                    // ✅ Si no hay respuesta o viene vacío → reset y salir
                     if (!resp || !resp.detalle || resp.detalle.length === 0) {
                         this.resetDashboard();
                         return;
                     }
 
+                    // 2. Mapeo de indicadores y gráficas generales
                     this.mapearKPIs(resp);
                     this.mapearGraficas(resp);
                     this.detalleVentas = resp.detalle;
 
-                    // 🎯 LÓGICA DE CÁLCULO DE METAS SUCURSAL Y SEGMENTOS POR AGENTE
+                    // 3. Lógica de Metas de Sucursal
                     this.metaAnual = resp.metaAnual || 0;
                     this.ventasAnual = resp.ventasAnual || resp.kpis?.totalVentas || 0;
+                    this.porcentajeMetaAnual = this.metaAnual > 0 ? (this.ventasAnual / this.metaAnual) * 100 : 0;
 
-                    if (this.metaAnual > 0) {
-                        this.porcentajeMetaAnual = (this.ventasAnual / this.metaAnual) * 100;
-                    } else {
-                        this.porcentajeMetaAnual = 0;
-                    }
-
-                    // 🌟 CREACIÓN DE SEGMENTOS PARA LA BARRA 🌟
-                    // 🌟 CREACIÓN DE SEGMENTOS PARA LA BARRA 🌟
+                    // 4. Procesamiento de Vendedores (Segmentos)
                     this.segmentosAgentes = [];
-                    if (this.metaAnual > 0 && Array.isArray(resp.topVendedores)) {
+
+                    if (Array.isArray(resp.topVendedores)) {
 
                         const coloresAgentes = [
-                            'bg-blue-500', 'bg-indigo-500', 'bg-purple-500',
-                            'bg-pink-500', 'bg-rose-500', 'bg-orange-500',
-                            'bg-amber-500', 'bg-yellow-500', 'bg-lime-500',
-                            'bg-green-500', 'bg-emerald-500', 'bg-teal-500'
+                            'bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500',
+                            'bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500',
+                            'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500'
                         ];
 
                         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
                         resp.topVendedores.forEach((vendedor: any, index: number) => {
-                            const widthBarra = (vendedor.totalVendido / this.metaAnual) * 100;
+                            // Cálculo de porcentajes para la barra y participación
+                            const widthBarra = this.metaAnual > 0 ? (vendedor.totalVendido / this.metaAnual) * 100 : 0;
                             const participacionSucursal = this.ventasAnual > 0 ? (vendedor.totalVendido / this.ventasAnual) * 100 : 0;
 
-                            if (widthBarra > 0) {
-                                const colorAsignado = coloresAgentes[index % coloresAgentes.length];
-                                const nombreSplit = vendedor.vendedor.trim().split(' ');
-                                const nombreCorto = nombreSplit.length > 1 ? `${nombreSplit[0]} ${nombreSplit[1].charAt(0)}.` : nombreSplit[0];
+                            // Solo procesar si tiene ventas
+                            if (vendedor.totalVendido > 0) {
 
-                                // 🔹 NUEVO: Agrupar ventas por mes desde el detalle para este vendedor
+                                // 🎯 SOLUCIÓN AL NOMBRE CORTO (Nombre + Primer Apellido completo)
+                                const partes = vendedor.vendedor.trim().split(/\s+/);
+                                // Tomamos la primera y segunda palabra si existen
+                                const nombreCorto = partes.length > 1 ? `${partes[0]} ${partes[1]}` : partes[0];
+
+                                // 📊 Agrupar ventas por mes desde el detalle para este vendedor específico
                                 const ventasMensualesMap = new Map<number, number>();
 
                                 if (Array.isArray(resp.detalle)) {
@@ -145,14 +144,13 @@ export class ReportVentasDashboardComponent implements OnInit {
                                         if (d.vendedor === vendedor.vendedor) {
                                             const fechaObj = new Date(d.fecha);
                                             const mesIndex = fechaObj.getMonth();
-                                            // Sumamos el netoMovimiento (venta real de ese renglón)
                                             const venta = d.netoMovimiento || 0;
                                             ventasMensualesMap.set(mesIndex, (ventasMensualesMap.get(mesIndex) || 0) + venta);
                                         }
                                     });
                                 }
 
-                                // Convertimos el mapa a un arreglo y lo ordenamos por mes (Enero a Diciembre)
+                                // Convertir mapa a array ordenado por mes
                                 const ventasMensuales = Array.from(ventasMensualesMap.entries())
                                     .map(([mesIndex, total]) => ({
                                         mesNombre: mesesNombres[mesIndex],
@@ -161,25 +159,27 @@ export class ReportVentasDashboardComponent implements OnInit {
                                     }))
                                     .sort((a, b) => a.mesNumero - b.mesNumero);
 
+                                // 5. Agregar el objeto final al arreglo de la vista
                                 this.segmentosAgentes.push({
-                                    nombreCorto: nombreCorto,
+                                    nombreCorto: nombreCorto, // "ANA LUNA" en lugar de "ANA L."
                                     nombreCompleto: vendedor.vendedor,
                                     totalVendido: vendedor.totalVendido,
                                     anchoPorcentaje: widthBarra,
                                     porcentajeParticipacion: participacionSucursal,
-                                    colorClass: colorAsignado,
-                                    ventasMensuales: ventasMensuales // 👈 Inyectamos el desglose aquí
+                                    colorClass: coloresAgentes[index % coloresAgentes.length],
+                                    ventasMensuales: ventasMensuales
                                 });
                             }
                         });
                     }
 
+                    // 6. Actualizar gráficas adicionales
                     this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
                     this.generarGraficaMarcas();
                     this.generarGraficaLineas();
                 },
-                error: err => {
-                    console.error('Error dashboard ventas', err);
+                error: (err) => {
+                    console.error('Error al consultar el dashboard:', err);
                     this.resetDashboard();
                 }
             });
