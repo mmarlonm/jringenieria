@@ -626,138 +626,192 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
         this.loading = true;
 
-        const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
-        const formatDate = (dateStr: string) => {
+        const tipoCambio = 18.50;
+
+        const formatCurrency = (val: number) =>
+            new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
+
+        const formatDate = (dateStr: any) => {
             if (!dateStr) return '-';
             const d = new Date(dateStr);
             return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
         };
 
-        const totalCargos = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
-        const totalSaldos = data.reduce((acc, curr) => {
-            // Si está PAGADA el saldo es 0, de lo contrario es el monto completo
-            return acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0));
-        }, 0);
-        const totalAbonos = totalCargos - totalSaldos;
+        const numeroALetras = (n: number, moneda: string = 'MXN'): string => {
+            const unidades = ["", "UN ", "DOS ", "TRES ", "CUATRO ", "CINCO ", "SEIS ", "SIETE ", "OCHO ", "NUEVE "];
+            const decenas = ["DIEZ ", "VEINTE ", "TREINTA ", "CUARENTA ", "CINCUENTA ", "SESENTA ", "SETENTA ", "OCHENTA ", "NOVENTA "];
+            const centenas = ["", "CIENTO ", "DOSCIENTOS ", "TRESCIENTOS ", "CUATROCIENTOS ", "QUINIENTOS ", "SEISCIENTOS ", "SETECIENTOS ", "OCHOCIENTOS ", "NOVECIENTOS "];
+
+            const convertirSeccion = (num: number) => {
+                let output = "";
+                if (num >= 100) {
+                    if (num === 100) return "CIEN ";
+                    output += centenas[Math.floor(num / 100)];
+                    num %= 100;
+                }
+                if (num >= 10) {
+                    const especiales = ["DIEZ ", "ONCE ", "DOCE ", "TRECE ", "CATORCE ", "QUINCE "];
+                    if (num <= 15) return output + especiales[num - 10];
+                    output += decenas[Math.floor(num / 10) - 1];
+                    if (num % 10 > 0) output += "Y ";
+                    num %= 10;
+                }
+                output += unidades[num];
+                return output;
+            };
+
+            let entero = Math.floor(n);
+            let centavos = Math.round((n - entero) * 100);
+            let resultado = "";
+
+            if (entero === 0) resultado = "CERO ";
+            else {
+                if (entero >= 1000000) {
+                    let millones = Math.floor(entero / 1000000);
+                    resultado += (millones === 1 ? "UN MILLÓN " : convertirSeccion(millones) + "MILLONES ");
+                    entero %= 1000000;
+                }
+                if (entero >= 1000) {
+                    let miles = Math.floor(entero / 1000);
+                    resultado += (miles === 1 ? "MIL " : convertirSeccion(miles) + "MIL ");
+                    entero %= 1000;
+                }
+                resultado += convertirSeccion(entero);
+            }
+
+            const sufijo = moneda === 'MXN' ? "PESOS" : "DÓLARES";
+            const mnc = moneda === 'MXN' ? "M.N." : "USD";
+            return `(${resultado}${sufijo} ${mnc})`.toUpperCase();
+        };
+
+        const totalMXN = data
+            .filter(i => (i.moneda || 'MXN').toUpperCase() === 'MXN')
+            .reduce((acc, curr) => acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0)), 0);
+
+        let totalUSD = data
+            .filter(i => (i.moneda || '').toUpperCase() === 'USD')
+            .reduce((acc, curr) => acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0)), 0);
+
+        if (totalUSD === 0 && totalMXN > 0) totalUSD = totalMXN / tipoCambio;
 
         const cliente = data[0].nombreCliente || '';
-        const rfc = data[0].rfc || '';
-        const sucursal = this.sucursal || 'TODAS';
-        const fInicio = formatDate(this.fechaInicio.toISOString());
-        const fFin = formatDate(this.fechaFin.toISOString());
+        const fInicio = formatDate(this.fechaInicio);
+        const fFin = formatDate(this.fechaFin);
 
         let tableRows = '';
         data.forEach((item, i) => {
-            const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
             const cargo = item.montoDocumento || 0;
             const saldo = item.estatusPago === 'PAGADA' ? 0 : cargo;
             const abono = cargo - saldo;
-            const estatus = item.estatusPago || '';
-
             tableRows += `
-            <tr style="background-color: ${bgColor}; color: #374151; font-size: 11px;">
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${formatDate(item.fechaDocumento)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold;">${item.folioCompleto || '-'}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">Venta</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">Venta de Equipos/Serv.</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(cargo)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${abono > 0 ? formatCurrency(abono) : '-'}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${formatCurrency(saldo)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold; color: ${estatus === 'VENCIDA' ? '#dc2626' : '#16a34a'};">${estatus}</td>
-            </tr>
-        `;
+        <tr style="font-size: 8.5px; text-align: center; color: #334155;">
+            <td style="padding: 5px; border: 1px solid #cbd5e1;">${i + 1}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1;">${formatDate(item.fechaDocumento)}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1; font-weight: bold;">${item.folioCompleto || '-'}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: left; font-size: 7.5px;">FACTURACION DE PRODUCTOS Y SERVICIOS</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1;">${item.moneda || 'MXN'}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">$ ${cargo.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">$ ${abono.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold;">$ ${saldo.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1;">${formatDate(item.fechaVencimiento)}</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1;">X</td>
+            <td style="padding: 5px; border: 1px solid #cbd5e1; font-weight: bold; color: ${item.estatusPago === 'VENCIDA' ? '#dc2626' : '#16a34a'};">${item.estatusPago}</td>
+        </tr>`;
         });
 
         const container = document.createElement('div');
-        container.id = 'temp-pdf-seg-container';
-        container.setAttribute('style', 'width: 800px; padding: 40px; background-color: #ffffff; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; z-index: -1000;');
+        container.setAttribute('style', 'width: 850px; height: 1123px; background-color: white; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; display: flex; flex-direction: column; overflow: hidden;');
 
         container.innerHTML = `
+    <div style="width: 100%; height: 45px; background-color: #d1d5db; position: relative; display: flex; align-items: center; justify-content: flex-end;">
+        <div style="background-color: #d1d5db; height: 100%; width: 200px; border-top-right-radius: 50px; border-bottom-right-radius: 50px; display: flex; align-items: center; justify-content: center; position: absolute; z-index: 1; right:30px">
+             <span style="color: #1e4b8a; font-weight: bold; font-size: 14px;">ESTADO DE CUENTA</span>
+        </div>
+        <div style="background-color: #166534; height: 100%; width: 60px;"></div>
+    </div>
+
+    <div style="padding: 20px 40px; flex: 1;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="images/logo/logo-new-jr.png" alt="Logo JR" style="max-height: 100px; max-width: 200px; object-fit: contain;">
-                <div>
-                    <h2 style="margin: 0; color: #1e3a8a; font-size: 16px;">JR INGENIERÍA ELÉCTRICA</h2>
-                    <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">RFC: JRI-XXXXXX-XXX</p>
-                    <p style="margin: 2px 0; font-size: 10px; color: #4b5563;">Dir: Calle Falsa 123, Pachuca, Hgo.</p>
-                    <a href="http://www.jringenieriaelectrica.com" style="margin: 2px 0; font-size: 10px; color: #2563eb; text-decoration: none;">www.jringenieriaelectrica.com</a>
-                </div>
+            <img src="images/logo/logo-new-jrbk.png" style="width: 110px;">
+            <h1 style="text-align: center; color: #1e4b8a; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 1px; flex: 1;">JR INGENIERÍA ELÉCTRICA</h1>
+            <div style="text-align: right;">
+                <p style="margin: 0; font-size: 12px; font-weight: bold; color: #1f2937;">RANGO DE FECHAS</p>
+                <p style="margin: 0; font-size: 11px; color: #4b5563;">${fInicio} AL ${fFin}</p>
             </div>
-            <h1 style="margin: 0; font-size: 22px; color: #1f2937; text-transform: uppercase;">Reporte de Estado de Cuenta</h1>
         </div>
 
-        <div style="background-color: #e0f2fe; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>CLIENTE:</strong> ${cliente}</p>
-            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>RFC:</strong> ${rfc}</p>
-            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>SUCURSAL:</strong> ${sucursal}</p>
-            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;"><strong>FILTRADO POR FECHAS:</strong> ${fInicio} - ${fFin}</p>
-        </div>
-
-        <div style="background-color: #16a34a; color: white; text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
-            <div style="font-size: 16px; font-weight: bold; letter-spacing: 1px;">SALDO PENDIENTE:</div>
-            <div style="font-size: 38px; font-weight: 900; margin-top: 5px;">${formatCurrency(totalSaldos)} MXN</div>
-        </div>
+        <p style="font-size: 12px; color: #1f2937; margin-bottom: 15px;"><strong>Cliente:</strong> ${cliente}</p>
 
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <thead>
-                <tr style="background-color: #d1d5db; color: #374151; font-size: 11px;">
-                    <th style="padding: 10px; text-align: center;">FECHA</th>
-                    <th style="padding: 10px; text-align: center;">FOLIO</th>
-                    <th style="padding: 10px; text-align: center;">TIPO</th>
-                    <th style="padding: 10px; text-align: center;">DESCRIPCIÓN</th>
-                    <th style="padding: 10px; text-align: right;">CARGO</th>
-                    <th style="padding: 10px; text-align: right;">ABONO</th>
-                    <th style="padding: 10px; text-align: right;">SALDO</th>
-                    <th style="padding: 10px; text-align: center;">ESTATUS</th>
+                <tr style="background-color: #1e4b8a; color: white; font-size: 9px; text-align: center; text-transform: uppercase;">
+                    <th style="padding: 8px; border: 1px solid #fff;">No.</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Fecha Facturación</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Folio</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Descripción</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Moneda</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Cargo</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Abono</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Saldo</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Vencimiento</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Días Venc.</th>
+                    <th style="padding: 8px; border: 1px solid #fff;">Status</th>
                 </tr>
             </thead>
-            <tbody>
-                ${tableRows}
-            </tbody>
+            <tbody>${tableRows}</tbody>
         </table>
 
-        <div style="display: flex; justify-content: flex-start; gap: 15px; margin-bottom: 40px;">
-            <div style="background-color: #e5e7eb; padding: 15px; border-radius: 6px; min-width: 160px; text-align: center;">
-                <div style="font-size: 12px; font-weight: bold; color: #374151; margin-bottom: 5px;">TOTAL CARGOS</div>
-                <div style="font-size: 18px; font-weight: 900; color: #1f2937;">${formatCurrency(totalCargos)}</div>
+        <div style="margin-bottom: 25px; display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: stretch; border: 1px solid #94a3b8; min-height: 35px; flex-wrap: nowrap;">
+                <div style="background-color: #84cc16; color: white; padding: 5px 10px; font-weight: bold; font-size: 9px; width: 170px; display: flex; align-items: center; flex-shrink: 0;">MONTO TOTAL FACTURAS MXN</div>
+                <div style="padding: 5px 10px; min-width: 120px; font-weight: bold; border-left: 1px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${formatCurrency(totalMXN)}</div>
+                <div style="padding: 5px 10px; flex: 1; border-left: 1px solid #94a3b8; font-size: 8.5px; font-weight: bold; display: flex; align-items: center; background-color: #f9fafb; color: #1f2937; word-break: break-word;">
+                    ${numeroALetras(totalMXN, 'MXN')}
+                </div>
             </div>
-            <div style="background-color: #e5e7eb; padding: 15px; border-radius: 6px; min-width: 160px; text-align: center;">
-                <div style="font-size: 12px; font-weight: bold; color: #374151; margin-bottom: 5px;">TOTAL ABONOS</div>
-                <div style="font-size: 18px; font-weight: 900; color: #1f2937;">${formatCurrency(totalAbonos)}</div>
-            </div>
-            <div style="background-color: #16a34a; padding: 15px; border-radius: 6px; min-width: 180px; text-align: center; color: white;">
-                <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">SALDO FINAL</div>
-                <div style="font-size: 18px; font-weight: 900;">${formatCurrency(totalSaldos)}</div>
+            <div style="display: flex; align-items: stretch; border: 1px solid #94a3b8; min-height: 35px; flex-wrap: nowrap;">
+                <div style="background-color: #f59e0b; color: white; padding: 5px 10px; font-weight: bold; font-size: 9px; width: 170px; display: flex; align-items: center; flex-shrink: 0;">MONTO TOTAL FACTURAS USD</div>
+                <div style="padding: 5px 10px; min-width: 120px; font-weight: bold; border-left: 1px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">$ ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                <div style="padding: 5px 10px; flex: 1; border-left: 1px solid #94a3b8; font-size: 8.5px; font-weight: bold; display: flex; align-items: center; background-color: #f9fafb; color: #1f2937; word-break: break-word;">
+                    ${numeroALetras(totalUSD, 'USD')}
+                </div>
             </div>
         </div>
 
-        <div style="border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #6b7280;">
-            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza, email: cobranza@jringenieriaelectrica.com
+        <div style="width: 70%; margin-top: 20px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #1e4b8a;">
+                <tr style="background-color: #1e4b8a; color: white; text-align: center; font-weight: bold; font-size: 12px;">
+                    <td colspan="2" style="padding: 8px;">DATOS BANCARIOS</td>
+                </tr>
+                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc; width: 25%;">BANCO</td><td style="padding: 7px; border: 1px solid #cbd5e1;">BBVA</td></tr>
+                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">NOMBRE</td><td style="padding: 7px; border: 1px solid #cbd5e1;">JESUS RICARDO MENDEZ ARRILLAGA</td></tr>
+                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">CUENTA</td><td style="padding: 7px; border: 1px solid #cbd5e1;">0478628203</td></tr>
+                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">CLAVE</td><td style="padding: 7px; border: 1px solid #cbd5e1;">012290004786282030</td></tr>
+            </table>
         </div>
+
+        <div style="margin-top: 25px; width: 70%;">
+            <div style="background-color: #1e4b8a; color: white; padding: 6px 15px; font-size: 11px; font-weight: bold; width: fit-content; min-width: 280px;">CUENTA EN PESOS (MXN)</div>
+            <div style="border: 1px solid #1e4b8a; padding: 6px 15px; font-size: 11px; width: fit-content; min-width: 280px; border-top: none;">CLABE INTERBANCARIA: 012290004786282030</div>
+        </div>
+    </div>
+
+    <div style="width: 100%; height: 40px; display: flex; position: absolute; bottom: 0;">
+         <div style="width: 20%; background-color: #166534; transform: skewX(-30deg); margin-left: -15px;"></div>
+         <div style="width: 85%; background-color: #1e3a8a; margin-left: -20px;"></div>
+    </div>
     `;
 
         document.body.appendChild(container);
 
         try {
-            const canvas = await html2canvas(container, {
-                scale: 3,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            });
-
+            const canvas = await html2canvas(container, { scale: 2, useCORS: true });
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-            const clienteClean = cliente.replace(/[^a-z0-9]/gi, '_');
-            pdf.save(`Estado_Cuenta_${clienteClean}_${new Date().getTime()}.pdf`);
-
-        } catch (error) {
-            console.error('Error al generar PDF de Estado de Cuenta:', error);
+            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+            pdf.save(`Estado_Cuenta_JR_${new Date().getTime()}.pdf`);
+        } catch (e) {
+            console.error(e);
         } finally {
             document.body.removeChild(container);
             this.loading = false;
@@ -970,6 +1024,17 @@ export class ReportCustomersDashboardComponent implements OnInit {
             default:
                 // Gris para cualquier otro estado desconocido
                 return `${base} bg-gray-50 text-gray-500 border-gray-200`;
+        }
+    }
+
+    async getTipoCambio(): Promise<number> {
+        try {
+            const response = await fetch('https://api.frankfurter.app/latest?from=USD&to=MXN');
+            const data = await response.json();
+            return data.rates.MXN; // Retorna por ejemplo 17.05
+        } catch (error) {
+            console.error("Error obteniendo tipo de cambio, usando default 18.00", error);
+            return 18.00; // Valor de respaldo
         }
     }
 }
