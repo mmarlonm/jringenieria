@@ -755,4 +755,11 @@ export class ReportVentasDashboardComponent implements OnInit {
         this.marcaSeleccionada = null;
         this.generarGraficaLineas();
     }
+
+    scrollContainer(container: HTMLElement, distance: number) {
+        container.scrollBy({
+            left: distance,
+            behavior: 'smooth'
+        });
+    }
 }

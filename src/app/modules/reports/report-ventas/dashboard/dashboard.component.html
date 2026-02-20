@@ -82,7 +82,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="text-left sm:text-right">
                     <span class="text-3xl font-black"
                         [ngClass]="{'text-indigo-600': porcentajeMetaAnual < 100, 'text-green-500': porcentajeMetaAnual >= 100}">
@@ -94,71 +93,74 @@
             <div
                 class="relative w-full h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner flex">
                 <ng-container *ngIf="metaAnual > 0">
-                    <ng-container *ngFor="let seg of segmentosAgentes">
-                        <div class="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000 ease-out border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
-                            [ngClass]="seg.colorClass" [style.width.%]="seg.anchoPorcentaje"
-                            [matTooltip]="seg.nombreCompleto + ' | Venta: ' + (seg.totalVendido | currency) + ' (' + (seg.anchoPorcentaje | number:'1.0-1') + '% de la Meta)'">
-                            <span *ngIf="seg.anchoPorcentaje > 4" class="truncate px-1 drop-shadow-md">{{
-                                seg.nombreCorto }}</span>
-                        </div>
-                    </ng-container>
+                    <div *ngFor="let seg of segmentosAgentes"
+                        class="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000 border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
+                        [ngClass]="seg.colorClass" [style.width.%]="seg.anchoPorcentaje"
+                        [matTooltip]="seg.nombreCompleto + ' | ' + (seg.totalVendido | currency)">
+                        <span *ngIf="seg.anchoPorcentaje > 4" class="truncate px-1 drop-shadow-md">{{ seg.nombreCorto
+                            }}</span>
+                    </div>
                 </ng-container>
             </div>
 
-            <div class="mt-2 text-xs text-right font-medium text-gray-400">
-                <span *ngIf="metaAnual > 0">* La barra completa representa la meta anual de toda la sucursal
-                    (100%).</span>
-                <span *ngIf="metaAnual === 0" class="text-orange-500">Esta sucursal no tiene metas configuradas para el
-                    año seleccionado.</span>
-            </div>
+            <div class="relative mt-4 group" *ngIf="segmentosAgentes.length > 0">
 
-            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3"
-                *ngIf="segmentosAgentes.length > 0">
-                <div *ngFor="let seg of segmentosAgentes"
-                    class="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-3 flex flex-col hover:shadow-md transition-shadow">
+                <button (click)="scrollContainer(scrollCards, -300)"
+                    class="absolute left-[-15px] top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-gray-700 shadow-md rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-600 border dark:border-gray-600 transition-opacity opacity-0 group-hover:opacity-100">
+                    <mat-icon>chevron_left</mat-icon>
+                </button>
 
-                    <div class="absolute top-0 left-0 w-full h-1" [ngClass]="seg.colorClass"></div>
+                <div #scrollCards class="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar"
+                    style="scroll-snap-type: x mandatory;">
 
-                    <div class="flex justify-between items-center mt-1 mb-1.5">
-                        <div class="font-bold text-sm text-gray-800 dark:text-gray-100 truncate pr-2"
-                            [title]="seg.nombreCompleto">
-                            {{ seg.nombreCorto }}
-                        </div>
-                        <div class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-1.5 py-0.5 rounded"
-                            matTooltip="Aporte a la sucursal">
-                            {{ seg.porcentajeParticipacion | number:'1.0-1' }}%
-                        </div>
-                    </div>
+                    <div *ngFor="let seg of segmentosAgentes"
+                        class="relative flex-none w-[280px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-3 flex flex-col hover:shadow-md transition-shadow"
+                        style="scroll-snap-align: start;">
 
-                    <div class="flex items-baseline gap-1.5 mb-2.5">
-                        <span class="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase">Total:</span>
-                        <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
-                            {{ seg.totalVendido | currency:'MXN':'symbol':'1.0-0' }}
-                        </span>
-                    </div>
+                        <div class="absolute top-0 left-0 w-full h-1" [ngClass]="seg.colorClass"></div>
 
-                    <div
-                        class="mt-auto bg-gray-50 dark:bg-gray-900/50 rounded p-2 border border-gray-100 dark:border-gray-700">
-                        <div class="grid grid-cols-3 gap-x-2 gap-y-1.5">
-                            <div *ngFor="let vm of seg.ventasMensuales" class="flex flex-col">
-                                <span
-                                    class="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase leading-none">{{
-                                    vm.mesNombre }}</span>
-                                <span
-                                    class="text-[10px] text-gray-700 dark:text-gray-300 font-semibold leading-tight">{{
-                                    vm.total | currency:'MXN':'symbol':'1.0-0' }}</span>
+                        <div class="flex justify-between items-center mt-1 mb-1.5">
+                            <div class="font-bold text-sm text-gray-800 dark:text-gray-100 truncate pr-2"
+                                [title]="seg.nombreCompleto">
+                                {{ seg.nombreCorto }}
+                            </div>
+                            <div
+                                class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                {{ seg.porcentajeParticipacion | number:'1.0-1' }}%
                             </div>
                         </div>
 
-                        <div *ngIf="seg.ventasMensuales.length === 0"
-                            class="text-[10px] text-gray-400 text-center italic py-1">
-                            Sin detalle
+                        <div class="flex items-baseline gap-1.5 mb-2.5">
+                            <span
+                                class="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase">Total:</span>
+                            <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
+                                {{ seg.totalVendido | currency:'MXN':'symbol':'1.0-0' }}
+                            </span>
+                        </div>
+
+                        <div
+                            class="mt-auto bg-gray-50 dark:bg-gray-900/50 rounded p-2 border border-gray-100 dark:border-gray-700">
+                            <div class="grid grid-cols-3 gap-x-2 gap-y-1.5">
+                                <div *ngFor="let vm of seg.ventasMensuales" class="flex flex-col">
+                                    <span
+                                        class="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase leading-none">{{
+                                        vm.mesNombre }}</span>
+                                    <span
+                                        class="text-[10px] text-gray-700 dark:text-gray-300 font-semibold leading-tight">{{
+                                        vm.total | currency:'MXN':'symbol':'1.0-0' }}</span>
+                                </div>
+                            </div>
+                            <div *ngIf="seg.ventasMensuales.length === 0"
+                                class="text-[10px] text-gray-400 text-center italic py-1">Sin detalle</div>
                         </div>
                     </div>
-
                 </div>
-            </div>
 
+                <button (click)="scrollContainer(scrollCards, 300)"
+                    class="absolute right-[-15px] top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-gray-700 shadow-md rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-600 border dark:border-gray-600 transition-opacity opacity-0 group-hover:opacity-100">
+                    <mat-icon>chevron_right</mat-icon>
+                </button>
+            </div>
         </div>
         <!-- 🔹 KPIs -->
         <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
