@@ -78,15 +78,3 @@
 .mat-flat-button.mat-primary {
   --mdc-filled-button-container-color: #16a34a;
 }
-
-/* Ocultar barra de scroll pero mantener funcionalidad */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
-}
