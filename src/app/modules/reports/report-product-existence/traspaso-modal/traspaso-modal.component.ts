@@ -40,18 +40,23 @@ export class TraspasoModalComponent implements OnInit {
 
     public usuarios: any[] = [];
     public loading: boolean = false;
-    public stockDisponible: number = 0;
+
+    // Lista de paqueterías solicitadas
+    public paqueterias: string[] = ['PAQUETEXPRESS', 'DHL', 'ESTAFETA', 'COLABORADOR'];
 
     public traspaso = {
         idAlmacenOrigen: null,
         almacenOrigenNombre: '',
         idAlmacenDestino: null,
         almacenDestinoNombre: '',
-        idUsuarioEnvia: 1,
+        idUsuarioEnvia: null, // Se sacará de la sesión
         idUsuarioDestino: null,
+        paqueteria: '',
         observaciones: '',
-        cantidad: 1
     };
+
+    // Lista de productos con su cantidad a enviar
+    public productosSeleccionados: any[] = [];
 
     constructor(
         public dialogRef: MatDialogRef<TraspasoModalComponent>,
@@ -62,6 +67,26 @@ export class TraspasoModalComponent implements OnInit {
 
     ngOnInit(): void {
         this.cargarUsuarios();
+        this.inicializarDatos();
+    }
+
+    inicializarDatos(): void {
+        // Sacar ID del usuario de la sesión
+        try {
+            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            this.traspaso.idUsuarioEnvia = userInformation.usuario?.id || 1;
+        } catch (e) {
+            this.traspaso.idUsuarioEnvia = 1;
+        }
+
+        // Inicializar lista de productos con cantidad por defecto 1
+        if (this.data.productos) {
+            this.productosSeleccionados = this.data.productos.map((p: any) => ({
+                ...p,
+                cantidadEnviar: 1,
+                errorStock: false
+            }));
+        }
     }
 
     cargarUsuarios(): void {
@@ -73,13 +98,14 @@ export class TraspasoModalComponent implements OnInit {
 
     onOrigenChange(): void {
         const id = this.traspaso.idAlmacenOrigen;
-        if (id === 1) { this.stockDisponible = this.data.producto.qro; this.traspaso.almacenOrigenNombre = 'Querétaro'; }
-        if (id === 2) { this.stockDisponible = this.data.producto.pach; this.traspaso.almacenOrigenNombre = 'Pachuca'; }
-        if (id === 3) { this.stockDisponible = this.data.producto.pue; this.traspaso.almacenOrigenNombre = 'Puebla'; }
+        if (id === 1) this.traspaso.almacenOrigenNombre = 'Querétaro';
+        if (id === 2) this.traspaso.almacenOrigenNombre = 'Pachuca';
+        if (id === 3) this.traspaso.almacenOrigenNombre = 'Puebla';
 
         if (this.traspaso.idAlmacenDestino === id) {
             this.traspaso.idAlmacenDestino = null;
         }
+        this.validarStockGlobal();
     }
 
     onDestinoChange(): void {
@@ -89,26 +115,37 @@ export class TraspasoModalComponent implements OnInit {
         if (id === 3) this.traspaso.almacenDestinoNombre = 'Puebla';
     }
 
-    // Propiedad calculada para validar en el HTML
-    get esInvalido(): boolean {
-        return this.traspaso.cantidad <= 0 ||
-            this.traspaso.cantidad > this.stockDisponible ||
-            !this.traspaso.idAlmacenDestino ||
-            !this.traspaso.idUsuarioDestino;
+    validarStockGlobal(): void {
+        const idOrigen = this.traspaso.idAlmacenOrigen;
+        this.productosSeleccionados.forEach(p => {
+            let stock = 0;
+            if (idOrigen === 1) stock = p.qro;
+            if (idOrigen === 2) stock = p.pach;
+            if (idOrigen === 3) stock = p.pue;
+
+            p.errorStock = p.cantidadEnviar > stock || p.cantidadEnviar <= 0;
+            p.stockMaximo = stock;
+        });
     }
 
-    /**
-     * Muestra confirmación y envía al Backend
-     */
+    get esInvalido(): boolean {
+        const algunErrorStock = this.productosSeleccionados.some(p => p.errorStock);
+        return algunErrorStock ||
+            !this.traspaso.idAlmacenOrigen ||
+            !this.traspaso.idAlmacenDestino ||
+            !this.traspaso.idUsuarioDestino ||
+            !this.traspaso.paqueteria;
+    }
+
     async confirmarTraspaso() {
         if (this.esInvalido) {
-            Swal.fire('Atención', 'Revisa la cantidad y los campos obligatorios', 'warning');
+            Swal.fire('Atención', 'Revisa las cantidades y los campos obligatorios', 'warning');
             return;
         }
 
         const confirm = await Swal.fire({
-            title: '¿Confirmar Traspaso?',
-            text: `Se moverán ${this.traspaso.cantidad} unidades a ${this.traspaso.almacenDestinoNombre}`,
+            title: '¿Confirmar Envío?',
+            text: `Se enviarán ${this.productosSeleccionados.length} productos a ${this.traspaso.almacenDestinoNombre} vía ${this.traspaso.paqueteria}`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#1e40af',
@@ -124,6 +161,7 @@ export class TraspasoModalComponent implements OnInit {
 
     private guardarTraspaso(): void {
         this.loading = true;
+
         const payload = {
             idAlmacenOrigen: this.traspaso.idAlmacenOrigen,
             almacenOrigenNombre: this.traspaso.almacenOrigenNombre,
@@ -131,17 +169,19 @@ export class TraspasoModalComponent implements OnInit {
             almacenDestinoNombre: this.traspaso.almacenDestinoNombre,
             idUsuarioEnvia: this.traspaso.idUsuarioEnvia,
             idUsuarioDestino: this.traspaso.idUsuarioDestino,
-            observaciones: this.traspaso.observaciones || `Traspaso de ${this.data.producto.nombreProducto}`,
-            detalles: [{
-                codigoProducto: this.data.producto.codigoProducto,
-                cantidadEnviada: this.traspaso.cantidad,
-                nombreProducto: this.data.producto.nombreProducto,
-            }]
+            paqueteria: this.traspaso.paqueteria,
+            observaciones: this.traspaso.observaciones || `Traspaso masivo de ${this.productosSeleccionados.length} productos`,
+            detalles: this.productosSeleccionados.map(p => ({
+                codigoProducto: p.codigoProducto,
+                cantidadEnviada: p.cantidadEnviar,
+                nombreProducto: p.nombreProducto
+            }))
         };
+
         this._service.crearTraspaso(payload).subscribe({
             next: () => {
                 this.loading = false;
-                Swal.fire('¡Éxito!', 'Traspaso enviado y notificado.', 'success');
+                Swal.fire('¡Éxito!', 'Traspaso masivo enviado con éxito.', 'success');
                 this.dialogRef.close(true);
             },
             error: (err) => {

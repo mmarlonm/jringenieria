@@ -17,8 +17,11 @@ import { ReportProductExistenceService } from '../report-product-existence.servi
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
 import { TraspasoModalComponent } from '../traspaso-modal/traspaso-modal.component';
-import { MatSort } from '@angular/material/sort'; // Importar MatSort
+import { MatSort } from '@angular/material/sort';
 import { MatSortModule } from '@angular/material/sort';
+import { SelectionModel } from '@angular/cdk/collections';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
 @Component({
     selector: 'app-reporte-product-existence-dashboard',
     standalone: true,
@@ -36,15 +39,18 @@ import { MatSortModule } from '@angular/material/sort';
         MatNativeDateModule,
         MatButtonModule,
         MatTableModule,
-        MatSortModule
+        MatSortModule,
+        MatCheckboxModule
     ]
 })
+
 export class ReportProductExistenceDashboardComponent implements OnInit {
     // Datos y Filtros
     @ViewChild(MatSort) sort: MatSort;
     public dataSource = new MatTableDataSource<any>([]);
     // Cambia esto en tu clase del componente
     public displayedColumns: string[] = [
+        'select',
         'codigo',
         'marca',
         'linea',
@@ -55,6 +61,9 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
         'total',
         'acciones'
     ];
+
+    public selection = new SelectionModel<any>(true, []);
+
 
     // Variables de filtro
     public esMoral: boolean = false;
@@ -211,19 +220,50 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     }
 
     /**
-   * Abre el modal para iniciar un traspaso del producto seleccionado
+     * Lógica de Selección
+     */
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    masterToggle() {
+        this.isAllSelected() ?
+            this.selection.clear() :
+            this.dataSource.data.forEach(row => this.selection.select(row));
+    }
+
+    checkboxLabel(row?: any): string {
+        if (!row) {
+            return `${this.isAllSelected() ? 'select' : 'deselect'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.codigoProducto}`;
+    }
+
+    abrirTraspasoMasivo(): void {
+        const seleccionados = this.selection.selected;
+        if (seleccionados.length === 0) return;
+        this.abrirTraspaso(seleccionados);
+    }
+
+    /**
+   * Abre el modal para iniciar un traspaso del producto o productos seleccionados
    */
-    abrirTraspaso(producto: any): void {
+    abrirTraspaso(productos: any | any[]): void {
+        const productList = Array.isArray(productos) ? productos : [productos];
+
         const dialogRef = this.dialog.open(TraspasoModalComponent, {
-            width: '500px',
+            width: '600px', // Aumentado para manejar lista
             data: {
-                producto: producto,
+                productos: productList,
                 esMoral: this.esMoral
             }
         });
 
         dialogRef.afterClosed().subscribe(result => {
             if (result) {
+                this.selection.clear();
                 this.consultar(); // Recargar si el traspaso fue exitoso
             }
         });
