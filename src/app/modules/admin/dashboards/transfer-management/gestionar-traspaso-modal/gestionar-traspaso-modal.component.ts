@@ -50,7 +50,8 @@ export class GestionarTraspasoModalComponent implements OnInit {
         conDiferencias: false,
         observaciones: '',
         urlEvidenciaRecepcion: '',
-        idUsuarioRecibe: null
+        idUsuarioRecibe: null,
+        folioContpaqi: ''
     };
 
     constructor(

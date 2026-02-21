@@ -1,14 +1,14 @@
-<div class="p-6 flex flex-col gap-6 max-w-[650px] max-h-[90vh] overflow-y-auto custom-scroll">
+<div class="p-6 flex flex-col gap-6 max-w-[650px] max-h-[90vh] overflow-y-auto custom-scroll bg-card">
 
     <!-- Header -->
     <div class="flex items-center justify-between">
-        <h2 class="text-xl font-black text-gray-800 flex items-center gap-2 m-0 uppercase tracking-tighter">
-            <div class="p-2 bg-slate-100 text-slate-600 rounded-lg">
+        <h2 class="text-xl font-black text-main flex items-center gap-2 m-0 uppercase tracking-tighter">
+            <div class="p-2 bg-default dark:bg-gray-800 text-secondary rounded-lg">
                 <mat-icon>history</mat-icon>
             </div>
             Historial de Proceso (Folio #{{traspaso.folio}})
         </h2>
-        <button mat-icon-button mat-dialog-close class="text-gray-400">
+        <button mat-icon-button mat-dialog-close class="text-secondary">
             <mat-icon>close</mat-icon>
         </button>
     </div>
@@ -19,24 +19,27 @@
         <!-- STEP 1: SOLICITUD (ORIGEN) -->
         <div class="timeline-step relative flex flex-col gap-1">
             <div
-                class="absolute -left-[30px] top-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center border-4 border-white shadow-sm z-10">
+                class="absolute -left-[30px] top-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center border-4 border-card dark:border-gray-800 shadow-sm z-10">
                 <mat-icon class="scale-75">add_shopping_cart</mat-icon>
             </div>
             <div class="flex justify-between items-start">
                 <div>
-                    <span class="text-[10px] font-black uppercase text-blue-600 tracking-widest leading-none">Fase 1:
+                    <span
+                        class="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-widest leading-none">Fase
+                        1:
                         Solicitud de Traspaso</span>
-                    <h3 class="text-sm font-bold text-slate-800 m-0 uppercase mt-1">Origen:
+                    <h3 class="text-sm font-bold text-main m-0 uppercase mt-1">Origen:
                         {{traspaso.almacenOrigenNombre}}</h3>
                 </div>
                 <div class="text-right">
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Creado el:</p>
-                    <p class="text-[10px] font-black text-slate-600">{{traspaso.fechaCreacion | date:'dd/MM/yyyy
+                    <p class="text-[9px] text-hint font-bold uppercase tracking-tighter">Creado el:</p>
+                    <p class="text-[10px] font-black text-secondary">{{traspaso.fechaCreacion | date:'dd/MM/yyyy
                         HH:mm'}}</p>
                 </div>
             </div>
-            <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 mt-2">
-                <p class="text-xs text-slate-600 italic leading-tight">"{{traspaso.observaciones || 'Sin observaciones
+            <div
+                class="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-800/50 mt-2">
+                <p class="text-xs text-secondary italic leading-tight">"{{traspaso.observaciones || 'Sin observaciones
                     iniciales'}}"</p>
             </div>
         </div>
@@ -45,31 +48,37 @@
         <div class="timeline-step relative flex flex-col gap-1"
             *ngIf="traspaso.estadoId >= 4 || traspaso.urlEvidenciaEnvio">
             <div
-                class="absolute -left-[30px] top-0 w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center border-4 border-white shadow-sm z-10">
+                class="absolute -left-[30px] top-0 w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center border-4 border-card dark:border-gray-800 shadow-sm z-10">
                 <mat-icon class="scale-75">local_shipping</mat-icon>
             </div>
             <div class="flex justify-between items-start">
                 <div>
-                    <span class="text-[10px] font-black uppercase text-indigo-600 tracking-widest leading-none">Fase 2:
+                    <span
+                        class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest leading-none">Fase
+                        2:
                         Procesamiento de Envío</span>
-                    <h3 class="text-sm font-bold text-slate-800 m-0 uppercase mt-1">Enviado vía {{traspaso.transportista
+                    <h3 class="text-sm font-bold text-main m-0 uppercase mt-1">Enviado vía {{traspaso.transportista
                         || 'Paquetería'}}</h3>
                 </div>
                 <div class="text-right" *ngIf="traspaso.guiaRastreo">
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Guía / Rastreo:</p>
-                    <p class="text-[10px] font-mongo font-black text-blue-600">{{traspaso.guiaRastreo}}</p>
+                    <p class="text-[9px] text-hint font-bold uppercase tracking-tighter">Guía / Rastreo:</p>
+                    <p class="text-[10px] font-mongo font-black text-blue-600 dark:text-blue-400">
+                        {{traspaso.guiaRastreo}}</p>
                 </div>
             </div>
 
-            <div class="flex flex-col gap-3 mt-2 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+            <div
+                class="flex flex-col gap-3 mt-2 bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-[9px] text-indigo-600 font-black uppercase tracking-widest">Evidencia Contpaqi
+                        <p class="text-[9px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest">
+                            Evidencia Contpaqi
                         </p>
-                        <p class="text-[10px] text-slate-500 truncate max-w-[200px]">{{traspaso.urlEvidenciaEnvio}}</p>
+                        <p class="text-[10px] text-secondary truncate max-w-[200px]">{{traspaso.urlEvidenciaEnvio}}</p>
                     </div>
                     <div class="flex gap-2">
-                        <button mat-stroked-button color="primary" class="!h-8 !px-3 !rounded-lg !text-[10px]"
+                        <button mat-stroked-button color="primary"
+                            class="!h-8 !px-3 !rounded-lg !text-[10px] dark:border-gray-700"
                             (click)="verPDF(traspaso.urlEvidenciaEnvio)">
                             VER PDF
                         </button>
@@ -79,10 +88,12 @@
                         </button>
                     </div>
                 </div>
-                <div class="border-t border-indigo-100 pt-2" *ngIf="traspaso.datosLogistica">
-                    <p class="text-[9px] text-indigo-600 font-black uppercase tracking-widest leading-none mb-1">Detalle
+                <div class="border-t border-indigo-100 dark:border-indigo-800 pt-2" *ngIf="traspaso.datosLogistica">
+                    <p
+                        class="text-[9px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest leading-none mb-1">
+                        Detalle
                         Logístico</p>
-                    <p class="text-xs text-slate-600 italic leading-tight">{{traspaso.datosLogistica}}</p>
+                    <p class="text-xs text-secondary italic leading-tight">{{traspaso.datosLogistica}}</p>
                 </div>
             </div>
         </div>
@@ -90,42 +101,56 @@
         <!-- STEP 3: RECEPCIÓN (DESTINO) -->
         <div class="timeline-step relative flex flex-col gap-1"
             *ngIf="traspaso.estadoId === 2 || traspaso.estadoId === 3">
-            <div class="absolute -left-[30px] top-0 w-10 h-10 rounded-full text-white flex items-center justify-center border-4 border-white shadow-sm z-10"
+            <div class="absolute -left-[30px] top-0 w-10 h-10 rounded-full text-white flex items-center justify-center border-4 border-card dark:border-gray-800 shadow-sm z-10"
                 [ngClass]="traspaso.estadoId === 2 ? 'bg-emerald-600' : 'bg-orange-500'">
                 <mat-icon class="scale-75">{{ traspaso.estadoId === 2 ? 'done_all' : 'report_problem' }}</mat-icon>
             </div>
             <div class="flex justify-between items-start">
                 <div>
                     <span class="text-[10px] font-black uppercase tracking-widest leading-none"
-                        [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600' : 'text-orange-500'">
+                        [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'">
                         {{ traspaso.estadoId === 2 ? 'Fase 3: Recepción Exitosa' : 'Fase 3: Recepción con Incidencias'
                         }}
                     </span>
-                    <h3 class="text-sm font-bold text-slate-800 m-0 uppercase mt-1">Destino:
+                    <h3 class="text-sm font-bold text-main m-0 uppercase mt-1">Destino:
                         {{traspaso.almacenDestinoNombre}}</h3>
                 </div>
             </div>
 
             <div class="flex flex-col gap-3 mt-2 p-4 rounded-xl border"
-                [ngClass]="traspaso.estadoId === 2 ? 'bg-emerald-50/50 border-emerald-100' : 'bg-orange-50/50 border-orange-100'">
+                [ngClass]="traspaso.estadoId === 2 ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/50' : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-800/50'">
 
                 <div *ngIf="traspaso.observacionesRecepcion" class="mb-1">
                     <p class="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
-                        [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600' : 'text-orange-500'">Notas de Recepción
+                        [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'">
+                        Notas de Recepción
                     </p>
-                    <p class="text-xs text-slate-600 italic leading-tight">"{{traspaso.observacionesRecepcion}}"</p>
+                    <p class="text-xs text-secondary italic leading-tight">"{{traspaso.observacionesRecepcion}}"</p>
+                </div>
+
+                <div *ngIf="traspaso.folioContpaqi" class="mb-1">
+                    <p class="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
+                        [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'">
+                        Folio Contpaqi
+                    </p>
+                    <p
+                        class="text-[10px] font-black text-main bg-white/50 dark:bg-white/5 px-2 py-1 rounded w-fit border border-divider dark:border-gray-800 italic">
+                        {{traspaso.folioContpaqi}}
+                    </p>
                 </div>
 
                 <div class="flex items-center justify-between" *ngIf="traspaso.urlEvidenciaRecepcion">
                     <div>
                         <p class="text-[9px] font-black uppercase tracking-widest"
-                            [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600' : 'text-orange-500'">Acuse de Recibo
+                            [ngClass]="traspaso.estadoId === 2 ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'">
+                            Acuse de Recibo
                         </p>
-                        <p class="text-[10px] text-slate-500 truncate max-w-[200px]">{{traspaso.urlEvidenciaRecepcion}}
+                        <p class="text-[10px] text-secondary truncate max-w-[200px]">{{traspaso.urlEvidenciaRecepcion}}
                         </p>
                     </div>
                     <div class="flex gap-2">
-                        <button mat-stroked-button color="accent" class="!h-8 !px-3 !rounded-lg !text-[10px]"
+                        <button mat-stroked-button color="accent"
+                            class="!h-8 !px-3 !rounded-lg !text-[10px] dark:border-gray-700"
                             (click)="verPDF(traspaso.urlEvidenciaRecepcion)">
                             VER ACUSE
                         </button>
@@ -137,17 +162,20 @@
         <!-- STEP X: CANCELADO -->
         <div class="timeline-step relative flex flex-col gap-1" *ngIf="traspaso.estadoId === 5">
             <div
-                class="absolute -left-[30px] top-0 w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center border-4 border-white shadow-sm z-10">
+                class="absolute -left-[30px] top-0 w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center border-4 border-card dark:border-gray-800 shadow-sm z-10">
                 <mat-icon class="scale-75">cancel</mat-icon>
             </div>
             <div>
-                <span class="text-[10px] font-black uppercase text-rose-600 tracking-widest leading-none">Proceso
+                <span
+                    class="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-widest leading-none">Proceso
                     Interrumpido</span>
-                <h3 class="text-sm font-bold text-slate-800 m-0 uppercase mt-1">Traspaso Cancelado</h3>
+                <h3 class="text-sm font-bold text-main m-0 uppercase mt-1">Traspaso Cancelado</h3>
             </div>
-            <div class="bg-rose-50/50 p-3 rounded-xl border border-rose-100 mt-2">
-                <p class="text-xs text-slate-600 font-bold uppercase mb-1">Motivo:</p>
-                <p class="text-xs text-rose-700 italic leading-tight">"{{traspaso.motivoCancelacion || 'Cancelado por el
+            <div
+                class="bg-rose-50/50 dark:bg-rose-900/10 p-3 rounded-xl border border-rose-100 dark:border-rose-800/50 mt-2">
+                <p class="text-xs text-secondary font-bold uppercase mb-1">Motivo:</p>
+                <p class="text-xs text-rose-700 dark:text-rose-400 italic leading-tight">"{{traspaso.motivoCancelacion
+                    || 'Cancelado por el
                     sistema o administrador'}}"</p>
             </div>
         </div>
@@ -161,19 +189,21 @@
         <div class="bg-card border dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-left text-[11px] border-collapse">
                 <thead>
-                    <tr class="bg-gray-50 border-b">
+                    <tr class="bg-default dark:bg-gray-800/50 border-b dark:border-gray-800">
                         <th class="p-3 font-bold uppercase text-secondary">Código</th>
                         <th class="p-3 font-bold uppercase text-secondary">Descripción</th>
                         <th class="p-3 font-bold uppercase text-secondary text-center w-20">Cant.</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let d of traspaso.detalles" class="border-b transition-colors hover:bg-gray-50/50">
-                        <td class="p-3 font-mono text-blue-600 font-bold tracking-tighter">{{d.codigoProducto}}</td>
-                        <td class="p-3 font-bold text-slate-700 uppercase leading-tight">{{d.nombreProducto}}</td>
+                    <tr *ngFor="let d of traspaso.detalles"
+                        class="border-b dark:border-gray-800 transition-colors hover:bg-hover">
+                        <td class="p-3 font-mono text-blue-600 dark:text-blue-400 font-bold tracking-tighter">
+                            {{d.codigoProducto}}</td>
+                        <td class="p-3 font-bold text-main uppercase leading-tight">{{d.nombreProducto}}</td>
                         <td class="p-3 text-center">
                             <span
-                                class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-black border border-blue-100">
+                                class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 px-3 py-1 rounded-full font-black border border-blue-100 dark:border-blue-800">
                                 x{{d.cantidadEnviada}}
                             </span>
                         </td>

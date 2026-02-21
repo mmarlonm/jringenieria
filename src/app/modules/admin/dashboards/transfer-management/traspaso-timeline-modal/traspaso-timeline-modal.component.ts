@@ -28,10 +28,14 @@ import { environment } from 'environments/environment';
             width: 2px;
             background: #e2e8f0;
         }
+        :host-context(.dark) .timeline-step::before {
+            background: #334155;
+        }
         .timeline-step:last-child::before { display: none; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        :host-context(.dark) .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
     `]
 })
 export class TraspasoTimelineModalComponent implements OnInit {

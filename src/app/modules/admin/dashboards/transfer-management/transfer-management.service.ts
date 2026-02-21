@@ -49,7 +49,7 @@ export class TransferManagementService {
   /**
    * Fase 4: Aprobar la recepción de un traspaso (Almacén Destino)
    */
-  aprobarRecepcion(idTraspaso: number, payload: { idUsuarioRecibe: number, conDiferencias: boolean, observaciones: string, urlEvidenciaRecepcion: string }): Observable<any> {
+  aprobarRecepcion(idTraspaso: number, payload: { idUsuarioRecibe: number, conDiferencias: boolean, observaciones: string, urlEvidenciaRecepcion: string, folioContpaqi: string }): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/aprobar-recepcion/${idTraspaso}`, payload);
   }
 
