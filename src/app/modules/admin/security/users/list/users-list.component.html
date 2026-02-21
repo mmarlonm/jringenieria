@@ -1,168 +1,136 @@
 <div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
-    <mat-drawer-container
-        class="bg-card h-full flex-auto dark:bg-transparent"
-        (backdropClick)="onBackdropClicked()"
-    >
+    <mat-drawer-container class="h-full flex-auto bg-default dark:bg-transparent" (backdropClick)="onBackdropClicked()">
         <!-- Drawer -->
-        <mat-drawer
-            class="w-full dark:bg-gray-900 md:w-160"
-            [mode]="drawerMode"
-            [opened]="false"
-            [position]="'end'"
-            [disableClose]="true"
-            #matDrawer
-        >
+        <mat-drawer class="w-full dark:bg-gray-900 md:w-160" [mode]="drawerMode" [opened]="false" [position]="'end'"
+            [disableClose]="true" #matDrawer>
             <router-outlet></router-outlet>
         </mat-drawer>
 
         <mat-drawer-content class="flex flex-col">
             <!-- Main -->
-            <div class="flex-auto">
+            <div class="flex-auto overflow-y-auto">
                 <!-- Header -->
                 <div
-                    class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8"
-                >
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b bg-card px-6 py-8 md:px-8 dark:bg-transparent">
                     <!-- Title -->
                     <div>
-                        <div
-                            class="text-4xl font-extrabold leading-none tracking-tight"
-                        >
-                            Usuarios
-                        </div>
-                        <div class="text-secondary ml-0.5 font-medium">
+                        <div class="text-4xl font-extrabold leading-none tracking-tight">Usuarios</div>
+                        <div class="text-secondary mt-1 flex items-center gap-2 font-medium">
+                            <mat-icon class="icon-size-4 text-hint" [svgIcon]="'heroicons_solid:users'"></mat-icon>
                             @if (contactsCount > 0) {
-                                {{ contactsCount }}
+                            {{ contactsCount }}
                             }
-                            {{
-                                contactsCount
-                                    | i18nPlural
-                                        : {
-                                              '=0': 'No users',
-                                              '=1': 'user',
-                                              other: 'users',
-                                          }
-                            }}
+                            {{ contactsCount | i18nPlural: { '=0': 'No hay usuarios', '=1': 'usuario registrado', other:
+                            'usuarios registrados' } }}
                         </div>
                     </div>
 
                     <!-- Main actions -->
-                    <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+                    <div class="mt-4 flex w-full sm:w-auto items-center gap-3 sm:mt-0">
                         <!-- Search -->
-                        <div class="flex-auto">
-                            <mat-form-field
-                                class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
-                                subscriptSizing="dynamic"
-                            >
-                                <mat-icon
-                                    class="icon-size-5"
-                                    matPrefix
-                                    [svgIcon]="
-                                        'heroicons_solid:magnifying-glass'
-                                    "
-                                ></mat-icon>
-                                <input
-                                    matInput
-                                    [formControl]="searchInputControl"
-                                    [autocomplete]="'off'"
-                                    [placeholder]="'Search users'"
-                                />
+                        <div class="flex-auto min-w-0 sm:min-w-60">
+                            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                                <mat-icon class="icon-size-5" matPrefix
+                                    [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                                <input matInput [formControl]="searchInputControl" [autocomplete]="'off'"
+                                    [placeholder]="'Buscar por nombre o email...'" />
                             </mat-form-field>
                         </div>
                         <!-- Add user button -->
-                        <button
-                            class="ml-4"
-                            mat-flat-button
-                            [color]="'primary'"
-                            (click)="createContact()"
-                        >
-                            <mat-icon
-                                [svgIcon]="'heroicons_outline:plus'"
-                            ></mat-icon>
-                            <span class="ml-2 mr-1">Add</span>
+                        <button mat-flat-button [color]="'primary'" class="rounded-xl px-6" (click)="createContact()">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                            <span class="ml-2">Nuevo Usuario</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Contacts list -->
-                <div class="relative">
+                <!-- Contacts grid -->
+                <div class="p-6 md:p-8">
                     @if (users$ | async; as users) {
-                        @if (users.length) {
-                            @for (
-                                user of users;
-                                track trackByFn(i, user);
-                                let i = $index
-                            ) {
-                                <!-- Group -->
-                                @if (
-                                    i === 0 ||
-                                    user.nombreRol !==
-                                        users[i - 1].nombreRol
-                                ) {
-                                    <div
-                                        class="text-secondary sticky top-0 z-10 -mt-px border-b border-t bg-gray-50 px-6 py-1 font-medium uppercase dark:bg-gray-900 md:px-8"
-                                    >
-                                        {{ user.nombreRol }}
-                                    </div>
-                                }
-                                <!-- Contact -->
-                                <a
-                                    class="z-20 flex cursor-pointer items-center border-b px-6 py-4 md:px-8"
-                                    [ngClass]="{
-                                        'dark:hover:bg-hover hover:bg-gray-100':
-                                            !selectedContact ||
-                                            selectedContact.id !== user.usuarioId,
-                                        'bg-primary-50 dark:bg-hover':
-                                            selectedContact &&
-                                            selectedContact.id === user.usuarioId,
-                                    }"
-                                    [routerLink]="['./', user.usuarioId]"
-                                >
-                                    <div
-                                        class="flex h-10 w-10 flex-0 items-center justify-center overflow-hidden rounded-full"
-                                    >
-                                        @if (user.avatar) {
-                                            <img
-                                                class="h-full w-full object-cover"
-                                                [src]="user.avatar"
-                                                alt="Contact avatar"
-                                            />
-                                        }
-                                        @if (!user.avatar) {
-                                            <div
-                                                class="flex h-full w-full items-center justify-center rounded-full bg-gray-200 text-lg uppercase text-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                                            >
-                                                {{ user.nombreUsuario }}
-                                            </div>
-                                        }
-                                    </div>
-                                    <div class="ml-4 min-w-0">
-                                        <div
-                                            class="truncate font-medium leading-5"
-                                        >
-                                            {{ user.nombreUsuario }}
-                                        </div>
-                                    </div>
-                                    <div class="ml-4 min-w-0">
-                                        <div
-                                            class="truncate font-medium leading-5"
-                                        >
-                                        @if (user.telefono) {
-                                            Tel. {{ user.telefono }}
-                                        }
-                                        </div>
-                                    </div>
-                                </a>
-                            }
-                        } @else {
-                            <div
-                                class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16"
-                            >
-                                There are no users!
-                            </div>
-                        }
-                    }
+                    @if (users.length) {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        @for (user of users; track trackByFn(i, user); let i = $index) {
+                        <!-- User Card -->
+                        <div class="group relative flex flex-col rounded-2xl bg-card p-6 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden active:scale-95"
+                            [ngClass]="{
+                                'ring-2 ring-primary bg-primary-50/10 dark:bg-primary-500/5 transition-none': selectedContact && selectedContact.usuarioId === user.usuarioId
+                            }" [routerLink]="['./', user.usuarioId]">
 
-                    <!-- No users -->
+                            <!-- Status Indicator -->
+                            <div class="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                [ngClass]="user.activo ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-500/10 dark:text-gray-400'">
+                                <div class="w-1.5 h-1.5 rounded-full"
+                                    [ngClass]="user.activo ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-gray-400'">
+                                </div>
+                                {{ user.activo ? 'Activo' : 'Inactivo' }}
+                            </div>
+
+                            <!-- Avatar & Info -->
+                            <div class="flex flex-col items-center text-center mt-2">
+                                <div class="relative">
+                                    <div
+                                        class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 ring-4 ring-bg-card transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 shadow-inner">
+                                        @if (user.avatar) {
+                                        <img class="h-full w-full object-cover" [src]="user.avatar" alt="User avatar" />
+                                        } @else {
+                                        <div
+                                            class="flex h-full w-full items-center justify-center text-3xl font-bold uppercase text-secondary">
+                                            {{ user.nombreUsuario.charAt(0) }}
+                                        </div>
+                                        }
+                                    </div>
+                                    <!-- Role badge overlay -->
+                                    <div
+                                        class="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-0.5 rounded-lg bg-primary text-white text-[9px] font-black uppercase tracking-tighter shadow-lg">
+                                        {{ user.nombreRol || 'Sin Rol' }}
+                                    </div>
+                                </div>
+
+                                <div class="mt-8">
+                                    <div
+                                        class="truncate text-lg font-black leading-tight group-hover:text-primary transition-colors">
+                                        {{ user.nombreUsuario }}
+                                    </div>
+                                    <div class="text-secondary mt-1 text-sm font-medium truncate opacity-60">
+                                        {{ user.email || 'Sin correo electrónico' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="my-6 border-t border-divider opacity-50"></div>
+
+                            <!-- Footer Info -->
+                            <div class="flex items-center justify-center gap-4 text-hint">
+                                <div class="flex items-center gap-1.5" [matTooltip]="'Teléfono'">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                                    <span class="text-xs font-bold">{{ user.telefono || '--' }}</span>
+                                </div>
+                                <div class="w-1 h-1 rounded-full bg-divider"></div>
+                                <div class="flex items-center gap-1.5" [matTooltip]="'Fecha de Registro'">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                                    <span class="text-xs font-bold">{{ user.fechaCreacion | date:'dd/MM/yy' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    } @else {
+                    <div class="flex flex-col items-center justify-center mt-20 text-center">
+                        <div class="p-6 rounded-full bg-gray-100 dark:bg-gray-800 text-hint mb-4">
+                            <mat-icon class="icon-size-16" [svgIcon]="'heroicons_outline:users'"></mat-icon>
+                        </div>
+                        <div class="text-4xl font-semibold tracking-tight text-secondary">No se encontraron usuarios
+                        </div>
+                        <p class="text-hint mt-2 max-w-md">Intenta ajustar los criterios de búsqueda o agrega un nuevo
+                            usuario al sistema.</p>
+                        <button mat-flat-button color="primary" class="mt-8 rounded-xl px-8"
+                            (click)="searchInputControl.setValue('')">
+                            Limpiar búsqueda
+                        </button>
+                    </div>
+                    }
+                    }
                 </div>
             </div>
         </mat-drawer-content>

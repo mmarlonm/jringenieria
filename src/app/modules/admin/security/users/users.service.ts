@@ -17,13 +17,9 @@ import { environment } from 'environments/environment'; // Asegúrate de tener l
 export class UsersService {
     private apiUrl = `${environment.apiUrl}/Profile`; // Asegúrate de que esto sea correcto
     private apiUrlProyecto = `${environment.apiUrl}/Proyecto`;
-    // Private
-    private _user: BehaviorSubject<any | null> = new BehaviorSubject(
-        null
-    );
-    private _users: BehaviorSubject<any[] | null> = new BehaviorSubject(
-        null
-    );
+    private _user: BehaviorSubject<any | null> = new BehaviorSubject(null);
+    private _users: BehaviorSubject<any[] | null> = new BehaviorSubject(null);
+    private _allUsers: any[] = [];
 
     /**
      * Constructor
@@ -58,6 +54,7 @@ export class UsersService {
     getUsers(): Observable<any[]> {
         return this._httpClient.get<any[]>(`${this.apiUrl}/get-users`).pipe(
             tap((contacts) => {
+                this._allUsers = contacts;
                 this._users.next(contacts);
             })
         );
@@ -67,7 +64,7 @@ export class UsersService {
      * Get contact by id
      */
     getUserById(id: string): Observable<any> {
-        return this._users.pipe(
+        return this.users$.pipe(
             take(1),
             map((contacts) => {
                 // Find the contact
@@ -81,7 +78,7 @@ export class UsersService {
             switchMap((contact) => {
                 if (!contact) {
                     return throwError(
-                        'Could not found contact with id of ' + id + '!'
+                        () => 'Could not found contact with id of ' + id + '!'
                     );
                 }
 
@@ -106,10 +103,12 @@ export class UsersService {
                                 avatar: null,
                                 email: "",
                                 fechaCreacion: null,
-                                nombreUsuario: "",
-                                usuarioId: 0
+                                nombreUsuario: "New User",
+                                usuarioId: 0,
+                                activo: true
                             }
-                            this._users.next([newUSer, ...contacts]);
+                            this._allUsers = [newUSer, ...this._allUsers];
+                            this._users.next(this._allUsers);
 
                             // Return the new contact
                             return newUSer;
@@ -125,16 +124,20 @@ export class UsersService {
     updateUsers(user: any): Observable<any> {
         return this._httpClient.post<any>(`${this.apiUrl}/created-user`, user).pipe(
             tap((updatedUser) => {
-                // Obtener la lista actual de users
-                this.users$.pipe(take(1)).subscribe((users) => {
-                    // Si el rol existe, actualizarlo; si no, agregarlo
-                    const updatedUsers = users.some(r => r.usuarioId === updatedUser.usuarioId)
-                        ? users.map(r => (r.rolId === updatedUser.usuarioId ? updatedUser : r))
-                        : [...users, updatedUser];
+                // Actualizar caché maestro: Buscar por ID real o por el marcador temporal (ID 0)
+                const index = this._allUsers.findIndex(r =>
+                    r.usuarioId === updatedUser.usuarioId ||
+                    (updatedUser.usuarioId !== 0 && r.usuarioId === 0)
+                );
 
-                    // Emitir la nueva lista de users
-                    this._users.next(updatedUsers);
-                });
+                if (index !== -1) {
+                    this._allUsers[index] = updatedUser;
+                } else {
+                    this._allUsers = [updatedUser, ...this._allUsers];
+                }
+
+                // Emitir la nueva lista filtrada si hay búsqueda activa o la lista completa
+                this._users.next([...this._allUsers]);
             })
         );
     }
@@ -158,13 +161,14 @@ export class UsersService {
                         map((updatedContact) => {
                             // Find the index of the updated contact
                             const index = contacts.findIndex(
-                                (item) => item.id === id
+                                (item) => item.usuarioId === id
                             );
 
                             // Update the contact
                             contacts[index] = updatedContact;
 
                             // Update the contacts
+                            this._allUsers = [...contacts];
                             this._users.next(contacts);
 
                             // Return the updated contact
@@ -173,7 +177,7 @@ export class UsersService {
                         switchMap((updatedContact) =>
                             this.user$.pipe(
                                 take(1),
-                                filter((item) => item && item.id === id),
+                                filter((item) => item && item.usuarioId === id),
                                 tap(() => {
                                     // Update the contact if it's selected
                                     this._user.next(updatedContact);
@@ -193,27 +197,32 @@ export class UsersService {
      *
      * @param id
      */
-    deleteContact(id: string): Observable<boolean> {
+    deleteContact(id: number): Observable<boolean> {
+        // En este caso es usuarioId
+        const idStr = id.toString();
         return this.users$.pipe(
             take(1),
             switchMap((contacts) =>
                 this._httpClient
-                    .delete('api/apps/contacts/contact', { params: { id } })
+                    .delete(`${this.apiUrl}/delete-user/${id}`)
                     .pipe(
-                        map((isDeleted: boolean) => {
+                        map(() => {
                             // Find the index of the deleted contact
                             const index = contacts.findIndex(
-                                (item) => item.id === id
+                                (item) => item.usuarioId === id
                             );
 
                             // Delete the contact
-                            contacts.splice(index, 1);
+                            if (index !== -1) {
+                                contacts.splice(index, 1);
+                            }
 
                             // Update the contacts
+                            this._allUsers = [...contacts];
                             this._users.next(contacts);
 
                             // Return the deleted status
-                            return isDeleted;
+                            return true;
                         })
                     )
             )
@@ -248,13 +257,14 @@ export class UsersService {
                         map((updatedContact) => {
                             // Find the index of the updated contact
                             const index = contacts.findIndex(
-                                (item) => item.id === id
+                                (item) => item.usuarioId === id
                             );
 
                             // Update the contact
                             contacts[index] = updatedContact;
 
                             // Update the contacts
+                            this._allUsers = [...contacts];
                             this._users.next(contacts);
 
                             // Return the updated contact
@@ -263,10 +273,10 @@ export class UsersService {
                         switchMap((updatedContact) =>
                             this.user$.pipe(
                                 take(1),
-                                filter((item) => item && item.id === id),
+                                filter((item) => item && item.usuarioId === id),
                                 tap(() => {
                                     // Update the contact if it's selected
-                                    this._users.next(updatedContact);
+                                    this._user.next(updatedContact);
 
                                     // Return the updated contact
                                     return updatedContact;
@@ -281,19 +291,31 @@ export class UsersService {
 
     // Función modificada para buscar en los contactos cargados localmente
     searchContacts(query: string): Observable<any[]> {
-        // Buscar en los datos locales en lugar de hacer una solicitud HTTP
-        const filteredContacts = this._users.value.filter(contact =>
-            contact.name.toLowerCase().includes(query.toLowerCase()) ||
-            contact.email.toLowerCase().includes(query.toLowerCase())
+        if (!query) {
+            this._users.next(this._allUsers);
+            return of(this._allUsers);
+        }
+
+        const filteredContacts = this._allUsers.filter(contact =>
+            (contact.nombreUsuario?.toLowerCase().includes(query.toLowerCase())) ||
+            (contact.email?.toLowerCase().includes(query.toLowerCase()))
         );
 
-        // Devolver el resultado como un observable
-        return new Observable<any[]>((observer) => {
-            observer.next(filteredContacts);
-            observer.complete();
-        });
+        this._users.next(filteredContacts);
+        return of(filteredContacts);
     }
 
+    /**
+     * Remove the unsaved (temporary) user
+     */
+    removeUnsavedUser(): void {
+        this._allUsers = this._allUsers.filter(user => user.usuarioId !== 0);
+        this._users.next([...this._allUsers]);
+    }
+
+    /**
+     * Get business units
+     */
     getUnidadesNegocio(): Observable<any[]> {
         return this._httpClient.get<any[]>(`${this.apiUrlProyecto}/unidades-negocio`);
     }

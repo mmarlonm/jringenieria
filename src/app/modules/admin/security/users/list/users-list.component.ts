@@ -1,4 +1,4 @@
-import { AsyncPipe, DOCUMENT, I18nPluralPipe, NgClass } from '@angular/common';
+import { AsyncPipe, DOCUMENT, DatePipe, I18nPluralPipe, NgClass } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -18,6 +18,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
 import {
     ActivatedRoute,
@@ -55,6 +56,8 @@ import {
         RouterLink,
         AsyncPipe,
         I18nPluralPipe,
+        DatePipe,
+        MatTooltipModule,
     ],
 })
 export class UsersListComponent implements OnInit, OnDestroy {
@@ -79,7 +82,7 @@ export class UsersListComponent implements OnInit, OnDestroy {
         @Inject(DOCUMENT) private _document: any,
         private _router: Router,
         private _fuseMediaWatcherService: FuseMediaWatcherService
-    ) {}
+    ) { }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
@@ -126,6 +129,11 @@ export class UsersListComponent implements OnInit, OnDestroy {
         // Subscribe to MatDrawer opened change
         this.matDrawer.openedChange.subscribe((opened) => {
             if (!opened) {
+                // If the selected user was a temporary placeholder (usuarioId: 0), remove it
+                if (this.selectedContact && this.selectedContact.usuarioId === 0) {
+                    this._usersService.removeUnsavedUser();
+                }
+
                 // Remove the selected user when drawer closed
                 this.selectedContact = null;
 
@@ -211,6 +219,6 @@ export class UsersListComponent implements OnInit, OnDestroy {
      * @param item
      */
     trackByFn(index: number, item: any): any {
-        return item.id || index;
+        return item.usuarioId || index;
     }
 }

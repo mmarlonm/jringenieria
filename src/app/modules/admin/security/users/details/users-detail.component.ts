@@ -161,7 +161,14 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
                 }
 
                 this.contactForm.patchValue(user);
-                this.toggleEditMode(false);
+
+                // If it's a new user, force edit mode
+                if (user.usuarioId === 0) {
+                    this.toggleEditMode(true);
+                } else {
+                    this.toggleEditMode(false);
+                }
+
                 this._changeDetectorRef.markForCheck();
             });
     }
@@ -312,10 +319,30 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             userPayload.avatar = userPayload.avatar.split(",")[1];
         }
 
-        this._usersService.updateUsers(userPayload).subscribe(() => {
-            Swal.fire({ icon: "success", title: "Éxito", text: "Usuario actualizado correctamente", timer: 1500 });
-            this.calcularTotalesVisualizacion(); // Refrescar totales en pantalla
-            this.toggleEditMode(false);
+        this._usersService.updateUsers(userPayload).subscribe({
+            next: () => {
+                Swal.fire({ icon: "success", title: "Éxito", text: "Usuario actualizado correctamente", timer: 1500 });
+                this.calcularTotalesVisualizacion(); // Refrescar totales en pantalla
+                this.toggleEditMode(false);
+            },
+            error: (error) => {
+                console.error('Error saving user:', error);
+                let message = "Ocurrió un error al guardar el usuario";
+                if (error.error) {
+                    if (typeof error.error === 'string') {
+                        message = error.error;
+                    } else if (error.error.errors) {
+                        message = Object.values(error.error.errors).flat().join('\n');
+                    } else if (error.error.title) {
+                        message = error.error.title;
+                    }
+                }
+                Swal.fire({
+                    icon: "error",
+                    title: "Error de Validación",
+                    text: message
+                });
+            }
         });
     }
 
@@ -323,6 +350,12 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
     toggleEditMode(editMode: boolean | null = null): void {
         this.editMode = editMode ?? !this.editMode;
+
+        // If we were creating a user and we cancel, we must close the drawer (which navigates back)
+        if (!this.editMode && this.user && this.user.usuarioId === 0) {
+            this._router.navigate(['../'], { relativeTo: this._activatedRoute });
+        }
+
         this._changeDetectorRef.markForCheck();
     }
 
@@ -360,8 +393,28 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
         confirmation.afterClosed().subscribe((result) => {
             if (result === 'confirmed') {
-                this._usersService.deleteContact(this.user.usuarioId).subscribe(() => {
-                    this._router.navigate(['../'], { relativeTo: this._activatedRoute });
+                this._usersService.deleteContact(this.user.usuarioId).subscribe({
+                    next: () => {
+                        this._router.navigate(['../'], { relativeTo: this._activatedRoute });
+                    },
+                    error: (error) => {
+                        console.error('Error deleting user:', error);
+                        let message = "Ocurrió un error al eliminar el usuario";
+                        if (error.error) {
+                            if (typeof error.error === 'string') {
+                                message = error.error;
+                            } else if (error.error.errors) {
+                                message = Object.values(error.error.errors).flat().join('\n');
+                            } else if (error.error.title) {
+                                message = error.error.title;
+                            }
+                        }
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: message
+                        });
+                    }
                 });
             }
         });
