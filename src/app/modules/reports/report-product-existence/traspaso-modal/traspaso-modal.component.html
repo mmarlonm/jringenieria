@@ -1,4 +1,5 @@
-<div class="p-6 flex flex-col gap-6 max-w-[600px] overflow-hidden">
+<div class="p-6 flex flex-col gap-6 max-w-[600px] max-h-[90vh] overflow-y-auto custom-scroll">
+
     <div class="flex items-center justify-between">
         <h2 class="text-xl font-black text-gray-800 flex items-center gap-2 m-0 uppercase tracking-tighter">
             <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
@@ -12,27 +13,32 @@
     </div>
 
     <!-- Lista de Productos -->
-    <div class="bg-slate-800 p-4 rounded-2xl shadow-inner text-white max-h-[300px] overflow-y-auto custom-scroll">
+    <div class="bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border dark:border-white/10">
+
         <p
-            class="text-[9px] uppercase font-bold text-slate-400 leading-none mb-3 tracking-widest sticky top-0 bg-slate-800 py-1">
-            Productos Seleccionados ({{productosSeleccionados.length}})
+            class="text-[10px] uppercase font-black text-slate-500 leading-none mb-3 tracking-widest sticky top-0 bg-gray-50 dark:bg-[#1e293b] py-1 z-10">
+            Productos a Traspasar ({{productosSeleccionados.length}})
         </p>
 
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-2">
             <div *ngFor="let p of productosSeleccionados; let i = index"
-                class="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/5 border border-white/10">
+                class="flex items-center justify-between gap-4 p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
                 <div class="flex-grow min-w-0">
-                    <p class="font-bold text-xs leading-tight uppercase truncate">{{p.nombreProducto}}</p>
-                    <p class="text-[9px] text-slate-400 font-mono">{{p.codigoProducto}}</p>
+                    <p class="font-bold text-xs leading-tight uppercase truncate text-slate-800 dark:text-white">
+                        {{p.nombreProducto}}</p>
+                    <p class="text-[9px] text-blue-600 dark:text-blue-400 font-mono font-bold">{{p.codigoProducto}}</p>
                 </div>
 
                 <div class="flex items-center gap-2">
                     <div class="flex flex-col items-end">
-                        <input type="number" [(ngModel)]="p.cantidadEnviar" (ngModelChange)="validarStockGlobal()"
-                            class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-xs font-black text-center focus:outline-none focus:border-blue-400"
-                            [class.border-rose-500]="p.errorStock">
-                        <p class="text-[8px] mt-1 uppercase font-bold" [class.text-rose-400]="p.errorStock"
-                            [class.text-slate-500]="!p.errorStock">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Cant:</span>
+                            <input type="number" [(ngModel)]="p.cantidadEnviar" (ngModelChange)="validarStockGlobal()"
+                                class="w-16 bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/20 rounded-lg px-2 py-1 text-xs font-black text-center focus:outline-none focus:border-blue-500 text-slate-800 dark:text-white"
+                                [class.!border-rose-500]="p.errorStock">
+                        </div>
+                        <p class="text-[8px] mt-1 uppercase font-bold" [class.text-rose-500]="p.errorStock"
+                            [class.text-slate-400]="!p.errorStock">
                             Stock: {{p.stockMaximo || 'Sel. Origen'}}
                         </p>
                     </div>
@@ -41,15 +47,15 @@
         </div>
     </div>
 
-    <!-- Configuración del Envío -->
+    <!-- Configuración del Envío (SOP Almacenes) -->
     <div class="flex flex-col gap-4">
         <div class="grid grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
                 <mat-label>Almacén Origen</mat-label>
                 <mat-select [(ngModel)]="traspaso.idAlmacenOrigen" (selectionChange)="onOrigenChange()" name="origen">
                     <mat-option [value]="1">QUERÉTARO</mat-option>
-                    <mat-option [value]="2">PACHUCA</mat-option>
-                    <mat-option [value]="3">PUEBLA</mat-option>
+                    <mat-option [value]="2">PUEBLA</mat-option>
+                    <mat-option [value]="3">PACHUCA</mat-option>
                 </mat-select>
             </mat-form-field>
 
@@ -58,30 +64,105 @@
                 <mat-select [(ngModel)]="traspaso.idAlmacenDestino" (selectionChange)="onDestinoChange()"
                     name="destino">
                     <mat-option [value]="1" [disabled]="traspaso.idAlmacenOrigen === 1">QUERÉTARO</mat-option>
-                    <mat-option [value]="2" [disabled]="traspaso.idAlmacenOrigen === 2">PACHUCA</mat-option>
-                    <mat-option [value]="3" [disabled]="traspaso.idAlmacenOrigen === 3">PUEBLA</mat-option>
+                    <mat-option [value]="2" [disabled]="traspaso.idAlmacenOrigen === 2">PUEBLA</mat-option>
+                    <mat-option [value]="3" [disabled]="traspaso.idAlmacenOrigen === 3">PACHUCA</mat-option>
                 </mat-select>
             </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
-                <mat-label>Paquetería / Envío</mat-label>
-                <mat-select [(ngModel)]="traspaso.paqueteria" name="paqueteria">
-                    <mat-option *ngFor="let paq of paqueterias" [value]="paq">
-                        {{paq}}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+        <!-- 🔹 Fase de Decisión: Método de Envío -->
+        <div class="bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border dark:border-white/10 flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b dark:border-white/10 pb-3">
+                <div class="flex flex-col">
+                    <span
+                        class="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-widest leading-none mb-2 italic">Fase
+                        2: Método de Envío</span>
+                    <mat-radio-group [(ngModel)]="traspaso.tipoEnvio" class="flex gap-4">
+                        <mat-radio-button value="PAQUETERIA" color="primary"><span
+                                class="text-xs font-bold uppercase">Paquetería</span></mat-radio-button>
+                        <mat-radio-button value="INTERNO" color="primary"><span
+                                class="text-xs font-bold uppercase">Interno JR</span></mat-radio-button>
+                    </mat-radio-group>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span
+                        class="text-[10px] font-black uppercase text-slate-500 tracking-widest leading-none mb-2">Destino
+                        Final</span>
+                    <mat-radio-group [(ngModel)]="traspaso.destinoFinal" class="flex gap-4">
+                        <mat-radio-button value="SUCURSAL" color="primary"><span
+                                class="text-xs font-bold uppercase">Sucursal</span></mat-radio-button>
+                        <mat-radio-button value="CLIENTE" color="primary"><span
+                                class="text-xs font-bold uppercase">Cliente</span></mat-radio-button>
+                    </mat-radio-group>
+                </div>
+            </div>
 
+            <!-- Datos Dinámicos de Logística -->
+            <div class="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                <!-- Si es Paquetería -->
+                <ng-container *ngIf="traspaso.tipoEnvio === 'PAQUETERIA'">
+                    <div
+                        class="flex items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <span class="text-[9px] font-bold text-blue-700 dark:text-blue-300 uppercase leading-tight">
+                            <mat-icon class="!text-[12px] !w-3 !h-3 align-middle">info</mat-icon>
+                            Preferir Paquetexpress para reducir costos
+                        </span>
+                        <mat-checkbox [(ngModel)]="logisticaExtra.esOcurre" color="primary">
+                            <span class="text-[10px] font-bold uppercase">Entrega Ocurre</span>
+                        </mat-checkbox>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                            <mat-label>Paquetería</mat-label>
+                            <mat-select [(ngModel)]="traspaso.paqueteria">
+                                <mat-option *ngFor="let paq of paqueterias" [value]="paq">{{paq}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                            <mat-label>Teléfono de Contacto</mat-label>
+                            <input matInput [(ngModel)]="logisticaExtra.telefono" placeholder="555-1234...">
+                        </mat-form-field>
+                    </div>
+
+                    <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                        <mat-label>Dirección de Envío</mat-label>
+                        <input matInput [(ngModel)]="logisticaExtra.direccion" placeholder="Calle, Número, Col, CP...">
+                    </mat-form-field>
+
+
+                </ng-container>
+
+                <!-- Si es Interno -->
+                <mat-form-field *ngIf="traspaso.tipoEnvio === 'INTERNO'" appearance="outline"
+                    class="w-full !mb-[-1.25em]">
+                    <mat-label>Nombre del Colaborador JR</mat-label>
+                    <input matInput [(ngModel)]="logisticaExtra.colaborador"
+                        placeholder="Nombre de quien transporta...">
+                </mat-form-field>
+
+                <!-- Si es para Cliente -->
+                <mat-form-field *ngIf="traspaso.destinoFinal === 'CLIENTE'" appearance="outline"
+                    class="w-full !mb-[-1.25em]">
+                    <mat-label>Orden de Compra / Factura</mat-label>
+                    <input matInput [(ngModel)]="logisticaExtra.ocFactura" placeholder="Ej. OC-123 / F-456">
+                </mat-form-field>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4">
             <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
-                <mat-label>Responsable en Destino</mat-label>
+                <mat-label>Responsable de Destino</mat-label>
                 <mat-select [(ngModel)]="traspaso.idUsuarioDestino" name="usuarioDestino">
                     <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">
                         {{user.nombreUsuario}}
                     </mat-option>
                 </mat-select>
             </mat-form-field>
+
+
+
+
         </div>
 
         <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
@@ -100,7 +181,7 @@
                 <mat-icon>send</mat-icon>
                 <span class="font-black tracking-widest text-xs uppercase">Confirmar Envío Masivo</span>
             </div>
-            <mat-spinner diameter="24" *ngIf="loading" class="mx-auto" color="accent"></mat-spinner>
+            <mat-spinner diameter="24" *ngIf="loading" class="mx-auto" color="white"></mat-spinner>
         </button>
     </div>
 </div>

@@ -40,17 +40,44 @@ export class TransferManagementService {
   }
 
   /**
-   * Alias específico para la recepción (si tu controlador prefiere este endpoint)
+   * Fase 3: Procesar el envío de un traspaso (Almacén Origen)
    */
-  aprobarRecepcion(idTraspaso: number, idUsuarioRecibe: number, transportista?: string, guia?: string): Observable<any> {
-    let params = new HttpParams().set('idUsuarioRecibe', idUsuarioRecibe.toString());
-    if (transportista) params = params.set('transportista', transportista);
-    if (guia) params = params.set('guia', guia);
+  procesarEnvio(idTraspaso: number, payload: { transportista: string, guiaRastreo: string, urlEvidenciaEnvio: string }): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/procesar-envio/${idTraspaso}`, payload);
+  }
 
-    return this.http.put<any>(`${this.apiUrl}/aprobar-recepcion/${idTraspaso}`, {}, { params });
+  /**
+   * Fase 4: Aprobar la recepción de un traspaso (Almacén Destino)
+   */
+  aprobarRecepcion(idTraspaso: number, payload: { idUsuarioRecibe: number, conDiferencias: boolean, observaciones: string, urlEvidenciaRecepcion: string }): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/aprobar-recepcion/${idTraspaso}`, payload);
+  }
+
+  /**
+   * Sube la evidencia (PDF/Imagen) del traspaso al servidor.
+   * @param idTraspaso ID del traspaso
+   * @param tipoEvidencia "Envio" | "Recepcion"
+   * @param archivo El archivo físico
+   */
+  subirEvidencia(idTraspaso: number, tipoEvidencia: 'Envio' | 'Recepcion', archivo: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('tipoEvidencia', tipoEvidencia);
+
+    return this.http.post<any>(`${this.apiUrl}/${idTraspaso}/subir-evidencia`, formData);
+  }
+
+
+  /**
+   * Descarga un archivo de evidencia dado su ruta relativa
+   */
+  descargarEvidencia(rutaRelativa: string): Observable<any> {
+    const params = new HttpParams().set('rutaRelativa', rutaRelativa);
+    return this.http.get<any>(`${this.apiUrl}/descargar-evidencia`, { params });
   }
 
   getPendientesDestino(idSucursalDestino: number): Observable<any[]> {
+
     return this.http.get<any[]>(`${this.apiUrl}/pendientes-destino/${idSucursalDestino}`);
   }
 

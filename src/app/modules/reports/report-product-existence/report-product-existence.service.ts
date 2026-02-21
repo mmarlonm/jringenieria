@@ -45,6 +45,18 @@ export class ReportProductExistenceService {
   crearTraspaso(traspaso: TraspasoDto): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/crear-traspaso`, traspaso);
   }
+
+  /**
+   * Sube la evidencia (PDF) del traspaso al servidor.
+   * @param file Archivo PDF a subir.
+   * @returns Observable con la URL de la evidencia.
+   */
+  subirEvidencia(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    // Siguiendo el patrón de otros servicios de la app para subida de archivos
+    return this.http.post<any>(`${this.apiUrl}/subir-evidencia-traspaso`, formData);
+  }
 }
 /**
  * Interfaz que representa la estructura de existencias por sucursal.
@@ -77,4 +89,12 @@ export interface TraspasoDto {
   idUsuarioDestino: number;
   observaciones?: string;
   detalles: TraspasoDetalleDto[];
+
+  // 🔹 NUEVOS CAMPOS (SOP ALMACENES)
+  guiaRastreo?: string;
+  transportista?: string;
+  tipoEnvio: string;      // "PAQUETERIA" | "INTERNO"
+  destinoFinal: string;   // "SUCURSAL" | "CLIENTE"
+  datosLogistica: string;
+  urlEvidenciaEnvio: string;
 }

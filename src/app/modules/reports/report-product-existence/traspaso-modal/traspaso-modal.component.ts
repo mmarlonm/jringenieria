@@ -10,7 +10,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import Swal from 'sweetalert2';
+
 
 // Servicios
 import { ReportProductExistenceService } from '../report-product-existence.service';
@@ -28,8 +31,11 @@ import { UsersService } from '../../../admin/security/users/users.service';
         MatInputModule,
         MatButtonModule,
         MatIconModule,
-        MatProgressSpinnerModule
+        MatProgressSpinnerModule,
+        MatRadioModule,
+        MatCheckboxModule
     ],
+
     templateUrl: './traspaso-modal.component.html',
     styles: [`
     :host { display: block; }
@@ -44,16 +50,39 @@ export class TraspasoModalComponent implements OnInit {
     // Lista de paqueterías solicitadas
     public paqueterias: string[] = ['PAQUETEXPRESS', 'DHL', 'ESTAFETA', 'COLABORADOR'];
 
-    public traspaso = {
+    public traspaso: any = {
         idAlmacenOrigen: null,
         almacenOrigenNombre: '',
         idAlmacenDestino: null,
         almacenDestinoNombre: '',
-        idUsuarioEnvia: null, // Se sacará de la sesión
+        idUsuarioEnvia: null,
         idUsuarioDestino: null,
         paqueteria: '',
+        guiaRastreo: '',
+        transportista: '',
         observaciones: '',
+        // 🔹 NUEVOS CAMPOS SOP
+        tipoEnvio: 'PAQUETERIA', // PAQUETERIA | INTERNO
+        destinoFinal: 'SUCURSAL', // SUCURSAL | CLIENTE
+        datosLogistica: '',
+        urlEvidenciaEnvio: ''
     };
+
+    // Campos temporales para la UI
+    public logisticaExtra = {
+        esOcurre: false,
+        direccion: '',
+        telefono: '',
+        colaborador: '',
+        ocFactura: ''
+    };
+
+
+
+
+    public archivoEvidencia: File | null = null;
+    public subiendoArchivo: boolean = false;
+
 
     // Lista de productos con su cantidad a enviar
     public productosSeleccionados: any[] = [];
@@ -79,7 +108,12 @@ export class TraspasoModalComponent implements OnInit {
             this.traspaso.idUsuarioEnvia = 1;
         }
 
+        // Default para el usuario destino (será sobreescrito por el select)
+        this.traspaso.idUsuarioDestino = null;
+
+
         // Inicializar lista de productos con cantidad por defecto 1
+
         if (this.data.productos) {
             this.productosSeleccionados = this.data.productos.map((p: any) => ({
                 ...p,
@@ -120,8 +154,8 @@ export class TraspasoModalComponent implements OnInit {
         this.productosSeleccionados.forEach(p => {
             let stock = 0;
             if (idOrigen === 1) stock = p.qro;
-            if (idOrigen === 2) stock = p.pach;
-            if (idOrigen === 3) stock = p.pue;
+            if (idOrigen === 2) stock = p.pue;
+            if (idOrigen === 3) stock = p.pach;
 
             p.errorStock = p.cantidadEnviar > stock || p.cantidadEnviar <= 0;
             p.stockMaximo = stock;
@@ -130,12 +164,39 @@ export class TraspasoModalComponent implements OnInit {
 
     get esInvalido(): boolean {
         const algunErrorStock = this.productosSeleccionados.some(p => p.errorStock);
+
         return algunErrorStock ||
             !this.traspaso.idAlmacenOrigen ||
             !this.traspaso.idAlmacenDestino ||
             !this.traspaso.idUsuarioDestino ||
-            !this.traspaso.paqueteria;
+            (this.traspaso.tipoEnvio === 'PAQUETERIA' && !this.traspaso.paqueteria);
+
+
     }
+
+
+
+
+    buildDatosLogistica(): void {
+        let parts: string[] = [];
+
+        if (this.traspaso.tipoEnvio === 'PAQUETERIA') {
+            const entrega = this.logisticaExtra.esOcurre ? 'Entrega Ocurre' : 'Entrega Domicilio';
+            parts.push(entrega);
+            if (this.logisticaExtra.direccion) parts.push(`Dirección: ${this.logisticaExtra.direccion}`);
+            if (this.logisticaExtra.telefono) parts.push(`Tel: ${this.logisticaExtra.telefono}`);
+        } else {
+
+            if (this.logisticaExtra.colaborador) parts.push(`Colaborador: ${this.logisticaExtra.colaborador}`);
+        }
+
+        if (this.traspaso.destinoFinal === 'CLIENTE') {
+            if (this.logisticaExtra.ocFactura) parts.push(`OC/Factura: ${this.logisticaExtra.ocFactura}`);
+        }
+
+        this.traspaso.datosLogistica = parts.join('. ');
+    }
+
 
     async confirmarTraspaso() {
         if (this.esInvalido) {
@@ -162,6 +223,8 @@ export class TraspasoModalComponent implements OnInit {
     private guardarTraspaso(): void {
         this.loading = true;
 
+        this.buildDatosLogistica();
+
         const payload = {
             idAlmacenOrigen: this.traspaso.idAlmacenOrigen,
             almacenOrigenNombre: this.traspaso.almacenOrigenNombre,
@@ -170,13 +233,21 @@ export class TraspasoModalComponent implements OnInit {
             idUsuarioEnvia: this.traspaso.idUsuarioEnvia,
             idUsuarioDestino: this.traspaso.idUsuarioDestino,
             paqueteria: this.traspaso.paqueteria,
+            guiaRastreo: this.traspaso.guiaRastreo,
+            transportista: this.traspaso.paqueteria || this.traspaso.transportista,
             observaciones: this.traspaso.observaciones || `Traspaso masivo de ${this.productosSeleccionados.length} productos`,
+            // 🔹 NUEVOS CAMPOS SOP
+            tipoEnvio: this.traspaso.tipoEnvio,
+            destinoFinal: this.traspaso.destinoFinal,
+            datosLogistica: this.traspaso.datosLogistica,
+            urlEvidenciaEnvio: this.traspaso.urlEvidenciaEnvio,
             detalles: this.productosSeleccionados.map(p => ({
                 codigoProducto: p.codigoProducto,
                 cantidadEnviada: p.cantidadEnviar,
                 nombreProducto: p.nombreProducto
             }))
         };
+
 
         this._service.crearTraspaso(payload).subscribe({
             next: () => {

@@ -16,6 +16,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { GestionarTraspasoModalComponent } from '../gestionar-traspaso-modal/gestionar-traspaso-modal.component';
+import { TraspasoTimelineModalComponent } from '../traspaso-timeline-modal/traspaso-timeline-modal.component';
+
 
 @Component({
     selector: 'app-transfer-management-dashboard',
@@ -34,8 +38,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         MatSelectModule,
         MatProgressSpinnerModule,
         MatDividerModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatDialogModule
     ]
+
 })
 export class TransferManagementDashboardComponent implements OnInit {
 
@@ -67,8 +73,10 @@ export class TransferManagementDashboardComponent implements OnInit {
     constructor(
         private _transferService: TransferManagementService,
         private _usersService: UsersService,
-        private _cdr: ChangeDetectorRef
+        private _cdr: ChangeDetectorRef,
+        private _dialog: MatDialog
     ) { }
+
 
     ngOnInit(): void {
         this.loadUsers(); // Primero cargamos usuarios, luego el historial
@@ -137,54 +145,40 @@ export class TransferManagementDashboardComponent implements OnInit {
             });
     }
 
-    approveTransfer(transfer: any): void {
-        Swal.fire({
-            title: 'Confirmar Recepción',
-            html: `
-                <div class="text-left py-2">
-                    <p class="text-[11px] text-slate-400 uppercase font-bold mb-2">Folio: ${transfer.folio}</p>
-                    <label class="text-[10px] font-bold uppercase text-slate-500">Transportista</label>
-                    <input id="swal-transportista" class="swal2-input !m-0 !mb-3 !w-full !text-sm" placeholder="Ej. DHL, Chofer" value="${transfer.transportista || ''}">
-                    <label class="text-[10px] font-bold uppercase text-slate-500">Guía de Rastreo</label>
-                    <input id="swal-guia" class="swal2-input !m-0 !w-full !text-sm" placeholder="Número de guía" value="${transfer.guiaRastreo || ''}">
-                </div>
-            `,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'Recibir Mercancía',
-            confirmButtonColor: '#2563eb',
-            preConfirm: () => {
-                return {
-                    transportista: (document.getElementById('swal-transportista') as HTMLInputElement).value,
-                    guia: (document.getElementById('swal-guia') as HTMLInputElement).value
-                }
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.loading = true;
-                const usuarioRecibeId = 1; // Aquí debes usar el ID del usuario logueado actualmente
+    verDetalle(traspaso: any): void {
+        this._dialog.open(TraspasoTimelineModalComponent, {
+            width: '650px',
+            data: { traspaso },
+            panelClass: 'custom-dialog-container'
+        });
+    }
 
-                this._transferService.aprobarRecepcion(transfer.idTraspaso, usuarioRecibeId, result.value.transportista, result.value.guia)
-                    .subscribe({
-                        next: () => {
-                            Swal.fire('Éxito', 'Inventario actualizado correctamente', 'success');
-                            this.consultar();
-                        },
-                        error: () => {
-                            this.loading = false;
-                            Swal.fire('Error', 'No se pudo procesar la recepción', 'error');
-                        }
-                    });
+    gestionarTraspaso(traspaso: any): void {
+
+        const dialogRef = this._dialog.open(GestionarTraspasoModalComponent, {
+            width: '550px',
+            data: { traspaso },
+            disableClose: true,
+            panelClass: 'custom-dialog-container'
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.consultar();
             }
         });
     }
 
+
     getStatusClass(estadoId: number): string {
         switch (estadoId) {
-            case 1: return 'status-pending';
-            case 2: return 'status-completed';
-            case 3: return 'status-rejected';
+            case 1: return 'status-pending';   // Solicitado
+            case 2: return 'status-completed'; // Completado
+            case 3: return 'status-incidence'; // Con Incidencia
+            case 4: return 'status-transit';   // En Tránsito
+            case 5: return 'status-rejected';  // Cancelado
             default: return 'status-unknown';
         }
     }
+
 }
