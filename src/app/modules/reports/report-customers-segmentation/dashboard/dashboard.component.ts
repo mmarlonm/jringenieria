@@ -626,17 +626,40 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
         this.loading = true;
 
-        const tipoCambio = 18.50;
-
-        const formatCurrency = (val: number) =>
-            new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
-
-        const formatDate = (dateStr: any) => {
+        const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
+        const formatDate = (dateStr: string) => {
             if (!dateStr) return '-';
             const d = new Date(dateStr);
             return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
         };
 
+        const parseDate = (dateStr: string) => {
+            if (!dateStr) return null;
+            if (typeof dateStr === 'string' && dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    return new Date(year, month, day);
+                }
+            }
+            return new Date(dateStr);
+        };
+
+        const calculateDiasVencidos = (vencimientoStr: string, estatus: string) => {
+            if (estatus === 'PAGADA') return 0;
+            const vDate = parseDate(vencimientoStr);
+            if (!vDate || isNaN(vDate.getTime())) return 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            vDate.setHours(0, 0, 0, 0);
+            const diffTime = today.getTime() - vDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays > 0 ? diffDays : 0;
+        };
+
+        // --- FUNCIÓN DE NÚMEROS A LETRAS (Sin leyendas extra) ---
         const numeroALetras = (n: number, moneda: string = 'MXN'): string => {
             const unidades = ["", "UN ", "DOS ", "TRES ", "CUATRO ", "CINCO ", "SEIS ", "SIETE ", "OCHO ", "NUEVE "];
             const decenas = ["DIEZ ", "VEINTE ", "TREINTA ", "CUARENTA ", "CINCUENTA ", "SESENTA ", "SETENTA ", "OCHENTA ", "NOVENTA "];
@@ -681,139 +704,213 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
             const sufijo = moneda === 'MXN' ? "PESOS" : "DÓLARES";
             const mnc = moneda === 'MXN' ? "M.N." : "USD";
-            return `(${resultado}${sufijo} ${mnc})`.toUpperCase();
+            return `(${resultado}${sufijo} ${centavos.toString().padStart(2, '0')}/100 ${mnc})`.toUpperCase();
         };
 
-        const totalMXN = data
-            .filter(i => (i.moneda || 'MXN').toUpperCase() === 'MXN')
-            .reduce((acc, curr) => acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0)), 0);
-
-        let totalUSD = data
-            .filter(i => (i.moneda || '').toUpperCase() === 'USD')
-            .reduce((acc, curr) => acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0)), 0);
-
-        if (totalUSD === 0 && totalMXN > 0) totalUSD = totalMXN / tipoCambio;
+        const totalCargos = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+        const totalSaldos = data.reduce((acc, curr) => {
+            // Si está PAGADA el saldo es 0, de lo contrario es el monto completo
+            return acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0));
+        }, 0);
+        const totalAbonos = totalCargos - totalSaldos;
 
         const cliente = data[0].nombreCliente || '';
-        const fInicio = formatDate(this.fechaInicio);
-        const fFin = formatDate(this.fechaFin);
+        const rfc = data[0].rfc || '';
+        const sucursal = this.sucursal || 'TODAS';
+        const fInicio = formatDate(this.fechaInicio.toISOString());
+        const fFin = formatDate(this.fechaFin.toISOString());
 
         let tableRows = '';
         data.forEach((item, i) => {
+            const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
             const cargo = item.montoDocumento || 0;
             const saldo = item.estatusPago === 'PAGADA' ? 0 : cargo;
             const abono = cargo - saldo;
+            const estatus = item.estatusPago || '';
+            const diasVencidos = calculateDiasVencidos(item.fechaVencimiento, estatus);
+
             tableRows += `
-        <tr style="font-size: 8.5px; text-align: center; color: #334155;">
-            <td style="padding: 5px; border: 1px solid #cbd5e1;">${i + 1}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1;">${formatDate(item.fechaDocumento)}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1; font-weight: bold;">${item.folioCompleto || '-'}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: left; font-size: 7.5px;">FACTURACION DE PRODUCTOS Y SERVICIOS</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1;">${item.moneda || 'MXN'}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">$ ${cargo.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">$ ${abono.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold;">$ ${saldo.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1;">${formatDate(item.fechaVencimiento)}</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1;">X</td>
-            <td style="padding: 5px; border: 1px solid #cbd5e1; font-weight: bold; color: ${item.estatusPago === 'VENCIDA' ? '#dc2626' : '#16a34a'};">${item.estatusPago}</td>
-        </tr>`;
+        <tr style="background-color: ${bgColor}; color: #374151; font-size: 9px;">
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${i + 1}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${formatDate(item.fechaDocumento)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold;">${item.folioCompleto || '-'}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">Venta de Equipos/Serv.</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.moneda || 'MXN'}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(cargo)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${abono > 0 ? formatCurrency(abono) : '-'}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${formatCurrency(saldo)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.fechaVencimiento || '-'}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${diasVencidos}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold; color: ${estatus === 'VENCIDA' ? '#dc2626' : '#16a34a'};">${estatus}</td>
+        </tr>
+    `;
         });
 
+        // Calcular los totales por moneda para mostrar en las cajas finales
+        const totalMXN = data
+            .filter(c => (c.moneda || 'MXN').toUpperCase() === 'MXN')
+            .reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+
+        const totalUSD = data
+            .filter(c => (c.moneda || '').toUpperCase() === 'USD')
+            .reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+
+
         const container = document.createElement('div');
-        container.setAttribute('style', 'width: 850px; height: 1123px; background-color: white; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; display: flex; flex-direction: column; overflow: hidden;');
+        container.id = 'temp-pdf-seg-container';
+        container.setAttribute('style', 'width: 850px; background-color: white; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; display: flex; flex-direction: column; padding: 0; margin: 0;');
 
         container.innerHTML = `
-    <div style="width: 100%; height: 45px; background-color: #d1d5db; position: relative; display: flex; align-items: center; justify-content: flex-end;">
+    <div style="width: 100%; height: 30px; background-color: #d1d5db; position: relative; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;">
         <div style="background-color: #d1d5db; height: 100%; width: 200px; border-top-right-radius: 50px; border-bottom-right-radius: 50px; display: flex; align-items: center; justify-content: center; position: absolute; z-index: 1; right:30px">
-             <span style="color: #1e4b8a; font-weight: bold; font-size: 14px;">ESTADO DE CUENTA</span>
+             <span style="color: #1e4b8a; font-weight: bold; font-size: 11px;">ESTADO DE CUENTA</span>
         </div>
         <div style="background-color: #166534; height: 100%; width: 60px;"></div>
     </div>
 
-    <div style="padding: 20px 40px; flex: 1;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <img src="images/logo/logo-new-jrbk.png" style="width: 110px;">
-            <h1 style="text-align: center; color: #1e4b8a; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 1px; flex: 1;">JR INGENIERÍA ELÉCTRICA</h1>
-            <div style="text-align: right;">
-                <p style="margin: 0; font-size: 12px; font-weight: bold; color: #1f2937;">RANGO DE FECHAS</p>
-                <p style="margin: 0; font-size: 11px; color: #4b5563;">${fInicio} AL ${fFin}</p>
+    <div style="padding: 5px 40px; flex: 1; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
+                <img src="images/logo/logo-new-jrbk.png" alt="Logo JR" style="max-height: 130px; max-width: 150px; object-fit: contain;">
+                <h1 style="text-align: center; color: #1e4b8a; font-size: 26px; font-weight: bold; margin: 0; letter-spacing: 1px; flex: 1;">
+                JR INGENIERÍA ELÉCTRICA
+            </h1>
             </div>
         </div>
 
-        <p style="font-size: 12px; color: #1f2937; margin-bottom: 15px;"><strong>Cliente:</strong> ${cliente}</p>
+        <div style="background-color: #e0f2fe; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+            <p style="margin: 1px 0; font-size: 10px; color: #1e3a8a;"><strong>CLIENTE:</strong> ${cliente}</p>
+            <p style="margin: 1px 0; font-size: 10px; color: #1e3a8a;"><strong>RFC:</strong> ${rfc}</p>
+            <p style="margin: 1px 0; font-size: 10px; color: #1e3a8a;"><strong>SUCURSAL:</strong> ${sucursal}</p>
+            <p style="margin: 1px 0; font-size: 10px; color: #1e3a8a;"><strong>FILTRADO:</strong> ${fInicio} - ${fFin}</p>
+        </div>
 
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <div style="background-color: #16a34a; color: white; text-align: center; padding: 10px; border-radius: 6px; margin-bottom: 15px; width: 100%;">
+            <div style="font-size: 11px; font-weight: bold; letter-spacing: 1px;">SALDO PENDIENTE:</div>
+            <div style="font-size: 24px; font-weight: 900; margin-top: 1px; white-space: nowrap;">${formatCurrency(totalSaldos)} MXN</div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
             <thead>
-                <tr style="background-color: #1e4b8a; color: white; font-size: 9px; text-align: center; text-transform: uppercase;">
-                    <th style="padding: 8px; border: 1px solid #fff;">No.</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Fecha Facturación</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Folio</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Descripción</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Moneda</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Cargo</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Abono</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Saldo</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Vencimiento</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Días Venc.</th>
-                    <th style="padding: 8px; border: 1px solid #fff;">Status</th>
+                <tr style="background-color: #1e4b8a; color: #ffffff; font-size: 8px;">
+                    <th style="padding: 8px; text-align: center;">NO.</th>
+                    <th style="padding: 8px; text-align: center;">FECHA FACTURACION</th>
+                    <th style="padding: 8px; text-align: center;">FOLIO</th>
+                    <th style="padding: 8px; text-align: center;">DESCRIPCION</th>
+                    <th style="padding: 8px; text-align: center;">MONEDA</th>
+                    <th style="padding: 8px; text-align: right;">CARGO</th>
+                    <th style="padding: 8px; text-align: right;">ABONO</th>
+                    <th style="padding: 8px; text-align: right;">SALDO</th>
+                    <th style="padding: 8px; text-align: center;">VENCIMIENTO</th>
+                    <th style="padding: 8px; text-align: center;">DIAS VENCIDOS</th>
+                    <th style="padding: 8px; text-align: center;">STATUS</th>
                 </tr>
             </thead>
-            <tbody>${tableRows}</tbody>
+            <tbody>
+                ${tableRows}
+            </tbody>
         </table>
 
-        <div style="margin-bottom: 25px; display: flex; flex-direction: column; gap: 6px;">
-            <div style="display: flex; align-items: stretch; border: 1px solid #94a3b8; min-height: 35px; flex-wrap: nowrap;">
-                <div style="background-color: #84cc16; color: white; padding: 5px 10px; font-weight: bold; font-size: 9px; width: 170px; display: flex; align-items: center; flex-shrink: 0;">MONTO TOTAL FACTURAS MXN</div>
-                <div style="padding: 5px 10px; min-width: 120px; font-weight: bold; border-left: 1px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${formatCurrency(totalMXN)}</div>
-                <div style="padding: 5px 10px; flex: 1; border-left: 1px solid #94a3b8; font-size: 8.5px; font-weight: bold; display: flex; align-items: center; background-color: #f9fafb; color: #1f2937; word-break: break-word;">
+        <!-- Resumen de totales -->
+        <div style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 20px;">
+            <div style="background-color: #e5e7eb; padding: 8px; border-radius: 6px; min-width: 120px; text-align: center;">
+                <div style="font-size: 9px; font-weight: bold; color: #374151; margin-bottom: 2px;">TOTAL CARGOS</div>
+                <div style="font-size: 14px; font-weight: 900; color: #1f2937; white-space: nowrap;">${formatCurrency(totalCargos)}</div>
+            </div>
+            <div style="background-color: #e5e7eb; padding: 8px; border-radius: 6px; min-width: 120px; text-align: center;">
+                <div style="font-size: 9px; font-weight: bold; color: #374151; margin-bottom: 2px;">TOTAL ABONOS</div>
+                <div style="font-size: 14px; font-weight: 900; color: #1f2937; white-space: nowrap;">${formatCurrency(totalAbonos)}</div>
+            </div>
+            <div style="background-color: #16a34a; padding: 8px; border-radius: 6px; min-width: 140px; text-align: center; color: white;">
+                <div style="font-size: 9px; font-weight: bold; margin-bottom: 2px;">SALDO FINAL</div>
+                <div style="font-size: 14px; font-weight: 900; white-space: nowrap;">${formatCurrency(totalSaldos)}</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: stretch; border: 1px solid #94a3b8; min-height: 30px;">
+                <div style="background-color: #84cc16; color: white; padding: 3px 8px; font-weight: bold; font-size: 8px; width: 150px; display: flex; align-items: center; flex-shrink: 0;">MONTO TOTAL FACTURAS MXN</div>
+                <div style="padding: 3px 8px; width: 90px; font-weight: bold; border-left: 1px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; white-space: nowrap; font-size: 9px;">${formatCurrency(totalMXN)}</div>
+                <div style="padding: 3px 8px; flex: 1; border-left: 1px solid #94a3b8; font-size: 8px; font-weight: bold; display: flex; align-items: center; background-color: #f9fafb; color: #1f2937; word-break: break-word;">
                     ${numeroALetras(totalMXN, 'MXN')}
                 </div>
             </div>
-            <div style="display: flex; align-items: stretch; border: 1px solid #94a3b8; min-height: 35px; flex-wrap: nowrap;">
-                <div style="background-color: #f59e0b; color: white; padding: 5px 10px; font-weight: bold; font-size: 9px; width: 170px; display: flex; align-items: center; flex-shrink: 0;">MONTO TOTAL FACTURAS USD</div>
-                <div style="padding: 5px 10px; min-width: 120px; font-weight: bold; border-left: 1px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">$ ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
-                <div style="padding: 5px 10px; flex: 1; border-left: 1px solid #94a3b8; font-size: 8.5px; font-weight: bold; display: flex; align-items: center; background-color: #f9fafb; color: #1f2937; word-break: break-word;">
+            <div style="display: flex; align-items: stretch; border: 1px solid #94a3b8; min-height: 30px;">
+                <div style="background-color: #f59e0b; color: white; padding: 3px 8px; font-weight: bold; font-size: 8px; width: 150px; display: flex; align-items: center; flex-shrink: 0;">MONTO TOTAL FACTURAS USD</div>
+                <div style="padding: 3px 8px; width: 90px; font-weight: bold; border-left: 1px solid #94a3b8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; white-space: nowrap; font-size: 9px;">$ ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                <div style="padding: 3px 8px; flex: 1; border-left: 1px solid #94a3b8; font-size: 8px; font-weight: bold; display: flex; align-items: center; background-color: #f9fafb; color: #1f2937; word-break: break-word;">
                     ${numeroALetras(totalUSD, 'USD')}
                 </div>
             </div>
         </div>
 
-        <div style="width: 70%; margin-top: 20px;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #1e4b8a;">
-                <tr style="background-color: #1e4b8a; color: white; text-align: center; font-weight: bold; font-size: 12px;">
-                    <td colspan="2" style="padding: 8px;">DATOS BANCARIOS</td>
-                </tr>
-                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc; width: 25%;">BANCO</td><td style="padding: 7px; border: 1px solid #cbd5e1;">BBVA</td></tr>
-                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">NOMBRE</td><td style="padding: 7px; border: 1px solid #cbd5e1;">JESUS RICARDO MENDEZ ARRILLAGA</td></tr>
-                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">CUENTA</td><td style="padding: 7px; border: 1px solid #cbd5e1;">0478628203</td></tr>
-                <tr><td style="padding: 7px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">CLAVE</td><td style="padding: 7px; border: 1px solid #cbd5e1;">012290004786282030</td></tr>
-            </table>
+        <div style="margin-top: 10px; border-top: 1px solid #d1d5db; padding-top: 8px; font-size: 9px; color: #6b7280; margin-bottom: 20px;">
+            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza, email: cobranza@jringenieriaelectrica.com
         </div>
-
-        <div style="margin-top: 25px; width: 70%;">
-            <div style="background-color: #1e4b8a; color: white; padding: 6px 15px; font-size: 11px; font-weight: bold; width: fit-content; min-width: 280px;">CUENTA EN PESOS (MXN)</div>
-            <div style="border: 1px solid #1e4b8a; padding: 6px 15px; font-size: 11px; width: fit-content; min-width: 280px; border-top: none;">CLABE INTERBANCARIA: 012290004786282030</div>
-        </div>
-    </div>
-
-    <div style="width: 100%; height: 40px; display: flex; position: absolute; bottom: 0;">
-         <div style="width: 20%; background-color: #166534; transform: skewX(-30deg); margin-left: -15px;"></div>
-         <div style="width: 85%; background-color: #1e3a8a; margin-left: -20px;"></div>
     </div>
     `;
 
+        const footerWrapper = document.createElement('div');
+        footerWrapper.setAttribute('style', 'width: 850px; position: absolute; left: -9999px; top: 0;');
+        footerWrapper.innerHTML = `
+        <div style="width: 100%; display: flex; flex-direction: column; align-items: flex-end;">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width: 100%; height: 10px; display: block;">
+                <polygon points="20,0 100,0 100,100 24,100" fill="#009640" />
+            </svg>
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width: 85%; height: 10px; display: block;">
+                <polygon points="0,0 100,0 100,100 4,100" fill="#005A9C" />
+            </svg>
+        </div>
+    `;
+
         document.body.appendChild(container);
+        document.body.appendChild(footerWrapper);
 
         try {
             const canvas = await html2canvas(container, { scale: 2, useCORS: true });
+            const footerCanvas = await html2canvas(footerWrapper, { scale: 2, useCORS: true });
+
             const imgData = canvas.toDataURL('image/png');
+            const footerImgData = footerCanvas.toDataURL('image/png');
+
             const pdf = new jsPDF('p', 'mm', 'a4');
-            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const footerHeight = (footerCanvas.height * pdfWidth) / footerCanvas.width;
+            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            // Altura disponible para el contenido en cada página (restando el footer)
+            const availableHeight = pdfHeight - footerHeight - 5; // 5mm de margen
+
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            // Función para añadir el footer a la página actual
+            const addFooter = () => {
+                pdf.addImage(footerImgData, 'PNG', 0, pdfHeight - footerHeight, pdfWidth, footerHeight);
+            };
+
+            // Primera página
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            addFooter();
+            heightLeft -= availableHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                // En las siguientes páginas, volvemos a aplicar el recorte
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                addFooter();
+                heightLeft -= availableHeight;
+            }
+
             pdf.save(`Estado_Cuenta_JR_${new Date().getTime()}.pdf`);
         } catch (e) {
-            console.error(e);
+            console.error("Error al exportar PDF: ", e);
         } finally {
             document.body.removeChild(container);
+            document.body.removeChild(footerWrapper);
             this.loading = false;
         }
     }
@@ -1024,17 +1121,6 @@ export class ReportCustomersDashboardComponent implements OnInit {
             default:
                 // Gris para cualquier otro estado desconocido
                 return `${base} bg-gray-50 text-gray-500 border-gray-200`;
-        }
-    }
-
-    async getTipoCambio(): Promise<number> {
-        try {
-            const response = await fetch('https://api.frankfurter.app/latest?from=USD&to=MXN');
-            const data = await response.json();
-            return data.rates.MXN; // Retorna por ejemplo 17.05
-        } catch (error) {
-            console.error("Error obteniendo tipo de cambio, usando default 18.00", error);
-            return 18.00; // Valor de respaldo
         }
     }
 }
