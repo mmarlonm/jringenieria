@@ -177,6 +177,12 @@ export class ReportVentasDashboardComponent implements OnInit {
                     this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
                     this.generarGraficaMarcas();
                     this.generarGraficaLineas();
+
+                    // 🎯 Nuevas Gráficas de Dona (Para la segunda fila)
+                    if (Array.isArray(resp.ventasPorClasificacion)) {
+                        this.graficaTopMarcasDonut(resp.ventasPorClasificacion);
+                        this.graficaTopLineasDonut(resp.ventasPorClasificacion);
+                    }
                 },
                 error: (err) => {
                     console.error('Error al consultar el dashboard:', err);
@@ -207,7 +213,7 @@ export class ReportVentasDashboardComponent implements OnInit {
 
         this.updateFlag = true;
 
-        ['chartComparativaMes', 'chartTopProductos', 'chartTopVendedores', 'chartMarcas', 'chartLineas']
+        ['chartComparativaMes', 'chartTopProductosPiezas', 'chartTopProductosMonto', 'chartTopVendedores', 'chartMarcas', 'chartLineas', 'chartTopMarcasDonut', 'chartTopLineasDonut']
             .forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '';
@@ -243,6 +249,11 @@ export class ReportVentasDashboardComponent implements OnInit {
 
         if (Array.isArray(data.topVendedores) && data.topVendedores.length) {
             this.graficaTopVendedores(data.topVendedores);
+        }
+
+        if (Array.isArray(data.ventasPorClasificacion)) {
+            this.graficaTopMarcasDonut(data.ventasPorClasificacion);
+            this.graficaTopLineasDonut(data.ventasPorClasificacion);
         }
     }
 
@@ -754,5 +765,71 @@ export class ReportVentasDashboardComponent implements OnInit {
     public resetFiltroMarca(): void {
         this.marcaSeleccionada = null;
         this.generarGraficaLineas();
+    }
+
+    private graficaTopMarcasDonut(clasificacion: any[]): void {
+        const porMarca = clasificacion.reduce((acc, curr) => {
+            acc[curr.marca] = (acc[curr.marca] || 0) + (curr.totalVendido || 0);
+            return acc;
+        }, {} as any);
+
+        const data = Object.keys(porMarca)
+            .map(key => ({ name: key, y: porMarca[key] }))
+            .sort((a, b) => b.y - a.y)
+            .slice(0, 5);
+
+        this.crearMiniDonut('chartTopMarcasDonut', 'Top Marcas', data, '#10b981');
+    }
+
+    private graficaTopLineasDonut(clasificacion: any[]): void {
+        const porLinea = clasificacion.reduce((acc, curr) => {
+            acc[curr.linea] = (acc[curr.linea] || 0) + (curr.totalVendido || 0);
+            return acc;
+        }, {} as any);
+
+        const data = Object.keys(porLinea)
+            .map(key => ({ name: key, y: porLinea[key] }))
+            .sort((a, b) => b.y - a.y)
+            .slice(0, 5);
+
+        this.crearMiniDonut('chartTopLineasDonut', 'Top Líneas', data, '#8b5cf6');
+    }
+
+    private crearMiniDonut(containerId: string, title: string, data: any[], colorPrincipal: string): void {
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#F1F5F9' : '#1E293B';
+
+        Highcharts.chart(containerId, {
+            chart: { type: 'pie', backgroundColor: 'transparent', height: 260 },
+            title: {
+                text: title,
+                align: 'center',
+                verticalAlign: 'middle',
+                y: 10,
+                style: { fontSize: '13px', fontWeight: 'bold', color: textColor }
+            },
+            tooltip: {
+                pointFormat: 'Monto: <b>${point.y:,.0f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+            },
+            credits: { enabled: false },
+            plotOptions: {
+                pie: {
+                    innerSize: '70%',
+                    borderWidth: 1,
+                    borderColor: isDark ? '#1E293B' : '#FFFFFF',
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}',
+                        distance: 5,
+                        style: { fontSize: '9px', textOutline: 'none', color: textColor }
+                    }
+                }
+            },
+            series: [{
+                name: title,
+                type: 'pie',
+                data: data
+            } as any]
+        });
     }
 }

@@ -206,8 +206,8 @@
         </div>
 
 
-        <!-- 🔹 GRÁFICAS -->
-        <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 🔹 GRÁFICAS FILA 1 -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Ventas por Vendedor
@@ -221,6 +221,10 @@
                 </h2>
                 <div id="chartTopProductosPiezas" class="w-full h-[260px] sm:h-80"></div>
             </div>
+        </div>
+
+        <!-- 🔹 GRÁFICAS FILA 2 (Para quitar el hueco) -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Top Productos por monto
@@ -228,19 +232,18 @@
                 <div id="chartTopProductosMonto" class="w-full h-[260px] sm:h-80"></div>
             </div>
 
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <div class="bg-card shadow rounded-2xl p-4 border overflow-hidden">
-                <div id="chartMarcas" style="height: 450px; width: 100%;"></div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Ventas por Marca
+                </h2>
+                <div id="chartTopMarcasDonut" class="w-full h-[260px]"></div>
             </div>
 
-            <div class="bg-card shadow rounded-2xl p-4 border overflow-hidden relative">
-                <button *ngIf="marcaSeleccionada" (click)="resetFiltroMarca()"
-                    class="absolute top-2 right-2 z-10 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                    <mat-icon class="icon-size-5 text-gray-600">close</mat-icon>
-                </button>
-                <div id="chartLineas" style="height: 450px; width: 100%;"></div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Ventas por Línea
+                </h2>
+                <div id="chartTopLineasDonut" class="w-full h-[260px]"></div>
             </div>
         </div>
 
