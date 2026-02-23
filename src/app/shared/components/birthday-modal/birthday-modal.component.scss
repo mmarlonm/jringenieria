@@ -1,0 +1,239 @@
+:host {
+    display: block;
+    max-width: 600px;
+}
+
+.birthday-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .birthday-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.patterns {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+
+    .circle {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+    }
+
+    .c1 {
+        top: -10%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: #6366f1;
+    }
+
+    .c2 {
+        bottom: -10%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: #ec4899;
+    }
+}
+
+.close-btn {
+    position: absolute !important;
+    top: 16px;
+    right: 16px;
+    color: rgba(0, 0, 0, 0.3);
+
+    .dark & {
+        color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+.icon-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .glow {
+        position: absolute;
+        inset: -10px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+        animation: pulse 2s infinite ease-in-out;
+    }
+}
+
+.birthday-icon {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 64px !important;
+    color: #4f46e5;
+    filter: drop-shadow(0 0 10px rgba(79, 70, 229, 0.4));
+    animation: float 3s infinite ease-in-out;
+}
+
+.celebrate-text {
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #4f46e5 0%, #ec4899 50%, #f59e0b 100%);
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 4s linear infinite;
+}
+
+.divider {
+    width: 60px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    margin: 1.5rem 0;
+
+    .dark & {
+        background: #334155;
+    }
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    max-width: 400px;
+}
+
+.quote-card {
+    background: white;
+    padding: 2.5rem 2rem;
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    position: relative;
+    max-width: 500px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    .dark & {
+        background: rgba(31, 41, 55, 0.5);
+    }
+
+    &:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 30px 40px -10px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.quote-icon-top {
+    position: absolute;
+    top: -15px;
+    left: 40px;
+    background: #4f46e5;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+
+    mat-icon {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 18px !important;
+    }
+}
+
+.quote-text {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: #374151;
+    font-weight: 600;
+
+    .dark & {
+        color: #f3f4f6;
+    }
+}
+
+.interaction-hint {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+.celebrate-btn {
+    background: #4f46e5 !important;
+    color: white !important;
+    padding: 0 3rem !important;
+    height: 56px !important;
+    border-radius: 28px !important;
+    font-weight: 800 !important;
+    font-size: 1rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3) !important;
+    transition: all 0.3s ease !important;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 20px -5px rgba(79, 70, 229, 0.4) !important;
+        background: #4338ca !important;
+    }
+}
+
+/* Animations */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
+}
+
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}

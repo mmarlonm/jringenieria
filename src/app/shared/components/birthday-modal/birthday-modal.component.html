@@ -1,0 +1,43 @@
+<div class="birthday-card relative overflow-hidden">
+    <!-- Animated background patterns -->
+    <div class="patterns">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+    </div>
+
+    <div class="content p-8 md:p-12 flex flex-col items-center text-center relative z-10 backdrop-blur-md">
+        <!-- Close icon -->
+        <button mat-icon-button (click)="close()" class="close-btn">
+            <mat-icon svgIcon="heroicons_outline:x-mark"></mat-icon>
+        </button>
+
+        <!-- Premium Illustration/Icon -->
+        <div class="icon-wrapper mb-8">
+            <div class="glow"></div>
+            <mat-icon class="birthday-icon" svgIcon="heroicons_outline:cake"></mat-icon>
+        </div>
+
+        <h1 class="celebrate-text">¡Feliz Cumpleaños!</h1>
+
+        <div class="divider"></div>
+
+        <p class="subtitle mt-4 mb-10 text-gray-700 dark:text-gray-300">
+            Hoy celebramos tu camino, tus logros y la gran persona que eres.
+        </p>
+
+        <!-- High-Impact Quote Card -->
+        <div class="quote-card group" (click)="celebrate()">
+            <div class="quote-icon-top">
+                <mat-icon svgIcon="heroicons_outline:chat-bubble-left-right"></mat-icon>
+            </div>
+            <p class="quote-text italic">
+                "{{ randomPhrase }}"
+            </p>
+            <div class="interaction-hint">Haz clic para celebrar de nuevo ✨</div>
+        </div>
+
+        <button mat-flat-button class="celebrate-btn mt-10" (click)="celebrate()">
+            <span>¡Sigue Brillando!</span>
+        </button>
+    </div>
+</div>

@@ -1,14 +1,16 @@
-import { Component, HostListener, OnDestroy, OnInit } from "@angular/core";
+import { Component, HostListener, OnDestroy, OnInit, inject } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { PresenceService } from "./presence.service";
 import { Subject, takeUntil } from "rxjs";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
+import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, MatDialogModule],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _unsubscribeAll = new Subject<void>();
@@ -16,8 +18,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private inactivityTimeout!: ReturnType<typeof setTimeout>;
   private readonly inactivityLimit = 60000;
   private isInactive = false;
+  private _dialog = inject(MatDialog);
 
-  constructor(private presenceService: PresenceService) {}
+  constructor(private presenceService: PresenceService) { }
 
   @HostListener("window:beforeunload")
   unloadHandler(): void {
@@ -33,6 +36,9 @@ export class AppComponent implements OnInit, OnDestroy {
       this.presenceService.stopConnection();
       return;
     }
+
+    // Check for birthday
+    this.checkBirthday(storedData);
 
     this.presenceService.startConnection(token, userId);
     this.presenceService
@@ -83,5 +89,65 @@ export class AppComponent implements OnInit, OnDestroy {
     } catch {
       return null;
     }
+  }
+
+  private checkBirthday(userData: any): void {
+    const fechaNacimiento = userData?.usuario?.fechaNacimiento;
+    const userId = userData?.usuario?.id;
+
+    console.log('🎂 Revisando cumpleaños...', { fechaNacimiento, userId });
+
+    if (!fechaNacimiento || !userId) return;
+
+    // Usar un método más robusto para evitar desfases de zona horaria
+    // Asumiendo formato YYYY-MM-DD o ISO
+    const today = new Date();
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth() + 1; // getMonth() es 0-11
+
+    let birthDay, birthMonth;
+
+    if (typeof fechaNacimiento === 'string' && fechaNacimiento.includes('-')) {
+      // Si es un string "XXXX-MM-DD...", extraemos directamente los números
+      const parts = fechaNacimiento.split('T')[0].split('-');
+      birthMonth = parseInt(parts[1], 10);
+      birthDay = parseInt(parts[2], 10);
+    } else {
+      const birthDate = new Date(fechaNacimiento);
+      birthDay = birthDate.getDate();
+      birthMonth = birthDate.getMonth() + 1;
+    }
+
+    console.log('📅 Comparación:', {
+      hoy: `${todayDay}/${todayMonth}`,
+      cumple: `${birthDay}/${birthMonth}`
+    });
+
+    const isBirthday = birthDay === todayDay && birthMonth === todayMonth;
+
+    if (isBirthday) {
+      console.log('🎉 ¡Es tu cumpleaños! Abriendo modal...');
+      const year = today.getFullYear();
+      const storageKey = `birthday_celebrated_${year}_${userId}`;
+      const alreadyCelebrated = localStorage.getItem(storageKey);
+
+      if (!alreadyCelebrated) {
+        this.showBirthdayCelebration();
+        localStorage.setItem(storageKey, 'true');
+      } else {
+        console.log('🎈 Ya celebramos hoy, no mostramos de nuevo.');
+      }
+    } else {
+      console.log('⏳ Aún no es tu cumpleaños.');
+    }
+  }
+
+  private showBirthdayCelebration(): void {
+    this._dialog.open(BirthdayModalComponent, {
+      width: '500px',
+      panelClass: 'birthday-modal-panel',
+      autoFocus: false,
+      disableClose: false
+    });
   }
 }

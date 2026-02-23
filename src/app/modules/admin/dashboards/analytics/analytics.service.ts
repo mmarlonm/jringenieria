@@ -7,6 +7,7 @@ import { environment } from "environments/environment"; // Asegúrate de tener l
 export class AnalyticsService {
   private _data: BehaviorSubject<any> = new BehaviorSubject(null);
   private apiUrl = `${environment.apiUrl}/Analitica`; // Asegúrate de que esto sea correcto
+  private authUrl = `${environment.apiUrl}/Auth`;
 
   /**
    * Constructor
@@ -94,6 +95,20 @@ export class AnalyticsService {
     }));
 
     return this._httpClient.post<any[]>(`${this.apiUrl}/optimizar-ruta`, body);
+  }
+
+  // Obtener eventos de Google Calendar
+  getGoogleEvents(userId: number): Observable<any[]> {
+    return this._httpClient.get<any[]>(`${this.authUrl}/events/${userId}`);
+  }
+
+  // Obtener eventos de Google Calendar por mes
+  getGoogleEventsByMonth(userId: number, year: number, month: number): Observable<any[]> {
+    const params = new HttpParams()
+      .set("usuarioId", userId.toString())
+      .set("year", year.toString())
+      .set("month", month.toString());
+    return this._httpClient.get<any[]>(`${this.authUrl}/eventos-por-mes`, { params });
   }
 
 }

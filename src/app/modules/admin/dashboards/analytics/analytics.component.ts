@@ -30,6 +30,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatTabChangeEvent } from "@angular/material/tabs";
 import { FormsModule } from '@angular/forms';
 import { HighchartsChartModule, HighchartsChartComponent } from 'highcharts-angular';
+import { TaskService } from "app/modules/admin/dashboards/tasks/tasks.service";
 
 import * as Highcharts from 'highcharts';
 import HC_funnel from 'highcharts/modules/funnel';
@@ -79,16 +80,24 @@ HC_funnel(Highcharts);
   ],
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
-  chartGithubIssues: ApexOptions = {};
-  chartTaskDistribution: ApexOptions = {};
-  chartBudgetDistribution: ApexOptions = {};
-  chartWeeklyExpenses: ApexOptions = {};
-  chartMonthlyExpenses: ApexOptions = {};
   chartYearlyExpenses: ApexOptions = {};
   data: any;
   selectedProject: string = "Informacion general";
   private _unsubscribeAll: Subject<any> = new Subject<any>();
   users: any[] = [];
+
+  googleEvents: any[] = [];
+  tasksSummary: any = {
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+    total: 0
+  };
+  filteredEvents: any[] = [];
+  calendarView: 'day' | 'week' | 'month' | 'custom' = 'day';
+  selectedDate: Date = new Date();
+  viewRangeTitle: string = '';
+  chartTaskDistribution: ApexOptions = {};
 
   //informacion de usuario logeado
   user: User;
@@ -221,10 +230,11 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
    * Constructor
    */
   constructor(
-    private _projectService: AnalyticsService,
+    private _analyticsService: AnalyticsService,
     private _router: Router,
     private _userService: UserService,
     private _usersService: UsersService,
+    private _taskService: TaskService,
     private cdr: ChangeDetectorRef,
     private _salesService: SalesService,
     private presenceService: PresenceService,
@@ -240,7 +250,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
    */
   ngOnInit(): void {
     // Get the data
-    this._projectService.data$
+    this._analyticsService.data$
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((data) => {
         // Store the data
@@ -255,6 +265,11 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((user: User) => {
         this.user = user["usuario"];
+        if (this.user) {
+          this.getTasksSummary();
+          this.getCalendarEvents();
+          this._prepareTaskDistributionChart();
+        }
       });
 
     // Attach SVG fill fixer to all ApexCharts
@@ -296,6 +311,270 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.onBuscar();
   }
 
+  private _prepareTaskDistributionChart(): void {
+    this.chartTaskDistribution = {
+      chart: {
+        type: 'donut',
+        height: 350,
+        animations: {
+          enabled: true,
+          speed: 800
+        }
+      },
+      labels: ['Pendientes', 'En Proceso', 'Finalizadas'],
+      series: [this.tasksSummary.pending, this.tasksSummary.inProgress, this.tasksSummary.completed],
+      colors: ['#f59e0b', '#6366f1', '#10b981'],
+      legend: {
+        position: 'bottom',
+        fontFamily: 'Inter, sans-serif'
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '75%',
+            labels: {
+              show: true,
+              total: {
+                show: true,
+                label: 'Tareas',
+                formatter: () => this.tasksSummary.total.toString()
+              }
+            }
+          }
+        }
+      },
+      tooltip: {
+        theme: 'dark'
+      },
+      responsive: [
+        {
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 200
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      ]
+    };
+  }
+
+  /**
+   * Get tasks summary
+   */
+  getTasksSummary(): void {
+    if (!this.user?.['id'] && !this.user?.['usuarioId']) return;
+    const userId = this.user['id'] || this.user['usuarioId'];
+
+    this._taskService.getTasks(userId).subscribe((tasks) => {
+      this.tasksSummary = {
+        pending: tasks.filter(t => t.estatus === 1).length,
+        inProgress: tasks.filter(t => t.estatus === 2).length,
+        completed: tasks.filter(t => t.estatus === 3).length,
+        total: tasks.length
+      };
+      this._prepareTaskDistributionChart();
+      this.cdr.detectChanges();
+    });
+  }
+
+  /**
+   * Get Google Calendar events
+   */
+  getCalendarEvents(): void {
+    if (!this.user?.['id'] && !this.user?.['usuarioId']) return;
+    const userId = this.user['id'] || this.user['usuarioId'];
+
+    // Usar la fecha seleccionada para determinar qué mes cargar
+    const year = this.selectedDate.getFullYear();
+    const month = this.selectedDate.getMonth() + 1; // JS months are 0-indexed
+
+    this._analyticsService.getGoogleEventsByMonth(userId, year, month).subscribe((events: any) => {
+      this.googleEvents = Array.isArray(events) ? events : [];
+      this.filterEvents();
+      this.cdr.detectChanges();
+    });
+  }
+
+  /**
+   * Filter events based on active view
+   */
+  filterEvents(): void {
+    if (!Array.isArray(this.googleEvents)) {
+      this.googleEvents = [];
+    }
+    const referenceDate = this.selectedDate || new Date();
+
+    if (this.calendarView === 'day' || this.calendarView === 'custom') {
+      this.viewRangeTitle = referenceDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+      this.filteredEvents = this.googleEvents.filter(e => {
+        const start = e.fechaInicio || e.start?.dateTime || e.start?.date || e.start;
+        if (!start) return false;
+        const eventDate = new Date(start);
+        return eventDate.toDateString() === referenceDate.toDateString();
+      });
+    } else if (this.calendarView === 'week') {
+      const startOfWeek = new Date(referenceDate);
+      startOfWeek.setDate(referenceDate.getDate() - referenceDate.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      this.viewRangeTitle = `Semana del ${startOfWeek.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })} al ${endOfWeek.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}`;
+
+      this.filteredEvents = this.googleEvents.filter(e => {
+        const start = e.fechaInicio || e.start?.dateTime || e.start?.date || e.start;
+        if (!start) return false;
+        const eventDate = new Date(start);
+        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+      });
+    } else if (this.calendarView === 'month') {
+      this.viewRangeTitle = referenceDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+      this.filteredEvents = this.googleEvents.filter(e => {
+        const start = e.fechaInicio || e.start?.dateTime || e.start?.date || e.start;
+        if (!start) return false;
+        const eventDate = new Date(start);
+        return eventDate.getMonth() === referenceDate.getMonth() &&
+          eventDate.getFullYear() === referenceDate.getFullYear();
+      });
+    }
+
+    // Capitalizar primera letra del título para mejor estética
+    if (this.viewRangeTitle) {
+      this.viewRangeTitle = this.viewRangeTitle.charAt(0).toUpperCase() + this.viewRangeTitle.slice(1);
+    }
+  }
+
+  /**
+   * Get colors for event status
+   */
+  getStatusColors(status: string): { bg: string, text: string } {
+    switch (status) {
+      case 'confirmed':
+        return { bg: 'bg-green-100 dark:bg-green-900', text: 'text-green-700 dark:text-green-100' };
+      case 'tentative':
+        return { bg: 'bg-amber-100 dark:bg-amber-900', text: 'text-amber-700 dark:text-amber-100' };
+      case 'cancelled':
+        return { bg: 'bg-red-100 dark:bg-red-900', text: 'text-red-700 dark:text-red-100' };
+      default:
+        return { bg: 'bg-gray-100 dark:bg-gray-900', text: 'text-gray-700 dark:text-gray-100' };
+    }
+  }
+
+  /**
+   * Get icon for attendee status
+   */
+  getAttendeeStatusIcon(status: string): string {
+    switch (status) {
+      case 'accepted':
+        return 'heroicons_solid:check-circle';
+      case 'declined':
+        return 'heroicons_solid:x-circle';
+      case 'tentative':
+        return 'heroicons_solid:question-mark-circle';
+      case 'needsAction':
+        return 'heroicons_outline:envelope';
+      default:
+        return 'heroicons_solid:minus-circle';
+    }
+  }
+
+  /**
+   * Set calendar view
+   */
+  setCalendarView(view: 'day' | 'week' | 'month' | 'custom'): void {
+    this.calendarView = view;
+    // If switching to day, and it was custom, keep it. 
+    // If switching from custom to day, just call it day.
+    if (view === 'day') this.calendarView = 'day';
+
+    this.filterEvents();
+    this.cdr.detectChanges();
+  }
+
+  onDateChange(date: Date): void {
+    if (date) {
+      this.selectedDate = new Date(date);
+      this.getCalendarEvents(); // Fetch data if month changed (or just always fetch for simplicity)
+      this.cdr.detectChanges();
+    }
+  }
+
+  onMonthSelected(date: Date, datepicker: any): void {
+    if (this.calendarView === 'month') {
+      this.selectedDate = new Date(date);
+      this.getCalendarEvents();
+      datepicker.close();
+      this.cdr.detectChanges();
+    }
+  }
+
+  next(): void {
+    const nextDate = new Date(this.selectedDate);
+    const currentMonth = this.selectedDate.getMonth();
+    const currentYear = this.selectedDate.getFullYear();
+
+    if (this.calendarView === 'month') {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    } else if (this.calendarView === 'week') {
+      nextDate.setDate(nextDate.getDate() + 7);
+    } else {
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
+
+    this.selectedDate = nextDate;
+
+    if (nextDate.getMonth() !== currentMonth || nextDate.getFullYear() !== currentYear) {
+      this.getCalendarEvents();
+    } else {
+      this.filterEvents();
+    }
+    this.cdr.detectChanges();
+  }
+
+  previous(): void {
+    const prevDate = new Date(this.selectedDate);
+    const currentMonth = this.selectedDate.getMonth();
+    const currentYear = this.selectedDate.getFullYear();
+
+    if (this.calendarView === 'month') {
+      prevDate.setMonth(prevDate.getMonth() - 1);
+    } else if (this.calendarView === 'week') {
+      prevDate.setDate(prevDate.getDate() - 7);
+    } else {
+      prevDate.setDate(prevDate.getDate() - 1);
+    }
+
+    this.selectedDate = prevDate;
+
+    if (prevDate.getMonth() !== currentMonth || prevDate.getFullYear() !== currentYear) {
+      this.getCalendarEvents();
+    } else {
+      this.filterEvents();
+    }
+    this.cdr.detectChanges();
+  }
+
+  goToToday(): void {
+    const today = new Date();
+    const currentMonth = this.selectedDate.getMonth();
+    const currentYear = this.selectedDate.getFullYear();
+
+    this.selectedDate = today;
+
+    if (today.getMonth() !== currentMonth || today.getFullYear() !== currentYear) {
+      this.getCalendarEvents();
+    } else {
+      this.filterEvents();
+    }
+    this.cdr.detectChanges();
+  }
+
 
 
   obtenerDatosEmbudo(unidadId: number) {
@@ -312,7 +591,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   getAnalitica(): void {
-    this._projectService.getAnalitica().subscribe((analitica: any) => {
+    this._analyticsService.getAnalitica().subscribe((analitica: any) => {
       this.analiticaData = analitica;
       // Proyectos
       if (analitica?.proyectos) {
@@ -425,6 +704,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   // @ Public methods
   // -----------------------------------------------------------------------------------------------------
 
+
   /**
    * Track by function for ngFor loops
    *
@@ -473,303 +753,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
    * @private
    */
   private _prepareChartData(): void {
-    // Github issues
-    this.chartGithubIssues = {
-      chart: {
-        fontFamily: "inherit",
-        foreColor: "inherit",
-        height: "100%",
-        type: "line",
-        toolbar: {
-          show: false,
-        },
-        zoom: {
-          enabled: false,
-        },
-      },
-      colors: ["#64748B", "#94A3B8"],
-      dataLabels: {
-        enabled: true,
-        enabledOnSeries: [0],
-        background: {
-          borderWidth: 0,
-        },
-      },
-      grid: {
-        borderColor: "var(--fuse-border)",
-      },
-      labels: this.data.githubIssues.labels,
-      legend: {
-        show: false,
-      },
-      plotOptions: {
-        bar: {
-          columnWidth: "50%",
-        },
-      },
-      series: this.data.githubIssues.series,
-      states: {
-        hover: {
-          filter: {
-            type: "darken",
-          },
-        },
-      },
-      stroke: {
-        width: [3, 0],
-      },
-      tooltip: {
-        followCursor: true,
-        theme: "dark",
-      },
-      xaxis: {
-        axisBorder: {
-          show: false,
-        },
-        axisTicks: {
-          color: "var(--fuse-border)",
-        },
-        labels: {
-          style: {
-            colors: "var(--fuse-text-secondary)",
-          },
-        },
-        tooltip: {
-          enabled: false,
-        },
-      },
-      yaxis: {
-        labels: {
-          offsetX: -16,
-          style: {
-            colors: "var(--fuse-text-secondary)",
-          },
-        },
-      },
-    };
-
-    // Task distribution
-    this.chartTaskDistribution = {
-      chart: {
-        fontFamily: "inherit",
-        foreColor: "inherit",
-        height: "100%",
-        type: "polarArea",
-        toolbar: {
-          show: false,
-        },
-        zoom: {
-          enabled: false,
-        },
-      },
-      labels: this.data.taskDistribution.labels,
-      legend: {
-        position: "bottom",
-      },
-      plotOptions: {
-        polarArea: {
-          spokes: {
-            connectorColors: "var(--fuse-border)",
-          },
-          rings: {
-            strokeColor: "var(--fuse-border)",
-          },
-        },
-      },
-      series: this.data.taskDistribution.series,
-      states: {
-        hover: {
-          filter: {
-            type: "darken",
-          },
-        },
-      },
-      stroke: {
-        width: 2,
-      },
-      theme: {
-        monochrome: {
-          enabled: true,
-          color: "#93C5FD",
-          shadeIntensity: 0.75,
-          shadeTo: "dark",
-        },
-      },
-      tooltip: {
-        followCursor: true,
-        theme: "dark",
-      },
-      yaxis: {
-        labels: {
-          style: {
-            colors: "var(--fuse-text-secondary)",
-          },
-        },
-      },
-    };
-
-    // Budget distribution
-    this.chartBudgetDistribution = {
-      chart: {
-        fontFamily: "inherit",
-        foreColor: "inherit",
-        height: "100%",
-        type: "radar",
-        sparkline: {
-          enabled: true,
-        },
-      },
-      colors: ["#818CF8"],
-      dataLabels: {
-        enabled: true,
-        formatter: (val: number): string | number => `${val}%`,
-        textAnchor: "start",
-        style: {
-          fontSize: "13px",
-          fontWeight: 500,
-        },
-        background: {
-          borderWidth: 0,
-          padding: 4,
-        },
-        offsetY: -15,
-      },
-      markers: {
-        strokeColors: "#818CF8",
-        strokeWidth: 4,
-      },
-      plotOptions: {
-        radar: {
-          polygons: {
-            strokeColors: "var(--fuse-border)",
-            connectorColors: "var(--fuse-border)",
-          },
-        },
-      },
-      series: this.data.budgetDistribution.series,
-      stroke: {
-        width: 2,
-      },
-      tooltip: {
-        theme: "dark",
-        y: {
-          formatter: (val: number): string => `${val}%`,
-        },
-      },
-      xaxis: {
-        labels: {
-          show: true,
-          style: {
-            fontSize: "12px",
-            fontWeight: "500",
-          },
-        },
-        categories: this.data.budgetDistribution.categories,
-      },
-      yaxis: {
-        max: (max: number): number => parseInt((max + 10).toFixed(0), 10),
-        tickAmount: 7,
-      },
-    };
-
-    // Weekly expenses
-    this.chartWeeklyExpenses = {
-      chart: {
-        animations: {
-          enabled: false,
-        },
-        fontFamily: "inherit",
-        foreColor: "inherit",
-        height: "100%",
-        type: "line",
-        sparkline: {
-          enabled: true,
-        },
-      },
-      colors: ["#22D3EE"],
-      series: this.data.weeklyExpenses.series,
-      stroke: {
-        curve: "smooth",
-      },
-      tooltip: {
-        theme: "dark",
-      },
-      xaxis: {
-        type: "category",
-        categories: this.data.weeklyExpenses.labels,
-      },
-      yaxis: {
-        labels: {
-          formatter: (val): string => `$${val}`,
-        },
-      },
-    };
-
-    // Monthly expenses
-    this.chartMonthlyExpenses = {
-      chart: {
-        animations: {
-          enabled: false,
-        },
-        fontFamily: "inherit",
-        foreColor: "inherit",
-        height: "100%",
-        type: "line",
-        sparkline: {
-          enabled: true,
-        },
-      },
-      colors: ["#4ADE80"],
-      series: this.data.monthlyExpenses.series,
-      stroke: {
-        curve: "smooth",
-      },
-      tooltip: {
-        theme: "dark",
-      },
-      xaxis: {
-        type: "category",
-        categories: this.data.monthlyExpenses.labels,
-      },
-      yaxis: {
-        labels: {
-          formatter: (val): string => `$${val}`,
-        },
-      },
-    };
-
-    // Yearly expenses
-    this.chartYearlyExpenses = {
-      chart: {
-        animations: {
-          enabled: false,
-        },
-        fontFamily: "inherit",
-        foreColor: "inherit",
-        height: "100%",
-        type: "line",
-        sparkline: {
-          enabled: true,
-        },
-      },
-      colors: ["#FB7185"],
-      series: this.data.yearlyExpenses.series,
-      stroke: {
-        curve: "smooth",
-      },
-      tooltip: {
-        theme: "dark",
-      },
-      xaxis: {
-        type: "category",
-        categories: this.data.yearlyExpenses.labels,
-      },
-      yaxis: {
-        labels: {
-          formatter: (val): string => `$${val}`,
-        },
-      },
-    };
+    // This method can be used for any remaining or new ApexCharts
+    // For now, we only have chartSales which is handled in prepateChartSales()
   }
 
   getColorClass(estatusId: number): string {
@@ -857,7 +842,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.marcadores = [];
     this.usuarios = [];
 
-    this._projectService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
+    this._analyticsService.getMapa(this.tipoSeleccionado).subscribe((ubicaciones) => {
       this.prospectosExistentes = ubicaciones; // Guardar los prospectos ya existentes
       // Generar lista de usuarios únicos
       const usuariosUnicos = Array.from(new Set(ubicaciones.map(u => u.nombreUsuario ?? 'Desconocido')));
@@ -998,7 +983,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
     if (!fechaInicio || !fechaFin) return;
 
-    this._projectService.getDataGraf(fechaInicio, fechaFin)
+    this._analyticsService.getDataGraf(fechaInicio, fechaFin)
       .subscribe((response: any[]) => {
         this.datosEmbudo = response || [];
         this.onUnidadNegocioChange(); // actualizar gráfica
@@ -1018,7 +1003,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       this.map.setView([lat, lon], 13);
 
       try {
-        this._projectService.getProspectosIA(lat,
+        this._analyticsService.getProspectosIA(lat,
           lon,
           this.prospectosExistentes?.map(p => p.nombre) || []).subscribe((prospectos) => {
 
@@ -1136,7 +1121,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     );
 
 
-    this._projectService.optimizarRuta(prospectosSugeridos).subscribe({
+    this._analyticsService.optimizarRuta(prospectosSugeridos).subscribe({
       next: (resp: any) => {
         try {
           const rutaOrdenada = JSON.parse(resp); // Ajusta si tu backend devuelve JSON string
