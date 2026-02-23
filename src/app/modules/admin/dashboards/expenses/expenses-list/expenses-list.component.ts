@@ -10,13 +10,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatDividerModule } from '@angular/material/divider';
 import { Subject, takeUntil, map, startWith, forkJoin } from 'rxjs';
 import { ExpensesService } from '../expenses.service';
-import { Expense, ExpenseCatalogs } from '../models/expenses.types';
+import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types';
 import Swal from 'sweetalert2';
 import moment from 'moment';
 
@@ -43,6 +44,7 @@ import moment from 'moment';
         MatMomentDateModule,
         MatSidenavModule,
         MatDividerModule,
+        MatAutocompleteModule,
         CurrencyPipe,
         DatePipe
     ],
@@ -53,9 +55,9 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     dataSource: MatTableDataSource<Expense> = new MatTableDataSource();
     displayedColumns: string[] = [
-        'fecha', 'gasto', 'tipo', 'tipoMovimiento', 'concepto', 'subtipo', 'unidad', 'area', 'cantidad',
-        'proveedor', 'factura', 'tasa', 'formaPago', 'cuenta', 'descripcion',
-        'impuestos', 'mes', 'año', 'registro', 'acciones'
+        'unidad', 'tipoMovimiento', 'fecha', 'gasto', 'concepto', 'subtipo', 'tipo', 'area', 'cuenta', 'numeroCuenta', 'formaPago',
+        'proveedor', 'factura', 'folioFiscal', 'tipoComprobante', 'moneda', 'descripcion',
+        'impuestos', 'tasa', 'mes', 'año', 'registro', 'acciones'
     ];
     searchInputControl: FormControl = new FormControl('');
 
@@ -64,7 +66,19 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     isAdding: boolean = false;
     rowForm: FormGroup;
     catalogs: ExpenseCatalogs;
+    subtiposFiltrados: GastoSubtipo[] = []; // Para el formulario de edición
+    filteredSubtiposHeader: GastoSubtipo[] = []; // Para el filtro del encabezado
+    filteredNumerosCuentaHeader: string[] = []; // Para el filtro del encabezado (No. Cuenta)
+    numerosCuentaFiltrados: string[] = []; // 👈 Nueva cascada para cuentas
+    filteredProveedores: any[] = []; // 👈 Para el autocomplete
     selectedExpense: Expense | null = null;
+
+    // 👈 Mapeo estático según requerimiento
+    accountNumbersMap: { [key: string]: string[] } = {
+        'JR INGENIERIA': ['124948939', '124949706'],
+        'JESUS MENDEZ': ['4772143013658287', '477133059607769', '1200449415', '197590067', '478628203'],
+        'COLABORADOR': []
+    };
     unidadesNegocio: any[] = [];
     currentUserUnidadId: number | null = null;
     currentUserUnidadName: string = '';
@@ -83,7 +97,14 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         factura: '',
         formaPago: '',
         cuenta: '',
-        tipoMovimiento: ''
+        tipoMovimiento: '',
+        folioFiscal: '',
+        tipoComprobante: '',
+        moneda: '',
+        numeroCuenta: '',
+        descripcion: '',
+        mes: '',
+        anio: ''
     };
 
     constructor(
@@ -122,6 +143,9 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                     this.catalogs = res.catalogos;
                     this.unidadesNegocio = res.unidades;
 
+                    this.subtiposFiltrados = res.catalogos?.subtipos || [];
+                    this.filteredSubtiposHeader = res.catalogos?.subtipos || [];
+
                     this._changeDetectorRef.markForCheck();
 
                     // 4. Una vez tenemos los catálogos, cargamos los gastos
@@ -141,6 +165,12 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             });
     }
 
+    applyDateFilter(event: any): void {
+        const date = event.value;
+        const formattedDate = date ? moment(date).format('DD/MM/YYYY') : '';
+        this.applyColumnFilter('fecha', formattedDate);
+    }
+
     // Función auxiliar para comparar filtros vacíos
     private _emptyFilter() {
         return { fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '', unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '' };
@@ -148,46 +178,94 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     // 🔹 NUEVO: Función para aplicar filtro desde el encabezado
     applyColumnFilter(column: string, value: string): void {
-        this.filterValues[column] = value.trim().toLowerCase();
+        const val = value ? value.trim().toLowerCase() : '';
+        this.filterValues[column] = val;
+
+        // Cascada en Filtros del Encabezado
+        if (column === 'concepto') {
+            if (val) {
+                const conceptObj = this.catalogs?.conceptos?.find(c => c.nombre.toLowerCase() === val);
+                if (conceptObj) {
+                    this.filteredSubtiposHeader = this.catalogs?.subtipos?.filter(s => s.conceptoId == conceptObj.conceptoId) || [];
+                } else {
+                    this.filteredSubtiposHeader = this.catalogs?.subtipos || [];
+                }
+            } else {
+                this.filteredSubtiposHeader = this.catalogs?.subtipos || [];
+            }
+        }
+
+        if (column === 'cuenta') {
+            if (val) {
+                const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+                const nombreNormalizado = normalize(val);
+
+                const matchingKey = Object.keys(this.accountNumbersMap).find(key =>
+                    nombreNormalizado.includes(normalize(key))
+                );
+                this.filteredNumerosCuentaHeader = matchingKey ? this.accountNumbersMap[matchingKey] : [];
+            } else {
+                this.filteredNumerosCuentaHeader = [];
+            }
+        }
+
         this.dataSource.filter = JSON.stringify(this.filterValues);
+        this._changeDetectorRef.detectChanges();
     }
 
     // 🔹 NUEVO: Predicado de filtro personalizado
     private _createFilterPredicate(): (data: Expense, filter: string) => boolean {
         return (data: Expense, filter: string): boolean => {
+            if (data.gastoId === 0) return true;
+
             // Si el filtro no es un JSON (es del buscador global)
             if (!filter.startsWith('{')) {
-                const searchStr = (data.nombreGasto + data.factura + this.getProveedorNombre(data.proveedorId)).toLowerCase();
+                const searchStr = (
+                    (data.nombreGasto || '') +
+                    (data.factura || '') +
+                    (data.folioFiscal || '') +
+                    (data.gastoProveedor?.nombre || '')
+                ).toLowerCase();
                 return searchStr.indexOf(filter) !== -1;
             }
 
             // Si es filtro por columnas
             const searchTerms = JSON.parse(filter);
 
-            const matchFecha = moment(data.fecha).format('DD/MM/YYYY').includes(searchTerms.fecha);
-            const matchGasto = data.nombreGasto?.toLowerCase().includes(searchTerms.gasto);
-            const matchTipo = this.getTipoNombre(data.tipoId).toLowerCase().includes(searchTerms.tipo);
-            const matchConcepto = this.getConceptoNombre(data.conceptoId).toLowerCase().includes(searchTerms.concepto);
-            const matchSubtipo = this.getSubtipoNombre(data.subtipoId).toLowerCase().includes(searchTerms.subtipo);
-            const matchArea = this.getAreaNombre(data.areaId).toLowerCase().includes(searchTerms.area);
-            const matchProveedor = this.getProveedorNombre(data.proveedorId).toLowerCase().includes(searchTerms.proveedor);
-            const matchFactura = data.factura?.toLowerCase().includes(searchTerms.factura);
-            const matchFP = this.getFormaPagoNombre(data.formaPagoId).toLowerCase().includes(searchTerms.formaPago);
-            const matchCuenta = this.getCuentaNombre(data.cuentaId).toLowerCase().includes(searchTerms.cuenta);
-            const matchUnidad = this.getUnidadNombre(data.unidadId).toLowerCase().includes(searchTerms.unidad);
+            const matchFecha = !searchTerms.fecha || moment(data.fecha).format('DD/MM/YYYY').includes(searchTerms.fecha);
+            const matchGasto = !searchTerms.gasto || data.cantidad?.toString().includes(searchTerms.gasto);
+            const matchTipo = !searchTerms.tipo || (data.gastoTipo?.nombre || '').toLowerCase().includes(searchTerms.tipo);
+            const matchConcepto = !searchTerms.concepto || (data.gastoConcepto?.nombre || '').toLowerCase().includes(searchTerms.concepto);
+            const matchSubtipo = !searchTerms.subtipo || (data.gastoSubtipo?.nombre || '').toLowerCase().includes(searchTerms.subtipo);
+            const matchArea = !searchTerms.area || (data.gastoArea?.nombre || '').toLowerCase().includes(searchTerms.area);
+            const matchProveedor = !searchTerms.proveedor || (data.gastoProveedor?.nombre || '').toLowerCase().includes(searchTerms.proveedor);
+            const matchFactura = !searchTerms.factura || (data.factura || '').toLowerCase().includes(searchTerms.factura);
+            const matchFP = !searchTerms.formaPago || (data.gastoFormaPago?.nombre || '').toLowerCase().includes(searchTerms.formaPago);
+            const matchCuenta = !searchTerms.cuenta || (data.gastoCuenta?.nombre || '').toLowerCase().includes(searchTerms.cuenta);
+            const matchUnidad = !searchTerms.unidad || (data.gastoUnidad?.nombre || '').toLowerCase().includes(searchTerms.unidad);
             const matchTM = !searchTerms.tipoMovimiento || data.tipoMovimiento?.toString() === searchTerms.tipoMovimiento;
+
+            const matchFolio = !searchTerms.folioFiscal || (data.folioFiscal || '').toLowerCase().includes(searchTerms.folioFiscal);
+            const matchComprobante = !searchTerms.tipoComprobante || (data.tipoComprobante || '').toLowerCase().includes(searchTerms.tipoComprobante);
+            const matchMoneda = !searchTerms.moneda || (data.moneda || '').toLowerCase().includes(searchTerms.moneda);
+            const matchNumCuenta = !searchTerms.numeroCuenta || (data.numeroCuenta || '').toLowerCase().includes(searchTerms.numeroCuenta);
+            const matchDesc = !searchTerms.descripcion || ((data.nombreGasto || '') + ' ' + (data.descripcion || '')).toLowerCase().includes(searchTerms.descripcion);
 
             return matchFecha && matchGasto && matchTipo && matchConcepto &&
                 matchSubtipo && matchArea && matchProveedor && matchFactura &&
-                matchFP && matchCuenta && matchUnidad && matchTM;
+                matchFP && matchCuenta && matchUnidad && matchTM &&
+                matchFolio && matchComprobante && matchMoneda && matchNumCuenta && matchDesc;
         };
     }
 
     public _resetColumnFilters(): void {
         this.filterValues = {
             fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '',
-            unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: ''
+            unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '',
+            folioFiscal: '', tipoComprobante: '', moneda: '', numeroCuenta: '', descripcion: '',
+            mes: '', anio: ''
         };
+        this.dataSource.filter = '';
     }
 
     private _initForm(): void {
@@ -195,19 +273,25 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             gastoId: [0],
             fecha: [moment(), Validators.required],
             nombreGasto: ['', Validators.required],
+            unidadId: [null, Validators.required], // 👈 AÑADIDO
             tipoId: [{ value: null, disabled: false }, Validators.required],
             conceptoId: [{ value: null, disabled: true }, Validators.required],
             subtipoId: [{ value: null, disabled: true }, Validators.required],
             areaId: [{ value: null, disabled: true }, Validators.required],
-            proveedorId: [{ value: null, disabled: true }, Validators.required],
+            proveedor: [{ value: null, disabled: true }, Validators.required],
             formaPagoId: [{ value: null, disabled: true }, Validators.required],
             cuentaId: [{ value: null, disabled: true }, Validators.required],
             cantidad: [0, [Validators.required, Validators.min(0.01)]],
             factura: ['', Validators.required],
-            tipoMovimiento: [''],
+            tipoMovimiento: [null],
             tasaId: [null, Validators.required],
             descripcion: [''],
-            impuestos: [{ value: 0, disabled: true }]
+            impuestos: [{ value: 0, disabled: true }],
+            // 👈 NUEVOS CAMPOS FISCALES
+            folioFiscal: [''],
+            tipoComprobante: [''],
+            moneda: ['MXN', Validators.required],
+            numeroCuenta: ['']
         });
 
         // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects)
@@ -218,7 +302,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             if (val != null) {
                 nextCtrl.enable();
             } else {
-                this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedorId', 'formaPagoId', 'cuentaId']);
+                this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
             }
             this._changeDetectorRef.detectChanges();
         });
@@ -227,9 +311,11 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.rowForm.get('conceptoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
             const nextCtrl = this.rowForm.get('subtipoId');
             if (val != null) {
+                this.subtiposFiltrados = this.catalogs?.subtipos?.filter(s => s.conceptoId == val) || [];
                 nextCtrl.enable();
             } else {
-                this._disableChain(['subtipoId', 'areaId', 'proveedorId', 'formaPagoId', 'cuentaId']);
+                this.subtiposFiltrados = this.catalogs?.subtipos || [];
+                this._disableChain(['subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
             }
             this._changeDetectorRef.detectChanges();
         });
@@ -237,19 +323,19 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         // Subtipo -> Area
         this.rowForm.get('subtipoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
             const nextCtrl = this.rowForm.get('areaId');
-            val != null ? nextCtrl.enable() : this._disableChain(['areaId', 'proveedorId', 'formaPagoId', 'cuentaId']);
+            val != null ? nextCtrl.enable() : this._disableChain(['areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
             this._changeDetectorRef.detectChanges();
         });
 
         // Area -> Proveedor
         this.rowForm.get('areaId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('proveedorId');
-            val != null ? nextCtrl.enable() : this._disableChain(['proveedorId', 'formaPagoId', 'cuentaId']);
+            const nextCtrl = this.rowForm.get('proveedor');
+            val != null ? nextCtrl.enable() : this._disableChain(['proveedor', 'formaPagoId', 'cuentaId']);
             this._changeDetectorRef.detectChanges();
         });
 
         // Proveedor -> Forma Pago
-        this.rowForm.get('proveedorId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
+        this.rowForm.get('proveedor').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
             const nextCtrl = this.rowForm.get('formaPagoId');
             val != null ? nextCtrl.enable() : this._disableChain(['formaPagoId', 'cuentaId']);
             this._changeDetectorRef.detectChanges();
@@ -262,9 +348,36 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             this._changeDetectorRef.detectChanges();
         });
 
+        // 🔹 Cuenta -> Numero de Cuenta (Cascada)
+        this.rowForm.get('cuentaId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
+            this._onCuentaChange(val);
+        });
+
         // Cálculos de impuestos
         this.rowForm.get('cantidad').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(() => this._calculateTax());
         this.rowForm.get('tasaId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(() => this._calculateTax());
+
+        // Autocomplete de Proveedor
+        this.rowForm.get('proveedor').valueChanges.pipe(
+            takeUntil(this._unsubscribeAll),
+            startWith(''),
+            map(value => typeof value === 'string' ? value : value?.nombre)
+        ).subscribe(val => {
+            this.filteredProveedores = this._filterProveedores(val || '');
+            this._changeDetectorRef.markForCheck();
+        });
+    }
+
+    private _filterProveedores(value: string): any[] {
+        const filterValue = value.toLowerCase();
+        return this.catalogs?.proveedores?.filter(p => p.nombre.toLowerCase().includes(filterValue)) || [];
+    }
+
+    displayProveedorFn(id: any): string {
+        if (!id) return '';
+        if (typeof id === 'string') return id;
+        if (!this.catalogs?.proveedores) return '';
+        return this.catalogs.proveedores.find(p => p.proveedorId === id)?.nombre || '';
     }
 
     private _disableChain(controls: string[]): void {
@@ -273,6 +386,31 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             ctrl.disable();
             ctrl.setValue(null);
         });
+    }
+
+    private _onCuentaChange(cuentaId: number): void {
+        const ctrl = this.rowForm.get('numeroCuenta');
+        if (!cuentaId || !this.catalogs?.cuentas) {
+            this.numerosCuentaFiltrados = [];
+            return;
+        }
+
+        const cuentaObj = this.catalogs.cuentas.find(c => c.cuentaId == cuentaId);
+        if (cuentaObj) {
+            // Normalización para ignorar acentos y mayúsculas
+            const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            const nombreNormalizado = normalize(cuentaObj.nombre);
+
+            // Buscamos si alguna de nuestras claves está contenida en el nombre de la cuenta
+            const matchingKey = Object.keys(this.accountNumbersMap).find(key =>
+                nombreNormalizado.includes(normalize(key))
+            );
+
+            this.numerosCuentaFiltrados = matchingKey ? this.accountNumbersMap[matchingKey] : [];
+        } else {
+            this.numerosCuentaFiltrados = [];
+        }
+        this._changeDetectorRef.detectChanges();
     }
 
     private _calculateTax(): void {
@@ -287,10 +425,15 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         }
     }
 
-    async addNew(): Promise<void> {
+    addNew(): void {
         if (this.isAdding) return;
         this.isAdding = true;
         this.editingId = 0;
+
+        // Limpiar filtros para que el nuevo registro sea visible
+        this._resetColumnFilters();
+        this.searchInputControl.setValue('', { emitEvent: false });
+        this.dataSource.filter = '';
 
         // Re-leer unidad actual por si cambió en la sesión
         this._loadUserUnidad();
@@ -299,11 +442,15 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.rowForm.patchValue({
             gastoId: 0,
             fecha: moment(),
+            nombreGasto: '',
             cantidad: 0,
+            moneda: 'MXN',
+            tipoMovimiento: 2,
+            tipoComprobante: 'I',
             unidadId: this.currentUserUnidadId
         });
 
-        this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedorId', 'formaPagoId', 'cuentaId']);
+        this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
 
         const newData = [{ gastoId: 0, unidadId: this.currentUserUnidadId } as Expense, ...this.dataSource.data];
         this.dataSource.data = newData;
@@ -314,8 +461,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.editingId = expense.gastoId;
         this.isAdding = false;
 
-        // Reset state and enable based on values
-        this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedorId', 'formaPagoId', 'cuentaId']);
+        this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
 
         if (expense.tipoId != null) {
             this.rowForm.get('conceptoId').enable();
@@ -324,8 +470,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                 if (expense.subtipoId != null) {
                     this.rowForm.get('areaId').enable();
                     if (expense.areaId != null) {
-                        this.rowForm.get('proveedorId').enable();
-                        if (expense.proveedorId != null) {
+                        this.rowForm.get('proveedor').enable();
+                        if (expense.proveedor != null) {
                             this.rowForm.get('formaPagoId').enable();
                             if (expense.formaPagoId != null) {
                                 this.rowForm.get('cuentaId').enable();
@@ -337,6 +483,17 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         }
 
         this.rowForm.patchValue(expense);
+        if (expense.conceptoId != null) {
+            this.subtiposFiltrados = this.catalogs?.subtipos?.filter(s => s.conceptoId == expense.conceptoId) || [];
+        } else {
+            this.subtiposFiltrados = this.catalogs?.subtipos || [];
+        }
+
+        // Cargar números de cuenta al editar
+        if (expense.cuentaId) {
+            this._onCuentaChange(expense.cuentaId);
+        }
+
         this._changeDetectorRef.detectChanges();
     }
 
@@ -358,17 +515,50 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
         const data = this.rowForm.getRawValue();
 
-        // Obtener información de sesión actualizada para guardar
-        this._loadUserUnidad();
+        // 🔹 Corrección para API: Mapeo PascalCase completo y Proveedor Único
+        // En la nueva convención 'Proveedor' recibe tanto ID como Nombre manual
+
+        // Asegurar que tipoMovimiento sea numérico
+        if (data.tipoMovimiento) {
+            data.tipoMovimiento = parseInt(data.tipoMovimiento, 10);
+        }
+
+        // Obtener información de usuario para el registro
         try {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            data.unidadId = this.currentUserUnidadId;
+            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const user = userInformation.usuario || {};
             data.usuarioId = user.id || 0;
         } catch (e) { }
 
+        // Mapeo a PascalCase para compatibilidad con la API de C#
+        const payload: any = {
+            GastoId: data.gastoId,
+            Fecha: data.fecha,
+            NombreGasto: data.nombreGasto,
+            Cantidad: data.cantidad,
+            Impuestos: data.impuestos,
+            TipoId: data.tipoId,
+            ConceptoId: data.conceptoId,
+            SubtipoId: data.subtipoId,
+            AreaId: data.areaId,
+            Proveedor: data.proveedor, // 👈 UNIFICADO: Ya no existe ProveedorId/Nombre
+            FormaPagoId: data.formaPagoId,
+            CuentaId: data.cuentaId,
+            TasaId: data.tasaId,
+            UnidadId: data.unidadId,
+            UsuarioId: data.usuarioId,
+            Factura: data.factura,
+            NumeroCuenta: data.numeroCuenta,
+            Descripcion: data.descripcion,
+            TipoMovimiento: data.tipoMovimiento,
+            FolioFiscal: data.folioFiscal,
+            TipoComprobante: data.tipoComprobante,
+            Moneda: data.moneda
+        };
+
         const request = this.isAdding
-            ? this._expensesService.createExpense(data)
-            : this._expensesService.updateExpense(data.gastoId, data);
+            ? this._expensesService.createExpense(payload)
+            : this._expensesService.updateExpense(payload.GastoId, payload);
 
         request.subscribe({
             next: () => {
@@ -449,8 +639,10 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         return this.catalogs?.areas?.find(i => i.areaId == id)?.nombre || 'N/A';
     }
 
-    getProveedorNombre(id: number): string {
-        return this.catalogs?.proveedores?.find(i => i.proveedorId == id)?.nombre || 'N/A';
+    getProveedorNombre(val: any): string {
+        if (!val) return 'N/A';
+        if (typeof val === 'string') return val;
+        return this.catalogs?.proveedores?.find(i => i.proveedorId == val)?.nombre || 'N/A';
     }
 
     getFormaPagoNombre(id: number): string {
@@ -464,7 +656,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     private _loadUserUnidad(): void {
         try {
             const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const unidad = userInformation.usuario?.unidadNegocio || userInformation;
+            const user = userInformation.usuario || {};
+            const unidad = user.unidadNegocio || userInformation.unidadNegocio || {};
 
             this.currentUserUnidadId = unidad.id || unidad.unidadId || 1;
             this.currentUserUnidadName = unidad.nombre || 'N/A';

@@ -34,7 +34,7 @@
                             'N/A'}}</span></div>
                     <div class="flex flex-col col-span-2"><span
                             class="font-bold uppercase text-[10px]">Proveedor</span><span
-                            class="font-bold text-slate-900 dark:text-slate-100">{{getProveedorNombre(selectedExpense.proveedorId)}}</span>
+                            class="font-bold text-slate-900 dark:text-slate-100">{{getProveedorNombre(selectedExpense.proveedor)}}</span>
                     </div>
                     <div class="flex flex-col"><span
                             class="font-bold uppercase text-[10px]">Área</span><span>{{getAreaNombre(selectedExpense.areaId)}}</span>
@@ -111,8 +111,10 @@
                                 class="bg-gray-100 p-4 border-b w-44 sticky left-0 z-30 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] max-md:!left-auto max-md:!shadow-none max-md:z-10">
                                 <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Fecha</span>
                                 <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
-                                    <input matInput (keyup)="applyColumnFilter('fecha', $any($event.target).value)"
-                                        placeholder="dd/mm/aaaa">
+                                    <input matInput [matDatepicker]="headerPicker"
+                                        (dateChange)="applyDateFilter($event)" placeholder="Seleccionar...">
+                                    <mat-datepicker-toggle matSuffix [for]="headerPicker"></mat-datepicker-toggle>
+                                    <mat-datepicker #headerPicker></mat-datepicker>
                                 </mat-form-field>
                             </th>
                             <td mat-cell *matCellDef="let row"
@@ -128,30 +130,130 @@
                             </td>
                         </ng-container>
 
-                        <ng-container matColumnDef="gasto">
+                        <!-- 👈 NUEVOS CAMPOS FISCALES -->
+                        <ng-container matColumnDef="folioFiscal">
                             <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-64">
-                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Concepto*</span>
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Folio
+                                    Fiscal</span>
                                 <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
-                                    <input matInput (keyup)="applyColumnFilter('gasto', $any($event.target).value)"
+                                    <input matInput
+                                        (keyup)="applyColumnFilter('folioFiscal', $any($event.target).value)"
                                         placeholder="Filtrar...">
                                 </mat-form-field>
                             </th>
-                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
-                                <ng-container *ngIf="editingId === row.gastoId; else viewGasto">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><input matInput
-                                            formControlName="nombreGasto"></mat-form-field>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b text-xs truncate max-w-40"
+                                [matTooltip]="row.folioFiscal">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewFolio">
+                                    <mat-form-field class="w-full fuse-mat-no-subscript fuse-mat-dense">
+                                        <input matInput formControlName="folioFiscal">
+                                    </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewGasto><span
-                                        class="font-bold text-slate-800">{{row.nombreGasto}}</span></ng-template>
+                                <ng-template #viewFolio>{{row.folioFiscal || 'N/A'}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="tipoComprobante">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-40">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Tipo
+                                    Comp.</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                    <mat-select (selectionChange)="applyColumnFilter('tipoComprobante', $event.value)">
+                                        <mat-option value="I">I - Ingreso</mat-option>
+                                        <mat-option value="E">E - Egreso</mat-option>
+                                        <mat-option value="P">P - Pago</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b text-center text-xs">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewComp">
+                                    <mat-form-field class="w-full fuse-mat-no-subscript fuse-mat-dense">
+                                        <mat-select formControlName="tipoComprobante">
+                                            <mat-option value="I">I</mat-option>
+                                            <mat-option value="E">E</mat-option>
+                                            <mat-option value="P">P</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewComp>{{row.tipoComprobante}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="moneda">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-24">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Moneda</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                    <mat-select (selectionChange)="applyColumnFilter('moneda', $event.value)">
+                                        <mat-option value="MXN">MXN</mat-option>
+                                        <mat-option value="USD">USD</mat-option>
+                                        <mat-option value="EUR">EUR</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row"
+                                class="p-2 bg-card border-b text-center text-xs font-bold">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewMoneda">
+                                    <mat-form-field class="w-full fuse-mat-no-subscript fuse-mat-dense">
+                                        <mat-select formControlName="moneda">
+                                            <mat-option value="MXN">MXN</mat-option>
+                                            <mat-option value="USD">USD</mat-option>
+                                            <mat-option value="EUR">EUR</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewMoneda>{{row.moneda}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="numeroCuenta">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Numeros
+                                    de cuenta</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                    <mat-select (selectionChange)="applyColumnFilter('numeroCuenta', $event.value)">
+                                        <mat-option *ngFor="let num of filteredNumerosCuentaHeader" [value]="num">
+                                            {{num}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b text-xs">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewNum">
+                                    <mat-form-field class="w-full fuse-mat-no-subscript fuse-mat-dense">
+                                        <mat-select formControlName="numeroCuenta">
+                                            <mat-option *ngFor="let num of numerosCuentaFiltrados" [value]="num">
+                                                {{num}}
+                                            </mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewNum>{{row.numeroCuenta}}</ng-template>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="gasto">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b text-right w-40">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Gasto</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                    <input matInput (keyup)="applyColumnFilter('gasto', $any($event.target).value)"
+                                        placeholder="ingrese cantidad">
+                                </mat-form-field>
+                            </th>
+                            <td mat-cell *matCellDef="let row"
+                                class="p-2 bg-card border-b text-right pr-4 font-black text-primary">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewCantG">
+                                    <mat-form-field class="w-28 fuse-mat-dense fuse-mat-no-subscript"><input matInput
+                                            type="number" formControlName="cantidad"
+                                            class="text-right"></mat-form-field>
+                                </ng-container>
+                                <ng-template #viewCantG>{{row.cantidad | currency}}</ng-template>
                             </td>
                         </ng-container>
 
                         <ng-container matColumnDef="tipoMovimiento">
                             <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-44">
                                 <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Tipo Mov.</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('tipoMovimiento', $event.value)">
-                                        <mat-option value="">Todos</mat-option>
                                         <mat-option value="1">Ingreso</mat-option>
                                         <mat-option value="2">Egreso</mat-option>
                                     </mat-select>
@@ -161,8 +263,8 @@
                                 <ng-container *ngIf="editingId === row.gastoId; else viewTM">
                                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                         <mat-select formControlName="tipoMovimiento">
-                                            <mat-option value="1">Ingreso</mat-option>
-                                            <mat-option value="2">Egreso</mat-option>
+                                            <mat-option [value]="1">Ingreso</mat-option>
+                                            <mat-option [value]="2">Egreso</mat-option>
                                         </mat-select>
                                     </mat-form-field>
                                 </ng-container>
@@ -187,11 +289,11 @@
                         </ng-container>
 
                         <ng-container matColumnDef="tipo">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
-                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Tipo</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
+                                <span
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary">Clasificacion</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('tipo', $event.value)">
-                                        <mat-option value="">Todos</mat-option>
                                         <mat-option *ngFor="let t of catalogs?.tipos"
                                             [value]="t.nombre">{{t.nombre}}</mat-option>
                                     </mat-select>
@@ -199,20 +301,24 @@
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewTipo">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
-                                            formControlName="tipoId"><mat-option *ngFor="let t of catalogs?.tipos"
-                                                [value]="t.tipoId">{{t.nombre}}</mat-option></mat-select></mat-form-field>
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('tipoId').disabled}">
+                                        <mat-select formControlName="tipoId">
+                                            <mat-option *ngFor="let t of catalogs?.tipos"
+                                                [value]="t.tipoId">{{t.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewTipo>{{getTipoNombre(row.tipoId)}}</ng-template>
+                                <ng-template #viewTipo>{{row.gastoTipo?.nombre || 'N/A'}}</ng-template>
                             </td>
                         </ng-container>
 
                         <ng-container matColumnDef="concepto">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
-                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Concepto</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Tus
+                                    Conceptos</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('concepto', $event.value)">
-                                        <mat-option value="">Todos</mat-option>
                                         <mat-option *ngFor="let c of catalogs?.conceptos"
                                             [value]="c.nombre">{{c.nombre}}</mat-option>
                                     </mat-select>
@@ -220,58 +326,73 @@
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewConcepto">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
-                                            formControlName="conceptoId"><mat-option
-                                                *ngFor="let c of catalogs?.conceptos"
-                                                [value]="c.conceptoId">{{c.nombre}}</mat-option></mat-select></mat-form-field>
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('conceptoId').disabled}">
+                                        <mat-select formControlName="conceptoId">
+                                            <mat-option *ngFor="let c of catalogs?.conceptos"
+                                                [value]="c.conceptoId">{{c.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewConcepto>{{getConceptoNombre(row.conceptoId)}}</ng-template>
+                                <ng-template #viewConcepto>{{row.gastoConcepto?.nombre || 'N/A'}}</ng-template>
                             </td>
                         </ng-container>
 
                         <ng-container matColumnDef="subtipo">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
                                 <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Subtipo</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('subtipo', $event.value)">
-                                        <mat-option value="">Todos</mat-option>
-                                        <mat-option *ngFor="let s of catalogs?.subtipos"
+                                        <mat-option *ngFor="let s of filteredSubtiposHeader"
                                             [value]="s.nombre">{{s.nombre}}</mat-option>
                                     </mat-select>
                                 </mat-form-field>
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewSubtipo">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
-                                            formControlName="subtipoId"><mat-option *ngFor="let s of catalogs?.subtipos"
-                                                [value]="s.subtipoId">{{s.nombre}}</mat-option></mat-select></mat-form-field>
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('subtipoId').disabled}">
+                                        <mat-select formControlName="subtipoId">
+                                            <mat-option *ngFor="let s of subtiposFiltrados"
+                                                [value]="s.subtipoId">{{s.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewSubtipo>{{getSubtipoNombre(row.subtipoId)}}</ng-template>
+                                <ng-template #viewSubtipo>{{row.gastoSubtipo?.nombre || 'N/A'}}</ng-template>
                             </td>
                         </ng-container>
 
                         <ng-container matColumnDef="unidad">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
                                 <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Unidad</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('unidad', $event.value)">
-                                        <mat-option value="">Todas</mat-option>
                                         <mat-option *ngFor="let u of unidadesNegocio"
                                             [value]="u.nombre">{{u.nombre}}</mat-option>
                                     </mat-select>
                                 </mat-form-field>
                             </th>
-                            <td mat-cell *matCellDef="let row"
-                                class="p-2 bg-card border-b text-secondary italic font-medium">
-                                {{getUnidadNombre(row.unidadId)}}</td>
+                            <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
+                                <ng-container *ngIf="editingId === row.gastoId; else viewUnidad">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <mat-select formControlName="unidadId">
+                                            <mat-option *ngFor="let u of unidadesNegocio"
+                                                [value]="u.id || u.unidadId">{{u.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </ng-container>
+                                <ng-template #viewUnidad>
+                                    <span class="text-secondary font-medium">{{getUnidadNombre(row.unidadId)}}</span>
+                                </ng-template>
+                            </td>
                         </ng-container>
 
                         <ng-container matColumnDef="area">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
-                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Área</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
+                                <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Areas
+                                    Empresa</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('area', $event.value)">
-                                        <mat-option value="">Todas</mat-option>
                                         <mat-option *ngFor="let a of catalogs?.areas"
                                             [value]="a.nombre">{{a.nombre}}</mat-option>
                                     </mat-select>
@@ -279,11 +400,15 @@
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewArea">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
-                                            formControlName="areaId"><mat-option *ngFor="let a of catalogs?.areas"
-                                                [value]="a.areaId">{{a.nombre}}</mat-option></mat-select></mat-form-field>
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('areaId').disabled}">
+                                        <mat-select formControlName="areaId">
+                                            <mat-option *ngFor="let a of catalogs?.areas"
+                                                [value]="a.areaId">{{a.nombre}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewArea>{{getAreaNombre(row.areaId)}}</ng-template>
+                                <ng-template #viewArea>{{row.gastoArea?.nombre || 'N/A'}}</ng-template>
                             </td>
                         </ng-container>
 
@@ -316,12 +441,20 @@
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewProv">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"><mat-select
-                                            formControlName="proveedorId"><mat-option
-                                                *ngFor="let p of catalogs?.proveedores"
-                                                [value]="p.proveedorId">{{p.nombre}}</mat-option></mat-select></mat-form-field>
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('proveedor').disabled}">
+                                        <input type="text" placeholder="Escribre proveedor..." aria-label="Proveedor"
+                                            matInput formControlName="proveedor" [matAutocomplete]="autoProv">
+                                        <mat-autocomplete #autoProv="matAutocomplete"
+                                            [displayWith]="displayProveedorFn.bind(this)">
+                                            <mat-option *ngFor="let p of filteredProveedores" [value]="p.proveedorId">
+                                                {{p.nombre}}
+                                            </mat-option>
+                                        </mat-autocomplete>
+                                    </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewProv>{{getProveedorNombre(row.proveedorId)}}</ng-template>
+                                <ng-template #viewProv>{{row.gastoProveedor?.nombre ||
+                                    getProveedorNombre(row.proveedor)}}</ng-template>
                             </td>
                         </ng-container>
 
@@ -343,7 +476,7 @@
                         </ng-container>
 
                         <ng-container matColumnDef="tasa">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-40">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
                                 <span
                                     class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Tasa</span>
                             </th>
@@ -362,13 +495,12 @@
                         </ng-container>
 
                         <ng-container matColumnDef="formaPago">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
                                 <span
                                     class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Forma
                                     Pago</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('formaPago', $event.value)">
-                                        <mat-option value="">Todas</mat-option>
                                         <mat-option *ngFor="let fp of catalogs?.formasPago"
                                             [value]="fp.nombre">{{fp.nombre}}</mat-option>
                                     </mat-select>
@@ -376,25 +508,25 @@
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewFP">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('formaPagoId').disabled}">
                                         <mat-select formControlName="formaPagoId">
                                             <mat-option *ngFor="let fp of catalogs?.formasPago"
                                                 [value]="fp.formaPagoId">{{fp.nombre}}</mat-option>
                                         </mat-select>
                                     </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewFP><span
-                                        class="text-xs text-secondary">{{getFormaPagoNombre(row.formaPagoId)}}</span></ng-template>
+                                <ng-template #viewFP><span class="text-xs text-secondary">{{row.gastoFormaPago?.nombre
+                                        || 'N/A'}}</span></ng-template>
                             </td>
                         </ng-container>
 
                         <ng-container matColumnDef="cuenta">
-                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-48">
+                            <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
                                 <span
-                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Cuenta</span>
-                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Cuentas</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                     <mat-select (selectionChange)="applyColumnFilter('cuenta', $event.value)">
-                                        <mat-option value="">Todas</mat-option>
                                         <mat-option *ngFor="let c of catalogs?.cuentas"
                                             [value]="c.nombre">{{c.nombre}}</mat-option>
                                     </mat-select>
@@ -402,15 +534,16 @@
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewCuenta">
-                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                        [ngClass]="{'bg-gray-100 opacity-60': rowForm.get('cuentaId').disabled}">
                                         <mat-select formControlName="cuentaId">
                                             <mat-option *ngFor="let c of catalogs?.cuentas"
                                                 [value]="c.cuentaId">{{c.nombre}}</mat-option>
                                         </mat-select>
                                     </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewCuenta><span
-                                        class="text-xs text-secondary">{{getCuentaNombre(row.cuentaId)}}</span></ng-template>
+                                <ng-template #viewCuenta><span class="text-xs text-secondary">{{row.gastoCuenta?.nombre
+                                        || 'N/A'}}</span></ng-template>
                             </td>
                         </ng-container>
 
@@ -418,15 +551,26 @@
                             <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-80">
                                 <span
                                     class="font-bold uppercase text-[10px] block mb-2 text-secondary tracking-wider">Descripción</span>
+                                <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript scale-90 -ml-2">
+                                    <input matInput
+                                        (keyup)="applyColumnFilter('descripcion', $any($event.target).value)"
+                                        placeholder="Filtrar...">
+                                </mat-form-field>
                             </th>
                             <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b">
                                 <ng-container *ngIf="editingId === row.gastoId; else viewDesc">
                                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
-                                        <input matInput formControlName="descripcion">
+                                        <input matInput formControlName="nombreGasto" placeholder="Título del gasto">
                                     </mat-form-field>
                                 </ng-container>
-                                <ng-template #viewDesc><span
-                                        class="text-xs italic truncate block max-w-64">{{row.descripcion}}</span></ng-template>
+                                <ng-template #viewDesc>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="font-bold text-slate-800 text-[11px] leading-tight">{{row.nombreGasto}}</span>
+                                        <span *ngIf="row.descripcion"
+                                            class="text-[10px] text-secondary truncate max-w-64 italic">{{row.descripcion}}</span>
+                                    </div>
+                                </ng-template>
                             </td>
                         </ng-container>
 

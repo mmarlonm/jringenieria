@@ -10,22 +10,22 @@
     </div>
 
     <mat-dialog-content class="p-8">
-        <form [formGroup]="expenseForm" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <form [formGroup]="expenseForm" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
 
-            <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript">
+            <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Título o Descripción Corta</mat-label>
                 <mat-icon matPrefix [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
                 <input matInput formControlName="nombreGasto" placeholder="Ej. Pago de servicios">
             </mat-form-field>
 
             <div class="grid grid-cols-2 gap-4">
-                <mat-form-field class="fuse-mat-no-subscript">
+                <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                     <mat-label>Cantidad (Subtotal)</mat-label>
                     <span matPrefix>$&nbsp;</span>
                     <input matInput type="number" formControlName="cantidad">
                 </mat-form-field>
 
-                <mat-form-field class="fuse-mat-no-subscript">
+                <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                     <mat-label>Tasa IVA</mat-label>
                     <mat-select formControlName="tasaId">
                         <mat-option *ngFor="let tasa of catalogs?.tasas" [value]="tasa.tasaId">
@@ -35,7 +35,7 @@
                 </mat-form-field>
             </div>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Impuesto Calculado</mat-label>
                 <span matPrefix>$&nbsp;</span>
                 <input matInput formControlName="impuestos" readonly>
@@ -43,52 +43,108 @@
                     matTooltip="Se calcula automáticamente"></mat-icon>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Fecha del Gasto</mat-label>
                 <input matInput [matDatepicker]="picker" formControlName="fecha">
                 <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
+                [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('proveedor').disabled}">
                 <mat-label>Proveedor</mat-label>
-                <mat-select formControlName="proveedorId">
-                    <mat-option *ngFor="let item of catalogs?.proveedores"
-                        [value]="item.proveedorId">{{item.nombre}}</mat-option>
-                </mat-select>
+                <input type="text" placeholder="Escribe el proveedor..." aria-label="Proveedor" matInput
+                    formControlName="proveedor" [matAutocomplete]="autoProv">
+                <mat-autocomplete #autoProv="matAutocomplete" [displayWith]="displayProveedorFn.bind(this)">
+                    <mat-option *ngFor="let p of filteredProveedores" [value]="p.proveedorId">
+                        {{p.nombre}}
+                    </mat-option>
+                </mat-autocomplete>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
+                [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('areaId').disabled}">
                 <mat-label>Área / Departamento</mat-label>
                 <mat-select formControlName="areaId">
                     <mat-option *ngFor="let item of catalogs?.areas" [value]="item.areaId">{{item.nombre}}</mat-option>
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
-                <mat-label>Tipo de Gasto</mat-label>
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                <mat-label>Clasificación (Fijo/Variable)</mat-label>
                 <mat-select formControlName="tipoId">
                     <mat-option *ngFor="let item of catalogs?.tipos" [value]="item.tipoId">{{item.nombre}}</mat-option>
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
-                <mat-label>Concepto</mat-label>
-                <mat-select formControlName="conceptoId">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                <mat-label>Unidad de Negocio / Sucursal</mat-label>
+                <mat-select formControlName="unidadId">
+                    <mat-option *ngFor="let item of catalogs?.unidades"
+                        [value]="item.id || item.unidadId">{{item.nombre}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
+                [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('conceptoId').disabled}">
+                <mat-label>Tus Conceptos</mat-label>
+                <mat-select formControlName="conceptoId" (selectionChange)="onConceptoChange($event.value)">
                     <mat-option *ngFor="let item of catalogs?.conceptos"
                         [value]="item.conceptoId">{{item.nombre}}</mat-option>
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
+                [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('subtipoId').disabled}">
                 <mat-label>Subtipo de Gasto</mat-label>
-                <mat-select formControlName="subtipoId">
-                    <mat-option *ngFor="let item of catalogs?.subtipos"
+                <mat-select formControlName="subtipoId" [disabled]="subtiposFiltrados.length === 0">
+                    <mat-option *ngFor="let item of subtiposFiltrados"
                         [value]="item.subtipoId">{{item.nombre}}</mat-option>
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <!-- 👈 CAMPOS FISCALES -->
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                <mat-label>Folio Fiscal (UUID)</mat-label>
+                <input matInput formControlName="folioFiscal" placeholder="Ej. 123e4567-...">
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                <mat-label>Tipo Comprobante</mat-label>
+                <mat-select formControlName="tipoComprobante">
+                    <mat-option value="I">I - Ingreso</mat-option>
+                    <mat-option value="E">E - Egreso</mat-option>
+                    <mat-option value="P">P - Pago</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <div class="grid grid-cols-2 gap-4">
+                <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                    <mat-label>Moneda</mat-label>
+                    <mat-select formControlName="moneda">
+                        <mat-option value="MXN">MXN</mat-option>
+                        <mat-option value="USD">USD</mat-option>
+                        <mat-option value="EUR">EUR</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                    <mat-label>No. Cuenta</mat-label>
+                    <mat-select formControlName="numeroCuenta">
+                        <mat-option *ngFor="let num of numerosCuentaFiltrados" [value]="num">
+                            {{num}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                <mat-label>Factura</mat-label>
+                <input matInput formControlName="factura">
+            </mat-form-field>
+
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
+                [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('formaPagoId').disabled}">
                 <mat-label>Forma de Pago</mat-label>
                 <mat-select formControlName="formaPagoId">
                     <mat-option *ngFor="let item of catalogs?.formasPago"
@@ -96,7 +152,8 @@
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
+                [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('cuentaId').disabled}">
                 <mat-label>Cuenta de Egreso</mat-label>
                 <mat-select formControlName="cuentaId">
                     <mat-option *ngFor="let item of catalogs?.cuentas"
@@ -104,22 +161,19 @@
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
-                <mat-label>Factura</mat-label>
-                <input matInput formControlName="factura">
-            </mat-form-field>
 
-            <mat-form-field class="fuse-mat-no-subscript">
+
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Tipo de Movimiento</mat-label>
                 <mat-select formControlName="tipoMovimiento">
-                    <mat-option value="1">
+                    <mat-option [value]="1">
                         <div class="flex items-center">
                             <mat-icon class="icon-size-4 mr-2 text-emerald-500"
                                 [svgIcon]="'heroicons_mini:arrow-trending-up'"></mat-icon>
                             <span>Ingreso</span>
                         </div>
                     </mat-option>
-                    <mat-option value="2">
+                    <mat-option [value]="2">
                         <div class="flex items-center">
                             <mat-icon class="icon-size-4 mr-2 text-rose-500"
                                 [svgIcon]="'heroicons_mini:arrow-trending-down'"></mat-icon>
@@ -129,7 +183,7 @@
                 </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript">
+            <mat-form-field class="sm:col-span-2 fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Descripción</mat-label>
                 <textarea matInput formControlName="descripcion" [rows]="3"></textarea>
             </mat-form-field>

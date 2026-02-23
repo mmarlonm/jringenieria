@@ -760,31 +760,52 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
 
         let bankAccountsRows = '';
-        if (totalMXN > 0) {
-            bankAccountsRows += `
+        // 🔹 Lógica condicional según Tipo de Cliente (Física vs Moral)
+        if (this.esMoral === 1) {
+            // PERSONA FÍSICA: Jesus Ricardo Mendez (Solo MXN según requerimiento)
+            if (totalMXN > 0) {
+                bankAccountsRows += `
             <div style="flex: 1; min-width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                 <div style="background-color: #004481; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 900; font-size: 10px; letter-spacing: 0.5px;">BBVA</div>
                 <div style="flex: 1; border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column; gap: 2px;">
                     <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.3px;">Cuenta MXN</div>
+                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">Titular: <span style="font-family: monospace;">JESUS RICARDO MENDEZ</span></div>
+                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">RFC: <span style="font-family: monospace;">MEAJ730516T86</span></div>
+                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. Cuenta: <span style="font-family: monospace;">0478628203</span></div>
+                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">CLABE: <span style="font-family: monospace;">012290004786282030</span></div>
+                </div>
+            </div>`;
+            }
+        } else {
+            // PERSONA MORAL: JR Ingenieria Electrica
+            if (totalMXN > 0) {
+                bankAccountsRows += `
+            <div style="flex: 1; min-width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="background-color: #004481; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 900; font-size: 10px; letter-spacing: 0.5px;">BBVA</div>
+                <div style="flex: 1; border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.3px;">Cuenta MXN</div>
+                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">Titular: <span style="font-family: monospace;">JR INGENIERIA ELECTRICA</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. de Cliente BBVA: <span style="font-family: monospace;">E3477448</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">RFC: <span style="font-family: monospace;">JIE250214R69</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. Cuenta: <span style="font-family: monospace;">0124948939</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">CLABE: <span style="font-family: monospace;">012290001249489399</span></div>
                 </div>
             </div>`;
-        }
-        if (totalUSD > 0) {
-            bankAccountsRows += `
+            }
+            if (totalUSD > 0) {
+                bankAccountsRows += `
             <div style="flex: 1; min-width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                 <div style="background-color: #004481; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 900; font-size: 10px; letter-spacing: 0.5px;">BBVA</div>
                 <div style="flex: 1; border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column; gap: 2px;">
                     <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.3px;">Cuenta USD</div>
+                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">Titular: <span style="font-family: monospace;">JR INGENIERIA ELECTRICA</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. de Cliente BBVA: <span style="font-family: monospace;">E3477448</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">RFC: <span style="font-family: monospace;">JIE250214R69</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. Cuenta: <span style="font-family: monospace;">0124949706</span></div>
                     <div style="font-size: 9px; color: #1e293b; font-weight: bold;">CLABE: <span style="font-family: monospace;">012290001249497064</span></div>
                 </div>
             </div>`;
+            }
         }
 
         const container = document.createElement('div');
