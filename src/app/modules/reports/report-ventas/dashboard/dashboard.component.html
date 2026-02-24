@@ -109,7 +109,7 @@
                     <ng-container *ngIf="totalMetaGlobal > 0">
                         <div *ngFor="let seg of segmentosSucursales"
                             class="h-full flex items-center justify-center text-[11px] font-bold text-white transition-all duration-1000 ease-out border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
-                            [ngClass]="seg.colorClass" [style.width.%]="seg.anchoPorcentaje"
+                            [style.background-color]="seg.hexColor" [style.width.%]="seg.anchoPorcentaje"
                             [matTooltip]="seg.nombre + ' | Venta: ' + (seg.totalVendido | currency) + ' (' + (seg.participacion | number:'1.0-1') + '% del total)'">
                             <span *ngIf="seg.anchoPorcentaje > 5" class="truncate px-1 drop-shadow-md">{{ seg.nombre
                                 }}</span>
