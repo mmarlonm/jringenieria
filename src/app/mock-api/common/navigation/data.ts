@@ -3,33 +3,6 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export const defaultNavigation: FuseNavigationItem[] = [
 
     // ==========================================================================================
-    // SECCIÓN: INICIO
-    // ==========================================================================================
-    {
-        id: 'dashboards.inicio',
-        title: 'Inicio',
-        type: 'group',
-        icon: 'heroicons_outline:home',
-        children: [
-            // Usa ID original: 'dashboards.analytics'
-            {
-                id: 'dashboards.analytics',
-                title: 'Analytics',
-                type: 'basic',
-                icon: 'heroicons_outline:chart-pie',
-                link: '/dashboards/analytics'
-            },
-            {
-                id: 'dashboards.tasjks',
-                title: 'Tareas',
-                type: 'basic',
-                icon: 'heroicons_outline:check-circle',
-                link: '/dashboards/tasks'
-            },
-        ]
-    },
-
-    // ==========================================================================================
     // SECCIÓN: INGENIERÍA
     // ==========================================================================================
     {
@@ -37,40 +10,59 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'INGENIERIA',
         subtitle: 'Gestión técnica y proyectos',
         type: 'group',
-        icon: 'heroicons_outline:home',
+        icon: 'heroicons_outline:cog',
         children: [
-            // Usa ID original: 'dashboards.quote'
+            // Elementos directos
+            { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
+            { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
+            { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
+            { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
+
+            // Subgrupo: GESTION
             {
-                id: 'dashboards.quote',
-                title: 'Cotizaciones de Proyectos',
-                type: 'basic',
-                icon: 'heroicons_outline:banknotes',
-                link: '/dashboards/quote'
-            },
-            {
-                id: 'ingenieria.catalogos',
-                title: 'Catalogos',
+                id: 'ingenieria.gestion',
+                title: 'GESTION',
                 type: 'collapsable',
-                icon: 'heroicons_outline:book-open',
+                icon: 'heroicons_outline:briefcase',
                 children: [
-                    // Usa ID original: 'catalogs.clients'
-                    { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
-                    // Usa ID original: 'catalogs.products'
-                    { id: 'catalogs.products', title: 'Productos', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/catalogs/products' },
-                    // Usa ID original: 'dashboards.prospects'
-                    { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' }
+                    { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
+                    { id: 'dashboards.quote', title: 'Cotización de Proyectos', type: 'basic', icon: 'heroicons_outline:banknotes', link: '/dashboards/quote' },
+                    { id: 'dashboards.transfer-management', title: 'Gestión de Traspasos', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/dashboards/transfer-management' }
                 ]
             },
+
+            // Subgrupo: PROYECTOS
+            {
+                id: 'ingenieria.proyectos',
+                title: 'PROYECTOS',
+                type: 'collapsable',
+                icon: 'heroicons_outline:clipboard-document-check',
+                children: [
+                    { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/dashboards/project' }, // Conservado
+                    { id: 'reports.project-progress', title: '*Diagrama de Gant por proyecto', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/reports/project-progress' }
+                ]
+            },
+
+            // Subgrupo: INVENTARIO
+            {
+                id: 'ingenieria.inventario',
+                title: 'INVENTARIO',
+                type: 'collapsable',
+                icon: 'heroicons_outline:archive-box',
+                children: [
+                    { id: 'catalogs.products', title: 'Inventario( Existencias de producto', type: 'basic', icon: 'heroicons_outline:cube', link: '/catalogs/products' },
+                    { id: 'reports.report-product-existence', title: '( Existencias de producto CIAT)', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
+                ]
+            },
+
+            // Subgrupo: REPORTES
             {
                 id: 'ingenieria.reportes',
-                title: 'Reportes',
+                title: 'REPORTES',
                 type: 'collapsable',
-                icon: 'heroicons_outline:clipboard-document-list',
+                icon: 'heroicons_outline:chart-pie',
                 children: [
-                    // Usa ID original: 'dashboards.project'
-                    { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/project' },
-                    // Usa ID original: 'reports.project-progress'
-                    { id: 'reports.project-progress', title: 'Reporte avance de proyectos', type: 'basic', icon: 'heroicons_outline:document-chart-bar', link: '/reports/project-progress' },
+                    { id: 'reports.report-expenses', title: 'Reporte de gastos', type: 'basic', icon: 'heroicons_outline:document-text', link: '/reports/report-expenses' }
                 ]
             }
         ]
@@ -84,71 +76,52 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'COMERCIALIZACION',
         subtitle: 'Ventas y atención comercial',
         type: 'group',
-        icon: 'heroicons_outline:briefcase',
+        icon: 'heroicons_outline:shopping-cart',
         children: [
-            // Usa ID original: 'dashboards.quote-products'
+            // Elementos directos
+            { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
+            { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
+            { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
+
+            // Subgrupo: INVENTARIO
             {
-                id: 'dashboards.quote-products',
-                title: 'Cotizaciones de Productos',
-                type: 'basic',
-                icon: 'heroicons_outline:banknotes',
-                link: '/dashboards/quote-products'
-            },
-            // Usa ID original: 'dashboards.sales'
-            {
-                id: 'dashboards.sales',
-                title: 'Ventas',
-                type: 'basic',
-                icon: 'heroicons_outline:shopping-cart',
-                link: '/dashboards/sales'
-            },
-            // Usa ID original: 'dashboards.tasjks'
-            {
-                id: 'dashboards.tasjks',
-                title: 'Tareas',
-                type: 'basic',
-                icon: 'heroicons_outline:check-circle',
-                link: '/dashboards/tasks'
-            },
-            {
-                id: 'dashboards.expenses',
-                title: 'Gastos',
-                type: 'basic',
-                icon: 'heroicons_outline:currency-dollar',
-                link: '/dashboards/expenses'
-            },
-            {
-                id: 'comercializacion.catalogos',
-                title: 'Catalogos',
+                id: 'comercializacion.inventario',
+                title: 'INVENTARIO',
                 type: 'collapsable',
-                icon: 'heroicons_outline:book-open',
+                icon: 'heroicons_outline:archive-box',
                 children: [
-                    { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
-                    { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' }
+                    { id: 'catalogs.products', title: 'Existencias de producto sucursales', type: 'basic', icon: 'heroicons_outline:cube', link: '/catalogs/products' },
+                    { id: 'reports.report-product-existence', title: 'Existencias de producto CIAT', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
                 ]
             },
+
+            // Subgrupo: GESTION
+            {
+                id: 'comercializacion.gestion',
+                title: 'GESTION',
+                type: 'collapsable',
+                icon: 'heroicons_outline:folder',
+                children: [
+                    { id: 'dashboards.sales', title: 'Ventas', type: 'basic', icon: 'heroicons_outline:shopping-bag', link: '/dashboards/sales' }, // Conservado
+                    { id: 'dashboards.transfer-management', title: 'Gestión de Traspasos', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/dashboards/transfer-management' },
+                    { id: 'dashboards.quote-products', title: 'Cotizaciones', type: 'basic', icon: 'heroicons_outline:banknotes', link: '/dashboards/quote-products' }
+                ]
+            },
+
+            // Subgrupo: REPORTES
             {
                 id: 'comercializacion.reportes',
-                title: 'Reportes',
+                title: 'REPORTES',
                 type: 'collapsable',
                 icon: 'heroicons_outline:chart-bar',
                 children: [
-                    // Usa ID original: 'reports.report-ventas'
                     { id: 'reports.report-ventas', title: 'Reporte de Ventas', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/reports/report-venta' },
-                    // Usa ID original: 'reports.report-portfolio-overdue'
-                    { id: 'reports.report-portfolio-overdue', title: 'Reporte Cuentas por Cobrar', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-portfolio-overdue' },
-                    // Usa ID original: 'reports.report-ventas-product'
-                    { id: 'reports.report-ventas-product', title: 'Reporte de Ventas por Producto', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/reports/report-venta-product' },
-                    // Usa ID original: 'dashboards.transfer-management' (Movido a reportes o dashboards según lógica)
-                    { id: 'dashboards.transfer-management', title: 'Gestion de Traspasos', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/dashboards/transfer-management' },
-                    // Usa ID original: 'reports.report-product-existence'
-                    { id: 'reports.report-product-existence', title: 'Reporte de Existencia de Productos', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
-                    // Usa ID original: 'reports.report-customers'
-                    { id: 'reports.report-customers', title: 'Acumulado de Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers' },
-                    // Usa ID original: 'reports.report-expenses'
-                    { id: 'reports.report-expenses', title: 'Reporte de Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-expenses' },
-                    { id: 'reports.report-ventas-agente', title: 'Reporte de Ventas por Agente', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-ventas-agente' },
-                    { id: 'reports.report-customers-segmentation', title: 'Reporte de Clientes por Segmentación', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-customers-segmentation' },
+                    { id: 'reports.report-ventas-agente', title: 'Reporte de ventas por agente', type: 'basic', icon: 'heroicons_outline:user', link: '/reports/report-ventas-agente' },
+                    { id: 'reports.report-ventas-product', title: 'Reporte de ventas por producto', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/reports/report-venta-product' },
+                    { id: 'reports.report-customers-segmentation', title: 'Reporte de ventas por cliente', type: 'basic', icon: 'heroicons_outline:users', link: '/reports/report-customers-segmentation' },
+                    { id: 'reports.report-customers', title: 'Acumulado de clientes', type: 'basic', icon: 'heroicons_outline:user-plus', link: '/reports/report-customers' },
+                    { id: 'reports.report-portfolio-overdue', title: 'Cartera Vencida', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/reports/report-portfolio-overdue' },
+                    { id: 'reports.report-expenses', title: 'Reporte de Gastos', type: 'basic', icon: 'heroicons_outline:document-text', link: '/reports/report-expenses' }
                 ]
             }
         ]
@@ -164,32 +137,44 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:megaphone',
         children: [
-            // Usa ID original: 'dashboards.surveys'
+            // Elementos directos
+            { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
+
+            // Subgrupo: ENCUESTAS
             {
-                id: 'dashboards.surveys',
-                title: 'Encuestas',
-                type: 'basic',
+                id: 'marketing.encuestas',
+                title: 'ENCUESTAS',
+                type: 'collapsable',
                 icon: 'heroicons_outline:clipboard-document-list',
-                link: '/dashboards/surveys'
+                children: [
+                    { id: 'dashboards.surveys', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document', link: '/dashboards/surveys' }, // Conservado
+                    { id: 'dashboards.surveys-products', title: 'Encuestas de Productos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' }, // Conservado
+                    { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
+                    { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' }
+                ]
             },
-            // Usa ID original: 'dashboards.surveys-products'
+
+            // Subgrupo: GESTION
             {
-                id: 'dashboards.surveys-products',
-                title: 'Encuesta de Productos',
-                type: 'basic',
-                icon: 'heroicons_outline:clipboard-document-check',
-                link: '/dashboards/surveys-products'
+                id: 'marketing.gestion',
+                title: 'GESTION',
+                type: 'collapsable',
+                icon: 'heroicons_outline:briefcase',
+                children: [
+                    { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' }
+                ]
             },
+
+            // Subgrupo: REPORTES
             {
                 id: 'marketing.reportes',
-                title: 'Reportes de Satisfacción',
+                title: 'REPORTES',
                 type: 'collapsable',
                 icon: 'heroicons_outline:chart-bar-square',
                 children: [
-                    // Usa ID original: 'reports.product-satisfaction-survey'
-                    { id: 'reports.product-satisfaction-survey', title: 'Encuesta de Satisfacción (Productos)', type: 'basic', icon: 'heroicons_outline:star', link: '/reports/product-satisfaction-survey' },
-                    // Usa ID original: 'reports.project-satisfaction-survey'
-                    { id: 'reports.project-satisfaction-survey', title: 'Encuesta de Satisfacción (Proyectos)', type: 'basic', icon: 'heroicons_outline:star', link: '/reports/project-satisfaction-survey' }
+                    { id: 'reports.product-satisfaction-survey', title: 'Reportes de satisfaccion', type: 'basic', icon: 'heroicons_outline:star', link: '/reports/product-satisfaction-survey' },
+                    { id: 'reports.project-satisfaction-survey', title: 'Reportes de satisfaccion (Proyectos)', type: 'basic', icon: 'heroicons_outline:star', link: '/reports/project-satisfaction-survey' }, // Conservado
+                    { id: 'reports.report-expenses', title: 'Reporte de Gastos', type: 'basic', icon: 'heroicons_outline:document-text', link: '/reports/report-expenses' }
                 ]
             }
         ]
@@ -205,27 +190,23 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:users',
         children: [
-            // Usa ID original: 'rrhh.personal-management'
-            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
-            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entrada y Salida', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/report-entrada-salida' },
+            { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' } // Conservado
         ]
     },
 
     // ==========================================================================================
-    // SECCIÓN: SEGURIDAD
+    // SECCIÓN: SEGURIDAD (Conservada)
     // ==========================================================================================
     {
-        id: 'apps', // ID Original para el grupo de seguridad
+        id: 'apps',
         title: 'SEGURIDAD',
         subtitle: 'Configuración del sistema',
         type: 'group',
         icon: 'heroicons_outline:shield-check',
         children: [
-            // Usa ID original: 'apps.contacts'
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
-            // Usa ID original: 'apps.roles'
             { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' },
-            // Usa ID original: 'reports.login-logs'
             { id: 'reports.login-logs', title: 'Historial de Inicios de Sesión', type: 'basic', icon: 'heroicons_outline:finger-print', link: '/reports/login-logs' }
         ]
     }
