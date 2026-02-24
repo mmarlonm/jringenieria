@@ -65,7 +65,8 @@ export class TraspasoModalComponent implements OnInit {
         tipoEnvio: 'PAQUETERIA', // PAQUETERIA | INTERNO
         destinoFinal: 'SUCURSAL', // SUCURSAL | CLIENTE
         datosLogistica: '',
-        urlEvidenciaEnvio: ''
+        urlEvidenciaEnvio: '',
+        ResponsableOrigenId: null
     };
 
     // Campos temporales para la UI
@@ -133,8 +134,8 @@ export class TraspasoModalComponent implements OnInit {
     onOrigenChange(): void {
         const id = this.traspaso.idAlmacenOrigen;
         if (id === 1) this.traspaso.almacenOrigenNombre = 'Querétaro';
-        if (id === 2) this.traspaso.almacenOrigenNombre = 'Pachuca';
-        if (id === 3) this.traspaso.almacenOrigenNombre = 'Puebla';
+        if (id === 2) this.traspaso.almacenOrigenNombre = 'Puebla';
+        if (id === 3) this.traspaso.almacenOrigenNombre = 'Pachuca';
 
         if (this.traspaso.idAlmacenDestino === id) {
             this.traspaso.idAlmacenDestino = null;
@@ -145,8 +146,8 @@ export class TraspasoModalComponent implements OnInit {
     onDestinoChange(): void {
         const id = this.traspaso.idAlmacenDestino;
         if (id === 1) this.traspaso.almacenDestinoNombre = 'Querétaro';
-        if (id === 2) this.traspaso.almacenDestinoNombre = 'Pachuca';
-        if (id === 3) this.traspaso.almacenDestinoNombre = 'Puebla';
+        if (id === 2) this.traspaso.almacenDestinoNombre = 'Puebla';
+        if (id === 3) this.traspaso.almacenDestinoNombre = 'Pachuca';
     }
 
     validarStockGlobal(): void {
@@ -169,6 +170,7 @@ export class TraspasoModalComponent implements OnInit {
             !this.traspaso.idAlmacenOrigen ||
             !this.traspaso.idAlmacenDestino ||
             !this.traspaso.idUsuarioDestino ||
+            !this.traspaso.ResponsableOrigenId ||
             (this.traspaso.tipoEnvio === 'PAQUETERIA' && !this.traspaso.paqueteria);
 
 
@@ -232,6 +234,7 @@ export class TraspasoModalComponent implements OnInit {
             almacenDestinoNombre: this.traspaso.almacenDestinoNombre,
             idUsuarioEnvia: this.traspaso.idUsuarioEnvia,
             idUsuarioDestino: this.traspaso.idUsuarioDestino,
+            ResponsableOrigenId: this.traspaso.ResponsableOrigenId,
             paqueteria: this.traspaso.paqueteria,
             guiaRastreo: this.traspaso.guiaRastreo,
             transportista: this.traspaso.paqueteria || this.traspaso.transportista,

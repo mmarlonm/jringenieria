@@ -97,4 +97,5 @@ export interface TraspasoDto {
   destinoFinal: string;   // "SUCURSAL" | "CLIENTE"
   datosLogistica: string;
   urlEvidenciaEnvio: string;
+  ResponsableOrigenId: number;
 }

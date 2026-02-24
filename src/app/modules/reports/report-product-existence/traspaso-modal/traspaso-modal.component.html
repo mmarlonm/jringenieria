@@ -150,7 +150,16 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-2 gap-4">
+            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                <mat-label>Responsable de Origen</mat-label>
+                <mat-select [(ngModel)]="traspaso.ResponsableOrigenId" name="responsableOrigen">
+                    <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">
+                        {{user.nombreUsuario}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
             <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
                 <mat-label>Responsable de Destino</mat-label>
                 <mat-select [(ngModel)]="traspaso.idUsuarioDestino" name="usuarioDestino">
@@ -159,10 +168,6 @@
                     </mat-option>
                 </mat-select>
             </mat-form-field>
-
-
-
-
         </div>
 
         <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
