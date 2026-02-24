@@ -191,22 +191,33 @@ export class ReportVentasDashboardComponent implements OnInit {
                             this.totalVentasGlobal = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.totalVenta || 0), 0);
                             this.porcentajeMetaGlobal = this.totalMetaGlobal > 0 ? (this.totalVentasGlobal / this.totalMetaGlobal) * 100 : 0;
 
-                            const coloresSucursales = [
-                                'bg-blue-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600',
-                                'bg-violet-600', 'bg-cyan-600', 'bg-orange-600', 'bg-pink-600'
+                            const paletaColores = [
+                                { class: 'bg-blue-600', hex: '#2563eb' },
+                                { class: 'bg-emerald-600', hex: '#10b981' },
+                                { class: 'bg-amber-600', hex: '#f59e0b' },
+                                { class: 'bg-rose-600', hex: '#e11d48' },
+                                { class: 'bg-violet-600', hex: '#7c3aed' },
+                                { class: 'bg-cyan-600', hex: '#0891b2' },
+                                { class: 'bg-orange-600', hex: '#ea580c' },
+                                { class: 'bg-pink-600', hex: '#db2777' }
                             ];
 
                             this.segmentosSucursales = this.desglosePorSucursal
                                 .filter(s => s.totalVenta > 0)
-                                .map((s, idx) => ({
-                                    nombre: s.sucursal,
-                                    totalVendido: s.totalVenta,
-                                    anchoPorcentaje: this.totalMetaGlobal > 0 ? (s.totalVenta / this.totalMetaGlobal) * 100 : 0,
-                                    participacion: this.totalVentasGlobal > 0 ? (s.totalVenta / this.totalVentasGlobal) * 100 : 0,
-                                    colorClass: coloresSucursales[idx % coloresSucursales.length]
-                                }));
+                                .map((s, idx) => {
+                                    const colorInfo = paletaColores[idx % paletaColores.length];
+                                    return {
+                                        nombre: s.sucursal,
+                                        totalVendido: s.totalVenta,
+                                        metaAnualSucursal: s.metaAnualSucursal, // 👈 Mantener para la gráfica de barras
+                                        anchoPorcentaje: this.totalMetaGlobal > 0 ? (s.totalVenta / this.totalMetaGlobal) * 100 : 0,
+                                        participacion: this.totalVentasGlobal > 0 ? (s.totalVenta / this.totalVentasGlobal) * 100 : 0,
+                                        colorClass: colorInfo.class,
+                                        hexColor: colorInfo.hex
+                                    };
+                                });
 
-                            this.graficarDesgloseConsolidado(this.desglosePorSucursal);
+                            this.graficarDesgloseConsolidado(this.segmentosSucursales);
                         }
                     }, 200);
 
@@ -848,10 +859,11 @@ export class ReportVentasDashboardComponent implements OnInit {
 
         if (!data || data.length === 0) return;
 
-        // 1. Preparar data para Pastel (Participación)
+        // 1. Preparar data para Pastel (Participación) con colores sincronizados
         const pastelData = data.map(d => ({
-            name: d.sucursal,
-            y: d.totalVenta
+            name: d.nombre || d.sucursal,
+            y: d.totalVendido || d.totalVenta,
+            color: d.hexColor // 👈 Color sincronizado desde el mapeo inicial
         }));
 
         const containerPastel = document.getElementById('chartDesglosePastel');
@@ -879,9 +891,9 @@ export class ReportVentasDashboardComponent implements OnInit {
         // 2. Preparar data para Barras de Cumplimiento (Meta vs Ventas por Sucursal)
         const containerBarras = document.getElementById('chartDesgloseBarras');
         if (containerBarras) {
-            const categorias = data.map(d => d.sucursal);
+            const categorias = data.map(d => d.nombre || d.sucursal);
             const dataMetas = data.map(d => d.metaAnualSucursal || 0);
-            const dataVentas = data.map(d => d.totalVenta || 0);
+            const dataVentas = data.map(d => d.totalVendido || d.totalVenta || 0);
 
             Highcharts.chart(containerBarras, {
                 chart: { type: 'column', backgroundColor: 'transparent' },
