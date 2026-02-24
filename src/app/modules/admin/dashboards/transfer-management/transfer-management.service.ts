@@ -42,14 +42,14 @@ export class TransferManagementService {
   /**
    * Fase 3: Procesar el envío de un traspaso (Almacén Origen)
    */
-  procesarEnvio(idTraspaso: number, payload: { transportista: string, guiaRastreo: string, urlEvidenciaEnvio: string }): Observable<any> {
+  procesarEnvio(idTraspaso: number, payload: { transportista: string, guiaRastreo: string, urlEvidenciaEnvio: string, folioContpaqi: string }): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/procesar-envio/${idTraspaso}`, payload);
   }
 
   /**
    * Fase 4: Aprobar la recepción de un traspaso (Almacén Destino)
    */
-  aprobarRecepcion(idTraspaso: number, payload: { idUsuarioRecibe: number, conDiferencias: boolean, observaciones: string, urlEvidenciaRecepcion: string, folioContpaqi: string }): Observable<any> {
+  aprobarRecepcion(idTraspaso: number, payload: { idUsuarioRecibe: number, conDiferencias: boolean, observaciones: string, urlEvidenciaRecepcion: string }): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/aprobar-recepcion/${idTraspaso}`, payload);
   }
 

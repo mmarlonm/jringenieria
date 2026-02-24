@@ -42,7 +42,8 @@ export class GestionarTraspasoModalComponent implements OnInit {
     public datosEnvio = {
         transportista: '',
         guiaRastreo: '',
-        urlEvidenciaEnvio: ''
+        urlEvidenciaEnvio: '',
+        folioContpaqi: ''
     };
 
     // Fase 4: Aprobar Recepción
@@ -50,8 +51,7 @@ export class GestionarTraspasoModalComponent implements OnInit {
         conDiferencias: false,
         observaciones: '',
         urlEvidenciaRecepcion: '',
-        idUsuarioRecibe: null,
-        folioContpaqi: ''
+        idUsuarioRecibe: null
     };
 
     constructor(
@@ -67,6 +67,7 @@ export class GestionarTraspasoModalComponent implements OnInit {
         if (this.traspaso.estadoId === 1) {
             this.datosEnvio.transportista = this.traspaso.transportista || '';
             this.datosEnvio.guiaRastreo = this.traspaso.guiaRastreo || '';
+            this.datosEnvio.folioContpaqi = this.traspaso.folioContpaqi || '';
         }
 
         // Obtener ID de usuario logueado para recepción

@@ -46,6 +46,11 @@
                     <mat-label>Guía de Rastreo</mat-label>
                     <input matInput [(ngModel)]="datosEnvio.guiaRastreo" placeholder="Número de guía...">
                 </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                    <mat-label>Folio Contpaqi</mat-label>
+                    <input matInput [(ngModel)]="datosEnvio.folioContpaqi" placeholder="Ej. TR-1234...">
+                </mat-form-field>
             </div>
 
             <!-- Upload Evidencia Envío -->
@@ -98,10 +103,6 @@
                 <mat-slide-toggle [(ngModel)]="datosRecepcion.conDiferencias" color="warn"></mat-slide-toggle>
             </div>
 
-            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
-                <mat-label>Folio Contpaqi</mat-label>
-                <input matInput [(ngModel)]="datosRecepcion.folioContpaqi" placeholder="Ej. TR-1234...">
-            </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Observaciones de Recepción</mat-label>
