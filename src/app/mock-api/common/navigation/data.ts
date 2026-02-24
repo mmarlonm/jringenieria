@@ -206,7 +206,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:users',
         children: [
             // Usa ID original: 'rrhh.personal-management'
-            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entrada y Salida', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/report-entrada-salida' },
         ]
     },
 

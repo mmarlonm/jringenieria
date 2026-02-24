@@ -1,0 +1,160 @@
+<div class="w-full min-h-screen bg-gray-100 dark:bg-transparent p-4 sm:p-8 flex flex-col gap-6" id="pdf-content">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-main tracking-tight m-0">Reporte de Entradas y Salidas</h1>
+            <p class="text-secondary text-sm italic">Control de asistencia y puntualidad</p>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
+                <mat-icon>groups</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Total Registros</p>
+                <p class="text-xl font-black text-main">{{totalRegistros}}</p>
+            </div>
+        </div>
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-xl">
+                <mat-icon>timer_off</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Total Retardos</p>
+                <p class="text-xl font-black text-main">{{totalRetardos}}</p>
+            </div>
+        </div>
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl">
+                <mat-icon>more_time</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Minutos Extra</p>
+                <p class="text-xl font-black text-main">{{totalMinutosExtra}}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div
+        class="bg-card rounded-2xl shadow-sm border dark:border-gray-800 p-4 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+
+        <mat-form-field appearance="outline" class="md:col-span-3 !mb-[-1.25em]">
+            <mat-label>Fecha Inicio</mat-label>
+            <input matInput [matDatepicker]="startPicker" [(ngModel)]="fechaInicio">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="md:col-span-3 !mb-[-1.25em]">
+            <mat-label>Fecha Fin</mat-label>
+            <input matInput [matDatepicker]="endPicker" [(ngModel)]="fechaFin">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="md:col-span-4 !mb-[-1.25em]">
+            <mat-label>Buscar empleado...</mat-label>
+            <input matInput [(ngModel)]="filtroTexto" (keyup)="aplicarFiltro()" placeholder="Nombre del usuario">
+            <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <button mat-flat-button
+            class="md:col-span-2 !h-[50px] !rounded-xl !bg-slate-800 dark:!bg-blue-600 !text-white shadow-md"
+            (click)="consultar()" [disabled]="loading">
+            <mat-icon class="mr-1" *ngIf="!loading">sync</mat-icon>
+            <mat-spinner diameter="20" *ngIf="loading" class="mr-1"></mat-spinner>
+            <span>{{ loading ? 'Cargando...' : 'Consultar' }}</span>
+        </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-card rounded-2xl shadow-xl border dark:border-gray-800 overflow-hidden flex flex-col h-[600px]">
+        <div class="overflow-auto flex-grow scroll-container">
+            <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
+
+                <ng-container matColumnDef="fecha">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">FECHA</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800">{{row.fecha |
+                        date:'dd/MM/yyyy'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="nombreUsuario">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">USUARIO</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 font-bold text-blue-600 border-b dark:border-gray-800">{{row.nombreUsuario}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="horaEntrada">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">ENTRADA</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 font-mono">
+                        {{row.horaEntrada || '--:--'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="ubicacionEntrada">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">UBICACIÓN
+                        ENTRADA</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 text-[10px] border-b dark:border-gray-800 truncate max-w-[150px]">
+                        {{row.ubicacionNombreEntrada}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="horaSalida">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">SALIDA</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 font-mono">
+                        {{row.horaSalida || '--:--'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="ubicacionSalida">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">UBICACIÓN
+                        SALIDA</th>
+                    <td mat-cell *matCellDef="let row"
+                        class="p-4 text-[10px] border-b dark:border-gray-800 truncate max-w-[150px]">
+                        {{row.ubicacionNombreSalida}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="esRetardo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        RETARDO</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 text-center">
+                        <span *ngIf="row.esRetardo"
+                            class="px-2 py-1 bg-rose-100 text-rose-600 text-[10px] font-bold rounded-full">SÍ</span>
+                        <span *ngIf="row.esRetardo === false"
+                            class="px-2 py-1 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-full">NO</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="minutosExtra">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        MIN. EXTRA</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 text-center font-black">
+                        {{row.minutosExtra || 0}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="observaciones">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">
+                        OBSERVACIONES</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 text-[10px] border-b dark:border-gray-800 italic">
+                        {{row.observaciones}}</td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-hover transition-colors">
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

@@ -81,4 +81,32 @@ export class PersonalManagementService {
   getDailyStatus(usuarioId: number): Observable<any> {
     return this._http.get<any>(`${this._apiUrl}/checador/status/${usuarioId}`);
   }
+
+  /**
+   * Nombre: getReporteAsistencias
+   * Descripción: Obtiene el listado consolidado de asistencias para el reporte.
+   * Parámetros: fechaInicio (string), fechaFin (string)
+   * Retorna: Observable con la lista de AsistenciaReporteDto
+   */
+  getReporteAsistencias(fechaInicio?: string, fechaFin?: string): Observable<AsistenciaReporteDto[]> {
+    let params = {};
+    if (fechaInicio) params['fechaInicio'] = fechaInicio;
+    if (fechaFin) params['fechaFin'] = fechaFin;
+
+    return this._http.get<AsistenciaReporteDto[]>(`${this._apiUrl}/reporte-asistencias`, { params });
+  }
+}
+
+export interface AsistenciaReporteDto {
+  asistenciaId: number;
+  usuarioId: number;
+  nombreUsuario?: string;
+  fecha: string | Date;
+  horaEntrada?: string;
+  horaSalida?: string;
+  esRetardo?: boolean;
+  minutosExtra?: number;
+  observaciones?: string;
+  ubicacionNombreEntrada?: string;
+  ubicacionNombreSalida?: string;
 }
