@@ -50,8 +50,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:archive-box',
                 children: [
-                    { id: 'catalogs.products', title: 'Inventario( Existencias de producto', type: 'basic', icon: 'heroicons_outline:cube', link: '/catalogs/products' },
-                    { id: 'reports.report-product-existence', title: '( Existencias de producto CIAT)', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
+                    { id: 'catalogs.products', title: 'EXISTENCIAS DE PRODUCTOS CIAT', type: 'basic', icon: 'heroicons_outline:cube', link: '' },
+                    { id: 'reports.report-product-existence', title: 'EXISTENCIAS DE PRODUCTOS', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
                 ]
             },
 
@@ -90,8 +90,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:archive-box',
                 children: [
-                    { id: 'catalogs.products', title: 'Existencias de producto sucursales', type: 'basic', icon: 'heroicons_outline:cube', link: '/catalogs/products' },
-                    { id: 'reports.report-product-existence', title: 'Existencias de producto CIAT', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
+                    { id: 'catalogs.products', title: 'EXISTENCIAS DE PRODUCTOS CIAT', type: 'basic', icon: 'heroicons_outline:cube', link: '' },
+                    { id: 'reports.report-product-existence', title: 'EXISTENCIAS DE PRODUCTOS', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
                 ]
             },
 
