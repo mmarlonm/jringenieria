@@ -1,6 +1,5 @@
 <div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-6">
 
-    <!-- 🔹 HEADER -->
     <div class="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-lg sm:text-2xl font-bold text-gray-800">
             Dashboard de Ventas
@@ -12,7 +11,6 @@
         </button>
     </div>
 
-    <!-- 🔹 FILTROS -->
     <div
         class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
 
@@ -59,8 +57,75 @@
 
     </div>
 
-    <!-- 🔹 CONTENIDO EXPORTABLE -->
     <div id="pdf-content" class="w-full space-y-6">
+
+        <div *ngIf="esMoral === '3' && sucursal === 'TODAS' && desglosePorSucursal?.length > 0"
+            class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div class="bg-white rounded-xl shadow p-4 border border-indigo-100">
+                <h2 class="text-base sm:text-lg font-bold mb-2 text-indigo-900">
+                    Participación Total por Sucursal
+                </h2>
+                <div id="chartDesglosePastel" class="w-full h-[280px]"></div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4 border border-indigo-100">
+                <h2 class="text-base sm:text-lg font-bold mb-2 text-indigo-900">
+                    Cumplimiento de Meta por Sucursal
+                </h2>
+                <div id="chartDesgloseBarras" class="w-full h-[280px]"></div>
+            </div>
+
+            <!-- 📊 Nueva Barra de Progreso Consolidada -->
+            <div class="md:col-span-2 bg-white rounded-xl shadow p-6 border border-indigo-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <mat-icon>analytics</mat-icon>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                                Total Ventas vs Meta Global (Todas las Sucursales)
+                            </h3>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-2xl font-black text-gray-800">{{ totalVentasGlobal | currency
+                                    }}</span>
+                                <span class="text-sm font-medium text-gray-400">/ {{ totalMetaGlobal | currency
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-left sm:text-right">
+                        <span class="text-3xl font-black"
+                            [ngClass]="{'text-indigo-600': porcentajeMetaGlobal < 100, 'text-green-500': porcentajeMetaGlobal >= 100}">
+                            {{ porcentajeMetaGlobal | number:'1.0-1' }}%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="relative w-full h-8 bg-gray-100 rounded-full overflow-hidden shadow-inner flex">
+                    <ng-container *ngIf="totalMetaGlobal > 0">
+                        <div *ngFor="let seg of segmentosSucursales"
+                            class="h-full flex items-center justify-center text-[11px] font-bold text-white transition-all duration-1000 ease-out border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
+                            [ngClass]="seg.colorClass" [style.width.%]="seg.anchoPorcentaje"
+                            [matTooltip]="seg.nombre + ' | Venta: ' + (seg.totalVendido | currency) + ' (' + (seg.participacion | number:'1.0-1') + '% del total)'">
+                            <span *ngIf="seg.anchoPorcentaje > 5" class="truncate px-1 drop-shadow-md">{{ seg.nombre
+                                }}</span>
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-4 text-xs font-medium text-gray-400">
+                    <span>* La barra representa el cumplimiento de la Meta Global (Todas las Sucursales).</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 bg-gray-100 border rounded-sm"></span>
+                        <span>Meta No Alcanzada</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div *ngIf="sucursal !== 'TODAS'"
             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
@@ -160,10 +225,8 @@
             </div>
 
         </div>
-        <!-- 🔹 KPIs -->
         <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
-            <!-- Ventas Totales -->
             <div class="bg-white rounded-xl shadow p-4">
                 <p class="text-sm text-gray-500">Ventas Totales</p>
                 <p class="text-xl sm:text-2xl font-bold text-gray-800">
@@ -171,7 +234,6 @@
                 </p>
             </div>
 
-            <!-- Facturas -->
             <div class="bg-white rounded-xl shadow p-4">
                 <p class="text-sm text-gray-500">Facturas</p>
                 <p class="text-xl sm:text-2xl font-bold text-gray-800">
@@ -179,7 +241,6 @@
                 </p>
             </div>
 
-            <!-- Clientes -->
             <div class="bg-white rounded-xl shadow p-4">
                 <p class="text-sm text-gray-500">Clientes</p>
                 <p class="text-xl sm:text-2xl font-bold text-gray-800">
@@ -187,7 +248,6 @@
                 </p>
             </div>
 
-            <!-- Venta Promedio -->
             <div class="bg-white rounded-xl shadow p-4">
                 <p class="text-sm text-gray-500">Venta Promedio</p>
                 <p class="text-xl sm:text-2xl font-bold text-gray-800">
@@ -195,7 +255,6 @@
                 </p>
             </div>
 
-            <!-- 🔹 NUEVA: Utilidad Bruta -->
             <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
                 <p class="text-sm text-gray-500">Utilidad Bruta</p>
                 <p class="text-xl sm:text-2xl font-bold text-green-600">
@@ -206,7 +265,6 @@
         </div>
 
 
-        <!-- 🔹 GRÁFICAS FILA 1 -->
         <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
@@ -223,7 +281,6 @@
             </div>
         </div>
 
-        <!-- 🔹 GRÁFICAS FILA 2 (Para quitar el hueco) -->
         <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
@@ -256,17 +313,14 @@
             </div>
         </div>
 
-        <!-- 🔹 GRÁFICA + TABLA -->
         <div class="w-full grid grid-cols-1 lg:grid-cols-1 gap-12">
 
-            <!-- 🔹 DETALLE -->
             <div class="bg-white rounded-xl shadow p-4 flex flex-col">
 
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Detalle de Ventas
                 </h2>
 
-                <!-- Scroll horizontal + vertical -->
                 <div class="w-full overflow-auto max-h-[420px] border rounded-lg">
 
                     <table class="min-w-[900px] w-full text-sm">

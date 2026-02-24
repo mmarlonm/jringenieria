@@ -71,6 +71,13 @@ export class ReportVentasDashboardComponent implements OnInit {
     public porcentajeMetaAnual: number = 0;
     public segmentosAgentes: any[] = []; // Array que dibujará la barra multicolor
 
+    // 🎯 NUEVO: Variable para la tabla de desglose Física/Moral
+    public desglosePorSucursal: any[] = [];
+    public totalMetaGlobal: number = 0;
+    public totalVentasGlobal: number = 0;
+    public porcentajeMetaGlobal: number = 0;
+    public segmentosSucursales: any[] = [];
+
     // 🔹 Drilldown
     detalleVentas: any[] = [];
     private datosClasificacionOriginal: any[] = [];
@@ -84,7 +91,6 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     // 🔹 Consulta principal
     consultar(): void {
-        // 1. Llamada al servicio
         this.reportVentasService
             .getDashboardVentas(
                 this.sucursal,
@@ -94,74 +100,72 @@ export class ReportVentasDashboardComponent implements OnInit {
             )
             .subscribe({
                 next: (resp) => {
-                    // ✅ Si no hay respuesta o viene vacío → reset y salir
                     if (!resp || !resp.detalle || resp.detalle.length === 0) {
                         this.resetDashboard();
                         return;
                     }
 
-                    // 2. Mapeo de indicadores y gráficas generales
+                    // 1. Mapeo de datos (Esto no interactúa con el DOM, va directo)
                     this.mapearKPIs(resp);
-                    this.mapearGraficas(resp);
                     this.detalleVentas = resp.detalle;
+                    this.desglosePorSucursal = resp.desglosePorSucursal || [];
 
-                    // 3. Lógica de Metas de Sucursal
+                    // 🛡️ Fallback: Si no hay desglose pero hay detalle, lo calculamos
+                    if (this.desglosePorSucursal.length === 0 && this.detalleVentas.length > 0) {
+                        const map = new Map<string, number>();
+                        this.detalleVentas.forEach(d => {
+                            const suc = d.sucursal || 'Sin Sucursal';
+                            map.set(suc, (map.get(suc) || 0) + (d.netoMovimiento || 0));
+                        });
+                        this.desglosePorSucursal = Array.from(map).map(([sucursal, total]) => ({
+                            sucursal,
+                            totalVenta: total
+                        }));
+                    }
+
+                    // 2. Lógica de Metas
                     this.metaAnual = resp.metaAnual || 0;
                     this.ventasAnual = resp.ventasAnual || resp.kpis?.totalVentas || 0;
                     this.porcentajeMetaAnual = this.metaAnual > 0 ? (this.ventasAnual / this.metaAnual) * 100 : 0;
 
-                    // 4. Procesamiento de Vendedores (Segmentos)
+                    // 3. Procesamiento de Vendedores (Barras)
                     this.segmentosAgentes = [];
-
                     if (Array.isArray(resp.topVendedores)) {
-
                         const coloresAgentes = [
                             'bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500',
                             'bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500',
                             'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500'
                         ];
-
                         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
                         resp.topVendedores.forEach((vendedor: any, index: number) => {
-                            // Cálculo de porcentajes para la barra y participación
                             const widthBarra = this.metaAnual > 0 ? (vendedor.totalVendido / this.metaAnual) * 100 : 0;
                             const participacionSucursal = this.ventasAnual > 0 ? (vendedor.totalVendido / this.ventasAnual) * 100 : 0;
 
-                            // Solo procesar si tiene ventas
                             if (vendedor.totalVendido > 0) {
-
-                                // 🎯 SOLUCIÓN AL NOMBRE CORTO (Nombre + Primer Apellido completo)
                                 const partes = vendedor.vendedor.trim().split(/\s+/);
-                                // Tomamos la primera y segunda palabra si existen
                                 const nombreCorto = partes.length > 1 ? `${partes[0]} ${partes[1]}` : partes[0];
 
-                                // 📊 Agrupar ventas por mes desde el detalle para este vendedor específico
                                 const ventasMensualesMap = new Map<number, number>();
-
                                 if (Array.isArray(resp.detalle)) {
                                     resp.detalle.forEach((d: any) => {
                                         if (d.vendedor === vendedor.vendedor) {
                                             const fechaObj = new Date(d.fecha);
                                             const mesIndex = fechaObj.getMonth();
-                                            const venta = d.netoMovimiento || 0;
-                                            ventasMensualesMap.set(mesIndex, (ventasMensualesMap.get(mesIndex) || 0) + venta);
+                                            ventasMensualesMap.set(mesIndex, (ventasMensualesMap.get(mesIndex) || 0) + (d.netoMovimiento || 0));
                                         }
                                     });
                                 }
 
-                                // Convertir mapa a array ordenado por mes
                                 const ventasMensuales = Array.from(ventasMensualesMap.entries())
                                     .map(([mesIndex, total]) => ({
                                         mesNombre: mesesNombres[mesIndex],
                                         mesNumero: mesIndex,
                                         total: total
-                                    }))
-                                    .sort((a, b) => a.mesNumero - b.mesNumero);
+                                    })).sort((a, b) => a.mesNumero - b.mesNumero);
 
-                                // 5. Agregar el objeto final al arreglo de la vista
                                 this.segmentosAgentes.push({
-                                    nombreCorto: nombreCorto, // "ANA LUNA" en lugar de "ANA L."
+                                    nombreCorto: nombreCorto,
                                     nombreCompleto: vendedor.vendedor,
                                     totalVendido: vendedor.totalVendido,
                                     anchoPorcentaje: widthBarra,
@@ -173,16 +177,39 @@ export class ReportVentasDashboardComponent implements OnInit {
                         });
                     }
 
-                    // 6. Actualizar gráficas adicionales
-                    this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
-                    this.generarGraficaMarcas();
-                    this.generarGraficaLineas();
+                    // 🎯 SOLUCIÓN AL ERROR #13: 
+                    // Obligamos a Angular a esperar 200ms a que pinte los <div id="..."> antes de mandar a llamar a Highcharts
+                    setTimeout(() => {
+                        this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
+                        this.mapearGraficas(resp);
+                        this.generarGraficaMarcas();
+                        this.generarGraficaLineas();
 
-                    // 🎯 Nuevas Gráficas de Dona (Para la segunda fila)
-                    if (Array.isArray(resp.ventasPorClasificacion)) {
-                        this.graficaTopMarcasDonut(resp.ventasPorClasificacion);
-                        this.graficaTopLineasDonut(resp.ventasPorClasificacion);
-                    }
+                        if (this.esMoral === '3' && this.sucursal === 'TODAS' && (this.desglosePorSucursal.length > 0 || this.detalleVentas.length > 0)) {
+                            // 📊 Calcular Totales Globales para la Barra de Progreso
+                            this.totalMetaGlobal = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.metaAnualSucursal || 0), 0);
+                            this.totalVentasGlobal = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.totalVenta || 0), 0);
+                            this.porcentajeMetaGlobal = this.totalMetaGlobal > 0 ? (this.totalVentasGlobal / this.totalMetaGlobal) * 100 : 0;
+
+                            const coloresSucursales = [
+                                'bg-blue-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600',
+                                'bg-violet-600', 'bg-cyan-600', 'bg-orange-600', 'bg-pink-600'
+                            ];
+
+                            this.segmentosSucursales = this.desglosePorSucursal
+                                .filter(s => s.totalVenta > 0)
+                                .map((s, idx) => ({
+                                    nombre: s.sucursal,
+                                    totalVendido: s.totalVenta,
+                                    anchoPorcentaje: this.totalMetaGlobal > 0 ? (s.totalVenta / this.totalMetaGlobal) * 100 : 0,
+                                    participacion: this.totalVentasGlobal > 0 ? (s.totalVenta / this.totalVentasGlobal) * 100 : 0,
+                                    colorClass: coloresSucursales[idx % coloresSucursales.length]
+                                }));
+
+                            this.graficarDesgloseConsolidado(this.desglosePorSucursal);
+                        }
+                    }, 200);
+
                 },
                 error: (err) => {
                     console.error('Error al consultar el dashboard:', err);
@@ -201,10 +228,15 @@ export class ReportVentasDashboardComponent implements OnInit {
         };
 
         this.detalleVentas = [];
+        this.desglosePorSucursal = []; // 🎯 NUEVO: Limpiar la tabla de desglose
         this.metaAnual = 0;
         this.ventasAnual = 0;
         this.porcentajeMetaAnual = 0;
         this.segmentosAgentes = [];
+        this.totalMetaGlobal = 0;
+        this.totalVentasGlobal = 0;
+        this.porcentajeMetaGlobal = 0;
+        this.segmentosSucursales = [];
 
         this.chartOptions = {
             title: { text: '' },
@@ -349,7 +381,10 @@ export class ReportVentasDashboardComponent implements OnInit {
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const borderColor = isDark ? '#334155' : '#E2E8F0';
 
-        Highcharts.chart('chartTopProductosPiezas', { // 👈 Asegúrate de tener este ID en tu HTML
+        const container = document.getElementById('chartTopProductosPiezas');
+        if (!container) return;
+
+        Highcharts.chart(container, { // 👈 Usamos el elemento directamente
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent'
@@ -442,7 +477,10 @@ export class ReportVentasDashboardComponent implements OnInit {
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const borderColor = isDark ? '#334155' : '#E2E8F0';
 
-        Highcharts.chart('chartTopProductosMonto', { // 👈 Asegúrate de tener este ID en tu HTML
+        const container = document.getElementById('chartTopProductosMonto');
+        if (!container) return;
+
+        Highcharts.chart(container, { // 👈 Asegúrate de tener este ID en tu HTML
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent'
@@ -542,7 +580,10 @@ export class ReportVentasDashboardComponent implements OnInit {
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const tooltipBorder = isDark ? '#1E293B' : '#E2E8F0';
 
-        Highcharts.chart('chartTopVendedores', {
+        const container = document.getElementById('chartTopVendedores');
+        if (!container) return;
+
+        Highcharts.chart(container, {
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent'
@@ -649,7 +690,10 @@ export class ReportVentasDashboardComponent implements OnInit {
 
         const self = this;
 
-        Highcharts.chart('chartMarcas', {
+        const container = document.getElementById('chartMarcas');
+        if (!container) return;
+
+        Highcharts.chart(container, {
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent'
@@ -718,7 +762,10 @@ export class ReportVentasDashboardComponent implements OnInit {
             return acc;
         }, [] as any[]);
 
-        Highcharts.chart('chartLineas', {
+        const container = document.getElementById('chartLineas');
+        if (!container) return;
+
+        Highcharts.chart(container, {
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent'
@@ -794,12 +841,107 @@ export class ReportVentasDashboardComponent implements OnInit {
 
         this.crearMiniDonut('chartTopLineasDonut', 'Top Líneas', data, '#8b5cf6');
     }
+    // 📊 Gráficas Nuevas: Desglose por Sucursal y Cumplimiento de Meta
+    private graficarDesgloseConsolidado(data: any[]): void {
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#F1F5F9' : '#1E293B';
+
+        if (!data || data.length === 0) return;
+
+        // 1. Preparar data para Pastel (Participación)
+        const pastelData = data.map(d => ({
+            name: d.sucursal,
+            y: d.totalVenta
+        }));
+
+        const containerPastel = document.getElementById('chartDesglosePastel');
+        if (containerPastel) {
+            Highcharts.chart(containerPastel, {
+                chart: { type: 'pie', backgroundColor: 'transparent' },
+                title: { text: '' },
+                tooltip: { pointFormat: 'Venta: <b>${point.y:,.2f}</b><br>Participación: <b>{point.percentage:.1f}%</b>' },
+                plotOptions: {
+                    pie: {
+                        innerSize: '50%',
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: true,
+                            format: '<b>{point.name}</b><br>{point.percentage:.1f}%',
+                            style: { textOutline: 'none', color: textColor, fontWeight: 'normal' }
+                        }
+                    }
+                },
+                series: [{ name: 'Sucursal', type: 'pie', data: pastelData } as any],
+                credits: { enabled: false }
+            });
+        }
+
+        // 2. Preparar data para Barras de Cumplimiento (Meta vs Ventas por Sucursal)
+        const containerBarras = document.getElementById('chartDesgloseBarras');
+        if (containerBarras) {
+            const categorias = data.map(d => d.sucursal);
+            const dataMetas = data.map(d => d.metaAnualSucursal || 0);
+            const dataVentas = data.map(d => d.totalVenta || 0);
+
+            Highcharts.chart(containerBarras, {
+                chart: { type: 'column', backgroundColor: 'transparent' },
+                title: { text: '' },
+                xAxis: {
+                    categories: categorias,
+                    crosshair: true,
+                    labels: { style: { color: textColor } }
+                },
+                yAxis: {
+                    min: 0,
+                    title: { text: 'Monto ($)', style: { color: textColor } },
+                    labels: { style: { color: textColor }, format: '${value:,.0f}' },
+                    gridLineColor: isDark ? '#334155' : '#E2E8F0'
+                },
+                tooltip: {
+                    shared: true,
+                    headerFormat: '<span style="font-size: 12px"><b>{point.key}</b></span><br/>',
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>${point.y:,.2f}</b><br/>',
+                    valuePrefix: '$'
+                },
+                plotOptions: {
+                    column: {
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        dataLabels: {
+                            enabled: true,
+                            format: '${point.y:,.0f}',
+                            style: { fontSize: '10px', fontWeight: 'bold', textOutline: 'none', color: textColor }
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: 'Meta Sucursal',
+                        type: 'column',
+                        color: isDark ? '#475569' : '#CBD5E1',
+                        data: dataMetas
+                    },
+                    {
+                        name: 'Venta Actual',
+                        type: 'column',
+                        color: '#3b82f6',
+                        data: dataVentas
+                    }
+                ] as any,
+                credits: { enabled: false }
+            });
+        }
+    }
 
     private crearMiniDonut(containerId: string, title: string, data: any[], colorPrincipal: string): void {
         const isDark = document.body.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
 
-        Highcharts.chart(containerId, {
+        // 🛡️ CANDADO DE SEGURIDAD PARA EVITAR ERROR 13
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        Highcharts.chart(container, {
             chart: { type: 'pie', backgroundColor: 'transparent', height: 260 },
             title: {
                 text: title,
