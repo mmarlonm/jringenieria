@@ -95,6 +95,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         'fechaInicioEstimada',
         'fechaFinEstimada',
         'estatus',
+        'cuadranteId',
         'empresa',
         'ubicacion',
         'comentarios',
@@ -597,6 +598,46 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.hideCompleted = !this.hideCompleted;
         this.configService.updateFilter('hideCompleted', this.hideCompleted);
         this.processTasks();
+    }
+
+    getCuadranteName(id: number | null | undefined): string {
+        switch (id) {
+            case 1: return 'Importante y Urgente';
+            case 2: return 'Importante, No Urgente';
+            case 3: return 'No Importante, Urgente';
+            case 4: return 'No Importante, No Urgente';
+            default: return 'Sin asignar';
+        }
+    }
+
+    getCuadranteColor(id: number | null | undefined): string {
+        switch (id) {
+            case 1: return '#f43f5e'; // bg-rose-500
+            case 2: return '#fbbf24'; // bg-amber-400
+            case 3: return '#34d399'; // bg-emerald-400
+            case 4: return '#38bdf8'; // bg-sky-400
+            default: return '#94a3b8'; // gray-400
+        }
+    }
+
+    updateTaskCuadranteId(task: Task, newId: number | null): void {
+        if (task.cuadranteId === newId) return;
+        const oldId = task.cuadranteId;
+        task.cuadranteId = newId;
+
+        this.taskService.updateTask(task.id!, task).subscribe({
+            next: () => {
+                this.snackBar.open(`Matriz Eisenhower actualizada`, "Cerrar", {
+                    duration: 2000,
+                    panelClass: ['success-snackbar']
+                });
+                this.loadTasks(); // Refresh to regroup
+            },
+            error: () => {
+                task.cuadranteId = oldId;
+                Swal.fire('Error', 'No se pudo actualizar la matriz.', 'error');
+            }
+        });
     }
 
     ngOnDestroy(): void {

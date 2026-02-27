@@ -94,7 +94,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             ubicacion: [''],
             links: this.fb.array([]),
             CreadorId: [null], // ID del usuario que crea la tarea
-            estatus: [2, Validators.required] // Nuevo campo de estatus con valor por defecto 1
+            estatus: [2, Validators.required], // Nuevo campo de estatus con valor por defecto 1
+            cuadranteId: [null]
         });
         this.tareaId = data?.id;
     }
@@ -158,7 +159,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 empresa: task.empresa,
                 ubicacion: task.ubicacion,
                 CreadorId: this.user.id, // Asigna el ID del usuario logueado
-                estatus: task.estatus
+                estatus: task.estatus,
+                cuadranteId: task.cuadranteId ?? null
             });
 
             // Actualiza manualmente flatpickr con las fechas ya parseadas
@@ -223,6 +225,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             fechaFinReal: toLocalISOString(formValue.fechaFinReal),
             empresa: formValue.empresa,
             ubicacion: formValue.ubicacion,
+            cuadranteId: formValue.cuadranteId
         };
 
         if (this.data?.id) {

@@ -16,4 +16,5 @@ export interface Task {
   dependencies?: string; // 👈 nuevo campo para dependencias de Gantt
   empresa: string;
   ubicacion: string;
+  cuadranteId?: number | null;
 }
