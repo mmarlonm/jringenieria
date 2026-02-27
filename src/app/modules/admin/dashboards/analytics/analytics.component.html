@@ -14,8 +14,14 @@
             }
           </div>
           <div class="ml-4 flex min-w-0 flex-col">
+            <div class="flex items-center mb-1">
+              <div class="px-3 py-1 rounded-md text-white text-xs font-bold uppercase tracking-widest shadow-sm"
+                style="background-color: #2596be;">
+                Centro de control JR
+              </div>
+            </div>
             <ng-container *transloco="let t">
-              <div class="truncate text-2xl font-semibold leading-7 tracking-tight md:text-5xl md:leading-snug">
+              <div class="truncate text-3xl font-bold leading-tight tracking-tight md:text-5xl md:leading-snug">
                 @if(user?.sexo == 1){
                 {{ t("¡Bienvenido") }}, {{ user?.nombreUsuario }}!
                 }

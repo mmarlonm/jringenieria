@@ -17,6 +17,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
             { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
+            { id: 'dashboards.roadmap', title: 'Roadmap 2026', type: 'basic', icon: 'heroicons_outline:flag', link: '/dashboards/roadmap' },
 
             // Subgrupo: GESTION
             {
@@ -82,6 +83,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
             { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
+            { id: 'dashboards.roadmap', title: 'Roadmap 2026', type: 'basic', icon: 'heroicons_outline:flag', link: '/dashboards/roadmap' },
 
             // Subgrupo: INVENTARIO
             {

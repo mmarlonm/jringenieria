@@ -90,6 +90,7 @@ export const appRoutes: Route[] = [
                     { path: 'surveys-products', loadChildren: () => import('app/modules/admin/dashboards/surveys-products/surveys.routes') },
                     { path: 'transfer-management', loadChildren: () => import('app/modules/admin/dashboards/transfer-management/transfer-management.routes') },
                     { path: 'expenses', loadChildren: () => import('app/modules/admin/dashboards/expenses/expenses.routes') },
+                    { path: 'roadmap', loadChildren: () => import('app/modules/admin/dashboards/roadmap/roadmap.routes') },
                 ]
             },
             {
