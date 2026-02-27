@@ -145,7 +145,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
             }
         } else {
             this.kpis = [...this.kpisOriginales];
-            this.totalVendido = this.listaClientesOriginal.reduce((acc, curr) => acc + (curr.montoTotal || 0), 0);
+            this.totalVendido = this.kpisOriginales.reduce((acc, curr) => acc + (curr.valorSegmento || 0), 0);
         }
         // 3. Renderizar todas las gráficas
         this.renderGraficaDona();
