@@ -937,16 +937,21 @@ export class ReportCustomersDashboardComponent implements OnInit {
             const footerHeight = (footerCanvas.height * pdfWidth) / footerCanvas.width;
             const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-            // Altura disponible para el contenido en cada página (restando el footer)
-            const availableHeight = pdfHeight - footerHeight - 5; // 5mm de margen
+            // Función para añadir el footer a la página actual con una máscara blanca para evitar superposiciones
+            const addFooter = () => {
+                // Dibujar un rectángulo blanco que cubra el área del footer (un poco más alto para seguridad)
+                pdf.setFillColor(255, 255, 255);
+                pdf.rect(0, pdfHeight - footerHeight - 2, pdfWidth, footerHeight + 2, 'F');
+                // Añadir la imagen del footer encima
+                pdf.addImage(footerImgData, 'PNG', 0, pdfHeight - footerHeight, pdfWidth, footerHeight);
+            };
+
+            // Altura disponible para el contenido en cada página (restando el footer y un margen de seguridad mayor)
+            const marginContent = 10; // 10mm de margen de seguridad
+            const availableHeight = pdfHeight - footerHeight - marginContent;
 
             let heightLeft = imgHeight;
             let position = 0;
-
-            // Función para añadir el footer a la página actual
-            const addFooter = () => {
-                pdf.addImage(footerImgData, 'PNG', 0, pdfHeight - footerHeight, pdfWidth, footerHeight);
-            };
 
             // Primera página
             pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
@@ -954,9 +959,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
             heightLeft -= availableHeight;
 
             while (heightLeft > 0) {
-                position = heightLeft - imgHeight;
                 pdf.addPage();
-                // En las siguientes páginas, volvemos a aplicar el recorte
+                position -= (availableHeight); // Desplazamos la imagen hacia arriba para mostrar la siguiente porción
                 pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
                 addFooter();
                 heightLeft -= availableHeight;
