@@ -474,3 +474,124 @@ td.mat-column-responsable {
         }
     }
 }
+
+/* ==========================================================================
+   MATRIZ DE EISENHOWER REDISEÑO
+   ========================================================================== */
+.eisenhower-matrix-container {
+    padding: 20px;
+    background-color: #fff;
+    overflow-x: auto;
+}
+
+.eisenhower-matrix {
+    display: grid;
+    grid-template-columns: 50px 1fr 1fr;
+    grid-template-rows: 50px 50px 1fr 50px 1fr; // Headers, HACER/PROG subheaders, Q1/Q2 list, DELEGAR/ELIMINAR subheaders, Q3/Q4 list
+    width: 100%;
+    min-width: 800px;
+    border: 2px solid #000;
+    gap: 0;
+
+    &>div {
+        border: 1px solid #000; // Unified internal borders
+    }
+
+    .matrix-header {
+        background-color: #ffff00;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        color: #000;
+        text-transform: uppercase;
+        font-size: 16px;
+        letter-spacing: 0.1em;
+    }
+
+    .matrix-subheader {
+        background-color: #f7941d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        color: #000;
+        text-transform: uppercase;
+        font-size: 16px;
+    }
+
+    .matrix-vertical-header {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        background-color: #ffff00;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        color: #000;
+        text-transform: uppercase;
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+
+        &.spans-2 {
+            grid-row: span 2;
+        }
+    }
+
+    .matrix-quadrant {
+        min-height: 200px;
+        padding: 0;
+        overflow-y: hidden;
+        display: flex;
+        flex-direction: column;
+
+        // Matching table colors (Rose, Amber, Emerald, Sky) with opacity for better readability
+        &.q1-bg {
+            background-color: rgba(244, 63, 94, 0.1);
+        }
+
+        // HACER
+        &.q2-bg {
+            background-color: rgba(251, 191, 36, 0.1);
+        }
+
+        // PROGRAMAR
+        &.q3-bg {
+            background-color: rgba(52, 211, 153, 0.1);
+        }
+
+        // DELEGAR
+        &.q4-bg {
+            background-color: rgba(56, 189, 248, 0.1);
+        }
+
+        // ELIMINAR
+
+        .matrix-items-container {
+            padding: 8px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .matrix-item {
+            border-bottom: 2px solid #000;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: normal;
+            line-height: 1.2;
+
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+    }
+}

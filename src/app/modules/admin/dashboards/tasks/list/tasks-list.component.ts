@@ -110,6 +110,12 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Data
     rawTasks: Task[] = [];
+    tasksByCuadrante: { [key: number]: Task[] } = {
+        1: [],
+        2: [],
+        3: [],
+        4: []
+    };
 
     // User Info
     user: User;
@@ -343,7 +349,10 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             }];
         }
 
-        // 5. Re-initialize column sorting for the newly rendered tables
+        // 5. Group by Cuadrante for Eisenhower Matrix
+        this.groupTasksByCuadrante(tasks);
+
+        // 6. Re-initialize column sorting for the newly rendered tables
         this.initHighcharts(this.groupedTasks);
         this.initGanttChart(tasks);
         this.initColumnSorting();
@@ -638,6 +647,15 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 Swal.fire('Error', 'No se pudo actualizar la matriz.', 'error');
             }
         });
+    }
+
+    groupTasksByCuadrante(tasks: Task[]): void {
+        this.tasksByCuadrante = {
+            1: tasks.filter(t => t.cuadranteId === 1),
+            2: tasks.filter(t => t.cuadranteId === 2),
+            3: tasks.filter(t => t.cuadranteId === 3),
+            4: tasks.filter(t => t.cuadranteId === 4)
+        };
     }
 
     ngOnDestroy(): void {

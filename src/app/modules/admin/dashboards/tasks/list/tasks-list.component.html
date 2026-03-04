@@ -565,4 +565,89 @@
       </div>
 
     </div>
+
+    <!-- 🔹 Matriz de Eisenhower -->
+    <div *ngIf="rawTasks.length > 0"
+      class="mx-4 sm:mx-6 md:mx-8 mb-10 bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div
+        class="flex items-center justify-between px-4 sm:px-6 py-4 border-b dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+            <mat-icon class="text-indigo-600 dark:text-indigo-400" svgIcon="heroicons_outline:squares-2x2"></mat-icon>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-main uppercase tracking-wider">Priorización Estratégica (Matriz de
+              Eisenhower)</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="eisenhower-matrix-container">
+        <div class="eisenhower-matrix">
+          <!-- Row 1: Top Headers -->
+          <div class="matrix-header"></div>
+          <div class="matrix-header">URGENTE</div>
+          <div class="matrix-header">NO URGENTE</div>
+
+          <!-- Column 1: Spanning Vertical Header (Row 2 & 3) -->
+          <div class="matrix-vertical-header spans-2">IMPORTANTE</div>
+
+          <!-- Row 2: Subheaders -->
+          <div class="matrix-subheader">HACER</div>
+          <div class="matrix-subheader">PROGRAMAR</div>
+
+          <!-- Row 3: Items -->
+          <div class="matrix-quadrant q1-bg">
+            <div class="matrix-items-container">
+              <div *ngFor="let task of tasksByCuadrante[1]" (click)="openTaskDialog(task.id)" class="matrix-item">
+                {{ task.nombre }}
+              </div>
+              <div *ngIf="tasksByCuadrante[1].length === 0" class="text-[10px] text-secondary italic text-center py-4">
+                Sin
+                tareas</div>
+            </div>
+          </div>
+          <div class="matrix-quadrant q2-bg">
+            <div class="matrix-items-container">
+              <div *ngFor="let task of tasksByCuadrante[2]" (click)="openTaskDialog(task.id)" class="matrix-item">
+                {{ task.nombre }}
+              </div>
+              <div *ngIf="tasksByCuadrante[2].length === 0" class="text-[10px] text-secondary italic text-center py-4">
+                Sin
+                tareas</div>
+            </div>
+          </div>
+
+          <!-- Column 1: Spanning Vertical Header (Row 4 & 5) -->
+          <div class="matrix-vertical-header spans-2">NO IMPORTANTE</div>
+
+          <!-- Row 4: Subheaders -->
+          <div class="matrix-subheader">DELEGAR</div>
+          <div class="matrix-subheader">ELIMINAR</div>
+
+          <!-- Row 5: Items -->
+          <div class="matrix-quadrant q3-bg">
+            <div class="matrix-items-container">
+              <div *ngFor="let task of tasksByCuadrante[3]" (click)="openTaskDialog(task.id)" class="matrix-item">
+                {{ task.nombre }}
+              </div>
+              <div *ngIf="tasksByCuadrante[3].length === 0" class="text-[10px] text-secondary italic text-center py-4">
+                Sin
+                tareas</div>
+            </div>
+          </div>
+          <div class="matrix-quadrant q4-bg">
+            <div class="matrix-items-container">
+              <div *ngFor="let task of tasksByCuadrante[4]" (click)="openTaskDialog(task.id)" class="matrix-item">
+                {{ task.nombre }}
+              </div>
+              <div *ngIf="tasksByCuadrante[4].length === 0" class="text-[10px] text-secondary italic text-center py-4">
+                Sin
+                tareas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>

@@ -96,6 +96,8 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     sucursal = 'TODAS';
     fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1);
     fechaFin: Date = new Date();
+    codigosProducto: string = '';
+    detalleRaw: any[] = [];
     treeData: any[] = [];
 
     totalVentas = 0;
@@ -128,13 +130,27 @@ export class ReportVentasProductDashboardComponent implements OnInit {
                 this.esMoral
             )
             .subscribe(resp => {
-
-                this.detalle = resp || [];
-
-                this.calcularKPIs();
-                this.renderGraficaProductos();
-                this.generarTablaJerarquica(this.detalle);
+                this.detalleRaw = resp || [];
+                this.filterCodes();
             });
+    }
+
+    filterCodes(): void {
+        if (!this.codigosProducto || this.codigosProducto.trim() === '') {
+            this.detalle = [...this.detalleRaw];
+        } else {
+            const codes = this.codigosProducto.split(',')
+                .map(c => c.trim().toUpperCase())
+                .filter(c => c !== '');
+
+            this.detalle = this.detalleRaw.filter(r =>
+                codes.some(code => r.codigoProducto?.toUpperCase().includes(code))
+            );
+        }
+
+        this.calcularKPIs();
+        this.renderGraficaProductos();
+        this.generarTablaJerarquica(this.detalle);
     }
 
 

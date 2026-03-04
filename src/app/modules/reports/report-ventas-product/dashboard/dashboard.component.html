@@ -84,10 +84,24 @@
     </div>
 
     <div class="bg-card rounded-xl shadow dark:border dark:border-gray-800 p-4 flex flex-col flex-1 lg:min-h-[85vh]">
-        <h2 class="font-semibold mb-3 shrink-0 flex justify-between items-center text-main">
-            Ventas por Clasificación
-            <span class="text-xs font-normal text-secondary italic">Jerarquía: Clasificación > Sub > Producto</span>
-        </h2>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 shrink-0">
+            <h2 class="font-semibold text-main">
+                Ventas por Clasificación
+                <span class="text-xs font-normal text-secondary italic block sm:inline sm:ml-2">Jerarquía: Clasificación
+                    >
+                    Sub > Producto</span>
+            </h2>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <mat-form-field appearance="outline" class="fuse-mat-dense w-full sm:w-80"
+                    [subscriptSizing]="'dynamic'">
+                    <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <mat-label>Filtrar por código(s) (ej: ABC, XYZ)</mat-label>
+                    <input matInput [(ngModel)]="codigosProducto" (ngModelChange)="filterCodes()"
+                        placeholder="Buscar uno o varios códigos...">
+                </mat-form-field>
+            </div>
+        </div>
 
         <div
             class="flex-1 overflow-auto border dark:border-gray-800 rounded-lg shadow-inner bg-default/30 min-h-[600px] lg:h-[1000px]">
