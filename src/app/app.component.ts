@@ -4,13 +4,16 @@ import { PresenceService } from "./presence.service";
 import { Subject, takeUntil } from "rxjs";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
+import { SignalRService } from "./signalr.service";
+import { ChatNotificationService } from "./shared/components/chat-notification/chat-notification.service";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
   standalone: true,
-  imports: [RouterOutlet, MatDialogModule],
+  imports: [RouterOutlet, MatDialogModule, MatSnackBarModule],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _unsubscribeAll = new Subject<void>();
@@ -20,7 +23,11 @@ export class AppComponent implements OnInit, OnDestroy {
   private isInactive = false;
   private _dialog = inject(MatDialog);
 
-  constructor(private presenceService: PresenceService) { }
+  constructor(
+    private presenceService: PresenceService,
+    private signalRService: SignalRService,
+    private chatNotificationService: ChatNotificationService
+  ) { }
 
   @HostListener("window:beforeunload")
   unloadHandler(): void {
@@ -46,6 +53,20 @@ export class AppComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((newConnectedUsers: string[]) => {
         this.connectedUsers = newConnectedUsers;
+      });
+
+    // 👇 Global SignalR for Chat
+    this.signalRService.startConnection(userId.toString());
+    this.signalRService.onMensajeRecibido()
+      .pipe(takeUntil(this._unsubscribeAll))
+      .subscribe((nuevoMensaje) => {
+        const isMine = Number(nuevoMensaje.remitenteId) === Number(userId);
+        if (!isMine) {
+          this.chatNotificationService.showNotification(
+            nuevoMensaje.remitenteNombre || 'Chat',
+            nuevoMensaje.contenido || nuevoMensaje.value || ''
+          );
+        }
       });
 
     this.startInactivityWatch();
