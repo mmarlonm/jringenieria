@@ -183,11 +183,20 @@
 
         <!-- 🔹 Nueva Tabla de Detalle -->
         <div class="w-full bg-white rounded-xl shadow overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+            <div
+                class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-base sm:text-lg font-semibold text-gray-800">Detalle de Transacciones</h2>
-                <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-                    {{ filteredExpenses.length }} registros
-                </span>
+                <div class="flex items-center gap-3">
+                    <button mat-flat-button color="primary"
+                        class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-4 !py-1 !text-xs flex items-center shadow-sm"
+                        (click)="exportToCSV()">
+                        <mat-icon class="mr-1 !text-sm">download</mat-icon>
+                        Exportar CSV
+                    </button>
+                    <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                        {{ filteredExpenses.length }} registros
+                    </span>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">

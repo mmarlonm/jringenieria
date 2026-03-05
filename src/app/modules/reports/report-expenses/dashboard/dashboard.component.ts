@@ -402,4 +402,49 @@ export class ReportExpensesDashboardComponent implements OnInit {
             });
         }
     }
+
+    public exportToCSV(): void {
+        if (!this.filteredExpenses || this.filteredExpenses.length === 0) return;
+
+        const headers = [
+            'Fecha',
+            'Descripción',
+            'Tipo',
+            'Concepto',
+            'Área',
+            'Movimiento',
+            'Monto'
+        ];
+
+        const cleanText = (text: any) => {
+            if (text === null || text === undefined) return '';
+            let str = String(text);
+            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = this.filteredExpenses.map(exp => [
+            moment(exp.fecha).format('DD/MM/YYYY'),
+            cleanText(exp.nombreGasto),
+            cleanText(this.getNombreTipo(exp.tipoId, exp)),
+            cleanText(this.getNombreConcepto(exp.conceptoId, exp)),
+            cleanText(this.getNombreArea(exp.areaId, exp)),
+            (exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'Ingreso' : 'Egreso',
+            exp.cantidad
+        ]);
+
+        const csvContent = '\ufeff' + [
+            headers.join(','),
+            ...rows.map(e => e.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Detalle_Gastos_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
