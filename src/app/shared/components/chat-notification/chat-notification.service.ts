@@ -7,15 +7,17 @@ import { sileo } from 'sileo';
 export class ChatNotificationService {
 
   /**
-   * Muestra una notificación de chat usando Sileo (Librería React integrada vía puente).
+   * Muestra una notificación usando Sileo con estilo 'Dynamic Island'.
    * @param remitenteName Nombre del remitente
    * @param contenido Contenido del mensaje
+   * @param title Título genérico (ej: 'Nuevo mensaje')
    */
-  showNotification(remitenteName: string, contenido: string): void {
-    // Sileo's success method expects a SileoOptions object.
+  showNotification(remitenteName: string, contenido: string, title: string = 'Nuevo mensaje'): void {
+    console.log('🚀 [ChatNotificationService] Llamando a sileo.success', { remitenteName, contenido, title });
     sileo.success({
-      title: remitenteName || 'Nuevo mensaje',
-      description: contenido
+      title: title,
+      description: `${remitenteName}: ${contenido}`,
+      duration: 8000
     });
   }
 }

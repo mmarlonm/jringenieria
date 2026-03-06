@@ -16,6 +16,7 @@ import { TranslocoService, provideTransloco } from '@ngneat/transloco';
 import { appRoutes } from 'app/app.routes';
 import { provideAuth } from 'app/core/auth/auth.provider';
 import { provideIcons } from 'app/core/icons/icons.provider';
+import { SignalRService } from 'app/signalr.service';
 import { mockApiServices } from 'app/mock-api';
 import { firstValueFrom } from 'rxjs';
 import { TranslocoHttpLoader } from './core/transloco/transloco.http-loader';
@@ -86,7 +87,27 @@ export const appConfig: ApplicationConfig = {
             multi: true,
         },
 
-        // Fuse
+        {
+            provide: APP_INITIALIZER,
+            useFactory: () => {
+                const signalRService = inject(SignalRService);
+                return () => {
+                    const token = localStorage.getItem('accessToken');
+                    const userInfo = localStorage.getItem('userInformation');
+                    if (token && userInfo) {
+                        try {
+                            const data = JSON.parse(userInfo);
+                            const userId = data?.usuario?.id;
+                            if (userId) {
+                                console.log('[AppConfig] 🚀 Iniciando SignalR desde APP_INITIALIZER');
+                                signalRService.startConnection(userId.toString(), token);
+                            }
+                        } catch (e) { }
+                    }
+                };
+            },
+            multi: true,
+        },
         provideAuth(),
         provideIcons(),
         provideFuse({

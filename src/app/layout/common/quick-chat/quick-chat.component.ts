@@ -122,12 +122,12 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
         this.chats = chats;
       });
 
-    // Inicia conexión SignalR
-    this.signalRService.startConnection(this.usuarioActualId.toString());
+    // La conexión se maneja globalmente en AppComponent desde el inicio de sesión
 
     this.signalRService.onMensajeRecibido()
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((nuevoMensaje) => {
+        if (!this.chat) return;
         // Asegúrate que venga remitenteId
         nuevoMensaje.isMine = Number(nuevoMensaje.contactId) === this.usuarioActualId;
 

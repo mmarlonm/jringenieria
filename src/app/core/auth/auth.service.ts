@@ -5,6 +5,7 @@ import { UserService } from "app/core/user/user.service";
 import { environment } from "environments/environment";
 import { Observable, of, switchMap, throwError, from } from "rxjs";
 import { PresenceService } from "app/presence.service";
+import { SignalRService } from "app/signalr.service";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
   private _httpClient = inject(HttpClient);
   private _userService = inject(UserService);
   private _presenceService = inject(PresenceService);
+  private _signalRService = inject(SignalRService);
 
   private tokenWatcherInterval: any;
 
@@ -64,6 +66,7 @@ export class AuthService {
             this.userInformation = JSON.stringify(userWithoutToken);
             this._userService.user = response;
             this._presenceService.startConnection(response.token, response.usuario.id);
+            this._signalRService.startConnection(response.usuario.id.toString(), response.token);
 
             this.startTokenWatcher(); // ⬅️ Inicia verificación periódica del token
 
@@ -80,6 +83,7 @@ export class AuthService {
     this._authenticated = false;
 
     this._presenceService.stopConnection();
+    this._signalRService.stopConnection();
     this.stopTokenWatcher(); // ⬅️ Detiene el watcher
 
     return of(true);
@@ -99,6 +103,11 @@ export class AuthService {
 
     const user: any = JSON.parse(this.userInformation || "{}");
     this._userService.user = user;
+
+    // Trigger conexión global en recargas/re-entrada
+    if (user?.usuario?.id) {
+      this._signalRService.startConnection(user.usuario.id.toString(), this.accessToken);
+    }
 
     return of(true);
   }
