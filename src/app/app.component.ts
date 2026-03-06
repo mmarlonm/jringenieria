@@ -1,19 +1,21 @@
 import { Component, HostListener, OnDestroy, OnInit, inject } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { PresenceService } from "./presence.service";
-import { Subject, takeUntil } from "rxjs";
+import { Subject, takeUntil, take } from "rxjs";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
 import { SignalRService } from "./signalr.service";
 import { ChatNotificationService } from "./shared/components/chat-notification/chat-notification.service";
 import { MatSnackBarModule } from "@angular/material/snack-bar";
+import { UsersService } from "app/modules/admin/security/users/users.service";
+import { SileoWrapperComponent } from "./shared/components/sileo-wrapper/sileo-wrapper.component";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
   standalone: true,
-  imports: [RouterOutlet, MatDialogModule, MatSnackBarModule],
+  imports: [RouterOutlet, MatDialogModule, MatSnackBarModule, SileoWrapperComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _unsubscribeAll = new Subject<void>();
@@ -26,7 +28,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private presenceService: PresenceService,
     private signalRService: SignalRService,
-    private chatNotificationService: ChatNotificationService
+    private chatNotificationService: ChatNotificationService,
+    private _usersService: UsersService
   ) { }
 
   @HostListener("window:beforeunload")
@@ -56,16 +59,25 @@ export class AppComponent implements OnInit, OnDestroy {
       });
 
     // 👇 Global SignalR for Chat
+    this._usersService.getUsers().subscribe(); // Pre-cargar usuarios
     this.signalRService.startConnection(userId.toString());
     this.signalRService.onMensajeRecibido()
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((nuevoMensaje) => {
-        const isMine = Number(nuevoMensaje.remitenteId) === Number(userId);
+        const remitenteId = nuevoMensaje.remitenteId || nuevoMensaje.contactId;
+        const isMine = Number(remitenteId) === Number(userId);
+
         if (!isMine) {
-          this.chatNotificationService.showNotification(
-            nuevoMensaje.remitenteNombre || 'Chat',
-            nuevoMensaje.contenido || nuevoMensaje.value || ''
-          );
+          // Intentar resolver el nombre del remitente desde la lista de usuarios
+          this._usersService.users$.pipe(take(1)).subscribe((users: any[]) => {
+            const user = users?.find(u => u.usuarioId == remitenteId);
+            const nombre = user?.nombreUsuario || nuevoMensaje.remitenteNombre || 'Equipo CRM';
+
+            this.chatNotificationService.showNotification(
+              nombre,
+              nuevoMensaje.contenido || nuevoMensaje.value || ''
+            );
+          });
         }
       });
 

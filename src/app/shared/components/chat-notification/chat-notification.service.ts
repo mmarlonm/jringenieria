@@ -1,20 +1,21 @@
-import { Injectable, inject } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { ChatNotificationComponent } from './chat-notification.component';
+import { Injectable } from '@angular/core';
+import { sileo } from 'sileo';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class ChatNotificationService {
-    private _snackBar = inject(MatSnackBar);
 
-    showNotification(remitenteName: string, contenido: string): void {
-        this._snackBar.openFromComponent(ChatNotificationComponent, {
-            data: { remitenteName, contenido },
-            duration: 5000,
-            horizontalPosition: 'right',
-            verticalPosition: 'top',
-            panelClass: ['chat-notification-snack']
-        });
-    }
+  /**
+   * Muestra una notificación de chat usando Sileo (Librería React integrada vía puente).
+   * @param remitenteName Nombre del remitente
+   * @param contenido Contenido del mensaje
+   */
+  showNotification(remitenteName: string, contenido: string): void {
+    // Sileo's success method expects a SileoOptions object.
+    sileo.success({
+      title: remitenteName || 'Nuevo mensaje',
+      description: contenido
+    });
+  }
 }
