@@ -22,7 +22,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FuseScrollbarDirective } from '@fuse/directives/scrollbar';
 import { QuickChatService } from 'app/layout/common/quick-chat/quick-chat.service';
 import { Chat } from 'app/layout/common/quick-chat/quick-chat.types';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, combineLatest } from 'rxjs';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NewChatComponent } from './new/new-chat.component';
 import { UsersService } from '../../../modules/admin/security/users/users.service';
@@ -116,10 +116,17 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedChat = chat;
       });
 
-    this._quickChatService.chats$
-      .pipe(takeUntil(this._unsubscribeAll))
-      .subscribe((chats: Chat[]) => {
+    combineLatest([
+      this._quickChatService.chats$,
+      this.signalRService.connectionEstablished
+    ]).pipe(takeUntil(this._unsubscribeAll))
+      .subscribe(([chats, isConnected]) => {
         this.chats = chats;
+        if (isConnected && chats && chats.length > 0) {
+          chats.forEach(chat => {
+            this.signalRService.unirseAlChat(Number(chat.id));
+          });
+        }
       });
 
     // La conexión se maneja globalmente en AppComponent desde el inicio de sesión

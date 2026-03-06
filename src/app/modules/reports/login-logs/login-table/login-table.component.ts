@@ -11,6 +11,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { LoginLogsService } from '../login-logs.service';
 import Swal from "sweetalert2";
@@ -30,7 +31,8 @@ import Swal from "sweetalert2";
         MatSortModule,
         MatFormFieldModule,
         MatInputModule,
-        MatSelectModule
+        MatSelectModule,
+        MatTooltipModule
     ]
 })
 export class LoginTableComponent implements OnInit {

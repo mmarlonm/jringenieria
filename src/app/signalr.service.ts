@@ -9,6 +9,7 @@ import { environment } from "environments/environment"; // Asegúrate de tener l
 export class SignalRService {
   private hubConnection: signalR.HubConnection | null = null;
   private mensajeRecibidoSubject = new ReplaySubject<any>(1);
+  public connectionEstablished = new ReplaySubject<boolean>(1);
   private apiUrl = `${environment.apiUrlSignal}`;
 
   private heartbeatIntervalId: any;
@@ -44,18 +45,23 @@ export class SignalRService {
     this.registerSignalRHandlers();
 
     this.hubConnection.onreconnecting((error) => console.warn('📡 [SignalRService] Reintentando conexión...', error));
-    this.hubConnection.onreconnected(() => console.log('✅ [SignalRService] Conexión reestablecida'));
+    this.hubConnection.onreconnected(() => {
+      console.log('✅ [SignalRService] Conexión reestablecida');
+      this.connectionEstablished.next(true);
+    });
 
     this.hubConnection
       .start()
       .then(() => {
         console.log("✅ [SignalRService] Conectado exitosamente y escuchando mensajes");
+        this.connectionEstablished.next(true);
         this.startHeartbeat();
       })
       .catch((err) => {
         console.error("❌ [SignalRService] Error crítico al iniciar conexión:", err);
         // Permitir reintentos inmediatos limpiando el estado
         this.hubConnection = null;
+        this.connectionEstablished.next(false);
       });
   }
 
