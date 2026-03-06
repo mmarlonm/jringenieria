@@ -116,10 +116,10 @@ export class AppComponent implements OnInit, OnDestroy {
         const nombreSugerido = nuevoMensaje.remitenteNombre || nuevoMensaje.senderName || nuevoMensaje.name || 'Equipo CRM';
 
         // Evitar notificaciones de mensajes propios usando el ID de la sesión actual
-        /*if (remitenteId && this.currentUserId && String(remitenteId) === String(this.currentUserId)) {
+        if (remitenteId && this.currentUserId && String(remitenteId) === String(this.currentUserId)) {
           console.log('[AppComponent] Ignorando mensaje propio');
           return;
-        }*/
+        }
 
         // Mostrar notificación de inmediato
         console.log('[AppComponent] 🔔 DISPARANDO NOTIFICACIÓN:', nombreSugerido, contenido);
