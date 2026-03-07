@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -55,9 +55,9 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
   constructor(
     private prospectosService: ProspectosService,
     private router: Router,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private route: ActivatedRoute
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
@@ -69,26 +69,20 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.dataSource.sort = this.sort;
       this.dataSource.paginator = this.paginator;
-    },1200);
+    }, 1200);
   }
 
   getProspects(): void {
-    this.prospectosService.getProspectos().subscribe((res:any) => {
-      if(res.code==200){
-      var prospects = res.data
-      this.prospectsCount = prospects.length;
-      this.dataSource = new MatTableDataSource(prospects);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
+    this.prospectosService.getProspectos().subscribe((res: any) => {
+      if (res.code == 200) {
+        var prospects = res.data
+        this.prospectsCount = prospects.length;
+        this.dataSource = new MatTableDataSource(prospects);
+        this.dataSource.paginator = this.paginator;
+        this.dataSource.sort = this.sort;
       }
-      else{
-        Swal.fire({
-                           icon: "error",
-                           title:"Opps",
-                           text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-                           draggable: true
-                         });
-        
+      else {
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }
@@ -108,23 +102,18 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
     this.router.navigate([`/dashboards/prospects/${prospectId}`]);
   }
 
-  async deleteQuote(prospectId: number){
+  async deleteQuote(prospectId: number) {
     const confirmed = await this.showConfirmation();
-    if(confirmed){
-    this.prospectosService.deleteProspecto(prospectId).subscribe((res) => {
-      if(res.code==200){
-      this.getProspects();
-      }
-      else{
-        Swal.fire({
-          icon: "error",
-          title:"Opps",
-          text:"Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
-        });
-      }
-    });
-  }
+    if (confirmed) {
+      this.prospectosService.deleteProspecto(prospectId).subscribe((res) => {
+        if (res.code == 200) {
+          this.getProspects();
+        }
+        else {
+          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
+        }
+      });
+    }
   }
 
   obtenerPermisos(): void {
@@ -150,17 +139,17 @@ export class ProspectListComponent implements OnInit, AfterViewInit {
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
   }
-  showConfirmation(): Promise<boolean>{
-      return Swal.fire({
-        title:'Seguro que desea eliminar',
-        text:'Esta accion no se puede revertir',
-        icon:'warning',
-        showCancelButton:true,
-        confirmButtonText:'Eliminar',
-        cancelButtonText:'Cancelar',
-        reverseButtons:true,
-      }).then((result)=> {
-        return result.isConfirmed;
-      });
-    }
+  showConfirmation(): Promise<boolean> {
+    return Swal.fire({
+      title: 'Seguro que desea eliminar',
+      text: 'Esta accion no se puede revertir',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    }).then((result) => {
+      return result.isConfirmed;
+    });
+  }
 }

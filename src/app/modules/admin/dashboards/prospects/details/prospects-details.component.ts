@@ -33,7 +33,7 @@ import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import { NotesDetailsComponent } from "../dialog/dialog.component";
 import { MatDialog } from "@angular/material/dialog";
-import Swal from "sweetalert2";
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import * as L from "leaflet";
 import { MomentDateAdapter } from "@angular/material-moment-adapter";
 import { environment } from '../../../../../../environments/environment';
@@ -124,8 +124,9 @@ export class ProspectDetailsComponent implements OnInit {
     public router: Router,
     private clientsService: ClientsService,
     private _usersService: UsersService,
-    private _matDialog: MatDialog
-  ) {}
+    private _matDialog: MatDialog,
+    private _chatNotificationService: ChatNotificationService
+  ) { }
 
   ngOnInit(): void {
     this.prospectForm = this.fb.group({
@@ -250,12 +251,7 @@ export class ProspectDetailsComponent implements OnInit {
           });
         }
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true,
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }
@@ -269,12 +265,7 @@ export class ProspectDetailsComponent implements OnInit {
 
   saveProspect(): void {
     if (this.prospectForm.invalid) {
-      Swal.fire({
-        icon: "error",
-        title: "Opps",
-        text: "Por favor, completa los campos obligatorios",
-        draggable: true,
-      });
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
       return;
     }
 
@@ -293,13 +284,9 @@ export class ProspectDetailsComponent implements OnInit {
       if (res.code == 200) {
         // Redirigir a la lista de proyectos
         this.router.navigate(["/dashboards/prospects"]); // O la ruta correspondiente a la lista
+        this._chatNotificationService.showSuccess("Éxito", "Prospecto guardado correctamente", 3000);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true,
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }
@@ -467,11 +454,7 @@ export class ProspectDetailsComponent implements OnInit {
       const cid = matchCid[1];
       const apiKey: string = environment.apiKeyGoogle; // 👉 pon aquí tu API Key de Google
       if (!apiKey || apiKey === "TU_API_KEY_AQUI") {
-        Swal.fire({
-          icon: "warning",
-          title: "Atención",
-          text: "Para buscar enlaces de Google Maps con CID necesitas configurar una API Key de Google Places.",
-        });
+        this._chatNotificationService.showWarning("Atención", "Para buscar enlaces de Google Maps con CID necesitas configurar una API Key de Google Places.", 5000);
         return;
       }
       const url = `https://maps.googleapis.com/maps/api/place/details/json?cid=${cid}&key=${apiKey}`;
@@ -485,19 +468,11 @@ export class ProspectDetailsComponent implements OnInit {
             this.longitud = lng;
             this.setMarker(lat, lng);
           } else {
-            Swal.fire({
-              icon: "error",
-              title: "Error",
-              text: "No se pudieron obtener coordenadas para este enlace de Google Maps.",
-            });
+            this._chatNotificationService.showError("Error", "No se pudieron obtener coordenadas para este enlace de Google Maps.", 5000);
           }
         })
         .catch((err) => {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "Hubo un problema al contactar Google Places API.",
-          });
+          this._chatNotificationService.showError("Error", "Hubo un problema al contactar Google Places API.", 5000);
           console.error("Error al obtener coordenadas:", err);
         });
       return;
@@ -513,11 +488,7 @@ export class ProspectDetailsComponent implements OnInit {
         this.longitud = lng;
         this.setMarker(lat, lng);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Coordenadas inválidas en el enlace de Google Maps.",
-        });
+        this._chatNotificationService.showError("Error", "Coordenadas inválidas en el enlace de Google Maps.", 5000);
       }
       return;
     }
@@ -539,19 +510,11 @@ export class ProspectDetailsComponent implements OnInit {
                 if (res2 && res2.url && res2.url !== matchShort[0]) {
                   this.buscarDireccion(res2.url);
                 } else {
-                  Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "No se pudo resolver el shortlink de Google Maps. Intenta pegar el enlace largo.",
-                  });
+                  this._chatNotificationService.showError("Error", "No se pudo resolver el shortlink de Google Maps. Intenta pegar el enlace largo.", 5000);
                 }
               })
               .catch((err2) => {
-                Swal.fire({
-                  icon: "error",
-                  title: "Error",
-                  text: "No se pudo resolver el shortlink de Google Maps.",
-                });
+                this._chatNotificationService.showError("Error", "No se pudo resolver el shortlink de Google Maps.", 5000);
                 console.error("Error al resolver shortlink (GET):", err2);
               });
           }
@@ -563,19 +526,11 @@ export class ProspectDetailsComponent implements OnInit {
               if (res2 && res2.url && res2.url !== matchShort[0]) {
                 this.buscarDireccion(res2.url);
               } else {
-                Swal.fire({
-                  icon: "error",
-                  title: "Error",
-                  text: "No se pudo resolver el shortlink de Google Maps. Intenta pegar el enlace largo.",
-                });
+                this._chatNotificationService.showError("Error", "No se pudo resolver el shortlink de Google Maps. Intenta pegar el enlace largo.", 5000);
               }
             })
             .catch((err2) => {
-              Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "No se pudo resolver el shortlink de Google Maps.",
-              });
+              this._chatNotificationService.showError("Error", "No se pudo resolver el shortlink de Google Maps.", 5000);
               console.error("Error al resolver shortlink (GET):", err2);
             });
           console.error("Error al resolver shortlink (HEAD):", err);
@@ -593,11 +548,7 @@ export class ProspectDetailsComponent implements OnInit {
         this.longitud = lng;
         this.setMarker(lat, lng);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Coordenadas inválidas.",
-        });
+        this._chatNotificationService.showError("Error", "Coordenadas inválidas.", 5000);
       }
       return;
     }
@@ -615,19 +566,11 @@ export class ProspectDetailsComponent implements OnInit {
           this.longitud = lng;
           this.setMarker(lat, lng);
         } else {
-          Swal.fire({
-            icon: "info",
-            title: "Sin resultados",
-            text: "No se encontraron coordenadas para esta dirección.",
-          });
+          this._chatNotificationService.showInfo("Sin resultados", "No se encontraron coordenadas para esta dirección.", 5000);
         }
       })
       .catch((err) => {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error al buscar la dirección.",
-        });
+        this._chatNotificationService.showError("Error", "Error al buscar la dirección.", 5000);
         console.error("Error al buscar dirección en Nominatim:", err);
       });
   }

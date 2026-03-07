@@ -41,7 +41,7 @@ import { MatChipsModule } from "@angular/material/chips";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { MatChipInputEvent } from "@angular/material/chips";
 import { eq, set } from "lodash";
-import { MatSnackBar } from '@angular/material/snack-bar'; // Asegúrate de tenerlo importado
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service'; // Asegúrate de tenerlo importado
 import Swal from 'sweetalert2';
 import Gantt from "frappe-gantt";
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -184,7 +184,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     public router: Router,
     private clientsService: ClientsService,
     private _usersService: UsersService,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog, // ✅ Esta línea es clave
     private currencyPipe: CurrencyPipe
@@ -731,12 +731,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
           this.anticipoDisplay = this.currencyPipe.transform(totalAnticipos, 'MXN', 'symbol', '1.2-2') || '';
         }
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }
@@ -780,12 +775,7 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
   saveProject(): void {
     if (this.projectForm.invalid) {
-      Swal.fire({
-        icon: "error",
-        title: "Opps",
-        text: "Por favor, completa los campos obligatorios",
-        draggable: true
-      });
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
       this.projectForm.markAllAsTouched();
       return;
     }
@@ -943,29 +933,16 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     this.projectService.uploadFile(formData).subscribe({
       next: (res) => {
         if (res.code == 200) {
-          this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
-            duration: 3000,
-            panelClass: ['snackbar-success']
-          });
+          this._chatNotificationService.showSuccess('Éxito', 'Archivo subido correctamente.', 5000);
           this.getFilesAll();
         }
         else {
-          Swal.fire({
-            icon: "error",
-            title: "Opps",
-            text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-            draggable: true
-          });
+          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
 
         }
       },
       error: (err) => {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
 
       },
     });
@@ -1020,27 +997,14 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     this.projectService.removeFile(proyectoId, categoria, nombreArchivo).subscribe({
       next: (res: any) => {
         if (res.code === 200) {
-          this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
-            duration: 3000,
-            panelClass: ['snackbar-success']
-          });
+          this._chatNotificationService.showSuccess("Éxito", 'Archivo eliminado correctamente.', 5000);
           this.getFilesAll(); // Recarga la lista de archivos
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Oops",
-            text: "Hubo un error en el sistema, contacte al administrador.",
-            draggable: true
-          });
+          this._chatNotificationService.showError("Oops", "Hubo un error en el sistema, contacte al administrador.", 5000);
         }
       },
       error: (err) => {
-        Swal.fire({
-          icon: "error",
-          title: "Oops",
-          text: "Hubo un error en el sistema, contacte al administrador.",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Oops", "Hubo un error en el sistema, contacte al administrador.", 5000);
       }
     });
   }
@@ -1668,10 +1632,10 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
 
     // Llamada a tu API de notificación (ejemplo)
     this.projectService.enviarNotificacion(payload).subscribe({
-      next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
+      next: () => this._chatNotificationService.showSuccess('Éxito', 'Notificación enviada correctamente', 3000),
       error: (err) => {
         console.error('Error al enviar notificación:', err);
-        this.snackBar.open('Error al enviar la notificación', 'Cerrar', { duration: 3000 });
+        this._chatNotificationService.showError('Error', 'Error al enviar la notificación', 3000);
       }
     });
   }
@@ -1696,10 +1660,10 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     };
 
     this.projectService.enviarNotificacionTarea(payload).subscribe({
-      next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
+      next: () => this._chatNotificationService.showSuccess('Éxito', 'Notificación enviada correctamente', 3000),
       error: (err) => {
         console.error('Error al enviar notificación:', err);
-        this.snackBar.open('Error al enviar la notificación', 'Cerrar', { duration: 3000 });
+        this._chatNotificationService.showError('Error', 'Error al enviar la notificación', 3000);
       }
     });
   }

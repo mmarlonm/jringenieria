@@ -92,6 +92,7 @@ import 'tui-calendar/dist/tui-calendar.css';
 import { FuseConfigService } from '@fuse/services/config';
 import { FuseConfig } from '@fuse/services/config/config.types';
 import { PersonalManagementService } from 'app/modules/rrhh/personal-management/personal-management.service';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 @Component({
     selector: 'classy-layout',
@@ -161,7 +162,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private tareasService: TaskService,
         private _taskConfigService: TaskViewConfigService,
         private _personalManagementService: PersonalManagementService,
-        private _ngZone: NgZone
+        private _ngZone: NgZone,
+        private _chatNotificationService: ChatNotificationService
     ) { }
 
     // ----------------------------------------------------------
@@ -283,14 +285,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     // ✅ Login manual
     loginWithGoogle(): void {
         if (this.googleStatus?.isLoggedIn && !this.googleStatus?.isExpired) {
-            Swal.fire({
-                title: '¡Conectado!',
-                text: 'Ya estás conectado con Google 😎',
-                icon: 'success',
-                confirmButtonText: 'Aceptar',
-                timer: 3000,
-                showConfirmButton: true
-            });
+            this._chatNotificationService.showSuccess('¡Conectado!', 'Ya estás conectado con Google 😎', 3000);
             return;
         }
         this._userService.loginWithGoogle(Number(this.user.id));
@@ -479,7 +474,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
     saveNewEvent(event: any) {
         if (!event.title || !event.start || !event.end) {
-            Swal.fire('Campos incompletos', 'Completa los campos requeridos', 'warning');
+            this._chatNotificationService.showWarning('Campos incompletos', 'Completa los campos requeridos', 5000);
             return;
         }
 
@@ -496,12 +491,11 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
         this._userService.createEvent(payload).subscribe({
             next: (res: any) => {
-                Swal.fire({
-                    icon: 'success',
-                    title: this.selectedEventId ? 'Evento actualizado' : 'Evento creado',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                this._chatNotificationService.showSuccess(
+                    'Éxito',
+                    this.selectedEventId ? 'Evento actualizado' : 'Evento creado',
+                    2000
+                );
 
                 // ✅ Ajuste de fechas (restar 1 día a ambas)
                 let start = new Date(res.start);
@@ -533,7 +527,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 console.error('Error al guardar evento:', err);
-                Swal.fire('Error', 'No se pudo guardar el evento', 'error');
+                this._chatNotificationService.showError('Error', 'No se pudo guardar el evento', 5000);
             }
         });
     }
@@ -591,11 +585,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 console.error('Error al actualizar evento', err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudo actualizar el evento.',
-                });
+                this._chatNotificationService.showError('Error', 'No se pudo actualizar el evento.', 5000);
             },
         });
     }
@@ -633,11 +623,11 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                 if (permissionStatus.state === 'denied') {
                     this.locationPermission = 'denied';
                     this.ubicacionNombre = 'Permiso bloqueado en navegador';
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Permiso bloqueado',
-                        text: 'Debes habilitar la ubicación manualmente en configuración del navegador.'
-                    });
+                    this._chatNotificationService.showError(
+                        'Permiso bloqueado',
+                        'Debes habilitar la ubicación manualmente en configuración del navegador.',
+                        6000
+                    );
 
                     return;
                 }
@@ -727,7 +717,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
         // 1. Verificar si el navegador soporta Geolocalización
         if (!navigator.geolocation) {
-            alert('Tu navegador no soporta geolocalización. Por favor, usa uno moderno.');
+            this._chatNotificationService.showError('Error', 'Tu navegador no soporta geolocalización. Por favor, usa uno moderno.', 6000);
             return;
         }
 
@@ -789,13 +779,13 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     private _handleLocationError(error: GeolocationPositionError): void {
         switch (error.code) {
             case error.PERMISSION_DENIED:
-                alert('Para marcar asistencia en JR Ingeniería es OBLIGATORIO permitir la ubicación. Por favor, habilítala en la configuración de tu navegador.');
+                this._chatNotificationService.showError('Permiso Denegado', 'Para marcar asistencia en JR Ingeniería es OBLIGATORIO permitir la ubicación. Por favor, habilítala en la configuración de tu navegador.', 8000);
                 break;
             case error.POSITION_UNAVAILABLE:
-                alert('No se pudo determinar tu ubicación actual. Revisa tu señal de GPS.');
+                this._chatNotificationService.showError('Ubicación No Disponible', 'No se pudo determinar tu ubicación actual. Revisa tu señal de GPS.', 6000);
                 break;
             case error.TIMEOUT:
-                alert('Se agotó el tiempo esperando la respuesta del GPS.');
+                this._chatNotificationService.showWarning('Tiempo Agotado', 'Se agotó el tiempo esperando la respuesta del GPS.', 5000);
                 break;
         }
     }

@@ -10,10 +10,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import Swal from 'sweetalert2';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { StarRatingModule, StarRatingConfigService } from 'angular-star-rating';
-import {StarRatingBridgeModule} from './start-rating-bridge.module'
+import { StarRatingBridgeModule } from './start-rating-bridge.module'
 import * as L from "leaflet";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
@@ -22,7 +22,7 @@ import { environment } from '../../../../../../environments/environment';
 @Component({
   selector: 'app-clients-details',
   templateUrl: './clients-details.component.html',
-  styleUrls:["./clientes-details.component.scss"],
+  styleUrls: ["./clientes-details.component.scss"],
   standalone: true,
   imports: [
     CommonModule,
@@ -38,7 +38,7 @@ import { environment } from '../../../../../../environments/environment';
     MatTabsModule,
     MatIconModule
   ],
-  })
+})
 export class ClientsDetailsComponent implements OnInit {
   clienteForm: FormGroup;
   categorias: any[] = [];
@@ -64,37 +64,37 @@ export class ClientsDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private http: HttpClient,
-    private snackBar: MatSnackBar
-  ) {}
+    private _chatNotificationService: ChatNotificationService
+  ) { }
 
   ngOnInit(): void {
     this.clienteForm = this.fb.group({
-        clienteId: [0],
-        nombre: ['', Validators.required],
-        direccion: [''],
-        ciudad: [''],
-        colonia: [''],
-        estado: [''],
-        pais: ['México', Validators.required],
-        codigoPostal: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
-        telefono: ['', Validators.required],
-        email: ['', [Validators.required, Validators.email]],
-        empresa: [''],
-        rfc: [''],
-        activo: [true],
-        Calificacion:[3],
-        latitud: [null],
-        longitud: [null],
+      clienteId: [0],
+      nombre: ['', Validators.required],
+      direccion: [''],
+      ciudad: [''],
+      colonia: [''],
+      estado: [''],
+      pais: ['México', Validators.required],
+      codigoPostal: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
+      telefono: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      empresa: [''],
+      rfc: [''],
+      activo: [true],
+      Calificacion: [3],
+      latitud: [null],
+      longitud: [null],
     });
 
     this.route.paramMap.subscribe(params => {
-        const id = params.get('id');
-        if (id === 'new') {
-            this.clientId = null;
-        } else {
-            this.clientId = Number(id);
-            this.loadClient(this.clientId);
-        }
+      const id = params.get('id');
+      if (id === 'new') {
+        this.clientId = null;
+      } else {
+        this.clientId = Number(id);
+        this.loadClient(this.clientId);
+      }
     });
   }
 
@@ -104,29 +104,24 @@ export class ClientsDetailsComponent implements OnInit {
 
   loadClient(id: number): void {
     this.clientsService.getClientById(id).subscribe((cliente) => {
-        if (cliente) {
-          this.latitud = cliente.latitud;
-          this.longitud = cliente.longitud;
-            this.clienteForm.patchValue(cliente);
-            this.clienteForm.get("Calificacion").setValue(cliente.calificacion || 3); // Valor por defecto
-        }
+      if (cliente) {
+        this.latitud = cliente.latitud;
+        this.longitud = cliente.longitud;
+        this.clienteForm.patchValue(cliente);
+        this.clienteForm.get("Calificacion").setValue(cliente.calificacion || 3); // Valor por defecto
+      }
     });
   }
 
   saveClient(): void {
-    if (this.clienteForm.invalid){
-       Swal.fire({
-                             icon: "error",
-                             title:"Opps",
-                             text:"Por favor, completa los campos obligatorios",
-                             draggable: true
-                           });   
-                           return;                   
-          
+    if (this.clienteForm.invalid) {
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
+      return;
+
     };
-  
+
     const clientData: any = this.clienteForm.value;
-  
+
     if (this.clientId) {
       clientData.proyectoId = this.clientId;
       clientData.latitud = this.latitud;
@@ -154,7 +149,7 @@ export class ClientsDetailsComponent implements OnInit {
     this.http.get<any[]>(url).subscribe(
       (data) => {
         if (data.length > 0) {
-          
+
           const primerResultado = data[0].response; // Toma el primer resultado como referencia
           const estado = primerResultado.estado;
           const ciudad = primerResultado.ciudad;
@@ -170,19 +165,19 @@ export class ClientsDetailsComponent implements OnInit {
             // Agregar los asentamientos a un campo de selección en el formulario
             this.asentamientos = asentamientos; // Debes definir esta variable en la clase como: asentamientos: string[] = [];
           } else {
-            this.snackBar.open('El estado recibido no es válido para México', 'Cerrar', { duration: 3000 });
+            this._chatNotificationService.showWarning('Atención', 'El estado recibido no es válido para México', 3000);
           }
         } else {
-          this.snackBar.open('No se encontraron datos para este código postal', 'Cerrar', { duration: 3000 });
+          this._chatNotificationService.showWarning('Atención', 'No se encontraron datos para este código postal', 3000);
         }
       },
       () => {
-        this.snackBar.open('Error al obtener datos del código postal', 'Cerrar', { duration: 3000 });
+        this._chatNotificationService.showError('Error', 'Error al obtener datos del código postal', 3000);
       }
     );
-}
+  }
 
-setMarker(lat: number, lng: number) {
+  setMarker(lat: number, lng: number) {
     if (this.marker) this.map.removeLayer(this.marker);
     // 👉 Arregla los íconos del marcador para GitHub Pages
     const icon = L.icon({
@@ -202,115 +197,115 @@ setMarker(lat: number, lng: number) {
     `;
 
     this.marker = L.marker([lat, lng], {
-        draggable: true,
-        icon,
-      }).addTo(this.map).bindPopup(popupContent).openPopup();
+      draggable: true,
+      icon,
+    }).addTo(this.map).bindPopup(popupContent).openPopup();
     this.map.setView([lat, lng], 15);
   }
 
   buscarDireccion(direccion: string, redirectCount: number = 0) {
-  if (!direccion) return;
+    if (!direccion) return;
 
-  const cidRegex = /google\.com\/maps\?cid=(\d+)/;
-  const shortLinkRegex = /https?:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
-  const coordRegex = /^\s*(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)\s*$/;
-  const atLatLngRegex = /@(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)(?:,|\/)/;
+    const cidRegex = /google\.com\/maps\?cid=(\d+)/;
+    const shortLinkRegex = /https?:\/\/maps\.app\.goo\.gl\/[A-Za-z0-9]+/;
+    const coordRegex = /^\s*(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)\s*$/;
+    const atLatLngRegex = /@(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)(?:,|\/)/;
 
-  // 1. Google Maps CID
-  const matchCid = direccion.match(cidRegex);
-  if (matchCid) {
-    const cid = matchCid[1];
-    const apiKey: string = environment.apiKeyGoogle;
-    if (!apiKey || apiKey === "TU_API_KEY_AQUI") {
-      Swal.fire({
-        icon: "warning",
-        title: "Atención",
-        text: "Para buscar enlaces CID necesitas configurar la API Key de Google Places.",
-      });
+    // 1. Google Maps CID
+    const matchCid = direccion.match(cidRegex);
+    if (matchCid) {
+      const cid = matchCid[1];
+      const apiKey: string = environment.apiKeyGoogle;
+      if (!apiKey || apiKey === "TU_API_KEY_AQUI") {
+        Swal.fire({
+          icon: "warning",
+          title: "Atención",
+          text: "Para buscar enlaces CID necesitas configurar la API Key de Google Places.",
+        });
+        return;
+      }
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?cid=${cid}&key=${apiKey}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data?.result?.geometry?.location) {
+            const lat = data.result.geometry.location.lat;
+            const lng = data.result.geometry.location.lng;
+            this.latitud = lat;
+            this.longitud = lng;
+            this.setMarker(lat, lng);
+          } else {
+            this._chatNotificationService.showError("Error", "No se pudieron obtener coordenadas del enlace.", 5000);
+          }
+        })
+        .catch(err => console.error(err));
       return;
     }
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?cid=${cid}&key=${apiKey}`;
-    fetch(url)
+
+    // 2. Google Maps @lat,lng
+    const matchAtLatLng = direccion.match(atLatLngRegex);
+    if (matchAtLatLng) {
+      const lat = parseFloat(matchAtLatLng[1]);
+      const lng = parseFloat(matchAtLatLng[3]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        this.latitud = lat;
+        this.longitud = lng;
+        this.setMarker(lat, lng);
+      } else {
+        this._chatNotificationService.showError("Error", "Coordenadas inválidas en URL.", 5000);
+      }
+      return;
+    }
+
+    // 3. Google Maps shortlink (maps.app.goo.gl)
+    const matchShort = direccion.match(shortLinkRegex);
+    if (matchShort && redirectCount < 2) {
+      fetch(matchShort[0], { method: "HEAD", redirect: "follow" })
+        .then(res => {
+          if (res?.url && res.url !== matchShort[0]) {
+            this.buscarDireccion(res.url, redirectCount + 1);
+          } else {
+            this._chatNotificationService.showError("Error", "No se pudo resolver el shortlink.", 5000);
+          }
+        })
+        .catch(err => console.error("Error shortlink:", err));
+      return;
+    }
+
+    // 4. Coordenadas directas lat,lon
+    const matchCoords = direccion.match(coordRegex);
+    if (matchCoords) {
+      const lat = parseFloat(matchCoords[1]);
+      const lng = parseFloat(matchCoords[3]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        this.latitud = lat;
+        this.longitud = lng;
+        this.setMarker(lat, lng);
+      } else {
+        this._chatNotificationService.showError("Error", "Coordenadas inválidas.", 5000);
+      }
+      return;
+    }
+
+    // 5. Dirección normal -> Nominatim
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
       .then(res => res.json())
       .then(data => {
-        if (data?.result?.geometry?.location) {
-          const lat = data.result.geometry.location.lat;
-          const lng = data.result.geometry.location.lng;
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
           this.latitud = lat;
-          this.longitud = lng;
-          this.setMarker(lat, lng);
+          this.longitud = lon;
+          this.setMarker(lat, lon);
         } else {
-          Swal.fire({ icon: "error", title: "Error", text: "No se pudieron obtener coordenadas del enlace." });
+          this._chatNotificationService.showInfo("Sin resultados", "No se encontraron coordenadas.", 5000);
         }
       })
-      .catch(err => console.error(err));
-    return;
+      .catch(err => {
+        console.error(err);
+        this._chatNotificationService.showError("Error", "Error al buscar la dirección.", 5000);
+      });
   }
-
-  // 2. Google Maps @lat,lng
-  const matchAtLatLng = direccion.match(atLatLngRegex);
-  if (matchAtLatLng) {
-    const lat = parseFloat(matchAtLatLng[1]);
-    const lng = parseFloat(matchAtLatLng[3]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      this.latitud = lat;
-      this.longitud = lng;
-      this.setMarker(lat, lng);
-    } else {
-      Swal.fire({ icon: "error", title: "Error", text: "Coordenadas inválidas en URL." });
-    }
-    return;
-  }
-
-  // 3. Google Maps shortlink (maps.app.goo.gl)
-  const matchShort = direccion.match(shortLinkRegex);
-  if (matchShort && redirectCount < 2) {
-    fetch(matchShort[0], { method: "HEAD", redirect: "follow" })
-      .then(res => {
-        if (res?.url && res.url !== matchShort[0]) {
-          this.buscarDireccion(res.url, redirectCount + 1);
-        } else {
-          Swal.fire({ icon: "error", title: "Error", text: "No se pudo resolver el shortlink." });
-        }
-      })
-      .catch(err => console.error("Error shortlink:", err));
-    return;
-  }
-
-  // 4. Coordenadas directas lat,lon
-  const matchCoords = direccion.match(coordRegex);
-  if (matchCoords) {
-    const lat = parseFloat(matchCoords[1]);
-    const lng = parseFloat(matchCoords[3]);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      this.latitud = lat;
-      this.longitud = lng;
-      this.setMarker(lat, lng);
-    } else {
-      Swal.fire({ icon: "error", title: "Error", text: "Coordenadas inválidas." });
-    }
-    return;
-  }
-
-  // 5. Dirección normal -> Nominatim
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-        this.latitud = lat;
-        this.longitud = lon;
-        this.setMarker(lat, lon);
-      } else {
-        Swal.fire({ icon: "info", title: "Sin resultados", text: "No se encontraron coordenadas." });
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      Swal.fire({ icon: "error", title: "Error", text: "Error al buscar la dirección." });
-    });
-}
 
 
   onTabChange(event: any): void {
@@ -404,9 +399,9 @@ setMarker(lat: number, lng: number) {
       });
     }
     this.map.on("click", (e: any) => {
-          this.latitud = e.latlng.lat;
-          this.longitud = e.latlng.lng;
-          this.setMarker(this.latitud, this.longitud);
-        });
+      this.latitud = e.latlng.lat;
+      this.longitud = e.latlng.lng;
+      this.setMarker(this.latitud, this.longitud);
+    });
   }
 }

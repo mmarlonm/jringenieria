@@ -15,7 +15,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatNativeDateModule } from "@angular/material/core";
-import { MatSnackBar } from "@angular/material/snack-bar";
+import { ChatNotificationService } from "app/shared/components/chat-notification/chat-notification.service";
 import { CommonModule } from "@angular/common";
 import { CurrencyMaskPipe } from "../../../../../pipes/currency-mask.pipe";
 import { ClientsService } from "../../../catalogs/clients/clients.service";
@@ -123,11 +123,11 @@ export class QuoteDetailsComponent implements OnInit {
     public router: Router,
     private clientsService: ClientsService,
     private prospectsService: ProspectosService,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
     private projectService: ProjectService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.quotesForm = this.fb.group({
@@ -227,24 +227,14 @@ export class QuoteDetailsComponent implements OnInit {
         this.dataSource.data = this.productos; // inicial
         this.calcularTotales();
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true,
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }
 
   saveQuotes(): void {
     if (this.quotesForm.invalid) {
-      Swal.fire({
-        icon: "error",
-        title: "Opps",
-        text: "Por favor, completa los campos obligatorios",
-        draggable: true,
-      });
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
       return;
     }
 
@@ -269,16 +259,9 @@ export class QuoteDetailsComponent implements OnInit {
         if (res.code == 200) {
           // Redirigir a la lista de proyectos
           this.router.navigate(["/dashboards/quote-products"]); // O la ruta correspondiente a la lista
-          this.snackBar.open("Cotizacion actualizada correctamente", "Cerrar", {
-            duration: 3000,
-          });
+          this._chatNotificationService.showSuccess("Éxito", "Cotizacion actualizada correctamente", 3000);
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Opps",
-            text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-            draggable: true,
-          });
+          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
         }
       });
     } else {
@@ -287,16 +270,9 @@ export class QuoteDetailsComponent implements OnInit {
         if (res.code == 200) {
           // Redirigir a la lista de proyectos
           this.router.navigate(["/dashboards/quote-products"]); // O la ruta correspondiente a la lista
-          this.snackBar.open("Cotizacion guardada correctamente", "Cerrar", {
-            duration: 3000,
-          });
+          this._chatNotificationService.showSuccess("Éxito", "Cotizacion guardada correctamente", 3000);
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Opps",
-            text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-            draggable: true,
-          });
+          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
         }
       });
     }
@@ -444,9 +420,7 @@ export class QuoteDetailsComponent implements OnInit {
         this.dataSource.data = [...this.productos]; // ← actualizar tabla
         this.calcularTotales();
 
-        this.snackBar.open("Producto eliminado correctamente", "Cerrar", {
-          duration: 2500,
-        });
+        this._chatNotificationService.showSuccess("Éxito", "Producto eliminado correctamente", 2500);
       }
     });
   }

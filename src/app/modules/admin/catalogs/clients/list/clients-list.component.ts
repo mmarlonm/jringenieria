@@ -6,7 +6,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from "sweetalert2";
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 
 @Component({
@@ -48,9 +48,9 @@ export class ClientsListComponent implements OnInit {
   constructor(
     private clientsService: ClientsService,
     private router: Router,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private route: ActivatedRoute
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
@@ -92,9 +92,7 @@ export class ClientsListComponent implements OnInit {
     if (confirmed) {
       this.clientsService.deleteClient(clientId).subscribe(() => {
         this.getClients();
-        this.snackBar.open("Proyecto eliminado correctamente", "Cerrar", {
-          duration: 3000,
-        });
+        this._chatNotificationService.showSuccess("Éxito", "Cliente eliminado correctamente", 3000);
       });
     }
   }
@@ -130,24 +128,24 @@ export class ClientsListComponent implements OnInit {
     // Realiza la petición HTTP POST al endpoint de la API
     this.clientsService.uploadExcel(formData).subscribe(() => {
       this.getClients();
-      this.snackBar.open('Clientes importados exitosamente', 'Cerrar', { duration: 3000 });
+      this._chatNotificationService.showSuccess("Éxito", "Clientes importados exitosamente", 3000);
     });
   }
 
   tienePermiso(codigo: string): boolean {
     return this.permisosDisponibles.includes(codigo);
   }
-   showConfirmation(): Promise<boolean> {
-      return Swal.fire({
-        title: "Seguro que desea eliminar",
-        text: "Esta accion no se puede revertir",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Eliminar",
-        cancelButtonText: "Cancelar",
-        reverseButtons: true,
-      }).then((result) => {
-        return result.isConfirmed;
-      });
-    }
+  showConfirmation(): Promise<boolean> {
+    return Swal.fire({
+      title: "Seguro que desea eliminar",
+      text: "Esta accion no se puede revertir",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+    }).then((result) => {
+      return result.isConfirmed;
+    });
+  }
 }

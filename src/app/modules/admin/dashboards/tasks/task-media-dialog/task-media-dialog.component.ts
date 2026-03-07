@@ -13,6 +13,7 @@ import { TaskService } from '../tasks.service';
 import Swal from 'sweetalert2';
 import { ImagePreviewDialogComponent } from './task-media-dialog-viewer.component';
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { environment } from 'environments/environment';
 
 @Component({
@@ -46,6 +47,7 @@ export class TaskMediaDialogComponent implements OnInit {
         public dialogRef: MatDialogRef<TaskMediaDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: { task: Task },
         private _taskService: TaskService,
+        private _notificationService: ChatNotificationService,
         private dialog: MatDialog
     ) {
         this.task = data.task;
@@ -84,15 +86,7 @@ export class TaskMediaDialogComponent implements OnInit {
                 this.loadFiles();
                 this.selectedFile = null;
                 this.categoriaArchivo = 'General';
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Archivo subido!',
-                    text: 'El archivo se ha subido correctamente.',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    position: 'top-end',
-                    toast: true
-                });
+                this._notificationService.showSuccess('Archivo subido!', 'El documento se ha adjuntado correctamente.');
             },
             error: (err) => {
                 console.error('Error al subir el archivo:', err);
@@ -118,15 +112,7 @@ export class TaskMediaDialogComponent implements OnInit {
                     .subscribe({
                         next: () => {
                             this.loadFiles();
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Eliminado',
-                                text: 'El archivo ha sido eliminado.',
-                                timer: 1500,
-                                showConfirmButton: false,
-                                position: 'top-end',
-                                toast: true
-                            });
+                            this._notificationService.showInfo('Eliminado', 'El archivo ha sido removido.');
                         },
                         error: (err) => {
                             console.error('Error al eliminar el archivo:', err);

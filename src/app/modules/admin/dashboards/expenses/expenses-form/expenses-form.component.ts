@@ -15,6 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ExpensesService } from '../expenses.service';
 import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types';
 import Swal from 'sweetalert2';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 @Component({
     selector: 'expense-form',
@@ -59,7 +60,8 @@ export class ExpenseFormComponent implements OnInit {
         public dialogRef: MatDialogRef<ExpenseFormComponent>,
         private _fb: FormBuilder,
         private _expensesService: ExpensesService,
-        private _changeDetectorRef: ChangeDetectorRef
+        private _changeDetectorRef: ChangeDetectorRef,
+        private _chatNotificationService: ChatNotificationService
     ) {
         this.isEdit = !!data.expense;
     }
@@ -262,10 +264,10 @@ export class ExpenseFormComponent implements OnInit {
 
         request.subscribe({
             next: () => {
-                Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
+                this._chatNotificationService.showSuccess('Éxito', 'Guardado', 3000);
                 this.dialogRef.close('saved');
             },
-            error: () => Swal.fire('Error', 'No se pudo procesar el registro', 'error')
+            error: () => this._chatNotificationService.showError('Error', 'No se pudo procesar el registro', 5000)
         });
     }
 

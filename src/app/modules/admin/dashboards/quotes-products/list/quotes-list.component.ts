@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -85,7 +85,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   constructor(
     private quotesService: QuotesService,
     private router: Router,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private route: ActivatedRoute,
     private dialog: MatDialog,
     private _changeDetectorRef: ChangeDetectorRef
@@ -157,15 +157,15 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
           next: (res: any) => {
             if (res.code === 200) {
               quote.estatus = nuevoEstatusId;
-              this.snackBar.open('Estatus actualizado correctamente', 'Cerrar', { duration: 3000 });
+              this._chatNotificationService.showSuccess('Éxito', 'Estatus actualizado correctamente', 3000);
               this._changeDetectorRef.markForCheck();
             } else {
-              this.snackBar.open('Error al actualizar estatus', 'Cerrar', { duration: 3000 });
+              this._chatNotificationService.showError('Error', 'Error al actualizar estatus', 3000);
               this.getQuotes();
             }
           },
           error: () => {
-            this.snackBar.open('Error de conexión', 'Cerrar', { duration: 3000 });
+            this._chatNotificationService.showError('Error', 'Error de conexión', 3000);
             this.getQuotes();
           }
         });
@@ -222,13 +222,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
       this.quotesService.deleteQuote(projectId).subscribe((res) => {
         if (res.code == 200) {
           this.getQuotes();
-          this.snackBar.open('Cotizacion eliminada correctamente', 'Cerrar', { duration: 3000 });
+          this._chatNotificationService.showSuccess('Éxito', 'Cotizacion eliminada correctamente', 3000);
         }
         else {
-          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-            duration: 3000,
-            panelClass: ['snackbar-error']
-          });
+          this._chatNotificationService.showError('Error', 'Hubo un error en el sistema, contacte al administrador del sistema.', 5000);
         }
       });
     }
@@ -361,10 +358,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
         });
       }
       else {
-        this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
-        });
+        this._chatNotificationService.showError('Error', 'Hubo un error en el sistema, contacte al administrador del sistema.', 5000);
       }
     });
   }
@@ -394,18 +388,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
 
       this.quotesService.enviarEncuesta(dto).subscribe({
         next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Encuesta enviada',
-            text: 'Se envió correctamente al cliente.',
-          });
+          this._chatNotificationService.showSuccess('Encuesta enviada', 'Se envió correctamente al cliente.', 5000);
         },
         error: () => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudo enviar la encuesta. Intenta más tarde.',
-          });
+          this._chatNotificationService.showError('Error', 'No se pudo enviar la encuesta. Intenta más tarde.', 5000);
         }
       });
     });

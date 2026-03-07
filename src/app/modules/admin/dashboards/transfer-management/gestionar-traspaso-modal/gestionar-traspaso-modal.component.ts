@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransferManagementService } from '../transfer-management.service';
 import Swal from 'sweetalert2';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 @Component({
     selector: 'app-gestionar-traspaso-modal',
@@ -57,7 +58,8 @@ export class GestionarTraspasoModalComponent implements OnInit {
     constructor(
         @Inject(MAT_DIALOG_DATA) public data: any,
         private _dialogRef: MatDialogRef<GestionarTraspasoModalComponent>,
-        private _service: TransferManagementService
+        private _service: TransferManagementService,
+        private _chatNotificationService: ChatNotificationService
     ) {
         this.traspaso = data.traspaso;
     }
@@ -119,23 +121,16 @@ export class GestionarTraspasoModalComponent implements OnInit {
 
 
                 if (!url) {
-                    Swal.fire('Atención', 'El archivo se subió pero no se recibió la ruta del servidor.', 'warning');
+                    this._chatNotificationService.showWarning('Atención', 'El archivo se subió pero no se recibió la ruta del servidor.', 5000);
                 }
 
                 this.subiendoArchivo = false;
 
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Archivo cargado correctamente',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
+                this._chatNotificationService.showSuccess('Éxito', 'Archivo cargado correctamente', 3000);
             },
             error: () => {
                 this.subiendoArchivo = false;
-                Swal.fire('Error', 'No se pudo subir el archivo', 'error');
+                this._chatNotificationService.showError('Error', 'No se pudo subir el archivo', 5000);
             }
         });
     }
@@ -146,12 +141,12 @@ export class GestionarTraspasoModalComponent implements OnInit {
         this._service.procesarEnvio(this.traspaso.idTraspaso, this.datosEnvio).subscribe({
             next: () => {
                 this.loading = false;
-                Swal.fire('Éxito', 'Envío procesado correctamente', 'success');
+                this._chatNotificationService.showSuccess('Éxito', 'Envío procesado correctamente', 3000);
                 this._dialogRef.close(true);
             },
             error: (err) => {
                 this.loading = false;
-                Swal.fire('Error', err.error?.message || 'No se pudo procesar el envío', 'error');
+                this._chatNotificationService.showError('Error', err.error?.message || 'No se pudo procesar el envío', 5000);
             }
         });
     }
@@ -172,12 +167,12 @@ export class GestionarTraspasoModalComponent implements OnInit {
         this._service.aprobarRecepcion(this.traspaso.idTraspaso, this.datosRecepcion as any).subscribe({
             next: () => {
                 this.loading = false;
-                Swal.fire('Éxito', 'Recepción aprobada correctamente', 'success');
+                this._chatNotificationService.showSuccess('Éxito', 'Recepción aprobada correctamente', 3000);
                 this._dialogRef.close(true);
             },
             error: (err) => {
                 this.loading = false;
-                Swal.fire('Error', err.error?.message || 'No se pudo aprobar la recepción', 'error');
+                this._chatNotificationService.showError('Error', err.error?.message || 'No se pudo aprobar la recepción', 5000);
             }
         });
     }

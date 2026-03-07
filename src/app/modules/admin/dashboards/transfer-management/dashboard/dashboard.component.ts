@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TransferManagementService } from '../transfer-management.service';
 import { UsersService } from "app/modules/admin/security/users/users.service";
 import Swal from 'sweetalert2';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 // Material Imports
 import { MatTableModule } from '@angular/material/table';
@@ -74,7 +75,8 @@ export class TransferManagementDashboardComponent implements OnInit {
         private _transferService: TransferManagementService,
         private _usersService: UsersService,
         private _cdr: ChangeDetectorRef,
-        private _dialog: MatDialog
+        private _dialog: MatDialog,
+        private _chatNotificationService: ChatNotificationService
     ) { }
 
 
@@ -140,7 +142,7 @@ export class TransferManagementDashboardComponent implements OnInit {
                 },
                 error: () => {
                     this.loading = false;
-                    Swal.fire('Error', 'No se pudo cargar el historial', 'error');
+                    this._chatNotificationService.showError('Error', 'No se pudo cargar el historial', 5000);
                 }
             });
     }

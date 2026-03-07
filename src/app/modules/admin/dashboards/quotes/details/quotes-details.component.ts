@@ -15,7 +15,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatNativeDateModule } from "@angular/material/core";
-import { MatSnackBar } from "@angular/material/snack-bar";
+import { ChatNotificationService } from "app/shared/components/chat-notification/chat-notification.service";
 import { CommonModule } from "@angular/common";
 import { CurrencyMaskPipe } from "../../../../../pipes/currency-mask.pipe";
 import { ClientsService } from "../../../catalogs/clients/clients.service";
@@ -82,7 +82,7 @@ export class QuoteDetailsComponent implements OnInit {
     public router: Router,
     private clientsService: ClientsService,
     private prospectsService: ProspectosService,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private cdr: ChangeDetectorRef,
     private projectService: ProjectService,
   ) { }
@@ -203,13 +203,7 @@ export class QuoteDetailsComponent implements OnInit {
           });
         }
         else {
-          Swal.fire({
-            icon: "error",
-            title: "Opps",
-            text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-            draggable: true
-          });
-
+          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
         }
 
       }
@@ -218,12 +212,7 @@ export class QuoteDetailsComponent implements OnInit {
 
   saveQuotes(): void {
     if (this.quotesForm.invalid) {
-      Swal.fire({
-        icon: "error",
-        title: "Opps",
-        text: "Por favor, completa los campos obligatorios",
-        draggable: true
-      });
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
       return;
     }
 
@@ -237,14 +226,9 @@ export class QuoteDetailsComponent implements OnInit {
         this.quotesService.updateQuote(quotesData).subscribe((res) => {
           if (res.code == 200) {
             this.router.navigate(["/dashboards/quote"]);
-            this.snackBar.open('Cotización actualizada correctamente', 'Cerrar', { duration: 3000 });
+            this._chatNotificationService.showSuccess('Éxito', 'Cotización actualizada correctamente', 3000);
           } else {
-            Swal.fire({
-              icon: "error",
-              title: "Opps",
-              text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-              draggable: true
-            });
+            this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
           }
         });
       } else {
@@ -252,14 +236,9 @@ export class QuoteDetailsComponent implements OnInit {
         this.quotesService.createQuote(quotesData).subscribe((res) => {
           if (res.code == 200) {
             this.router.navigate(["/dashboards/quote"]);
-            this.snackBar.open('Cotización guardada correctamente', 'Cerrar', { duration: 3000 });
+            this._chatNotificationService.showSuccess('Éxito', 'Cotización guardada correctamente', 3000);
           } else {
-            Swal.fire({
-              icon: "error",
-              title: "Opps",
-              text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-              draggable: true
-            });
+            this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
           }
         });
       }
@@ -372,19 +351,11 @@ export class QuoteDetailsComponent implements OnInit {
 
     this.quotesService.uploadFile(formData).subscribe({
       next: () => {
-        this.snackBar.open('Archivo subido correctamente.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-success']
-        });
+        this._chatNotificationService.showSuccess('Éxito', 'Archivo subido correctamente.', 3000);
         this.getFilesAll();
       },
       error: (err) => {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       },
     });
   }
@@ -463,21 +434,13 @@ export class QuoteDetailsComponent implements OnInit {
   deleteFile(quotesId: number, categoria: string, nombreArchivo: string): void {
     this.quotesService.removeFile(quotesId, categoria, nombreArchivo).subscribe(
       (res) => {
-        this.snackBar.open('Archivo eliminado correctamente.', 'Cerrar', {
-          duration: 3000,
-          panelClass: ['snackbar-success']
-        });
+        this._chatNotificationService.showSuccess('Éxito', 'Archivo eliminado correctamente.', 3000);
 
         // Si necesitas actualizar la lista después de eliminar:
         this.getFilesAll(); // Opcional: recargar lista de archivos
       },
       (error) => {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Ocurrio un error al eliminar el archivo",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Opps", "Ocurrio un error al eliminar el archivo", 5000);
       }
     );
   }

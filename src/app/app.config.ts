@@ -3,7 +3,6 @@ import { APP_INITIALIZER, ApplicationConfig, inject, importProvidersFrom } from 
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
 import {
     PreloadAllModules,
     provideRouter,
@@ -34,7 +33,6 @@ export const appConfig: ApplicationConfig = {
     providers: [
         provideAnimations(),
         provideHttpClient(),
-        importProvidersFrom(MatSnackBarModule),
         provideRouter(
             appRoutes,
             withPreloading(PreloadAllModules),

@@ -10,9 +10,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import Swal from 'sweetalert2';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 @Component({
   selector: 'app-products-details',
   templateUrl: './products-details.component.html',
@@ -42,12 +42,12 @@ export class ProductsDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private http: HttpClient,
-    private snackBar: MatSnackBar
-  ) {}
+    private _chatNotificationService: ChatNotificationService
+  ) { }
 
   ngOnInit(): void {
     this.productForm = this.fb.group({
-      productoId: [0], 
+      productoId: [0],
       codigoProducto: ['', Validators.required],
       nombreProducto: ['', Validators.required],
       descripcion: [''],
@@ -58,40 +58,35 @@ export class ProductsDetailsComponent implements OnInit {
       categoria: [''],
       fechaCreacion: [new Date().toISOString()], // Fecha actual en formato ISO
       activo: [true]
-  });
+    });
 
     this.route.paramMap.subscribe(params => {
-        const id = params.get('id');
-        if (id === 'new') {
-            this.productId = null;
-        } else {
-            this.productId = Number(id);
-            this.loadProduct(this.productId);
-        }
+      const id = params.get('id');
+      if (id === 'new') {
+        this.productId = null;
+      } else {
+        this.productId = Number(id);
+        this.loadProduct(this.productId);
+      }
     });
   }
 
   loadProduct(id: number): void {
     this.productsService.getProductById(id).subscribe((Product) => {
-        if (Product) {
-            this.productForm.patchValue(Product);
-        }
+      if (Product) {
+        this.productForm.patchValue(Product);
+      }
     });
   }
 
   saveProduct(): void {
-    if (this.productForm.invalid){
-       Swal.fire({
-                             icon: "error",
-                             title:"Opps",
-                             text:"Por favor, completa los campos obligatorios",
-                             draggable: true
-                           });   
-                           return;                   
+    if (this.productForm.invalid) {
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
+      return;
     }
-  
+
     const productData: any = this.productForm.value;
-  
+
     if (this.productId) {
       productData.proyectoId = this.productId;
       this.productsService.updateProduct(productData).subscribe(() => {

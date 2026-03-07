@@ -22,8 +22,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { RouterLink, Router } from '@angular/router';
 import { FuseCardComponent } from '@fuse/components/card';
 import { UserService } from 'app/core/user/user.service';
@@ -79,7 +79,7 @@ export class ProfileComponent implements OnInit {
     private _userService: UserService,
     private cdRef: ChangeDetectorRef,
     private _formBuilder: FormBuilder,
-    private _snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private _authService: AuthService,
     private _router: Router,
     private _profileService: ProfileService
@@ -219,14 +219,10 @@ export class ProfileComponent implements OnInit {
     // Actualizar datos del usuario
     this._userService.updateUser(obj).subscribe(
       () => {
-        this._snackBar.open('Datos de usuario actualizados correctamente', 'Cerrar', {
-          duration: 3000,
-        });
+        this._chatNotificationService.showSuccess('Éxito', 'Datos de usuario actualizados correctamente', 3000);
       },
       (error) => {
-        this._snackBar.open('Error al actualizar datos de usuario', 'Cerrar', {
-          duration: 3000,
-        });
+        this._chatNotificationService.showError('Error', 'Error al actualizar datos de usuario', 3000);
       }
     );
 
@@ -234,9 +230,7 @@ export class ProfileComponent implements OnInit {
     if (currentPasswordUser && newPasswordUser && confirmPasswordUser) {
       this._userService.changePassword(Number.parseInt(id), currentPasswordUser, newPasswordUser, confirmPasswordUser).subscribe(
         (res) => {
-          this._snackBar.open('Contraseña actualizada correctamente', 'Cerrar', {
-            duration: 3000,
-          });
+          this._chatNotificationService.showSuccess('Éxito', 'Contraseña actualizada correctamente', 3000);
 
           setTimeout(() => {
             // Sign out
@@ -256,9 +250,7 @@ export class ProfileComponent implements OnInit {
           }, 3000);
         },
         (error) => {
-          this._snackBar.open(error.error.mensaje, 'Cerrar', {
-            duration: 3000,
-          });
+          this._chatNotificationService.showError('Error', error.error?.mensaje || 'Error al actualizar contraseña', 3000);
         }
       );
     }

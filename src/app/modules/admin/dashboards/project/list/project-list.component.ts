@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { ProjectService } from "../project.service";
 import { MatTableDataSource } from "@angular/material/table";
-import { MatSnackBar } from "@angular/material/snack-bar";
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatPaginator } from "@angular/material/paginator";
 import { MatSort } from "@angular/material/sort";
 import { MatMenuTrigger } from "@angular/material/menu"; // Importa MatMenuTrigger
@@ -77,10 +77,10 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
   constructor(
     private projectService: ProjectService,
     private router: Router,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private route: ActivatedRoute,
     private dialog: MatDialog
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
@@ -114,14 +114,7 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
         // Establecer el filtro personalizado
         this.setCustomFilter();
       } else {
-        this.snackBar.open(
-          projects.message || "Error al obtener los proyectos",
-          "Cerrar",
-          {
-            duration: 3000,
-            panelClass: ["snackbar-error"],
-          }
-        );
+        this._chatNotificationService.showError("Error", projects.message || "Error al obtener los proyectos", 5000);
       }
     });
   }
@@ -217,9 +210,7 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
     if (confirmed) {
       this.projectService.deleteProject(projectId).subscribe(() => {
         this.getProjects();
-        this.snackBar.open("Proyecto eliminado correctamente", "Cerrar", {
-          duration: 3000,
-        });
+        this._chatNotificationService.showSuccess("Éxito", "Proyecto eliminado correctamente", 3000);
       });
     }
   }
@@ -270,40 +261,32 @@ export class ProjectListComponent implements OnInit, AfterViewInit {
   }
 
   enviarEncuesta(project: any): void {
-  const dialogRef = this.dialog.open(SendSurveyDialogComponent, {
-    width: '500px',
-    data: { proyectoId: project.proyectoId }
-  });
+    const dialogRef = this.dialog.open(SendSurveyDialogComponent, {
+      width: '500px',
+      data: { proyectoId: project.proyectoId }
+    });
 
-  dialogRef.afterClosed().subscribe((emails: string[]) => {
-    if (emails && emails.length > 0) {
-      const dto = {
-        emails: emails,
-        clienteNombre: project.nombreContactoCliente || '',
-        proyectoNombre: project.nombre || '',
-        urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey/${project.proyectoId}`,
-        telefono: project.telefonoContactoCliente || '',
-        proyectoId: project.proyectoId || 0
-      };
+    dialogRef.afterClosed().subscribe((emails: string[]) => {
+      if (emails && emails.length > 0) {
+        const dto = {
+          emails: emails,
+          clienteNombre: project.nombreContactoCliente || '',
+          proyectoNombre: project.nombre || '',
+          urlEncuesta: `https://mmarlonm.github.io/jringenieria/#/survey/${project.proyectoId}`,
+          telefono: project.telefonoContactoCliente || '',
+          proyectoId: project.proyectoId || 0
+        };
 
-      this.projectService.enviarEncuesta(dto).subscribe({
-        next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Encuesta enviada',
-            text: 'Se envió correctamente al cliente.',
-          });
-        },
-        error: () => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudo enviar la encuesta. Intenta más tarde.',
-          });
-        }
-      });
-    }
-  });
-}
+        this.projectService.enviarEncuesta(dto).subscribe({
+          next: () => {
+            this._chatNotificationService.showSuccess('Encuesta enviada', 'Se envió correctamente al cliente.', 5000);
+          },
+          error: () => {
+            this._chatNotificationService.showError('Error', 'No se pudo enviar la encuesta. Intenta más tarde.', 5000);
+          }
+        });
+      }
+    });
+  }
 
 }

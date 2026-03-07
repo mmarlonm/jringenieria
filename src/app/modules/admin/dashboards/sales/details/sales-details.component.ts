@@ -26,8 +26,7 @@ import { UsersService } from "../../../security/users/users.service";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
 import { ProjectService } from "../../project/project.service";
-import { MatSnackBar } from "@angular/material/snack-bar";
-import Swal from 'sweetalert2'
+import { ChatNotificationService } from "app/shared/components/chat-notification/chat-notification.service";
 
 @Component({
   selector: "app-sales-details",
@@ -72,7 +71,7 @@ export class SalesDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     public projectService: ProjectService,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
   ) { }
 
   ngOnInit(): void {
@@ -117,24 +116,14 @@ export class SalesDetailsComponent implements OnInit {
         var venta = res.data;
         if (venta) this.salesForm.patchValue(venta);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }
 
   saveVenta(): void {
     if (this.salesForm.invalid) {
-      Swal.fire({
-        icon: "error",
-        title: "Opps",
-        text: "Por favor, completa los campos obligatorios",
-        draggable: true
-      });
+      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
       return;
     }
 
@@ -143,14 +132,9 @@ export class SalesDetailsComponent implements OnInit {
       if (res.code == 200) {
         this.router.navigate(["/dashboards/sales"]);
         const message = this.ventaId ? 'Cotización actualizada correctamente' : 'Cotización guardada correctamente';
-        this.snackBar.open(message, 'Cerrar', { duration: 3000 });
+        this._chatNotificationService.showSuccess('Éxito', message, 3000);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Opps",
-          text: "Hubo un error en el sistema, contacte al administrador del sistema.",
-          draggable: true
-        });
+        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
       }
     });
   }

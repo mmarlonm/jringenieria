@@ -6,7 +6,6 @@ import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
 import { SignalRService } from "./signalr.service";
 import { ChatNotificationService } from "./shared/components/chat-notification/chat-notification.service";
-import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { UsersService } from "app/modules/admin/security/users/users.service";
 import { SileoWrapperComponent } from "./shared/components/sileo-wrapper/sileo-wrapper.component";
 
@@ -15,7 +14,7 @@ import { SileoWrapperComponent } from "./shared/components/sileo-wrapper/sileo-w
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
   standalone: true,
-  imports: [RouterOutlet, MatDialogModule, MatSnackBarModule, SileoWrapperComponent],
+  imports: [RouterOutlet, MatDialogModule, SileoWrapperComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _unsubscribeAll = new Subject<void>();
@@ -48,7 +47,6 @@ export class AppComponent implements OnInit, OnDestroy {
       takeUntil(this._unsubscribeAll)
     ).subscribe((event) => {
       const navEvent = event as NavigationEnd;
-      console.log('🛣️ [AppComponent] Navegación detectada, verificando servicios...', navEvent.url);
       // Pequeño delay para asegurar que localStorage esté listo tras redirección
       setTimeout(() => this.checkAndStartServices(), 300);
     });
@@ -57,10 +55,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Gatillo ultra-proactivo: Intentar conectar ya mismo y a los 2 segundos
     this.checkAndStartServices();
-    setTimeout(() => this.checkAndStartServices(), 2000);
+    setTimeout(() => {
+      this.checkAndStartServices();
+      // Prueba de notificación al inicio
+      this.chatNotificationService.showSuccess('Sistema Listo', 'Las notificaciones de Sileo se han inicializado correctamente.');
+    }, 2000);
 
-    // Watchdog de 30 segundos para asegurar que la conexión se mantenga
-    setInterval(() => this.checkAndStartServices(), 30000);
+    // Watchdog de 60 segundos para asegurar que la conexión se mantenga
+    setInterval(() => this.checkAndStartServices(), 60000);
   }
 
   private checkAndStartServices(): void {
@@ -105,24 +107,19 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.isSubscribedToMessages) return;
     this.isSubscribedToMessages = true;
 
-    console.log('[AppComponent] 📡 Suscribiéndose a onMensajeRecibido...');
     this.signalRService.onMensajeRecibido()
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((nuevoMensaje) => {
-        console.log('[AppComponent] 📩 MENSAJE RECIBIDO DESDE SIGNALR:', nuevoMensaje);
-
         const remitenteId = nuevoMensaje.remitenteId || nuevoMensaje.contactId || nuevoMensaje.senderId || nuevoMensaje.usuarioId || nuevoMensaje.id;
         const contenido = nuevoMensaje.contenido || nuevoMensaje.value || nuevoMensaje.mensaje || nuevoMensaje.text || 'Nuevo mensaje';
         const nombreSugerido = nuevoMensaje.remitenteNombre || nuevoMensaje.senderName || nuevoMensaje.name || 'Equipo CRM';
 
         // Evitar notificaciones de mensajes propios usando el ID de la sesión actual
         if (remitenteId && this.currentUserId && String(remitenteId) === String(this.currentUserId)) {
-          console.log('[AppComponent] Ignorando mensaje propio');
           return;
         }
 
         // Mostrar notificación de inmediato
-        console.log('[AppComponent] 🔔 DISPARANDO NOTIFICACIÓN:', nombreSugerido, contenido);
         this.chatNotificationService.showNotification(nombreSugerido, contenido);
 
         // Opcional: Intentar resolver el nombre real si la lista está cargada
@@ -182,8 +179,6 @@ export class AppComponent implements OnInit, OnDestroy {
     const fechaNacimiento = userData?.usuario?.fechaNacimiento;
     const userId = userData?.usuario?.id;
 
-    console.log('🎂 Revisando cumpleaños...', { fechaNacimiento, userId });
-
     if (!fechaNacimiento || !userId) return;
 
     // Usar un método más robusto para evitar desfases de zona horaria
@@ -205,15 +200,9 @@ export class AppComponent implements OnInit, OnDestroy {
       birthMonth = birthDate.getMonth() + 1;
     }
 
-    console.log('📅 Comparación:', {
-      hoy: `${todayDay}/${todayMonth}`,
-      cumple: `${birthDay}/${birthMonth}`
-    });
-
     const isBirthday = birthDay === todayDay && birthMonth === todayMonth;
 
     if (isBirthday) {
-      console.log('🎉 ¡Es tu cumpleaños! Abriendo modal...');
       const year = today.getFullYear();
       const storageKey = `birthday_celebrated_${year}_${userId}`;
       const alreadyCelebrated = localStorage.getItem(storageKey);
@@ -221,11 +210,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (!alreadyCelebrated) {
         this.showBirthdayCelebration();
         localStorage.setItem(storageKey, 'true');
-      } else {
-        console.log('🎈 Ya celebramos hoy, no mostramos de nuevo.');
       }
-    } else {
-      console.log('⏳ Aún no es tu cumpleaños.');
     }
   }
 

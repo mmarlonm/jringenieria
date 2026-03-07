@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -60,7 +60,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
 
   currentFilterColumn: string = '';
   filterValue: string = '';
-  filterOptions:any = {
+  filterOptions: any = {
     empresa: ["Technology"],  // Ejemplo de opciones
     fechaEntrega: ["2023-01-01"],
     estatus: ['Pendiente', 'Aprobada', 'Rechazada', 'En Proceso', 'Finalizada']
@@ -70,10 +70,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   constructor(
     private quotesService: QuotesService,
     private router: Router,
-    private snackBar: MatSnackBar,
+    private _chatNotificationService: ChatNotificationService,
     private route: ActivatedRoute,
     private dialog: MatDialog,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
@@ -85,31 +85,31 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.dataSource.sort = this.sort;
       this.dataSource.paginator = this.paginator;
-    },1200);
+    }, 1200);
   }
 
   getQuotes(): void {
-    this.quotesService.getQuotes().subscribe((res:any) => {
+    this.quotesService.getQuotes().subscribe((res: any) => {
       if (res) {
-        if(res.code==200){
-          var quotes:any = res.data;
-    
-      this.quotesCount = quotes.length;
-      this.dataSource = new MatTableDataSource(quotes);
-      this.dataSource.paginator = this.paginator;
+        if (res.code == 200) {
+          var quotes: any = res.data;
 
-      this.filterOptions.fechaEntrega = [...new Set(
-        quotes
-          .map(quote => quote.fechaEntrega)
-          .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
-      )];
-      this.dataSource.sort = this.sort;
+          this.quotesCount = quotes.length;
+          this.dataSource = new MatTableDataSource(quotes);
+          this.dataSource.paginator = this.paginator;
 
-      this.setCustomFilter();
+          this.filterOptions.fechaEntrega = [...new Set(
+            quotes
+              .map(quote => quote.fechaEntrega)
+              .filter(fecha => fecha !== null && fecha !== undefined) // Filtra null y undefined
+          )];
+          this.dataSource.sort = this.sort;
+
+          this.setCustomFilter();
         }
       }
     });
-  
+
   }
 
   /**
@@ -133,23 +133,20 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     this.router.navigate([`/dashboards/quote/${projectId}`]);
   }
 
-  async deleteQuote(projectId: number){
+  async deleteQuote(projectId: number) {
     const confirmed = await this.showConfirmation();
-    if(confirmed){
+    if (confirmed) {
 
-    this.quotesService.deleteQuote(projectId).subscribe((res) => {
-      if(res.code==200){
-        this.getQuotes();
-        this.snackBar.open('Cotizacion eliminada correctamente', 'Cerrar', { duration: 3000 });    
-      }
-    else{
-      this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-        duration: 3000,
-        panelClass: ['snackbar-error']
+      this.quotesService.deleteQuote(projectId).subscribe((res) => {
+        if (res.code == 200) {
+          this.getQuotes();
+          this._chatNotificationService.showSuccess('Éxito', 'Cotizacion eliminada correctamente', 3000);
+        }
+        else {
+          this._chatNotificationService.showError('Error', 'Hubo un error en el sistema, contacte al administrador del sistema.', 5000);
+        }
       });
-    }  
-    });
-  }
+    }
   }
 
   obtenerPermisos(): void {
@@ -230,47 +227,43 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   resetFilter(): void {
     // Restablecer el valor del filtro
     this.filterValue = null;  // Esto puede ajustarse según la lógica de tu filtro (por ejemplo, "" para texto vacío)
-  
+
     // Limpiar el filtro global (en dataSource)
     this.dataSource.filter = '';  // Esto elimina el filtro aplicado
-    
-  
+
+
     // Si necesitas que se apliquen cambios adicionales (por ejemplo, restablecer otras partes del estado del filtro),
     // puedes llamar a las funciones applyFilter() o applySelect() con valores vacíos.
     this.applyFilter();  // Aplica filtro vacío si es necesario (esto dependerá de cómo se maneje en tu aplicación)
   }
 
   getHistorial(cotizacionId: number): void {
-      this.quotesService.getHistorial(cotizacionId).subscribe((res:any) => {
-        if(res.code==200)
-        {
-        var historial:any=res.data;
+    this.quotesService.getHistorial(cotizacionId).subscribe((res: any) => {
+      if (res.code == 200) {
+        var historial: any = res.data;
         this.historialData = historial;
-  
+
         this.dialog.open(HistorialComponent, {
           width: '700px',
           data: { historial }
         });
-        }
-        else{
-          this.snackBar.open('Hubo un error en el sistema, contacte al administrador del sistema.', 'Cerrar', {
-            duration: 3000,
-            panelClass: ['snackbar-error']
-          });
-        }
-      });
-    }
-    showConfirmation(): Promise<boolean>{
-        return Swal.fire({
-          title:'Seguro que desea eliminar',
-          text:'Esta accion no se puede revertir',
-          icon:'warning',
-          showCancelButton:true,
-          confirmButtonText:'Eliminar',
-          cancelButtonText:'Cancelar',
-          reverseButtons:true,
-        }).then((result)=> {
-          return result.isConfirmed;
-        });
       }
+      else {
+        this._chatNotificationService.showError('Error', 'Hubo un error en el sistema, contacte al administrador del sistema.', 5000);
+      }
+    });
+  }
+  showConfirmation(): Promise<boolean> {
+    return Swal.fire({
+      title: 'Seguro que desea eliminar',
+      text: 'Esta accion no se puede revertir',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+    }).then((result) => {
+      return result.isConfirmed;
+    });
+  }
 }

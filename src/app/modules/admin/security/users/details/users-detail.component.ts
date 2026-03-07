@@ -41,7 +41,7 @@ import { UsersListComponent } from 'app/modules/admin/security/users/list/users-
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
-import Swal from 'sweetalert2';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 @Component({
     selector: 'users-details',
@@ -103,6 +103,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         private _fuseConfirmationService: FuseConfirmationService,
         private _router: Router,
         private _rolService: RolService,
+        private _chatNotificationService: ChatNotificationService
     ) { }
 
     // 🔹 Ahora el FormArray 'metasAgrupadas' contendrá un FormGroup por cada Año
@@ -212,7 +213,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
         );
 
         if (anioYaExiste) {
-            Swal.fire({ icon: 'warning', title: 'Atención', text: `Las metas para el año ${anio} ya están en la lista.` });
+            this._chatNotificationService.showWarning('Atención', `Las metas para el año ${anio} ya están en la lista.`, 5000);
             return;
         }
 
@@ -284,7 +285,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
     updateContact(): void {
         if (this.contactForm.invalid) {
-            Swal.fire({ icon: "error", title: "Opps", text: "Revisa los campos obligatorios." });
+            this._chatNotificationService.showError("Opps", "Revisa los campos obligatorios.", 5000);
             return;
         }
 
@@ -321,7 +322,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
 
         this._usersService.updateUsers(userPayload).subscribe({
             next: () => {
-                Swal.fire({ icon: "success", title: "Éxito", text: "Usuario actualizado correctamente", timer: 1500 });
+                this._chatNotificationService.showSuccess("Éxito", "Usuario actualizado correctamente", 2000);
                 this.calcularTotalesVisualizacion(); // Refrescar totales en pantalla
                 this.toggleEditMode(false);
             },
@@ -337,11 +338,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
                         message = error.error.title;
                     }
                 }
-                Swal.fire({
-                    icon: "error",
-                    title: "Error de Validación",
-                    text: message
-                });
+                this._chatNotificationService.showError("Error de Validación", message, 5000);
             }
         });
     }
@@ -409,11 +406,7 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
                                 message = error.error.title;
                             }
                         }
-                        Swal.fire({
-                            icon: "error",
-                            title: "Error",
-                            text: message
-                        });
+                        this._chatNotificationService.showError("Error", message, 5000);
                     }
                 });
             }

@@ -10,6 +10,7 @@ import {
 import { TaskService } from './../tasks.service';
 import { UsersService } from '../../../security/users/users.service';
 import { UserService } from "app/core/user/user.service";
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import {
     MatDatepickerModule
 } from '@angular/material/datepicker';
@@ -80,6 +81,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         private taskService: TaskService,
         private usersService: UsersService,
         private _userService: UserService,
+        private _notificationService: ChatNotificationService,
         @Inject(MAT_DIALOG_DATA) public data: { id?: number, readOnly?: boolean } | null
     ) {
         this.form = this.fb.group({
@@ -229,16 +231,28 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         };
 
         if (this.data?.id) {
-            this.taskService.updateTask(this.data.id, task).subscribe(() => {
-                this.loading = false;
-                this.dialogRef.close('refresh');
+            this.taskService.updateTask(this.data.id, task).subscribe({
+                next: () => {
+                    this.loading = false;
+                    this.dialogRef.close('refresh');
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this._notificationService.showError('Error al actualizar', 'No se pudieron guardar los cambios en la tarea.');
+                }
             });
         } else {
-            this.taskService.createTask(task).subscribe((id: number) => {
-                this.loading = false;
-                this.tareaId = id;
-                this.loadFiles();
-                this.dialogRef.close('refresh');
+            this.taskService.createTask(task).subscribe({
+                next: (id: number) => {
+                    this.loading = false;
+                    this.tareaId = id;
+                    this.loadFiles();
+                    this.dialogRef.close('refresh');
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this._notificationService.showError('Error al crear', 'No se pudo dar de alta la nueva tarea.');
+                }
             });
         }
     }
@@ -265,8 +279,14 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             formData.append('archivo', file);
 
             this.taskService.uploadFile(formData).subscribe({
-                next: () => this.loadFiles(),
-                error: err => console.error('Error al subir archivo', err)
+                next: () => {
+                    this.loadFiles();
+                    this._notificationService.showSuccess('Archivo subido', `Se ha adjuntado "${file.name}" correctamente.`);
+                },
+                error: err => {
+                    console.error('Error al subir archivo', err);
+                    this._notificationService.showError('Error de carga', `No se pudo subir el archivo "${file.name}".`);
+                }
             });
         });
 
@@ -283,10 +303,16 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         formData.append('categoria', this.categoriaArchivo);
         formData.append('archivo', this.selectedFile);
 
-        this.taskService.uploadFile(formData).subscribe(() => {
-            this.loadFiles();
-            this.selectedFile = null;
-            this.categoriaArchivo = '';
+        this.taskService.uploadFile(formData).subscribe({
+            next: () => {
+                this.loadFiles();
+                this.selectedFile = null;
+                this.categoriaArchivo = '';
+                this._notificationService.showSuccess('Archivo subido', 'El documento se ha guardado correctamente.');
+            },
+            error: (err) => {
+                this._notificationService.showError('Error de carga', 'No se pudo procesar el archivo.');
+            }
         });
     }
     loadFiles(): void {
@@ -315,7 +341,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
         this.taskService
             .removeFile(this.tareaId, file.categoria, file.nombreArchivo)
-            .subscribe(() => this.loadFiles());
+            .subscribe({
+                next: () => {
+                    this.loadFiles();
+                    this._notificationService.showInfo('Archivo eliminado', 'El adjunto ha sido removido.');
+                },
+                error: (err) => {
+                    this._notificationService.showError('Error al eliminar', 'No se pudo borrar el archivo del servidor.');
+                }
+            });
     }
 
 

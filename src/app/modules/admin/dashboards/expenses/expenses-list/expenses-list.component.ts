@@ -20,6 +20,7 @@ import { ExpensesService } from '../expenses.service';
 import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types';
 import Swal from 'sweetalert2';
 import moment from 'moment';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 @Component({
     selector: 'expenses-list',
@@ -110,7 +111,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
         private _expensesService: ExpensesService,
-        private _fb: FormBuilder
+        private _fb: FormBuilder,
+        private _chatNotificationService: ChatNotificationService
     ) { }
 
     ngOnInit(): void {
@@ -565,7 +567,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                 this.editingId = null;
                 this.isAdding = false;
                 this._expensesService.getExpenses(this.currentUserUnidadId).subscribe();
-                Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
+                this._chatNotificationService.showSuccess('Éxito', 'Guardado', 3000);
             }
         });
     }
@@ -594,7 +596,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             if (result.isConfirmed) {
                 this._expensesService.deleteExpense(id).subscribe(() => {
                     this._expensesService.getExpenses(this.currentUserUnidadId).subscribe();
-                    Swal.fire('Eliminado', '', 'success');
+                    this._chatNotificationService.showSuccess('Eliminado', 'Se eliminó correctamente', 3000);
                 });
             }
         });

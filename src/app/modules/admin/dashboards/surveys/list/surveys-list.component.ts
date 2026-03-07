@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { SurveysService } from "../surveys.service";
 import { MatTableDataSource } from "@angular/material/table";
-import { MatSnackBar } from "@angular/material/snack-bar";
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatPaginator } from "@angular/material/paginator";
 import { MatSort } from "@angular/material/sort";
 import { MatMenuTrigger } from "@angular/material/menu"; // Importa MatMenuTrigger
@@ -63,7 +63,7 @@ export class SurveysListComponent implements OnInit, AfterViewInit {
     constructor(
         private surveysService: SurveysService,
         private router: Router,
-        private snackBar: MatSnackBar,
+        private _chatNotificationService: ChatNotificationService,
         private route: ActivatedRoute,
         private dialog: MatDialog
     ) { }
@@ -88,13 +88,10 @@ export class SurveysListComponent implements OnInit, AfterViewInit {
                 this.dataSource.paginator = this.paginator;
                 this.dataSource.sort = this.sort;
             } else {
-                this.snackBar.open(
+                this._chatNotificationService.showError(
+                    "Error",
                     "Hubo un error en el sistema, contacte al administrador del sistema.",
-                    "Cerrar",
-                    {
-                        duration: 3000,
-                        panelClass: ["snackbar-error"],
-                    }
+                    5000
                 );
             }
         });
@@ -135,7 +132,7 @@ export class SurveysListComponent implements OnInit, AfterViewInit {
                 });
             } else {
                 // Muestra error si no se encontró
-                alert('Encuesta no encontrada');
+                this._chatNotificationService.showError('Error', 'Encuesta no encontrada', 5000);
             }
         });
     }

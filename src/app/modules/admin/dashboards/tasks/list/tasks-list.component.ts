@@ -3,14 +3,13 @@ import { MatTableDataSource } from "@angular/material/table";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatSort } from "@angular/material/sort";
 import { MatDialog } from "@angular/material/dialog";
-import { MatSnackBar } from "@angular/material/snack-bar";
+import { ChatNotificationService } from "app/shared/components/chat-notification/chat-notification.service";
 import { TaskService } from "../tasks.service";
 import { Task } from "./../models/tasks.model";
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -73,7 +72,6 @@ interface GroupedTasks {
         MatTooltipModule,
         DragDropModule,
         MatDialogModule,
-        MatSnackBarModule,
         MatNativeDateModule,
         MatDatepickerModule,
         TaskMediaDialogComponent,
@@ -168,7 +166,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     constructor(
         private taskService: TaskService,
         public configService: TaskViewConfigService, // Public for usage in template
-        private snackBar: MatSnackBar,
+        private _notificationService: ChatNotificationService,
         private dialog: MatDialog,
         private _userService: UserService,
         private _cdr: ChangeDetectorRef,
@@ -300,7 +298,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.processTasks();
             },
             error: () => {
-                this.snackBar.open("Error al cargar tareas", "Cerrar", { duration: 3000 });
+                this._notificationService.showError("Error al cargar tareas", "Hubo un problema al obtener la lista desde el servidor.");
             }
         });
     }
@@ -532,7 +530,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
                 this.taskService.updateTask(task.id, task).subscribe({
                     next: () => {
-                        this.snackBar.open(`Tarea movida`, "Cerrar", { duration: 2000 });
+                        this._notificationService.showInfo(`Tarea movida`, `La tarea se ha desplazado correctamente.`);
 
                         // ACTUALIZACIÓN DE GRÁFICAS: 
                         // Se llama aquí porque el cambio de estatus afecta el pastel y la carga de usuario
@@ -569,15 +567,12 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.taskService.updateTask(task.id!, task).subscribe({
             next: () => {
-                this.snackBar.open(`Estatus actualizado a ${this.getStatusName(newStatusId)}`, "Cerrar", {
-                    duration: 2000,
-                    panelClass: ['success-snackbar']
-                });
+                this._notificationService.showSuccess(`Estatus actualizado`, `Estatus cambiado a ${this.getStatusName(newStatusId)}`);
                 this.loadTasks(); // Refresh to regroup
             },
             error: () => {
                 task.estatus = oldStatus;
-                Swal.fire('Error', 'No se pudo actualizar el estatus.', 'error');
+                this._notificationService.showError('Error', 'No se pudo actualizar el estatus.');
             }
         });
     }
@@ -636,15 +631,12 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.taskService.updateTask(task.id!, task).subscribe({
             next: () => {
-                this.snackBar.open(`Matriz Eisenhower actualizada`, "Cerrar", {
-                    duration: 2000,
-                    panelClass: ['success-snackbar']
-                });
+                this._notificationService.showSuccess(`Matriz Eindhoven actualizada`, `La prioridad se ha guardado.`);
                 this.loadTasks(); // Refresh to regroup
             },
             error: () => {
                 task.cuadranteId = oldId;
-                Swal.fire('Error', 'No se pudo actualizar la matriz.', 'error');
+                this._notificationService.showError('Error', 'No se pudo actualizar la matriz.');
             }
         });
     }
@@ -731,7 +723,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.configService.resetConfig();
                 this.loadConfig();
                 this.applyFilter();
-                this.snackBar.open('Diseño restablecido', 'Cerrar', { duration: 2000 });
+                this._notificationService.showInfo('Diseño restablecido', 'Se han vuelto a las columnas por defecto.');
             }
         });
     }
@@ -750,10 +742,9 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         dialogRef.afterClosed().subscribe(result => {
             if (result === 'refresh') {
                 this.loadTasks();
-                this.snackBar.open(
-                    taskId ? 'Tarea actualizada correctamente' : 'Tarea agregada exitosamente',
-                    'Cerrar',
-                    { duration: 3000 }
+                this._notificationService.showSuccess(
+                    taskId ? 'Tarea actualizada' : 'Tarea agregada',
+                    taskId ? 'Los cambios se han guardado.' : 'La nueva tarea está lista.'
                 );
             }
         });
@@ -771,7 +762,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             if (result.isConfirmed) {
                 this.taskService.deleteTask(id).subscribe(() => {
                     this.loadTasks();
-                    this.snackBar.open('Tarea eliminada correctamente', 'Cerrar', { duration: 3000 });
+                    this._notificationService.showSuccess('Tarea eliminada', 'La tarea ha sido removida del sistema.');
                 });
             }
         });
@@ -1179,7 +1170,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     enviarNotificacionTarea(): void {
         const recipients = this.prepareNotificationRecipients();
         if (recipients.length === 0) {
-            this.snackBar.open("No hay destinatarios válidos con tareas", "Cerrar", { duration: 3000 });
+            this._notificationService.showWarning("Sin destinatarios", "No hay usuarios seleccionados con tareas pendientes.");
             return;
         }
 
@@ -1191,8 +1182,8 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         };
 
         this.projectService.enviarNotificacionTarea(payload).subscribe({
-            next: () => this.snackBar.open('Notificación enviada correctamente', 'Cerrar', { duration: 3000 }),
-            error: () => this.snackBar.open('Error al enviar la notificación', 'Cerrar', { duration: 3000 })
+            next: () => this._notificationService.showSuccess('Notificación enviada', 'El correo ha sido enviado a los responsables.'),
+            error: () => this._notificationService.showError('Error de envío', 'No se pudo enviar la notificación por correo.')
         });
     }
 
