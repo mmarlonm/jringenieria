@@ -10,14 +10,12 @@ export class ChatNotificationService {
    * Muestra una notificación de ÉXITO (Verde/Premium).
    */
   showSuccess(title: string, description: string, duration: number = 5000): void {
-    console.log('🚀 [ChatNotificationService] Llamando a sileo.success:', { title, description });
     try {
       const id = sileo.success({
         title: title,
         description: description,
         duration: duration
       });
-      console.log('✅ [ChatNotificationService] Sileo ID generado:', id);
     } catch (error) {
       console.error('❌ [ChatNotificationService] Error en sileo.success:', error);
     }
@@ -27,7 +25,6 @@ export class ChatNotificationService {
    * Muestra una notificación de ERROR (Rojo/Premium).
    */
   showError(title: string, description: string, duration: number = 8000): void {
-    console.log('❌ [Sileo] Error:', { title, description });
     sileo.error({
       title: title,
       description: description,
@@ -39,7 +36,6 @@ export class ChatNotificationService {
    * Muestra una notificación de INFORMACIÓN (Azul/Premium).
    */
   showInfo(title: string, description: string, duration: number = 5000): void {
-    console.log('ℹ️ [Sileo] Info:', { title, description });
     sileo.info({
       title: title,
       description: description,
@@ -51,7 +47,6 @@ export class ChatNotificationService {
    * Muestra una notificación de ADVERTENCIA (Naranja/Premium).
    */
   showWarning(title: string, description: string, duration: number = 6000): void {
-    console.log('⚠️ [Sileo] Warning:', { title, description });
     sileo.warning({
       title: title,
       description: description,
@@ -64,11 +59,24 @@ export class ChatNotificationService {
    * Útil para procesos asíncronos.
    */
   showLoading(title: string, description: string): any {
-    console.log('⏳ [Sileo] Loading:', { title, description });
     return (sileo as any).loading({
       title: title,
       description: description
     });
+  }
+
+  /**
+   * Maneja promesas automáticamente mostrando loading, success o error.
+   */
+  promise<T>(
+    promise: Promise<T>,
+    options: {
+      loading: string | { title?: string; description?: string };
+      success: string | { title?: string; description?: string } | ((data: T) => string | { title?: string; description?: string });
+      error: string | { title?: string; description?: string } | ((error: any) => string | { title?: string; description?: string });
+    }
+  ): Promise<T> {
+    return (sileo as any).promise(promise, options);
   }
 
   // Mantenemos compatibilidad con el método anterior si es necesario, 

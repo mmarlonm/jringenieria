@@ -49,7 +49,6 @@ export class SileoWrapperComponent implements OnInit, OnDestroy {
     const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
 
     try {
-      console.log('🏗️ [SileoWrapper] Inyectando React Toaster de forma segura en el BODY...');
 
       let existingContainer = document.getElementById(this.rootTitle) as HTMLDivElement;
 

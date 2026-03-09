@@ -17,6 +17,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
 import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
 import { AuthService } from 'app/core/auth/auth.service';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'auth-sign-in',
@@ -54,8 +56,9 @@ export class AuthSignInComponent implements OnInit {
         private _activatedRoute: ActivatedRoute,
         private _authService: AuthService,
         private _formBuilder: UntypedFormBuilder,
-        private _router: Router
-    ) {}
+        private _router: Router,
+        private _chatNotificationService: ChatNotificationService
+    ) { }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
@@ -94,37 +97,35 @@ export class AuthSignInComponent implements OnInit {
         // Hide the alert
         this.showAlert = false;
 
-        // Sign in
-        this._authService.signIn(this.signInForm.value).subscribe(
-            () => {
-                // Set the redirect url.
-                // The '/signed-in-redirect' is a dummy url to catch the request and redirect the user
-                // to the correct page after a successful sign in. This way, that url can be set via
-                // routing file and we don't have to touch here.
-                const redirectURL =
-                    this._activatedRoute.snapshot.queryParamMap.get(
-                        'redirectURL'
-                    ) || '/signed-in-redirect';
+        // Sign in using Sileo Promise
+        const loginPromise = firstValueFrom(this._authService.signIn(this.signInForm.value));
 
-                // Navigate to the redirect url
+        this._chatNotificationService.promise(loginPromise, {
+            loading: { title: 'Iniciando sesión...', description: 'Verificando credenciales' },
+            success: (response: any) => {
+                // Set the redirect url
+                const redirectURL = this._activatedRoute.snapshot.queryParamMap.get('redirectURL') || '/signed-in-redirect';
                 this._router.navigateByUrl(redirectURL);
+
+                // Get user name directly from the response
+                let userName = 'Usuario';
+                if (response && response.usuario && response.usuario.nombreUsuario) {
+                    userName = response.usuario.nombreUsuario;
+                }
+
+                return { title: `¡Bienvenid@, ${userName}!`, description: 'Has iniciado sesión exitosamente.' };
             },
-            (response) => {
+            error: (err) => {
                 // Re-enable the form
                 this.signInForm.enable();
-
-                // Reset the form
                 this.signInNgForm.resetForm();
 
                 // Set the alert
-                this.alert = {
-                    type: 'error',
-                    message: 'Wrong email or password',
-                };
-
-                // Show the alert
+                this.alert = { type: 'error', message: 'Correo o contraseña incorrectos' };
                 this.showAlert = true;
+
+                return { title: 'Error al iniciar sesión', description: 'Verifica tus credenciales e intenta de nuevo.' };
             }
-        );
+        }).catch(() => { }); // Prevent unhandled promise rejection error log
     }
 }
