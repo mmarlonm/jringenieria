@@ -17,7 +17,7 @@ export interface TaskViewConfig {
 export class TaskViewConfigService {
     private readonly STORAGE_KEY = 'task-view-config';
     public readonly DEFAULT_CONFIG: TaskViewConfig = {
-        visibleColumns: ['id', 'nombre', 'responsable', 'fechaInicioEstimada', 'fechaFinEstimada', 'estatus', 'empresa', 'ubicacion', 'comentarios', 'media', 'acciones'],
+        visibleColumns: ['id', 'nombre', 'responsable', 'fechaInicioEstimada', 'fechaFinEstimada', 'estatus', 'cuadranteId', 'empresa', 'ubicacion', 'comentarios', 'media', 'acciones'],
         groupBy: 'estatus',
         filters: {},
         expandedGroups: {},
@@ -30,6 +30,7 @@ export class TaskViewConfigService {
             'fechaInicioEstimada': '160px',
             'fechaFinEstimada': '160px',
             'estatus': '140px',
+            'cuadranteId': '150px',
             'empresa': '150px',
             'ubicacion': '150px',
             'comentarios': '250px',

@@ -250,12 +250,22 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 const idx = this.viewConfig.visibleColumns.indexOf('nombre');
                 this.viewConfig.visibleColumns.splice(idx + 1, 0, 'responsable', 'asignados');
             }
+
+            if (!this.viewConfig.visibleColumns.includes('cuadranteId')) {
+                const eIdx = this.viewConfig.visibleColumns.indexOf('estatus');
+                if (eIdx > -1) {
+                    this.viewConfig.visibleColumns.splice(eIdx + 1, 0, 'cuadranteId');
+                } else {
+                    this.viewConfig.visibleColumns.push('cuadranteId');
+                }
+            }
         }
 
         // 2. Aplicar anchos por defecto
         this.viewConfig.columnWidths = {
             'responsable': '100px',
             'asignados': '120px',
+            'cuadranteId': '150px',
             'empresa': '150px',
             'ubicacion': '150px',
             ...this.configService.DEFAULT_CONFIG.columnWidths,
@@ -273,6 +283,15 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 if (!cols.includes('responsable')) {
                     const nIdx = cols.indexOf('nombre');
                     cols.splice(nIdx + 1, 0, 'responsable', 'asignados');
+                }
+
+                if (!cols.includes('cuadranteId')) {
+                    const eIdx = cols.indexOf('estatus');
+                    if (eIdx > -1) {
+                        cols.splice(eIdx + 1, 0, 'cuadranteId');
+                    } else {
+                        cols.push('cuadranteId');
+                    }
                 }
 
                 // Garantizar columnas mínimas
@@ -642,11 +661,12 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     groupTasksByCuadrante(tasks: Task[]): void {
+        const activeTasks = tasks.filter(t => t.estatus !== 3);
         this.tasksByCuadrante = {
-            1: tasks.filter(t => t.cuadranteId === 1),
-            2: tasks.filter(t => t.cuadranteId === 2),
-            3: tasks.filter(t => t.cuadranteId === 3),
-            4: tasks.filter(t => t.cuadranteId === 4)
+            1: activeTasks.filter(t => t.cuadranteId === 1),
+            2: activeTasks.filter(t => t.cuadranteId === 2),
+            3: activeTasks.filter(t => t.cuadranteId === 3),
+            4: activeTasks.filter(t => t.cuadranteId === 4)
         };
     }
 
