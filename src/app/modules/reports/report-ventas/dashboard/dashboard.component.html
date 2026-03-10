@@ -26,10 +26,9 @@
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Sucursal</mat-label>
             <mat-select [(ngModel)]="sucursal">
-                <mat-option value="TODAS">Todas</mat-option>
-                <mat-option value="PACHUCA">Pachuca</mat-option>
-                <mat-option value="Puebla">Puebla</mat-option>
-                <mat-option value="Queretaro">Querétaro</mat-option>
+                <mat-option *ngFor="let s of sucursalesDisponibles" [value]="s.value">
+                    {{ s.label }}
+                </mat-option>
             </mat-select>
         </mat-form-field>
 

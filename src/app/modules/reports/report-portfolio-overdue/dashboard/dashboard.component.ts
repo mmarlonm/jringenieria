@@ -63,6 +63,13 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     esMoral: boolean = false;
     filtroTexto: string = ''; // 🔍 Nueva propiedad para el buscador
 
+    sucursales = [
+        { value: 'SANTA JULIA', label: 'Pachuca' },
+        { value: 'PUEBLA', label: 'Puebla' },
+        { value: 'QUERETARO', label: 'Querétaro' }
+    ];
+    sucursalesDisponibles: any[] = [];
+
     // Estado de la Data
     detalle: CarteraVencidaDto[] = [];
     loading: boolean = false;
@@ -78,7 +85,41 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     constructor(private service: ReportPortfolioOverdueService) { }
 
     ngOnInit(): void {
+        this.verificarRoles();
         this.consultar();
+    }
+
+    verificarRoles(): void {
+        const userStr = localStorage.getItem('userInformation');
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            const roles = userData.roles || [];
+            const esAdmin = roles.some((r: string) => ['Admin', 'pruebas', 'AdministracionQueretaro'].includes(r));
+
+            if (esAdmin) {
+                this.sucursalesDisponibles = [...this.sucursales];
+            } else {
+                const nombreUnidad = userData.usuario?.unidadNegocio?.nombre;
+                if (nombreUnidad) {
+                    let unidadNormalizada = nombreUnidad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    if (unidadNormalizada === 'hidalgo') {
+                        unidadNormalizada = 'pachuca';
+                    }
+                    this.sucursalesDisponibles = this.sucursales.filter(s =>
+                        s.label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === unidadNormalizada
+                    );
+                    if (this.sucursalesDisponibles.length > 0) {
+                        this.sucursal = this.sucursalesDisponibles[0].value;
+                    } else {
+                        this.sucursalesDisponibles = [...this.sucursales];
+                    }
+                } else {
+                    this.sucursalesDisponibles = [...this.sucursales];
+                }
+            }
+        } else {
+            this.sucursalesDisponibles = [...this.sucursales];
+        }
     }
 
     /**

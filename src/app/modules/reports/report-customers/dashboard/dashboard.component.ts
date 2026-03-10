@@ -47,6 +47,14 @@ export class ReportCustomersDashboardComponent implements OnInit {
     fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1);
     fechaFin: Date = new Date();
 
+    sucursales = [
+        { value: 'TODAS', label: 'Todas' },
+        { value: 'PACHUCA', label: 'Pachuca' },
+        { value: 'Puebla', label: 'Puebla' },
+        { value: 'Queretaro', label: 'Querétaro' }
+    ];
+    sucursalesDisponibles: any[] = [];
+
     // Data y KPIs
     detalle: any[] = [];
     totalNuevos = 0;
@@ -56,7 +64,41 @@ export class ReportCustomersDashboardComponent implements OnInit {
     constructor(private reportVentasProductService: ReportCustomersService) { }
 
     ngOnInit(): void {
+        this.verificarRoles();
         this.consultar();
+    }
+
+    verificarRoles(): void {
+        const userStr = localStorage.getItem('userInformation');
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            const roles = userData.roles || [];
+            const esAdmin = roles.some((r: string) => ['Admin', 'pruebas', 'AdministracionQueretaro'].includes(r));
+
+            if (esAdmin) {
+                this.sucursalesDisponibles = [...this.sucursales];
+            } else {
+                const nombreUnidad = userData.usuario?.unidadNegocio?.nombre;
+                if (nombreUnidad) {
+                    let unidadNormalizada = nombreUnidad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    if (unidadNormalizada === 'hidalgo') {
+                        unidadNormalizada = 'pachuca';
+                    }
+                    this.sucursalesDisponibles = this.sucursales.filter(s =>
+                        s.label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === unidadNormalizada
+                    );
+                    if (this.sucursalesDisponibles.length > 0) {
+                        this.sucursal = this.sucursalesDisponibles[0].value;
+                    } else {
+                        this.sucursalesDisponibles = [...this.sucursales];
+                    }
+                } else {
+                    this.sucursalesDisponibles = [...this.sucursales];
+                }
+            }
+        } else {
+            this.sucursalesDisponibles = [...this.sucursales];
+        }
     }
 
     consultar(): void {

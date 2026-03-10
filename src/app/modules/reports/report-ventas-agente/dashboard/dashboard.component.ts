@@ -54,6 +54,14 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     public fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1); // 1 de Enero
     public fechaFin: Date = new Date();
 
+    public sucursales = [
+        { value: 'TODAS', label: 'Todas' },
+        { value: 'PACHUCA', label: 'Pachuca' },
+        { value: 'Puebla', label: 'Puebla' },
+        { value: 'Queretaro', label: 'Querétaro' }
+    ];
+    public sucursalesDisponibles: any[] = [];
+
     // 🔹 Agentes
     public listaAgentes: Agente[] = [];
     public agenteSeleccionado: number = 0; // 0 = TODOS
@@ -87,8 +95,42 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     constructor(private reportVentasService: ReportVentasAgenteService) { }
 
     ngOnInit(): void {
+        this.verificarRoles();
         this.cargarAgentes();
         this.consultar();
+    }
+
+    verificarRoles(): void {
+        const userStr = localStorage.getItem('userInformation');
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            const roles = userData.roles || [];
+            const esAdmin = roles.some((r: string) => ['Admin', 'pruebas', 'AdministracionQueretaro'].includes(r));
+
+            if (esAdmin) {
+                this.sucursalesDisponibles = [...this.sucursales];
+            } else {
+                const nombreUnidad = userData.usuario?.unidadNegocio?.nombre;
+                if (nombreUnidad) {
+                    let unidadNormalizada = nombreUnidad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    if (unidadNormalizada === 'hidalgo') {
+                        unidadNormalizada = 'pachuca';
+                    }
+                    this.sucursalesDisponibles = this.sucursales.filter(s =>
+                        s.label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === unidadNormalizada
+                    );
+                    if (this.sucursalesDisponibles.length > 0) {
+                        this.sucursal = this.sucursalesDisponibles[0].value;
+                    } else {
+                        this.sucursalesDisponibles = [...this.sucursales];
+                    }
+                } else {
+                    this.sucursalesDisponibles = [...this.sucursales];
+                }
+            }
+        } else {
+            this.sucursalesDisponibles = [...this.sucursales];
+        }
     }
 
     cargarAgentes(): void {
