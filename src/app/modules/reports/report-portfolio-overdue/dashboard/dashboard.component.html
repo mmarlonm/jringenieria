@@ -6,7 +6,7 @@
             <p class="text-sm text-gray-500 italic" *ngIf="loading">Procesando datos...</p>
         </div>
 
-        <button *ngIf="filtroTexto && filtroTexto.trim() !== ''" (click)="exportarPDFEstado()"
+        <button *ngIf="filtroTextoAplicado !== ''" (click)="exportarPDFEstado()"
             class="flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-green-700 transition-all">
             <mat-icon>receipt_long</mat-icon>
             Exportar Estado Cuenta

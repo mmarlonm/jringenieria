@@ -62,6 +62,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     fechaFin: Date = new Date();
     esMoral: boolean = false;
     filtroTexto: string = ''; // 🔍 Nueva propiedad para el buscador
+    filtroTextoAplicado: string = ''; // Texto buscado actualmente
 
     sucursales = [
         { value: 'SANTA JULIA', label: 'Pachuca' },
@@ -138,6 +139,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
 
     consultar(): void {
         this.loading = true;
+        this.filtroTextoAplicado = this.filtroTexto.trim();
         this.service
             .getDashboardReport(this.sucursal, this.fechaInicio, this.fechaFin, this.esMoral)
             .subscribe({
