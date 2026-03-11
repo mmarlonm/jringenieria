@@ -730,6 +730,34 @@ export class ReportVentasDashboardComponent implements OnInit {
         });
     }
 
+    exportarCsvDetalle(): void {
+        if (!this.detalleVentas || this.detalleVentas.length === 0) return;
+
+        let csvContent = 'Fecha,Sucursal,Folio,Cliente,Vendedor,Total\n';
+
+        this.detalleVentas.forEach(row => {
+            const fechaParseada = new Date(row.fecha);
+            const fechaStr = isNaN(fechaParseada.getTime()) ? row.fecha : fechaParseada.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            const sucursal = `"${(row.sucursal || '').replace(/"/g, '""')}"`;
+            const folio = `"${(row.folio || '').replace(/"/g, '""')}"`;
+            const cliente = `"${(row.cliente || '').replace(/"/g, '""')}"`;
+            const vendedor = `"${(row.vendedor || '').replace(/"/g, '""')}"`;
+            const total = row.totalDocumento !== undefined && row.totalDocumento !== null ? row.totalDocumento : 0;
+
+            csvContent += `${fechaStr},${sucursal},${folio},${cliente},${vendedor},${total}\n`;
+        });
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `detalle-ventas-${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     private generarGraficaMarcas(): void {
         const dataMarcas = this.datosClasificacionOriginal.reduce((acc, curr) => {
             const existe = acc.find(x => x.name === curr.marca);
