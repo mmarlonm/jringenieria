@@ -22,6 +22,7 @@ import { forkJoin } from 'rxjs';
                     <div class="text-2xl font-extrabold tracking-tight leading-none italic text-primary">Detalle de Solicitud</div>
                     <div class="mt-1 flex items-center text-secondary font-medium" *ngIf="solicitud">
                         Folio: <span class="ml-1 font-bold text-default">{{ solicitud.idSolicitud || data.idSolicitud }}</span>
+                        <span class="ml-3" *ngIf="solicitud.folioOC">Folio OC: <span class="ml-1 font-bold text-amber-600">{{ solicitud.folioOC }}</span></span>
                         <span class="mx-2">•</span>
                         Status: <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white uppercase" 
                                       [style.background-color]="getColorById(solicitud.idEstatus)">

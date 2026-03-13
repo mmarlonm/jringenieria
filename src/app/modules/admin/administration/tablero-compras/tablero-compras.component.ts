@@ -45,6 +45,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
 {
     displayedColumns: string[] = [
         'folio',
+        'folioOC',
         'fechaSolicitud',
         'sucursal',
         'areaSolicitante',

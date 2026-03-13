@@ -172,6 +172,14 @@
                         <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
                     </ng-container>
 
+                    <!-- Folio OC (Contpac) -->
+                    <ng-container matColumnDef="folioOC">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio OC</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-amber-600 tabular-nums">
+                            {{ s.folioOC || '-' }}
+                        </td>
+                    </ng-container>
+
                     <!-- Fecha de solicitud -->
                     <ng-container matColumnDef="fechaSolicitud">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
