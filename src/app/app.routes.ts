@@ -128,6 +128,9 @@ export const appRoutes: Route[] = [
                     { path: 'roles', loadChildren: () => import('app/modules/admin/security/roles/roles.routes') }
                 ]
             },
+            {
+                path: 'administration', loadChildren: () => import('app/modules/admin/administration/administration.routes')
+            },
             { path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes') },
             { path: 'profile', loadChildren: () => import('app/modules/admin/pages/profile/profile.routes') }
         ]

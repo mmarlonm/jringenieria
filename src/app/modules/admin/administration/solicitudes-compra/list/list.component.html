@@ -1,0 +1,101 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-card">
+    <!-- Header -->
+    <div class="flex flex-col p-6 sm:py-8 sm:px-10 border-b">
+        <div>
+            <div class="text-4xl font-extrabold leading-none tracking-tight">
+                Solicitudes de Compra
+            </div>
+            <div class="text-secondary ml-0.5 font-medium">
+                {{ count }} {{ count === 1 ? 'solicitud' : 'solicitudes' }}
+            </div>
+        </div>
+
+        <!-- Main actions -->
+        <div class="mt-4 flex items-center sm:mt-6">
+            <!-- Search -->
+            <div class="flex-auto">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
+                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" [autocomplete]="'off'" [placeholder]="'Buscar solicitud'">
+                </mat-form-field>
+            </div>
+            <!-- Add button -->
+            <button class="ml-4" mat-flat-button color="primary" [routerLink]="['./new']">
+                <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+                <span class="button-text ml-2">Nueva Solicitud</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-auto overflow-auto p-6 sm:px-8">
+        <div class="mat-elevation-z8 bg-card rounded-2xl overflow-hidden border">
+            <table mat-table [dataSource]="solicitudes$ | async" matSort class="w-full">
+                <!-- Folio -->
+                <ng-container matColumnDef="folio">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
+                    <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
+                </ng-container>
+
+                <!-- Fecha -->
+                <ng-container matColumnDef="fecha">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+                    <td mat-cell *matCellDef="let s">{{ s.fechaSolicitud | date:'dd/MM/yyyy' }}</td>
+                </ng-container>
+
+                <!-- Sucursal -->
+                <ng-container matColumnDef="sucursal">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Sucursal</th>
+                    <td mat-cell *matCellDef="let s">{{ s.sucursal }}</td>
+                </ng-container>
+
+                <!-- Área -->
+                <ng-container matColumnDef="area">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Área</th>
+                    <td mat-cell *matCellDef="let s">{{ s.areaSolicitante }}</td>
+                </ng-container>
+
+                <!-- Prioridad -->
+                <ng-container matColumnDef="prioridad">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Prioridad</th>
+                    <td mat-cell *matCellDef="let s">
+                        <span class="px-2 py-1 rounded text-xs font-semibold"
+                            [ngClass]="{
+                                'bg-red-100 text-red-700': s.prioridad === 'Urgente',
+                                'bg-amber-100 text-amber-700': s.prioridad === 'Alta',
+                                'bg-blue-100 text-blue-700': s.prioridad === 'Normal'
+                            }">
+                            {{ s.prioridad }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Estatus -->
+                <ng-container matColumnDef="estatus">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Estatus</th>
+                    <td mat-cell *matCellDef="let s">
+                        <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700">
+                            {{ s.nombreEstatus }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Acciones -->
+                <ng-container matColumnDef="acciones" stickyEnd>
+                    <th mat-header-cell *matHeaderCellDef class="text-center w-32">Acciones</th>
+                    <td mat-cell *matCellDef="let s" class="text-center">
+                        <button mat-icon-button color="accent" class="small-icon-button" [routerLink]="['edit', s.idSolicitud]" matTooltip="Editar">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" class="small-icon-button" (click)="deleteSolicitud(s.idSolicitud)" matTooltip="Eliminar">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="bg-gray-50 uppercase text-xs font-semibold text-secondary"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors"></tr>
+            </table>
+        </div>
+    </div>
+</div>

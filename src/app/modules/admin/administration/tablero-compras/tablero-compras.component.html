@@ -1,0 +1,245 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50/30">
+
+    <!-- Header -->
+    <div class="flex flex-col p-3 sm:px-6 sm:py-4 border-b bg-white dark:bg-transparent">
+        <div class="flex-auto min-w-0">
+            <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">Tablero de Compras</div>
+            <div class="flex items-center mt-0.5 font-medium text-secondary">
+                {{ dataSource.data.length }} solicitudes registradas en el sistema
+            </div>
+            
+            <!-- Active Filter Badge -->
+            <div *ngIf="selectedStatusId" class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
+                Filtrado por: {{ getStatusName(selectedStatusId) | uppercase }}
+                <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)" matTooltip="Quitar filtro">
+                    <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main actions -->
+        <div class="mt-4 flex flex-col sm:flex-row items-center sm:gap-4 md:mt-6">
+            <div class="flex-auto w-full">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
+                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'" [placeholder]="'Buscar solicitud por cualquier campo...'">
+                </mat-form-field>
+            </div>
+            <div class="flex-none py-2 flex justify-end">
+                <button mat-flat-button color="primary" [routerLink]="['/administration/solicitudes-compra/new']" class="rounded-lg px-6">
+                    <mat-icon svgIcon="heroicons_outline:plus" class="mr-2"></mat-icon>
+                    <span>NUEVA SOLICITUD</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-auto p-3 sm:p-5">
+
+        <!-- Reference Design: Process Arrow Flow -->
+        <div class="process-container shadow-sm border border-gray-100 bg-white">
+            
+            <!-- Arrow Flow -->
+            <div class="arrow-flow mt-6">
+                <!-- A: Creada -->
+                <div class="arrow-step step-1" [class.active]="selectedStatusId === 1" (click)="filterByStatus(1)" [matTooltip]="'Creada'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:document-plus" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countCreada }}</span>
+                    </div>
+                    <span class="status-label">Creada</span>
+                </div>
+
+                <!-- B: Revisión -->
+                <div class="arrow-step step-2" [class.active]="selectedStatusId === 2" (click)="filterByStatus(2)" [matTooltip]="'Revisión'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:magnifying-glass" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countRevision }}</span>
+                    </div>
+                    <span class="status-label">Revisión</span>
+                </div>
+
+                <!-- C: Cotización -->
+                <div class="arrow-step step-3" [class.active]="selectedStatusId === 3" (click)="filterByStatus(3)" [matTooltip]="'Cotización'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:currency-dollar" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countCotizacion }}</span>
+                    </div>
+                    <span class="status-label">Cotización</span>
+                </div>
+
+                <!-- D: Aprobación -->
+                <div class="arrow-step step-4" [class.active]="selectedStatusId === 4" (click)="filterByStatus(4)" [matTooltip]="'Aprobación'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:check-badge" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countAprobacion }}</span>
+                    </div>
+                    <span class="status-label">Aprobación</span>
+                </div>
+
+                <!-- E: OC -->
+                <div class="arrow-step step-5" [class.active]="selectedStatusId === 5" (click)="filterByStatus(5)" [matTooltip]="'Orden Compra'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:document-text" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countOC }}</span>
+                    </div>
+                    <span class="status-label">Orden Compra</span>
+                </div>
+
+                <!-- F: Tránsito -->
+                <div class="arrow-step step-6" [class.active]="selectedStatusId === 6" (click)="filterByStatus(6)" [matTooltip]="'En Tránsito'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:truck" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countTransito }}</span>
+                    </div>
+                    <span class="status-label">Tránsito</span>
+                </div>
+
+                <!-- G: Recibido -->
+                <div class="arrow-step step-7" [class.active]="selectedStatusId === 7" (click)="filterByStatus(7)" [matTooltip]="'Recibido'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:archive-box" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countRecibido }}</span>
+                    </div>
+                    <span class="status-label">Recibido</span>
+                </div>
+
+                <!-- H: Cerrada -->
+                <div class="arrow-step step-8" [class.active]="selectedStatusId === 8" (click)="filterByStatus(8)" [matTooltip]="'Cerrada'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:lock-closed" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countCerrada }}</span>
+                    </div>
+                    <span class="status-label">Cerrada</span>
+                </div>
+            </div>
+
+            <!-- Dotted Timeline Tracker -->
+            <div class="timeline-tracker">
+                <div class="line-dashed"></div>
+                <!-- Dots aligned with arrows -->
+                <div class="dot-point" [class.active]="selectedStatusId === 1"><div class="dot-circle dot-1"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 2"><div class="dot-circle dot-2"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 3"><div class="dot-circle dot-3"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 4"><div class="dot-circle dot-4"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 5"><div class="dot-circle dot-5"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 6"><div class="dot-circle dot-6"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 7"><div class="dot-circle dot-7"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 8"><div class="dot-circle dot-8"></div></div>
+            </div>
+
+        </div>
+
+        <!-- Management Table -->
+        <div class="bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto min-h-[400px]">
+                <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
+
+                    <!-- Fecha requerida -->
+                    <ng-container matColumnDef="fechaRequerida">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha requerida</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">
+                            <span class="font-bold">{{ s.fechaRequerida | date:'dd/MM/yyyy' }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Lugar de entrega -->
+                    <ng-container matColumnDef="lugarEntrega">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Lugar de entrega</th>
+                        <td mat-cell *matCellDef="let s">
+                            <span class="text-xs">{{ s.lugarEntrega }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Moneda -->
+                    <ng-container matColumnDef="moneda">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Moneda</th>
+                        <td mat-cell *matCellDef="let s" class="text-center">
+                            <span class="font-mono text-[10px]">{{ s.moneda }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Monto -->
+                    <ng-container matColumnDef="monto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
+                        <td mat-cell *matCellDef="let s" class="text-right font-bold pr-8">
+                            {{ getMontoTotal(s) | currency:s.moneda }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Tipo de compra -->
+                    <ng-container matColumnDef="tipoCompra">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+                        <td mat-cell *matCellDef="let s">
+                            <span class="text-xs italic">{{ s.tipoCompra }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Centro de costo -->
+                    <ng-container matColumnDef="centroCosto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Centro de costo</th>
+                        <td mat-cell *matCellDef="let s">
+                            <span class="text-xs font-semibold">{{ s.centroCosto }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Comentarios -->
+                    <ng-container matColumnDef="comentarios">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Observaciones</th>
+                        <td mat-cell *matCellDef="let s" class="max-w-[200px] truncate italic text-xs text-secondary" [matTooltip]="s.comentariosObservaciones">
+                            {{ s.comentariosObservaciones }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Estatus -->
+                    <ng-container matColumnDef="estatus">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Estatus</th>
+                        <td mat-cell *matCellDef="let s" class="px-2 py-3 cursor-pointer whitespace-nowrap text-center" [matMenuTriggerFor]="statusMenu">
+                            <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-sm"
+                                 [style.background-color]="getColorByEstatusId(s.idEstatus)">
+                                {{ getStatusName(s.idEstatus) }}
+                            </div>
+                            <mat-menu #statusMenu="matMenu">
+                                <button mat-menu-item *ngFor="let cat of estatus" (click)="cambiarEstatus(s.idSolicitud, cat.idEstatus)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="getColorByEstatusId(cat.idEstatus)"></div>
+                                        <span>{{ cat.nombreEstatus }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Pendiente -->
+                    <ng-container matColumnDef="pendiente">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Pendiente</th>
+                        <td mat-cell *matCellDef="let s" class="text-center pr-4">
+                            <span class="text-red-500 font-black">
+                                {{ getPendienteTotal(s) }}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Acciones -->
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+                        <td mat-cell *matCellDef="let s" class="text-center">
+                            <button mat-icon-button (click)="verDetalle(s.idSolicitud); $event.stopPropagation()" matTooltip="Ver detalle completo">
+                                <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                            </button>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/50"></tr>
+                </table>
+
+                <div *ngIf="dataSource.data.length === 0" class="p-12 text-center text-secondary">
+                    No se encontraron resultados
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

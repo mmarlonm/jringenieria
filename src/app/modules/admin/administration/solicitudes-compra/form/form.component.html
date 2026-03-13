@@ -1,0 +1,257 @@
+<div class="absolute inset-0 flex flex-col overflow-hidden p-6 bg-card">
+    <h1 class="text-2xl font-bold mb-4">
+        {{ isEdit ? "Editar Solicitud de Compra" : "Nueva Solicitud de Compra" }}
+    </h1>
+
+    <mat-tab-group class="h-full flex-1 overflow-hidden">
+        <!-- TAB 1: Información General -->
+        <mat-tab label="Información General">
+            <div class="overflow-auto p-4 max-h-[calc(100vh-250px)]">
+                <form [formGroup]="solicitudForm" class="flex flex-col gap-4 mt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Left Column -->
+                        <div class="flex flex-col gap-4">
+                            <mat-form-field appearance="fill">
+                                <mat-label>Folio</mat-label>
+                                <input matInput formControlName="idSolicitud" readonly>
+                            </mat-form-field>
+                            
+                            <mat-form-field appearance="fill">
+                                <mat-label>Sucursal</mat-label>
+                                <mat-select formControlName="sucursal">
+                                    <mat-option *ngFor="let s of sucursales" [value]="s.nombre">{{s.nombre}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Área solicitante</mat-label>
+                                <mat-select formControlName="areaSolicitante">
+                                    <mat-option *ngFor="let a of areas" [value]="a">{{a}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Proyecto / Cliente</mat-label>
+                                <input matInput formControlName="proyectoCliente">
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Lugar de entrega</mat-label>
+                                <input matInput formControlName="lugarEntrega">
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Middle Column -->
+                        <div class="flex flex-col gap-4">
+                            <mat-form-field appearance="fill">
+                                <mat-label>Prioridad</mat-label>
+                                <mat-select formControlName="prioridad">
+                                    <mat-option *ngFor="let p of prioridades" [value]="p">{{p}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Proveedor sugerido</mat-label>
+                                <input matInput formControlName="proveedorSugerido">
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Fecha requerida</mat-label>
+                                <input matInput [matDatepicker]="picker" formControlName="fechaRequerida">
+                                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker #picker></mat-datepicker>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Tipo de compra</mat-label>
+                                <mat-select formControlName="tipoCompra">
+                                    <mat-option *ngFor="let t of tiposCompra" [value]="t">{{t}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Centro de costo</mat-label>
+                                <mat-select formControlName="centroCosto">
+                                    <mat-option *ngFor="let c of centrosCosto" [value]="c">{{c}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="flex flex-col gap-4">
+                            <mat-form-field appearance="fill">
+                                <mat-label>Folio del proyecto</mat-label>
+                                <input matInput formControlName="folioProyecto">
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Moneda</mat-label>
+                                <mat-select formControlName="moneda">
+                                    <mat-option value="MXN">MXN</mat-option>
+                                    <mat-option value="USD">USD</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Forma de pago</mat-label>
+                                <mat-select formControlName="formaPago">
+                                    <mat-option *ngFor="let f of formasPago" [value]="f">{{f}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill">
+                                <mat-label>Razón Social</mat-label>
+                                <mat-select formControlName="razonSocial">
+                                    <mat-option value="JESUS">JESUS</mat-option>
+                                    <mat-option value="JR">JR</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+
+                    <!-- Observations -->
+                    <div class="mt-4">
+                        <mat-form-field appearance="fill" class="w-full">
+                            <mat-label>Comentarios y observaciones</mat-label>
+                            <textarea matInput formControlName="comentariosObservaciones" rows="3"></textarea>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="mt-4">
+                        <mat-form-field appearance="fill" class="w-full">
+                            <mat-label>Datos bancarios proveedor</mat-label>
+                            <textarea matInput formControlName="datosBancariosProveedor" rows="2"></textarea>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Nota / Archivo Adjunto -->
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2">
+                                <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
+                                Archivos Adjuntos
+                            </h3>
+                            <button mat-stroked-button color="primary" type="button" (click)="fileInput.click()">
+                                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                Subir Nuevo Archivo
+                            </button>
+                            <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.jpg,.png">
+                        </div>
+
+                        <!-- Selected File (Pending Upload) -->
+                        <div *ngIf="selectedFile" class="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2">
+                            <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                            <div class="flex flex-col flex-1">
+                                <span class="text-sm font-bold text-primary-900">{{ selectedFile.name }}</span>
+                                <span class="text-xs text-primary-600">Pendiente de guardar</span>
+                            </div>
+                            <button mat-icon-button color="warn" (click)="selectedFile = null; fileInput.value = ''">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                            </button>
+                        </div>
+
+                        <!-- Existing Files -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div *ngFor="let file of archivos" class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow group">
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg group-hover:bg-primary-50 transition-colors">
+                                    <mat-icon class="text-gray-500 group-hover:text-primary transition-colors" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                                </div>
+                                <div class="flex flex-col flex-1 truncate">
+                                    <span class="text-sm font-medium text-gray-900 truncate" [matTooltip]="file.nombreArchivo">{{ file.nombreArchivo }}</span>
+                                    <span class="text-xs text-gray-500">Archivo guardado</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button mat-icon-button color="primary" (click)="descargarArchivo(file.nombreArchivo)" matTooltip="Descargar">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" (click)="eliminarArchivo(file.nombreArchivo)" matTooltip="Eliminar">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="archivos.length === 0 && !selectedFile" class="p-6 text-center border-2 border-dashed rounded-xl text-gray-400 bg-white">
+                            <mat-icon class="icon-size-10 mb-2 opacity-30" [svgIcon]="'heroicons_outline:document-plus'"></mat-icon>
+                            <p class="text-sm">No hay archivos adjuntos en esta solicitud.</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </mat-tab>
+
+        <!-- TAB 2: Detalle de materiales -->
+        <mat-tab label="Detalle de materiales">
+            <div class="overflow-auto p-4 max-h-[calc(100vh-250px)]">
+                <div class="flex items-center justify-between mb-4 mt-2">
+                    <h3 class="text-lg font-bold">Partidas solicitadas</h3>
+                    <button mat-raised-button color="primary" (click)="addDetalle()">
+                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        Añadir Partida
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto border rounded-xl shadow-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-700 text-white">
+                            <tr>
+                                <th class="p-3 border text-center w-16">Partida</th>
+                                <th class="p-3 border">Material / Servicio</th>
+                                <th class="p-3 border">Descripción / Especificación</th>
+                                <th class="p-3 border w-24 text-center">Cantidad</th>
+                                <th class="p-3 border w-24 text-center">Unidad</th>
+                                <th class="p-3 border">Observaciones</th>
+                                <th class="p-3 border text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody [formGroup]="solicitudForm">
+                            <ng-container formArrayName="detalles">
+                                <tr *ngFor="let d of detalles.controls; let i = index" [formGroupName]="i" class="hover:bg-gray-50 transition-colors">
+                                    <td class="p-2 border text-center font-bold">
+                                        {{ d.get('partida').value }}
+                                    </td>
+                                    <td class="p-2 border">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none" formControlName="materialServicio" placeholder="Nombre...">
+                                    </td>
+                                    <td class="p-2 border">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none" formControlName="descripcionEspecificacion" placeholder="Detalles...">
+                                    </td>
+                                    <td class="p-2 border">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center" type="number" formControlName="cantidad">
+                                    </td>
+                                    <td class="p-2 border">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center" formControlName="unidad">
+                                    </td>
+                                    <td class="p-2 border">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none" formControlName="observaciones">
+                                    </td>
+                                    <td class="p-2 border text-center">
+                                        <button mat-icon-button color="warn" (click)="removeDetalle(i)" matTooltip="Eliminar partida">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </ng-container>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div *ngIf="detalles.length === 0" class="p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4">
+                    <mat-icon class="icon-size-12 mb-2 opacity-50" [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
+                    <p class="text-xl font-medium">No hay partidas en esta solicitud.</p>
+                    <p class="text-secondary">Usa el botón "Añadir Partida" para comenzar.</p>
+                </div>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+
+    <!-- Botones Flotantes (btn-float) -->
+    <div class="flex justify-end gap-2 mb-4 btn-float z-99">
+        <button mat-raised-button color="warn" type="button" (click)="cancelar()">
+            Cancelar
+        </button>
+        <button mat-raised-button color="primary" type="submit" (click)="save()">
+            {{ isEdit ? 'Actualizar' : 'Guardar' }}
+        </button>
+    </div>
+</div>

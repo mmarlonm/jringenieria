@@ -1,0 +1,133 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    .mat-column-fechaRequerida,
+    .mat-column-lugarEntrega,
+    .mat-column-moneda,
+    .mat-column-monto,
+    .mat-column-tipoCompra,
+    .mat-column-centroCosto,
+    .mat-column-comentarios,
+    .mat-column-estatus,
+    .mat-column-pendiente {
+        @apply px-4;
+    }
+
+    table {
+        @apply border-collapse w-full;
+    }
+
+    th.mat-header-cell {
+        @apply bg-gray-50 uppercase text-xs font-semibold text-secondary;
+        height: 48px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        white-space: nowrap;
+    }
+
+    td.mat-cell {
+        @apply py-4 border-b border-gray-100 dark:border-gray-800;
+    }
+
+    tr.mat-row:hover {
+        @apply bg-gray-50 dark:bg-gray-800/50;
+    }
+
+    /* Reference Design: Arrow Flow */
+    .process-container {
+        @apply flex flex-col items-center w-full mb-4 overflow-x-auto;
+        padding-bottom: 25px;
+        background: #fbfcfd;
+        border-radius: 8px;
+    }
+
+    .arrow-flow {
+        @apply flex flex-row items-center justify-center w-full min-w-max px-4;
+        height: 90px;
+        flex-wrap: nowrap;
+    }
+
+    .arrow-step {
+        @apply relative flex flex-shrink-0 items-center justify-center cursor-pointer transition-all duration-300;
+        width: 155px;
+        height: 65px;
+        margin-right: -12px;
+        clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%, 15% 50%);
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+
+        &:first-child {
+            clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%);
+        }
+
+        &:last-child {
+            clip-path: polygon(0% 0%, 80% 0%, 100% 50%, 80% 100%, 0% 100%, 15% 50%);
+            width: 165px;
+        }
+
+        &.active {
+            transform: translateY(-2px);
+            z-index: 10;
+            filter: saturate(1.1) brightness(1.05);
+        }
+
+        /* Inner Square */
+        .step-square {
+            @apply flex flex-col items-center justify-center bg-[#073b4c] text-white rounded-md;
+            width: 42px;
+            height: 42px;
+            
+            .ref-letter {
+                @apply text-lg font-black text-white leading-none;
+            }
+            
+            .count-tag {
+                @apply text-[9px] font-bold opacity-80 mt-0.5;
+            }
+        }
+        
+        .status-label {
+            @apply absolute bottom-[-25px] left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[9px] font-bold uppercase text-secondary tracking-widest transition-all duration-300;
+            opacity: 0.8;
+        }
+    }
+
+    /* Dotted Timeline Tracker */
+    .timeline-tracker {
+        @apply relative flex items-center justify-center w-full min-w-max px-4 mt-6;
+        height: 12px;
+        
+        .line-dashed {
+            @apply absolute top-1/2 left-[8%] right-[8%] h-[1px] border-b border-dashed border-gray-300;
+        }
+        
+        .dot-point {
+            @apply relative flex items-center justify-center;
+            width: 143px; /* Adjusted to match larger arrow width */
+            
+            .dot-circle {
+                @apply w-2 h-2 rounded-full z-10 border border-white shadow-sm;
+            }
+        }
+    }
+
+    /* Official Reference Colors */
+    .step-1 { background-color: #880E4F; }
+    .step-2 { background-color: #E91E63; }
+    .step-3 { background-color: #FF9800; }
+    .step-4 { background-color: #8BC34A; }
+    .step-5 { background-color: #03A9F4; }
+    .step-6 { background-color: #2196F3; }
+    .step-7 { background-color: #3F51B5; }
+    .step-8 { background-color: #1A237E; }
+    
+    .dot-1 { background-color: #880E4F; }
+    .dot-2 { background-color: #E91E63; }
+    .dot-3 { background-color: #FF9800; }
+    .dot-4 { background-color: #8BC34A; }
+    .dot-5 { background-color: #03A9F4; }
+    .dot-6 { background-color: #2196F3; }
+    .dot-7 { background-color: #3F51B5; }
+    .dot-8 { background-color: #1A237E; }
+}

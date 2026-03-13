@@ -58,7 +58,7 @@ export class AppComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.checkAndStartServices();
       // Prueba de notificación al inicio
-      this.chatNotificationService.showSuccess('Sistema Listo', 'Las notificaciones de Sileo se han inicializado correctamente.');
+      //this.chatNotificationService.showSuccess('Sistema Listo', 'Las notificaciones de Sileo se han inicializado correctamente.');
     }, 2000);
 
     // Watchdog de 60 segundos para asegurar que la conexión se mantenga

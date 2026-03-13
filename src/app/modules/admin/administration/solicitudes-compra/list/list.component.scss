@@ -1,0 +1,27 @@
+
+.small-icon-button {
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+
+    .mat-icon {
+        width: 20px !important;
+        height: 20px !important;
+        line-height: 20px !important;
+    }
+}
+
+table.mat-table {
+    width: 100%;
+    table-layout: auto;
+}
+
+.mat-column-actions {
+    width: 120px;
+    white-space: nowrap;
+}
+
+.mat-column-folio {
+    width: 80px;
+    white-space: nowrap;
+}
