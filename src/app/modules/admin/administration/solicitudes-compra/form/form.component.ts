@@ -17,6 +17,7 @@ import { ProjectService } from 'app/modules/admin/dashboards/project/project.ser
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { SolicitudCompraCreateDto, ProductoBuscadorDto } from '../models/solicitud-compra.types';
 import { debounceTime, distinctUntilChanged, filter, map, Observable, of, startWith, switchMap } from 'rxjs';
+import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -26,13 +27,13 @@ import Swal from 'sweetalert2';
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [
-        CommonModule, 
-        ReactiveFormsModule, 
-        RouterLink, 
-        MatButtonModule, 
-        MatFormFieldModule, 
-        MatIconModule, 
-        MatInputModule, 
+        CommonModule,
+        ReactiveFormsModule,
+        RouterLink,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatInputModule,
         MatSelectModule,
         MatDatepickerModule,
         MatNativeDateModule,
@@ -54,7 +55,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     tiposCompra = ['Material para proyecto', 'Inventario almacén', 'Herramienta', 'Consumible', 'Servicio'];
     centrosCosto = ['Proyecto específico', 'Operación sucursal', 'Administración'];
     areas = ['Proyectos', 'Almacén', 'Ventas', 'Administración', 'Marketing', 'RH'];
-    formasPago = ['Debito', 'Credito'];
+    formasPago = ['CONTADO (PUE)', 'CREDITO (PPD)'];
     razonesSociales = ['Jesus Ricardo Mendez', 'JR Ingenieria Electrica'];
     cuadrantes = [
         { id: 1, nombre: 'Hacer (Urg. / Imp.)' },
@@ -63,11 +64,13 @@ export class SolicitudCompraFormComponent implements OnInit {
         { id: 4, nombre: 'Eliminar (No Urg. / No Imp.)' }
     ];
     sucursales: any[] = [];
+    usuarios: any[] = [];
 
     constructor(
         private _formBuilder: FormBuilder,
         private _solicitudCompraService: SolicitudCompraService,
         private _projectService: ProjectService,
+        private _usersService: UsersService,
         private _chatNotificationService: ChatNotificationService,
         private _route: ActivatedRoute,
         private _router: Router
@@ -76,6 +79,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     ngOnInit(): void {
         this.initForm();
         this.loadBranches();
+        this.loadUsers();
 
         this._route.params.subscribe(params => {
             if (params['id']) {
@@ -86,12 +90,27 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
+    loadUsers(): void {
+        this._usersService.getUsers().subscribe(users => {
+            this.usuarios = users || [];
+        });
+    }
+
     initForm(): void {
+        let userId = 1; // Fallback
+        try {
+            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const user = userInformation.usuario || {};
+            userId = user.id || user.usuarioId || 1;
+        } catch (e) {
+            console.error('Error reading user from localStorage', e);
+        }
+
         this.solicitudForm = this._formBuilder.group({
             idSolicitud: [0],
             sucursal: ['', Validators.required],
             areaSolicitante: ['', Validators.required],
-            idPersonaSolicitante: [1], // Mocked for now
+            idPersonaSolicitante: [userId],
             proyectoCliente: [''],
             lugarEntrega: [''],
             datosBancariosProveedor: [''],
@@ -167,7 +186,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     onProductSelected(event: any, index: number): void {
         const product = event.option.value as ProductoBuscadorDto;
         const detailGroup = this.detalles.at(index);
-        
+
         // Populate fields from selected product
         detailGroup.patchValue({
             materialServicio: product.nombreProducto, // We patch it back as string for manual edit later
@@ -283,7 +302,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         } else {
             this._solicitudCompraService.crear(data).subscribe((response) => {
                 const newId = response.idSolicitud || response.id;
-                
+
                 if (this.selectedFile && newId) {
                     this._solicitudCompraService.subirArchivo(newId, this.selectedFile).subscribe(() => {
                         this._chatNotificationService.showSuccess('Éxito', 'Solicitud y archivo guardados correctamente');

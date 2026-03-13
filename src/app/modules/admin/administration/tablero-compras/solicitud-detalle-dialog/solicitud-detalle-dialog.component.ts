@@ -8,6 +8,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SolicitudCompraService } from '../../solicitudes-compra/solicitud-compra.service';
 import { SolicitudCompra } from '../../solicitudes-compra/models/solicitud-compra.types';
+import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
     selector: 'solicitud-detalle-dialog',
@@ -40,6 +42,10 @@ import { SolicitudCompra } from '../../solicitudes-compra/models/solicitud-compr
                     <div class="flex flex-col">
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">Sucursal / Área</span>
                         <span class="font-semibold">{{ solicitud.sucursal }} / {{ solicitud.areaSolicitante }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Solicitante</span>
+                        <span class="font-semibold text-primary">{{ getSolicitanteName(solicitud.idPersonaSolicitante) }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">Fecha Requerida</span>
@@ -178,11 +184,13 @@ import { SolicitudCompra } from '../../solicitudes-compra/models/solicitud-compr
 export class SolicitudDetalleDialogComponent implements OnInit {
     solicitud: SolicitudCompra | null = null;
     archivos: any[] = [];
+    usuarios: any[] = [];
 
     constructor(
         public dialogRef: MatDialogRef<SolicitudDetalleDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: { idSolicitud: number },
-        private _service: SolicitudCompraService
+        private _service: SolicitudCompraService,
+        private _usersService: UsersService
     ) { }
 
     ngOnInit(): void {
@@ -190,10 +198,20 @@ export class SolicitudDetalleDialogComponent implements OnInit {
     }
 
     loadDetail(): void {
-        this._service.getPorId(this.data.idSolicitud).subscribe(res => {
-            this.solicitud = res;
+        forkJoin({
+            solicitud: this._service.getPorId(this.data.idSolicitud),
+            users: this._usersService.getUsers()
+        }).subscribe(res => {
+            this.solicitud = res.solicitud;
+            this.usuarios = res.users || [];
             this.loadFiles();
         });
+    }
+
+    getSolicitanteName(id: number): string {
+        if (!this.usuarios || this.usuarios.length === 0) return `ID: ${id}`;
+        const user = this.usuarios.find(u => u.id === id || u.usuarioId === id);
+        return user ? (user.nombreUsuario || user.nombre || user.email) : `ID: ${id}`;
     }
 
     loadFiles(): void {

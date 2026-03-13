@@ -194,8 +194,8 @@
                     <!-- Solicitante -->
                     <ng-container matColumnDef="solicitante">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Solicitante</th>
-                        <!-- Asumiremos que nos muestran el ID o el nombre de otra forma (DTO) -->
-                        <td mat-cell *matCellDef="let s">{{ s.idPersonaSolicitante }}</td>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap font-medium">{{
+                            getUserLabel(s.idPersonaSolicitante) }}</td>
                     </ng-container>
 
                     <!-- Proyecto / Cliente -->

@@ -16,6 +16,7 @@ import { SolicitudCompraService } from '../solicitudes-compra/solicitud-compra.s
 import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/solicitud-compra.types';
 import { SolicitudDetalleDialogComponent } from './solicitud-detalle-dialog/solicitud-detalle-dialog.component';
 import { HistorialDialogComponent } from './historial-dialog/historial-dialog.component';
+import { UsersService } from 'app/modules/admin/security/users/users.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -79,6 +80,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy
     countRecibido: number = 0;    // ID 7
     countCerrada: number = 0;     // ID 8
 
+    usuarios: any[] = [];
+
     selectedStatusId: number | null = null;
 
     @ViewChild(MatSort) sort: MatSort;
@@ -87,6 +90,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
 
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
+        private _usersService: UsersService,
         private _dialog: MatDialog
     )
     {
@@ -114,6 +118,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy
                 this._calculateKPIs();
             });
 
+        // Get users
+        this._usersService.getUsers()
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((users) => {
+                this.usuarios = users || [];
+            });
+
         // Load initial data
         this._solicitudCompraService.getEstatus().subscribe();
         this._solicitudCompraService.getTodas().subscribe();
@@ -138,6 +149,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy
             maxHeight: '90vh',
             autoFocus: false
         });
+    }
+
+    getUserLabel(idUsuario: number): string
+    {
+        if (!this.usuarios || this.usuarios.length === 0) return `ID: ${idUsuario}`;
+        const user = this.usuarios.find(u => u.id === idUsuario || u.usuarioId === idUsuario);
+        return user ? (user.nombreUsuario || user.nombre || user.email) : `ID: ${idUsuario}`;
     }
 
     verHistorial(idSolicitud: number): void {

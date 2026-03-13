@@ -69,6 +69,15 @@
                             </mat-form-field>
 
                             <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Solicitante</mat-label>
+                                <mat-select formControlName="idPersonaSolicitante">
+                                    <mat-option *ngFor="let user of usuarios" [value]="user.id || user.usuarioId">
+                                        {{user.nombreUsuario || user.nombre || user.email}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Centro de costo</mat-label>
                                 <mat-select formControlName="centroCosto">
                                     <mat-option *ngFor="let c of centrosCosto" [value]="c">{{c}}</mat-option>
@@ -290,7 +299,7 @@
         <mat-tab label="Detalle de materiales">
             <div class="p-4">
                 <div class="flex items-center justify-between mb-4 mt-2">
-                    <h3 class="text-lg font-bold">Partidas solicitadas</h3>
+                    <h3 class="text-lg font-bold">PRODUCTOS SOLICITADOS</h3>
                     <button mat-raised-button color="primary" (click)="addDetalle()">
                         <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                         Añadir Partida
@@ -378,8 +387,13 @@
                                             type="number" formControlName="cantidad">
                                     </td>
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center"
+                                        <select class="w-full p-1 bg-transparent border-none outline-none text-center cursor-pointer text-sm"
                                             formControlName="unidad">
+                                            <option value="" disabled>--</option>
+                                            <option value="PZA">PZA</option>
+                                            <option value="CAJA">CAJA</option>
+                                            <option value="METRO">METRO</option>
+                                        </select>
                                     </td>
                                     <td class="p-2 border">
                                         <input class="w-full p-1 bg-transparent border-none outline-none"
