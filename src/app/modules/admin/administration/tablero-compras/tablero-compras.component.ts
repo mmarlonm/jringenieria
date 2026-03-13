@@ -369,4 +369,72 @@ export class TableroComprasComponent implements OnInit, OnDestroy
     getUnidades(s: SolicitudCompra): string {
         return s.detalles?.map(d => d.unidad).filter(Boolean).join(', ') || '-';
     }
+
+    exportToCSV(): void {
+        const solicitudes = this.dataSource.filteredData;
+        if (!solicitudes || solicitudes.length === 0) return;
+
+        const headers = [
+            'Folio',
+            'Folio OC',
+            'Fecha Solicitud',
+            'Sucursal',
+            'Área Solicitante',
+            'Solicitante',
+            'Proyecto/Cliente',
+            'Folio Proyecto',
+            'Prioridad',
+            'Proveedor Sugerido',
+            'Fecha Requerida',
+            'Lugar Entrega',
+            'Moneda',
+            'Monto',
+            'Tipo Compra',
+            'Centro Costo',
+            'Estatus',
+            'Pendiente'
+        ];
+
+        const cleanText = (text: any) => {
+            if (text === null || text === undefined) return '';
+            let str = String(text);
+            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = solicitudes.map(s => [
+            s.idSolicitud,
+            cleanText(s.folioOC),
+            s.fechaSolicitud ? new Date(s.fechaSolicitud).toLocaleDateString() : '',
+            cleanText(s.sucursal),
+            cleanText(s.areaSolicitante),
+            cleanText(this.getUserLabel(s.idPersonaSolicitante)),
+            cleanText(s.proyectoCliente),
+            cleanText(s.folioProyecto),
+            cleanText(s.prioridad),
+            cleanText(s.proveedorSugerido),
+            s.fechaRequerida ? new Date(s.fechaRequerida).toLocaleDateString() : '',
+            cleanText(s.lugarEntrega),
+            cleanText(s.moneda),
+            s.monto || 0,
+            cleanText(s.tipoCompra),
+            cleanText(s.centroCosto),
+            cleanText(s.nombreEstatus),
+            this.getPendienteTotal(s)
+        ]);
+
+        const csvContent = '\ufeff' + [
+            headers.join(','),
+            ...rows.map(e => e.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Tablero_Compras_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }

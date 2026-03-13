@@ -30,7 +30,13 @@
                         [placeholder]="'Buscar solicitud por cualquier campo...'">
                 </mat-form-field>
             </div>
-            <div class="flex-none py-2 flex justify-end">
+            <div class="flex-none py-2 flex justify-end gap-2">
+                <button mat-flat-button color="primary"
+                    class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-4 shadow-sm"
+                    (click)="exportToCSV()">
+                    <mat-icon class="mr-2">download</mat-icon>
+                    <span>EXPORTAR EXCEL</span>
+                </button>
                 <button mat-flat-button color="primary" [routerLink]="['/administration/solicitudes-compra/new']"
                     class="rounded-lg px-6">
                     <mat-icon svgIcon="heroicons_outline:plus" class="mr-2"></mat-icon>
