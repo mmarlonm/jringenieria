@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, ReplaySubject, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'environments/environment';
-import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto } from './models/solicitud-compra.types';
+import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto } from './models/solicitud-compra.types';
 
 @Injectable({
     providedIn: 'root'
@@ -15,6 +15,14 @@ export class SolicitudCompraService {
     private _estatus: BehaviorSubject<CatEstatusCompra[]> = new BehaviorSubject([]);
 
     constructor(private _httpClient: HttpClient) { }
+
+    buscarProductos(filtro: string = ''): Observable<ProductoBuscadorDto[]> {
+        return this._httpClient.get<{ success: boolean, data: ProductoBuscadorDto[] }>(`${this.apiUrl}/buscar-productos`, {
+            params: { filtro }
+        }).pipe(
+            map(response => response.data || [])
+        );
+    }
 
     get solicitudes$(): Observable<SolicitudCompra[]> {
         return this._solicitudes.asObservable();

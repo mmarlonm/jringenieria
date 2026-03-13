@@ -76,3 +76,11 @@ export interface SolicitudCompraDetalleCreateDto {
     unidad: string;
     observaciones?: string;
 }
+
+export interface ProductoBuscadorDto {
+    productoId: number;
+    idRemoto?: number;
+    codigoProducto: string;
+    nombreProducto: string;
+    unidadMedida: string;
+}

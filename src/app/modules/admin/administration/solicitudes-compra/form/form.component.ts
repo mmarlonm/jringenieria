@@ -11,10 +11,12 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
-import { SolicitudCompraCreateDto } from '../models/solicitud-compra.types';
+import { SolicitudCompraCreateDto, ProductoBuscadorDto } from '../models/solicitud-compra.types';
+import { debounceTime, distinctUntilChanged, filter, map, Observable, of, startWith, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -35,7 +37,8 @@ import Swal from 'sweetalert2';
         MatDatepickerModule,
         MatNativeDateModule,
         MatTabsModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatAutocompleteModule
     ]
 })
 export class SolicitudCompraFormComponent implements OnInit {
@@ -44,6 +47,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     solicitudId: number;
     selectedFile: File | null = null;
     archivos: any[] = [];
+    filteredProducts$: Observable<ProductoBuscadorDto[]>[] = [];
 
     // Select options
     prioridades = ['Urgente', 'Alta', 'Normal'];
@@ -51,6 +55,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     centrosCosto = ['Proyecto específico', 'Operación sucursal', 'Administración'];
     areas = ['Proyectos', 'Almacén', 'Ventas', 'Administración', 'Marketing', 'RH'];
     formasPago = ['Debito', 'Credito'];
+    razonesSociales = ['Jesus Ricardo Mendez', 'JR Ingenieria Electrica'];
     sucursales: any[] = [];
 
     constructor(
@@ -122,7 +127,50 @@ export class SolicitudCompraFormComponent implements OnInit {
             unidad: ['', Validators.required],
             observaciones: ['']
         });
+
+        const index = this.detalles.length;
         this.detalles.push(detalleForm);
+        this._setupProductSearch(index);
+    }
+
+    private _setupProductSearch(index: number): void {
+        const control = this.detalles.at(index).get('materialServicio');
+        this.filteredProducts$[index] = control.valueChanges.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap(value => {
+                // Only search if it's a string and has at least 2 chars
+                if (typeof value === 'string' && value.length >= 2) {
+                    return this._solicitudCompraService.buscarProductos(value);
+                }
+                return of([]);
+            })
+        );
+    }
+
+    displayFn(value: any): string {
+        if (value && typeof value === 'object') {
+            return value.nombreProducto || value.codigoProducto || '';
+        }
+        return value || '';
+    }
+
+    onProductSelected(event: any, index: number): void {
+        const product = event.option.value as ProductoBuscadorDto;
+        const detailGroup = this.detalles.at(index);
+        
+        // Populate fields from selected product
+        detailGroup.patchValue({
+            materialServicio: product.nombreProducto, // We patch it back as string for manual edit later
+            descripcionEspecificacion: `${product.codigoProducto} - ${product.nombreProducto}`,
+            unidad: product.unidadMedida
+        }, { emitEvent: false });
+
+        // Force the input to show the name string instead of the object
+        // by resetting the control value to the name string
+        setTimeout(() => {
+            detailGroup.get('materialServicio').setValue(product.nombreProducto, { emitEvent: false });
+        });
     }
 
     removeDetalle(index: number): void {
@@ -148,6 +196,10 @@ export class SolicitudCompraFormComponent implements OnInit {
                 });
                 this.detalles.push(detalleForm);
             });
+
+            // Setup search for loaded details
+            this.detalles.controls.forEach((_, i) => this._setupProductSearch(i));
+
             this.loadArchivos(id);
         });
     }
