@@ -70,6 +70,25 @@
                     </td>
                 </ng-container>
 
+                <!-- Cuadrante (Matriz Eisenhower) Column -->
+                <ng-container matColumnDef="cuadranteId">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="whitespace-nowrap text-center">
+                        Matriz Eisenhower
+                    </th>
+                    <td mat-cell *matCellDef="let s" class="text-center p-0 whitespace-nowrap border-r border-b dark:border-gray-800"
+                        [style.background-color]="s.cuadranteId ? getCuadranteColor(s.cuadranteId) + '20' : ''" translate="no">
+                        <div *ngIf="s.cuadranteId" class="flex items-center justify-center h-full gap-2 px-2 py-3 min-w-40 min-h-[48px]">
+                            <div class="w-3 h-3 rounded-full" [style.background-color]="getCuadranteColor(s.cuadranteId)">
+                            </div>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider"
+                                  [style.color]="getCuadranteColor(s.cuadranteId)">
+                                {{ getCuadranteName(s.cuadranteId) }}
+                            </span>
+                        </div>
+                        <span *ngIf="!s.cuadranteId" class="text-xs text-secondary italic">Sin asignar</span>
+                    </td>
+                </ng-container>
+
                 <!-- Estatus -->
                 <ng-container matColumnDef="estatus">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Estatus</th>

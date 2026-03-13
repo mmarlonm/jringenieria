@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, map, Observable, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'environments/environment';
-import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto } from './models/solicitud-compra.types';
+import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto } from './models/solicitud-compra.types';
 
 @Injectable({
     providedIn: 'root'
@@ -72,11 +72,16 @@ export class SolicitudCompraService {
         return this._httpClient.post(`${this.apiUrl}/crear`, dto);
     }
 
-    actualizarEstatus(id: number, idEstatus: number, folioOc?: string): Observable<any> {
+    actualizarEstatus(id: number, idEstatus: number, folioOc?: string, idUsuario?: number): Observable<any> {
         let params: any = { idEstatus };
         if (folioOc) params.folioOc = folioOc;
-        
+        if (idUsuario) params.idUsuario = idUsuario;
+
         return this._httpClient.put(`${this.apiUrl}/${id}/estatus`, null, { params });
+    }
+
+    getHistorial(id: number): Observable<any> {
+        return this._httpClient.get<any>(`${this.apiUrl}/${id}/historial`);
     }
 
     eliminar(id: number): Observable<any> {

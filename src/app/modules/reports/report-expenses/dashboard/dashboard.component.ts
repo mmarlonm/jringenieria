@@ -130,6 +130,33 @@ export class ReportExpensesDashboardComponent implements OnInit {
         return this.fullCatalogs?.tipos?.find(t => t.tipoId === id)?.nombre || 'S/T';
     }
 
+    private getNombreSubtipo(id: number, expense?: Expense): string {
+        if (expense?.gastoSubtipo) return expense.gastoSubtipo.nombre;
+        return this.fullCatalogs?.subtipos?.find(s => s.subtipoId === id)?.nombre || 'S/T';
+    }
+
+    private getNombreProveedor(id: any, expense?: Expense): string {
+        if (!id) return 'S/P';
+        if (typeof id === 'string') return id;
+        if (expense?.gastoProveedor) return expense.gastoProveedor.nombre;
+        return this.fullCatalogs?.proveedores?.find(p => p.proveedorId === id)?.nombre || 'S/P';
+    }
+
+    private getNombreCuenta(id: number, expense?: Expense): string {
+        if (expense?.gastoCuenta) return expense.gastoCuenta.nombre;
+        return this.fullCatalogs?.cuentas?.find(c => c.cuentaId === id)?.nombre || 'S/C';
+    }
+
+    private getNombreFormaPago(id: number, expense?: Expense): string {
+        if (expense?.gastoFormaPago) return expense.gastoFormaPago.nombre;
+        return this.fullCatalogs?.formasPago?.find(f => f.formaPagoId === id)?.nombre || 'S/F';
+    }
+
+    private getNombreUnidad(id: number, expense?: Expense): string {
+        if (expense?.gastoUnidad) return expense.gastoUnidad.nombre;
+        return id ? id.toString() : 'S/U';
+    }
+
     /**
      * Se ejecuta al cargar y al presionar el botón "Consultar"
      */
@@ -411,9 +438,20 @@ export class ReportExpensesDashboardComponent implements OnInit {
             'Descripción',
             'Tipo',
             'Concepto',
+            'Subtipo',
             'Área',
+            'Proveedor',
+            'Cuenta',
+            'No. Cuenta',
+            'Forma Pago',
+            'Factura',
+            'Folio Fiscal',
+            'Tipo Comprobante',
             'Movimiento',
-            'Monto'
+            'Moneda',
+            'Importe',
+            'Impuestos',
+            'Unidad'
         ];
 
         const cleanText = (text: any) => {
@@ -428,9 +466,20 @@ export class ReportExpensesDashboardComponent implements OnInit {
             cleanText(exp.nombreGasto),
             cleanText(this.getNombreTipo(exp.tipoId, exp)),
             cleanText(this.getNombreConcepto(exp.conceptoId, exp)),
+            cleanText(this.getNombreSubtipo(exp.subtipoId, exp)),
             cleanText(this.getNombreArea(exp.areaId, exp)),
+            cleanText(this.getNombreProveedor(exp.proveedor, exp)),
+            cleanText(this.getNombreCuenta(exp.cuentaId, exp)),
+            cleanText(exp.numeroCuenta),
+            cleanText(this.getNombreFormaPago(exp.formaPagoId, exp)),
+            cleanText(exp.factura),
+            cleanText(exp.folioFiscal),
+            cleanText(exp.tipoComprobante),
             (exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'Ingreso' : 'Egreso',
-            exp.cantidad
+            cleanText(exp.moneda),
+            exp.cantidad,
+            exp.impuestos || 0,
+            cleanText(this.getNombreUnidad(exp.unidadId, exp))
         ]);
 
         const csvContent = '\ufeff' + [

@@ -3,16 +3,19 @@
     <!-- Header -->
     <div class="flex flex-col p-3 sm:px-6 sm:py-4 border-b bg-white dark:bg-transparent">
         <div class="flex-auto min-w-0">
-            <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">Tablero de Compras</div>
+            <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
+                Tablero de Compras</div>
             <div class="flex items-center mt-0.5 font-medium text-secondary">
                 {{ dataSource.data.length }} solicitudes registradas en el sistema
             </div>
-            
+
             <!-- Active Filter Badge -->
-            <div *ngIf="selectedStatusId" class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+            <div *ngIf="selectedStatusId"
+                class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
                 <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
                 Filtrado por: {{ getStatusName(selectedStatusId) | uppercase }}
-                <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)" matTooltip="Quitar filtro">
+                <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)"
+                    matTooltip="Quitar filtro">
                     <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
                 </button>
             </div>
@@ -23,11 +26,13 @@
             <div class="flex-auto w-full">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
                     <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'" [placeholder]="'Buscar solicitud por cualquier campo...'">
+                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'"
+                        [placeholder]="'Buscar solicitud por cualquier campo...'">
                 </mat-form-field>
             </div>
             <div class="flex-none py-2 flex justify-end">
-                <button mat-flat-button color="primary" [routerLink]="['/administration/solicitudes-compra/new']" class="rounded-lg px-6">
+                <button mat-flat-button color="primary" [routerLink]="['/administration/solicitudes-compra/new']"
+                    class="rounded-lg px-6">
                     <mat-icon svgIcon="heroicons_outline:plus" class="mr-2"></mat-icon>
                     <span>NUEVA SOLICITUD</span>
                 </button>
@@ -40,11 +45,12 @@
 
         <!-- Reference Design: Process Arrow Flow -->
         <div class="process-container shadow-sm border border-gray-100 bg-white">
-            
+
             <!-- Arrow Flow -->
             <div class="arrow-flow mt-6">
                 <!-- A: Creada -->
-                <div class="arrow-step step-1" [class.active]="selectedStatusId === 1" (click)="filterByStatus(1)" [matTooltip]="'Creada'">
+                <div class="arrow-step step-1" [class.active]="selectedStatusId === 1" (click)="filterByStatus(1)"
+                    [matTooltip]="'Creada'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:document-plus" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countCreada }}</span>
@@ -53,7 +59,8 @@
                 </div>
 
                 <!-- B: Revisión -->
-                <div class="arrow-step step-2" [class.active]="selectedStatusId === 2" (click)="filterByStatus(2)" [matTooltip]="'Revisión'">
+                <div class="arrow-step step-2" [class.active]="selectedStatusId === 2" (click)="filterByStatus(2)"
+                    [matTooltip]="'Revisión'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:magnifying-glass" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countRevision }}</span>
@@ -62,7 +69,8 @@
                 </div>
 
                 <!-- C: Cotización -->
-                <div class="arrow-step step-3" [class.active]="selectedStatusId === 3" (click)="filterByStatus(3)" [matTooltip]="'Cotización'">
+                <div class="arrow-step step-3" [class.active]="selectedStatusId === 3" (click)="filterByStatus(3)"
+                    [matTooltip]="'Cotización'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:currency-dollar" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countCotizacion }}</span>
@@ -71,7 +79,8 @@
                 </div>
 
                 <!-- D: Aprobación -->
-                <div class="arrow-step step-4" [class.active]="selectedStatusId === 4" (click)="filterByStatus(4)" [matTooltip]="'Aprobación'">
+                <div class="arrow-step step-4" [class.active]="selectedStatusId === 4" (click)="filterByStatus(4)"
+                    [matTooltip]="'Aprobación'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:check-badge" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countAprobacion }}</span>
@@ -80,7 +89,8 @@
                 </div>
 
                 <!-- E: OC -->
-                <div class="arrow-step step-5" [class.active]="selectedStatusId === 5" (click)="filterByStatus(5)" [matTooltip]="'Orden Compra'">
+                <div class="arrow-step step-5" [class.active]="selectedStatusId === 5" (click)="filterByStatus(5)"
+                    [matTooltip]="'Orden Compra'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:document-text" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countOC }}</span>
@@ -89,7 +99,8 @@
                 </div>
 
                 <!-- F: Tránsito -->
-                <div class="arrow-step step-6" [class.active]="selectedStatusId === 6" (click)="filterByStatus(6)" [matTooltip]="'En Tránsito'">
+                <div class="arrow-step step-6" [class.active]="selectedStatusId === 6" (click)="filterByStatus(6)"
+                    [matTooltip]="'En Tránsito'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:truck" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countTransito }}</span>
@@ -98,7 +109,8 @@
                 </div>
 
                 <!-- G: Recibido -->
-                <div class="arrow-step step-7" [class.active]="selectedStatusId === 7" (click)="filterByStatus(7)" [matTooltip]="'Recibido'">
+                <div class="arrow-step step-7" [class.active]="selectedStatusId === 7" (click)="filterByStatus(7)"
+                    [matTooltip]="'Recibido'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:archive-box" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countRecibido }}</span>
@@ -107,7 +119,8 @@
                 </div>
 
                 <!-- H: Cerrada -->
-                <div class="arrow-step step-8" [class.active]="selectedStatusId === 8" (click)="filterByStatus(8)" [matTooltip]="'Cerrada'">
+                <div class="arrow-step step-8" [class.active]="selectedStatusId === 8" (click)="filterByStatus(8)"
+                    [matTooltip]="'Cerrada'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:lock-closed" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countCerrada }}</span>
@@ -120,14 +133,30 @@
             <div class="timeline-tracker">
                 <div class="line-dashed"></div>
                 <!-- Dots aligned with arrows -->
-                <div class="dot-point" [class.active]="selectedStatusId === 1"><div class="dot-circle dot-1"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 2"><div class="dot-circle dot-2"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 3"><div class="dot-circle dot-3"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 4"><div class="dot-circle dot-4"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 5"><div class="dot-circle dot-5"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 6"><div class="dot-circle dot-6"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 7"><div class="dot-circle dot-7"></div></div>
-                <div class="dot-point" [class.active]="selectedStatusId === 8"><div class="dot-circle dot-8"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 1">
+                    <div class="dot-circle dot-1"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 2">
+                    <div class="dot-circle dot-2"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 3">
+                    <div class="dot-circle dot-3"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 4">
+                    <div class="dot-circle dot-4"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 5">
+                    <div class="dot-circle dot-5"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 6">
+                    <div class="dot-circle dot-6"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 7">
+                    <div class="dot-circle dot-7"></div>
+                </div>
+                <div class="dot-point" [class.active]="selectedStatusId === 8">
+                    <div class="dot-circle dot-8"></div>
+                </div>
             </div>
 
         </div>
@@ -136,6 +165,77 @@
         <div class="bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100">
             <div class="overflow-x-auto min-h-[400px]">
                 <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
+
+                    <!-- Folio -->
+                    <ng-container matColumnDef="folio">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
+                    </ng-container>
+
+                    <!-- Fecha de solicitud -->
+                    <ng-container matColumnDef="fechaSolicitud">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">{{ s.fechaSolicitud |
+                            date:'dd/MM/yyyy' }}</td>
+                    </ng-container>
+
+                    <!-- Sucursal -->
+                    <ng-container matColumnDef="sucursal">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Sucursal</th>
+                        <td mat-cell *matCellDef="let s">{{ s.sucursal }}</td>
+                    </ng-container>
+
+                    <!-- Área solicitante -->
+                    <ng-container matColumnDef="areaSolicitante">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Área</th>
+                        <td mat-cell *matCellDef="let s">{{ s.areaSolicitante }}</td>
+                    </ng-container>
+
+                    <!-- Solicitante -->
+                    <ng-container matColumnDef="solicitante">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Solicitante</th>
+                        <!-- Asumiremos que nos muestran el ID o el nombre de otra forma (DTO) -->
+                        <td mat-cell *matCellDef="let s">{{ s.idPersonaSolicitante }}</td>
+                    </ng-container>
+
+                    <!-- Proyecto / Cliente -->
+                    <ng-container matColumnDef="proyectoCliente">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Proyecto / Cliente</th>
+                        <td mat-cell *matCellDef="let s">{{ s.proyectoCliente }}</td>
+                    </ng-container>
+
+                    <!-- Folio del Proyecto -->
+                    <ng-container matColumnDef="folioProyecto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio del proyecto</th>
+                        <td mat-cell *matCellDef="let s">{{ s.folioProyecto }}</td>
+                    </ng-container>
+
+                    <!-- Prioridad -->
+                    <ng-container matColumnDef="prioridad">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Prioridad</th>
+                        <td mat-cell *matCellDef="let s">
+                            <span class="px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider" [ngClass]="{
+                                    'bg-red-100 text-red-700': s.prioridad === 'Urgente',
+                                    'bg-amber-100 text-amber-700': s.prioridad === 'Alta',
+                                    'bg-blue-100 text-blue-700': s.prioridad === 'Normal'
+                                }">
+                                {{ s.prioridad }}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Proveedor Sugerido -->
+                    <ng-container matColumnDef="proveedorSugerido">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor sugerido</th>
+                        <td mat-cell *matCellDef="let s">{{ s.proveedorSugerido }}</td>
+                    </ng-container>
+
+                    <!-- Datos bancarios proveedor -->
+                    <ng-container matColumnDef="datosBancarios">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Datos bancarios proveedor</th>
+                        <td mat-cell *matCellDef="let s" class="max-w-[150px] truncate text-xs"
+                            [matTooltip]="s.datosBancariosProveedor">{{ s.datosBancariosProveedor }}</td>
+                    </ng-container>
 
                     <!-- Fecha requerida -->
                     <ng-container matColumnDef="fechaRequerida">
@@ -165,7 +265,7 @@
                     <ng-container matColumnDef="monto">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
                         <td mat-cell *matCellDef="let s" class="text-right font-bold pr-8">
-                            {{ getMontoTotal(s) | currency:s.moneda }}
+                            {{ s.monto | currency:s.moneda }}
                         </td>
                     </ng-container>
 
@@ -188,7 +288,8 @@
                     <!-- Comentarios -->
                     <ng-container matColumnDef="comentarios">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Observaciones</th>
-                        <td mat-cell *matCellDef="let s" class="max-w-[200px] truncate italic text-xs text-secondary" [matTooltip]="s.comentariosObservaciones">
+                        <td mat-cell *matCellDef="let s" class="max-w-[200px] truncate italic text-xs text-secondary"
+                            [matTooltip]="s.comentariosObservaciones">
                             {{ s.comentariosObservaciones }}
                         </td>
                     </ng-container>
@@ -196,15 +297,18 @@
                     <!-- Estatus -->
                     <ng-container matColumnDef="estatus">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Estatus</th>
-                        <td mat-cell *matCellDef="let s" class="px-2 py-3 cursor-pointer whitespace-nowrap text-center" [matMenuTriggerFor]="statusMenu">
+                        <td mat-cell *matCellDef="let s" class="px-2 py-3 cursor-pointer whitespace-nowrap text-center"
+                            [matMenuTriggerFor]="statusMenu">
                             <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-sm"
-                                 [style.background-color]="getColorByEstatusId(s.idEstatus)">
+                                [style.background-color]="getColorByEstatusId(s.idEstatus)">
                                 {{ getStatusName(s.idEstatus) }}
                             </div>
                             <mat-menu #statusMenu="matMenu">
-                                <button mat-menu-item *ngFor="let cat of estatus" (click)="cambiarEstatus(s.idSolicitud, cat.idEstatus)">
+                                <button mat-menu-item *ngFor="let cat of estatus"
+                                    (click)="cambiarEstatus(s.idSolicitud, cat.idEstatus)">
                                     <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="getColorByEstatusId(cat.idEstatus)"></div>
+                                        <div class="w-3 h-3 rounded-full mr-3"
+                                            [style.background-color]="getColorByEstatusId(cat.idEstatus)"></div>
                                         <span>{{ cat.nombreEstatus }}</span>
                                     </div>
                                 </button>
@@ -227,9 +331,36 @@
                         <th mat-header-cell *matHeaderCellDef class="text-center w-28">Acciones</th>
                         <td mat-cell *matCellDef="let s" class="text-center">
                             <div class="flex items-center justify-center gap-1">
-                                <button mat-icon-button (click)="verDetalle(s.idSolicitud); $event.stopPropagation()" matTooltip="Ver detalle">
-                                    <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                <button mat-icon-button (click)="verDetalle(s.idSolicitud); $event.stopPropagation()"
+                                    matTooltip="Ver detalle">
+                                    <mat-icon class="icon-size-5 text-primary"
+                                        [svgIcon]="'heroicons_solid:eye'"></mat-icon>
                                 </button>
+                                <button mat-icon-button (click)="verHistorial(s.idSolicitud); $event.stopPropagation()"
+                                    matTooltip="Ver historial de estatus"
+                                    class="text-indigo-500 bg-indigo-50/50 hover:bg-indigo-100/50">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
+                    <!-- Cuadrante (Matriz Eisenhower) Column -->
+                    <ng-container matColumnDef="cuadranteId">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="whitespace-nowrap text-center">
+                            Matriz Eisenhower
+                        </th>
+                        <td mat-cell *matCellDef="let s"
+                            class="text-center p-0 whitespace-nowrap border-r border-b dark:border-gray-800"
+                            [style.background-color]="getCuadranteColor(s.cuadranteId) + '20'" translate="no">
+                            <!-- EXACT Tasks Module Implementation styling -->
+                            <div class="flex items-center justify-center h-full gap-2 px-2 py-3 min-w-40 min-h-[48px]">
+                                <div class="w-3 h-3 rounded-full"
+                                    [style.background-color]="getCuadranteColor(s.cuadranteId)">
+                                </div>
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider"
+                                    [style.color]="getCuadranteColor(s.cuadranteId)">
+                                    {{ getCuadranteName(s.cuadranteId) }}
+                                </span>
                             </div>
                         </td>
                     </ng-container>

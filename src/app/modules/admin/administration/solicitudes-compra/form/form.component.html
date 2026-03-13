@@ -7,69 +7,68 @@
         <!-- TAB 1: Información General -->
         <mat-tab label="Información General">
             <div class="p-4">
-                <form [formGroup]="solicitudForm" class="flex flex-col gap-4 mt-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Left Column -->
-                        <div class="flex flex-col gap-4">
-                            <mat-form-field appearance="fill">
-                                <mat-label>Folio</mat-label>
-                                <input matInput formControlName="idSolicitud" readonly>
-                            </mat-form-field>
-                            
-                            <mat-form-field appearance="fill">
-                                <mat-label>Sucursal</mat-label>
-                                <mat-select formControlName="sucursal">
-                                    <mat-option *ngFor="let s of sucursales" [value]="s.nombre">{{s.nombre}}</mat-option>
+
+                <div
+                    class="flex items-center gap-4 p-4 mt-2 mb-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+                    <div
+                        class="flex items-center justify-center min-w-[3rem] h-12 rounded-xl bg-indigo-500 shadow-inner">
+                        <mat-icon class="icon-size-6 text-white" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em] mb-1">Folio
+                            de Solicitud</span>
+                        <div class="flex items-end gap-2 leading-none">
+                            <span *ngIf="solicitudForm.get('idSolicitud')?.value; else newRequest"
+                                class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                                {{ solicitudForm.get('idSolicitud')?.value}}
+                            </span>
+                            <ng-template #newRequest>
+                                <span
+                                    class="px-2 py-0.5 rounded text-sm font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-widest border border-indigo-200 dark:border-indigo-800/50">
+                                    NUEVA
+                                </span>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+
+                <form [formGroup]="solicitudForm" class="flex flex-col gap-4">
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+
+                        <!-- Panel 1: Datos Internos -->
+                        <div
+                            class="flex flex-col p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
+                            <h3
+                                class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <mat-icon class="icon-size-5"
+                                    [svgIcon]="'heroicons_outline:building-office-2'"></mat-icon>
+                                Datos Internos
+                            </h3>
+
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Razón Social (Facturación)</mat-label>
+                                <mat-select formControlName="razonSocial">
+                                    <mat-option *ngFor="let r of razonesSociales" [value]="r">{{r}}</mat-option>
                                 </mat-select>
                             </mat-form-field>
 
-                            <mat-form-field appearance="fill">
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Sucursal</mat-label>
+                                <mat-select formControlName="sucursal">
+                                    <mat-option *ngFor="let s of sucursales"
+                                        [value]="s.nombre">{{s.nombre}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Área solicitante</mat-label>
                                 <mat-select formControlName="areaSolicitante">
                                     <mat-option *ngFor="let a of areas" [value]="a">{{a}}</mat-option>
                                 </mat-select>
                             </mat-form-field>
 
-                            <mat-form-field appearance="fill">
-                                <mat-label>Proyecto / Cliente</mat-label>
-                                <input matInput formControlName="proyectoCliente">
-                            </mat-form-field>
-
-                            <mat-form-field appearance="fill">
-                                <mat-label>Lugar de entrega</mat-label>
-                                <input matInput formControlName="lugarEntrega">
-                            </mat-form-field>
-                        </div>
-
-                        <!-- Middle Column -->
-                        <div class="flex flex-col gap-4">
-                            <mat-form-field appearance="fill">
-                                <mat-label>Prioridad</mat-label>
-                                <mat-select formControlName="prioridad">
-                                    <mat-option *ngFor="let p of prioridades" [value]="p">{{p}}</mat-option>
-                                </mat-select>
-                            </mat-form-field>
-
-                            <mat-form-field appearance="fill">
-                                <mat-label>Proveedor sugerido</mat-label>
-                                <input matInput formControlName="proveedorSugerido">
-                            </mat-form-field>
-
-                            <mat-form-field appearance="fill">
-                                <mat-label>Fecha requerida</mat-label>
-                                <input matInput [matDatepicker]="picker" formControlName="fechaRequerida">
-                                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                                <mat-datepicker #picker></mat-datepicker>
-                            </mat-form-field>
-
-                            <mat-form-field appearance="fill">
-                                <mat-label>Tipo de compra</mat-label>
-                                <mat-select formControlName="tipoCompra">
-                                    <mat-option *ngFor="let t of tiposCompra" [value]="t">{{t}}</mat-option>
-                                </mat-select>
-                            </mat-form-field>
-
-                            <mat-form-field appearance="fill">
+                            <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Centro de costo</mat-label>
                                 <mat-select formControlName="centroCosto">
                                     <mat-option *ngFor="let c of centrosCosto" [value]="c">{{c}}</mat-option>
@@ -77,34 +76,131 @@
                             </mat-form-field>
                         </div>
 
-                        <!-- Right Column -->
-                        <div class="flex flex-col gap-4">
-                            <mat-form-field appearance="fill">
+                        <!-- Panel 2: Detalles del Requerimiento -->
+                        <div
+                            class="flex flex-col p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
+                            <h3
+                                class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:shopping-cart'"></mat-icon>
+                                Requerimiento
+                            </h3>
+
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Tipo de compra</mat-label>
+                                <mat-select formControlName="tipoCompra">
+                                    <mat-option *ngFor="let t of tiposCompra" [value]="t">{{t}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Proyecto / Cliente</mat-label>
+                                <input matInput formControlName="proyectoCliente">
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Folio del proyecto</mat-label>
                                 <input matInput formControlName="folioProyecto">
                             </mat-form-field>
 
-                            <mat-form-field appearance="fill">
-                                <mat-label>Moneda</mat-label>
-                                <mat-select formControlName="moneda">
-                                    <mat-option value="MXN">MXN</mat-option>
-                                    <mat-option value="USD">USD</mat-option>
-                                </mat-select>
-                            </mat-form-field>
+                            <div class="grid grid-cols-2 gap-4 w-full">
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Prioridad</mat-label>
+                                    <mat-select formControlName="prioridad">
+                                        <mat-option *ngFor="let p of prioridades" [value]="p">{{p}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
 
-                            <mat-form-field appearance="fill">
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Matriz Eisenhower</mat-label>
+                                    <mat-select formControlName="cuadranteId">
+                                        <mat-option [value]="null">Sin asignar</mat-option>
+                                        <mat-option [value]="1"><span class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-rose-500"></div>Impt. y Urgente
+                                            </span></mat-option>
+                                        <mat-option [value]="2"><span class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-amber-400"></div>Impt., No Urgente
+                                            </span></mat-option>
+                                        <mat-option [value]="3"><span class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-emerald-400"></div>No Impt., Urgente
+                                            </span></mat-option>
+                                        <mat-option [value]="4"><span class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-sky-400"></div>No Impt., No Urg.
+                                            </span></mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <!-- Panel 3: Finanzas y Logística -->
+                        <div
+                            class="flex flex-col p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
+                            <h3
+                                class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <mat-icon class="icon-size-5"
+                                    [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                                Finanzas / Logística
+                            </h3>
+
+                            <div class="grid grid-cols-2 gap-4 w-full">
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Moneda</mat-label>
+                                    <mat-select formControlName="moneda">
+                                        <mat-option value="MXN">MXN</mat-option>
+                                        <mat-option value="USD">USD</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Monto</mat-label>
+                                    <input matInput type="number" formControlName="monto">
+                                </mat-form-field>
+                            </div>
+
+                            <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Forma de pago</mat-label>
                                 <mat-select formControlName="formaPago">
                                     <mat-option *ngFor="let f of formasPago" [value]="f">{{f}}</mat-option>
                                 </mat-select>
                             </mat-form-field>
 
-                            <mat-form-field appearance="fill">
-                                <mat-label>Razón Social</mat-label>
-                                <mat-select formControlName="razonSocial">
-                                    <mat-option *ngFor="let r of razonesSociales" [value]="r">{{r}}</mat-option>
-                                </mat-select>
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Fecha requerida</mat-label>
+                                <input matInput [matDatepicker]="picker" formControlName="fechaRequerida">
+                                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker #picker></mat-datepicker>
                             </mat-form-field>
+
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Lugar de entrega</mat-label>
+                                <input matInput formControlName="lugarEntrega">
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Panel 4: Información del Proveedor Sugerido (Spans width when wrapped) -->
+                        <div
+                            class="flex flex-col p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 gap-4 lg:col-span-2 xl:col-span-3">
+                            <h3
+                                class="text-sm font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <mat-icon class="icon-size-5 text-slate-500"
+                                    [svgIcon]="'heroicons_outline:truck'"></mat-icon>
+                                Información del Proveedor Sugerido
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Nombre / Razón Social del Proveedor</mat-label>
+                                    <input matInput formControlName="proveedorSugerido">
+                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
+                                        [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>RFC del Proveedor</mat-label>
+                                    <input matInput formControlName="rfc" class="uppercase">
+                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
+                                        [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                </mat-form-field>
+                            </div>
                         </div>
                     </div>
 
@@ -128,17 +224,19 @@
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold flex items-center gap-2">
                                 <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
-                                Archivos Adjuntos
+                                ADJUNTAR COTIZACION
                             </h3>
                             <button mat-stroked-button color="primary" type="button" (click)="fileInput.click()">
                                 <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                                 Subir Nuevo Archivo
                             </button>
-                            <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.jpg,.png">
+                            <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)"
+                                accept=".pdf,.doc,.docx,.jpg,.png">
                         </div>
 
                         <!-- Selected File (Pending Upload) -->
-                        <div *ngIf="selectedFile" class="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2">
+                        <div *ngIf="selectedFile"
+                            class="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2">
                             <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
                             <div class="flex flex-col flex-1">
                                 <span class="text-sm font-bold text-primary-900">{{ selectedFile.name }}</span>
@@ -151,27 +249,36 @@
 
                         <!-- Existing Files -->
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            <div *ngFor="let file of archivos" class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow group">
-                                <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg group-hover:bg-primary-50 transition-colors">
-                                    <mat-icon class="text-gray-500 group-hover:text-primary transition-colors" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                            <div *ngFor="let file of archivos"
+                                class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow group">
+                                <div
+                                    class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg group-hover:bg-primary-50 transition-colors">
+                                    <mat-icon class="text-gray-500 group-hover:text-primary transition-colors"
+                                        [svgIcon]="'heroicons_outline:document'"></mat-icon>
                                 </div>
                                 <div class="flex flex-col flex-1 truncate">
-                                    <span class="text-sm font-medium text-gray-900 truncate" [matTooltip]="file.nombreArchivo">{{ file.nombreArchivo }}</span>
+                                    <span class="text-sm font-medium text-gray-900 truncate"
+                                        [matTooltip]="file.nombreArchivo">{{ file.nombreArchivo }}</span>
                                     <span class="text-xs text-gray-500">Archivo guardado</span>
                                 </div>
                                 <div class="flex gap-1">
-                                    <button mat-icon-button color="primary" (click)="descargarArchivo(file.nombreArchivo)" matTooltip="Descargar">
-                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                                    <button mat-icon-button color="primary"
+                                        (click)="descargarArchivo(file.nombreArchivo)" matTooltip="Descargar">
+                                        <mat-icon class="icon-size-5"
+                                            [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
                                     </button>
-                                    <button mat-icon-button color="warn" (click)="eliminarArchivo(file.nombreArchivo)" matTooltip="Eliminar">
+                                    <button mat-icon-button color="warn" (click)="eliminarArchivo(file.nombreArchivo)"
+                                        matTooltip="Eliminar">
                                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div *ngIf="archivos.length === 0 && !selectedFile" class="p-6 text-center border-2 border-dashed rounded-xl text-gray-400 bg-white">
-                            <mat-icon class="icon-size-10 mb-2 opacity-30" [svgIcon]="'heroicons_outline:document-plus'"></mat-icon>
+                        <div *ngIf="archivos.length === 0 && !selectedFile"
+                            class="p-6 text-center border-2 border-dashed rounded-xl text-gray-400 bg-white">
+                            <mat-icon class="icon-size-10 mb-2 opacity-30"
+                                [svgIcon]="'heroicons_outline:document-plus'"></mat-icon>
                             <p class="text-sm">No hay archivos adjuntos en esta solicitud.</p>
                         </div>
                     </div>
@@ -205,65 +312,84 @@
                         </thead>
                         <tbody [formGroup]="solicitudForm">
                             <ng-container formArrayName="detalles">
-                                <tr *ngFor="let d of detalles.controls; let i = index" [formGroupName]="i" class="hover:bg-gray-50 transition-colors">
+                                <tr *ngFor="let d of detalles.controls; let i = index" [formGroupName]="i"
+                                    class="hover:bg-gray-50 transition-colors">
                                     <td class="p-2 border text-center font-bold">
                                         {{ d.get('partida').value }}
                                     </td>
                                     <td class="p-2 border relative group/search">
                                         <div class="flex items-center">
-                                            <input class="w-full p-1 bg-transparent border-none outline-none text-sm placeholder:text-gray-300" 
-                                                   formControlName="materialServicio" 
-                                                   [matAutocomplete]="auto"
-                                                   placeholder="Buscar producto o escribir manual...">
-                                            <mat-icon class="icon-size-4 text-gray-400 group-hover/search:text-primary transition-colors" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                                            <input
+                                                class="w-full p-1 bg-transparent border-none outline-none text-sm placeholder:text-gray-300"
+                                                formControlName="materialServicio" [matAutocomplete]="auto"
+                                                placeholder="Buscar producto o escribir manual...">
+                                            <mat-icon
+                                                class="icon-size-4 text-gray-400 group-hover/search:text-primary transition-colors"
+                                                [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
                                         </div>
 
-                                        <mat-autocomplete #auto="matAutocomplete" 
-                                                        [displayWith]="displayFn"
-                                                        class="min-w-100"
-                                                        (optionSelected)="onProductSelected($event, i)">
-                                            
+                                        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn"
+                                            class="min-w-100" (optionSelected)="onProductSelected($event, i)">
+
                                             <!-- Results from catalog -->
-                                            <mat-option *ngFor="let product of (filteredProducts$[i] | async)" [value]="product" class="h-auto py-2 border-b last:border-0 border-gray-100">
+                                            <mat-option *ngFor="let product of (filteredProducts$[i] | async)"
+                                                [value]="product"
+                                                class="h-auto py-2 border-b last:border-0 border-gray-100">
                                                 <div class="flex flex-col leading-tight">
                                                     <div class="flex items-center justify-between mb-0.5">
-                                                        <span class="text-xs font-black text-primary">{{ product.codigoProducto }}</span>
-                                                        <span class="text-[9px] px-1.5 py-0.5 bg-amber-100 text-amber-700 font-bold rounded uppercase tabular-nums">
+                                                        <span class="text-xs font-black text-primary">{{
+                                                            product.codigoProducto }}</span>
+                                                        <span
+                                                            class="text-[9px] px-1.5 py-0.5 bg-amber-100 text-amber-700 font-bold rounded uppercase tabular-nums">
                                                             {{ product.unidadMedida }}
                                                         </span>
                                                     </div>
-                                                    <span class="text-[11px] font-medium text-gray-700 dark:text-gray-200 break-words">{{ product.nombreProducto }}</span>
+                                                    <span
+                                                        class="text-[11px] font-medium text-gray-700 dark:text-gray-200 break-words">{{
+                                                        product.nombreProducto }}</span>
                                                     <div class="mt-1 flex items-center gap-1 opacity-50">
-                                                        <mat-icon class="icon-size-3" [svgIcon]="'heroicons_mini:tag'"></mat-icon>
-                                                        <span class="text-[8px] font-bold tracking-tighter uppercase">ID Catálogo: {{ product.productoId }}</span>
+                                                        <mat-icon class="icon-size-3"
+                                                            [svgIcon]="'heroicons_mini:tag'"></mat-icon>
+                                                        <span class="text-[8px] font-bold tracking-tighter uppercase">ID
+                                                            Catálogo: {{ product.productoId }}</span>
                                                     </div>
                                                 </div>
                                             </mat-option>
 
                                             <!-- Manual entry hint -->
-                                            <mat-option *ngIf="d.get('materialServicio').value && (filteredProducts$[i] | async)?.length === 0" disabled class="h-auto py-3">
+                                            <mat-option
+                                                *ngIf="d.get('materialServicio').value && (filteredProducts$[i] | async)?.length === 0"
+                                                disabled class="h-auto py-3">
                                                 <div class="flex items-center gap-2 text-secondary italic">
-                                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:pencil-square'"></mat-icon>
-                                                    <span class="text-xs">Usando entrada manual: "{{ d.get('materialServicio').value }}"</span>
+                                                    <mat-icon class="icon-size-4"
+                                                        [svgIcon]="'heroicons_solid:pencil-square'"></mat-icon>
+                                                    <span class="text-xs">Usando entrada manual: "{{
+                                                        d.get('materialServicio').value }}"</span>
                                                 </div>
                                             </mat-option>
                                         </mat-autocomplete>
                                     </td>
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none" formControlName="descripcionEspecificacion" placeholder="Detalles...">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none"
+                                            formControlName="descripcionEspecificacion" placeholder="Detalles...">
                                     </td>
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center" type="number" formControlName="cantidad">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center"
+                                            type="number" formControlName="cantidad">
                                     </td>
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center" formControlName="unidad">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center"
+                                            formControlName="unidad">
                                     </td>
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none" formControlName="observaciones">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none"
+                                            formControlName="observaciones">
                                     </td>
                                     <td class="p-2 border text-center">
-                                        <button mat-icon-button color="warn" (click)="removeDetalle(i)" matTooltip="Eliminar partida">
-                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                        <button mat-icon-button color="warn" (click)="removeDetalle(i)"
+                                            matTooltip="Eliminar partida">
+                                            <mat-icon class="icon-size-5"
+                                                [svgIcon]="'heroicons_outline:trash'"></mat-icon>
                                         </button>
                                     </td>
                                 </tr>
@@ -272,8 +398,10 @@
                     </table>
                 </div>
 
-                <div *ngIf="detalles.length === 0" class="p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4">
-                    <mat-icon class="icon-size-12 mb-2 opacity-50" [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
+                <div *ngIf="detalles.length === 0"
+                    class="p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4">
+                    <mat-icon class="icon-size-12 mb-2 opacity-50"
+                        [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
                     <p class="text-xl font-medium">No hay partidas en esta solicitud.</p>
                     <p class="text-secondary">Usa el botón "Añadir Partida" para comenzar.</p>
                 </div>

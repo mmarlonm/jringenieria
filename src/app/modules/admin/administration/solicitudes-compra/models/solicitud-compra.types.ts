@@ -25,6 +25,9 @@ export interface SolicitudCompra {
     moneda: string;
     formaPago?: string;
     razonSocial: string;
+    rfc?: string;
+    monto?: number;
+    cuadranteId?: number;
     idEstatus: number;
     nombreEstatus: string;
 
@@ -65,6 +68,9 @@ export interface SolicitudCompraCreateDto {
     moneda: string;
     formaPago?: string;
     razonSocial: string;
+    rfc?: string;
+    monto?: number;
+    cuadranteId?: number;
     detalles: SolicitudCompraDetalleCreateDto[];
 }
 
@@ -83,4 +89,13 @@ export interface ProductoBuscadorDto {
     codigoProducto: string;
     nombreProducto: string;
     unidadMedida: string;
+}
+
+export interface HistorialEstatusDto {
+    idHistorial: number;
+    idEstatus: number;
+    nombreEstatus: string;
+    idUsuario: number;
+    fechaCambio: string | Date;
+    comentarios?: string;
 }

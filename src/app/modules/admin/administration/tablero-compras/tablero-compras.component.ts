@@ -15,6 +15,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { SolicitudCompraService } from '../solicitudes-compra/solicitud-compra.service';
 import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/solicitud-compra.types';
 import { SolicitudDetalleDialogComponent } from './solicitud-detalle-dialog/solicitud-detalle-dialog.component';
+import { HistorialDialogComponent } from './historial-dialog/historial-dialog.component';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -35,12 +36,23 @@ import Swal from 'sweetalert2';
         MatTooltipModule,
         MatDialogModule,
         SolicitudDetalleDialogComponent,
+        HistorialDialogComponent,
         RouterLink
     ]
 })
 export class TableroComprasComponent implements OnInit, OnDestroy
 {
     displayedColumns: string[] = [
+        'folio',
+        'fechaSolicitud',
+        'sucursal',
+        'areaSolicitante',
+        'solicitante',
+        'proyectoCliente',
+        'folioProyecto',
+        'prioridad',
+        'proveedorSugerido',
+        'datosBancarios',
         'fechaRequerida',
         'lugarEntrega',
         'moneda',
@@ -48,6 +60,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         'tipoCompra',
         'centroCosto',
         'comentarios',
+        'cuadranteId',
         'estatus',
         'pendiente',
         'acciones'
@@ -127,38 +140,90 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         });
     }
 
+    verHistorial(idSolicitud: number): void {
+        this._dialog.open(HistorialDialogComponent, {
+            data: { idSolicitud },
+            width: '100%',
+            maxWidth: '600px',
+            autoFocus: false
+        });
+    }
+
     cambiarEstatus(id: number, idEstatus: number): void
     {
         const estatusNuevo = this.estatus.find(e => e.idEstatus === idEstatus);
 
-        Swal.fire({
-            title: '¿Cambiar estatus?',
-            text: `¿Estás seguro de cambiar el estatus a "${estatusNuevo?.nombreEstatus || 'Nuevo'}"?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, cambiar',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this._solicitudCompraService.actualizarEstatus(id, idEstatus)
-                    .subscribe({
-                        next: () => {
-                            Swal.fire({
-                                title: '¡Éxito!',
-                                text: 'Estatus actualizado correctamente',
-                                icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                            this._solicitudCompraService.getTodas().subscribe();
-                        },
-                        error: () => {
-                            Swal.fire('Error', 'No se pudo actualizar el estatus', 'error');
-                        }
-                    });
+        if (idEstatus === 5 || estatusNuevo?.nombreEstatus.toLowerCase().includes('orden')) {
+            Swal.fire({
+                title: 'Orden de Compra',
+                text: 'Por favor, ingresa el Folio de la Orden de Compra:',
+                input: 'text',
+                inputAttributes: {
+                    autocapitalize: 'off',
+                    required: 'true'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Estatus',
+                cancelButtonText: 'Cancelar',
+                showLoaderOnConfirm: true,
+                preConfirm: (folio) => {
+                    if (!folio) {
+                        Swal.showValidationMessage('El Folio OC es requerido para este estatus');
+                        return false;
+                    }
+                    return folio;
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    this._ejecutarCambioEstatus(id, idEstatus, result.value);
+                }
+            });
+        } else {
+            Swal.fire({
+                title: '¿Cambiar estatus?',
+                text: `¿Estás seguro de cambiar el estatus a "${estatusNuevo?.nombreEstatus || 'Nuevo'}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cambiar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this._ejecutarCambioEstatus(id, idEstatus);
+                }
+            });
+        }
+    }
+
+    private _ejecutarCambioEstatus(id: number, idEstatus: number, folioOc?: string): void {
+        const userObjStr = localStorage.getItem('userInformation');
+        let idUsuario = 0;
+        if (userObjStr) {
+            try {
+                const userObj = JSON.parse(userObjStr);
+                idUsuario = userObj?.usuario?.id || 0;
+            } catch (e) {
+                console.error('Error parsing user object from localStorage', e);
             }
-        });
+        }
+
+        this._solicitudCompraService.actualizarEstatus(id, idEstatus, folioOc, idUsuario)
+            .subscribe({
+                next: () => {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'Estatus actualizado correctamente',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    this._solicitudCompraService.getTodas().subscribe();
+                },
+                error: () => {
+                    Swal.fire('Error', 'No se pudo actualizar el estatus', 'error');
+                }
+            });
     }
 
     applyFilter(event: Event): void
@@ -227,7 +292,27 @@ export class TableroComprasComponent implements OnInit, OnDestroy
 
     getMontoTotal(s: SolicitudCompra): number
     {
-        return 0;
+        return 0; // Or whatever calculation is needed
+    }
+
+    getCuadranteName(id: number | null | undefined): string {
+        switch (id) {
+            case 1: return 'Importante y Urgente';
+            case 2: return 'Importante, No Urgente';
+            case 3: return 'No Importante, Urgente';
+            case 4: return 'No Importante, No Urgente';
+            default: return 'Sin asignar';
+        }
+    }
+
+    getCuadranteColor(id: number | null | undefined): string {
+        switch (id) {
+            case 1: return '#f43f5e'; // bg-rose-500
+            case 2: return '#fbbf24'; // bg-amber-400
+            case 3: return '#34d399'; // bg-emerald-400
+            case 4: return '#38bdf8'; // bg-sky-400
+            default: return '#94a3b8'; // gray-400
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -247,5 +332,22 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         this.countTransito = solicitudes.filter(s => s.idEstatus === 6 || s.nombreEstatus.toLowerCase().includes('transito') || s.nombreEstatus.toLowerCase().includes('tránsito')).length;
         this.countRecibido = solicitudes.filter(s => s.idEstatus === 7 || s.nombreEstatus.toLowerCase().includes('recibido')).length;
         this.countCerrada = solicitudes.filter(s => s.idEstatus === 8 || s.nombreEstatus.toLowerCase().includes('cerrada')).length;
+    }
+
+    // Detail Helper Methods
+    getMateriales(s: SolicitudCompra): string {
+        return s.detalles?.map(d => d.materialServicio).filter(Boolean).join(', ') || '-';
+    }
+
+    getDescripciones(s: SolicitudCompra): string {
+        return s.detalles?.map(d => d.descripcionEspecificacion).filter(Boolean).join(', ') || '-';
+    }
+
+    getCantidades(s: SolicitudCompra): string {
+        return s.detalles?.map(d => d.cantidad).filter(c => c !== undefined && c !== null).join(', ') || '-';
+    }
+
+    getUnidades(s: SolicitudCompra): string {
+        return s.detalles?.map(d => d.unidad).filter(Boolean).join(', ') || '-';
     }
 }

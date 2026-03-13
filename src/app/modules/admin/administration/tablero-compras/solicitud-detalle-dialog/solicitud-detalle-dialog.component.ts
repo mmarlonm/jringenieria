@@ -56,6 +56,16 @@ import { SolicitudCompra } from '../../solicitudes-compra/models/solicitud-compr
                         <span class="font-medium italic">{{ solicitud.tipoCompra }}</span>
                     </div>
                     <div class="flex flex-col">
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Matriz Eisenhower</span>
+                        <div class="mt-1 px-3 py-1.5 rounded-full text-[11px] font-bold inline-flex items-center gap-2 whitespace-nowrap shadow-sm border border-black/5 w-fit"
+                             [style.background-color]="getCuadranteColor(solicitud.cuadranteId) + '20'">
+                            <div class="w-3 h-3 rounded-full" [style.background-color]="getCuadranteColor(solicitud.cuadranteId)"></div>
+                            <span class="leading-none pt-px" [style.color]="getCuadranteColor(solicitud.cuadranteId)">
+                                {{ getCuadranteName(solicitud.cuadranteId) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">Centro de Costo</span>
                         <span class="font-medium">{{ solicitud.centroCosto }}</span>
                     </div>
@@ -225,6 +235,26 @@ export class SolicitudDetalleDialogComponent implements OnInit {
             8: '#15803D'  // Cerrada
         };
         return colors[id] || '#64748b';
+    }
+
+    getCuadranteName(id: number | null | undefined): string {
+        switch (id) {
+            case 1: return 'Importante y Urgente';
+            case 2: return 'Importante, No Urgente';
+            case 3: return 'No Importante, Urgente';
+            case 4: return 'No Importante, No Urgente';
+            default: return 'Sin asignar';
+        }
+    }
+
+    getCuadranteColor(id: number | null | undefined): string {
+        switch (id) {
+            case 1: return '#f43f5e'; // bg-rose-500
+            case 2: return '#fbbf24'; // bg-amber-400
+            case 3: return '#34d399'; // bg-emerald-400
+            case 4: return '#38bdf8'; // bg-sky-400
+            default: return '#94a3b8'; // gray-400
+        }
     }
 
     close(): void {

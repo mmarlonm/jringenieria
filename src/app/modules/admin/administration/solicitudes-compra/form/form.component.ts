@@ -56,6 +56,12 @@ export class SolicitudCompraFormComponent implements OnInit {
     areas = ['Proyectos', 'Almacén', 'Ventas', 'Administración', 'Marketing', 'RH'];
     formasPago = ['Debito', 'Credito'];
     razonesSociales = ['Jesus Ricardo Mendez', 'JR Ingenieria Electrica'];
+    cuadrantes = [
+        { id: 1, nombre: 'Hacer (Urg. / Imp.)' },
+        { id: 2, nombre: 'Planificar (No Urg. / Imp.)' },
+        { id: 3, nombre: 'Delegar (Urg. / No Imp.)' },
+        { id: 4, nombre: 'Eliminar (No Urg. / No Imp.)' }
+    ];
     sucursales: any[] = [];
 
     constructor(
@@ -99,6 +105,9 @@ export class SolicitudCompraFormComponent implements OnInit {
             moneda: ['MXN', Validators.required],
             formaPago: [''],
             razonSocial: ['', Validators.required],
+            rfc: [''],
+            monto: [0, [Validators.min(0)]],
+            cuadranteId: [null, Validators.required],
             detalles: this._formBuilder.array([])
         });
     }

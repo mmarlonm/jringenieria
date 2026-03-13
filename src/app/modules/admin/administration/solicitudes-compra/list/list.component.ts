@@ -26,7 +26,7 @@ import Swal from 'sweetalert2';
 })
 export class SolicitudCompraListComponent implements OnInit {
     solicitudes$: Observable<SolicitudCompra[]>;
-    displayedColumns: string[] = ['folio', 'fecha', 'sucursal', 'area', 'prioridad', 'estatus', 'acciones'];
+    displayedColumns: string[] = ['folio', 'fecha', 'sucursal', 'area', 'prioridad', 'cuadranteId', 'estatus', 'acciones'];
     filterValue: string = '';
     count: number = 0;
 
@@ -64,5 +64,26 @@ export class SolicitudCompraListComponent implements OnInit {
                 });
             }
         });
+    }
+
+    // Helper methods for Eisenhower Matrix styling
+    getCuadranteName(id: number): string {
+        switch (id) {
+            case 1: return 'Impt. y Urgente';
+            case 2: return 'Impt., No Urgente';
+            case 3: return 'No Impt., Urgente';
+            case 4: return 'No Impt., No Urg.';
+            default: return 'No asignado';
+        }
+    }
+
+    getCuadranteColor(id: number): string {
+        switch (id) {
+            case 1: return '#f43f5e'; // rose-500
+            case 2: return '#fbbf24'; // amber-400
+            case 3: return '#34d399'; // emerald-400
+            case 4: return '#38bdf8'; // sky-400
+            default: return '#9ca3af'; // gray-400
+        }
     }
 }

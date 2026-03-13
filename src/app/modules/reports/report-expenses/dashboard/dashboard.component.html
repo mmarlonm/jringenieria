@@ -202,25 +202,46 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-                            <th class="px-6 py-3 font-bold border-b">Fecha</th>
-                            <th class="px-6 py-3 font-bold border-b">Descripción</th>
-                            <th class="px-6 py-3 font-bold border-b">Tipo</th>
-                            <th class="px-6 py-3 font-bold border-b">Concepto</th>
-                            <th class="px-6 py-3 font-bold border-b">Movimiento</th>
-                            <th class="px-6 py-3 font-bold border-b text-right">Monto</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Fecha</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Descripción</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Tipo</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Concepto</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Subtipo</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Área</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Proveedor</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Cuenta</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">No. Cuenta</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Forma Pago</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Factura</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Folio Fiscal</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Tipo Comprobante</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Movimiento</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-center">Moneda</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-right">Importe</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-right">Impuestos</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-center">Unidad</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr *ngFor="let exp of filteredExpenses"
                             class="hover:bg-gray-50/80 transition-colors text-sm text-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap">{{ exp.fecha | date:'dd/MM/yyyy' }}</td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="font-medium text-gray-900">{{ exp.nombreGasto }}</span>
-                                <p class="text-xs text-gray-500 truncate max-w-[200px]">{{ exp.descripcion }}</p>
+                                <p class="text-xs text-gray-500 truncate max-w-[200px]" [matTooltip]="exp.descripcion">{{ exp.descripcion }}</p>
                             </td>
-                            <td class="px-6 py-4">{{ getNombreTipo(exp.tipoId, exp) }}</td>
-                            <td class="px-6 py-4">{{ getNombreConcepto(exp.conceptoId, exp) }}</td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 whitespace-nowrap">{{ getNombreTipo(exp.tipoId, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ getNombreConcepto(exp.conceptoId, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ getNombreSubtipo(exp.subtipoId, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ getNombreArea(exp.areaId, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap truncate max-w-[150px]" [matTooltip]="getNombreProveedor(exp.proveedor, exp)">{{ getNombreProveedor(exp.proveedor, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ getNombreCuenta(exp.cuentaId, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ exp.numeroCuenta || 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ getNombreFormaPago(exp.formaPagoId, exp) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ exp.factura || 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-xs truncate max-w-[200px]" [matTooltip]="exp.folioFiscal || 'N/A'">{{ exp.folioFiscal || 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">{{ exp.tipoComprobante || 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span
                                     [ngClass]="(exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
                                     class="px-2 py-1 rounded text-[10px] font-bold uppercase">
@@ -228,13 +249,22 @@
                                     }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-right font-mono font-bold"
+                            <td class="px-6 py-4 whitespace-nowrap text-center">{{ exp.moneda || 'MXN' }}</td>
+                            <td class="px-6 py-4 text-right font-mono font-bold whitespace-nowrap"
                                 [ngClass]="(exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'text-emerald-600' : 'text-rose-600'">
-                                {{ exp.cantidad | currency:'MXN' }}
+                                {{ exp.cantidad | currency: (exp.moneda || 'MXN') }}
+                            </td>
+                            <td class="px-6 py-4 text-right font-mono text-gray-500 whitespace-nowrap">
+                                {{ (exp.impuestos || 0) | currency: (exp.moneda || 'MXN') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold">
+                                    {{ getNombreUnidad(exp.unidadId, exp) | uppercase }}
+                                </span>
                             </td>
                         </tr>
                         <tr *ngIf="filteredExpenses.length === 0">
-                            <td colspan="6" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron
+                            <td colspan="19" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron
                                 movimientos con los filtros aplicados.</td>
                         </tr>
                     </tbody>
