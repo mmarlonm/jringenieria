@@ -52,7 +52,7 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     // Select options
     prioridades = ['Urgente', 'Alta', 'Normal'];
-    tiposCompra = ['Material para proyecto', 'Inventario almacén', 'Herramienta', 'Consumible', 'Servicio'];
+    tiposCompra = ['Material para proyecto', 'Inventario almacén', 'Herramienta', 'Consumible', 'Servicio', 'VENTA CONFIRMADA'];
     centrosCosto = ['Proyecto específico', 'Operación sucursal', 'Administración'];
     areas = ['Proyectos', 'Almacén', 'Ventas', 'Administración', 'Marketing', 'RH'];
     formasPago = ['CONTADO (PUE)', 'CREDITO (PPD)'];
