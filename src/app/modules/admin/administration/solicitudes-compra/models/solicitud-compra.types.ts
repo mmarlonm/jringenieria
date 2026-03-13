@@ -47,6 +47,7 @@ export interface SolicitudCompraDetalle {
     observaciones?: string;
     idEstatusInicial: number;
     pendiente: number;
+    monto?: number;
 }
 
 export interface SolicitudCompraCreateDto {
@@ -81,6 +82,7 @@ export interface SolicitudCompraDetalleCreateDto {
     cantidad: number;
     unidad: string;
     observaciones?: string;
+    monto?: number;
 }
 
 export interface ProductoBuscadorDto {

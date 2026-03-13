@@ -16,7 +16,7 @@ import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { SolicitudCompraCreateDto, ProductoBuscadorDto } from '../models/solicitud-compra.types';
-import { debounceTime, distinctUntilChanged, filter, map, Observable, of, startWith, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, Observable, of, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
 
@@ -49,6 +49,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     selectedFile: File | null = null;
     archivos: any[] = [];
     filteredProducts$: Observable<ProductoBuscadorDto[]>[] = [];
+    private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     // Select options
     prioridades = ['Urgente', 'Alta', 'Normal'];
@@ -90,6 +91,11 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
+    ngOnDestroy(): void {
+        this._unsubscribeAll.next(null);
+        this._unsubscribeAll.complete();
+    }
+
     loadUsers(): void {
         this._usersService.getUsers().subscribe(users => {
             this.usuarios = users || [];
@@ -129,6 +135,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             cuadranteId: [null, Validators.required],
             detalles: this._formBuilder.array([])
         });
+
+        this._setupCalculationListener();
     }
 
     loadBranches(): void {
@@ -153,12 +161,26 @@ export class SolicitudCompraFormComponent implements OnInit {
             descripcionEspecificacion: [''],
             cantidad: [1, [Validators.required, Validators.min(0.01)]],
             unidad: ['', Validators.required],
-            observaciones: ['']
+            observaciones: [''],
+            monto: [0, [Validators.min(0)]]
         });
 
         const index = this.detalles.length;
         this.detalles.push(detalleForm);
         this._setupProductSearch(index);
+    }
+
+    private _setupCalculationListener(): void {
+        this.detalles.valueChanges.pipe(
+            debounceTime(50),
+            takeUntil(this._unsubscribeAll)
+        ).subscribe((values: any[]) => {
+            const total = (values || []).reduce((acc, curr) => acc + (Number(curr.monto) || 0), 0);
+            const montoControl = this.solicitudForm.get('monto');
+            if (montoControl) {
+                montoControl.setValue(total, { emitEvent: false });
+            }
+        });
     }
 
     private _setupProductSearch(index: number): void {
@@ -220,7 +242,8 @@ export class SolicitudCompraFormComponent implements OnInit {
                     descripcionEspecificacion: [d.descripcionEspecificacion],
                     cantidad: [d.cantidad],
                     unidad: [d.unidad],
-                    observaciones: [d.observaciones]
+                    observaciones: [d.observaciones],
+                    monto: [d.monto || 0]
                 });
                 this.detalles.push(detalleForm);
             });

@@ -76,8 +76,12 @@ import { forkJoin } from 'rxjs';
                         <span class="font-medium">{{ solicitud.centroCosto }}</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Moneda</span>
-                        <span class="font-bold">{{ solicitud.moneda }}</span>
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Moneda / Monto</span>
+                        <span class="font-bold text-primary">{{ solicitud.moneda }} {{ solicitud.monto | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="flex flex-col" *ngIf="solicitud.rfc">
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">RFC Proveedor</span>
+                        <span class="font-medium uppercase">{{ solicitud.rfc }}</span>
                     </div>
                 </div>
 
@@ -97,7 +101,8 @@ import { forkJoin } from 'rxjs';
                                     <th class="px-4 py-3">Material / Servicio</th>
                                     <th class="px-4 py-3">Especificación</th>
                                     <th class="px-4 py-3 text-right">Cant.</th>
-                                    <th class="px-4 py-3">Unidad</th>
+                                    <th class="px-4 py-3 text-right">Monto</th>
+                                    <th class="px-4 py-3 text-center">Unidad</th>
                                     <th class="px-4 py-3">Pendiente</th>
                                 </tr>
                             </thead>
@@ -107,7 +112,8 @@ import { forkJoin } from 'rxjs';
                                     <td class="px-4 py-3 font-semibold">{{ item.materialServicio }}</td>
                                     <td class="px-4 py-3 text-xs text-secondary italic">{{ item.descripcionEspecificacion || '-' }}</td>
                                     <td class="px-4 py-3 text-right font-bold text-primary">{{ item.cantidad }}</td>
-                                    <td class="px-4 py-3 text-xs">{{ item.unidad }}</td>
+                                    <td class="px-4 py-3 text-right font-bold tabular-nums">{{ item.monto | number:'1.2-2' }}</td>
+                                    <td class="px-4 py-3 text-center text-xs">{{ item.unidad }}</td>
                                     <td class="px-4 py-3 text-right font-black text-red-500">{{ item.pendiente }}</td>
                                 </tr>
                             </tbody>
