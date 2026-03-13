@@ -128,6 +128,32 @@ export const defaultNavigation: FuseNavigationItem[] = [
             }
         ]
     },
+    // ==========================================================================================
+    // SECCIÓN: ADMINISTRACIÓN
+    // ==========================================================================================
+    {
+        id: 'administracion',
+        title: 'ADMINISTRACION',
+        subtitle: 'Gestión administrativa',
+        type: 'group',
+        icon: 'heroicons_outline:briefcase',
+        children: [
+            {
+                id: 'administracion.tablero-compras',
+                title: 'Tablero de compras',
+                type: 'basic',
+                icon: 'heroicons_outline:presentation-chart-bar',
+                link: '/administration/tablero-compras'
+            },
+            {
+                id: 'administracion.solicitudes-compra',
+                title: 'Solicitud de compras',
+                type: 'basic',
+                icon: 'heroicons_outline:shopping-cart',
+                link: '/administration/solicitudes-compra'
+            }
+        ]
+    },
 
     // ==========================================================================================
     // SECCIÓN: MARKETING
@@ -210,33 +236,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
             { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' },
             { id: 'reports.login-logs', title: 'Historial de Inicios de Sesión', type: 'basic', icon: 'heroicons_outline:finger-print', link: '/reports/login-logs' }
-        ]
-    },
-
-    // ==========================================================================================
-    // SECCIÓN: ADMINISTRACIÓN
-    // ==========================================================================================
-    {
-        id: 'administracion',
-        title: 'ADMINISTRACION',
-        subtitle: 'Gestión administrativa',
-        type: 'group',
-        icon: 'heroicons_outline:briefcase',
-        children: [
-            {
-                id: 'administracion.tablero-compras',
-                title: 'Tablero de compras',
-                type: 'basic',
-                icon: 'heroicons_outline:presentation-chart-bar',
-                link: '/administration/tablero-compras'
-            },
-            {
-                id: 'administracion.solicitudes-compra',
-                title: 'Solicitud de compras',
-                type: 'basic',
-                icon: 'heroicons_outline:shopping-cart',
-                link: '/administration/solicitudes-compra'
-            }
         ]
     }
 ];
