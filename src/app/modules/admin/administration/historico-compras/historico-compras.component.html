@@ -1,0 +1,313 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50/30">
+
+    <!-- Header -->
+    <div class="flex flex-col p-3 sm:px-6 sm:py-4 border-b bg-white dark:bg-transparent">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex-auto min-w-0">
+                <div class="flex items-center gap-3">
+                    <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
+                        Histórico de Compras
+                    </div>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
+                        {{ dataSource.data.length }} registros
+                    </span>
+                </div>
+                
+                <!-- KPIs Summary in Header -->
+                <div class="flex items-center gap-4 mt-2">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-secondary uppercase leading-none">Inversión Total</span>
+                        <span class="text-lg font-black text-indigo-600">{{ investmentTotal | currency:'MXN' }}</span>
+                    </div>
+                    <div class="w-px h-8 bg-gray-200 mx-2"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-secondary uppercase leading-none">Ticket Promedio</span>
+                        <span class="text-lg font-black text-amber-600">{{ avgCost | currency:'MXN' }}</span>
+                    </div>
+                    <div class="w-px h-8 bg-gray-200 mx-2"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-secondary uppercase leading-none">Tasa de Cierre</span>
+                        <span class="text-lg font-black text-emerald-600">{{ efficiencyRate | number:'1.0-1' }}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button mat-flat-button color="primary"
+                    class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-4 shadow-sm"
+                    (click)="exportToCSV()">
+                    <mat-icon class="mr-2">download</mat-icon>
+                    <span>EXPORTAR CSV</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 pt-2 items-end">
+            <div class="lg:col-span-4">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Buscador</mat-label>
+                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'"
+                        [placeholder]="'Buscar en el historial...'">
+                </mat-form-field>
+            </div>
+
+            <div class="lg:col-span-2">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Prioridad</mat-label>
+                    <mat-select [(ngModel)]="filtroPrioridad" (selectionChange)="onFilterChange()">
+                        <mat-option [value]="''">Todas</mat-option>
+                        <mat-option *ngFor="let p of prioridadesList" [value]="p">{{p}}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="lg:col-span-3">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Fecha Inicio</mat-label>
+                    <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" (dateChange)="loadByDateRange()">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerInicio></mat-datepicker>
+                </mat-form-field>
+            </div>
+
+            <div class="lg:col-span-3">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Fecha Fin</mat-label>
+                    <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="loadByDateRange()">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFin></mat-datepicker>
+                </mat-form-field>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-auto p-3 sm:p-5">
+        
+        <!-- Process Arrow Flow -->
+        <div class="process-container shadow-sm border border-gray-100 bg-white">
+            <div class="arrow-flow mt-6">
+                <!-- 1: Creada -->
+                <div class="arrow-step step-1" [class.active]="selectedStatusId === 1" (click)="filterByStatus(1)" [matTooltip]="'Creada'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:document-plus" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countCreada }}</span>
+                    </div>
+                    <span class="status-label">Creada</span>
+                </div>
+                <!-- 2: Revisión -->
+                <div class="arrow-step step-2" [class.active]="selectedStatusId === 2" (click)="filterByStatus(2)" [matTooltip]="'Revisión'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:magnifying-glass" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countRevision }}</span>
+                    </div>
+                    <span class="status-label">Revisión</span>
+                </div>
+                <!-- 3: Cotización -->
+                <div class="arrow-step step-3" [class.active]="selectedStatusId === 3" (click)="filterByStatus(3)" [matTooltip]="'Cotización'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:currency-dollar" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countCotizacion }}</span>
+                    </div>
+                    <span class="status-label">Cotización</span>
+                </div>
+                <!-- 4: Aprobación -->
+                <div class="arrow-step step-4" [class.active]="selectedStatusId === 4" (click)="filterByStatus(4)" [matTooltip]="'Aprobación'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:check-badge" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countAprobacion }}</span>
+                    </div>
+                    <span class="status-label">Aprobación</span>
+                </div>
+                <!-- 5: OC -->
+                <div class="arrow-step step-5" [class.active]="selectedStatusId === 5" (click)="filterByStatus(5)" [matTooltip]="'Orden Compra'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:document-text" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countOC }}</span>
+                    </div>
+                    <span class="status-label">Orden Compra</span>
+                </div>
+                <!-- 6: Tránsito -->
+                <div class="arrow-step step-6" [class.active]="selectedStatusId === 6" (click)="filterByStatus(6)" [matTooltip]="'En Tránsito'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:truck" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countTransito }}</span>
+                    </div>
+                    <span class="status-label">Tránsito</span>
+                </div>
+                <!-- 7: Recibido -->
+                <div class="arrow-step step-7" [class.active]="selectedStatusId === 7" (click)="filterByStatus(7)" [matTooltip]="'Recibido'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:archive-box" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countRecibido }}</span>
+                    </div>
+                    <span class="status-label">Recibido</span>
+                </div>
+                <!-- 8: Cerrada -->
+                <div class="arrow-step step-8" [class.active]="selectedStatusId === 8" (click)="filterByStatus(8)" [matTooltip]="'Cerrada'">
+                    <div class="step-square">
+                        <mat-icon svgIcon="heroicons_solid:lock-closed" class="text-white icon-size-5"></mat-icon>
+                        <span class="count-tag">{{ countCerrada }}</span>
+                    </div>
+                    <span class="status-label">Cerrada</span>
+                </div>
+            </div>
+
+            <!-- Dotted Timeline Tracker -->
+            <div class="timeline-tracker">
+                <div class="line-dashed"></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 1"><div class="dot-circle dot-1"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 2"><div class="dot-circle dot-2"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 3"><div class="dot-circle dot-3"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 4"><div class="dot-circle dot-4"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 5"><div class="dot-circle dot-5"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 6"><div class="dot-circle dot-6"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 7"><div class="dot-circle dot-7"></div></div>
+                <div class="dot-point" [class.active]="selectedStatusId === 8"><div class="dot-circle dot-8"></div></div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100 mt-4">
+            <div class="overflow-x-auto min-h-[400px]">
+                <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
+
+                    <ng-container matColumnDef="folio">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="folioOC">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio OC</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-amber-600 tabular-nums">{{ s.folioOC || '-' }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="fechaSolicitud">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">{{ s.fechaSolicitud | date:'dd/MM/yyyy' }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="sucursal">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Sucursal</th>
+                        <td mat-cell *matCellDef="let s">{{ s.sucursal }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="areaSolicitante">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Área</th>
+                        <td mat-cell *matCellDef="let s">{{ s.areaSolicitante }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="solicitante">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Solicitante</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap font-medium">{{ getUserLabel(s.idPersonaSolicitante) }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="proyectoCliente">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Proyecto / Cliente</th>
+                        <td mat-cell *matCellDef="let s">{{ s.proyectoCliente }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="folioProyecto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio proyecto</th>
+                        <td mat-cell *matCellDef="let s">{{ s.folioProyecto }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="prioridad">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Prioridad</th>
+                        <td mat-cell *matCellDef="let s">
+                            <span class="px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider" [ngClass]="{
+                                'bg-red-100 text-red-700': s.prioridad === 'Urgente',
+                                'bg-amber-100 text-amber-700': s.prioridad === 'Alta',
+                                'bg-blue-100 text-blue-700': s.prioridad === 'Normal'
+                            }">{{ s.prioridad }}</span>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="proveedorSugerido">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor sugerido</th>
+                        <td mat-cell *matCellDef="let s">{{ s.proveedorSugerido }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="datosBancarios">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Datos bancarios</th>
+                        <td mat-cell *matCellDef="let s" class="text-[10px] truncate max-w-[120px]" [matTooltip]="s.datosBancariosProveedor">{{ s.datosBancariosProveedor }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="fechaRequerida">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha req.</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold">{{ s.fechaRequerida | date:'dd/MM/yyyy' }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="lugarEntrega">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Lugar entrega</th>
+                        <td mat-cell *matCellDef="let s" class="text-xs">{{ s.lugarEntrega }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="moneda">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Moneda</th>
+                        <td mat-cell *matCellDef="let s" class="text-center text-[10px]">{{ s.moneda }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="monto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
+                        <td mat-cell *matCellDef="let s" class="text-right font-bold pr-8">{{ s.monto | currency:s.moneda }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="tipoCompra">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+                        <td mat-cell *matCellDef="let s" class="text-xs italic">{{ s.tipoCompra }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="centroCosto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Centro de costo</th>
+                        <td mat-cell *matCellDef="let s" class="text-xs font-semibold">{{ s.centroCosto }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="comentarios">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Observaciones</th>
+                        <td mat-cell *matCellDef="let s" class="text-[10px] italic text-secondary truncate max-w-[150px]" [matTooltip]="s.comentariosObservaciones">{{ s.comentariosObservaciones }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="cuadranteId">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Matriz E</th>
+                        <td mat-cell *matCellDef="let s" class="text-center p-0" [style.background-color]="getCuadranteColor(s.cuadranteId) + '15'">
+                             <div class="flex items-center justify-center gap-2 px-2 py-3 min-w-[140px]">
+                                <div class="w-2 h-2 rounded-full" [style.background-color]="getCuadranteColor(s.cuadranteId)"></div>
+                                <span class="text-[9px] font-extrabold uppercase" [style.color]="getCuadranteColor(s.cuadranteId)">{{ getCuadranteName(s.cuadranteId) }}</span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="estatus">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Estatus</th>
+                        <td mat-cell *matCellDef="let s" class="text-center p-2">
+                            <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-sm"
+                                [style.background-color]="getColorByEstatusId(s.idEstatus)">
+                                {{ getStatusName(s.idEstatus) }}
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef class="text-center w-28">Acciones</th>
+                        <td mat-cell *matCellDef="let s" class="text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button mat-icon-button (click)="verDetalle(s.idSolicitud)" matTooltip="Ver detalle">
+                                    <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                </button>
+                                <button mat-icon-button (click)="verHistorial(s.idSolicitud)" matTooltip="Ver historial" class="text-indigo-500 bg-indigo-50/50">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/50"></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

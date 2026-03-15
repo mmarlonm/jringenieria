@@ -15,7 +15,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatDividerModule } from '@angular/material/divider';
-import { Subject, takeUntil, map, startWith, forkJoin } from 'rxjs';
+import { Subject, takeUntil, map, startWith, forkJoin, debounceTime, switchMap, catchError, of } from 'rxjs';
 import { ExpensesService } from '../expenses.service';
 import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types';
 import Swal from 'sweetalert2';
@@ -72,6 +72,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     filteredNumerosCuentaHeader: string[] = []; // Para el filtro del encabezado (No. Cuenta)
     numerosCuentaFiltrados: string[] = []; // 👈 Nueva cascada para cuentas
     filteredProveedores: any[] = []; // 👈 Para el autocomplete
+    filteredFoliosFactura: any[] = []; // 👈 Para búsqueda por Folio/Factura
+    filteredFoliosUUID: any[] = []; // 👈 Para búsqueda por UUID/FolioFiscal
     selectedExpense: Expense | null = null;
 
     // 👈 Mapeo estático según requerimiento
@@ -367,6 +369,83 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         ).subscribe(val => {
             this.filteredProveedores = this._filterProveedores(val || '');
             this._changeDetectorRef.markForCheck();
+        });
+
+        // 🔹 Búsqueda en tiempo real para Factura
+        this.rowForm.get('factura').valueChanges.pipe(
+            takeUntil(this._unsubscribeAll),
+            debounceTime(2000),
+            switchMap(val => {
+                if (typeof val !== 'string') return of([]);
+                const query = val.trim();
+                if (query.length >= 1) {
+                    return this._expensesService.buscarFoliosContpaq(query).pipe(
+                        catchError(() => of([]))
+                    );
+                }
+                return of([]);
+            })
+        ).subscribe(res => {
+            this.filteredFoliosFactura = res;
+            this._changeDetectorRef.markForCheck();
+        });
+
+        // 🔹 Búsqueda en tiempo real para Folio Fiscal
+        this.rowForm.get('folioFiscal').valueChanges.pipe(
+            takeUntil(this._unsubscribeAll),
+            debounceTime(2000),
+            switchMap(val => {
+                if (typeof val !== 'string') return of([]);
+                const query = val.trim();
+                if (query.length >= 1) {
+                    return this._expensesService.buscarFoliosContpaq(query).pipe(
+                        catchError(() => of([]))
+                    );
+                }
+                return of([]);
+            })
+        ).subscribe(res => {
+            this.filteredFoliosUUID = res;
+            this._changeDetectorRef.markForCheck();
+        });
+    }
+
+    displayFolioFn(item: any): string {
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        return item.folio || '';
+    }
+
+    onFolioContpaqSelected(event: any): void {
+        const option = event.option.value;
+        if (!option) return;
+
+        this.filteredFoliosFactura = [];
+        this.filteredFoliosUUID = [];
+
+        this._expensesService.getDetalleFolioContpaq(option.folio, option.rfc).subscribe({
+            next: (detalle) => {
+                if (!detalle) return;
+
+                let moneda = detalle.moneda || 'MXN';
+                if (moneda === 'MXP') moneda = 'MXN';
+
+                this.rowForm.patchValue({
+                    fecha: detalle.fecha ? moment(detalle.fecha) : moment(),
+                    cantidad: detalle.total || 0,
+                    proveedor: detalle.proveedorNombre || detalle.proveedor || '',
+                    folioFiscal: detalle.folioFiscal || detalle.uuid || '',
+                    moneda: moneda,
+                    descripcion: detalle.descripcion || detalle.concepto || '',
+                    factura: detalle.folio || this.rowForm.get('factura').value,
+                    tipoComprobante: detalle.tipoComprobante || 'I'
+                }, { emitEvent: false });
+
+                this._calculateTax();
+                this._changeDetectorRef.markForCheck();
+                this._chatNotificationService.showSuccess('Autocompletado', `Datos de ${detalle.proveedorNombre || detalle.proveedor} cargados`, 3000);
+            },
+            error: () => this._chatNotificationService.showError('Error', 'No se pudo obtener el detalle', 5000)
         });
     }
 

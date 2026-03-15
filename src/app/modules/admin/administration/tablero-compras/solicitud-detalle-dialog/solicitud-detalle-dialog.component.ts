@@ -250,14 +250,14 @@ export class SolicitudDetalleDialogComponent implements OnInit {
 
     getColorById(id: number): string {
         const colors = {
-            1: '#FB275D', // Creada
-            2: '#FFCB00', // Revisión
-            3: '#F59E0B', // Cotización
-            4: '#A855F7', // Aprobación
-            5: '#6366F1', // OC
-            6: '#3B82F6', // Tránsito
-            7: '#22C55E', // Recibido
-            8: '#15803D'  // Cerrada
+            1: '#880E4F', // Creada
+            2: '#E91E63', // Revisión
+            3: '#FF9800', // Cotización
+            4: '#8BC34A', // Aprobación
+            5: '#03A9F4', // OC
+            6: '#2196F3', // Tránsito
+            7: '#3F51B5', // Recibido
+            8: '#1A237E'  // Cerrada
         };
         return colors[id] || '#64748b';
     }

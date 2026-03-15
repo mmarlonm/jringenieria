@@ -365,15 +365,15 @@ export class TableroComprasComponent implements OnInit, OnDestroy
     {
         const nombre = this.getStatusName(estatusId).toLowerCase();
 
-        // Specific colors for the 8 statuses
-        if (estatusId === 1 || nombre.includes('creada')) return '#FB275D'; // Pink
-        if (estatusId === 2 || nombre.includes('revision') || nombre.includes('revisión') || nombre.includes('reivision')) return '#FFCB00'; // Yellow
-        if (estatusId === 3 || nombre.includes('cotizacion') || nombre.includes('cotización')) return '#F59E0B'; // Orange
-        if (estatusId === 4 || nombre.includes('aprobacion') || nombre.includes('aprobación')) return '#A855F7'; // Purple
-        if (estatusId === 5 || nombre.includes('orden')) return '#6366F1'; // Indigo
-        if (estatusId === 6 || nombre.includes('transito') || nombre.includes('tránsito')) return '#3B82F6'; // Blue
-        if (estatusId === 7 || nombre.includes('recibido')) return '#22C55E'; // Green
-        if (estatusId === 8 || nombre.includes('cerrada')) return '#15803D'; // Dark Green
+        // Specific colors for the 8 statuses (Matching SCSS process-step colors)
+        if (estatusId === 1 || nombre.includes('creada')) return '#880E4F'; 
+        if (estatusId === 2 || nombre.includes('revision') || nombre.includes('revisión') || nombre.includes('reivision')) return '#E91E63'; 
+        if (estatusId === 3 || nombre.includes('cotizacion') || nombre.includes('cotización')) return '#FF9800'; 
+        if (estatusId === 4 || nombre.includes('aprobacion') || nombre.includes('aprobación')) return '#8BC34A'; 
+        if (estatusId === 5 || nombre.includes('orden')) return '#03A9F4'; 
+        if (estatusId === 6 || nombre.includes('transito') || nombre.includes('tránsito')) return '#2196F3'; 
+        if (estatusId === 7 || nombre.includes('recibido')) return '#3F51B5'; 
+        if (estatusId === 8 || nombre.includes('cerrada')) return '#1A237E'; 
         
         return '#C4C4C4';
     }

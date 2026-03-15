@@ -146,6 +146,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 link: '/administration/tablero-compras'
             },
             {
+                id: 'administracion.historico-compras',
+                title: 'Histórico de compras',
+                type: 'basic',
+                icon: 'heroicons_outline:clock',
+                link: '/administration/historico-compras'
+            },
+            {
                 id: 'administracion.solicitudes-compra',
                 title: 'Solicitud de compras',
                 type: 'basic',

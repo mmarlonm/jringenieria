@@ -78,32 +78,27 @@ export class HistorialDialogComponent implements OnInit, OnDestroy {
     }
 
     getUserLabel(idUsuario: number): string {
-        if (!this._allUsers || this._allUsers.length === 0) return `Usuario ID: ${idUsuario}`;
+        if (!this._allUsers || this._allUsers.length === 0) return `ID: ${idUsuario}`;
         const user = this._allUsers.find(u => Number(u.id) === Number(idUsuario) || Number(u.usuarioId) === Number(idUsuario));
         if (user) {
-            const codigo = user.codigoEmpleado || user.username || user.correo || '';
-            const nombre = user.nombreCompleto || user.nombre || '';
-            if (codigo && nombre) {
-                return `${codigo} - ${nombre}`;
-            } else if (nombre) {
-                return nombre;
-            }
+            const nombre = user.nombreCompleto || user.nombre || user.nombreUsuario || user.email || 'Usuario';
+            return `${idUsuario} - ${nombre}`;
         }
-        return `Usuario ID: ${idUsuario}`;
+        return `ID: ${idUsuario}`;
     }
 
-    getColorClass(idEstatus: number): string {
-        switch (idEstatus) {
-            case 1: return 'text-pink-500 bg-pink-100';
-            case 2: return 'text-yellow-500 bg-yellow-100';
-            case 3: return 'text-orange-500 bg-orange-100';
-            case 4: return 'text-purple-500 bg-purple-100';
-            case 5: return 'text-indigo-500 bg-indigo-100';
-            case 6: return 'text-blue-500 bg-blue-100';
-            case 7: return 'text-green-500 bg-green-100';
-            case 8: return 'text-emerald-700 bg-emerald-100';
-            default: return 'text-gray-500 bg-gray-100';
-        }
+    getColor(idEstatus: number): string {
+        const colors = {
+            1: '#880E4F', 
+            2: '#E91E63', 
+            3: '#FF9800', 
+            4: '#8BC34A', 
+            5: '#03A9F4', 
+            6: '#2196F3', 
+            7: '#3F51B5', 
+            8: '#1A237E'  
+        };
+        return colors[idEstatus] || '#64748b';
     }
     
     getIcon(idEstatus: number): string {
