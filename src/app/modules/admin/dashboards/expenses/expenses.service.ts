@@ -109,4 +109,17 @@ export class ExpensesService {
     getUnidadesNegocio(): Observable<any[]> {
         return this._httpClient.get<any[]>(`${this.apiUrlProyecto}/unidades-negocio`);
     }
+
+    /**
+     * Busca folios en CONTPAQi
+     */
+    buscarFoliosContpaq(filtro: string): Observable<any[]> {
+        return this._httpClient.get<any[]>(`${environment.apiUrl}/ReportDashboard/contpaq-buscar-folios?filtro=${filtro}`);
+    }
+    /**
+     * Obtiene el detalle de un folio de CONTPAQi
+     */
+    getDetalleFolioContpaq(folio: string, rfc: string): Observable<any> {
+        return this._httpClient.get<any>(`${environment.apiUrl}/ReportDashboard/contpaq-detalle-folio?folio=${folio}&rfc=${rfc}`);
+    }
 }

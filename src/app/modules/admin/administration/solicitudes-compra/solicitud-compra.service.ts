@@ -44,8 +44,12 @@ export class SolicitudCompraService {
         );
     }
 
-    getTodas(): Observable<SolicitudCompra[]> {
-        return this._httpClient.get<SolicitudCompra[]>(this.apiUrl).pipe(
+    getTodas(fechaInicio?: string, fechaFin?: string): Observable<SolicitudCompra[]> {
+        const params: any = {};
+        if (fechaInicio) params.fechaInicio = fechaInicio;
+        if (fechaFin) params.fechaFin = fechaFin;
+
+        return this._httpClient.get<SolicitudCompra[]>(this.apiUrl, { params }).pipe(
             tap((solicitudes) => {
                 this._solicitudes.next(solicitudes);
             })

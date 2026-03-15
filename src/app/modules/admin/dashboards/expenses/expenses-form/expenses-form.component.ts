@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
-import { map, startWith } from 'rxjs';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { catchError, debounceTime, distinctUntilChanged, map, merge, of, startWith, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -38,14 +38,18 @@ import { ChatNotificationService } from 'app/shared/components/chat-notification
         MatTooltipModule
     ]
 })
-export class ExpenseFormComponent implements OnInit {
+export class ExpenseFormComponent implements OnInit, OnDestroy {
     expenseForm: FormGroup;
     catalogs: ExpenseCatalogs;
     todosLosSubtipos: GastoSubtipo[] = []; // 👈 Guardar todos
     subtiposFiltrados: GastoSubtipo[] = []; // 👈 Mostrar en el select
     numerosCuentaFiltrados: string[] = []; // 👈 Nueva cascada para cuentas
     filteredProveedores: any[] = []; // 👈 Para el autocomplete
+    filteredFoliosFactura: any[] = []; // 👈 Para búsqueda por Folio/Factura
+    filteredFoliosUUID: any[] = []; // 👈 Para búsqueda por UUID/FolioFiscal
     isEdit: boolean = false;
+
+    private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     // 👈 Mapeo estático según requerimiento
     accountNumbersMap: { [key: string]: string[] } = {
@@ -53,7 +57,6 @@ export class ExpenseFormComponent implements OnInit {
         'JESUS MENDEZ': ['4772143013658287', '477133059607769', '1200449415', '197590067', '478628203'],
         'COLABORADOR': []
     };
-
     constructor(
         @Inject(MAT_DIALOG_DATA) public data: { expense: Expense | null },
         // 🔹 Cambia 'private _dialogRef' por 'public dialogRef'
@@ -169,6 +172,64 @@ export class ExpenseFormComponent implements OnInit {
             this.filteredProveedores = this._filterProveedores(val || '');
             this._changeDetectorRef.markForCheck();
         });
+
+        // 🔹 Búsqueda en tiempo real para Factura
+        this.expenseForm.get('factura').valueChanges.pipe(
+            debounceTime(2000),
+            switchMap(val => {
+                // Si es un objeto (seleccionado), no buscamos
+                if (typeof val !== 'string') return of([]);
+
+                const query = val.trim();
+                console.log('[CONTPAQ] Buscando Factura:', query);
+
+                if (query.length >= 1) {
+                    return this._expensesService.buscarFoliosContpaq(query).pipe(
+                        catchError(err => {
+                            console.error('[CONTPAQ] Error en búsqueda Factura:', err);
+                            return of([]);
+                        })
+                    );
+                }
+                return of([]);
+            }),
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(res => {
+            console.log('[CONTPAQ] Resultados Factura:', res);
+            this.filteredFoliosFactura = res;
+            this._changeDetectorRef.markForCheck();
+        });
+
+        // 🔹 Búsqueda en tiempo real para Folio Fiscal
+        this.expenseForm.get('folioFiscal').valueChanges.pipe(
+            debounceTime(2000),
+            switchMap(val => {
+                if (typeof val !== 'string') return of([]);
+
+                const query = val.trim();
+                console.log('[CONTPAQ] Buscando UUID:', query);
+
+                if (query.length >= 1) {
+                    return this._expensesService.buscarFoliosContpaq(query).pipe(
+                        catchError(err => {
+                            console.error('[CONTPAQ] Error en búsqueda UUID:', err);
+                            return of([]);
+                        })
+                    );
+                }
+                return of([]);
+            }),
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(res => {
+            console.log('[CONTPAQ] Resultados UUID:', res);
+            this.filteredFoliosUUID = res;
+            this._changeDetectorRef.markForCheck();
+        });
+    }
+
+    ngOnDestroy(): void {
+        this._unsubscribeAll.next(null);
+        this._unsubscribeAll.complete();
     }
 
     private _filterProveedores(value: string): any[] {
@@ -181,6 +242,12 @@ export class ExpenseFormComponent implements OnInit {
         if (typeof id === 'string') return id;
         if (!this.catalogs?.proveedores) return '';
         return this.catalogs.proveedores.find(p => p.proveedorId === id)?.nombre || '';
+    }
+
+    displayFolioFn(item: any): string {
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        return item.folio || '';
     }
 
     private _disableChain(controls: string[]): void {
@@ -308,5 +375,46 @@ export class ExpenseFormComponent implements OnInit {
             this.numerosCuentaFiltrados = [];
         }
         this._changeDetectorRef.markForCheck();
+    }
+
+    /**
+     * Al seleccionar un folio de CONTPAQi, prellenar el formulario
+     */
+    onFolioContpaqSelected(event: MatAutocompleteSelectedEvent): void {
+        const option = event.option.value; // Objeto con folio, proveedor, rfc, etc.
+        if (!option) return;
+
+        this.filteredFoliosFactura = []; // Limpiar resultados
+        this.filteredFoliosUUID = [];
+
+        this._expensesService.getDetalleFolioContpaq(option.folio, option.rfc).subscribe({
+            next: (detalle) => {
+                if (!detalle) return;
+
+                // Mapeo de moneda MXP -> MXN
+                let moneda = detalle.moneda || 'MXN';
+                if (moneda === 'MXP') moneda = 'MXN';
+
+                // PatchValue al formulario
+                this.expenseForm.patchValue({
+                    fecha: detalle.fecha ? new Date(detalle.fecha) : new Date(),
+                    cantidad: detalle.total || 0,
+                    proveedor: detalle.proveedor || '',
+                    folioFiscal: detalle.uuid || '',
+                    moneda: moneda,
+                    descripcion: detalle.concepto || '',
+                    factura: detalle.folio || this.expenseForm.get('factura').value
+                }, { emitEvent: false });
+
+                // Recalcular impuestos y forzar detección de cambios
+                this._calculateTax();
+                this._changeDetectorRef.markForCheck();
+
+                this._chatNotificationService.showSuccess('Autocompletado', `Datos de ${detalle.proveedor} cargados`, 3000);
+            },
+            error: () => {
+                this._chatNotificationService.showError('Error', 'No se pudo obtener el detalle de la factura', 5000);
+            }
+        });
     }
 }

@@ -2,46 +2,102 @@
 
     <!-- Header -->
     <div class="flex flex-col p-3 sm:px-6 sm:py-4 border-b bg-white dark:bg-transparent">
-        <div class="flex-auto min-w-0">
-            <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
-                Tablero de Compras</div>
-            <div class="flex items-center mt-0.5 font-medium text-secondary">
-                {{ dataSource.data.length }} solicitudes registradas en el sistema
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex-auto min-w-0">
+                <div class="flex items-center gap-3">
+                    <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
+                        Tablero de Compras
+                    </div>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
+                        {{ dataSource.data.length }} solicitudes
+                    </span>
+                </div>
+
+                <!-- Active Filter Badge -->
+                <div *ngIf="selectedStatusId"
+                    class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                    <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
+                    Filtrado por: {{ getStatusName(selectedStatusId) | uppercase }}
+                    <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)"
+                        matTooltip="Quitar filtro">
+                        <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
+                    </button>
+                </div>
             </div>
 
-            <!-- Active Filter Badge -->
-            <div *ngIf="selectedStatusId"
-                class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
-                Filtrado por: {{ getStatusName(selectedStatusId) | uppercase }}
-                <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)"
-                    matTooltip="Quitar filtro">
-                    <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
-                </button>
-            </div>
-        </div>
-
-        <!-- Main actions -->
-        <div class="mt-4 flex flex-col sm:flex-row items-center sm:gap-4 md:mt-6">
-            <div class="flex-auto w-full">
-                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
-                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'"
-                        [placeholder]="'Buscar solicitud por cualquier campo...'">
-                </mat-form-field>
-            </div>
-            <div class="flex-none py-2 flex justify-end gap-2">
+            <!-- Actions in Header -->
+            <div class="flex items-center gap-2">
                 <button mat-flat-button color="primary"
                     class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-4 shadow-sm"
                     (click)="exportToCSV()">
                     <mat-icon class="mr-2">download</mat-icon>
-                    <span>EXPORTAR EXCEL</span>
+                    <span class="hidden sm:inline">EXPORTAR EXCEL</span>
                 </button>
                 <button mat-flat-button color="primary" [routerLink]="['/administration/solicitudes-compra/new']"
                     class="rounded-lg px-6">
                     <mat-icon svgIcon="heroicons_outline:plus" class="mr-2"></mat-icon>
-                    <span>NUEVA SOLICITUD</span>
+                    <span class="hidden sm:inline">NUEVA SOLICITUD</span>
                 </button>
+            </div>
+        </div>
+
+        <!-- Compact Filters Row -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 pt-2 items-end">
+            <!-- Search -->
+            <div class="lg:col-span-4">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Buscador</mat-label>
+                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'"
+                        [placeholder]="'Buscar solicitud...'">
+                </mat-form-field>
+            </div>
+
+            <!-- Priority -->
+            <div class="lg:col-span-2">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Prioridad</mat-label>
+                    <mat-select [(ngModel)]="filtroPrioridad" (selectionChange)="onFilterChange()">
+                        <mat-option [value]="''">Todas</mat-option>
+                        <mat-option *ngFor="let p of prioridadesList" [value]="p">{{p}}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <!-- Matrix -->
+            <div class="lg:col-span-2">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Matriz Eisenhower</mat-label>
+                    <mat-select [(ngModel)]="filtroCuadrante" (selectionChange)="onFilterChange()">
+                        <mat-option [value]="''">Todas</mat-option>
+                        <mat-option *ngFor="let c of cuadrantesList" [value]="c.id">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full" [style.background-color]="getCuadranteColor(c.id)"></div>
+                                <span class="text-xs">{{c.nombre}}</span>
+                            </div>
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <!-- Date Inicio -->
+            <div class="lg:col-span-2">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Fecha Inicio</mat-label>
+                    <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" (dateChange)="loadByDateRange(true)">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerInicio></mat-datepicker>
+                </mat-form-field>
+            </div>
+
+            <!-- Date Fin -->
+            <div class="lg:col-span-2">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Fecha Fin</mat-label>
+                    <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="loadByDateRange(true)">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFin></mat-datepicker>
+                </mat-form-field>
             </div>
         </div>
     </div>

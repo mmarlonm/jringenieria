@@ -11,6 +11,9 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
 import { Subject, takeUntil } from 'rxjs';
 import { SolicitudCompraService } from '../solicitudes-compra/solicitud-compra.service';
 import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/solicitud-compra.types';
@@ -38,7 +41,10 @@ import Swal from 'sweetalert2';
         MatDialogModule,
         SolicitudDetalleDialogComponent,
         HistorialDialogComponent,
-        RouterLink
+        RouterLink,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatSelectModule
     ]
 })
 export class TableroComprasComponent implements OnInit, OnDestroy
@@ -84,6 +90,19 @@ export class TableroComprasComponent implements OnInit, OnDestroy
     usuarios: any[] = [];
 
     selectedStatusId: number | null = null;
+    fechaInicio: any = '';
+    fechaFin: any = '';
+    filtroSearch: string = '';
+    filtroPrioridad: string = '';
+    filtroCuadrante: any = '';
+
+    prioridadesList = ['Urgente', 'Alta', 'Normal'];
+    cuadrantesList = [
+        { id: 1, nombre: 'Importante y Urgente' },
+        { id: 2, nombre: 'Importante, No Urgente' },
+        { id: 3, nombre: 'No Importante, Urgente' },
+        { id: 4, nombre: 'No Importante, No Urgente' }
+    ];
 
     @ViewChild(MatSort) sort: MatSort;
 
@@ -116,6 +135,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy
             .subscribe((solicitudes) => {
                 this.dataSource.data = solicitudes;
                 this.dataSource.sort = this.sort;
+                this._setupFilterPredicate();
+                this._updateFilter(); // Initialize current filter state
                 this._calculateKPIs();
             });
 
@@ -128,7 +149,15 @@ export class TableroComprasComponent implements OnInit, OnDestroy
 
         // Load initial data
         this._solicitudCompraService.getEstatus().subscribe();
-        this._solicitudCompraService.getTodas().subscribe();
+        
+        // Default dates: First day of current month and Today
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        this.fechaInicio = firstDay.toISOString().split('T')[0];
+        this.fechaFin = now.toISOString().split('T')[0];
+
+        this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
     }
 
     ngOnDestroy(): void
@@ -247,13 +276,72 @@ export class TableroComprasComponent implements OnInit, OnDestroy
 
     applyFilter(event: Event): void
     {
-        const filterValue = (event.target as HTMLInputElement).value;
-        this.dataSource.filter = filterValue.trim().toLowerCase();
+        this.filtroSearch = (event.target as HTMLInputElement).value;
+        this._updateFilter();
         
         // Reset process filter when using search
-        if (filterValue) {
+        if (this.filtroSearch) {
             this.selectedStatusId = null;
         }
+    }
+
+    private _setupFilterPredicate(): void {
+        this.dataSource.filterPredicate = (data: SolicitudCompra, filter: string) => {
+            try {
+                const filterObj = JSON.parse(filter);
+                
+                // 1. Text Search
+                const searchStr = filterObj.search.toLowerCase();
+                const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.proveedorSugerido || ''} ${data.centroCosto} ${data.nombreEstatus}`.toLowerCase();
+                const passSearch = dataStr.includes(searchStr);
+
+                // 2. Status
+                const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
+
+                // 3. Priority
+                const passPriority = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
+
+                // 4. Matrix (Cuadrante)
+                const passCuadrante = filterObj.cuadranteId !== '' ? data.cuadranteId === Number(filterObj.cuadranteId) : true;
+
+                return passSearch && passStatus && passPriority && passCuadrante;
+            } catch (e) {
+                return true;
+            }
+        };
+    }
+
+    private _updateFilter(): void {
+        const filterObj = {
+            search: this.filtroSearch,
+            statusId: this.selectedStatusId,
+            prioridad: this.filtroPrioridad,
+            cuadranteId: this.filtroCuadrante
+        };
+        this.dataSource.filter = JSON.stringify(filterObj);
+    }
+
+    onFilterChange(): void {
+        this._updateFilter();
+    }
+
+    loadByDateRange(silent: boolean = false): void {
+        if (!this.fechaInicio || !this.fechaFin) {
+            if (!silent) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atención',
+                    text: 'Por favor selecciona ambas fechas (Inicio y Fin)'
+                });
+            }
+            return;
+        }
+
+        // Format dates to YYYY-MM-DD for backend
+        const start = this.fechaInicio instanceof Date ? this.fechaInicio.toISOString().split('T')[0] : this.fechaInicio;
+        const end = this.fechaFin instanceof Date ? this.fechaFin.toISOString().split('T')[0] : this.fechaFin;
+
+        this._solicitudCompraService.getTodas(start, end).subscribe();
     }
 
     filterByStatus(statusId: number | null): void
@@ -263,15 +351,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         } else {
             this.selectedStatusId = statusId;
         }
-
-        if (this.selectedStatusId === null) {
-            this.dataSource.filter = '';
-        } else {
-            // Using a custom filter predicate or just filtering the data source
-            // Simple way: Filter by status name or ID
-            const statusName = this.getStatusName(this.selectedStatusId).toLowerCase();
-            this.dataSource.filter = statusName;
-        }
+        
+        this.onFilterChange();
     }
 
     getStatusName(estatusId: number): string

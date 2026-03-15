@@ -102,12 +102,21 @@
                         [value]="item.subtipoId">{{item.nombre}}</mat-option>
                 </mat-select>
             </mat-form-field>
-
-            <!-- 👈 CAMPOS FISCALES -->
             <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Folio Fiscal (UUID)</mat-label>
-                <input matInput formControlName="folioFiscal" placeholder="Ej. 123e4567-...">
+                <input matInput formControlName="folioFiscal" [matAutocomplete]="autoUUID"
+                    placeholder="Busca folio CONTPAQi o ingresa UUID...">
             </mat-form-field>
+
+            <mat-autocomplete #autoUUID="matAutocomplete" [displayWith]="displayFolioFn.bind(this)"
+                (optionSelected)="onFolioContpaqSelected($event)">
+                <mat-option *ngFor="let item of filteredFoliosUUID" [value]="item">
+                    <div class="flex flex-col leading-tight py-1">
+                        <span class="font-bold text-sm">{{item.folio}}</span>
+                        <span class="text-xs text-secondary">{{item.proveedor}} | {{item.rfc}}</span>
+                    </div>
+                </mat-option>
+            </mat-autocomplete>
 
             <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Tipo Comprobante</mat-label>
@@ -140,8 +149,19 @@
 
             <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
                 <mat-label>Factura</mat-label>
-                <input matInput formControlName="factura">
+                <input matInput formControlName="factura" [matAutocomplete]="autoFactura"
+                    placeholder="Busca folio CONTPAQi...">
             </mat-form-field>
+
+            <mat-autocomplete #autoFactura="matAutocomplete" [displayWith]="displayFolioFn.bind(this)"
+                (optionSelected)="onFolioContpaqSelected($event)">
+                <mat-option *ngFor="let item of filteredFoliosFactura" [value]="item">
+                    <div class="flex flex-col leading-tight py-1">
+                        <span class="font-bold text-sm">{{item.folio}}</span>
+                        <span class="text-xs text-secondary">{{item.proveedor}} | {{item.rfc}}</span>
+                    </div>
+                </mat-option>
+            </mat-autocomplete>
 
             <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
                 [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('formaPagoId').disabled}">
