@@ -85,7 +85,13 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
         this._receptionService.getDetalleConsolidado(folio).subscribe({
             next: (res) => {
                 this.ocData = res;
-                this.receptionForm.patchValue({ idSolicitud: res.idSolicitud || folio });
+                if (res && res.datosFiscales) {
+                    this.receptionForm.patchValue({
+                        idSolicitud: res.idSolicitud || folio,
+                        // If we had more fields to patch in the form group they would go here
+                        // For fields shown directly in template via ocData, the assignment above is enough
+                    });
+                }
                 this.isLoading = false;
             },
             error: () => {
@@ -114,7 +120,14 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
 
         // Ensure we send the data in the format the API expects
         const payload = {
-            ...this.receptionForm.value
+            ...this.receptionForm.value,
+            idSolicitud: this.ocData?.idSolicitud,
+            folioOC: this.ocData?.folioOC,
+            sucursal: this.ocData?.sucursal,
+            proveedorSugerido: this.ocData?.datosFiscales?.nombreProveedor,
+            proyectoCliente: this.ocData?.proyectoCliente,
+            monto: this.ocData?.datosFiscales?.totalFactura,
+            moneda: this.ocData?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (this.ocData?.datosFiscales?.moneda?.trim() || 'MXN')
         };
 
         this._receptionService.registrarRecepcion(payload).subscribe({

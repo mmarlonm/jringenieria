@@ -24,7 +24,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                 <div class="md:col-span-1">
                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
-                        <mat-label>Folio OC / Solicitud</mat-label>
+                        <mat-label>Folio OC</mat-label>
                         <input matInput (keyup.enter)="onSearchOC($event)" placeholder="Ej. 123">
                         <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:hashtag'"></mat-icon>
                     </mat-form-field>
@@ -42,7 +42,7 @@
                     </mat-form-field>
                     <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
                         <mat-label>Proveedor</mat-label>
-                        <input matInput [value]="ocData?.datosFiscales?.proveedorNombre || '-'" readonly>
+                        <input matInput [value]="ocData?.datosFiscales?.nombreProveedor || '-'" readonly>
                     </mat-form-field>
                 </div>
             </div>
@@ -103,22 +103,26 @@
                     C. Validación Fiscal (CONTPAQi)
                 </h3>
 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
                     <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
-                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">Monto Factura</span>
-                        <span class="text-base font-black text-primary leading-tight">{{ (ocData?.datosFiscales?.total || 0) | currency:ocData?.datosFiscales?.moneda || 'MXN' }}</span>
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">Factura</span>
+                        <span class="text-base font-black text-primary leading-tight">{{ (ocData?.datosFiscales?.totalFactura || 0) | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">Folio Interno</span>
+                        <span class="text-sm font-bold text-amber-600 leading-tight">{{ ocData?.datosFiscales?.folioInternoFactura || '-' }}</span>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
                         <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">Razón Social</span>
-                        <span class="text-xs font-bold text-gray-700 truncate" [matTooltip]="ocData?.datosFiscales?.proveedorNombre">{{ ocData?.datosFiscales?.proveedorNombre || '-' }}</span>
+                        <span class="text-xs font-bold text-gray-700 truncate" [matTooltip]="ocData?.datosFiscales?.nombreProveedor">{{ ocData?.datosFiscales?.nombreProveedor || '-' }}</span>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
                         <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">RFC</span>
-                        <span class="text-xs font-bold text-gray-700">{{ ocData?.datosFiscales?.rfc || '-' }}</span>
+                        <span class="text-xs font-bold text-gray-700">{{ ocData?.datosFiscales?.rfcProveedor || '-' }}</span>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
                         <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">UUID</span>
-                        <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">{{ ocData?.datosFiscales?.folioFiscal || 'No disponible' }}</span>
+                        <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">{{ ocData?.datosFiscales?.folioFiscal_UUID || 'No disponible' }}</span>
                     </div>
                 </div>
             </mat-card>

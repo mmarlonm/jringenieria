@@ -109,4 +109,8 @@ export class SolicitudCompraService {
     eliminarArchivo(id: number, nombreArchivo: string): Observable<any> {
         return this._httpClient.delete(`${this.apiUrl}/${id}/archivos/${nombreArchivo}`);
     }
+
+    getDetalleConsolidado(idSolicitud: number): Observable<any> {
+        return this._httpClient.get<any>(`${this.apiUrl}/recepcion/detalle-consolidado/${idSolicitud}`);
+    }
 }

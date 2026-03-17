@@ -65,7 +65,37 @@
                     </div>
                 </mat-card>
 
-                <!-- Status/Comments -->
+            <!-- Fiscal Validation -->
+            <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-emerald-50/30" *ngIf="reception.datosFiscales || reception.datosFacturaContpaqi">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+                <h3 class="text-xs font-black text-gray-900 flex items-center gap-2 mb-4 uppercase tracking-tighter">
+                    <mat-icon class="icon-size-5 text-emerald-500" [svgIcon]="'heroicons_solid:document-check'"></mat-icon>
+                    Validación Fiscal (CONTPAQi)
+                </h3>
+                
+                <ng-container *ngIf="(reception.datosFacturaContpaqi || reception.datosFiscales) as df">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="flex flex-col bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                            <span class="text-[9px] font-bold text-secondary uppercase tracking-wider mb-1">Monto Factura</span>
+                            <span class="text-sm font-black text-emerald-600">{{ (df.totalFactura || 0) | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                        </div>
+                        <div class="flex flex-col bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                            <span class="text-[9px] font-bold text-secondary uppercase tracking-wider mb-1">Folio Interno</span>
+                            <span class="text-sm font-black text-amber-600">{{ df.folioInternoFactura || '-' }}</span>
+                        </div>
+                        <div class="flex flex-col bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                            <span class="text-[9px] font-bold text-secondary uppercase tracking-wider mb-1">RFC Proveedor</span>
+                            <span class="text-xs font-bold text-gray-700 leading-tight">{{ df.rfcProveedor || '-' }}</span>
+                        </div>
+                        <div class="flex flex-col bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                            <span class="text-[9px] font-bold text-secondary uppercase tracking-wider mb-1">UUID</span>
+                            <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">{{ df.folioFiscal_UUID || 'No disponible' }}</span>
+                        </div>
+                    </div>
+                </ng-container>
+            </mat-card>
+
+            <!-- Status/Comments -->
                 <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-white flex flex-col">
                     <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
                     <h3 class="text-sm font-black text-gray-900 flex items-center gap-2 mb-4 uppercase tracking-tighter">

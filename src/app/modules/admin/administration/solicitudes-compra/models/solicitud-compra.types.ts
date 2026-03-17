@@ -30,6 +30,7 @@ export interface SolicitudCompra {
     cuadranteId?: number;
     idEstatus: number;
     nombreEstatus: string;
+    datosFacturaContpaqi?: any;
 
     // Relaciones
     estatus: CatEstatusCompra;

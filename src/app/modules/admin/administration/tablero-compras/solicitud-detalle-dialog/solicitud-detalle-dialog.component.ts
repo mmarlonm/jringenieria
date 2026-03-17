@@ -9,7 +9,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { SolicitudCompraService } from '../../solicitudes-compra/solicitud-compra.service';
 import { SolicitudCompra } from '../../solicitudes-compra/models/solicitud-compra.types';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'solicitud-detalle-dialog',
@@ -127,6 +128,41 @@ import { forkJoin } from 'rxjs';
                     </div>
                 </ng-template>
 
+                <!-- Fiscal Data (CONTPAQi) -->
+                <div class="p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/20" 
+                     *ngIf="(solicitud.datosFacturaContpaqi || solicitud.datosFiscales) as df">
+                    <div class="flex items-center mb-4 text-emerald-700 dark:text-emerald-400">
+                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:document-check'"></mat-icon>
+                        <span class="text-base font-bold uppercase tracking-tight">Validación Fiscal (CONTPAQi)</span>
+                    </div>
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Factura</span>
+                            <span class="text-sm font-black text-emerald-600">{{ (df.totalFactura || 0) | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Folio Interno</span>
+                            <span class="text-sm font-bold text-amber-600 leading-tight">{{ df.folioInternoFactura || '-' }}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Razón Social</span>
+                            <span class="text-xs font-bold text-gray-700 truncate" [matTooltip]="df.nombreProveedor">
+                                {{ df.nombreProveedor || '-' }}
+                            </span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">RFC</span>
+                            <span class="text-xs font-bold text-gray-700">{{ df.rfcProveedor || '-' }}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">UUID</span>
+                            <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">
+                                {{ df.folioFiscal_UUID || 'No disponible' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Observations & Files -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Observations -->
@@ -207,9 +243,13 @@ export class SolicitudDetalleDialogComponent implements OnInit {
     loadDetail(): void {
         forkJoin({
             solicitud: this._service.getPorId(this.data.idSolicitud),
+            consolidado: this._service.getDetalleConsolidado(this.data.idSolicitud).pipe(catchError(() => of(null))),
             users: this._usersService.getUsers()
         }).subscribe(res => {
-            this.solicitud = res.solicitud;
+            this.solicitud = {
+                ...res.solicitud,
+                datosFiscales: res.consolidado?.datosFiscales || res.solicitud?.datosFacturaContpaqi
+            } as any;
             this.usuarios = res.users || [];
             this.loadFiles();
         });
