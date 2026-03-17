@@ -255,7 +255,7 @@
             </div>
 
             <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
-                <p class="text-sm text-gray-500">Utilidad Bruta</p>
+                <p class="text-sm text-gray-500">Monto sin IVA</p>
                 <p class="text-xl sm:text-2xl font-bold text-green-600">
                     {{ kpis.utilidadBruta | currency:'MXN' }}
                 </p>
@@ -318,7 +318,8 @@
 
             <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col">
 
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap justify-between items-center gap-2">
+                <div
+                    class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap justify-between items-center gap-2">
                     <h2 class="text-base sm:text-lg font-semibold text-gray-800">
                         Detalle de Ventas
                     </h2>
