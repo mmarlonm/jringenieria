@@ -349,7 +349,8 @@
                                             <input
                                                 class="w-full p-1 bg-transparent border-none outline-none text-sm placeholder:text-gray-300"
                                                 formControlName="materialServicio" [matAutocomplete]="auto"
-                                                placeholder="Buscar producto o escribir manual...">
+                                                placeholder="Buscar producto o escribir manual..."
+                                                (paste)="onPasteMaterials($event, i, 'materialServicio')">
                                             <mat-icon
                                                 class="icon-size-4 text-gray-400 group-hover/search:text-primary transition-colors"
                                                 [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
@@ -398,16 +399,19 @@
                                     </td>
                                     <td class="p-2 border">
                                         <input class="w-full p-1 bg-transparent border-none outline-none"
-                                            formControlName="descripcionEspecificacion" placeholder="Detalles...">
+                                            formControlName="descripcionEspecificacion" placeholder="Detalles..."
+                                            (paste)="onPasteMaterials($event, i, 'descripcionEspecificacion')">
                                     </td>
                                     <td class="p-2 border">
                                         <input class="w-full p-1 bg-transparent border-none outline-none text-center"
-                                            type="number" formControlName="cantidad">
+                                            type="number" formControlName="cantidad"
+                                            (paste)="onPasteMaterials($event, i, 'cantidad')">
                                     </td>
                                     <td class="p-2 border">
                                         <input
                                             class="w-full p-1 bg-transparent border-none outline-none text-right font-bold text-primary"
-                                            type="number" formControlName="monto" placeholder="0.00">
+                                            type="number" formControlName="monto" placeholder="0.00"
+                                            (paste)="onPasteMaterials($event, i, 'monto')">
                                     </td>
                                     <td class="p-2 border">
                                         <select
@@ -421,7 +425,8 @@
                                     </td>
                                     <td class="p-2 border">
                                         <input class="w-full p-1 bg-transparent border-none outline-none"
-                                            formControlName="observaciones">
+                                            formControlName="observaciones"
+                                            (paste)="onPasteMaterials($event, i, 'observaciones')">
                                     </td>
                                     <td class="p-2 border text-center">
                                         <button mat-icon-button color="warn" (click)="removeDetalle(i)"

@@ -260,6 +260,34 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
+    onPasteMaterials(event: ClipboardEvent, index: number, field: string): void {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return;
+
+        const pastedText = clipboardData.getData('text');
+        if (!pastedText) return;
+
+        // Split by lines (Excel uses \r\n or \n)
+        const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
+
+        if (lines.length <= 1) return; // Regular single value paste
+
+        // Prevent default paste of the whole block into a single cell
+        event.preventDefault();
+
+        lines.forEach((line, i) => {
+            const currentIndex = index + i;
+            
+            // If the row doesn't exist, create it
+            if (currentIndex >= this.detalles.length) {
+                this.addDetalle();
+            }
+
+            // Patch the value for the specific field
+            this.detalles.at(currentIndex).get(field).setValue(line.trim());
+        });
+    }
+
     removeDetalle(index: number): void {
         this.detalles.removeAt(index);
     }
