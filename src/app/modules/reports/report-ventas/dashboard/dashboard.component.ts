@@ -149,13 +149,22 @@ export class ReportVentasDashboardComponent implements OnInit {
 
                     // 1. Mapeo de datos (Esto no interactúa con el DOM, va directo)
                     this.mapearKPIs(resp);
-                    this.detalleVentas = resp.detalle;
+
+                    // 🛡️ Quitar duplicados por documentoId SOLO para la tabla
+                    const mapUnique = new Map();
+                    resp.detalle.forEach((d: any) => {
+                        if (!mapUnique.has(d.documentoId)) {
+                            mapUnique.set(d.documentoId, d);
+                        }
+                    });
+                    this.detalleVentas = Array.from(mapUnique.values());
+
                     this.desglosePorSucursal = resp.desglosePorSucursal || [];
 
-                    // 🛡️ Fallback: Si no hay desglose pero hay detalle, lo calculamos
-                    if (this.desglosePorSucursal.length === 0 && this.detalleVentas.length > 0) {
+                    // 🛡️ Fallback: Si no hay desglose pero hay detalle, lo calculamos (usando Original)
+                    if (this.desglosePorSucursal.length === 0 && Array.isArray(resp.detalle)) {
                         const map = new Map<string, number>();
-                        this.detalleVentas.forEach(d => {
+                        resp.detalle.forEach((d: any) => {
                             const suc = d.sucursal || 'Sin Sucursal';
                             map.set(suc, (map.get(suc) || 0) + (d.netoMovimiento || 0));
                         });
