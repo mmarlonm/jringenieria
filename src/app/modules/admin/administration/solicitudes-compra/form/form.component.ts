@@ -49,6 +49,8 @@ export class SolicitudCompraFormComponent implements OnInit {
     selectedFile: File | null = null;
     archivos: any[] = [];
     filteredProducts$: Observable<ProductoBuscadorDto[]>[] = [];
+    proyectos: any[] = [];
+    filteredProyectos$: Observable<any[]>;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     // Select options
@@ -81,6 +83,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.initForm();
         this.loadBranches();
         this.loadUsers();
+        this.loadProjects();
 
         this._route.params.subscribe(params => {
             if (params['id']) {
@@ -99,6 +102,14 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadUsers(): void {
         this._usersService.getUsers().subscribe(users => {
             this.usuarios = users || [];
+        });
+    }
+
+    loadProjects(): void {
+        this._projectService.getProjects().subscribe((response: any) => {
+            // Handle the wrapper { code, message, data: [] }
+            this.proyectos = response?.data || response || [];
+            this._setupProjectFilter();
         });
     }
 
@@ -128,10 +139,10 @@ export class SolicitudCompraFormComponent implements OnInit {
             centroCosto: ['', Validators.required],
             folioProyecto: [''],
             moneda: ['MXN', Validators.required],
-            formaPago: [''],
+            formaPago: ['', Validators.required],
             razonSocial: ['', Validators.required],
             rfc: [''],
-            monto: [0, [Validators.min(0)]],
+            monto: [0, [Validators.required, Validators.min(0.01)]],
             cuadranteId: [null, Validators.required],
             detalles: this._formBuilder.array([])
         });
@@ -168,6 +179,32 @@ export class SolicitudCompraFormComponent implements OnInit {
         const index = this.detalles.length;
         this.detalles.push(detalleForm);
         this._setupProductSearch(index);
+    }
+
+    private _setupProjectFilter(): void {
+        const control = this.solicitudForm.get('folioProyecto');
+        this.filteredProyectos$ = control.valueChanges.pipe(
+            startWith(''),
+            debounceTime(200),
+            map(value => {
+                const name = typeof value === 'string' ? value : '';
+                return name ? this._filterProjects(name) : this.proyectos.slice();
+            })
+        );
+    }
+
+    private _filterProjects(name: string): any[] {
+        const filterValue = name.toLowerCase();
+        return this.proyectos.filter(p =>
+            String(p.proyectoId || p.id).toLowerCase().includes(filterValue) ||
+            String(p.nombre || p.nombreProyecto).toLowerCase().includes(filterValue)
+        );
+    }
+
+    onProjectSelected(event: any): void {
+        const project = event.option.value;
+        const label = `${project.proyectoId || project.id} - ${project.nombre || project.nombreProyecto}`;
+        this.solicitudForm.get('folioProyecto').setValue(label, { emitEvent: false });
     }
 
     private _setupCalculationListener(): void {

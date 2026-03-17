@@ -1,0 +1,271 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50/30 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex flex-col p-6 sm:px-10 sm:py-8 border-b bg-white dark:bg-transparent shadow-sm">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex-auto min-w-0">
+                <div class="flex items-center gap-2">
+                    <mat-icon class="icon-size-8 text-primary" [svgIcon]="'heroicons_outline:archive-box'"></mat-icon>
+                    <h1
+                        class="text-3xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
+                        Recepción de Compras
+                    </h1>
+                </div>
+                <p class="mt-1 text-secondary font-medium italic">Histórico de entregas y control de recepción física.
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button mat-flat-button color="primary"
+                    class="px-6 rounded-xl font-black uppercase tracking-widest shadow-lg"
+                    (click)="openNewReceptionDialog()">
+                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:plus'"></mat-icon>
+                    Nueva Recepción
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-auto overflow-y-auto p-6 sm:p-10">
+        <div class="max-w-screen-2xl mx-auto space-y-8">
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Total Recepciones -->
+                <mat-card
+                    class="relative overflow-hidden p-6 rounded-3xl border-none shadow-xl bg-gradient-to-br from-indigo-600 to-indigo-800 text-white group transition-all hover:scale-[1.02]">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <mat-icon class="icon-size-32" [svgIcon]="'heroicons_outline:archive-box'"></mat-icon>
+                    </div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-black uppercase tracking-widest text-indigo-100">Total
+                                Histórico</span>
+                            <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                <mat-icon class="icon-size-5 text-white"
+                                    [svgIcon]="'heroicons_solid:list-bullet'"></mat-icon>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-5xl font-black mb-1 leading-none tracking-tighter">{{ totalRecepciones
+                                }}</span>
+                            <span class="text-xs font-bold text-indigo-200 uppercase tracking-widest">Recepciones
+                                Registradas</span>
+                        </div>
+                    </div>
+                </mat-card>
+
+                <!-- Hoy -->
+                <mat-card
+                    class="relative overflow-hidden p-6 rounded-3xl border-none shadow-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white group transition-all hover:scale-[1.02]">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <mat-icon class="icon-size-32" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                    </div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <span
+                                class="text-xs font-black uppercase tracking-widest text-emerald-500 bg-white/90 px-2 py-0.5 rounded-full">Hoy</span>
+                            <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:bolt'"></mat-icon>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-5xl font-black mb-1 leading-none tracking-tighter">{{ hoyRecepciones
+                                }}</span>
+                            <span class="text-xs font-bold text-emerald-100 uppercase tracking-widest">Nuevas hoy</span>
+                        </div>
+                    </div>
+                </mat-card>
+
+                <!-- Semana -->
+                <mat-card
+                    class="relative overflow-hidden p-6 rounded-3xl border-none shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white group transition-all hover:scale-[1.02]">
+                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <mat-icon class="icon-size-32" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
+                    </div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-black uppercase tracking-widest text-amber-100">Últimos 7
+                                días</span>
+                            <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-5xl font-black mb-1 leading-none tracking-tighter">{{ semanaRecepciones
+                                }}</span>
+                            <span class="text-xs font-bold text-amber-100 uppercase tracking-widest">Registros
+                                semanales</span>
+                        </div>
+                    </div>
+                </mat-card>
+            </div>
+
+            <!-- Filters & Table -->
+            <mat-card class="p-8 shadow-xl rounded-2xl border-none overflow-hidden bg-white">
+                <!-- Table Filters -->
+                <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                    <div class="flex-auto w-full sm:w-80">
+                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                            <mat-icon matPrefix class="icon-size-5"
+                                [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                            <input matInput (keyup)="applyFilter($event)"
+                                placeholder="Buscar por folio, sucursal, proyecto..." #input>
+                        </mat-form-field>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button mat-stroked-button class="rounded-xl border-gray-300">
+                            <mat-icon class="icon-size-5 mr-2"
+                                [svgIcon]="'heroicons_outline:adjustments-horizontal'"></mat-icon>
+                            Filtros Avanzados
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto">
+                    <table mat-table [dataSource]="dataSource" matSort class="w-full">
+
+                        <!-- ID Recepcion -->
+                        <ng-container matColumnDef="idRecepcion">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                # REC</th>
+                            <td mat-cell *matCellDef="let row" class="py-4">
+                                <span
+                                    class="bg-gray-100 text-gray-700 px-2 py-1 rounded-lg font-mono text-xs font-bold">#{{
+                                    row.idRecepcion }}</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- ID Solicitud -->
+                        <ng-container matColumnDef="idSolicitud">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                # SOL</th>
+                            <td mat-cell *matCellDef="let row" class="py-4 text-xs font-bold text-secondary">
+                                {{ row.idSolicitud }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Folio OC -->
+                        <ng-container matColumnDef="folioOC">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                Folio OC</th>
+                            <td mat-cell *matCellDef="let row" class="py-4">
+                                <div class="flex items-center gap-1.5">
+                                    <mat-icon class="icon-size-4 text-primary"
+                                        [svgIcon]="'heroicons_solid:hashtag'"></mat-icon>
+                                    <span class="font-black text-primary">{{ row.folioOC || '-' }}</span>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <!-- Fecha -->
+                        <ng-container matColumnDef="fechaRecepcion">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                Fecha</th>
+                            <td mat-cell *matCellDef="let row" class="py-4 text-xs font-bold text-gray-600">
+                                {{ row.fechaRecepcion | date:'dd/MM/yyyy' }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Sucursal -->
+                        <ng-container matColumnDef="sucursal">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                Sucursal</th>
+                            <td mat-cell *matCellDef="let row" class="py-4">
+                                <span
+                                    class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wide border border-blue-100">
+                                    {{ row.sucursal }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Proyecto -->
+                        <ng-container matColumnDef="proyecto">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                Proyecto</th>
+                            <td mat-cell *matCellDef="let row"
+                                class="py-4 max-w-48 truncate text-xs font-bold text-gray-700"
+                                [matTooltip]="row.proyectoCliente">
+                                {{ row.proyectoCliente || '-' }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Quien Recibió -->
+                        <ng-container matColumnDef="quienRecibio">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                Recibe</th>
+                            <td mat-cell *matCellDef="let row" class="py-4">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 uppercase">
+                                        {{ (row.nombreQuienRecibio || 'U').charAt(0) }}
+                                    </div>
+                                    <span class="text-xs font-bold text-gray-700">{{ row.nombreQuienRecibio ||
+                                        'Desconocido' }}</span>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <!-- Lugar -->
+                        <ng-container matColumnDef="lugarEntrega">
+                            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                                Lugar</th>
+                            <td mat-cell *matCellDef="let row" class="py-4 text-xs text-secondary italic">
+                                {{ row.lugarEntrega }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Acciones -->
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 text-center">
+                                Acciones</th>
+                            <td mat-cell *matCellDef="let row" class="py-4 text-center">
+                                <button mat-icon-button [matMenuTriggerFor]="menu" class="hover:bg-gray-100 rounded-xl">
+                                    <mat-icon class="text-secondary"
+                                        [svgIcon]="'heroicons_solid:ellipsis-vertical'"></mat-icon>
+                                </button>
+                                <mat-menu #menu="matMenu" class="rounded-xl shadow-xl border-none">
+                                    <button mat-menu-item (click)="openDetailsDialog(row)">
+                                        <mat-icon class="icon-size-5 text-indigo-500"
+                                            [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                        <span>Ver Detalles</span>
+                                    </button>
+                                </mat-menu>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                            class="hover:bg-gray-50/80 transition-colors cursor-pointer border-b border-gray-100 last:border-none">
+                        </tr>
+
+                        <!-- Row shown when there is no matching data. -->
+                        <tr class="mat-row" *matNoDataRow>
+                            <td class="mat-cell p-12 text-center" colspan="9">
+                                <div class="flex flex-col items-center justify-center">
+                                    <mat-icon class="icon-size-16 text-gray-200 mb-4"
+                                        [svgIcon]="'heroicons_outline:archive-box-x-mark'"></mat-icon>
+                                    <p class="text-lg font-bold text-gray-400">No se encontraron registros de recepción.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Pagination Placeholder (If using backend pagination, add mat-paginator) -->
+            </mat-card>
+
+        </div>
+    </div>
+</div>

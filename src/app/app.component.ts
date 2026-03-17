@@ -76,7 +76,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     // Pre-cargar usuarios si no están cargados (para nombres en notificaciones)
-    this._usersService.getUsers().subscribe();
+    //this._usersService.getUsers().subscribe();
 
     // Check for birthday
     this.checkBirthday(storedData);

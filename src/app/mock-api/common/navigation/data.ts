@@ -158,6 +158,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:shopping-cart',
                 link: '/administration/solicitudes-compra'
+            },
+            {
+                id: 'administracion.recepcion-compras',
+                title: 'Recepción de Compras',
+                type: 'basic',
+                icon: 'heroicons_outline:archive-box',
+                link: '/administration/recepcion-compras'
             }
         ]
     },
@@ -286,7 +293,12 @@ export const compactNavigation: FuseNavigationItem[] = [
         tooltip: 'Administración',
         type: 'aside',
         icon: 'heroicons_outline:briefcase',
-        children: []
+        children: [
+            { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
+            { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
+            { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
+            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' }
+        ]
     }
 ];
 
@@ -295,7 +307,17 @@ export const futuristicNavigation: FuseNavigationItem[] = [
     { id: 'comercializacion', title: 'COMERCIALIZACION', type: 'group', children: [] },
     { id: 'marketing', title: 'MARKETING', type: 'group', children: [] },
     { id: 'apps', title: 'SEGURIDAD', type: 'group', children: [] },
-    { id: 'administracion', title: 'ADMINISTRACIÓN', type: 'group', children: [] }
+    {
+        id: 'administracion',
+        title: 'ADMINISTRACIÓN',
+        type: 'group',
+        children: [
+            { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
+            { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
+            { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
+            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' }
+        ]
+    }
 ];
 
 export const horizontalNavigation: FuseNavigationItem[] = [
@@ -303,5 +325,17 @@ export const horizontalNavigation: FuseNavigationItem[] = [
     { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
-    { id: 'administracion', title: 'Administración', type: 'group', icon: 'heroicons_outline:briefcase', children: [] }
+    {
+        id: 'administracion',
+        title: 'Administración',
+        type: 'group',
+        icon: 'heroicons_outline:briefcase',
+        children: [
+            { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
+            { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
+            { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
+            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' }
+        ]
+    }
+
 ];

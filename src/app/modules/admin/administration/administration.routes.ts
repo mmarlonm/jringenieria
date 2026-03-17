@@ -12,5 +12,9 @@ export default [
     {
         path: 'historico-compras',
         loadChildren: () => import('./historico-compras/historico-compras.routes').then(m => m.default)
+    },
+    {
+        path: 'recepcion-compras',
+        loadComponent: () => import('app/modules/admin/administration/purchase-reception/purchase-reception.component').then(m => m.PurchaseReceptionComponent)
     }
 ] as Routes;

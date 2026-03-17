@@ -108,7 +108,15 @@
 
                             <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Folio del proyecto</mat-label>
-                                <input matInput formControlName="folioProyecto">
+                                <input matInput formControlName="folioProyecto" [matAutocomplete]="autoProject"
+                                    placeholder="Buscar proyecto o escribir manual...">
+                                <mat-autocomplete #autoProject="matAutocomplete"
+                                    (optionSelected)="onProjectSelected($event)">
+                                    <mat-option *ngFor="let p of (filteredProyectos$ | async)" [value]="p">
+                                        <span class="font-bold text-primary">{{ p.proyectoId }}</span>
+                                        <span class="ml-2 text-secondary">{{ p.nombre }}</span>
+                                    </mat-option>
+                                </mat-autocomplete>
                             </mat-form-field>
 
                             <div class="grid grid-cols-2 gap-4 w-full">
@@ -162,6 +170,12 @@
                                 <mat-form-field appearance="fill" class="w-full">
                                     <mat-label>Monto</mat-label>
                                     <input matInput type="number" formControlName="monto">
+                                    <mat-error *ngIf="solicitudForm.get('monto')?.hasError('required')">
+                                        El monto es requerido
+                                    </mat-error>
+                                    <mat-error *ngIf="solicitudForm.get('monto')?.hasError('min')">
+                                        El monto debe ser mayor a 0
+                                    </mat-error>
                                 </mat-form-field>
                             </div>
 
@@ -170,6 +184,9 @@
                                 <mat-select formControlName="formaPago">
                                     <mat-option *ngFor="let f of formasPago" [value]="f">{{f}}</mat-option>
                                 </mat-select>
+                                <mat-error *ngIf="solicitudForm.get('formaPago')?.hasError('required')">
+                                    La forma de pago es requerida
+                                </mat-error>
                             </mat-form-field>
 
                             <mat-form-field appearance="fill" class="w-full">
@@ -388,11 +405,13 @@
                                             type="number" formControlName="cantidad">
                                     </td>
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none text-right font-bold text-primary"
+                                        <input
+                                            class="w-full p-1 bg-transparent border-none outline-none text-right font-bold text-primary"
                                             type="number" formControlName="monto" placeholder="0.00">
                                     </td>
                                     <td class="p-2 border">
-                                        <select class="w-full p-1 bg-transparent border-none outline-none text-center cursor-pointer text-sm"
+                                        <select
+                                            class="w-full p-1 bg-transparent border-none outline-none text-center cursor-pointer text-sm"
                                             formControlName="unidad">
                                             <option value="" disabled>--</option>
                                             <option value="PZA">PZA</option>

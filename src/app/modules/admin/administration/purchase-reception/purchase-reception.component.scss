@@ -1,0 +1,51 @@
+purchase-reception {
+    .mat-mdc-card {
+        background: white;
+        transition: transform 0.2s, box-shadow 0.2s;
+        
+        &:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    }
+
+    .fuse-mat-dense {
+        .mat-mdc-form-field-subscript-wrapper {
+            display: none !important;
+        }
+    }
+
+    textarea {
+        resize: none;
+    }
+}
+
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+}
+
+.mat-mdc-card {
+    border-radius: 1.5rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mat-mdc-table {
+    background: transparent !important;
+}
+
+.mat-mdc-row {
+    &:hover {
+        background-color: rgba(var(--fuse-primary-rgb), 0.03) !important;
+    }
+}
+
+.mat-mdc-header-row {
+    height: 48px !important;
+}
+
+.mat-mdc-cell, .mat-mdc-header-cell {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}

@@ -1,0 +1,166 @@
+<div class="flex flex-col max-w-5xl w-full max-h-screen overflow-y-auto bg-gray-50/30">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b bg-white">
+        <div class="flex items-center gap-2">
+            <mat-icon class="icon-size-7 text-primary" [svgIcon]="'heroicons_outline:archive-box'"></mat-icon>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900 italic">
+                Nueva Recepción de Compra
+            </h2>
+        </div>
+        <button mat-icon-button (click)="close()">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Form -->
+    <div class="p-8 space-y-8">
+        <!-- Section A: Referencia y Autocompletado -->
+        <mat-card class="p-6 shadow-sm border-none overflow-hidden relative bg-white">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+            <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <mat-icon class="icon-size-5 text-primary opacity-70" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                A. Referencia y Orden de Compra
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                <div class="md:col-span-1">
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                        <mat-label>Folio OC / Solicitud</mat-label>
+                        <input matInput (keyup.enter)="onSearchOC($event)" placeholder="Ej. 123">
+                        <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:hashtag'"></mat-icon>
+                    </mat-form-field>
+                    <p class="text-[10px] text-secondary mt-1 italic">Presiona Enter para buscar</p>
+                </div>
+
+                <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                        <mat-label>Sucursal</mat-label>
+                        <input matInput [value]="ocData?.sucursal || '-'" readonly>
+                    </mat-form-field>
+                    <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                        <mat-label>Proyecto</mat-label>
+                        <input matInput [value]="ocData?.proyectoCliente || '-'" readonly>
+                    </mat-form-field>
+                    <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                        <mat-label>Proveedor</mat-label>
+                        <input matInput [value]="ocData?.datosFiscales?.proveedorNombre || '-'" readonly>
+                    </mat-form-field>
+                </div>
+            </div>
+        </mat-card>
+
+        <form [formGroup]="receptionForm" class="space-y-8">
+            <!-- Section B: Logística de Recepción -->
+            <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-white">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                    <mat-icon class="icon-size-5 text-amber-500 opacity-70" [svgIcon]="'heroicons_solid:truck'"></mat-icon>
+                    B. Logística de Recepción
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Fecha de Recepción</mat-label>
+                            <input matInput [matDatepicker]="picker" formControlName="fechaRecepcion">
+                            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-datepicker #picker></mat-datepicker>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Quién Recibió</mat-label>
+                            <mat-select formControlName="quienRecibioId">
+                                <mat-option *ngFor="let user of usuarios" [value]="user.id || user.usuarioId">
+                                    {{ user.nombreUsuario || user.nombre }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="space-y-4">
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Lugar de Entrega</mat-label>
+                            <input matInput formControlName="lugarEntrega" placeholder="Ej. Almacén Central">
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Dónde (Punto Específico)</mat-label>
+                            <input matInput formControlName="dondeRecibio" placeholder="Ej. Puerta 2">
+                        </mat-form-field>
+                    </div>
+
+                    <mat-form-field class="w-full md:col-span-2" appearance="fill">
+                        <mat-label>Comentarios adicionales</mat-label>
+                        <textarea matInput formControlName="CondicionesComentarios" rows="3" placeholder="Detalles de la entrega..."></textarea>
+                    </mat-form-field>
+                </div>
+            </mat-card>
+
+            <!-- Section C: Validación Fiscal (CONTPAQi) -->
+            <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-gray-50/50">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                    <mat-icon class="icon-size-5 text-emerald-500 opacity-70" [svgIcon]="'heroicons_solid:document-check'"></mat-icon>
+                    C. Validación Fiscal (CONTPAQi)
+                </h3>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">Monto Factura</span>
+                        <span class="text-base font-black text-primary leading-tight">{{ (ocData?.datosFiscales?.total || 0) | currency:ocData?.datosFiscales?.moneda || 'MXN' }}</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">Razón Social</span>
+                        <span class="text-xs font-bold text-gray-700 truncate" [matTooltip]="ocData?.datosFiscales?.proveedorNombre">{{ ocData?.datosFiscales?.proveedorNombre || '-' }}</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">RFC</span>
+                        <span class="text-xs font-bold text-gray-700">{{ ocData?.datosFiscales?.rfc || '-' }}</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex flex-col">
+                        <span class="text-[9px] font-bold text-secondary uppercase tracking-wider">UUID</span>
+                        <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">{{ ocData?.datosFiscales?.folioFiscal || 'No disponible' }}</span>
+                    </div>
+                </div>
+            </mat-card>
+
+            <!-- Section D: Carga de Archivos -->
+            <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-white">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                    <mat-icon class="icon-size-5 text-indigo-500 opacity-70" [svgIcon]="'heroicons_solid:paper-clip'"></mat-icon>
+                    D. Carga de Archivos Requeridos
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group"
+                         (click)="evidenciaInput.click()">
+                        <mat-icon class="icon-size-10 text-secondary mb-2 group-hover:text-indigo-500" [svgIcon]="'heroicons_outline:camera'"></mat-icon>
+                        <span class="text-sm font-bold text-gray-700">Evidencia Fotográfica</span>
+                        <span class="text-[11px] text-secondary mt-1 text-center truncate w-full px-2">{{ evidenciaFile ? evidenciaFile.name : 'Click para subir archivos' }}</span>
+                        <input type="file" #evidenciaInput class="hidden" (change)="onFileSelected($event, 'evidencia')" accept="image/*">
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group"
+                         (click)="comprobanteInput.click()">
+                        <mat-icon class="icon-size-10 text-secondary mb-2 group-hover:text-indigo-500" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                        <span class="text-sm font-bold text-gray-700">Comprobante de Pago</span>
+                        <span class="text-[11px] text-secondary mt-1 text-center truncate w-full px-2">{{ comprobanteFile ? comprobanteFile.name : 'Click para subir archivos' }}</span>
+                        <input type="file" #comprobanteInput class="hidden" (change)="onFileSelected($event, 'comprobante')" accept=".pdf,.jpg,.png">
+                    </div>
+                </div>
+            </mat-card>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+                <button mat-button (click)="close()">
+                    Cancelar
+                </button>
+                <button mat-flat-button color="primary" class="px-8 rounded-lg font-bold shadow-md"
+                    [disabled]="isLoading || receptionForm.invalid" (click)="submit()">
+                    <mat-icon *ngIf="isLoading" class="animate-spin icon-size-5 mr-2" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
+                    {{ isLoading ? 'Registrando...' : 'Registrar Entrega' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
