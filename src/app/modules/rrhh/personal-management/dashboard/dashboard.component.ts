@@ -18,6 +18,8 @@ import { PersonalManagementService } from '../personal-management.service';
 import { PersonalConfigDialogComponent } from '../form-dialog/personal-config-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ChangeDetectorRef } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 @Component({
     selector: 'app-personal-management-dashboard',
     standalone: true,
@@ -55,15 +57,30 @@ export class PersonalManagementDashboardComponent implements OnInit {
     ngOnInit(): void {
         this.personalManagementService.getUsers().subscribe((users) => {
             this.users = users;
-            // Calcular cumpleaños
-            this.calculateBirthdays();
-            console.log(this.users);
-            this._changeDetectorRef.markForCheck();
+
+            // Para cada usuario, intentamos obtener su info detallada si falta la fecha de nacimiento
+            const detailRequests = this.users.map(user => {
+                // Siempre intentamos obtener info fresca para asegurar que tenemos la fecha de nacimiento
+                return this.personalManagementService.getPersonalInfo(user.usuarioId).pipe(
+                    tap(info => {
+                        if (info && info.fechaNacimiento) {
+                            user.fechaNacimiento = info.fechaNacimiento;
+                        }
+                    }),
+                    catchError(() => of(null))
+                );
+            });
+
+            forkJoin(detailRequests).subscribe(() => {
+                this.calculateBirthdays();
+                this._changeDetectorRef.markForCheck();
+            });
         });
     }
 
     calculateBirthdays(): void {
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const currentYear = today.getFullYear();
 
         this.users.forEach(user => {
@@ -74,20 +91,23 @@ export class PersonalManagementDashboardComponent implements OnInit {
             }
 
             const birthDate = new Date(user.fechaNacimiento);
-            const nextBirthday = new Date(birthDate);
-            nextBirthday.setFullYear(currentYear);
+            // Crear el cumple en el año actual
+            const nextBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
 
-            // Si ya pasó este año, es el siguiente
-            if (nextBirthday.getTime() < today.setHours(0, 0, 0, 0)) {
+            // Si ya pasó este año, mover al siguiente
+            if (nextBirthday.getTime() < today.getTime()) {
                 nextBirthday.setFullYear(currentYear + 1);
             }
 
-            const diffTime = nextBirthday.getTime() - today.setHours(0, 0, 0, 0);
+            const diffTime = nextBirthday.getTime() - today.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             user.daysUntilBirthday = diffDays;
             user.isBirthdayToday = diffDays === 0;
         });
+
+        // Ordenar por el que falte menos días (opcional, pero ayuda a visualizarlos primero)
+        // this.users.sort((a, b) => (a.daysUntilBirthday ?? 999) - (b.daysUntilBirthday ?? 999));
     }
 
     private initForm(): void {

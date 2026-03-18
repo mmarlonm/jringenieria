@@ -20,30 +20,31 @@
 
                         <!-- Gorro de cumpleaños animado (Emoji) -->
                         @if (member.isBirthdayToday) {
-                        <div class="absolute -top-6 -right-4 text-6xl animate-bounce filter drop-shadow-lg z-10"
+                        <div class="absolute -top-8 -right-6 text-7xl animate-bounce filter drop-shadow-xl z-20"
                             title="¡Feliz Cumpleaños!">
                             🥳
                         </div>
-                        <div class="absolute -bottom-2 -left-2 text-4xl animate-pulse z-10">
+                        <div class="absolute -top-10 -left-6 text-5xl animate-pulse z-20 pointer-events-none rotate-12">
+                            🎉
+                        </div>
+                        <div class="absolute -bottom-4 -left-4 text-5xl animate-pulse z-20">
                             🎂
                         </div>
                         }
-
-                        <!-- Countdown para cumpleaños cercanos (< 30 días) -->
-                        @if (!member.isBirthdayToday && member.daysUntilBirthday !== null && member.daysUntilBirthday <=
-                            30) { <div
-                            class="absolute -top-2 -right-6 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-md border border-gray-200 dark:border-gray-700 flex items-center gap-1 z-10">
-                            <span class="text-xs font-bold text-pink-500">Faltan {{ member.daysUntilBirthday }}
-                                días</span>
-                            <span class="text-sm">🎈</span>
-                    </div>
-                    }
 
                     <div class="absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white"
                         [ngClass]="member.activo ? 'bg-green-500' : 'bg-gray-400'"></div>
                 </div>
 
-                <div class="mt-6 font-semibold text-lg leading-tight">{{ member.nombreUsuario }}</div>
+                <div class="mt-6 font-semibold text-lg leading-tight flex items-center justify-center gap-2">
+                    {{ member.nombreUsuario }}
+                    @if (member.daysUntilBirthday !== null && !member.isBirthdayToday) {
+                    <span
+                        class="text-[10px] font-black text-pink-600 bg-pink-50 dark:bg-pink-900/30 px-2 py-0.5 rounded-full border border-pink-200 dark:border-pink-800/50 shadow-sm whitespace-nowrap">
+                        <span class="mr-0.5">🎂</span> {{ member.daysUntilBirthday }}d
+                    </span>
+                    }
+                </div>
                 <div class="text-secondary font-medium">{{ member.nombreRol }}</div>
                 <div class="mt-1 text-md text-hint">{{ member.email }}</div>
             </div>

@@ -233,7 +233,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:users',
         children: [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
-            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' } // Conservado
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-text', link: '/rrhh/report-entrada-salida' }
         ]
     },
 
