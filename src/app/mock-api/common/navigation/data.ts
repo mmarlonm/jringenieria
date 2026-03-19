@@ -3,6 +3,46 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export const defaultNavigation: FuseNavigationItem[] = [
 
     // ==========================================================================================
+    // SECCIÓN: ADMINISTRACIÓN
+    // ==========================================================================================
+    {
+        id: 'administracion',
+        title: 'ADMINISTRACION',
+        subtitle: 'Gestión administrativa',
+        type: 'group',
+        icon: 'heroicons_outline:briefcase',
+        children: [
+            {
+                id: 'administracion.solicitudes-compra',
+                title: 'Solicitud de compras',
+                type: 'basic',
+                icon: 'heroicons_outline:shopping-cart',
+                link: '/administration/solicitudes-compra'
+            },
+            {
+                id: 'administracion.tablero-compras',
+                title: 'Tablero de compras',
+                type: 'basic',
+                icon: 'heroicons_outline:presentation-chart-bar',
+                link: '/administration/tablero-compras'
+            },
+            {
+                id: 'administracion.recepcion-compras',
+                title: 'Recepción de Compras',
+                type: 'basic',
+                icon: 'heroicons_outline:archive-box',
+                link: '/administration/recepcion-compras'
+            },
+            {
+                id: 'administracion.historico-compras',
+                title: 'Histórico de compras',
+                type: 'basic',
+                icon: 'heroicons_outline:clock',
+                link: '/administration/historico-compras'
+            }
+        ]
+    },
+    // ==========================================================================================
     // SECCIÓN: INGENIERÍA
     // ==========================================================================================
     {
@@ -128,46 +168,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             }
         ]
     },
-    // ==========================================================================================
-    // SECCIÓN: ADMINISTRACIÓN
-    // ==========================================================================================
-    {
-        id: 'administracion',
-        title: 'ADMINISTRACION',
-        subtitle: 'Gestión administrativa',
-        type: 'group',
-        icon: 'heroicons_outline:briefcase',
-        children: [
-            {
-                id: 'administracion.tablero-compras',
-                title: 'Tablero de compras',
-                type: 'basic',
-                icon: 'heroicons_outline:presentation-chart-bar',
-                link: '/administration/tablero-compras'
-            },
-            {
-                id: 'administracion.historico-compras',
-                title: 'Histórico de compras',
-                type: 'basic',
-                icon: 'heroicons_outline:clock',
-                link: '/administration/historico-compras'
-            },
-            {
-                id: 'administracion.solicitudes-compra',
-                title: 'Solicitud de compras',
-                type: 'basic',
-                icon: 'heroicons_outline:shopping-cart',
-                link: '/administration/solicitudes-compra'
-            },
-            {
-                id: 'administracion.recepcion-compras',
-                title: 'Recepción de Compras',
-                type: 'basic',
-                icon: 'heroicons_outline:archive-box',
-                link: '/administration/recepcion-compras'
-            }
-        ]
-    },
+
 
     // ==========================================================================================
     // SECCIÓN: MARKETING
