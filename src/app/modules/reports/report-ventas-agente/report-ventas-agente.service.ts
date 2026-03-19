@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from 'environments/environment';
 
 
@@ -32,9 +32,12 @@ export class ReportVentasAgenteService {
     esMoral: number
   ): Observable<any> {
 
+    // 🔹 Si es reporte moral (valor 2) y se seleccionó el agente 22 (ADRIAN GOMEZ), sumamos 1 al ID (sería 23)
+    const agenteFinal = (esMoral === 2 && agente === 22) ? (agente + 2) : agente;
+
     const params = new HttpParams()
       .set('sucursal', sucursal)
-      .set('agenteId', agente)
+      .set('agenteId', agenteFinal)
       .set('fechaInicio', fechaInicio.toISOString())
       .set('fechaFin', fechaFin.toISOString())
       .set('esMoral', esMoral);
@@ -47,6 +50,11 @@ export class ReportVentasAgenteService {
    * Ideal para poblar el <mat-select> en la vista
    */
   getAgentes(): Observable<Agente[]> {
-    return this.http.get<Agente[]>(`${this.apiUrl}/agentes`);
+    return this.http.get<Agente[]>(`${this.apiUrl}/agentes`).pipe(
+      map(agentes => agentes.map(agente => ({
+        ...agente,
+        nombreAgente: agente.nombreAgente === 'ADRIAN GOMEZ CHACATL' ? 'ADRIAN GOMEZ' : agente.nombreAgente
+      })))
+    );
   }
 }
