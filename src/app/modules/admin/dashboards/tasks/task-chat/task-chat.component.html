@@ -33,12 +33,24 @@
                         {{ comment.nombreUsuario }}
                     </div>
 
-                    <!-- Globo de texto -->
-                    <div class="chat-bubble p-3 shadow-sm"
+                    <!-- Globo de texto con hover group para acciones -->
+                    <div class="relative group chat-bubble shadow-sm"
                          [ngClass]="{
-                            'bg-[#2c7c6e] text-white rounded-l-2xl rounded-tr-2xl': comment.esMio,
-                            'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-r-2xl rounded-tl-2xl': !comment.esMio
+                            'bg-[#2c7c6e] text-white rounded-l-2xl rounded-tr-2xl p-3': comment.esMio,
+                            'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-r-2xl rounded-tl-2xl p-3': !comment.esMio
                          }">
+                        
+                        <!-- Botón de eliminar (Hover) -->
+                        <div *ngIf="comment.esMio" 
+                             class="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            <button mat-icon-button 
+                                    class="w-8 h-8 min-w-8 text-red-500 bg-white dark:bg-gray-900 shadow-md transform hover:scale-110"
+                                    [matTooltip]="'Eliminar mensaje'"
+                                    (click)="eliminarMensaje(comment.idComentario)">
+                                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:trash"></mat-icon>
+                            </button>
+                        </div>
+
                         <!-- Renderizar imagen/sticker si aplica -->
                         <div *ngIf="isImageMessage(comment.mensaje)" class="mb-1">
                             <img [src]="getImageUrl(comment.mensaje)" class="max-w-full rounded-lg shadow-sm cursor-pointer hover:scale-[1.02] transition-transform duration-200" />
@@ -48,8 +60,10 @@
                         <div *ngIf="!isImageMessage(comment.mensaje)" class="text-sm whitespace-pre-wrap leading-relaxed">{{ comment.mensaje }}</div>
                         
                         <!-- Fecha/Hora -->
-                        <div class="text-[9px] mt-1 opacity-70 text-right">
-                            {{ comment.fechaCreacion | date:'dd/MM HH:mm' }}
+                        <div class="flex items-center justify-end mt-1 pt-1 opacity-70 border-t border-black/5 dark:border-white/5">
+                            <div class="text-[9px]">
+                                {{ formatMessageDate(comment.fechaCreacion) | date:'dd MMM, HH:mm' }}
+                            </div>
                         </div>
                     </div>
                 </div>

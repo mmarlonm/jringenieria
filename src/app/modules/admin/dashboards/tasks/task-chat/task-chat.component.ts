@@ -39,7 +39,7 @@ import { environment } from 'environments/environment';
   templateUrl: './task-chat.component.html',
   styleUrls: ['./task-chat.component.scss']
 })
-export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class TaskChatComponent implements OnInit, OnDestroy {
   @Input() tareaId!: number;
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
@@ -47,6 +47,7 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   newComment: string = '';
   loading: boolean = false;
   sending: boolean = false;
+  isNearBottom: boolean = true;
   isDragging: boolean = false; // Flag para UI feedback
   giphyResults: any[] = [];
   giphyQuery: string = '';
@@ -98,9 +99,6 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       });
   }
 
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
-  }
 
   ngOnDestroy(): void {
     if (this._hubConnection) {
@@ -119,9 +117,12 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe({
         next: (comments) => {
-          this.comments = comments;
+          this.comments = comments.map(c => ({
+            ...c,
+            esMio: Number(c.idUsuario) === this.userId
+          }));
           this.loading = false;
-          setTimeout(() => this.scrollToBottom(), 100);
+          setTimeout(() => this.scrollToBottom(true), 100);
         },
         error: () => {
           this.loading = false;
@@ -140,13 +141,18 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       .pipe(takeUntil(this._unsubscribeAll))
       .subscribe({
         next: (comment) => {
-          // Evitar duplicados si SignalR se adelantó
-          const existe = this.comments.some(c => c.idComentario === comment.idComentario);
+          // Asegurar esMio y evitar duplicados
+          const nuevo = {
+            ...comment,
+            esMio: Number(comment.idUsuario) === this.userId
+          };
+          
+          const existe = this.comments.some(c => c.idComentario === nuevo.idComentario);
           if (!existe) {
-            this.comments.push(comment);
+            this.comments.push(nuevo);
           }
           this.sending = false;
-          setTimeout(() => this.scrollToBottom(), 100);
+          setTimeout(() => this.scrollToBottom(true), 100); // Forzar al enviar
         },
         error: () => {
           this.sending = false;
@@ -155,10 +161,42 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       });
   }
 
-  private scrollToBottom(): void {
-    try {
-      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-    } catch (err) { }
+  eliminarMensaje(idComentario: number): void {
+    if (!idComentario || !this.tareaId || !this.userId) return;
+
+    if (confirm('¿Estás seguro de que deseas eliminar este mensaje?')) {
+      this._taskService.deleteComment(this.tareaId, idComentario, this.userId)
+        .pipe(takeUntil(this._unsubscribeAll))
+        .subscribe({
+          next: () => {
+            // SignalR se encargará de removerlo para todos
+            console.log('🗑️ [TaskChat] Petición de eliminación enviada exitosamente');
+          },
+          error: (err) => {
+            console.error('❌ Error al eliminar comentario:', err);
+          }
+        });
+    }
+  }
+
+  private scrollToBottom(force: boolean = false): void {
+    if (!this.scrollContainer) return;
+    
+    // Solo bajamos si estamos cerca del final o si se fuerza (ej. al enviar mensaje)
+    if (force || this.isNearBottom) {
+      try {
+        setTimeout(() => {
+          this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+        }, 50);
+      } catch (err) { }
+    }
+  }
+
+  onScroll(event: any): void {
+    const element = event.target;
+    // Consideramos que está al final si está a menos de 100px del fondo
+    const threshold = 100;
+    this.isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
   }
 
   addEmoji(emoji: string): void {
@@ -258,6 +296,17 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       return mensaje.substring(7);
     }
     return mensaje;
+  }
+
+  // Helper para manejar fechas UTC que vienen del backend sin la 'Z'
+  formatMessageDate(dateStr: string): Date | string {
+    if (!dateStr) return '';
+    
+    // Si la fecha no termina en Z, se la añadimos para que el DatePipe la tome como UTC y la convierta a local
+    if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+      return new Date(dateStr + 'Z');
+    }
+    return dateStr;
   }
 
   // Drag and Drop
@@ -361,10 +410,18 @@ export class TaskChatComponent implements OnInit, AfterViewChecked, OnDestroy {
           });
         };
 
-        // Registrar múltiples nombres de eventos por si el backend varía
         this._hubConnection?.on('MensajeRecibido', messageHandler);
         this._hubConnection?.on('NuevoMensaje', messageHandler);
         this._hubConnection?.on('ReceiveMessage', messageHandler);
+
+        // Nuevo listener para eliminación en tiempo real
+        this._hubConnection?.on('ComentarioEliminado', (idComentario: number) => {
+          console.log('🗑️ [TaskChat] Evento de mensaje eliminado:', idComentario);
+          this._ngZone.run(() => {
+            this.comments = this.comments.filter(c => c.idComentario !== idComentario);
+            this._changeDetectorRef.markForCheck();
+          });
+        });
       })
       .catch(err => console.error('❌ [TaskChat] Error al conectar SignalR:', err));
   }

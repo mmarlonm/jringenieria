@@ -91,4 +91,10 @@ export class TaskService {
   addComment(idTarea: number, idUsuario: number, mensaje: string): Observable<TareaComentario> {
     return this.http.post<TareaComentario>(`${this.apiUrl}/${idTarea}/comentarios`, { idTarea, idUsuario, mensaje });
   }
+
+  deleteComment(idTarea: number, idComentario: number, idUsuario: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${idTarea}/comentarios/${idComentario}`, {
+      params: { idUsuario: idUsuario.toString() }
+    });
+  }
 }
