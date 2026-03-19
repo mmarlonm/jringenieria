@@ -69,6 +69,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         'comentarios',
         'cuadranteId',
         'estatus',
+        'estadoLiquidacion',
         'acciones'
     ];
     dataSource: MatTableDataSource<SolicitudCompra> = new MatTableDataSource();
@@ -266,6 +267,29 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             });
     }
 
+    cambiarEstadoLiquidacion(row: any, nuevoEstado?: number): void {
+        const estadoFinal = nuevoEstado !== undefined ? nuevoEstado : (row.estadoLiquidacion === 0 ? 1 : 0);
+        const textoEstado = estadoFinal === 1 ? 'Liquidado' : 'Pendiente';
+
+        this._solicitudCompraService.actualizarEstadoLiquidacion(row.idSolicitud, estadoFinal)
+            .subscribe({
+                next: () => {
+                    row.estadoLiquidacion = estadoFinal;
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: `Estado de liquidación actualizado a: ${textoEstado}`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                },
+                error: (error) => {
+                    console.error('Error al actualizar estado de liquidación', error);
+                    Swal.fire('Error', 'No se pudo actualizar el estado de liquidación', 'error');
+                }
+            });
+    }
+
     applyFilter(event: Event): void {
         this.filtroSearch = (event.target as HTMLInputElement).value;
         this._updateFilter();
@@ -456,7 +480,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             'Monto',
             'Tipo Compra',
             'Centro Costo',
-            'Estatus'
+            'Estatus',
+            'Pago'
         ];
 
         const cleanText = (text: any) => {
@@ -483,7 +508,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             s.monto || 0,
             cleanText(s.tipoCompra),
             cleanText(s.centroCosto),
-            cleanText(s.nombreEstatus)
+            cleanText(s.nombreEstatus),
+            s.estadoLiquidacion === 1 ? 'Liquidado' : 'Pendiente'
         ]);
 
         const csvContent = '\ufeff' + [

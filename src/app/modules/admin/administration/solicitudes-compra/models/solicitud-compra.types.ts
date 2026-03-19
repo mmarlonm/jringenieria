@@ -31,6 +31,7 @@ export interface SolicitudCompra {
     idEstatus: number;
     nombreEstatus: string;
     datosFacturaContpaqi?: any;
+    estadoLiquidacion: number;
 
     // Relaciones
     estatus: CatEstatusCompra;

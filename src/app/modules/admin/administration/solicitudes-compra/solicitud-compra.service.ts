@@ -113,4 +113,8 @@ export class SolicitudCompraService {
     getDetalleConsolidado(idSolicitud: number): Observable<any> {
         return this._httpClient.get<any>(`${this.apiUrl}/recepcion/detalle-consolidado/${idSolicitud}`);
     }
+
+    actualizarEstadoLiquidacion(idSolicitud: number, nuevoEstado: number): Observable<any> {
+        return this._httpClient.put(`${this.apiUrl}/${idSolicitud}/estado-liquidacion`, nuevoEstado);
+    }
 }
