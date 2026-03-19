@@ -38,7 +38,7 @@ export class NotificacionesChatService {
         if (this._hubConnection?.state === signalR.HubConnectionState.Connected) return;
 
         this._hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl(this.hubUrl, {
+            .withUrl(`${this.hubUrl}?usuarioId=${userId}`, {
                 accessTokenFactory: () => localStorage.getItem('accessToken') || ''
             })
             .withAutomaticReconnect()

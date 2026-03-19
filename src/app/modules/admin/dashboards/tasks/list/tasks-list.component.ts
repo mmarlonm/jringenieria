@@ -817,7 +817,9 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             data: { tareaId: task.id },
             width: '100%',
             maxWidth: '500px',
-            panelClass: 'task-chat-dialog',
+            height: '600px',
+            minHeight: '400px',
+            panelClass: ['task-chat-dialog', 'custom-dialog-container'],
             autoFocus: false
         });
     }

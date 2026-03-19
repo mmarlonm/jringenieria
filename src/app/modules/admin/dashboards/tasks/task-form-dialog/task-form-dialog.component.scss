@@ -12,7 +12,7 @@
         background: transparent !important;
         overflow: visible !important;
 
-        @media (max-width: 1023px) {
+        @media (max-width: 767px) {
             margin-left: 0;
             margin-top: 0;
             width: 100%;
@@ -20,13 +20,12 @@
         }
     }
 
-    @media (max-width: 1023px) {
+    @media (max-width: 767px) {
         width: 100% !important;
-        // Quitar restricción estricta de altura para permitir que crezca con el contenido o use el scroll del padre
-        height: auto !important; 
+        height: 500px !important; // Altura fija en móvil para permitir scroll interno
         min-height: 300px;
-        max-height: none !important;
-        overflow: visible !important;
+        max-height: 70vh !important;
+        overflow: hidden !important; 
         
         .toggle-btn {
             left: 50% !important;
@@ -39,6 +38,11 @@
             min-height: 0 !important;
             height: 0 !important;
         }
+    }
+
+    // Ajuste opcional para pantallas medianas (md a lg)
+    @media (min-width: 768px) and (max-width: 1023px) {
+        width: 320px; // Un poco más estrecho para que quepa bien el form
     }
 }
 
@@ -74,7 +78,7 @@
         overflow: visible !important;
     }
 
-    @media (max-width: 1023px) {
+    @media (max-width: 767px) {
         .mat-mdc-dialog-container, 
         .mat-dialog-container {
             height: auto !important;
@@ -96,7 +100,7 @@
         max-height: none !important;
         margin: 0 !important;
         
-        @media (max-width: 1023px) {
+        @media (max-width: 767px) {
             overflow: visible !important;
             height: auto !important;
         }

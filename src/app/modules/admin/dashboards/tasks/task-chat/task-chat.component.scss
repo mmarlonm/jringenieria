@@ -1,4 +1,13 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
 .chat-main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -6,9 +15,15 @@
 .chat-bubble {
     position: relative;
     word-break: break-word;
-    
-    // Sombra suave para que resalte en fondos claros/oscuros
     filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+    
+    // Animación suave al aparecer
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 // Estilo scrollbar personalizado para el chat
@@ -30,5 +45,36 @@
 }
 
 textarea {
-    resize: none !important;
+    border-right: none !important;
+}
+
+.custom-scroll {
+    &::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+
+        &:hover {
+            background: #94a3b8;
+        }
+    }
+}
+
+.emoji-menu-panel {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
+    
+    ::ng-deep .mat-mdc-menu-content {
+        padding: 0 !important;
+    }
 }

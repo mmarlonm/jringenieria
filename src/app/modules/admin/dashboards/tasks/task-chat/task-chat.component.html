@@ -1,4 +1,15 @@
-<div class="flex flex-col h-full chat-main-container">
+<div class="flex flex-col h-full chat-main-container relative"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDrop($event)">
+
+    <!-- Overlay de Drag and Drop -->
+    <div *ngIf="isDragging" class="absolute inset-0 z-[100] bg-primary/20 backdrop-blur-[2px] border-4 border-dashed border-primary flex items-center justify-center m-2 rounded-2xl pointer-events-none transition-all duration-300">
+        <div class="bg-card p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-3">
+            <mat-icon class="icon-size-16 text-primary animate-bounce">add_photo_alternate</mat-icon>
+            <p class="text-lg font-bold text-primary">¡Suelta aquí para enviar la imagen!</p>
+        </div>
+    </div>
     <!-- Contenedor de mensajes -->
     <div #scrollContainer class="flex-auto overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/20">
         
@@ -28,7 +39,13 @@
                             'bg-[#2c7c6e] text-white rounded-l-2xl rounded-tr-2xl': comment.esMio,
                             'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-r-2xl rounded-tl-2xl': !comment.esMio
                          }">
-                        <div class="text-sm whitespace-pre-wrap leading-relaxed">{{ comment.mensaje }}</div>
+                        <!-- Renderizar imagen/sticker si aplica -->
+                        <div *ngIf="isImageMessage(comment.mensaje)" class="mb-1">
+                            <img [src]="getImageUrl(comment.mensaje)" class="max-w-full rounded-lg shadow-sm cursor-pointer hover:scale-[1.02] transition-transform duration-200" />
+                        </div>
+                        
+                        <!-- Mensaje de texto (si no es solo una imagen) -->
+                        <div *ngIf="!isImageMessage(comment.mensaje)" class="text-sm whitespace-pre-wrap leading-relaxed">{{ comment.mensaje }}</div>
                         
                         <!-- Fecha/Hora -->
                         <div class="text-[9px] mt-1 opacity-70 text-right">
@@ -42,6 +59,103 @@
 
     <!-- Input de envío -->
     <div class="p-4 bg-card border-t dark:border-gray-800 flex items-end gap-2">
+        <!-- Selector de Emojis y Stickers -->
+        <button mat-icon-button 
+                [matMenuTriggerFor]="emojiMenu"
+                class="text-secondary hover:text-primary transition-colors duration-200"
+                matTooltip="Añadir emoji o sticker">
+            <mat-icon class="icon-size-6">sentiment_satisfied_alt</mat-icon>
+        </button>
+
+        <mat-menu #emojiMenu="matMenu" class="emoji-menu-panel custom-scroll">
+            <div class="w-72 sm:w-80" (click)="$event.stopPropagation()">
+                <mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
+                    <!-- Tab de Emojis -->
+                    <mat-tab>
+                        <ng-template mat-tab-label>
+                            <mat-icon class="icon-size-5 mr-2">emoji_emotions</mat-icon>
+                            <span class="text-xs font-semibold">Emojis</span>
+                        </ng-template>
+                        <div class="p-2 grid grid-cols-8 gap-1 max-h-60 overflow-y-auto custom-scroll">
+                            <button *ngFor="let emoji of emojis" 
+                                    class="h-8 w-8 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                    (click)="addEmoji(emoji)">
+                                {{ emoji }}
+                            </button>
+                        </div>
+                    </mat-tab>
+
+                    <!-- Tab de Stickers -->
+                    <mat-tab>
+                        <ng-template mat-tab-label>
+                            <mat-icon class="icon-size-5 mr-2">sticky_note_2</mat-icon>
+                            <span class="text-xs font-semibold">Stickers</span>
+                        </ng-template>
+                        <div class="p-2 grid grid-cols-3 gap-2 max-h-60 overflow-y-auto custom-scroll">
+                            <!-- Botón para subir Sticker propio -->
+                            <button class="flex flex-col items-center p-2 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-all"
+                                    (click)="stickerUpload.click()">
+                                <mat-icon class="icon-size-6 text-secondary mb-1">add_photo_alternate</mat-icon>
+                                <span class="text-[9px] text-secondary font-bold">CARGAR</span>
+                                <input type="file" #stickerUpload hidden accept="image/*" (change)="onStickerFileSelected($event)">
+                            </button>
+
+                            <!-- Stickers Custom (Persistidos) -->
+                            <div *ngFor="let custom of customStickers; let i = index" 
+                                 class="relative group flex flex-col items-center p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded shadow-sm transition-all cursor-pointer"
+                                 (click)="sendCustomSticker(custom)">
+                                <img [src]="custom" class="w-full h-12 object-cover rounded" />
+                                <button mat-icon-button 
+                                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                        (click)="deleteCustomSticker($event, i)">
+                                    <mat-icon class="icon-size-3">close</mat-icon>
+                                </button>
+                            </div>
+
+                            <button *ngFor="let sticker of stickers" 
+                                    class="flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded shadow-sm transition-all"
+                                    (click)="sendSticker(sticker)">
+                                <mat-icon class="icon-size-8 text-primary mb-1" [svgIcon]="sticker.icon"></mat-icon>
+                                <span class="text-[10px] text-secondary truncate w-full text-center">{{ sticker.label }}</span>
+                            </button>
+                        </div>
+                    </mat-tab>
+
+                    <!-- Tab de GIFs (Giphy) -->
+                    <mat-tab>
+                        <ng-template mat-tab-label>
+                            <mat-icon class="icon-size-5 mr-2">gif_box</mat-icon>
+                            <span class="text-xs font-semibold">GIFs</span>
+                        </ng-template>
+                        <div class="p-3 flex flex-col gap-3 min-h-[320px]">
+                            <!-- Buscador Giphy -->
+                            <mat-form-field appearance="outline" class="fuse-mat-dense w-full no-subscript" subscriptSizing="dynamic">
+                                <mat-icon matPrefix class="icon-size-4">search</mat-icon>
+                                <input matInput 
+                                       placeholder="Buscar en Giphy..." 
+                                       [(ngModel)]="giphyQuery"
+                                       (ngModelChange)="searchGiphy()"
+                                       autocomplete="off">
+                            </mat-form-field>
+
+                            <!-- Resultados Giphy -->
+                            <div class="flex-auto overflow-y-auto custom-scroll grid grid-cols-2 gap-2 p-1 max-h-60">
+                                <div *ngIf="giphyResults.length === 0 && !giphyQuery" class="col-span-2 flex flex-col items-center justify-center p-4 text-secondary opacity-50">
+                                    <mat-icon class="icon-size-12 mb-2 text-gray-400">trending_up</mat-icon>
+                                    <span class="text-xs">Busca tus GIFs favoritos</span>
+                                </div>
+                                <img *ngFor="let gif of giphyResults" 
+                                     [src]="gif.images.fixed_height_small.url" 
+                                     (click)="sendGif(gif)"
+                                     class="w-full h-24 object-cover rounded shadow-sm cursor-pointer hover:scale-[1.05] transition-transform duration-200"
+                                     [title]="gif.title" />
+                            </div>
+                        </div>
+                    </mat-tab>
+                </mat-tab-group>
+            </div>
+        </mat-menu>
+
         <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
             <textarea matInput
                       cdkTextareaAutosize
@@ -51,6 +165,7 @@
                       placeholder="Escribe un mensaje..."
                       [(ngModel)]="newComment"
                       (keyup.enter)="!$event.shiftKey && sendComment()"
+                      (paste)="onPaste($event)"
                       [disabled]="sending"></textarea>
         </mat-form-field>
         <button mat-mini-fab color="primary" 
