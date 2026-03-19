@@ -440,7 +440,11 @@
                   [ngStyle]="getColumnWidth('acciones')" translate="no">
                   <div class="flex items-center justify-center gap-1">
                     <button mat-icon-button class="icon-size-7 text-green-500 hover:bg-green-50 dark:hover:bg-green-500/10"
-                      matTooltip="Chat de la Tarea" (click)="openChat(task)">
+                      matTooltip="Chat de la Tarea" (click)="openChat(task)"
+                      [matBadge]="unreadCounts.get(task.id)" 
+                      [matBadgeHidden]="!unreadCounts.get(task.id)"
+                      matBadgeColor="warn"
+                      matBadgeSize="small">
                       <mat-icon class="icon-size-4" svgIcon="heroicons_solid:chat-bubble-left-right"></mat-icon>
                     </button>
                     <button mat-icon-button class="icon-size-7 text-primary hover:bg-primary/10"

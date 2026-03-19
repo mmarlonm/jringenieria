@@ -133,4 +133,35 @@ export class NotificationsService {
         })
     );
 }
+
+    /**
+     * Agrega una nueva notificación manualmente (usado por SignalR)
+     */
+    pushNotification(notification: Notification): void {
+        this.notifications$.pipe(take(1)).subscribe(notifications => {
+            // Evitar duplicados por ID
+            if (notifications.some(n => n.id === notification.id)) return;
+            
+            const updated = [notification, ...notifications];
+            this._notifications.next(updated);
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+        });
+    }
+
+    /**
+     * Marca como leídas todas las notificaciones que comiencen con el prefijo dado
+     */
+    markReadByPrefix(prefix: string): void {
+        this.notifications$.pipe(take(1)).subscribe(notifications => {
+            const hasMatches = notifications.some(n => n.id.startsWith(prefix) && !n.read);
+            if (!hasMatches) return;
+
+            const updated = notifications.map(n => 
+                n.id.startsWith(prefix) ? { ...n, read: true } : n
+            );
+            
+            this._notifications.next(updated);
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+        });
+    }
 }

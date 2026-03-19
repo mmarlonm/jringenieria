@@ -3,18 +3,20 @@ import { Router, NavigationEnd, RouterOutlet } from "@angular/router";
 import { PresenceService } from "./presence.service";
 import { Subject, takeUntil, take, filter } from "rxjs";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
 import { SignalRService } from "./signalr.service";
 import { ChatNotificationService } from "./shared/components/chat-notification/chat-notification.service";
 import { UsersService } from "app/modules/admin/security/users/users.service";
 import { SileoWrapperComponent } from "./shared/components/sileo-wrapper/sileo-wrapper.component";
+import { NotificacionesChatService } from "./notificaciones-chat.service";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
   standalone: true,
-  imports: [RouterOutlet, MatDialogModule, SileoWrapperComponent],
+  imports: [RouterOutlet, MatDialogModule, MatSnackBarModule, SileoWrapperComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _unsubscribeAll = new Subject<void>();
@@ -29,13 +31,14 @@ export class AppComponent implements OnInit, OnDestroy {
     private presenceService: PresenceService,
     private signalRService: SignalRService,
     private chatNotificationService: ChatNotificationService,
+    private _notificacionesChatService: NotificacionesChatService,
     private _usersService: UsersService,
     private router: Router
   ) { }
 
-  @HostListener("window:beforeunload")
   unloadHandler(): void {
     this.presenceService.stopConnection();
+    this._notificacionesChatService.stopConnection();
   }
 
   ngOnInit(): void {
@@ -72,6 +75,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     if (!token || !userId) {
       this.presenceService.stopConnection();
+      this._notificacionesChatService.stopConnection();
       return;
     }
 
@@ -90,6 +94,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // SignalRService ahora maneja su propio bloqueo si ya está conectado/conectando
     this.signalRService.startConnection(userId.toString(), token);
+
+    // Nuevo: Iniciar servicio de notificaciones de chat de tareas
+    this._notificacionesChatService.startConnection();
 
     // Asegurar suscripción única a mensajes
     this.subscribeToMessages();
@@ -139,6 +146,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
     this.presenceService.stopConnection();
+    this._notificacionesChatService.stopConnection();
     clearTimeout(this.inactivityTimeout);
     window.removeEventListener("mousemove", this.resetInactivityTimer);
     window.removeEventListener("keydown", this.resetInactivityTimer);

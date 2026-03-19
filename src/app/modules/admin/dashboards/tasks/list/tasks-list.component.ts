@@ -18,6 +18,9 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { TaskViewConfigService, TaskViewConfig } from '../services/task-view-config.service';
+import { NotificationsService } from "app/layout/common/notifications/notifications.service";
+import { Notification } from "app/layout/common/notifications/notifications.types";
+import { MatBadgeModule } from '@angular/material/badge';
 
 import { TaskFormDialogComponent } from "./../task-form-dialog/task-form-dialog.component";
 import { CommonModule } from "@angular/common";
@@ -75,6 +78,7 @@ interface GroupedTasks {
         MatDialogModule,
         MatNativeDateModule,
         MatDatepickerModule,
+        MatBadgeModule,
         TaskMediaDialogComponent,
         ResizeColumnDirective,
         ResizableDirective,
@@ -116,6 +120,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         3: [],
         4: []
     };
+    unreadCounts: Map<number, number> = new Map();
 
     // User Info
     user: User;
@@ -172,6 +177,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         private dialog: MatDialog,
         private _userService: UserService,
         private _cdr: ChangeDetectorRef,
+        private _notificationsService: NotificationsService,
         private usersService: UsersService,
         private projectService: ProjectService,
     ) { }
@@ -187,6 +193,13 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
                 this.user = user["usuario"];
+            });
+
+        // Suscribirse a notificaciones para actualizar contadores de chat
+        this._notificationsService.notifications$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((notifications: Notification[]) => {
+                this._updateUnreadCounts(notifications);
             });
 
         this.loadTasks();
@@ -406,6 +419,28 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 displayedColumns: groupColumns
             });
         });
+    }
+
+    /**
+     * Actualiza el mapa de mensajes no leídos basándose en las notificaciones globales
+     */
+    private _updateUnreadCounts(notifications: Notification[]): void {
+        const newUnreadCounts = new Map<number, number>();
+
+        notifications.forEach(n => {
+            // Buscamos el patrón chat-{taskId}-{timestamp} y que no esté leída
+            if (n.id.startsWith('chat-') && !n.read) {
+                const parts = n.id.split('-');
+                const taskId = parseInt(parts[1], 10);
+                if (!isNaN(taskId)) {
+                    const current = newUnreadCounts.get(taskId) || 0;
+                    newUnreadCounts.set(taskId, current + 1);
+                }
+            }
+        });
+
+        this.unreadCounts = newUnreadCounts;
+        this._cdr.markForCheck();
     }
 
     // Toggle Group Expansion
@@ -773,6 +808,11 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     openChat(task: Task): void {
+        // Marcar como leídas las notificaciones de esta tarea
+        if (task.id) {
+            this._notificationsService.markReadByPrefix(`chat-${task.id}-`);
+        }
+
         this.dialog.open(TaskChatComponent, {
             data: { tareaId: task.id },
             width: '100%',

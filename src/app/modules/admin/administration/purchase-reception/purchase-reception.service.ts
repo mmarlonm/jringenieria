@@ -44,4 +44,18 @@ export class PurchaseReceptionService {
     descargarArchivo(idSolicitud: number, nombreArchivo: string): Observable<any> {
         return this._httpClient.get<any>(`${this.apiUrl}/recepcion/${idSolicitud}/descargar-archivo/${nombreArchivo}`);
     }
+
+    /**
+     * Busca folios en CONTPAQi
+     */
+    buscarFoliosContpaq(filtro: string): Observable<any[]> {
+        return this._httpClient.get<any[]>(`${environment.apiUrl}/ReportDashboard/contpaq-buscar-folios?filtro=${filtro}`);
+    }
+
+    /**
+     * Obtiene el detalle de un folio de CONTPAQi
+     */
+    getDetalleFolioContpaq(folio: string, rfc: string): Observable<any> {
+        return this._httpClient.get<any>(`${environment.apiUrl}/ReportDashboard/contpaq-detalle-folio?folio=${folio}&rfc=${rfc}`);
+    }
 }
