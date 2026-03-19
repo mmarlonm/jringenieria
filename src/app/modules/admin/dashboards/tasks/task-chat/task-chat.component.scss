@@ -1,0 +1,34 @@
+.chat-main-container {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chat-bubble {
+    position: relative;
+    word-break: break-word;
+    
+    // Sombra suave para que resalte en fondos claros/oscuros
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+// Estilo scrollbar personalizado para el chat
+#scrollContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#scrollContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#scrollContainer::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.dark #scrollContainer::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+textarea {
+    resize: none !important;
+}

@@ -40,6 +40,7 @@ import { UsersService } from "app/modules/admin/security/users/users.service";
 import { HighchartsChartModule } from 'highcharts-angular';
 import * as Highcharts from 'highcharts';
 import Gantt from 'frappe-gantt';
+import { TaskChatComponent } from "../task-chat/task-chat.component";
 
 interface GroupedTasks {
     groupName: string;
@@ -78,7 +79,8 @@ interface GroupedTasks {
         ResizeColumnDirective,
         ResizableDirective,
         ResizeHandleDirective,
-        HighchartsChartModule
+        HighchartsChartModule,
+        TaskChatComponent
     ],
 })
 export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -753,9 +755,9 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     openTaskDialog(taskId?: number, readOnly: boolean = false): void {
         const dialogRef = this.dialog.open(TaskFormDialogComponent, {
             width: '100%',
-            maxWidth: '900px',
+            maxWidth: taskId ? '1200px' : '900px',
             maxHeight: '90vh',
-            panelClass: 'task-dialog',
+            panelClass: 'task-floating-panel',
             data: taskId ? { id: taskId, readOnly } : null
         });
 
@@ -767,6 +769,16 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                     taskId ? 'Los cambios se han guardado.' : 'La nueva tarea está lista.'
                 );
             }
+        });
+    }
+
+    openChat(task: Task): void {
+        this.dialog.open(TaskChatComponent, {
+            data: { tareaId: task.id },
+            width: '100%',
+            maxWidth: '500px',
+            panelClass: 'task-chat-dialog',
+            autoFocus: false
         });
     }
 

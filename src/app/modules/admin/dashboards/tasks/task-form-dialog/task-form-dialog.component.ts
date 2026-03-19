@@ -37,6 +37,7 @@ import { User } from 'app/core/user/user.types';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialogModule } from '@angular/material/dialog';
 
+import { TaskChatComponent } from '../task-chat/task-chat.component';
 
 @Component({
     selector: 'app-task-form-dialog',
@@ -52,13 +53,15 @@ import { MatDialogModule } from '@angular/material/dialog';
         MatButtonModule,
         MatIconModule,
         MatSelectModule,
-        MatDialogModule
+        MatDialogModule,
+        TaskChatComponent
     ]
 })
 export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     form: FormGroup;
     userList: any[] = [];
     loading: boolean = false;
+    isChatCollapsed: boolean = false;
 
     private flatpickrInstances: { [key: string]: flatpickr.Instance } = {};
 
@@ -260,6 +263,10 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
     cancel(): void {
         this.dialogRef.close();
+    }
+
+    toggleChat(): void {
+        this.isChatCollapsed = !this.isChatCollapsed;
     }
 
     getUsers(): void {

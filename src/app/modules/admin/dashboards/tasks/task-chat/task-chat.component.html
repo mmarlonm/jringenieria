@@ -1,0 +1,63 @@
+<div class="flex flex-col h-full chat-main-container">
+    <!-- Contenedor de mensajes -->
+    <div #scrollContainer class="flex-auto overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/20">
+        
+        <div *ngIf="loading" class="flex justify-center items-center h-full">
+            <mat-progress-spinner mode="indeterminate" [diameter]="40"></mat-progress-spinner>
+        </div>
+
+        <div *ngIf="!loading && comments.length === 0" class="flex flex-col items-center justify-center h-full text-secondary opacity-60">
+            <mat-icon class="icon-size-12 mb-2">chat_bubble_outline</mat-icon>
+            <p>No hay comentarios aún. ¡Sé el primero!</p>
+        </div>
+
+        <ng-container *ngIf="!loading">
+            <div *ngFor="let comment of comments" class="flex flex-col w-full" 
+                 [ngClass]="{'items-end': comment.esMio, 'items-start': !comment.esMio}">
+                
+                <div class="max-w-[85%] sm:max-w-[70%]">
+                    <!-- Nombre de usuario -->
+                    <div class="text-[10px] font-bold text-secondary mb-1 px-2" 
+                         [ngClass]="{'text-right': comment.esMio}">
+                        {{ comment.nombreUsuario }}
+                    </div>
+
+                    <!-- Globo de texto -->
+                    <div class="chat-bubble p-3 shadow-sm"
+                         [ngClass]="{
+                            'bg-[#2c7c6e] text-white rounded-l-2xl rounded-tr-2xl': comment.esMio,
+                            'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-r-2xl rounded-tl-2xl': !comment.esMio
+                         }">
+                        <div class="text-sm whitespace-pre-wrap leading-relaxed">{{ comment.mensaje }}</div>
+                        
+                        <!-- Fecha/Hora -->
+                        <div class="text-[9px] mt-1 opacity-70 text-right">
+                            {{ comment.fechaCreacion | date:'dd/MM HH:mm' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+
+    <!-- Input de envío -->
+    <div class="p-4 bg-card border-t dark:border-gray-800 flex items-end gap-2">
+        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+            <textarea matInput
+                      cdkTextareaAutosize
+                      #autosize="cdkTextareaAutosize"
+                      cdkAutosizeMinRows="1"
+                      cdkAutosizeMaxRows="5"
+                      placeholder="Escribe un mensaje..."
+                      [(ngModel)]="newComment"
+                      (keyup.enter)="!$event.shiftKey && sendComment()"
+                      [disabled]="sending"></textarea>
+        </mat-form-field>
+        <button mat-mini-fab color="primary" 
+                (click)="sendComment()" 
+                [disabled]="!newComment.trim() || sending">
+            <mat-icon *ngIf="!sending">send</mat-icon>
+            <mat-icon *ngIf="sending" class="animate-spin">sync</mat-icon>
+        </button>
+    </div>
+</div>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Task } from './models/tasks.model';
+import { Task, TareaComentario } from './models/tasks.model';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
 
@@ -79,5 +79,16 @@ export class TaskService {
 
     // 3. Envía la solicitud con los parámetros
     return this.http.get<any>(url, { params: params });
+  }
+
+  // Comentarios / Chat
+  getComments(idTarea: number, idUsuario: number): Observable<TareaComentario[]> {
+    return this.http.get<TareaComentario[]>(`${this.apiUrl}/${idTarea}/comentarios`, {
+      params: { idUsuario: idUsuario.toString() }
+    });
+  }
+
+  addComment(idTarea: number, idUsuario: number, mensaje: string): Observable<TareaComentario> {
+    return this.http.post<TareaComentario>(`${this.apiUrl}/${idTarea}/comentarios`, { idTarea, idUsuario, mensaje });
   }
 }

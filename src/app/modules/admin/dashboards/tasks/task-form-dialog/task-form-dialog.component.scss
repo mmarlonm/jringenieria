@@ -1,71 +1,139 @@
-/* Scroll horizontal */
-.files-scroll {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+// Layout del Chat Separado (Efecto Floating Card)
+.chat-card-container {
+    width: 380px;
+    z-index: 10;
+    flex-shrink: 0;
+    
+    &.collapsed {
+        width: 0px;
+        margin-left: -12px;
+        border: 0;
+        box-shadow: none;
+        background: transparent !important;
+        overflow: visible !important;
+
+        @media (max-width: 1023px) {
+            margin-left: 0;
+            margin-top: 0;
+            width: 100%;
+            height: 0;
+        }
+    }
+
+    @media (max-width: 1023px) {
+        width: 100% !important;
+        // Quitar restricción estricta de altura para permitir que crezca con el contenido o use el scroll del padre
+        height: auto !important; 
+        min-height: 300px;
+        max-height: none !important;
+        overflow: visible !important;
+        
+        .toggle-btn {
+            left: 50% !important;
+            top: -24px !important;
+            transform: translateX(-50%) rotate(90deg) !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+        }
+
+        &.collapsed {
+            min-height: 0 !important;
+            height: 0 !important;
+        }
+    }
 }
 
-/* Scroll bonito tipo Fuse */
-.files-scroll::-webkit-scrollbar {
-    height: 6px;
+.toggle-btn {
+    border-radius: 50% !important;
+    padding: 0 !important;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        background-color: var(--fuse-primary-500) !important;
+        color: white !important;
+    }
 }
 
-.files-scroll::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+// Forzar transparencia TOTAL en el contenedor del diálogo
+::ng-deep .task-floating-panel {
+    background: transparent !important;
+    box-shadow: none !important;
+    
+    .mat-mdc-dialog-container, 
+    .mat-dialog-container {
+        --mdc-dialog-container-color: transparent !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    .mat-mdc-dialog-surface,
+    .mat-dialog-surface {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    @media (max-width: 1023px) {
+        .mat-mdc-dialog-container, 
+        .mat-dialog-container {
+            height: auto !important;
+            max-height: 95vh !important;
+            overflow-y: auto !important;
+        }
+        
+        .mat-mdc-dialog-surface,
+        .mat-dialog-surface {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+    }
 }
 
-.files-scroll::-webkit-scrollbar-track {
-    background: transparent;
+::ng-deep .task-form {
+    mat-dialog-content {
+        max-height: none !important;
+        margin: 0 !important;
+        
+        @media (max-width: 1023px) {
+            overflow: visible !important;
+            height: auto !important;
+        }
+    }
 }
 
-/* Card de archivo */
-.file-card {
-    min-width: 260px;
-    max-width: 260px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    background-color: #f9fafb;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+::ng-deep .fuse-mat-dense {
+    .mat-mdc-form-field-flex {
+        min-height: 40px !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
+
+    .mat-mdc-form-field-infix {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
+
+    .mat-mdc-text-field-wrapper {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .mat-mdc-form-field-label {
+        top: 20px !important;
+    }
 }
 
-.file-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+:host {
+    display: block;
+    height: 100%;
 }
 
-/* Info */
-.file-info {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
+h3 {
+    margin: 0 !important;
 }
 
-.file-text {
-    overflow: hidden;
-}
-
-.file-name {
-    font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.file-date {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-/* Acciones */
-.file-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
+mat-form-field {
+    margin-bottom: 0 !important;
 }

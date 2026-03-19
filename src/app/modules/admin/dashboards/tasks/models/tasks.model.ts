@@ -18,3 +18,13 @@ export interface Task {
   ubicacion: string;
   cuadranteId?: number | null;
 }
+
+export interface TareaComentario {
+  idComentario: number;
+  idTarea: number;
+  idUsuario: number;
+  nombreUsuario: string;
+  mensaje: string;
+  fechaCreacion: Date | string;
+  esMio: boolean;
+}

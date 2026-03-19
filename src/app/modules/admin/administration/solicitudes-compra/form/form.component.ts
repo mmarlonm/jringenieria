@@ -143,6 +143,9 @@ export class SolicitudCompraFormComponent implements OnInit {
             razonSocial: ['', Validators.required],
             rfc: [''],
             monto: [0, [Validators.required, Validators.min(0.01)]],
+            subtotal: [0],
+            iva: [0],
+            totalPiezas: [0],
             cuadranteId: [null, Validators.required],
             detalles: this._formBuilder.array([])
         });
@@ -209,14 +212,33 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     private _setupCalculationListener(): void {
         this.detalles.valueChanges.pipe(
-            debounceTime(50),
+            debounceTime(100),
             takeUntil(this._unsubscribeAll)
         ).subscribe((values: any[]) => {
-            const total = (values || []).reduce((acc, curr) => acc + (Number(curr.monto) || 0), 0);
-            const montoControl = this.solicitudForm.get('monto');
-            if (montoControl) {
-                montoControl.setValue(total, { emitEvent: false });
-            }
+            let subtotal = 0;
+            let totalPiezas = 0;
+            
+            (values || []).forEach((curr) => {
+                const cantidad = parseFloat(curr.cantidad) || 0;
+                const monto = parseFloat(curr.monto) || 0; // Monto is the unit price
+                const subtotalLinea = Number((cantidad * monto).toFixed(4));
+                
+                subtotal += subtotalLinea;
+                totalPiezas += cantidad;
+            });
+
+            // Redondear para el cálculo del IVA
+            subtotal = Number(subtotal.toFixed(2));
+            const iva = Number((subtotal * 0.16).toFixed(2));
+            const total = Number((subtotal + iva).toFixed(2));
+
+            // Actualizar controles de cabecera
+            this.solicitudForm.patchValue({
+                subtotal: subtotal,
+                iva: iva,
+                monto: total,
+                totalPiezas: totalPiezas
+            }, { emitEvent: false });
         });
     }
 
@@ -300,6 +322,18 @@ export class SolicitudCompraFormComponent implements OnInit {
                 this.detalles.removeAt(0);
             }
             solicitud.detalles.forEach(d => {
+                // Si hay monto pero no cantidad, asumimos 1 unidad para no perder el valor en la automatización
+                const cantidad = d.cantidad || 0;
+                const monto = d.monto || 0;
+                let precioUnitario = 0;
+
+                if (cantidad > 0) {
+                    precioUnitario = monto / cantidad;
+                } else if (monto > 0) {
+                    // Item legacy o servicio sin cantidad explícita
+                    precioUnitario = monto;
+                }
+
                 const detalleForm = this._formBuilder.group({
                     idDetalle: [d.idDetalle],
                     partida: [d.partida],
