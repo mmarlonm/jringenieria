@@ -306,9 +306,53 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 const filterObj = JSON.parse(filter);
 
                 // 1. Text Search
-                const searchStr = filterObj.search.toLowerCase();
-                const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.proveedorSugerido || ''} ${data.centroCosto} ${data.nombreEstatus}`.toLowerCase();
-                const passSearch = dataStr.includes(searchStr);
+                const searchStr = filterObj.search.trim().toLowerCase();
+                
+                // If search is empty, pass text search
+                if (!searchStr) {
+                    const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
+                    const passPriority = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
+                    const passCuadrante = filterObj.cuadranteId !== '' ? data.cuadranteId === Number(filterObj.cuadranteId) : true;
+                    return passStatus && passPriority && passCuadrante;
+                }
+
+                // Get labels for complex fields
+                const solicitante = this.getUserLabel(data.idPersonaSolicitante);
+                const estatusNom = data.nombreEstatus || '';
+                const pagoStatus = data.estadoLiquidacion === 1 ? 'liquidado' : 'pendiente';
+                const cuadranteNom = this.getCuadranteName(data.cuadranteId);
+                
+                // Collect all values to search in
+                const searchableValues = [
+                    data.idSolicitud,
+                    data.folioOC,
+                    data.fechaSolicitud ? new Date(data.fechaSolicitud).toLocaleDateString() : '',
+                    data.sucursal,
+                    data.areaSolicitante,
+                    solicitante,
+                    data.proyectoCliente,
+                    data.folioProyecto,
+                    data.prioridad,
+                    data.proveedorSugerido,
+                    data.datosBancariosProveedor,
+                    data.fechaRequerida ? new Date(data.fechaRequerida).toLocaleDateString() : '',
+                    data.lugarEntrega,
+                    data.moneda,
+                    data.monto,
+                    data.tipoCompra,
+                    data.centroCosto,
+                    data.comentariosObservaciones,
+                    cuadranteNom,
+                    estatusNom,
+                    pagoStatus
+                ];
+
+                // Check if any value contains the search string
+                const passSearch = searchableValues.some(val => 
+                    val !== null && 
+                    val !== undefined && 
+                    String(val).toLowerCase().includes(searchStr)
+                );
 
                 // 2. Status
                 const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
