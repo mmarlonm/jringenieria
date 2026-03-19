@@ -47,8 +47,7 @@ import Swal from 'sweetalert2';
         MatSelectModule
     ]
 })
-export class TableroComprasComponent implements OnInit, OnDestroy
-{
+export class TableroComprasComponent implements OnInit, OnDestroy {
     displayedColumns: string[] = [
         'folio',
         'folioOC',
@@ -70,7 +69,6 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         'comentarios',
         'cuadranteId',
         'estatus',
-        'pendiente',
         'acciones'
     ];
     dataSource: MatTableDataSource<SolicitudCompra> = new MatTableDataSource();
@@ -112,16 +110,14 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         private _solicitudCompraService: SolicitudCompraService,
         private _usersService: UsersService,
         private _dialog: MatDialog
-    )
-    {
+    ) {
     }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
 
-    ngOnInit(): void
-    {
+    ngOnInit(): void {
         // Get estatus
         this._solicitudCompraService.estatus$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -149,19 +145,18 @@ export class TableroComprasComponent implements OnInit, OnDestroy
 
         // Load initial data
         this._solicitudCompraService.getEstatus().subscribe();
-        
+
         // Default dates: First day of current month and Today
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        
+
         this.fechaInicio = firstDay.toISOString().split('T')[0];
         this.fechaFin = now.toISOString().split('T')[0];
 
         this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
     }
 
-    ngOnDestroy(): void
-    {
+    ngOnDestroy(): void {
         this._unsubscribeAll.next(null);
         this._unsubscribeAll.complete();
     }
@@ -170,8 +165,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
-    verDetalle(idSolicitud: number): void
-    {
+    verDetalle(idSolicitud: number): void {
         this._dialog.open(SolicitudDetalleDialogComponent, {
             data: { idSolicitud },
             width: '100%',
@@ -181,8 +175,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         });
     }
 
-    getUserLabel(idUsuario: number): string
-    {
+    getUserLabel(idUsuario: number): string {
         if (!this.usuarios || this.usuarios.length === 0) return `ID: ${idUsuario}`;
         const user = this.usuarios.find(u => u.id === idUsuario || u.usuarioId === idUsuario);
         return user ? (user.nombreUsuario || user.nombre || user.email) : `ID: ${idUsuario}`;
@@ -197,8 +190,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         });
     }
 
-    cambiarEstatus(id: number, idEstatus: number): void
-    {
+    cambiarEstatus(id: number, idEstatus: number): void {
         const estatusNuevo = this.estatus.find(e => e.idEstatus === idEstatus);
 
         if (idEstatus === 5 || estatusNuevo?.nombreEstatus.toLowerCase().includes('orden')) {
@@ -274,11 +266,10 @@ export class TableroComprasComponent implements OnInit, OnDestroy
             });
     }
 
-    applyFilter(event: Event): void
-    {
+    applyFilter(event: Event): void {
         this.filtroSearch = (event.target as HTMLInputElement).value;
         this._updateFilter();
-        
+
         // Reset process filter when using search
         if (this.filtroSearch) {
             this.selectedStatusId = null;
@@ -289,7 +280,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         this.dataSource.filterPredicate = (data: SolicitudCompra, filter: string) => {
             try {
                 const filterObj = JSON.parse(filter);
-                
+
                 // 1. Text Search
                 const searchStr = filterObj.search.toLowerCase();
                 const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.proveedorSugerido || ''} ${data.centroCosto} ${data.nombreEstatus}`.toLowerCase();
@@ -344,54 +335,48 @@ export class TableroComprasComponent implements OnInit, OnDestroy
         this._solicitudCompraService.getTodas(start, end).subscribe();
     }
 
-    filterByStatus(statusId: number | null): void
-    {
+    filterByStatus(statusId: number | null): void {
         if (this.selectedStatusId === statusId) {
             this.selectedStatusId = null;
         } else {
             this.selectedStatusId = statusId;
         }
-        
+
         this.onFilterChange();
     }
 
-    getStatusName(estatusId: number): string
-    {
+    getStatusName(estatusId: number): string {
         const estatus = this.estatus.find(e => e.idEstatus === estatusId);
         return estatus ? estatus.nombreEstatus : 'Sin Estatus';
     }
 
-    getColorByEstatusId(estatusId: number): string
-    {
+    getColorByEstatusId(estatusId: number): string {
         const nombre = this.getStatusName(estatusId).toLowerCase();
 
         // Specific colors for the 8 statuses (Matching SCSS process-step colors)
-        if (estatusId === 1 || nombre.includes('creada')) return '#880E4F'; 
-        if (estatusId === 2 || nombre.includes('revision') || nombre.includes('revisión') || nombre.includes('reivision')) return '#E91E63'; 
-        if (estatusId === 3 || nombre.includes('cotizacion') || nombre.includes('cotización')) return '#FF9800'; 
-        if (estatusId === 4 || nombre.includes('aprobacion') || nombre.includes('aprobación')) return '#8BC34A'; 
-        if (estatusId === 5 || nombre.includes('orden')) return '#03A9F4'; 
-        if (estatusId === 6 || nombre.includes('transito') || nombre.includes('tránsito')) return '#2196F3'; 
-        if (estatusId === 7 || nombre.includes('recibido')) return '#3F51B5'; 
-        if (estatusId === 8 || nombre.includes('cerrada')) return '#1A237E'; 
-        
+        if (estatusId === 1 || nombre.includes('creada')) return '#880E4F';
+        if (estatusId === 2 || nombre.includes('revision') || nombre.includes('revisión') || nombre.includes('reivision')) return '#E91E63';
+        if (estatusId === 3 || nombre.includes('cotizacion') || nombre.includes('cotización')) return '#FF9800';
+        if (estatusId === 4 || nombre.includes('aprobacion') || nombre.includes('aprobación')) return '#8BC34A';
+        if (estatusId === 5 || nombre.includes('orden')) return '#03A9F4';
+        if (estatusId === 6 || nombre.includes('transito') || nombre.includes('tránsito')) return '#2196F3';
+        if (estatusId === 7 || nombre.includes('recibido')) return '#3F51B5';
+        if (estatusId === 8 || nombre.includes('cerrada')) return '#1A237E';
+
         return '#C4C4C4';
     }
 
-    getFillColorByEstatusId(estatusId: number): string
-    {
+    getFillColorByEstatusId(estatusId: number): string {
         const color = this.getColorByEstatusId(estatusId);
         return color + '15';
     }
 
-    getPendienteTotal(s: SolicitudCompra): number
-    {
+    getPendienteTotal(s: SolicitudCompra): number {
         if (!s.detalles) return 0;
         return s.detalles.reduce((acc, current) => acc + (current.pendiente || 0), 0);
     }
 
-    getMontoTotal(s: SolicitudCompra): number
-    {
+    getMontoTotal(s: SolicitudCompra): number {
         return 0; // Or whatever calculation is needed
     }
 
@@ -419,11 +404,10 @@ export class TableroComprasComponent implements OnInit, OnDestroy
     // @ Private methods
     // -----------------------------------------------------------------------------------------------------
 
-    private _calculateKPIs(): void
-    {
+    private _calculateKPIs(): void {
         const solicitudes = this.dataSource.data;
         this.totalSolicitudes = solicitudes.length;
-        
+
         this.countCreada = solicitudes.filter(s => s.idEstatus === 1 || s.nombreEstatus.toLowerCase().includes('creada')).length;
         this.countRevision = solicitudes.filter(s => s.idEstatus === 2 || s.nombreEstatus.toLowerCase().includes('revision') || s.nombreEstatus.toLowerCase().includes('revisión')).length;
         this.countCotizacion = solicitudes.filter(s => s.idEstatus === 3 || s.nombreEstatus.toLowerCase().includes('cotización') || s.nombreEstatus.toLowerCase().includes('cotizacion')).length;
@@ -472,8 +456,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
             'Monto',
             'Tipo Compra',
             'Centro Costo',
-            'Estatus',
-            'Pendiente'
+            'Estatus'
         ];
 
         const cleanText = (text: any) => {
@@ -500,8 +483,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy
             s.monto || 0,
             cleanText(s.tipoCompra),
             cleanText(s.centroCosto),
-            cleanText(s.nombreEstatus),
-            this.getPendienteTotal(s)
+            cleanText(s.nombreEstatus)
         ]);
 
         const csvContent = '\ufeff' + [
