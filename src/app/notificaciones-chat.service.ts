@@ -11,13 +11,16 @@ import { environment } from 'environments/environment';
 })
 export class NotificacionesChatService {
     private _hubConnection: signalR.HubConnection | null = null;
-    private _apiUrl = environment.apiUrl;
+    private hubUrl: string;
 
     constructor(
-        private _notificationsService: NotificationsService,
         private _snackBar: MatSnackBar,
-        private _router: Router
-    ) { }
+        private _router: Router,
+        private _notificationsService: NotificationsService
+    ) {
+        // Usar apiUrlSignal para evitar el /api que suele causar 404 en hubs de .NET
+        this.hubUrl = environment.apiUrlSignal + '/chatHub';
+    }
 
     /**
      * Inicializa la conexión a SignalR y se une al canal del usuario
@@ -35,7 +38,9 @@ export class NotificacionesChatService {
         if (this._hubConnection?.state === signalR.HubConnectionState.Connected) return;
 
         this._hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl(this._apiUrl + '/chatHub')
+            .withUrl(this.hubUrl, {
+                accessTokenFactory: () => localStorage.getItem('accessToken') || ''
+            })
             .withAutomaticReconnect()
             .build();
 
@@ -43,9 +48,10 @@ export class NotificacionesChatService {
             .then(() => {
                 console.log('📡 [NotificacionesChatService] Conectado a /chatHub');
                 
-                // Unirse al chat personal (Notificaciones directas)
-                this._hubConnection?.invoke('UnirseAlChat', "Usuario_" + userId)
-                    .catch(err => console.error('[NotificacionesChatService] Error en UnirseAlChat:', err));
+                // Unirse al grupo personal (Notificaciones directas)
+                // Usamos el nuevo método UnirseAGrupo del backend
+                this._hubConnection?.invoke('UnirseAGrupo', "Usuario_" + userId)
+                    .catch(err => console.error('[NotificacionesChatService] Error en UnirseAGrupo:', err));
 
                 // Escuchar notificaciones de nuevos mensajes en tareas
                 this._hubConnection?.on('NuevaNotificacionChat', (data: { idTarea: number, titulo: string, mensaje: string, fecha: Date }) => {
