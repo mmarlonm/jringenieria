@@ -810,7 +810,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     openChat(task: Task): void {
         // Marcar como leídas las notificaciones de esta tarea
         if (task.id) {
-            this._notificationsService.markReadByPrefix(`chat-${task.id}-`);
+            this._notificationsService.deleteByPrefix(`chat-${task.id}-`);
         }
 
         this.dialog.open(TaskChatComponent, {

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import * as signalR from '@microsoft/signalr';
 import { NotificationsService } from 'app/layout/common/notifications/notifications.service';
 import { Notification } from 'app/layout/common/notifications/notifications.types';
 import { environment } from 'environments/environment';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
 @Injectable({
     providedIn: 'root'
@@ -14,7 +14,7 @@ export class NotificacionesChatService {
     private hubUrl: string;
 
     constructor(
-        private _snackBar: MatSnackBar,
+        private _chatNotificationService: ChatNotificationService,
         private _router: Router,
         private _notificationsService: NotificationsService
     ) {
@@ -67,18 +67,8 @@ export class NotificacionesChatService {
     private _handleNewNotification(data: { idTarea: number, titulo: string, mensaje: string, fecha: Date }): void {
         const { idTarea, titulo, mensaje, fecha } = data;
 
-        // 1. Mostrar Toast Silencioso (MatSnackBar)
-        const snackBarRef = this._snackBar.open(`${titulo} - ${mensaje}`, 'Ver', {
-            duration: 8000,
-            horizontalPosition: 'right',
-            verticalPosition: 'bottom',
-            panelClass: ['chat-notification-snackbar']
-        });
-
-        // Al hacer clic en el botón "Ver" del Toast, redirigir a la tarea
-        snackBarRef.onAction().subscribe(() => {
-            this._router.navigate(['/dashboards/tasks'], { queryParams: { id: idTarea } });
-        });
+        // 1. Mostrar Notificación Premium (Sileo)
+        this._chatNotificationService.showSuccess(titulo, mensaje, 8000);
 
         // 2. Integrar con el sistema de notificaciones de Fuse (Campanita)
         const fuseNotification: Notification = {

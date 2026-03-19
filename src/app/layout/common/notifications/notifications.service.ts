@@ -35,10 +35,9 @@ export class NotificationsService {
             } as Notification))
         ),
         map((fetchedNotifications) => {
-            const today = new Date().toDateString();
-            const stored = JSON.parse(localStorage.getItem('notificacionesHoy') || '[]') as Notification[];
+            const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]') as Notification[];
 
-            // Unificar notificaciones por ID
+            // 1. Unificar notificaciones por ID (Prioridad server para contenido, local para estado)
             const merged = fetchedNotifications.map(newNoti => {
                 const existing = stored.find(s => s.id === newNoti.id);
                 return existing
@@ -50,17 +49,15 @@ export class NotificationsService {
                     : newNoti;
             });
 
-            // Agregar notificaciones antiguas que aún están abiertas (view: true)
-            const stillOpenOldNotis = stored.filter(n => {
-                const notiDate = new Date(n.time).toDateString();
-                return notiDate !== today && n.view;
-            });
+            // 2. Mantener todas las notificaciones locales que NO están en el servidor 
+            // (ej. chat, notificaciones manuales) siempre que sigan siendo visibles
+            const localOnly = stored.filter(s => s.view && !fetchedNotifications.some(f => f.id === s.id));
 
-            const finalNotifications = [...merged, ...stillOpenOldNotis];
+            const finalNotifications = [...merged, ...localOnly];
 
             // Guardar en localStorage y emitir
-            localStorage.setItem('notificacionesHoy', JSON.stringify(finalNotifications));
-            this._notifications.next(finalNotifications);
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(finalNotifications));
+            this._notifications.next(finalNotifications.filter(n => n.view));
 
             return finalNotifications;
         })
@@ -107,7 +104,8 @@ export class NotificationsService {
         if (stored) {
             try {
                 const parsed = JSON.parse(stored) as Notification[];
-                this._notifications.next(parsed);
+                // Emitimos solo las que son visibles
+                this._notifications.next(parsed.filter(n => n.view));
             } catch (e) {
                 console.warn('Error al cargar notificaciones del localStorage:', e);
                 this._notifications.next([]);
@@ -160,7 +158,24 @@ export class NotificationsService {
                 n.id.startsWith(prefix) ? { ...n, read: true } : n
             );
             
-            this._notifications.next(updated);
+            this._notifications.next(updated.filter(n => n.view));
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+        });
+    }
+
+    /**
+     * Elimina visualmente todas las notificaciones que comiencen con el prefijo dado
+     */
+    deleteByPrefix(prefix: string): void {
+        this.notifications$.pipe(take(1)).subscribe(notifications => {
+            const hasMatches = notifications.some(n => n.id.startsWith(prefix));
+            if (!hasMatches) return;
+
+            const updated = notifications.map(n => 
+                n.id.startsWith(prefix) ? { ...n, view: false, read: true } : n
+            );
+            
+            this._notifications.next(updated.filter(n => n.view));
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
         });
     }
