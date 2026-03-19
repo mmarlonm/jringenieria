@@ -337,21 +337,21 @@
                     </button>
                 </div>
 
-                <div class="overflow-x-auto border rounded-xl shadow-sm">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-700 text-white">
-                            <tr>
-                                <th class="p-3 border text-center w-16">Partida</th>
-                                <th class="p-3 border">Material / Servicio</th>
-                                <th class="p-3 border">Descripción / Especificación</th>
-                                <th class="p-3 border w-24 text-center">Cantidad</th>
-                                <th class="p-3 border w-32 text-center">Monto</th>
-                                <th class="p-3 border w-32 text-center">Total Partida</th>
-                                <th class="p-3 border w-24 text-center">Unidad</th>
-                                <th class="p-3 border">Observaciones</th>
-                                <th class="p-3 border text-center">Acciones</th>
-                            </tr>
-                        </thead>
+                <div class="overflow-x-auto border rounded-xl shadow-sm bg-white dark:bg-slate-900">
+                                <table class="w-full text-left border-collapse min-w-[1100px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-secondary">
+                                            <th class="p-3 border w-12 text-center">#</th>
+                                            <th class="p-3 border min-w-[200px]">Material / Servicio</th>
+                                            <th class="p-3 border min-w-[250px]">Descripción / Especificación</th>
+                                            <th class="p-3 border w-24 text-center">Cantidad</th>
+                                            <th class="p-3 border w-32 text-center">Monto</th>
+                                            <th class="p-3 border w-36 text-center">Total Partida</th>
+                                            <th class="p-3 border w-24 text-center">Unidad</th>
+                                            <th class="p-3 border min-w-[150px]">Observaciones</th>
+                                            <th class="p-3 border w-16 text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
                         <tbody [formGroup]="solicitudForm">
                             <ng-container formArrayName="detalles">
                                 <tr *ngFor="let d of detalles.controls; let i = index" [formGroupName]="i"
