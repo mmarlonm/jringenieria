@@ -14,3 +14,7 @@
         min-height: 48px !important;
     }
 }
+
+::ng-deep .mat-mdc-autocomplete-panel.min-w-100 {
+    min-width: 400px !important;
+}

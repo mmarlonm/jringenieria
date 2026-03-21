@@ -93,6 +93,8 @@ export interface ProductoBuscadorDto {
     codigoProducto: string;
     nombreProducto: string;
     unidadMedida: string;
+    existencia?: number;
+    almacen?: string;
 }
 
 export interface HistorialEstatusDto {

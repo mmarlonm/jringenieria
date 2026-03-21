@@ -230,13 +230,43 @@
 
                     <!-- Folio -->
                     <ng-container matColumnDef="folio" sticky>
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Folio</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenu" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.idSolicitud}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenu="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Folio</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.idSolicitud" (keyup)="onFilterChange()" placeholder="Ej. 105">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
                     </ng-container>
 
                     <!-- Folio OC (Contpac) -->
                     <ng-container matColumnDef="folioOC">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio OC</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Folio OC</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuOC" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.folioOC}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuOC="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Folio OC</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.folioOC" (keyup)="onFilterChange()" placeholder="Ej. BC-123">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="font-bold text-amber-600 tabular-nums">
                             {{ s.folioOC || '-' }}
                         </td>
@@ -244,45 +274,162 @@
 
                     <!-- Fecha de solicitud -->
                     <ng-container matColumnDef="fechaSolicitud">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Fecha</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuFecha" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.fechaSolicitud}" [svgIcon]="'heroicons_solid:calendar'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuFecha="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Fecha de Solicitud</mat-label>
+                                            <input matInput [matDatepicker]="picker" [(ngModel)]="filterValues.fechaSolicitud" (dateChange)="onFilterChange()">
+                                            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                            <mat-datepicker #picker></mat-datepicker>
+                                        </mat-form-field>
+                                        <button mat-button color="warn" class="mt-2 w-full" *ngIf="filterValues.fechaSolicitud" (click)="filterValues.fechaSolicitud = null; onFilterChange()">Limpiar</button>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="whitespace-nowrap">{{ s.fechaSolicitud |
                             date:'dd/MM/yyyy' }}</td>
                     </ng-container>
 
                     <!-- Sucursal -->
                     <ng-container matColumnDef="sucursal">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Sucursal</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Sucursal</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuSuc" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.sucursal}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuSuc="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Sucursal</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.sucursal" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todas</mat-option>
+                                                <mat-option *ngFor="let s of sucursales" [value]="s">{{ s }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">{{ s.sucursal }}</td>
                     </ng-container>
 
                     <!-- Área solicitante -->
                     <ng-container matColumnDef="areaSolicitante">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Área</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Área</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuArea" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.areaSolicitante}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuArea="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Área</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.areaSolicitante" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todas</mat-option>
+                                                <mat-option *ngFor="let a of areas" [value]="a">{{ a }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">{{ s.areaSolicitante }}</td>
                     </ng-container>
 
                     <!-- Solicitante -->
                     <ng-container matColumnDef="solicitante">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Solicitante</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Solicitante</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuSol" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.idPersonaSolicitante}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuSol="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Solicitante</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.idPersonaSolicitante" (keyup)="onFilterChange()" placeholder="Nombre...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="whitespace-nowrap font-medium">{{
                             getUserLabel(s.idPersonaSolicitante) }}</td>
                     </ng-container>
 
                     <!-- Proyecto / Cliente -->
                     <ng-container matColumnDef="proyectoCliente">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Proyecto / Cliente</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Proyecto / Cliente</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuProj" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.proyectoCliente}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuProj="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Proyecto</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.proyectoCliente" (keyup)="onFilterChange()" placeholder="Nombre proyecto...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">{{ s.proyectoCliente }}</td>
                     </ng-container>
 
                     <!-- Folio del Proyecto -->
                     <ng-container matColumnDef="folioProyecto">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio del proyecto</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Folio del proyecto</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuFProj" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.folioProyecto}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuFProj="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Folio Proyecto</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.folioProyecto" (keyup)="onFilterChange()" placeholder="Ej. PRJ-001">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">{{ s.folioProyecto }}</td>
                     </ng-container>
 
                     <!-- Prioridad -->
                     <ng-container matColumnDef="prioridad">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Prioridad</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Prioridad</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuPrio" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.prioridad}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuPrio="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Prioridad</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.prioridad" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todas</mat-option>
+                                                <mat-option *ngFor="let p of prioridades" [value]="p">{{ p }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">
                             <span class="px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider" [ngClass]="{
                                     'bg-red-100 text-red-700': s.prioridad === 'Urgente',
@@ -296,20 +443,68 @@
 
                     <!-- Proveedor Sugerido -->
                     <ng-container matColumnDef="proveedorSugerido">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor sugerido</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Proveedor sugerido</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuProv" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.proveedorSugerido}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuProv="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Proveedor</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.proveedorSugerido" (keyup)="onFilterChange()" placeholder="Nombre comercial...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">{{ s.proveedorSugerido }}</td>
                     </ng-container>
 
                     <!-- Datos bancarios proveedor -->
                     <ng-container matColumnDef="datosBancarios">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Datos bancarios proveedor</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Datos bancarios proveedor</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuBancos" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.datosBancariosProveedor}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuBancos="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Datos Bancarios</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.datosBancariosProveedor" (keyup)="onFilterChange()" placeholder="Filtrar...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="max-w-[150px] truncate text-xs"
                             [matTooltip]="s.datosBancariosProveedor">{{ s.datosBancariosProveedor }}</td>
                     </ng-container>
 
                     <!-- Fecha requerida -->
                     <ng-container matColumnDef="fechaRequerida">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha requerida</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Fecha requerida</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuFechaReq" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.fechaRequerida}" [svgIcon]="'heroicons_solid:calendar'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuFechaReq="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Fecha Requerida</mat-label>
+                                            <input matInput [matDatepicker]="pickerReq" [(ngModel)]="filterValues.fechaRequerida" (dateChange)="onFilterChange()">
+                                            <mat-datepicker-toggle matSuffix [for]="pickerReq"></mat-datepicker-toggle>
+                                            <mat-datepicker #pickerReq></mat-datepicker>
+                                        </mat-form-field>
+                                        <button mat-button color="warn" class="mt-2 w-full" *ngIf="filterValues.fechaRequerida" (click)="filterValues.fechaRequerida = null; onFilterChange()">Limpiar</button>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="whitespace-nowrap">
                             <span class="font-bold">{{ s.fechaRequerida | date:'dd/MM/yyyy' }}</span>
                         </td>
@@ -317,7 +512,22 @@
 
                     <!-- Lugar de entrega -->
                     <ng-container matColumnDef="lugarEntrega">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Lugar de entrega</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Lugar de entrega</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuLugar" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.lugarEntrega}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuLugar="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Lugar</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.lugarEntrega" (keyup)="onFilterChange()" placeholder="Filtrar...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">
                             <span class="text-xs">{{ s.lugarEntrega }}</span>
                         </td>
@@ -325,7 +535,25 @@
 
                     <!-- Moneda -->
                     <ng-container matColumnDef="moneda">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Moneda</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center justify-center gap-2">
+                                <span mat-sort-header>Moneda</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuMon" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.moneda}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuMon="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Moneda</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.moneda" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todas</mat-option>
+                                                <mat-option *ngFor="let m of monedas" [value]="m">{{ m }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="text-center">
                             <span class="font-mono text-[10px]">{{ s.moneda }}</span>
                         </td>
@@ -333,7 +561,22 @@
 
                     <!-- Monto -->
                     <ng-container matColumnDef="monto">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Monto</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuMonto" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.monto}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuMonto="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Monto</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.monto" (keyup)="onFilterChange()" placeholder="Ej. 1500">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="text-right font-bold pr-8">
                             {{ s.monto | currency:s.moneda }}
                         </td>
@@ -341,7 +584,25 @@
 
                     <!-- Tipo de compra -->
                     <ng-container matColumnDef="tipoCompra">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Tipo</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuTipo" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.tipoCompra}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuTipo="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Tipo de Compra</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.tipoCompra" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todas</mat-option>
+                                                <mat-option *ngFor="let t of tiposCompra" [value]="t">{{ t }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">
                             <span class="text-xs italic">{{ s.tipoCompra }}</span>
                         </td>
@@ -349,7 +610,22 @@
 
                     <!-- Centro de costo -->
                     <ng-container matColumnDef="centroCosto">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Centro de costo</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Centro de costo</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuCC" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.centroCosto}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuCC="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Centro de costo</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.centroCosto" (keyup)="onFilterChange()" placeholder="Filtrar...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s">
                             <span class="text-xs font-semibold">{{ s.centroCosto }}</span>
                         </td>
@@ -357,7 +633,22 @@
 
                     <!-- Comentarios -->
                     <ng-container matColumnDef="comentarios">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Observaciones</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Observaciones</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuObs" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.comentariosObservaciones}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuObs="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Observaciones</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.comentariosObservaciones" (keyup)="onFilterChange()" placeholder="Filtrar...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="max-w-[200px] truncate italic text-xs text-secondary"
                             [matTooltip]="s.comentariosObservaciones">
                             {{ s.comentariosObservaciones }}
@@ -366,7 +657,25 @@
 
                     <!-- Estatus -->
                     <ng-container matColumnDef="estatus">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Estatus</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center justify-center gap-2">
+                                <span mat-sort-header>Estatus</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuEst" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.nombreEstatus}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuEst="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Estatus</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.nombreEstatus" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todos</mat-option>
+                                                <mat-option *ngFor="let e of estatusDisponibles" [value]="e">{{ e }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="px-2 py-3 cursor-pointer whitespace-nowrap text-center"
                             [matMenuTriggerFor]="statusMenu">
                             <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-sm"
@@ -388,21 +697,46 @@
 
                     <!-- Pago / Liquidación -->
                     <ng-container matColumnDef="estadoLiquidacion">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Pago</th>
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center justify-center gap-2">
+                                <span mat-sort-header>Pago</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuPago" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.estadoLiquidacion}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuPago="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Estatus de Pago</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.estadoLiquidacion" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todos</mat-option>
+                                                <mat-option *ngFor="let p of pagosDisponibles" [value]="p">{{ p }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
                         <td mat-cell *matCellDef="let s" class="px-2 py-3 cursor-pointer text-center"
                             [matMenuTriggerFor]="payMenu">
                             <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm transition-all"
                                 [ngClass]="{
                                     'bg-amber-100 text-amber-700': s.estadoLiquidacion === 0,
-                                    'bg-emerald-100 text-emerald-700': s.estadoLiquidacion === 1
+                                    'bg-emerald-100 text-emerald-700': s.estadoLiquidacion === 1,
+                                    'bg-sky-100 text-sky-700': s.estadoLiquidacion === 2
                                 }">
-                                {{ s.estadoLiquidacion === 1 ? 'Liquidado' : 'Pendiente' }}
+                                {{ getEstadoLiquidacionLabel(s.estadoLiquidacion) }}
                             </span>
                             <mat-menu #payMenu="matMenu">
                                 <button mat-menu-item (click)="cambiarEstadoLiquidacion(s, 0)">
                                     <div class="flex items-center">
                                         <div class="w-3 h-3 rounded-full mr-3 bg-amber-500"></div>
                                         <span>Pendiente</span>
+                                    </div>
+                                </button>
+                                <button mat-menu-item (click)="cambiarEstadoLiquidacion(s, 2)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3 bg-sky-500"></div>
+                                        <span>Anticipo</span>
                                     </div>
                                 </button>
                                 <button mat-menu-item (click)="cambiarEstadoLiquidacion(s, 1)">
@@ -453,8 +787,27 @@
                     </ng-container>
                     <!-- Cuadrante (Matriz Eisenhower) Column -->
                     <ng-container matColumnDef="cuadranteId">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="whitespace-nowrap text-center">
-                            Matriz Eisenhower
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center justify-center gap-2">
+                                <span mat-sort-header>Matriz Eisenhower</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuCuad" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.cuadranteId}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuCuad="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Cuadrante</mat-label>
+                                            <mat-select [(ngModel)]="filterValues.cuadranteId" (selectionChange)="onFilterChange()">
+                                                <mat-option [value]="''">Todos</mat-option>
+                                                <mat-option [value]="'Importante y Urgente'">Importante y Urgente</mat-option>
+                                                <mat-option [value]="'Importante, No Urgente'">Importante, No Urgente</mat-option>
+                                                <mat-option [value]="'No Importante, Urgente'">No Importante, Urgente</mat-option>
+                                                <mat-option [value]="'No Importante, No Urgente'">No Importante, No Urgente</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
                         </th>
                         <td mat-cell *matCellDef="let s"
                             class="text-center p-0 whitespace-nowrap border-r border-b dark:border-gray-800"

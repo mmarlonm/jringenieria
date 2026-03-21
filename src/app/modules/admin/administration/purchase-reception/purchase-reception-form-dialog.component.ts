@@ -86,7 +86,8 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             lugarEntrega: ['', Validators.required],
             quienRecibioId: [null, Validators.required],
             dondeRecibio: ['', Validators.required],
-            CondicionesComentarios: ['']
+            CondicionesComentarios: [''],
+            estatus: [0, Validators.required]
         });
     }
 
@@ -197,7 +198,8 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             proveedorSugerido: this.ocData?.datosFiscales?.nombreProveedor,
             proyectoCliente: this.ocData?.proyectoCliente,
             monto: this.ocData?.datosFiscales?.totalFactura,
-            moneda: this.ocData?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (this.ocData?.datosFiscales?.moneda?.trim() || 'MXN')
+            moneda: this.ocData?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (this.ocData?.datosFiscales?.moneda?.trim() || 'MXN'),
+            estatus: this.receptionForm.value.estatus
         };
 
         this._receptionService.registrarRecepcion(payload).subscribe({

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, map, Observable, ReplaySubject, tap } from 'rxjs';
+import { BehaviorSubject, catchError, map, Observable, of, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'environments/environment';
 import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto } from './models/solicitud-compra.types';
 
@@ -20,7 +20,33 @@ export class SolicitudCompraService {
         return this._httpClient.get<{ success: boolean, data: ProductoBuscadorDto[] }>(`${this.apiUrl}/buscar-productos`, {
             params: { filtro }
         }).pipe(
-            map(response => response.data || [])
+            map(response => response.data || []),
+            catchError(() => of([] as ProductoBuscadorDto[]))
+        );
+    }
+
+    consultarExistenciaContpaqi(busqueda: string, almacen: string): Observable<ProductoBuscadorDto[]> {
+        return this._httpClient.get<any>(`${this.apiUrl}/consultar-existencia-contpaqi`, {
+            params: { busqueda, almacen }
+        }).pipe(
+            map(response => {
+                // Determine if the data is wrapped in { data: [...] } or is a direct array
+                const rawData = response?.data !== undefined ? response.data : response;
+                const data = Array.isArray(rawData) ? rawData : [];
+                
+                return data.map(p => ({
+                    productoId: 0,
+                    codigoProducto: p.codigo || p.codigoProducto || '',
+                    nombreProducto: p.producto || p.nombreProducto || '',
+                    existencia: p.cantidadReal !== undefined ? p.cantidadReal : (p.existencia || 0),
+                    almacen: p.almacen || p.warehouse || almacen,
+                    unidadMedida: p.unidadMedida || 'PZ'
+                }));
+            }),
+            catchError(err => {
+                console.error('Error en consultarExistenciaContpaqi:', err);
+                return of([] as ProductoBuscadorDto[]);
+            })
         );
     }
 

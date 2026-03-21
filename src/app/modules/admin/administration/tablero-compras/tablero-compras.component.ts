@@ -87,8 +87,42 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     countCerrada: number = 0;     // ID 8
 
     usuarios: any[] = [];
-
     selectedStatusId: number | null = null;
+    
+    // Advanced Filters
+    filterValues: any = {
+        idSolicitud: '',
+        folioOC: '',
+        fechaSolicitud: null,
+        sucursal: '',
+        areaSolicitante: '',
+        idPersonaSolicitante: '',
+        proyectoCliente: '',
+        folioProyecto: '',
+        prioridad: '',
+        proveedorSugerido: '',
+        fechaRequerida: null,
+        moneda: '',
+        centroCosto: '',
+        nombreEstatus: '',
+        estadoLiquidacion: '',
+        cuadranteId: '',
+        monto: '',
+        tipoCompra: '',
+        datosBancariosProveedor: '',
+        lugarEntrega: '',
+        comentariosObservaciones: ''
+    };
+
+    // Unique values for selects
+    sucursales: string[] = [];
+    areas: string[] = [];
+    prioridades: string[] = [];
+    monedas: string[] = [];
+    estatusDisponibles: string[] = [];
+    pagosDisponibles: string[] = [];
+    tiposCompra: string[] = [];
+
     fechaInicio: any = '';
     fechaFin: any = '';
     filtroSearch: string = '';
@@ -135,6 +169,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 this._setupFilterPredicate();
                 this._updateFilter(); // Initialize current filter state
                 this._calculateKPIs();
+                this._extractUniqueValues(solicitudes);
             });
 
         // Get users
@@ -261,15 +296,27 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     });
                     this._solicitudCompraService.getTodas().subscribe();
                 },
-                error: () => {
-                    Swal.fire('Error', 'No se pudo actualizar el estatus', 'error');
+                error: (error) => {
+                    console.error('Error al actualizar estatus:', error);
+                    const mensaje = error.error?.message || error.error?.mensaje || 'No se pudo actualizar el estatus';
+                    Swal.fire({
+                        title: 'Atención',
+                        text: mensaje,
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    // Refresh data to ensure UI is in sync with server state
+                    this._solicitudCompraService.getTodas().subscribe();
                 }
             });
     }
 
     cambiarEstadoLiquidacion(row: any, nuevoEstado?: number): void {
         const estadoFinal = nuevoEstado !== undefined ? nuevoEstado : (row.estadoLiquidacion === 0 ? 1 : 0);
-        const textoEstado = estadoFinal === 1 ? 'Liquidado' : 'Pendiente';
+        let textoEstado = 'Pendiente';
+        if (estadoFinal === 1) textoEstado = 'Liquidado';
+        if (estadoFinal === 2) textoEstado = 'Anticipo';
 
         this._solicitudCompraService.actualizarEstadoLiquidacion(row.idSolicitud, estadoFinal)
             .subscribe({
@@ -305,65 +352,81 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             try {
                 const filterObj = JSON.parse(filter);
 
-                // 1. Text Search
-                const searchStr = filterObj.search.trim().toLowerCase();
-                
-                // If search is empty, pass text search
-                if (!searchStr) {
-                    const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
-                    const passPriority = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
-                    const passCuadrante = filterObj.cuadranteId !== '' ? data.cuadranteId === Number(filterObj.cuadranteId) : true;
-                    return passStatus && passPriority && passCuadrante;
+                // 1. Global Search
+                const searchStr = (filterObj.search || '').trim().toLowerCase();
+                let passGlobal = true;
+                if (searchStr) {
+                    const solicitante = this.getUserLabel(data.idPersonaSolicitante);
+                    const estatusNom = data.nombreEstatus || '';
+                    const pagoStatus = this.getEstadoLiquidacionLabel(data.estadoLiquidacion).toLowerCase();
+                    const cuadranteNom = this.getCuadranteName(data.cuadranteId);
+                    
+                    const searchableValues = [
+                        data.idSolicitud,
+                        data.folioOC,
+                        data.sucursal,
+                        data.areaSolicitante,
+                        solicitante,
+                        data.proyectoCliente,
+                        data.folioProyecto,
+                        data.prioridad,
+                        data.proveedorSugerido,
+                        data.moneda,
+                        data.monto,
+                        data.tipoCompra,
+                        data.centroCosto,
+                        cuadranteNom,
+                        estatusNom,
+                        pagoStatus
+                    ];
+
+                    passGlobal = searchableValues.some(val => 
+                        val !== null && val !== undefined && String(val).toLowerCase().includes(searchStr)
+                    );
                 }
 
-                // Get labels for complex fields
-                const solicitante = this.getUserLabel(data.idPersonaSolicitante);
-                const estatusNom = data.nombreEstatus || '';
-                const pagoStatus = data.estadoLiquidacion === 1 ? 'liquidado' : 'pendiente';
-                const cuadranteNom = this.getCuadranteName(data.cuadranteId);
+                // 2. Process Filters (Top Arrows)
+                const passStatusProcess = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
+
+                // 3. Compact Filters (Priority, Cuadrante)
+                const passPriorityProcess = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
+                const passCuadranteProcess = filterObj.cuadranteId !== '' ? data.cuadranteId === Number(filterObj.cuadranteId) : true;
+
+                // 4. Advanced Column Filters
+                const adv = filterObj.advanced || {};
                 
-                // Collect all values to search in
-                const searchableValues = [
-                    data.idSolicitud,
-                    data.folioOC,
-                    data.fechaSolicitud ? new Date(data.fechaSolicitud).toLocaleDateString() : '',
-                    data.sucursal,
-                    data.areaSolicitante,
-                    solicitante,
-                    data.proyectoCliente,
-                    data.folioProyecto,
-                    data.prioridad,
-                    data.proveedorSugerido,
-                    data.datosBancariosProveedor,
-                    data.fechaRequerida ? new Date(data.fechaRequerida).toLocaleDateString() : '',
-                    data.lugarEntrega,
-                    data.moneda,
-                    data.monto,
-                    data.tipoCompra,
-                    data.centroCosto,
-                    data.comentariosObservaciones,
-                    cuadranteNom,
-                    estatusNom,
-                    pagoStatus
-                ];
+                const passIdSolicitud = !adv.idSolicitud || String(data.idSolicitud).toLowerCase().includes(adv.idSolicitud.toLowerCase());
+                const passFolioOC = !adv.folioOC || (data.folioOC || '').toLowerCase().includes(adv.folioOC.toLowerCase());
+                
+                // Date Filters
+                const passFechaSol = !adv.fechaSolicitud || 
+                    (data.fechaSolicitud && new Date(data.fechaSolicitud).toDateString() === new Date(adv.fechaSolicitud).toDateString());
+                const passFechaReq = !adv.fechaRequerida || 
+                    (data.fechaRequerida && new Date(data.fechaRequerida).toDateString() === new Date(adv.fechaRequerida).toDateString());
 
-                // Check if any value contains the search string
-                const passSearch = searchableValues.some(val => 
-                    val !== null && 
-                    val !== undefined && 
-                    String(val).toLowerCase().includes(searchStr)
-                );
+                const passSucursal = !adv.sucursal || data.sucursal === adv.sucursal;
+                const passArea = !adv.areaSolicitante || data.areaSolicitante === adv.areaSolicitante;
+                const passSolicitante = !adv.idPersonaSolicitante || this.getUserLabel(data.idPersonaSolicitante).toLowerCase().includes(adv.idPersonaSolicitante.toLowerCase());
+                const passProyecto = !adv.proyectoCliente || (data.proyectoCliente || '').toLowerCase().includes(adv.proyectoCliente.toLowerCase());
+                const passFolioProj = !adv.folioProyecto || (data.folioProyecto || '').toLowerCase().includes(adv.folioProyecto.toLowerCase());
+                const passPrioridad = !adv.prioridad || data.prioridad === adv.prioridad;
+                const passProveedor = !adv.proveedorSugerido || (data.proveedorSugerido || '').toLowerCase().includes(adv.proveedorSugerido.toLowerCase());
+                const passMoneda = !adv.moneda || data.moneda === adv.moneda;
+                const passCentroCosto = !adv.centroCosto || (data.centroCosto || '').toLowerCase().includes(adv.centroCosto.toLowerCase());
+                const passEstatus = !adv.nombreEstatus || data.nombreEstatus === adv.nombreEstatus;
+                const passPago = !adv.estadoLiquidacion || this.getEstadoLiquidacionLabel(data.estadoLiquidacion) === adv.estadoLiquidacion;
+                const passCuadrante = !adv.cuadranteId || this.getCuadranteName(data.cuadranteId) === adv.cuadranteId;
+                const passMonto = !adv.monto || String(data.monto).toLowerCase().includes(adv.monto.toLowerCase());
+                const passTipo = !adv.tipoCompra || data.tipoCompra === adv.tipoCompra;
+                const passBancos = !adv.datosBancariosProveedor || (data.datosBancariosProveedor || '').toLowerCase().includes(adv.datosBancariosProveedor.toLowerCase());
+                const passLugar = !adv.lugarEntrega || (data.lugarEntrega || '').toLowerCase().includes(adv.lugarEntrega.toLowerCase());
+                const passComentarios = !adv.comentariosObservaciones || (data.comentariosObservaciones || '').toLowerCase().includes(adv.comentariosObservaciones.toLowerCase());
 
-                // 2. Status
-                const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
-
-                // 3. Priority
-                const passPriority = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
-
-                // 4. Matrix (Cuadrante)
-                const passCuadrante = filterObj.cuadranteId !== '' ? data.cuadranteId === Number(filterObj.cuadranteId) : true;
-
-                return passSearch && passStatus && passPriority && passCuadrante;
+                return passGlobal && passStatusProcess && passPriorityProcess && passCuadranteProcess &&
+                       passIdSolicitud && passFolioOC && passFechaSol && passFechaReq && passSucursal && passArea && 
+                       passSolicitante && passProyecto && passFolioProj && passPrioridad && passProveedor && 
+                       passMoneda && passCentroCosto && passEstatus && passPago && passCuadrante &&
+                       passMonto && passTipo && passBancos && passLugar && passComentarios;
             } catch (e) {
                 return true;
             }
@@ -375,7 +438,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             search: this.filtroSearch,
             statusId: this.selectedStatusId,
             prioridad: this.filtroPrioridad,
-            cuadranteId: this.filtroCuadrante
+            cuadranteId: this.filtroCuadrante,
+            advanced: this.filterValues
         };
         this.dataSource.filter = JSON.stringify(filterObj);
     }
@@ -416,6 +480,12 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     getStatusName(estatusId: number): string {
         const estatus = this.estatus.find(e => e.idEstatus === estatusId);
         return estatus ? estatus.nombreEstatus : 'Sin Estatus';
+    }
+
+    getEstadoLiquidacionLabel(estado: number): string {
+        if (estado === 1) return 'Liquidado';
+        if (estado === 2) return 'Anticipo';
+        return 'Pendiente';
     }
 
     getColorByEstatusId(estatusId: number): string {
@@ -553,7 +623,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             cleanText(s.tipoCompra),
             cleanText(s.centroCosto),
             cleanText(s.nombreEstatus),
-            s.estadoLiquidacion === 1 ? 'Liquidado' : 'Pendiente'
+            this.getEstadoLiquidacionLabel(s.estadoLiquidacion)
         ]);
 
         const csvContent = '\ufeff' + [
@@ -569,5 +639,46 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    isColumnFiltered(column: string): boolean {
+        return !!this.filterValues[column];
+    }
+
+    resetAdvancedFilters(): void {
+        this.filterValues = {
+            idSolicitud: '',
+            folioOC: '',
+            fechaSolicitud: null,
+            sucursal: '',
+            areaSolicitante: '',
+            idPersonaSolicitante: '',
+            proyectoCliente: '',
+            folioProyecto: '',
+            prioridad: '',
+            proveedorSugerido: '',
+            fechaRequerida: null,
+            moneda: '',
+            centroCosto: '',
+            nombreEstatus: '',
+            estadoLiquidacion: '',
+            cuadranteId: '',
+            monto: '',
+            tipoCompra: '',
+            datosBancariosProveedor: '',
+            lugarEntrega: '',
+            comentariosObservaciones: ''
+        };
+        this.onFilterChange();
+    }
+
+    private _extractUniqueValues(data: SolicitudCompra[]): void {
+        this.sucursales = Array.from(new Set(data.map(i => i.sucursal))).filter(x => !!x).sort();
+        this.areas = Array.from(new Set(data.map(i => i.areaSolicitante))).filter(x => !!x).sort();
+        this.prioridades = Array.from(new Set(data.map(i => i.prioridad))).filter(x => !!x).sort();
+        this.monedas = Array.from(new Set(data.map(i => i.moneda))).filter(x => !!x).sort();
+        this.estatusDisponibles = Array.from(new Set(data.map(i => i.nombreEstatus))).filter(x => !!x).sort();
+        this.pagosDisponibles = Array.from(new Set(data.map(i => this.getEstadoLiquidacionLabel(i.estadoLiquidacion)))).filter(x => !!x).sort();
+        this.tiposCompra = Array.from(new Set(data.map(i => i.tipoCompra))).filter(x => !!x).sort();
     }
 }

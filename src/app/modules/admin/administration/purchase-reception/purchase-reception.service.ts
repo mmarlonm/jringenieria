@@ -41,6 +41,10 @@ export class PurchaseReceptionService {
         return this._httpClient.get<any>(`${this.apiUrl}/recepcion/${id}/archivos`);
     }
 
+    actualizarEstatusRecepcion(idRecepcion: number, nuevoEstatus: number): Observable<any> {
+        return this._httpClient.put(`${this.apiUrl}/recepcion/${idRecepcion}/estatus`, nuevoEstatus);
+    }
+
     descargarArchivo(idSolicitud: number, nombreArchivo: string): Observable<any> {
         return this._httpClient.get<any>(`${this.apiUrl}/recepcion/${idSolicitud}/descargar-archivo/${nombreArchivo}`);
     }

@@ -57,6 +57,7 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
         'proyecto',
         'quienRecibio',
         'lugarEntrega',
+        'estatus',
         'acciones'
     ];
     
@@ -179,5 +180,23 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
 
     verArchivos(reception: any): void {
         this.openDetailsDialog(reception);
+    }
+
+    cambiarEstatus(reception: any, nuevoEstatus: number): void {
+        const idRecepcion = reception.idRecepcion || reception.id;
+        const textoEstado = nuevoEstatus === 1 ? 'Completado' : 'Pendiente';
+
+        this._receptionService.actualizarEstatusRecepcion(idRecepcion, nuevoEstatus)
+            .subscribe({
+                next: () => {
+                    reception.estatus = nuevoEstatus;
+                    this._notificationService.showSuccess('Éxito', `Estatus actualizado a: ${textoEstado}`);
+                    this._calculateKPIs(); // Recalcular si es necesario
+                },
+                error: (error) => {
+                    console.error('Error al actualizar estatus', error);
+                    this._notificationService.showError('Error', 'No se pudo actualizar el estatus');
+                }
+            });
     }
 }

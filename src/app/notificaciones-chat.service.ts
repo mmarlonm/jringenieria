@@ -80,7 +80,9 @@ export class NotificacionesChatService {
             read: false,
             view: true,
             link: `/dashboards/tasks?id=${idTarea}`,
-            useRouter: true
+            useRouter: true,
+            referenciaId: idTarea,
+            tipo: 'Chat'
         };
 
         this._notificationsService.pushNotification(fuseNotification);

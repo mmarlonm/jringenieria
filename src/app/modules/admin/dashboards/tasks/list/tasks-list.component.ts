@@ -428,8 +428,16 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         const newUnreadCounts = new Map<number, number>();
 
         notifications.forEach(n => {
-            // Buscamos el patrón chat-{taskId}-{timestamp} y que no esté leída
-            if (n.id.startsWith('chat-') && !n.read) {
+            if (n.read) return;
+
+            // Estructura persistente (DB)
+            if (n.tipo === 'Chat' && n.referenciaId) {
+                const taskId = n.referenciaId;
+                const current = newUnreadCounts.get(taskId) || 0;
+                newUnreadCounts.set(taskId, current + 1);
+            } 
+            // Estructura volátil (SignalR Legacy)
+            else if (n.id.startsWith('chat-')) {
                 const parts = n.id.split('-');
                 const taskId = parseInt(parts[1], 10);
                 if (!isNaN(taskId)) {
@@ -808,9 +816,9 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     openChat(task: Task): void {
-        // Marcar como leídas las notificaciones de esta tarea
+        // Marcar como leídas las notificaciones de esta tarea (Persistente + Local)
         if (task.id) {
-            this._notificationsService.deleteByPrefix(`chat-${task.id}-`);
+            this._notificationsService.markReadByReferenciaId(task.id, 'Chat');
         }
 
         this.dialog.open(TaskChatComponent, {

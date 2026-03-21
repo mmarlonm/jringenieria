@@ -87,6 +87,14 @@
                                 </mat-option>
                             </mat-select>
                         </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Estatus de Recepción</mat-label>
+                            <mat-select formControlName="estatus">
+                                <mat-option [value]="0">Pendiente</mat-option>
+                                <mat-option [value]="1">Completado</mat-option>
+                            </mat-select>
+                        </mat-form-field>
                     </div>
 
                     <div class="space-y-4">

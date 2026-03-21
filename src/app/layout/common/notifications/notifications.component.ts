@@ -20,6 +20,7 @@ import { NotificationsService } from 'app/layout/common/notifications/notificati
 import { Notification } from 'app/layout/common/notifications/notifications.types';
 // ...imports sin cambios
 import { Subject, takeUntil } from 'rxjs';
+import { TimeAgoPipe } from 'app/shared/pipes/time-ago.pipe';
 
 @Component({
     selector: 'notifications',
@@ -36,6 +37,7 @@ import { Subject, takeUntil } from 'rxjs';
         NgTemplateOutlet,
         RouterLink,
         DatePipe,
+        TimeAgoPipe
     ],
 })
 export class NotificationsComponent implements OnInit, OnDestroy {
@@ -97,9 +99,23 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         this._notificationsService.markAllAsRead().subscribe();
     }
 
+    markRead(notification: Notification): void {
+        if (notification.read) return;
+
+        this._notificationsService.markAsReadApi(notification.id).subscribe(() => {
+            this._calculateUnreadCount();
+            this._changeDetectorRef.markForCheck();
+        });
+    }
+
     toggleRead(notification: Notification): void {
-        notification.read = !notification.read;
-        this._notificationsService.update(notification.id, notification).subscribe();
+        if (notification.read) {
+            // Si pasamos de leído a no leído, solo actualizamos localmente
+            this._notificationsService.update(notification.id, { read: false }).subscribe();
+        } else {
+            // Si pasamos de no leído a leído, llamamos al API
+            this.markRead(notification);
+        }
     }
 
     delete(notification: Notification): void {

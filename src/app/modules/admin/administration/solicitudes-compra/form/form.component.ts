@@ -16,7 +16,7 @@ import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { SolicitudCompraCreateDto, ProductoBuscadorDto } from '../models/solicitud-compra.types';
-import { debounceTime, distinctUntilChanged, filter, map, Observable, of, startWith, switchMap, takeUntil, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
 
@@ -245,15 +245,30 @@ export class SolicitudCompraFormComponent implements OnInit {
     private _setupProductSearch(index: number): void {
         const control = this.detalles.at(index).get('materialServicio');
         this.filteredProducts$[index] = control.valueChanges.pipe(
-            debounceTime(300),
-            distinctUntilChanged(),
+            debounceTime(500),
+            // We keep switchMap but handle errors to prevent the stream from completing
             switchMap(value => {
                 // Only search if it's a string and has at least 2 chars
-                if (typeof value === 'string' && value.length >= 2) {
-                    return this._solicitudCompraService.buscarProductos(value);
+                if (typeof value === 'string' && value.trim().length >= 2) {
+                    // Logic to map sucursal to almacen for CONTPAQi
+                    const sucursal = this.solicitudForm.get('sucursal').value || '';
+                    
+                    // Normalize to remove accents (e.g., QUERÉTARO -> QUERETARO)
+                    let almacen = sucursal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+                    if (sucursal.toLowerCase().includes('hidalgo')) {
+                        almacen = 'SANTA JULIA';
+                    }
+
+                    return this._solicitudCompraService.consultarExistenciaContpaqi(value.trim(), almacen)
+                        .pipe(
+                            catchError(() => of([] as ProductoBuscadorDto[]))
+                        );
                 }
-                return of([]);
-            })
+                return of([] as ProductoBuscadorDto[]);
+            }),
+            // Use shareReplay to avoid multiple subscriptions breaking the UI logic
+            shareReplay(1)
         );
     }
 
@@ -279,6 +294,16 @@ export class SolicitudCompraFormComponent implements OnInit {
         // by resetting the control value to the name string
         setTimeout(() => {
             detailGroup.get('materialServicio').setValue(product.nombreProducto, { emitEvent: false });
+            
+            // Auto-focus the quantity field
+            const rowElements = document.querySelectorAll('tbody tr');
+            if (rowElements[index]) {
+                const quantityInput = rowElements[index].querySelector('input[formControlName="cantidad"]') as HTMLInputElement;
+                if (quantityInput) {
+                    quantityInput.focus();
+                    quantityInput.select();
+                }
+            }
         });
     }
 
@@ -312,15 +337,17 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     removeDetalle(index: number): void {
         this.detalles.removeAt(index);
+        this.filteredProducts$.splice(index, 1);
     }
 
     loadSolicitud(id: number): void {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
             this.solicitudForm.patchValue(solicitud);
-            // Clear details array and reload
+            // Clear details array and search observables
             while (this.detalles.length) {
                 this.detalles.removeAt(0);
             }
+            this.filteredProducts$ = [];
             solicitud.detalles.forEach(d => {
                 // Si hay monto pero no cantidad, asumimos 1 unidad para no perder el valor en la automatización
                 const cantidad = d.cantidad || 0;
