@@ -1,0 +1,122 @@
+<div class="flex flex-col max-h-[90vh] overflow-hidden">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 sm:px-10 border-b bg-gray-50 dark:bg-transparent">
+        <div class="flex flex-col">
+            <h2 class="text-2xl font-extrabold tracking-tight leading-7 italic">
+                {{ isEdit ? 'Editar Cierre' : 'Agregar Cierre' }}
+            </h2>
+            <p class="text-secondary font-medium italic">Completa la información para el cierre de terminal.</p>
+        </div>
+        <button mat-icon-button (click)="close()" [disabled]="isLoading">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-auto p-6 sm:p-10 overflow-y-auto bg-white">
+        <form [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            
+            <!-- Sucursal -->
+            <mat-form-field class="w-full fuse-mat-dense">
+                <mat-label class="font-bold italic">Sucursal</mat-label>
+                <mat-select formControlName="sucursal">
+                    <mat-option *ngFor="let s of sucursales" [value]="s">{{s}}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+            </mat-form-field>
+
+            <!-- Fecha Cierre -->
+            <mat-form-field class="w-full fuse-mat-dense">
+                <mat-label class="font-bold italic">Fecha Cierre</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fechaCierre">
+                <mat-datepicker-toggle matPrefix [for]="picker">
+                    <mat-icon matDatepickerToggleIcon class="icon-size-5" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                </mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <!-- Afiliación -->
+            <mat-form-field class="w-full fuse-mat-dense">
+                <mat-label class="font-bold italic">Afiliación</mat-label>
+                <input matInput formControlName="afiliacion">
+                <mat-icon matPrefix class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:credit-card'"></mat-icon>
+            </mat-form-field>
+
+            <!-- Monto Total -->
+            <mat-form-field class="w-full fuse-mat-dense">
+                <mat-label class="font-bold italic">Monto Total</mat-label>
+                <span matPrefix class="text-emerald-600 font-black mr-1">$</span>
+                <input type="number" matInput formControlName="montoTotal">
+            </mat-form-field>
+
+            <!-- Folios (Chips) -->
+            <div class="sm:col-span-2">
+                <mat-form-field class="w-full">
+                    <mat-label class="font-bold italic">Folios de Facturas</mat-label>
+                    <mat-chip-grid #chipGrid aria-label="Ingresa folios">
+                        <mat-chip-row *ngFor="let folio of foliosList" (removed)="removeFolio(folio)" class="bg-primary/10 text-primary font-black border-primary/20">
+                            {{folio}}
+                            <button matChipRemove [attr.aria-label]="'remover ' + folio">
+                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+                            </button>
+                        </mat-chip-row>
+                    </mat-chip-grid>
+                    <input placeholder="Escribe un folio y presiona Enter..."
+                           [matChipInputFor]="chipGrid"
+                           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                           (matChipInputTokenEnd)="addFolio($event)"/>
+                    <mat-hint class="italic text-[10px] font-medium">Presiona ENTER o COMA para separar los folios.</mat-hint>
+                </mat-form-field>
+            </div>
+
+            <!-- Observaciones -->
+            <mat-form-field class="sm:col-span-2 fuse-mat-textarea">
+                <mat-label class="font-bold italic">Observaciones</mat-label>
+                <textarea matInput formControlName="observaciones" rows="3"></textarea>
+                <mat-icon matPrefix class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
+            </mat-form-field>
+
+            <!-- Evidencias (Solo Agregar) -->
+            <div class="sm:col-span-2 mt-4" *ngIf="!isEdit">
+                <mat-divider class="mb-6"></mat-divider>
+                <h3 class="text-sm font-black uppercase tracking-widest text-secondary mb-4 italic">Evidencias</h3>
+                
+                <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                     (click)="fileInput.click()"
+                     (drop)="onFileDrop($event)"
+                     (dragover)="onDragOver($event)">
+                    
+                    <input #fileInput type="file" multiple class="hidden" (change)="onFilesSelected($event)">
+                    
+                    <mat-icon class="icon-size-12 text-gray-400 mb-2" [svgIcon]="'heroicons_outline:arrow-up-tray'"></mat-icon>
+                    <span class="text-sm font-bold text-gray-600 italic">Haz clic o arrastra tus archivos aquí</span>
+                    <span class="text-xs text-secondary italic">(JPG, PNG o PDF)</span>
+                </div>
+
+                <!-- Lista de archivos seleccionados -->
+                <div class="mt-4 flex flex-wrap gap-2" *ngIf="selectedFiles.length > 0">
+                    <div *ngFor="let file of selectedFiles; let i = index" 
+                         class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 rounded-xl text-xs font-bold text-gray-700 shadow-sm animate-in fade-in zoom-in duration-300">
+                        <mat-icon class="icon-size-4 text-secondary" [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
+                        <span class="max-w-40 truncate">{{ file.name }}</span>
+                        <button type="button" class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-300" (click)="removeFile(i)">
+                            <mat-icon class="icon-size-3.5 text-red-500" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end p-6 sm:px-10 border-t bg-gray-50 dark:bg-transparent">
+        <button mat-button class="px-6 rounded-xl font-bold italic" (click)="close()" [disabled]="isLoading">
+            Cancelar
+        </button>
+        <button mat-flat-button color="primary" class="px-8 rounded-xl font-black uppercase tracking-widest shadow-lg ml-3"
+            (click)="submit()" [disabled]="isLoading">
+            <span *ngIf="!isLoading">{{ isEdit ? 'Actualizar' : 'Guardar' }}</span>
+            <mat-icon *ngIf="isLoading" class="animate-spin" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
+        </button>
+    </div>
+</div>

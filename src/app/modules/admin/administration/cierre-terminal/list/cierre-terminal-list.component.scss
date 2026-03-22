@@ -1,0 +1,19 @@
+cierre-terminal-list {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+
+    table {
+        background: transparent !important;
+        
+        .mat-header-cell {
+            background: #F8FAFC !important;
+        }
+
+        .mat-row {
+            &:hover {
+                background-color: rgba(var(--fuse-primary-rgb), 0.03) !important;
+            }
+        }
+    }
+}

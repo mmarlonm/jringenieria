@@ -39,6 +39,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:clock',
                 link: '/administration/historico-compras'
+            },
+            {
+                id: 'administracion.cierre-terminal',
+                title: 'Cierre de Terminal',
+                type: 'basic',
+                icon: 'heroicons_outline:calculator',
+                link: '/administration/cierre-terminal'
             }
         ]
     },
@@ -299,7 +306,8 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
             { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
-            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' }
+            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
+            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' }
         ]
     }
 ];
@@ -317,7 +325,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
             { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
-            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' }
+            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
+            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' }
         ]
     }
 ];
@@ -336,7 +345,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
             { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
-            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' }
+            { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
+            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' }
         ]
     }
 

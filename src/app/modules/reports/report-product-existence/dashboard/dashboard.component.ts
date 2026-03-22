@@ -51,6 +51,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     // Cambia esto en tu clase del componente
     public displayedColumns: string[] = [
         'select',
+        'buscar',
         'codigo',
         'marca',
         'linea',
@@ -69,6 +70,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     public esMoral: boolean = false;
     public fechaCorte: Date = new Date();
     public filtroTexto: string = ''; // Para buscar por nombre o código
+    public filtroCodes: string = ''; // Para búsqueda masiva por pegado
     totalQRO: number;
     totalPCH: number;
     totalPUE: number;
@@ -94,12 +96,25 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
                 // 🔹 CONFIGURACIÓN DEL FILTRO AVANZADO
                 this.dataSource.filterPredicate = (data: any, filter: string) => {
                     const search = filter.trim().toLowerCase();
+                    const codesFilter = this.filtroCodes.trim().toLowerCase();
 
                     // Campos sobre los que buscamos
                     const codigo = (data.codigoProducto || '').toString().toLowerCase();
                     const nombre = (data.nombreProducto || '').toLowerCase();
                     const marca = (data.marca || '').toLowerCase();
                     const linea = (data.linea || '').toLowerCase();
+
+                    // Si hay filtro de códigos (Pegado masivo)
+                    if (codesFilter) {
+                        const listCodes = codesFilter.split(',')
+                            .map(c => c.trim())
+                            .filter(c => c !== '');
+                        
+                        if (listCodes.length > 0) {
+                            // Si el código actual está en la lista del pegado
+                            return listCodes.some(c => codigo === c);
+                        }
+                    }
 
                     // 1. Caso: Rango numérico (ej: 100-200)
                     if (search.includes('-')) {
@@ -135,7 +150,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
                 this.totalGeneral = resp.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
                 // Aplicar filtro si ya había texto escrito
-                if (this.filtroTexto) {
+                if (this.filtroTexto || this.filtroCodes) {
                     this.aplicarFiltro();
                 }
             });
@@ -148,12 +163,45 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
         // Importante: No pasamos a minúsculas aquí para procesar guiones/comas íntegros
         // el Predicate configurado arriba ya se encarga del case-insensitive
         const filterValue = this.filtroTexto.trim();
-        this.dataSource.filter = filterValue;
+        this.dataSource.filter = filterValue || this.filtroCodes;
 
         // Si usas paginador (aunque no lo veo en tu ViewChild), vuelve a la pag 1
         if (this.dataSource.paginator) {
             this.dataSource.paginator.firstPage();
         }
+    }
+
+    /**
+     * Maneja el pegado masivo de códigos (Excel, vertical, etc.)
+     */
+    onPasteCodes(event: ClipboardEvent): void {
+        event.preventDefault();
+        const data = event.clipboardData?.getData('text') || '';
+        // Dividir por cualquier espacio en blanco (incluyendo saltos de línea y tabs) o comas
+        const codes = data.split(/[\s,]+/)
+            .map(c => c.trim())
+            .filter(c => c.length > 0)
+            .join(',');
+        
+        this.filtroCodes = codes;
+        this.aplicarFiltro();
+    }
+
+    /**
+     * Limpia el filtro vertical y recarga la tabla
+     */
+    limpiarFiltroVertical(): void {
+        this.filtroCodes = '';
+        this.aplicarFiltro();
+    }
+
+    /**
+     * Verifica si un código coincide con el filtro masivo para marcarlo visualmente
+     */
+    isCodeMatched(codigo: any): boolean {
+        if (!this.filtroCodes) return false;
+        const codes = this.filtroCodes.split(',').map(c => c.trim());
+        return codes.includes(String(codigo));
     }
 
     exportarExcel(): void {

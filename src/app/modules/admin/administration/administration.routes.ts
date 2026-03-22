@@ -16,5 +16,9 @@ export default [
     {
         path: 'recepcion-compras',
         loadComponent: () => import('app/modules/admin/administration/purchase-reception/purchase-reception.component').then(m => m.PurchaseReceptionComponent)
+    },
+    {
+        path: 'cierre-terminal',
+        loadChildren: () => import('./cierre-terminal/cierre-terminal.routes').then(m => m.default)
     }
 ] as Routes;
