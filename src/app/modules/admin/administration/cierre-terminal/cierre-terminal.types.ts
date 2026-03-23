@@ -16,6 +16,8 @@ export interface CierreTerminal {
     observaciones?: string;
     usuarioId?: number;
     fechaRegistro?: string | Date;
+    unidadDeNegocioId?: number;
+    nombreUnidadNegocio?: string;
 }
 
 export interface CierreTerminalEvidencia {

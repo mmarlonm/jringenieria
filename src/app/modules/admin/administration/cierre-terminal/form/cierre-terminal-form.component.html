@@ -16,11 +16,11 @@
     <div class="flex-auto p-6 sm:p-10 overflow-y-auto bg-white">
         <form [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
             
-            <!-- Sucursal -->
+            <!-- Sucursal (powered by Unidades de Negocio) -->
             <mat-form-field class="w-full fuse-mat-dense">
                 <mat-label class="font-bold italic">Sucursal</mat-label>
-                <mat-select formControlName="sucursal">
-                    <mat-option *ngFor="let s of sucursales" [value]="s">{{s}}</mat-option>
+                <mat-select formControlName="unidadDeNegocioId">
+                    <mat-option *ngFor="let u of unidadesNegocio" [value]="u.unidadId">{{u.nombre}}</mat-option>
                 </mat-select>
                 <mat-icon matPrefix class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
             </mat-form-field>

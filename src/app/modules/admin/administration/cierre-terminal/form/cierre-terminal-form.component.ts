@@ -52,7 +52,7 @@ export class CierreTerminalFormDialogComponent implements OnInit {
     // File upload
     selectedFiles: File[] = [];
 
-    sucursales = ['Pachuca', 'CDMX', 'Puebla'];
+    unidadesNegocio: any[] = [];
 
     constructor(
         public matDialogRef: MatDialogRef<CierreTerminalFormDialogComponent>,
@@ -63,7 +63,7 @@ export class CierreTerminalFormDialogComponent implements OnInit {
         private _userService: UserService
     ) {
         this.form = this._fb.group({
-            sucursal: ['', Validators.required],
+            unidadDeNegocioId: [null, Validators.required],
             fechaCierre: [new Date(), Validators.required],
             afiliacion: ['', Validators.required],
             montoTotal: [null, [Validators.required, Validators.min(0)]],
@@ -72,10 +72,22 @@ export class CierreTerminalFormDialogComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.getUnidadesNegocio();
         if (this.data?.id) {
             this.isEdit = true;
             this.loadCierre(this.data.id);
         }
+    }
+
+    getUnidadesNegocio(): void {
+        this._cierreService.getUnidadesNegocio().subscribe({
+            next: (data) => {
+                this.unidadesNegocio = data;
+            },
+            error: () => {
+                this._notificationService.showError('Error', 'No se pudieron cargar las unidades de negocio.');
+            }
+        });
     }
 
     loadCierre(id: number): void {
@@ -84,7 +96,7 @@ export class CierreTerminalFormDialogComponent implements OnInit {
             next: (response) => {
                 const cierre = response.detalle.datosCierre;
                 this.form.patchValue({
-                    sucursal: cierre.sucursal,
+                    unidadDeNegocioId: cierre.unidadDeNegocioId,
                     fechaCierre: new Date(cierre.fechaCierre),
                     afiliacion: cierre.afiliacion,
                     montoTotal: cierre.montoTotal,
@@ -164,8 +176,11 @@ export class CierreTerminalFormDialogComponent implements OnInit {
         const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
         const usuarioId = userInformation.usuario?.id || 0;
 
+        const selectedUnit = this.unidadesNegocio.find(u => u.unidadId === this.form.value.unidadDeNegocioId);
+
         const cierre: CierreTerminal = {
             ...this.form.value,
+            sucursal: selectedUnit?.nombre || '',
             foliosFacturas: this.foliosList.join(','),
             usuarioId: usuarioId
         };

@@ -21,6 +21,13 @@ export class CierreTerminalService {
     }
 
     /**
+     * Obtener Unidades de Negocio (desde el endpoint de Proyectos)
+     */
+    getUnidadesNegocio(): Observable<any[]> {
+        return this._httpClient.get<any[]>(`${environment.apiUrl}/Proyecto/unidades-negocio`);
+    }
+
+    /**
      * Obtener un cierre por ID (con detalle anidado)
      */
     getById(id: number): Observable<CierreTerminalResponse> {
