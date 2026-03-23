@@ -13,6 +13,11 @@
                 <p class="mt-1 text-secondary font-medium italic italic">Control y registro de folios de facturas por sucursal.</p>
             </div>
             <div class="flex items-center gap-3">
+                <button mat-flat-button class="!bg-emerald-600 !text-white px-6 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-emerald-100"
+                    (click)="exportarExcel()">
+                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:table-cells'"></mat-icon>
+                    Excel
+                </button>
                 <button mat-flat-button color="primary" class="px-6 rounded-xl font-black uppercase tracking-widest shadow-lg"
                     (click)="openFormDialog()">
                     <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:plus'"></mat-icon>

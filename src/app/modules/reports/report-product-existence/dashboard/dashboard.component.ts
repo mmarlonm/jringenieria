@@ -230,7 +230,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
 
         // Mapeamos los datos de la tabla de existencias
         const rows = this.dataSource.data.map(r => [
-            cleanText(r.codigoProducto),
+            `="${cleanText(r.codigoProducto).replace(/"/g, '')}"`,
             cleanText(r.marca),
             cleanText(r.linea),
             cleanText(r.nombreProducto),
@@ -241,9 +241,9 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
         ]);
 
         // Construcción del contenido CSV con el separador para Excel
-        const csvContent = 'sep=,\n' + '\ufeff' + [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
+        const csvContent = '\ufeff' + 'sep=;\n' + [
+            headers.join(';'),
+            ...rows.map(e => e.join(';'))
         ].join('\n');
 
         // Proceso de descarga

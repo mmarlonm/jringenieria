@@ -143,4 +143,50 @@ export class CierreTerminalListComponent implements OnInit, OnDestroy {
         if (parts.length <= 3) return folios;
         return `${parts.slice(0, 3).join(', ')} (+${parts.length - 3})`;
     }
+
+    exportarExcel(): void {
+        if (!this.dataSource.data || this.dataSource.data.length === 0) return;
+
+        const headers = [
+            'Sucursal',
+            'Fecha Cierre',
+            'Afiliacion',
+            'Monto Total',
+            'Folios',
+            'Observaciones'
+        ];
+
+        const cleanText = (text: any) => {
+            if (text === null || text === undefined) return '';
+            let str = String(text);
+            str = str.replace(/\r?\n|\r/g, " ");
+            str = str.replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = this.dataSource.data.map(r => [
+            cleanText(r.sucursal),
+            new Date(r.fechaCierre).toLocaleDateString(),
+            cleanText(r.afiliacion),
+            r.montoTotal,
+            `="${cleanText(r.foliosFacturas).replace(/"/g, '')}"`,
+            cleanText(r.observaciones)
+        ]);
+
+        const csvContent = '\ufeff' + 'sep=;\n' + [
+            headers.join(';'),
+            ...rows.map(e => e.join(';'))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const fileName = `Cierre_Terminal_${Date.now()}.csv`;
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }

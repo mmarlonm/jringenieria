@@ -214,7 +214,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
         };
 
         const rows = this.dataSource.data.map(r => [
-            cleanText(r.codigoProducto),
+            `="${cleanText(r.codigoProducto).replace(/"/g, '')}"`,
             cleanText(r.marca),
             cleanText(r.linea),
             cleanText(r.nombreProducto),
@@ -224,9 +224,9 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
             r.totaL_TABLEROS
         ]);
 
-        const csvContent = 'sep=,\n' + '\ufeff' + [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
+        const csvContent = '\ufeff' + 'sep=;\n' + [
+            headers.join(';'),
+            ...rows.map(e => e.join(';'))
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
