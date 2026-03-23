@@ -36,6 +36,22 @@ export class ReportExistenciasTablerosService {
             { params }
         );
     }
+
+    /**
+     * Envía el DTO de traspaso al endpoint de .NET
+     */
+    crearTraspaso(traspaso: any): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/crear-traspaso`, traspaso);
+    }
+
+    /**
+     * Sube la evidencia (PDF) del traspaso al servidor.
+     */
+    subirEvidencia(file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<any>(`${this.apiUrl}/subir-evidencia-traspaso`, formData);
+    }
 }
 
 /**

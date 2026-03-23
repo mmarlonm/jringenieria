@@ -15,6 +15,12 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { MatSortModule } from '@angular/material/sort';
 
+import { MatDialog } from '@angular/material/dialog';
+import { TraspasoModalComponent } from '../../report-product-existence/traspaso-modal/traspaso-modal.component';
+import { SelectionModel } from '@angular/cdk/collections';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ReportProductExistenceService } from 'app/modules/reports/report-product-existence/report-product-existence.service';
 @Component({
     selector: 'app-reporte-existencias-tableros-dashboard',
     standalone: true,
@@ -31,7 +37,9 @@ import { MatSortModule } from '@angular/material/sort';
         MatNativeDateModule,
         MatButtonModule,
         MatTableModule,
-        MatSortModule
+        MatSortModule,
+        MatCheckboxModule,
+        MatTooltipModule
     ]
 })
 
@@ -41,6 +49,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
     public dataSource = new MatTableDataSource<ExistenciasTablerosDto>([]);
 
     public displayedColumns: string[] = [
+        'select',
         'buscar',
         'codigo',
         'marca',
@@ -49,8 +58,11 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
         'qro',
         'pach',
         'pue',
-        'total'
+        'total',
+        'acciones'
     ];
+
+    public selection = new SelectionModel<ExistenciasTablerosDto>(true, []);
 
     // Variables de filtro
     public esMoral: boolean = false;
@@ -62,7 +74,10 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
     totalPUE: number = 0;
     totalGeneral: number = 0;
 
-    constructor(private reportExistenciasTablerosService: ReportExistenciasTablerosService) { }
+    constructor(
+        private reportExistenciasTablerosService: ReportExistenciasTablerosService,
+        private dialog: MatDialog
+    ) { }
 
     ngOnInit(): void {
         console.log('ReportExistenciasTablerosDashboardComponent: Initializing...');
@@ -245,9 +260,65 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
     exportarPDF(): void {
         const element = document.getElementById('pdf-content');
         if (!element) return;
-        // The previous report used html2canvas which wasn't imported.
-        // It's typically implemented externally or via a shared service.
-        // Keeping the stub similar to original report.
-        window.print(); // Fallback for quick pdf generation
+        window.print();
+    }
+
+    /**
+     * Lógica de Selección
+     */
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    masterToggle() {
+        this.isAllSelected() ?
+            this.selection.clear() :
+            this.dataSource.data.forEach(row => this.selection.select(row));
+    }
+
+    checkboxLabel(row?: ExistenciasTablerosDto): string {
+        if (!row) {
+            return `${this.isAllSelected() ? 'select' : 'deselect'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.codigoProducto}`;
+    }
+
+    abrirTraspasoMasivo(): void {
+        const seleccionados = this.selection.selected;
+        if (seleccionados.length === 0) return;
+        this.abrirTraspaso(seleccionados);
+    }
+
+    /**
+     * Abre el modal para iniciar un traspaso del producto o productos seleccionados
+     */
+    abrirTraspaso(productos: ExistenciasTablerosDto | ExistenciasTablerosDto[]): void {
+        const productList = Array.isArray(productos) ? productos : [productos];
+
+        // Mapear campos de tableros a los esperados por el modal (qro, pach, pue)
+        const mappedProducts = productList.map(p => ({
+            ...p,
+            qro: p.tablerO_QRO,
+            pach: p.tablerO_PACH,
+            pue: p.tablerO_PUE
+        }));
+
+        const dialogRef = this.dialog.open(TraspasoModalComponent, {
+            width: '600px',
+            data: {
+                productos: mappedProducts,
+                esMoral: this.esMoral,
+                prefix: 'TABLEROS' // Identificador para observaciones
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.selection.clear();
+                this.consultar();
+            }
+        });
     }
 }

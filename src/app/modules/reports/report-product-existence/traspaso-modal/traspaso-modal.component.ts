@@ -227,6 +227,8 @@ export class TraspasoModalComponent implements OnInit {
 
         this.buildDatosLogistica();
 
+        const obsPrefix = this.data.prefix ? `[${this.data.prefix.replace('-', '')}] ` : '';
+
         const payload = {
             idAlmacenOrigen: this.traspaso.idAlmacenOrigen,
             almacenOrigenNombre: this.traspaso.almacenOrigenNombre,
@@ -238,12 +240,12 @@ export class TraspasoModalComponent implements OnInit {
             paqueteria: this.traspaso.paqueteria,
             guiaRastreo: this.traspaso.guiaRastreo,
             transportista: this.traspaso.paqueteria || this.traspaso.transportista,
-            observaciones: this.traspaso.observaciones || `Traspaso masivo de ${this.productosSeleccionados.length} productos`,
+            observaciones: `${obsPrefix}${this.traspaso.observaciones || `Traspaso masivo de ${this.productosSeleccionados.length} productos`}`,
             // 🔹 NUEVOS CAMPOS SOP
             tipoEnvio: this.traspaso.tipoEnvio,
             destinoFinal: this.traspaso.destinoFinal,
             datosLogistica: this.traspaso.datosLogistica,
-            urlEvidenciaEnvio: this.traspaso.urlEvidenciaEnvio,
+            urlEvidenciaEnvio: this.traspaso.urlEvidenciaEnvio || null,
             detalles: this.productosSeleccionados.map(p => ({
                 codigoProducto: p.codigoProducto,
                 cantidadEnviada: p.cantidadEnviar,
