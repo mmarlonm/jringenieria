@@ -86,10 +86,20 @@ export class ReportExpensesDashboardComponent implements OnInit {
 
     // 🔹 Configuración Base (Tema Claro)
     private baseTheme: Highcharts.Options = {
-        chart: { backgroundColor: 'transparent' },
+        chart: { 
+            backgroundColor: 'transparent',
+            spacingBottom: 20,
+            spacingTop: 10,
+            spacingLeft: 10,
+            spacingRight: 10
+        },
         title: { text: undefined },
         credits: { enabled: false },
-        legend: { itemStyle: { color: '#4b5563', fontWeight: 'normal' } }, // Gris oscuro para texto
+        legend: { 
+            itemStyle: { color: '#4b5563', fontWeight: 'normal', fontSize: '11px' },
+            margin: 10,
+            padding: 5
+        },
         tooltip: { backgroundColor: '#ffffff', style: { color: '#1f2937' }, borderColor: '#e5e7eb', borderRadius: 8, shadow: true }
     };
 
@@ -387,7 +397,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
                         enabled: true,
                         format: '{point.name}: {point.percentage:.1f}%',
                         style: { color: '#374151', textOutline: 'none', fontWeight: '500' },
-                        distance: 15
+                        distance: 10
                     },
                     showInLegend: true,
                     states: {
@@ -402,7 +412,9 @@ export class ReportExpensesDashboardComponent implements OnInit {
                 align: 'center',
                 verticalAlign: 'bottom',
                 layout: 'horizontal',
-                itemStyle: { fontSize: '10px' }
+                itemStyle: { fontSize: '10px' },
+                symbolPadding: 5,
+                padding: 3
             },
             series: [{
                 type: 'pie',
