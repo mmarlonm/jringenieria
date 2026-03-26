@@ -38,6 +38,7 @@ export class GestionarTraspasoModalComponent implements OnInit {
     public loading: boolean = false;
     public subiendoArchivo: boolean = false;
     public traspaso: any;
+    public actualizandoFolio: boolean = false;
 
     // Fase 3: Procesar Envío
     public datosEnvio = {
@@ -65,11 +66,12 @@ export class GestionarTraspasoModalComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Inicializar datos si ya existen en el traspaso (ej. transportista por defecto)
+        // Inicializar datos siempre para el folio
+        this.datosEnvio.folioContpaqi = this.traspaso.folioContpaqi || '';
+
         if (this.traspaso.estadoId === 1) {
             this.datosEnvio.transportista = this.traspaso.transportista || '';
             this.datosEnvio.guiaRastreo = this.traspaso.guiaRastreo || '';
-            this.datosEnvio.folioContpaqi = this.traspaso.folioContpaqi || '';
         }
 
         // Obtener ID de usuario logueado para recepción
@@ -173,6 +175,26 @@ export class GestionarTraspasoModalComponent implements OnInit {
             error: (err) => {
                 this.loading = false;
                 this._chatNotificationService.showError('Error', err.error?.message || 'No se pudo aprobar la recepción', 5000);
+            }
+        });
+    }
+
+    guardarFolio(): void {
+        if (!this.datosEnvio.folioContpaqi?.trim()) {
+            this._chatNotificationService.showWarning('Atención', 'Ingresa un folio válido', 3000);
+            return;
+        }
+
+        this.actualizandoFolio = true;
+        this._service.actualizarFolio(this.traspaso.idTraspaso, this.datosEnvio.folioContpaqi).subscribe({
+            next: () => {
+                this.actualizandoFolio = false;
+                this.traspaso.folioContpaqi = this.datosEnvio.folioContpaqi;
+                this._chatNotificationService.showSuccess('Éxito', 'Folio actualizado correctamente', 3000);
+            },
+            error: (err) => {
+                this.actualizandoFolio = false;
+                this._chatNotificationService.showError('Error', err.error?.message || 'No se pudo actualizar el folio', 5000);
             }
         });
     }

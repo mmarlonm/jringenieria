@@ -1,4 +1,4 @@
-<div class="p-6 flex flex-col gap-6 max-w-[500px] max-h-[90vh] overflow-y-auto custom-scroll">
+<div class="p-4 sm:p-6 flex flex-col gap-6 w-full sm:max-w-[500px] max-h-[90vh] overflow-y-auto custom-scroll">
 
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -31,6 +31,28 @@
         </p>
     </div>
 
+    <!-- Folio CONTPAQi (Siempre editable) -->
+    <div class="bg-emerald-50/30 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30 flex flex-col gap-3">
+        <div class="flex items-center gap-2">
+            <mat-icon class="text-emerald-600 dark:text-emerald-400 scale-75">receipt</mat-icon>
+            <span class="text-[10px] font-black uppercase text-emerald-800 dark:text-emerald-200 tracking-widest">Folio CONTPAQi</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                <mat-label>Referencia CONTPAQi</mat-label>
+                <input matInput [(ngModel)]="datosEnvio.folioContpaqi" placeholder="Ej. TR-1234...">
+            </mat-form-field>
+            <button mat-flat-button color="primary" 
+                class="!rounded-xl !h-12 !px-4 shadow-sm"
+                [disabled]="actualizandoFolio"
+                (click)="guardarFolio()"
+                matTooltip="Guardar solo el folio">
+                <mat-icon *ngIf="!actualizandoFolio">save</mat-icon>
+                <mat-spinner diameter="20" *ngIf="actualizandoFolio"></mat-spinner>
+            </button>
+        </div>
+    </div>
+
     <!-- ============================================= -->
     <!-- VISTA A: PROCESAR ENVÍO (Solicitado -> 1)     -->
     <!-- ============================================= -->
@@ -45,11 +67,6 @@
                 <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
                     <mat-label>Guía de Rastreo</mat-label>
                     <input matInput [(ngModel)]="datosEnvio.guiaRastreo" placeholder="Número de guía...">
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
-                    <mat-label>Folio Contpaqi</mat-label>
-                    <input matInput [(ngModel)]="datosEnvio.folioContpaqi" placeholder="Ej. TR-1234...">
                 </mat-form-field>
             </div>
 

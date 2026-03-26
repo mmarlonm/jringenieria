@@ -149,7 +149,8 @@ export class TransferManagementDashboardComponent implements OnInit {
 
     verDetalle(traspaso: any): void {
         this._dialog.open(TraspasoTimelineModalComponent, {
-            width: '650px',
+            width: '95vw',
+            maxWidth: '650px',
             data: { traspaso },
             panelClass: 'custom-dialog-container'
         });
@@ -158,7 +159,8 @@ export class TransferManagementDashboardComponent implements OnInit {
     gestionarTraspaso(traspaso: any): void {
 
         const dialogRef = this._dialog.open(GestionarTraspasoModalComponent, {
-            width: '550px',
+            width: '95vw',
+            maxWidth: '550px',
             data: { traspaso },
             disableClose: true,
             panelClass: 'custom-dialog-container'

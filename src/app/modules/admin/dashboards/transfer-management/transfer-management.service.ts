@@ -77,8 +77,15 @@ export class TransferManagementService {
   }
 
   getPendientesDestino(idSucursalDestino: number): Observable<any[]> {
-
     return this.http.get<any[]>(`${this.apiUrl}/pendientes-destino/${idSucursalDestino}`);
+  }
+
+  /**
+   * Actualiza únicamente el folio CONTPAQi de un traspaso
+   */
+  actualizarFolio(idTraspaso: number, folio: string): Observable<any> {
+    const params = new HttpParams().set('folioContpaqi', folio);
+    return this.http.put<any>(`${this.apiUrl}/actualizar-folio/${idTraspaso}`, {}, { params });
   }
 
   getUnidadesDeNegocio(): Observable<any[]> {
