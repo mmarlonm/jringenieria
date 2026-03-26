@@ -31,24 +31,46 @@
         </p>
     </div>
 
-    <!-- Folio CONTPAQi (Siempre editable) -->
-    <div class="bg-emerald-50/30 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30 flex flex-col gap-3">
+    <!-- GESTIÓN DE IDENTIFICADORES (Siempre editable) -->
+    <div class="bg-blue-50/20 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/30 flex flex-col gap-4">
         <div class="flex items-center gap-2">
-            <mat-icon class="text-emerald-600 dark:text-emerald-400 scale-75">receipt</mat-icon>
-            <span class="text-[10px] font-black uppercase text-emerald-800 dark:text-emerald-200 tracking-widest">Folio CONTPAQi</span>
+            <div class="p-1.5 bg-blue-600 text-white rounded-lg">
+                <mat-icon class="scale-75 !w-5 !h-5 !text-[20px]">edit_note</mat-icon>
+            </div>
+            <span class="text-[10px] font-black uppercase text-blue-800 dark:text-blue-200 tracking-widest leading-none">Gestión de Identificadores</span>
         </div>
+        
+        <!-- Fila de Folio -->
         <div class="flex items-center gap-3">
             <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
-                <mat-label>Referencia CONTPAQi</mat-label>
+                <mat-label>Folio CONTPAQi</mat-label>
                 <input matInput [(ngModel)]="datosEnvio.folioContpaqi" placeholder="Ej. TR-1234...">
+                <mat-icon matPrefix class="icon-size-5 mr-2">description</mat-icon>
             </mat-form-field>
             <button mat-flat-button color="primary" 
                 class="!rounded-xl !h-12 !px-4 shadow-sm"
-                [disabled]="actualizandoFolio"
+                [disabled]="actualizandoFolio || !datosEnvio.folioContpaqi"
                 (click)="guardarFolio()"
                 matTooltip="Guardar solo el folio">
                 <mat-icon *ngIf="!actualizandoFolio">save</mat-icon>
                 <mat-spinner diameter="20" *ngIf="actualizandoFolio"></mat-spinner>
+            </button>
+        </div>
+
+        <!-- Fila de Guía -->
+        <div class="flex items-center gap-3">
+            <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
+                <mat-label>Guía de Rastreo</mat-label>
+                <input matInput [(ngModel)]="datosEnvio.guiaRastreo" placeholder="Ej. PKX123456...">
+                <mat-icon matPrefix class="icon-size-5 mr-2">local_shipping</mat-icon>
+            </mat-form-field>
+            <button mat-flat-button color="accent" 
+                class="!rounded-xl !h-12 !px-4 shadow-sm"
+                [disabled]="actualizandoGuia || !datosEnvio.guiaRastreo"
+                (click)="guardarGuia()"
+                matTooltip="Guardar solo la guía">
+                <mat-icon *ngIf="!actualizandoGuia">save</mat-icon>
+                <mat-spinner diameter="20" *ngIf="actualizandoGuia"></mat-spinner>
             </button>
         </div>
     </div>
@@ -62,11 +84,6 @@
                 <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
                     <mat-label>Transportista / Paquetería</mat-label>
                     <input matInput [(ngModel)]="datosEnvio.transportista" placeholder="Ej. Paquetexpress, DHL...">
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
-                    <mat-label>Guía de Rastreo</mat-label>
-                    <input matInput [(ngModel)]="datosEnvio.guiaRastreo" placeholder="Número de guía...">
                 </mat-form-field>
             </div>
 

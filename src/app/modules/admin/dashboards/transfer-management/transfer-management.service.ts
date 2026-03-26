@@ -85,7 +85,17 @@ export class TransferManagementService {
    */
   actualizarFolio(idTraspaso: number, folio: string): Observable<any> {
     const params = new HttpParams().set('folioContpaqi', folio);
-    return this.http.put<any>(`${this.apiUrl}/actualizar-folio/${idTraspaso}`, {}, { params });
+    return this.http.put<any>(`${environment.apiUrl}/Traspasos/actualizar-folio/${idTraspaso}`, {}, { params });
+  }
+
+  /**
+   * Actualiza únicamente la guía de rastreo de un traspaso
+   * [HttpPut("actualizar-guia/{id}")]
+   * public async Task<IActionResult> ActualizarGuia(int id, [FromQuery] string guia)
+   */
+  actualizarGuia(idTraspaso: number, guia: string): Observable<any> {
+    const params = new HttpParams().set('guia', guia);
+    return this.http.put<any>(`${environment.apiUrl}/Traspasos/actualizar-guia/${idTraspaso}`, {}, { params });
   }
 
   getUnidadesDeNegocio(): Observable<any[]> {

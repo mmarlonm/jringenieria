@@ -39,6 +39,7 @@ export class GestionarTraspasoModalComponent implements OnInit {
     public subiendoArchivo: boolean = false;
     public traspaso: any;
     public actualizandoFolio: boolean = false;
+    public actualizandoGuia: boolean = false;
 
     // Fase 3: Procesar Envío
     public datosEnvio = {
@@ -66,13 +67,10 @@ export class GestionarTraspasoModalComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Inicializar datos siempre para el folio
+        // Inicializar datos siempre para el folio y guía
         this.datosEnvio.folioContpaqi = this.traspaso.folioContpaqi || '';
-
-        if (this.traspaso.estadoId === 1) {
-            this.datosEnvio.transportista = this.traspaso.transportista || '';
-            this.datosEnvio.guiaRastreo = this.traspaso.guiaRastreo || '';
-        }
+        this.datosEnvio.guiaRastreo = this.traspaso.guiaRastreo || '';
+        this.datosEnvio.transportista = this.traspaso.transportista || '';
 
         // Obtener ID de usuario logueado para recepción
         try {
@@ -195,6 +193,26 @@ export class GestionarTraspasoModalComponent implements OnInit {
             error: (err) => {
                 this.actualizandoFolio = false;
                 this._chatNotificationService.showError('Error', err.error?.message || 'No se pudo actualizar el folio', 5000);
+            }
+        });
+    }
+
+    guardarGuia(): void {
+        if (!this.datosEnvio.guiaRastreo?.trim()) {
+            this._chatNotificationService.showWarning('Atención', 'Ingresa una guía de rastreo válida', 3000);
+            return;
+        }
+
+        this.actualizandoGuia = true;
+        this._service.actualizarGuia(this.traspaso.idTraspaso, this.datosEnvio.guiaRastreo).subscribe({
+            next: () => {
+                this.actualizandoGuia = false;
+                this.traspaso.guiaRastreo = this.datosEnvio.guiaRastreo;
+                this._chatNotificationService.showSuccess('Éxito', 'Guía de rastreo actualizada correctamente', 3000);
+            },
+            error: (err) => {
+                this.actualizandoGuia = false;
+                this._chatNotificationService.showError('Error', err.error?.message || 'No se pudo actualizar la guía', 5000);
             }
         });
     }
