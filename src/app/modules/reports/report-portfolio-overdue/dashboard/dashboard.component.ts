@@ -95,7 +95,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         if (userStr) {
             const userData = JSON.parse(userStr);
             const roles = userData.roles || [];
-            const esAdmin = roles.some((r: string) => ['Admin', 'pruebas', 'AdministracionQueretaro'].includes(r));
+            const esAdmin = roles.some((r: string) => ['Admin', 'pruebas', 'AdministracionQueretaro', 'Admin'].includes(r));
 
             if (esAdmin) {
                 this.sucursalesDisponibles = [...this.sucursales];
