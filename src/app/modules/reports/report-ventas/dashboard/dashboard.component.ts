@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -91,7 +93,11 @@ export class ReportVentasDashboardComponent implements OnInit {
     private datosClasificacionOriginal: any[] = [];
     public marcaSeleccionada: string | null = null;
 
-    constructor(private reportVentasService: ReportVentasService) { }
+    constructor(
+        private reportVentasService: ReportVentasService,
+        private router: Router
+    ) { }
+
 
     ngOnInit(): void {
         this.verificarRoles();
@@ -235,6 +241,8 @@ export class ReportVentasDashboardComponent implements OnInit {
                         this.mapearGraficas(resp);
                         this.generarGraficaMarcas();
                         this.generarGraficaLineas();
+                        this.graficaTopClientesMonto();
+
 
                         if (this.esMoral === '3' && this.sucursal === 'TODAS' && (this.desglosePorSucursal.length > 0 || this.detalleVentas.length > 0)) {
                             // 📊 Calcular Totales Globales para la Barra de Progreso
@@ -527,9 +535,17 @@ export class ReportVentasDashboardComponent implements OnInit {
                 data: data.map(x => ({
                     name: x.producto,
                     y: x.cantidadVendida // 👈 El pastel se divide por cantidad de piezas
-                }))
+                })),
+                point: {
+                    events: {
+                        click: () => {
+                            this.router.navigate(['/reports/report-venta-product']);
+                        }
+                    }
+                }
             } as any]
         });
+
     }
 
     // 📊 2. Gráfica Top Productos (SOLO MONTO / DINERO)
@@ -631,9 +647,17 @@ export class ReportVentasDashboardComponent implements OnInit {
                 data: data.map(x => ({
                     name: x.producto,
                     y: x.totalVendido // 👈 El pastel se divide por el dinero generado
-                }))
+                })),
+                point: {
+                    events: {
+                        click: () => {
+                            this.router.navigate(['/reports/report-venta-product']);
+                        }
+                    }
+                }
             } as any]
         });
+
     }
 
     private graficaTopVendedores(data: any[]): void {
@@ -702,9 +726,17 @@ export class ReportVentasDashboardComponent implements OnInit {
                 data: data.map(x => ({
                     name: x.vendedor,
                     y: x.totalVendido
-                }))
+                })),
+                point: {
+                    events: {
+                        click: () => {
+                            this.router.navigate(['/reports/report-ventas-agente']);
+                        }
+                    }
+                }
             }]
         });
+
     }
 
     exportarPDF(): void {
@@ -1065,4 +1097,63 @@ export class ReportVentasDashboardComponent implements OnInit {
             } as any]
         });
     }
-}
+
+    private graficaTopClientesMonto(): void {
+        const porCliente = this.detalleVentas.reduce((acc, curr) => {
+            acc[curr.cliente] = (acc[curr.cliente] || 0) + (curr.totalDocumento || 0);
+            return acc;
+        }, {} as any);
+
+        const data = Object.keys(porCliente)
+            .map(key => ({ name: key, y: porCliente[key] }))
+            .sort((a, b) => b.y - a.y)
+            .slice(0, 5);
+
+        const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#F1F5F9' : '#1E293B';
+
+        const container = document.getElementById('chartTopClientesMonto');
+        if (!container) return;
+
+        Highcharts.chart(container, {
+            chart: { type: 'pie', backgroundColor: 'transparent', height: 260 },
+            title: {
+                text: 'Top Clientes (Monto)',
+                align: 'center',
+                verticalAlign: 'middle',
+                y: 10,
+                style: { fontSize: '13px', fontWeight: 'bold', color: textColor }
+            },
+            tooltip: {
+                pointFormat: 'Monto: <b>${point.y:,.0f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+            },
+            credits: { enabled: false },
+            plotOptions: {
+                pie: {
+                    innerSize: '70%',
+                    borderWidth: 1,
+                    borderColor: isDark ? '#1E293B' : '#FFFFFF',
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}',
+                        distance: 5,
+                        style: { fontSize: '9px', textOutline: 'none', color: textColor }
+                    },
+                    point: {
+                        events: {
+                            click: () => {
+                                this.router.navigate(['/reports/report-customers-segmentation']);
+                            }
+                        }
+                    }
+                }
+            },
+            series: [{
+                name: 'Clientes',
+                type: 'pie',
+                data: data
+            } as any]
+        });
+    }
+}

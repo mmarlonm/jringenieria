@@ -265,14 +265,14 @@
 
 
         <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl shadow p-4">
+            <div class="bg-white rounded-xl shadow p-4 cursor-pointer">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Ventas por Vendedor
                 </h2>
                 <div id="chartTopVendedores" class="w-full h-[260px] sm:h-80"></div>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-4">
+            <div class="bg-white rounded-xl shadow p-4 cursor-pointer">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Top Productos por pieza
                 </h2>
@@ -281,7 +281,7 @@
         </div>
 
         <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white rounded-xl shadow p-4">
+            <div class="bg-white rounded-xl shadow p-4 cursor-pointer">
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Top Productos por monto
                 </h2>
@@ -296,12 +296,20 @@
             </div>
         </div>
 
-        <div class="w-full">
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-xl shadow p-4">
+
                 <h2 class="text-base sm:text-lg font-semibold mb-2">
                     Ventas por Línea
                 </h2>
                 <div id="chartTopLineasDonut" class="w-full h-[280px]"></div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4 cursor-pointer">
+                <h2 class="text-base sm:text-lg font-semibold mb-2">
+                    Top Clientes por Monto
+                </h2>
+                <div id="chartTopClientesMonto" class="w-full h-[280px]"></div>
             </div>
         </div>
 
