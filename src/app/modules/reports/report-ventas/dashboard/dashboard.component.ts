@@ -538,8 +538,10 @@ export class ReportVentasDashboardComponent implements OnInit {
                 })),
                 point: {
                     events: {
-                        click: () => {
-                            this.router.navigate(['/reports/report-venta-product']);
+                        click: (e: any) => {
+                            const producto = e.point.name;
+                            const sucursal = this.sucursal;
+                            this.router.navigate(['/reports/report-venta-product'], { queryParams: { producto, sucursal } });
                         }
                     }
                 }
@@ -650,8 +652,10 @@ export class ReportVentasDashboardComponent implements OnInit {
                 })),
                 point: {
                     events: {
-                        click: () => {
-                            this.router.navigate(['/reports/report-venta-product']);
+                        click: (e: any) => {
+                            const producto = e.point.name;
+                            const sucursal = this.sucursal;
+                            this.router.navigate(['/reports/report-venta-product'], { queryParams: { producto, sucursal } });
                         }
                     }
                 }
@@ -729,8 +733,10 @@ export class ReportVentasDashboardComponent implements OnInit {
                 })),
                 point: {
                     events: {
-                        click: () => {
-                            this.router.navigate(['/reports/report-ventas-agente']);
+                        click: (e: any) => {
+                            const vendedor = e.point.name;
+                            const sucursal = this.sucursal;
+                            this.router.navigate(['/reports/report-ventas-agente'], { queryParams: { vendedor, sucursal } });
                         }
                     }
                 }
@@ -825,7 +831,7 @@ export class ReportVentasDashboardComponent implements OnInit {
                 style: { fontSize: '14px', fontWeight: 'bold' }
             },
             subtitle: {
-                text: 'Haga clic para filtrar líneas',
+                text: 'Haga clic para ver detalle por producto',
                 style: { fontSize: '11px' }
             },
             tooltip: {
@@ -851,8 +857,9 @@ export class ReportVentasDashboardComponent implements OnInit {
                     point: {
                         events: {
                             click: function () {
-                                self.marcaSeleccionada = this.name;
-                                self.generarGraficaLineas(this.name);
+                                const sucursal = self.sucursal;
+                                const marca = this.name;
+                                self.router.navigate(['/reports/report-venta-product'], { queryParams: { marca, sucursal } });
                             }
                         }
                     }
@@ -909,6 +916,18 @@ export class ReportVentasDashboardComponent implements OnInit {
                 pie: {
                     allowPointSelect: true,
                     cursor: 'pointer',
+                    point: {
+                        events: {
+                            click: (e: any) => {
+                                const sucursal = this.sucursal;
+                                const linea = e.point.name;
+                                const marca = this.marcaSeleccionada;
+                                this.router.navigate(['/reports/report-venta-product'], { 
+                                    queryParams: { marca, linea, sucursal } 
+                                });
+                            }
+                        }
+                    },
                     dataLabels: {
                         enabled: true,
                         format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
@@ -1087,6 +1106,27 @@ export class ReportVentasDashboardComponent implements OnInit {
                         format: '{point.name}',
                         distance: 5,
                         style: { fontSize: '9px', textOutline: 'none', color: textColor }
+                    },
+                    point: {
+                        events: {
+                            click: (e: any) => {
+                                if (title === 'Top Marcas') {
+                                    this.router.navigate(['/reports/report-venta-product'], {
+                                        queryParams: {
+                                            marca: e.point.name,
+                                            sucursal: this.sucursal
+                                        }
+                                    });
+                                } else if (title === 'Top Líneas') {
+                                    this.router.navigate(['/reports/report-venta-product'], {
+                                        queryParams: {
+                                            linea: e.point.name,
+                                            sucursal: this.sucursal
+                                        }
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -1142,8 +1182,11 @@ export class ReportVentasDashboardComponent implements OnInit {
                     },
                     point: {
                         events: {
-                            click: () => {
-                                this.router.navigate(['/reports/report-customers-segmentation']);
+                            click: (e: any) => {
+                                const cliente = e.point.name;
+                                this.router.navigate(['/reports/report-customers-segmentation'], { 
+                                    queryParams: { cliente } 
+                                });
                             }
                         }
                     }

@@ -225,9 +225,16 @@
 
             <div class="bg-white rounded-xl shadow p-4 flex flex-col">
 
-                <h2 class="text-base sm:text-lg font-semibold mb-2">
-                    Detalle de Ventas
-                </h2>
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-base sm:text-lg font-semibold">
+                        Detalle de Ventas
+                    </h2>
+                    <button mat-flat-button class="!bg-green-600 !text-white !rounded-lg" (click)="exportarCsvDetalle()" 
+                        *ngIf="detalleVentas.length > 0">
+                        <mat-icon class="mr-2">download</mat-icon>
+                        Descargar CSV
+                    </button>
+                </div>
 
                 <div class="w-full overflow-auto max-h-[420px] border rounded-lg">
 

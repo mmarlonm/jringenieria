@@ -177,8 +177,12 @@
                                 </tr>
 
                                 <ng-container *ngIf="expandedCategorias.has(getCategoriaKey(padre.nombre, cat.nombre))">
-                                    <tr *ngFor="let prod of cat.productos"
-                                        class="border-b dark:border-gray-800 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors">
+                                    <tr *ngFor="let prod of cat.productos" [id]="'prod-' + prod.codigo"
+                                        class="border-b dark:border-gray-800 transition-all duration-500"
+                                        [ngClass]="{
+                                            'bg-blue-100/50 dark:bg-blue-500/20 border-l-4 border-blue-600 shadow-sm': highlightedProduct === prod.codigo,
+                                            'hover:bg-blue-50/40 dark:hover:bg-blue-900/10': highlightedProduct !== prod.codigo
+                                        }">
                                         <td></td>
                                         <td class="p-2">
                                             <span class="font-medium text-main">{{ prod.codigo }}</span>

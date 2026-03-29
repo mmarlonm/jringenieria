@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import { HighchartsChartModule } from 'highcharts-angular';
 
@@ -97,12 +98,18 @@ export class ReportCustomersDashboardComponent implements OnInit {
     constructor(
         private _reportService: ReportCustomersSegmentationService,
         private http: HttpClient,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private route: ActivatedRoute
     ) { }
 
     ngOnInit(): void {
         this.verificarRoles();
-        this.consultar();
+        this.route.queryParams.subscribe(params => {
+            if (params['cliente']) {
+                this.clienteFiltroGlobal = params['cliente'];
+            }
+            this.consultar();
+        });
     }
 
     verificarRoles(): void {
@@ -160,7 +167,6 @@ export class ReportCustomersDashboardComponent implements OnInit {
                         this.detallesProductos = resp.detallesProductos || [];
                         this.resumenGeograficoOriginal = resp.resumenGeografico || [];
 
-                        this.clienteFiltroGlobal = 'TODOS';
                         this.actualizarDashboardGlobal();
                     }
                 }
@@ -172,9 +178,14 @@ export class ReportCustomersDashboardComponent implements OnInit {
         this.aplicarFiltrosTabla();
 
         // 2. Si hay un cliente global seleccionado, recalculamos KPIs y totales
-        if (this.clienteFiltroGlobal !== 'TODOS') {
-            const cli = this.listaClientesOriginal.find(c => c.nombreCliente === this.clienteFiltroGlobal);
+        if (this.clienteFiltroGlobal && this.clienteFiltroGlobal !== 'TODOS') {
+            const cli = this.listaClientesOriginal.find(c => 
+                (c.nombreCliente || '').trim().toUpperCase() === this.clienteFiltroGlobal.toString().trim().toUpperCase()
+            );
             if (cli) {
+                // Sincronizamos el valor exacto para que el MatSelect lo reconozca
+                this.clienteFiltroGlobal = cli.nombreCliente;
+
                 this.kpis = this.kpisOriginales.map(s => {
                     const esMismoSegmento = s.clasificacion === cli.clasificacion;
                     return {

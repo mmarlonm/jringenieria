@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 // 🔹 Highcharts
 import * as Highcharts from 'highcharts';
@@ -65,6 +66,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     // 🔹 Agentes
     public listaAgentes: Agente[] = [];
     public agenteSeleccionado: number = 0; // 0 = TODOS
+    private nombreVendedorFiltrar: string | null = null;
 
     // 🔹 KPIs
     kpis = {
@@ -92,12 +94,22 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     // 📊 Lista para dibujar la barra de progreso dividida por meses en el HTML
     public segmentosMeses: any[] = [];
 
-    constructor(private reportVentasService: ReportVentasAgenteService) { }
+    constructor(
+        private reportVentasService: ReportVentasAgenteService,
+        private route: ActivatedRoute
+    ) { }
 
     ngOnInit(): void {
         this.verificarRoles();
-        this.cargarAgentes();
-        this.consultar();
+        this.route.queryParams.subscribe(params => {
+            if (params['sucursal']) {
+                this.sucursal = params['sucursal'];
+            }
+            if (params['vendedor']) {
+                this.nombreVendedorFiltrar = params['vendedor'];
+            }
+            this.cargarAgentes();
+        });
     }
 
     verificarRoles(): void {
@@ -137,8 +149,23 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
         this.reportVentasService.getAgentes().subscribe({
             next: (agentes) => {
                 this.listaAgentes = agentes;
+
+                // Si venimos de report-ventas con un vendedor específico
+                if (this.nombreVendedorFiltrar) {
+                    const agente = agentes.find(a => 
+                        a.nombreAgente.toLowerCase().trim() === this.nombreVendedorFiltrar?.toLowerCase().trim()
+                    );
+                    if (agente) {
+                        this.agenteSeleccionado = agente.agenteId;
+                    }
+                }
+                
+                this.consultar();
             },
-            error: (err) => console.error('Error al cargar el catálogo de agentes', err)
+            error: (err) => {
+                console.error('Error al cargar el catálogo de agentes', err);
+                this.consultar(); // Consultar de todos modos si falla la carga de agentes
+            }
         });
     }
 
@@ -605,5 +632,35 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     public resetFiltroMarca(): void {
         this.marcaSeleccionada = null;
         this.generarGraficaLineas();
+    }
+
+    exportarCsvDetalle(): void {
+        if (!this.detalleVentas || this.detalleVentas.length === 0) return;
+
+        let csvContent = 'Fecha,Sucursal,Folio,Cliente,Vendedor,Total\n';
+
+        this.detalleVentas.forEach(row => {
+            const fechaParseada = new Date(row.fecha);
+            const fechaStr = isNaN(fechaParseada.getTime()) 
+                ? row.fecha 
+                : fechaParseada.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            const sucursal = `"${(row.sucursal || '').replace(/"/g, '""')}"`;
+            const folio = `"${(row.folio || '').replace(/"/g, '""')}"`;
+            const cliente = `"${(row.cliente || '').replace(/"/g, '""')}"`;
+            const vendedor = `"${(row.vendedor || '').replace(/"/g, '""')}"`;
+            const total = row.totalDocumento !== undefined && row.totalDocumento !== null ? row.totalDocumento : 0;
+
+            csvContent += `${fechaStr},${sucursal},${folio},${cliente},${vendedor},${total}\n`;
+        });
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `detalle-ventas-agente-${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 }

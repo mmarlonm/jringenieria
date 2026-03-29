@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
@@ -112,6 +113,10 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     totalCantidad = 0;
     totalProductos = 0;
     totalClasificaciones = 0;
+    private productToExpand: string | null = null;
+    private marcaToExpand: string | null = null;
+    private lineaToExpand: string | null = null;
+    public highlightedProduct: string | null = null;
 
     expandedPadres = new Set<string>();
     expandedCategorias = new Set<string>();
@@ -119,11 +124,28 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     public tablaJerarquica: PadreNode[] = [];
 
 
-    constructor(private reportVentasProductService: ReportVentasProductService) { }
+    constructor(
+        private reportVentasProductService: ReportVentasProductService,
+        private route: ActivatedRoute
+    ) { }
 
     ngOnInit(): void {
         this.verificarRoles();
-        this.consultar();
+        this.route.queryParams.subscribe(params => {
+            if (params['sucursal']) {
+                this.sucursal = params['sucursal'];
+            }
+            if (params['producto']) {
+                this.productToExpand = params['producto'];
+            }
+            if (params['marca']) {
+                this.marcaToExpand = params['marca'];
+            }
+            if (params['linea']) {
+                this.lineaToExpand = params['linea'];
+            }
+            this.consultar();
+        });
     }
 
     verificarRoles(): void {
@@ -178,7 +200,53 @@ export class ReportVentasProductDashboardComponent implements OnInit {
     }
 
     filterCodes(): void {
-        if (!this.codigosProducto || this.codigosProducto.trim() === '') {
+        const toExpandProd = this.productToExpand;
+        const toExpandMarca = this.marcaToExpand;
+        const toExpandLinea = this.lineaToExpand;
+        this.productToExpand = null; 
+        this.marcaToExpand = null;
+        this.lineaToExpand = null;
+
+        if (toExpandProd) {
+            this.detalle = [...this.detalleRaw];
+            this.codigosProducto = ''; 
+
+            const item = this.detalle.find(r => 
+                r.codigoProducto?.toUpperCase().trim() === toExpandProd.toUpperCase().trim() ||
+                r.nombreProducto?.toUpperCase().trim() === toExpandProd.toUpperCase().trim()
+            );
+
+            if (item) {
+                this.expandedPadres.add(item.clasificacionPadre);
+                this.expandedCategorias.add(`${item.clasificacionPadre}|${item.clasificacion}`);
+
+                // 🔹 Resaltar y hacer Scroll
+                this.highlightedProduct = item.codigoProducto;
+                this.scrollToHighlightedProduct(item.codigoProducto);
+            }
+        } else if (toExpandMarca) {
+            this.detalle = [...this.detalleRaw];
+            this.codigosProducto = '';
+            
+            // Buscar si la marca existe en los datos
+            const marcaExiste = this.detalle.some(r => r.clasificacionPadre === toExpandMarca);
+            if (marcaExiste) {
+                this.expandedPadres.add(toExpandMarca);
+            }
+        } else if (toExpandLinea) {
+            this.detalle = [...this.detalleRaw];
+            this.codigosProducto = '';
+            
+            // Si viene línea, necesitamos encontrar a qué marca pertenece
+            const item = this.detalle.find(r => 
+                (r.clasificacion || '').trim().toUpperCase() === toExpandLinea.toUpperCase().trim() && 
+                (!toExpandMarca || (r.clasificacionPadre || '').trim().toUpperCase() === toExpandMarca.toUpperCase().trim())
+            );
+            if (item) {
+                this.expandedPadres.add(item.clasificacionPadre);
+                this.expandedCategorias.add(`${item.clasificacionPadre}|${item.clasificacion}`);
+            }
+        } else if (!this.codigosProducto || this.codigosProducto.trim() === '') {
             this.detalle = [...this.detalleRaw];
         } else {
             const codes = this.codigosProducto.split(',')
@@ -186,13 +254,32 @@ export class ReportVentasProductDashboardComponent implements OnInit {
                 .filter(c => c !== '');
 
             this.detalle = this.detalleRaw.filter(r =>
-                codes.some(code => r.codigoProducto?.toUpperCase().includes(code))
+                codes.some(code => 
+                    r.codigoProducto?.toUpperCase().includes(code) ||
+                    r.nombreProducto?.toUpperCase().includes(code)
+                )
             );
         }
 
         this.calcularKPIs();
         this.renderGraficaProductos();
         this.generarTablaJerarquica(this.detalle);
+    }
+
+    private scrollToHighlightedProduct(codigo: string): void {
+        if (!codigo) return;
+        
+        setTimeout(() => {
+            const el = document.getElementById(`prod-${codigo}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 500);
+
+        // Limpiar el resaltado después de 5 segundos
+        setTimeout(() => {
+            this.highlightedProduct = null;
+        }, 5000);
     }
 
 
