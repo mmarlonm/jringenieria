@@ -435,7 +435,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 const taskId = n.referenciaId;
                 const current = newUnreadCounts.get(taskId) || 0;
                 newUnreadCounts.set(taskId, current + 1);
-            } 
+            }
             // Estructura volátil (SignalR Legacy)
             else if (n.id.startsWith('chat-')) {
                 const parts = n.id.split('-');
@@ -799,7 +799,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         const dialogRef = this.dialog.open(TaskFormDialogComponent, {
             width: '100%',
             maxWidth: taskId ? '1200px' : '900px',
-            maxHeight: '90vh',
+            maxHeight: '95vh',
             panelClass: 'task-floating-panel',
             data: taskId ? { id: taskId, readOnly } : null
         });
@@ -1192,6 +1192,49 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.gantt = new Gantt("#gantt-container", ganttTasks, {
                     view_mode: this.viewMode,
                     language: 'es',
+                    on_click: (task: any) => {
+                        this.openTaskDialog(Number(task.id));
+                    },
+                    on_date_change: (task: any, start: Date, end: Date) => {
+                        const t = tasks.find(x => x.id?.toString() === task.id);
+                        if (t && t.id) {
+                            const updatedTask = {
+                                ...t,
+                                fechaInicioEstimada: start,
+                                fechaFinEstimada: end
+                            };
+                            this.taskService.updateTask(t.id, updatedTask).subscribe({
+                                next: () => {
+                                    this._notificationService.showSuccess('Fecha actualizada', `La tarea "${task.name}" ha sido reprogramada.`);
+                                    this.loadTasks(); // Actualizar todo para sincronizar
+                                },
+                                error: () => {
+                                    this._notificationService.showError('Error', 'No se pudo actualizar la fecha de la tarea.');
+                                    this.loadTasks(); // Revertir cambios visuales
+                                }
+                            });
+                        }
+                    },
+                    on_progress_change: (task: any, progress: number) => {
+                        const t = tasks.find(x => x.id?.toString() === task.id);
+                        if (t && t.id) {
+                            // Mapear progreso a estatus (ejemplo: 100% -> Completada)
+                            let newStatus = t.estatus;
+                            if (progress === 100) newStatus = 3;
+                            else if (progress > 0) newStatus = 2;
+                            else newStatus = 1;
+
+                            if (newStatus !== t.estatus) {
+                                const updatedTask = { ...t, estatus: newStatus };
+                                this.taskService.updateTask(t.id, updatedTask).subscribe({
+                                    next: () => {
+                                        this._notificationService.showInfo('Progreso actualizado', `Estatus cambiado a "${this.getStatusName(newStatus)}"`);
+                                        this.loadTasks();
+                                    }
+                                });
+                            }
+                        }
+                    },
                     custom_popup_html: (task: any) => {
                         const t = tasks.find(x => x.id?.toString() === task.id);
 

@@ -177,7 +177,7 @@
                   class="border-r border-b dark:border-gray-800 px-4 whitespace-nowrap"
                   [style.background-color]="getFillColorByEstatusId(task.estatus)" [ngStyle]="getColumnWidth('nombre')">
                   <span class="font-medium text-main hover:text-primary cursor-pointer transition-colors truncate block"
-                    (click)="openTaskDialog(task.id, true)">{{ task.nombre }}</span>
+                    (click)="openTaskDialog(task.id)">{{ task.nombre }}</span>
                 </td>
               </ng-container>
 

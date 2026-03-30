@@ -36,8 +36,10 @@ import flatpickr from 'flatpickr';
 import { User } from 'app/core/user/user.types';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import { TaskChatComponent } from '../task-chat/task-chat.component';
+import { TareaActividadesGanttComponent } from '../gantt/tarea-actividades-gantt.component';
 
 @Component({
     selector: 'app-task-form-dialog',
@@ -54,14 +56,17 @@ import { TaskChatComponent } from '../task-chat/task-chat.component';
         MatIconModule,
         MatSelectModule,
         MatDialogModule,
-        TaskChatComponent
+        MatTabsModule,
+        TaskChatComponent,
+        TareaActividadesGanttComponent
     ]
 })
 export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     form: FormGroup;
     userList: any[] = [];
     loading: boolean = false;
-    isChatCollapsed: boolean = false;
+    isChatCollapsed: boolean = true;
+    isScreenSmall: boolean = false;
 
     private flatpickrInstances: { [key: string]: flatpickr.Instance } = {};
 
@@ -99,6 +104,8 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             ubicacion: [''],
             links: this.fb.array([]),
             CreadorId: [null], // ID del usuario que crea la tarea
+            apiUrl: 'https://api.mgm-technologies-group.org/api',  // API Principal (Producción)
+            apiUrlSignal: 'https://api.mgm-technologies-group.org', // SignalR
             estatus: [2, Validators.required], // Nuevo campo de estatus con valor por defecto 1
             cuadranteId: [null]
         });
@@ -111,7 +118,10 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
                 this.user = user["usuario"];
-                this.form.get("CreadorId").setValue(this.user.id); // Setea el usuario logueado como creador por defecto
+                if (this.user) {
+                    this.form.get("CreadorId").setValue(this.user.id);
+                }
+ // Setea el usuario logueado como creador por defecto
             });
         this.getUsers();
 
@@ -163,7 +173,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 usuarioIds: task.usuarioIds ?? [],
                 empresa: task.empresa,
                 ubicacion: task.ubicacion,
-                CreadorId: this.user.id, // Asigna el ID del usuario logueado
+                CreadorId: this.user?.id || null, // Asigna el ID del usuario logueado de forma segura
                 estatus: task.estatus,
                 cuadranteId: task.cuadranteId ?? null
             });

@@ -1,191 +1,215 @@
-<div class="flex flex-col md:flex-row w-full bg-transparent overflow-y-auto sm:p-1 md:p-2 gap-3 min-h-0 h-auto md:h-[800px] max-h-screen">
+<div class="flex flex-col md:flex-row w-full bg-transparent p-4 md:p-6 items-center justify-center min-h-0 gap-4 overflow-visible h-auto max-h-screen pt-2 md:pt-6">
     
-    <!-- Card del Formulario -->
-    <div class="flex flex-col flex-none md:flex-auto bg-card rounded-2xl shadow-xl overflow-hidden border dark:border-gray-800 min-w-0">
-        <h2 mat-dialog-title class="m-0 p-3 pb-0 border-b-0 text-lg font-bold flex items-center justify-between">
-            <span>{{ data?.id ? 'Editar tarea' : 'Nueva tarea' }}</span>
-        </h2>
-
-        <form [formGroup]="form" class="flex flex-col flex-auto overflow-hidden">
-            <mat-dialog-content class="flex-auto p-3 pt-1 overflow-y-auto">
-                <!-- Fila 1: Nombre -->
-                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
-                    <mat-label>Nombre de la tarea</mat-label>
-                    <input matInput formControlName="nombre" />
-                </mat-form-field>
-
-                <!-- Fila 2: Empresa y Ubicación -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-1">
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
-                        <mat-label>Empresa</mat-label>
-                        <input matInput formControlName="empresa" />
-                        <mat-icon matSuffix class="text-gray-400 icon-size-4">business</mat-icon>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
-                        <mat-label>Ubicación</mat-label>
-                        <input matInput formControlName="ubicacion" />
-                        <mat-icon matSuffix class="text-gray-400 icon-size-4">place</mat-icon>
-                    </mat-form-field>
-                </div>
-
-                <!-- Fila 3: Fechas (Con IDs para Flatpickr) -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-1">
-                    <mat-form-field appearance="outline" class="fuse-mat-dense">
-                        <mat-label>In. Est.</mat-label>
-                        <input matInput [matDatepicker]="pickerIE" formControlName="fechaInicioEstimada" id="fechaInicioEstimada" />
-                        <mat-datepicker-toggle matSuffix [for]="pickerIE"></mat-datepicker-toggle>
-                        <mat-datepicker #pickerIE></mat-datepicker>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="fuse-mat-dense">
-                        <mat-label>Fin Est.</mat-label>
-                        <input matInput [matDatepicker]="pickerFE" formControlName="fechaFinEstimada" id="fechaFinEstimada" />
-                        <mat-datepicker-toggle matSuffix [for]="pickerFE"></mat-datepicker-toggle>
-                        <mat-datepicker #pickerFE></mat-datepicker>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="fuse-mat-dense">
-                        <mat-label>In. Real</mat-label>
-                        <input matInput [matDatepicker]="pickerIR" formControlName="fechaInicioReal" id="fechaInicioReal" />
-                        <mat-datepicker-toggle matSuffix [for]="pickerIR"></mat-datepicker-toggle>
-                        <mat-datepicker #pickerIR></mat-datepicker>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="fuse-mat-dense">
-                        <mat-label>Fin Real</mat-label>
-                        <input matInput [matDatepicker]="pickerFR" formControlName="fechaFinReal" id="fechaFinReal" />
-                        <mat-datepicker-toggle matSuffix [for]="pickerFR"></mat-datepicker-toggle>
-                        <mat-datepicker #pickerFR></mat-datepicker>
-                    </mat-form-field>
-                </div>
-
-                <!-- Fila 4: Usuarios y Estatus -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-1">
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
-                        <mat-label>Asignar usuarios</mat-label>
-                        <mat-select formControlName="usuarioIds" multiple>
-                            <mat-option *ngFor="let u of userList" [value]="u.usuarioId">{{ u.nombreUsuario }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
-                        <mat-label>Estatus</mat-label>
-                        <mat-select formControlName="estatus">
-                            <mat-option [value]="1">Pendiente</mat-option>
-                            <mat-option [value]="2">En proceso</mat-option>
-                            <mat-option [value]="3">Completada</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <!-- Fila 5: Eisenhower (Con colores restaurados) -->
-                <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-1">
-                    <mat-label>Matriz Eisenhower</mat-label>
-                    <mat-select formControlName="cuadranteId">
-                        <mat-option [value]="null">Sin asignar</mat-option>
-                        <mat-option [value]="1">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-rose-500"></div>
-                                <span>Importante y Urgente (Hacer ya)</span>
-                            </div>
-                        </mat-option>
-                        <mat-option [value]="2">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-amber-400"></div>
-                                <span>Importante, No Urgente (Planear)</span>
-                            </div>
-                        </mat-option>
-                        <mat-option [value]="3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
-                                <span>No Importante, Urgente (Delegar)</span>
-                            </div>
-                        </mat-option>
-                        <mat-option [value]="4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-sky-400"></div>
-                                <span>No Importante, No Urgente (Posponer)</span>
-                            </div>
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-
-                <!-- Fila 6: Comentarios (Compacto) -->
-                <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-1">
-                    <mat-label>Comentarios</mat-label>
-                    <textarea matInput rows="1" cdkTextareaAutosize formControlName="comentarios"></textarea>
-                </mat-form-field>
-
-                <!-- Secciones de Soporte (Links y Archivos) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1 border-t pt-2 dark:border-gray-800">
-                    <div class="links-section">
-                        <div class="flex items-center justify-between mb-1">
-                            <h3 class="text-[11px] font-bold uppercase text-secondary">Links</h3>
-                            <button mat-icon-button type="button" size="small" (click)="addLink()" [disabled]="data?.readOnly" class="w-6 h-6">
-                                <mat-icon class="icon-size-4">add</mat-icon>
-                            </button>
-                        </div>
-                        <div formArrayName="links" class="max-h-24 overflow-y-auto">
-                            <div *ngFor="let ctrl of links.controls; let i = index" class="link-row flex items-center gap-1 mb-1">
-                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                                    <input matInput [formControlName]="i" placeholder="https://..." class="text-xs" />
-                                </mat-form-field>
-                                <button mat-icon-button color="warn" size="small" (click)="removeLink(i)" class="w-6 h-6" [disabled]="data?.readOnly">
-                                    <mat-icon class="icon-size-4">delete</mat-icon>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="files-section" *ngIf="tareaId">
-                        <div class="flex items-center justify-between mb-1">
-                            <h3 class="text-[11px] font-bold uppercase text-secondary">Archivos</h3>
-                            <button mat-icon-button color="primary" size="small" (click)="fileInput.click()" [disabled]="data?.readOnly" class="w-6 h-6">
-                                <mat-icon class="icon-size-4">attach_file</mat-icon>
-                            </button>
-                            <input type="file" #fileInput multiple hidden (change)="onFileSelected($event)" />
-                        </div>
-                        <div *ngIf="files?.length; else noFiles" class="files-scroll max-h-24 overflow-y-auto">
-                            <div *ngFor="let file of files" class="file-card p-1 mb-1 border rounded flex items-center justify-between">
-                                <div class="flex items-center gap-1 overflow-hidden">
-                                    <mat-icon class="icon-size-4 text-primary">description</mat-icon>
-                                    <span class="text-[10px] truncate w-24" title="{{ file.nombreArchivo }}">{{ file.nombreArchivo }}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <button mat-icon-button class="w-5 h-5" (click)="download(file)"><mat-icon class="icon-size-3">download</mat-icon></button>
-                                    <button mat-icon-button class="w-5 h-5" color="warn" (click)="remove(file)" [disabled]="data?.readOnly"><mat-icon class="icon-size-3">delete</mat-icon></button>
-                                </div>
-                            </div>
-                        </div>
-                        <ng-template #noFiles><div class="text-[10px] text-gray-400 italic">Sin archivos</div></ng-template>
+    <!-- Card del Formulario (Principal) -->
+    <div class="flex flex-col flex-none md:flex-auto bg-card rounded-3xl shadow-2xl overflow-hidden border dark:border-gray-800 min-w-0 relative h-[85vh] max-h-[850px] md:w-[940px]">
+        
+        <form [formGroup]="form" class="flex flex-col h-full w-full overflow-hidden">
+            <!-- Cabecera Simple -->
+            <div class="flex-none flex items-center justify-between p-4 border-b bg-white dark:bg-slate-900/40 px-6">
+                <div class="flex items-center gap-3">
+                    <mat-icon class="text-primary icon-size-7">assignment</mat-icon>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-bold leading-none">{{ data?.id ? 'Editar tarea' : 'Nueva tarea' }}</span>
+                        <span class="text-xs font-semibold text-secondary mt-1" *ngIf="data?.id">ID de Tarea: #{{ data.id }}</span>
                     </div>
                 </div>
-            </mat-dialog-content>
-
-            <mat-dialog-actions align="end" class="p-3 pt-0 min-h-0">
-                <button mat-button type="button" size="small" (click)="cancel()">Cancelar</button>
-                <button mat-flat-button color="primary" type="button" size="small" (click)="save()"
-                    [disabled]="loading || form.invalid || data?.readOnly">
-                    Guardar
+                <button mat-icon-button type="button" (click)="cancel()" class="text-secondary hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <mat-icon class="icon-size-5">close</mat-icon>
                 </button>
-            </mat-dialog-actions>
+            </div>
+
+            <!-- Contenido Principal con Pestañas -->
+            <div class="flex-auto overflow-hidden bg-transparent">
+                <mat-tab-group class="h-full" [animationDuration]="'200ms'" mat-stretch-tabs="false">
+                    <!-- Pestaña 1: Detalles -->
+                    <mat-tab>
+                        <ng-template mat-tab-label>
+                            <mat-icon class="icon-size-5 mr-2 text-primary">description</mat-icon>
+                            <span class="font-bold">Detalles</span>
+                        </ng-template>
+                        
+                        <div class="flex flex-col flex-auto h-full p-4 md:p-6 overflow-y-auto custom-scrollbar">
+                            <!-- Fila 1: Nombre -->
+                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-2">
+                                <mat-label>Nombre de la tarea</mat-label>
+                                <input matInput formControlName="nombre" placeholder="¿Qué hay que hacer?" />
+                            </mat-form-field>
+
+                            <!-- Fila 2: Empresa y Ubicación -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Empresa</mat-label>
+                                    <input matInput formControlName="empresa" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">business</mat-icon>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Ubicación</mat-label>
+                                    <input matInput formControlName="ubicacion" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">place</mat-icon>
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Fila 3: Calendario -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                                <mat-form-field appearance="outline" class="fuse-mat-dense">
+                                    <mat-label>In. Est.</mat-label>
+                                    <input matInput [matDatepicker]="pickerIE" formControlName="fechaInicioEstimada" />
+                                    <mat-datepicker-toggle matSuffix [for]="pickerIE"></mat-datepicker-toggle>
+                                    <mat-datepicker #pickerIE></mat-datepicker>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="fuse-mat-dense">
+                                    <mat-label>Fin Est.</mat-label>
+                                    <input matInput [matDatepicker]="pickerFE" formControlName="fechaFinEstimada" />
+                                    <mat-datepicker-toggle matSuffix [for]="pickerFE"></mat-datepicker-toggle>
+                                    <mat-datepicker #pickerFE></mat-datepicker>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="fuse-mat-dense">
+                                    <mat-label>In. Real</mat-label>
+                                    <input matInput [matDatepicker]="pickerIR" formControlName="fechaInicioReal" />
+                                    <mat-datepicker-toggle matSuffix [for]="pickerIR"></mat-datepicker-toggle>
+                                    <mat-datepicker #pickerIR></mat-datepicker>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="fuse-mat-dense">
+                                    <mat-label>Fin Real</mat-label>
+                                    <input matInput [matDatepicker]="pickerFR" formControlName="fechaFinReal" />
+                                    <mat-datepicker-toggle matSuffix [for]="pickerFR"></mat-datepicker-toggle>
+                                    <mat-datepicker #pickerFR></mat-datepicker>
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Fila 4: Equipo y Estatus -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Asignar usuarios</mat-label>
+                                    <mat-select formControlName="usuarioIds" multiple>
+                                        <mat-option *ngFor="let u of userList" [value]="u.usuarioId">{{ u.nombreUsuario }}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Estatus</mat-label>
+                                    <mat-select formControlName="estatus">
+                                        <mat-option [value]="1">Pendiente</mat-option>
+                                        <mat-option [value]="2">En proceso</mat-option>
+                                        <mat-option [value]="3">Completada</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Fila 5: Eisenhower -->
+                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-2">
+                                <mat-label>Matriz Eisenhower</mat-label>
+                                <mat-select formControlName="cuadranteId">
+                                    <mat-option [value]="null">Sin asignar</mat-option>
+                                    <mat-option [value]="1"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-rose-500"></div><span>Importante y Urgente</span></div></mat-option>
+                                    <mat-option [value]="2"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-amber-400"></div><span>Importante, No Urgente</span></div></mat-option>
+                                    <mat-option [value]="3"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-400"></div><span>No Importante, Urgente</span></div></mat-option>
+                                    <mat-option [value]="4"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-sky-400"></div><span>No Importante, No Urgente</span></div></mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <!-- Fila 6: Comentarios -->
+                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-4">
+                                <mat-label>Comentarios</mat-label>
+                                <textarea matInput rows="2" cdkTextareaAutosize formControlName="comentarios"></textarea>
+                            </mat-form-field>
+
+                            <!-- Secciones de Soporte -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t dark:border-gray-800">
+                                <div class="links-section">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-xs font-bold uppercase tracking-wider text-secondary">Links Externos</h3>
+                                        <button mat-icon-button type="button" size="small" (click)="addLink()" [disabled]="data?.readOnly" class="w-7 h-7 bg-primary/10 text-primary">
+                                            <mat-icon class="icon-size-4">add</mat-icon>
+                                        </button>
+                                    </div>
+                                    <div formArrayName="links" class="max-h-32 overflow-y-auto pr-1">
+                                        <div *ngFor="let ctrl of links.controls; let i = index" class="flex items-center gap-2 mb-2">
+                                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                                                <input matInput [formControlName]="i" placeholder="https://..." class="text-xs" />
+                                            </mat-form-field>
+                                            <button mat-icon-button color="warn" (click)="removeLink(i)" class="w-7 h-7" [disabled]="data?.readOnly">
+                                                <mat-icon class="icon-size-4">delete</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="files-section" *ngIf="tareaId">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-xs font-bold uppercase tracking-wider text-secondary">Archivos Adjuntos</h3>
+                                        <button mat-icon-button color="primary" size="small" (click)="fileInput.click()" [disabled]="data?.readOnly" class="w-7 h-7 bg-primary/10">
+                                            <mat-icon class="icon-size-4">attach_file</mat-icon>
+                                        </button>
+                                        <input type="file" #fileInput multiple hidden (change)="onFileSelected($event)" />
+                                    </div>
+                                    <div *ngIf="files?.length; else noFiles" class="max-h-32 overflow-y-auto">
+                                        <div *ngFor="let file of files" class="p-2 mb-1 border rounded-lg flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                                            <div class="flex items-center gap-2 overflow-hidden">
+                                                <mat-icon class="icon-size-4 text-primary">insert_drive_file</mat-icon>
+                                                <span class="text-[11px] font-medium truncate w-32" title="{{ file.nombreArchivo }}">{{ file.nombreArchivo }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <button mat-icon-button class="w-7 h-7" (click)="download(file)"><mat-icon class="icon-size-4 text-secondary">download</mat-icon></button>
+                                                <button mat-icon-button class="w-7 h-7" color="warn" (click)="remove(file)" [disabled]="data?.readOnly"><mat-icon class="icon-size-4 text-delete_outline">delete_outline</mat-icon></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ng-template #noFiles><div class="text-[11px] text-secondary italic text-center py-4 bg-slate-50/30 dark:bg-slate-900/20 rounded-lg">No hay archivos aún.</div></ng-template>
+                                </div>
+                            </div>
+                        </div>
+                    </mat-tab>
+
+                    <!-- Pestaña 2: Actividades/Gantt -->
+                    <mat-tab *ngIf="tareaId">
+                        <ng-template mat-tab-label>
+                            <mat-icon class="icon-size-5 mr-2 text-primary">account_tree</mat-icon>
+                            <span class="font-bold">Actividades</span>
+                        </ng-template>
+                        <div class="flex flex-col flex-auto h-full p-2 bg-slate-100/30 dark:bg-slate-900/40">
+                            <app-tarea-actividades-gantt 
+                                [tareaId]="tareaId"
+                                [assignedUserIds]="form.get('usuarioIds').value"
+                                [allUsers]="userList">
+                            </app-tarea-actividades-gantt>
+                        </div>
+                    </mat-tab>
+                </mat-tab-group>
+            </div>
+
+            <!-- Acciones Fijas -->
+            <div class="flex-none p-4 px-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-end gap-3">
+                <button mat-button type="button" class="px-6 font-semibold" (click)="cancel()">Cancelar</button>
+                <button mat-flat-button color="primary" type="button" class="px-10 py-5 rounded-xl font-bold text-lg" 
+                        (click)="save()" [disabled]="loading || form.invalid || data?.readOnly">
+                    <div class="flex items-center gap-2">
+                        <mat-icon *ngIf="loading" class="animate-spin icon-size-6">sync</mat-icon>
+                        <span>{{ loading ? 'Guardando...' : 'Guardar Cambios' }}</span>
+                    </div>
+                </button>
+            </div>
         </form>
     </div>
 
-    <!-- Card del Chat (Independiente) -->
+    <!-- Card del Chat (Derecha) -->
     <div *ngIf="tareaId" 
-         class="flex flex-col bg-card rounded-2xl shadow-xl border dark:border-gray-800 transition-all duration-300 ease-in-out chat-card-container relative"
+         class="flex flex-col bg-card rounded-3xl shadow-2xl border dark:border-gray-800 transition-all duration-300 ease-in-out chat-card-container relative h-[85vh] max-h-[850px]"
          [ngClass]="{'collapsed': isChatCollapsed}">
         
-        <button mat-icon-button class="absolute -left-4 top-4 bg-white dark:bg-gray-700 shadow-lg border dark:border-gray-600 z-50 w-8 h-8 toggle-btn"
-                (click)="toggleChat()" matTooltip="{{ isChatCollapsed ? 'Abrir Chat' : 'Cerrar Chat' }}">
-            <mat-icon class="icon-size-5">{{ isChatCollapsed ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+        <!-- Toggle -->
+        <button mat-icon-button class="absolute -left-5 top-12 bg-white dark:bg-gray-800 shadow-2xl border dark:border-gray-700 z-50 w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                (click)="toggleChat()">
+            <mat-icon class="icon-size-6 text-primary">{{ isChatCollapsed ? 'chevron_left' : 'chevron_right' }}</mat-icon>
         </button>
 
         <div class="flex-auto flex flex-col overflow-hidden w-full h-full" 
-             [ngStyle]="{'display': isChatCollapsed ? (isScreenSmall ? 'none' : 'none') : 'flex', 'visibility': isChatCollapsed ? 'hidden' : 'visible'}">
-            <div class="p-3 pb-1 flex items-center gap-2">
-                <mat-icon class="text-primary icon-size-5">chat</mat-icon>
-                <h3 class="text-md font-semibold">Chat</h3>
+             [ngStyle]="{'display': isChatCollapsed ? 'none' : 'flex'}">
+            <div class="p-4 flex items-center gap-3 border-b bg-white dark:bg-slate-900/40">
+                <mat-icon class="text-primary icon-size-6">forum</mat-icon>
+                <h3 class="text-lg font-bold">Actividad</h3>
             </div>
-            <div class="flex-auto overflow-hidden px-2 pb-3">
-                <app-task-chat [tareaId]="tareaId"></app-task-chat>
+            <div class="flex-auto overflow-hidden">
+                <app-task-chat [tareaId]="tareaId" class="h-full"></app-task-chat>
             </div>
         </div>
     </div>

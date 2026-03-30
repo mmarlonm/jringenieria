@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Task, TareaComentario } from './models/tasks.model';
+import { TareaActividad } from './models/task-activity.model';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
 
@@ -96,5 +97,21 @@ export class TaskService {
     return this.http.delete(`${this.apiUrl}/${idTarea}/comentarios/${idComentario}`, {
       params: { idUsuario: idUsuario.toString() }
     });
+  }
+
+  // ==========================================
+  // ACTIVIDADES (GANTT)
+  // ==========================================
+
+  getActividades(tareaId: number): Observable<TareaActividad[]> {
+    return this.http.get<TareaActividad[]>(`${this.apiUrl}/${tareaId}/actividades`);
+  }
+
+  guardarActividad(actividad: TareaActividad): Observable<any> {
+    return this.http.post(`${this.apiUrl}/actividad`, actividad);
+  }
+
+  eliminarActividad(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/actividad/${id}`);
   }
 }

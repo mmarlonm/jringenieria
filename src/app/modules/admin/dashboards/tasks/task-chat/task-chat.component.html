@@ -175,7 +175,7 @@
                       cdkTextareaAutosize
                       #autosize="cdkTextareaAutosize"
                       cdkAutosizeMinRows="1"
-                      cdkAutosizeMaxRows="5"
+                      cdkAutosizeMaxRows="3"
                       placeholder="Escribe un mensaje..."
                       [(ngModel)]="newComment"
                       (keyup.enter)="!$event.shiftKey && sendComment()"
@@ -183,10 +183,11 @@
                       [disabled]="sending"></textarea>
         </mat-form-field>
         <button mat-mini-fab color="primary" 
+                class="w-8 h-8 min-w-8"
                 (click)="sendComment()" 
                 [disabled]="!newComment.trim() || sending">
-            <mat-icon *ngIf="!sending">send</mat-icon>
-            <mat-icon *ngIf="sending" class="animate-spin">sync</mat-icon>
+            <mat-icon *ngIf="!sending" class="icon-size-4">send</mat-icon>
+            <mat-icon *ngIf="sending" class="animate-spin icon-size-4">sync</mat-icon>
         </button>
     </div>
 </div>

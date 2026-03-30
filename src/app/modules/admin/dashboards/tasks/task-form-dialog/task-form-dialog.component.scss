@@ -42,18 +42,17 @@
 
     // Ajuste opcional para pantallas medianas (md a lg)
     @media (min-width: 768px) and (max-width: 1023px) {
-        width: 320px; // Un poco más estrecho para que quepa bien el form
+        width: 320px;
     }
 }
 
-.toggle-btn {
-    border-radius: 50% !important;
-    padding: 0 !important;
-    transition: all 0.2s ease-in-out;
-
-    &:hover {
-        background-color: var(--fuse-primary-500) !important;
-        color: white !important;
+.dialog-wrapper {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+        display: none;
     }
 }
 
@@ -140,4 +139,48 @@ h3 {
 
 mat-form-field {
     margin-bottom: 0 !important;
+}
+
+// Asegurar que las pestañas de Material ocupen todo el alto para no cortar botones
+::ng-deep {
+    .mat-mdc-tab-group {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        min-height: 0 !important;
+    }
+    .mat-mdc-tab-header {
+        flex: 0 0 auto !important;
+        visibility: visible !important;
+    }
+    .mat-mdc-tab-body-wrapper {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        min-height: 0 !important;
+    }
+    .mat-mdc-tab-body {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        min-height: 0 !important;
+    }
+    .mat-mdc-tab-body-content {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important; 
+        min-height: 0 !important;
+    }
+
+    form.flex-col {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        min-height: 0 !important;
+    }
 }
