@@ -237,6 +237,7 @@ export class ReportVentasDashboardComponent implements OnInit {
                     // 🎯 SOLUCIÓN AL ERROR #13: 
                     // Obligamos a Angular a esperar 200ms a que pinte los <div id="..."> antes de mandar a llamar a Highcharts
                     setTimeout(() => {
+                        this.marcaSeleccionada = null; // 🎯 Resetear filtro al consultar
                         this.datosClasificacionOriginal = resp.ventasPorClasificacion || [];
                         this.mapearGraficas(resp);
                         this.generarGraficaMarcas();
@@ -298,6 +299,7 @@ export class ReportVentasDashboardComponent implements OnInit {
         };
 
         this.detalleVentas = [];
+        this.marcaSeleccionada = null; // 🎯 Resetear filtro
         this.desglosePorSucursal = []; // 🎯 NUEVO: Limpiar la tabla de desglose
         this.metaAnual = 0;
         this.ventasAnual = 0;
@@ -969,8 +971,14 @@ export class ReportVentasDashboardComponent implements OnInit {
         this.crearMiniDonut('chartTopMarcasDonut', 'Top Marcas', data, '#10b981');
     }
 
-    private graficaTopLineasDonut(clasificacion: any[]): void {
-        const porLinea = clasificacion.reduce((acc, curr) => {
+    private graficaTopLineasDonut(clasificacion: any[], marca?: string): void {
+        this.marcaSeleccionada = marca || null;
+        let filtrados = clasificacion;
+        if (marca) {
+            filtrados = clasificacion.filter(x => x.marca === marca);
+        }
+
+        const porLinea = filtrados.reduce((acc, curr) => {
             acc[curr.linea] = (acc[curr.linea] || 0) + (curr.totalVendido || 0);
             return acc;
         }, {} as any);
@@ -980,7 +988,8 @@ export class ReportVentasDashboardComponent implements OnInit {
             .sort((a, b) => b.y - a.y)
             .slice(0, 5);
 
-        this.crearMiniDonut('chartTopLineasDonut', 'Top Líneas', data, '#8b5cf6');
+        const titulo = marca ? `Top Líneas (${marca})` : 'Top Líneas';
+        this.crearMiniDonut('chartTopLineasDonut', titulo, data, '#8b5cf6');
     }
     // 📊 Gráficas Nuevas: Desglose por Sucursal y Cumplimiento de Meta
     private graficarDesgloseConsolidado(data: any[]): void {
@@ -1110,16 +1119,13 @@ export class ReportVentasDashboardComponent implements OnInit {
                     point: {
                         events: {
                             click: (e: any) => {
-                                if (title === 'Top Marcas') {
+                                if (containerId === 'chartTopMarcasDonut') {
+                                    // 🎯 Ahora filtra en lugar de redireccionar
+                                    this.graficaTopLineasDonut(this.datosClasificacionOriginal, e.point.name);
+                                } else if (containerId === 'chartTopLineasDonut') {
                                     this.router.navigate(['/reports/report-venta-product'], {
                                         queryParams: {
-                                            marca: e.point.name,
-                                            sucursal: this.sucursal
-                                        }
-                                    });
-                                } else if (title === 'Top Líneas') {
-                                    this.router.navigate(['/reports/report-venta-product'], {
-                                        queryParams: {
+                                            marca: this.marcaSeleccionada,
                                             linea: e.point.name,
                                             sucursal: this.sucursal
                                         }
