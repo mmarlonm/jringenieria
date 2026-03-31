@@ -105,16 +105,8 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Distribución por Estado</h3>
-                @if (listaClientesOriginal.length > 0) {
-                <highcharts-chart [Highcharts]="Highcharts" [options]="chartVentasEstado" [(update)]="updateFlag"
-                    style="width: 100%; height: 350px; display: block;">
-                </highcharts-chart>
-                }
-            </div>
-
+        <!-- 🔹 Primera Fila: Gráficas de Pastel (50/50) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Lealtad de Clientes</h3>
                 @if (kpis.length > 0) {
@@ -137,23 +129,17 @@
                 </div>
                 }
             </div>
+        </div>
 
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 🔹 Segunda Fila: Estado y Relación Valor/Volumen -->
             <div class="lg:col-span-1 bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Análisis de Cartera</h3>
-                <div class="flex flex-col gap-4 mt-2">
-                    <div class="flex justify-between items-center p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
-                        <span class="text-sm font-medium">Ticket Promedio</span>
-                        <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                            {{ (totalVendido / (listaClientesFiltrada.length || 1)) | currency }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                        <span class="text-sm font-medium">Venta Total</span>
-                        <span class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                            {{ totalVendido | currency }}
-                        </span>
-                    </div>
-                </div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Distribución por Estado</h3>
+                @if (listaClientesOriginal.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartVentasEstado" [(update)]="updateFlag"
+                    style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
             </div>
 
             <div class="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -165,6 +151,7 @@
                 }
             </div>
 
+            <!-- 🔹 Tercera Fila: Top Productos -->
             <div
                 class="lg:col-span-3 bg-card rounded-2xl p-6 shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                 @if (detallesProductos.length > 0) {
@@ -172,6 +159,25 @@
                     style="width: 100%; height: 400px; display: block;">
                 </highcharts-chart>
                 }
+            </div>
+
+            <!-- 🔹 Cuarta Fila (Sola): Análisis de Cartera -->
+            <div class="lg:col-span-3 bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Análisis de Cartera</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div class="flex justify-between items-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                        <span class="text-sm font-semibold text-indigo-900 dark:text-indigo-200">Ticket Promedio</span>
+                        <span class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                            {{ (totalVendido / (listaClientesFiltrada.length || 1)) | currency }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                        <span class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">Venta Total</span>
+                        <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                            {{ totalVendido | currency }}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 

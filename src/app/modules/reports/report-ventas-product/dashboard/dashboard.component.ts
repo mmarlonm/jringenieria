@@ -5,6 +5,38 @@ import { ActivatedRoute } from '@angular/router';
 
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
+import Exporting from 'highcharts/modules/exporting';
+
+// 🔹 Inicializar Módulos de Highcharts
+if (typeof Exporting === 'function') {
+    Exporting(Highcharts);
+}
+
+// Configuración global de idioma para Highcharts en Español
+const spanishLang: any = {
+    contextButtonTitle: 'Menú contextual de la gráfica',
+    decimalPoint: '.',
+    downloadJPEG: 'Descargar imagen JPEG',
+    downloadPDF: 'Descargar documento PDF',
+    downloadPNG: 'Descargar imagen PNG',
+    downloadSVG: 'Descargar imagen vectorial SVG',
+    drillUpText: 'Regresar a {series.name}',
+    loading: 'Cargando...',
+    months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+    noData: 'Sin datos para mostrar',
+    printChart: 'Imprimir gráfica',
+    resetZoom: 'Reiniciar zoom',
+    resetZoomTitle: 'Reiniciar zoom nivel 1:1',
+    shortMonths: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    thousandsSep: ',',
+    weekdays: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+    viewFullscreen: 'Ver en pantalla completa',
+    exitFullscreen: 'Salir de pantalla completa',
+    viewData: 'Ver tabla de datos',
+    hideData: 'Ocultar tabla de datos'
+};
+
+Highcharts.setOptions({ lang: spanishLang });
 
 import { MatIconModule } from "@angular/material/icon";
 import { MatFormFieldModule } from '@angular/material/form-field';
