@@ -61,8 +61,15 @@ export class ReportCustomersDashboardComponent implements OnInit {
     chartSplineSegmento: Highcharts.Options = {};
     chartTopProductos: Highcharts.Options = {};
     chartVentasEstado: Highcharts.Options = {};
+    chartTopClientes: any = null;
     chartMapHeatmap: any = null;
     chartMapHighlight: any = null;
+
+    // Modal de productos por cliente
+    isModalOpen: boolean = false;
+    modalProductos: any[] = [];
+    clienteSeleccionado: string = '';
+    totalVendidoModal: number = 0;
 
     // Filtros
     esMoral = 0;
@@ -205,6 +212,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
         this.renderGraficaSpline();
         this.renderGraficaTopProductos();
         this.renderGraficaVentasEstado();
+        this.renderGraficaTopClientes();
         this.renderMapas();
         this.updateFlag = true;
     }
@@ -377,6 +385,67 @@ export class ReportCustomersDashboardComponent implements OnInit {
                 showInLegend: false
             } as any]
         };
+    }
+
+    private renderGraficaTopClientes(): void {
+        const clientesUnicos = this.listaClientesUnica
+            .sort((a, b) => (b.montoTotal || 0) - (a.montoTotal || 0))
+            .slice(0, 10);
+
+        this.chartTopClientes = {
+            chart: { type: 'pie', backgroundColor: 'transparent' },
+            title: { text: null }, // Mantenemos el título en el HTML para mejor control
+            tooltip: {
+                pointFormat: '{series.name}: <b>${point.y:,.2f}</b> ({point.percentage:.1f}%)'
+            },
+            plotOptions: {
+                pie: {
+                    innerSize: '65%',
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                        distance: 20
+                    },
+                    showInLegend: false
+                }
+            },
+            legend: { enabled: false },
+            series: [{
+                name: 'Inversión Total',
+                colorByPoint: true,
+                data: clientesUnicos.map(c => ({
+                    name: c.nombreCliente,
+                    y: c.montoTotal
+                }))
+            } as any],
+            credits: { enabled: false }
+        };
+        
+        if (clientesUnicos.length === 0) {
+            this.chartTopClientes = null;
+        }
+        
+        this.updateFlag = true;
+        this.cdr.detectChanges();
+    }
+
+    verDetallesProducto(cli: any): void {
+        this.clienteSeleccionado = cli.nombreCliente;
+        
+        // El usuario ya agregó folioCompleto en detallesProductos para un filtrado exacto
+        this.modalProductos = this.detallesProductos.filter((p: any) => 
+            p.folioCompleto === cli.folioCompleto
+        );
+
+        this.totalVendidoModal = this.modalProductos.reduce((acc, p) => acc + (p.totalVendido || 0), 0);
+        this.isModalOpen = true;
+        this.cdr.detectChanges();
+    }
+
+    cerrarModal(): void {
+        this.isModalOpen = false;
     }
 
     private renderMapas(): void {

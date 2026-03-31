@@ -125,11 +125,16 @@
             </div>
 
             <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Relación Valor/Volumen</h3>
-                @if (kpis.length > 0) {
-                <highcharts-chart [Highcharts]="Highcharts" [options]="chartSplineSegmento" [(update)]="updateFlag"
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 text-center">Top 10 Clientes por Monto</h3>
+                @if (chartTopClientes && chartTopClientes.series?.[0]?.data?.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartTopClientes" [(update)]="updateFlag"
                     style="width: 100%; height: 350px; display: block;">
                 </highcharts-chart>
+                } @else {
+                <div class="flex flex-col items-center justify-center h-[350px] text-gray-400">
+                    <mat-icon class="icon-size-12 mb-2 opacity-50">pie_chart_outline</mat-icon>
+                    <span class="text-xs italic">Cargando datos o sin información disponible...</span>
+                </div>
                 }
             </div>
 
@@ -149,6 +154,15 @@
                         </span>
                     </div>
                 </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Relación Valor/Volumen</h3>
+                @if (kpis.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartSplineSegmento" [(update)]="updateFlag"
+                    style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
             </div>
 
             <div
@@ -215,6 +229,7 @@
                             <th class="px-6 py-4">Clasificación</th>
                             <th class="px-6 py-4 text-right">Importe</th>
                             <th class="px-6 py-4 text-center">Estatus y Vencimiento</th>
+                            <th class="px-6 py-4 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -275,10 +290,17 @@
                                     </div>
                                 </div>
                             </td>
+
+                            <td class="px-6 py-4 text-center">
+                                <button mat-icon-button (click)="verDetallesProducto(cli)" matTooltip="Ver productos comprados"
+                                    class="text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200">
+                                    <mat-icon class="icon-size-5">inventory_2</mat-icon>
+                                </button>
+                            </td>
                         </tr>
 
                         <tr *ngIf="listaClientesFiltrada.length === 0">
-                            <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-400">
                                 No se encontraron facturas con los filtros seleccionados.
                             </td>
                         </tr>
@@ -287,5 +309,82 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Modal de Detalles de Productos -->
+    <div *ngIf="isModalOpen" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-gray-900/40 backdrop-blur-md transition-all duration-300">
+        
+        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border dark:border-gray-800">
+            
+            <!-- Header del Modal -->
+            <div class="flex-none p-6 border-b dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+                        <mat-icon>shopping_cart</mat-icon>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 leading-tight">Detalles de Compra</h2>
+                        <p class="text-xs text-secondary font-medium uppercase tracking-widest mt-0.5">{{ clienteSeleccionado }}</p>
+                    </div>
+                </div>
+                <button mat-icon-button (click)="cerrarModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <!-- Contenido del Modal (Tabla de Productos) -->
+            <div class="flex-auto overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+                <div class="bg-gray-50/50 dark:bg-gray-800/20 rounded-2xl overflow-hidden border dark:border-gray-800">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-white dark:bg-gray-800 text-gray-500 font-bold uppercase text-[10px] tracking-widest">
+                            <tr>
+                                <th class="px-6 py-4">Producto</th>
+                                <th class="px-6 py-4 text-center">Unidades</th>
+                                <th class="px-6 py-4 text-right">Total Vendido</th>
+                                <th class="px-6 py-4 text-center">Fecha Venta</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            <tr *ngFor="let p of modalProductos" class="hover:bg-white dark:hover:bg-gray-800/40 transition-colors">
+                                <td class="px-6 py-4 font-medium text-gray-700 dark:text-gray-300">{{ p.producto }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ p.unidades | number }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right font-bold text-gray-800 dark:text-gray-100">
+                                    {{ p.totalVendido | currency }}
+                                </td>
+                                <td class="px-6 py-4 text-center text-gray-500 italic text-xs">
+                                    {{ p.fechaVenta | date:'dd/MM/yyyy' }}
+                                </td>
+                            </tr>
+                            <tr *ngIf="modalProductos.length === 0">
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-400 italic">
+                                    No se encontraron detalles de productos para este cliente.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot *ngIf="modalProductos.length > 0" class="bg-gray-50/80 dark:bg-gray-800/50 font-bold">
+                            <tr>
+                                <td colspan="2" class="px-6 py-4 text-gray-500 uppercase text-[10px] tracking-widest text-right">Total Acumulado:</td>
+                                <td class="px-6 py-4 text-right text-indigo-600 dark:text-indigo-400 text-lg">
+                                    {{ totalVendidoModal | currency }}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer del Modal -->
+            <div class="flex-none p-4 px-6 border-t dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 flex justify-end">
+                <button mat-flat-button color="primary" (click)="cerrarModal()" class="rounded-xl px-8 py-2 font-bold shadow-lg shadow-indigo-100 dark:shadow-none">
+                    Entendido
+                </button>
+            </div>
+        </div>
     </div>
 </div>
