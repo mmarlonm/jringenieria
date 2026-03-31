@@ -67,6 +67,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     loading: boolean = false;
     isChatCollapsed: boolean = true;
     isScreenSmall: boolean = false;
+    isFullscreen: boolean = false;
 
     private flatpickrInstances: { [key: string]: flatpickr.Instance } = {};
 
@@ -277,6 +278,17 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
     toggleChat(): void {
         this.isChatCollapsed = !this.isChatCollapsed;
+    }
+
+    toggleFullscreen(): void {
+        this.isFullscreen = !this.isFullscreen;
+        if (this.isFullscreen) {
+            this.dialogRef.updateSize('100vw', '100vh');
+            this.dialogRef.addPanelClass('fullscreen-dialog');
+        } else {
+            this.dialogRef.updateSize(this.data?.id ? '1200px' : '900px', '95vh');
+            this.dialogRef.removePanelClass('fullscreen-dialog');
+        }
     }
 
     getUsers(): void {
