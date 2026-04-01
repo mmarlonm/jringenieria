@@ -12,7 +12,7 @@
     </div>
 
     <div
-        class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+        class="w-full bg-white rounded-xl shadow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Tipo de persona</mat-label>
@@ -51,6 +51,26 @@
                 class="w-full h-[50px] !bg-green-600 hover:!bg-green-700 !text-white !rounded-lg" (click)="consultar()">
                 <mat-icon class="mr-2">search</mat-icon>
                 Consultar
+            </button>
+        </div>
+
+        <div class="w-full pb-5">
+            <button mat-flat-button 
+                [disabled]="isLoadingIA"
+                class="w-full h-[50px] !rounded-lg relative overflow-hidden group transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:shadow-[0_0_20px_rgba(139,92,246,0.7)] disabled:opacity-75 disabled:grayscale" 
+                style="background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%); color: white;"
+                (click)="generarReporteIA()">
+                
+                <mat-icon class="mr-2 drop-shadow-md" [class.animate-pulse]="!isLoadingIA" [class.animate-spin]="isLoadingIA">
+                    {{ isLoadingIA ? 'sync' : 'auto_awesome' }}
+                </mat-icon>
+                
+                <span class="font-bold tracking-wide drop-shadow-md whitespace-nowrap overflow-hidden text-ellipsis px-1">
+                    {{ isLoadingIA ? 'Generando...' : 'IA Gemini' }}
+                </span>
+                
+                <!-- Reflejo interior (Glass effect) -->
+                <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
             </button>
         </div>
 

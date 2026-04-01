@@ -50,6 +50,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip'; // Importante para la barra
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 
 // 🔹 Servicios y Librerías Externas
 import { ReportVentasService } from '../report-ventas.service';
@@ -76,7 +77,8 @@ import { DetalleEmpresaModalComponent } from './detalle-empresa-modal.component'
         MatNativeDateModule,
         MatButtonModule,
         MatTooltipModule,
-        MatDialogModule
+        MatDialogModule,
+        MatSnackBarModule
     ]
 })
 export class ReportVentasDashboardComponent implements OnInit {
@@ -136,10 +138,13 @@ export class ReportVentasDashboardComponent implements OnInit {
     private datosClasificacionOriginal: any[] = [];
     public marcaSeleccionada: string | null = null;
 
+    public isLoadingIA = false; // Bandera para mostrar spinner en el botón de IA
+
     constructor(
         private reportVentasService: ReportVentasService,
         private router: Router,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private snackBar: MatSnackBar
     ) { }
 
 
@@ -179,6 +184,58 @@ export class ReportVentasDashboardComponent implements OnInit {
         } else {
             this.sucursalesDisponibles = [...this.sucursales];
         }
+    }
+
+    /**
+     * Integración con la Inteligencia Artificial (Gemini)
+     * Consume el endpoint que genera un PDF analítico sobre el rango de fechas.
+     */
+    public generarReporteIA(): void {
+        if (!this.fechaInicio || !this.fechaFin) {
+            this.snackBar.open('Debes seleccionar un rango de fechas válido.', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        this.isLoadingIA = true;
+        this.snackBar.open('✨ Gemini está analizando los datos, esto puede tardar varios segundos...', 'Cerrar', { 
+            duration: 8000, 
+            panelClass: ['bg-indigo-600', 'text-white', 'font-bold'] 
+        });
+
+        this.reportVentasService.generarReporteIA(
+            this.sucursal,
+            this.fechaInicio,
+            this.fechaFin,
+            this.esMoral
+        ).subscribe({
+            next: (blob: Blob) => {
+                this.isLoadingIA = false;
+                
+                // Disparar descarga del Binario (PDF)
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Reporte_IA_JR.pdf';
+                document.body.appendChild(a);
+                a.click();
+                
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                this.snackBar.open('✅ Reporte IA generado con éxito.', 'OK', { 
+                    duration: 4000,
+                    panelClass: ['bg-emerald-600', 'text-white', 'font-bold']
+                });
+            },
+            error: (err) => {
+                this.isLoadingIA = false;
+                console.error('Error IA:', err);
+                this.snackBar.open('❌ Hubo un error al conectar con el consultor IA.', 'Cerrar', { 
+                    duration: 5000, 
+                    panelClass: ['bg-rose-600', 'text-white', 'font-bold'] 
+                });
+            }
+        });
     }
 
     // 🔹 Consulta principal

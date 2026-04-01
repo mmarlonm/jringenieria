@@ -33,4 +33,26 @@ export class ReportVentasService {
 
     return this.http.get<any>(`${this.apiUrl}/reporte-ventas`, { params });
   }
+
+  /**
+   * Genera el Reporte Ejecutivo impulsado por IA (Gemini).
+   * Endpoint: api/ReportDashboard/reporte-ejecutivo-ia
+   */
+  generarReporteIA(
+    sucursal: string,
+    fechaInicio: Date,
+    fechaFin: Date,
+    esMoral: string
+  ): Observable<Blob> {
+    const params = new HttpParams()
+      .set('sucursal', sucursal)
+      .set('fechaInicio', fechaInicio.toISOString())
+      .set('fechaFin', fechaFin.toISOString())
+      .set('esMoral', esMoral);
+
+    return this.http.post(`${this.apiUrl}/reporte-ejecutivo-ia`, {}, { 
+        params, 
+        responseType: 'blob' 
+    });
+  }
 }
