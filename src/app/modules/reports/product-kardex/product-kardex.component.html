@@ -1,0 +1,266 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:py-12 sm:px-10 border-b bg-card dark:bg-transparent">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-3xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate mb-1">
+                Kardex de Producto
+            </h2>
+            <p class="text-secondary">
+                Consulta el historial de movimientos de un producto específico.
+            </p>
+        </div>
+        <div class="flex items-center mt-6 sm:mt-0 sm:ml-2">
+            <button
+                mat-flat-button
+                [color]="'primary'"
+                (click)="exportToExcel()"
+                [disabled]="!data.length || isLoading"
+            >
+                <mat-icon
+                    class="icon-size-5 mr-2"
+                    [svgIcon]="'heroicons_outline:document-arrow-down'"
+                ></mat-icon>
+                Exportar a Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="flex-auto p-6 sm:p-10">
+        <!-- Filters -->
+        <div class="p-6 bg-card shadow rounded-2xl overflow-hidden mb-8">
+            <form [formGroup]="filterForm" class="flex flex-wrap items-end -m-2">
+                <!-- Product Code -->
+                <div class="w-full sm:w-1/2 lg:w-1/4 p-2">
+                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                        <mat-label>Código de Producto</mat-label>
+                        <input matInput formControlName="codigo" placeholder="Ej: ABC-123" />
+                    </mat-form-field>
+                </div>
+
+                <!-- Date Start -->
+                <div class="w-full sm:w-1/2 lg:w-1/4 p-2">
+                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                        <mat-label>Fecha Inicio</mat-label>
+                        <input matInput [matDatepicker]="startPicker" formControlName="fechaInicio" />
+                        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #startPicker></mat-datepicker>
+                    </mat-form-field>
+                </div>
+
+                <!-- Date End -->
+                <div class="w-full sm:w-1/2 lg:w-1/4 p-2">
+                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                        <mat-label>Fecha Fin</mat-label>
+                        <input matInput [matDatepicker]="endPicker" formControlName="fechaFin" />
+                        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #endPicker></mat-datepicker>
+                    </mat-form-field>
+                </div>
+
+                <!-- Branch -->
+                <div class="w-full sm:w-1/2 lg:w-1/4 p-2">
+                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                        <mat-label>Sucursal</mat-label>
+                        <mat-select formControlName="sucursal">
+                            <mat-option *ngFor="let branch of branches" [value]="branch.value">
+                                {{ branch.label }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- Company -->
+                <div class="w-full sm:w-1/2 lg:w-1/4 p-2">
+                    <mat-form-field class="w-full" subscriptSizing="dynamic">
+                        <mat-label>Empresa</mat-label>
+                        <mat-select formControlName="tipoEmpresa">
+                            <mat-option *ngFor="let company of companies" [value]="company.value">
+                                {{ company.label }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- Consult Button -->
+                <div class="p-2 ml-auto">
+                    <button
+                        mat-flat-button
+                        [color]="'primary'"
+                        type="button"
+                        (click)="consultar()"
+                        [disabled]="isLoading"
+                    >
+                        <span *ngIf="!isLoading" class="flex items-center">
+                            <mat-icon
+                                class="icon-size-5 mr-2"
+                                [svgIcon]="'heroicons_outline:magnifying-glass'"
+                            ></mat-icon>
+                            Consultar
+                        </span>
+                        <mat-progress-spinner
+                            *ngIf="isLoading"
+                            [diameter]="20"
+                            [mode]="'indeterminate'"
+                        ></mat-progress-spinner>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table Container -->
+        <div class="bg-card shadow rounded-2xl overflow-hidden">
+            <!-- Loading -->
+            <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-12">
+                <mat-progress-spinner [mode]="'indeterminate'"></mat-progress-spinner>
+                <p class="mt-4 text-lg font-medium text-secondary">Obteniendo movimientos...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div
+                *ngIf="errorMessage"
+                class="flex items-center m-6 p-4 rounded-lg bg-red-50 text-red-600 border border-red-200"
+            >
+                <mat-icon
+                    class="icon-size-5 mr-3 text-red-600"
+                    [svgIcon]="'heroicons_outline:exclamation-circle'"
+                ></mat-icon>
+                <span class="font-medium">{{ errorMessage }}</span>
+            </div>
+
+            <!-- Empty state -->
+            <div
+                *ngIf="!isLoading && hasSearched && !data.length"
+                class="flex flex-col items-center justify-center p-12 text-center"
+            >
+                <div class="flex items-center justify-center w-16 h-16 rounded-full bg-light text-primary mb-4">
+                    <mat-icon [svgIcon]="'heroicons_outline:archive-box-x-mark'"></mat-icon>
+                </div>
+                <h3 class="text-xl font-bold">No se encontraron movimientos</h3>
+                <p class="text-secondary max-w-sm mt-2">
+                    Intenta con otro código de producto o ajusta el rango de fechas.
+                </p>
+            </div>
+
+            <!-- Table -->
+            <div
+                *ngIf="!isLoading && data.length"
+                class="overflow-auto max-h-[600px]"
+            >
+                <table class="w-full text-sm text-left border-separate border-spacing-0 table-auto">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800 text-secondary border-b border-t sticky top-0 z-10 shadow-sm">
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Código</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Producto</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Fecha</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Concepto</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Folio</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Tipo</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs text-right whitespace-nowrap">Cantidad</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs text-right whitespace-nowrap">Precio</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs text-right whitespace-nowrap">Subtotal</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Almacén</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Referencia</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Usuario</th>
+                            <th class="px-6 py-4 font-bold uppercase tracking-widest text-xs whitespace-nowrap">Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        <tr *ngFor="let item of data" class="group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all duration-200">
+                            <!-- Código -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="font-mono text-xs font-semibold">{{ item.codigo }}</span>
+                            </td>
+
+                            <!-- Producto -->
+                            <td class="px-6 py-4 max-w-64">
+                                <span class="text-xs font-medium line-clamp-2" [title]="item.producto">{{ item.producto }}</span>
+                            </td>
+
+                            <!-- Fecha -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="font-semibold text-base-content text-xs">{{ item.fecha | date: 'dd/MM/yyyy' }}</span>
+                            </td>
+
+                            <!-- Concepto -->
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ item.concepto }}</span>
+                            </td>
+
+                            <!-- Folio -->
+                            <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold tracking-wider border border-blue-200 dark:border-blue-800">
+                                    {{ item.folio }}
+                                </span>
+                            </td>
+
+                            <!-- Tipo -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div 
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
+                                    [ngClass]="{
+                                        'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800': item.tipo_Mov === 'ENTRADA',
+                                        'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800': item.tipo_Mov === 'SALIDA'
+                                    }"
+                                >
+                                    <mat-icon 
+                                        class="icon-size-3 mr-1"
+                                        [svgIcon]="item.tipo_Mov === 'ENTRADA' ? 'heroicons_mini:plus-circle' : 'heroicons_mini:minus-circle'"
+                                    ></mat-icon>
+                                    {{ item.tipo_Mov }}
+                                </div>
+                            </td>
+
+                            <!-- Cantidad -->
+                            <td class="px-6 py-4 text-right">
+                                <span class="font-mono text-xs font-semibold tabular-nums">
+                                    {{ item.cantidad | number: '1.2-2' }}
+                                </span>
+                            </td>
+
+                            <!-- Precio -->
+                            <td class="px-6 py-4 text-right">
+                                <span class="font-mono text-xs text-secondary tabular-nums">
+                                    {{ item.precio | currency }}
+                                </span>
+                            </td>
+
+                            <!-- Subtotal -->
+                            <td class="px-6 py-4 text-right">
+                                <span class="font-mono text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                                    {{ item.subtotal | currency }}
+                                </span>
+                            </td>
+
+                            <!-- Almacén -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-xs font-medium">{{ item.almacen_Sucursal }}</span>
+                            </td>
+
+                            <!-- Referencia -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-xs text-secondary">{{ item.referencia_Documento || '-' }}</span>
+                            </td>
+
+                            <!-- Usuario -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-xs font-semibold text-primary">{{ item.id_Usuario }}</span>
+                            </td>
+
+                            <!-- Observaciones -->
+                            <td class="px-6 py-4 min-w-64">
+                                <span 
+                                    class="text-[10px] text-secondary italic cursor-help line-clamp-2 leading-tight" 
+                                    *ngIf="item.observaciones_Movimiento"
+                                    [matTooltip]="item.observaciones_Movimiento"
+                                >
+                                    {{ item.observaciones_Movimiento }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

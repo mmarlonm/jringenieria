@@ -99,7 +99,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:archive-box',
                 children: [
                     { id: 'catalogs.products', title: 'EXISTENCIAS DE PRODUCTOS CIAT', type: 'basic', icon: 'heroicons_outline:cube', link: '/reports/existencias-tableros' },
-                    { id: 'reports.report-product-existence', title: 'EXISTENCIAS DE PRODUCTOS', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
+                    { id: 'reports.report-product-existence', title: 'EXISTENCIAS DE PRODUCTOS', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
+                    { id: 'reports.inventory.kardex', title: 'Kardex de Producto', type: 'basic', icon: 'heroicons_outline:clock', link: '/reports/inventory/kardex' }
                 ]
             },
 
@@ -140,7 +141,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 icon: 'heroicons_outline:archive-box',
                 children: [
                     { id: 'catalogs.products', title: 'EXISTENCIAS DE PRODUCTOS CIAT', type: 'basic', icon: 'heroicons_outline:cube', link: '/reports/existencias-tableros' },
-                    { id: 'reports.report-product-existence', title: 'EXISTENCIAS DE PRODUCTOS', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' }
+                    { id: 'reports.report-product-existence', title: 'EXISTENCIAS DE PRODUCTOS', type: 'basic', icon: 'heroicons_outline:list-bullet', link: '/reports/report-product-existence' },
+                    { id: 'reports.inventory.kardex', title: 'Kardex de Producto', type: 'basic', icon: 'heroicons_outline:clock', link: '/reports/inventory/kardex' }
                 ]
             },
 

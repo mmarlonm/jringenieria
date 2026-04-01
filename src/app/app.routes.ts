@@ -114,6 +114,7 @@ export const appRoutes: Route[] = [
                     { path: 'report-ventas-agente', loadChildren: () => import('app/modules/reports/report-ventas-agente/report-ventas-agente.routes') },
                     { path: 'report-customers-segmentation', loadChildren: () => import('app/modules/reports/report-customers-segmentation/report-customers-segmentation.routes') },
                     { path: 'existencias-tableros', loadChildren: () => import('app/modules/reports/report-existencias-tableros/report-existencias-tableros.routes') },
+                    { path: 'inventory/kardex', loadChildren: () => import('app/modules/reports/product-kardex/product-kardex.routes') },
                 ]
             },
             {
