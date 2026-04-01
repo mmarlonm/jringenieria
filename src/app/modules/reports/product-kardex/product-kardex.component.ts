@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatNativeDateModule } from '@angular/material/core';
 import { ProductKardexService, KardexProducto } from './product-kardex.service';
 import { DateTime } from 'luxon';
 import { finalize } from 'rxjs/operators';
@@ -30,6 +31,7 @@ import { finalize } from 'rxjs/operators';
         MatSelectModule,
         MatProgressSpinnerModule,
         MatTooltipModule,
+        MatNativeDateModule,
     ],
 })
 export class ProductKardexComponent implements OnInit {
@@ -82,8 +84,17 @@ export class ProductKardexComponent implements OnInit {
         this.data = [];
 
         const filters = this.filterForm.getRawValue();
-        const startDate = DateTime.fromJSDate(filters.fechaInicio).toFormat('yyyy-MM-dd');
-        const endDate = DateTime.fromJSDate(filters.fechaFin).toFormat('yyyy-MM-dd');
+        
+        const start = DateTime.isDateTime(filters.fechaInicio) 
+            ? filters.fechaInicio 
+            : DateTime.fromJSDate(filters.fechaInicio);
+            
+        const end = DateTime.isDateTime(filters.fechaFin) 
+            ? filters.fechaFin 
+            : DateTime.fromJSDate(filters.fechaFin);
+
+        const startDate = start.toFormat('yyyy-MM-dd');
+        const endDate = end.toFormat('yyyy-MM-dd');
 
         this._productKardexService
             .getKardex(

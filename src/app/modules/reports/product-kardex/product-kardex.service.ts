@@ -37,12 +37,15 @@ export class ProductKardexService {
         sucursal: string,
         tipoEmpresa: number
     ): Observable<KardexProducto[]> {
-        const params = new HttpParams()
-            .set('codigo', codigo)
-            .set('fechaInicio', fechaInicio)
-            .set('fechaFin', fechaFin)
+        let params = new HttpParams()
+            .set('inicio', fechaInicio)
+            .set('fin', fechaFin)
             .set('sucursal', sucursal)
             .set('tipoEmpresa', tipoEmpresa.toString());
+
+        if (codigo) {
+            params = params.set('codigo', codigo);
+        }
 
         return this._httpClient.get<KardexProducto[]>(`${this.apiUrl}/kardex-producto`, { params });
     }
