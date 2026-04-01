@@ -49,11 +49,15 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip'; // Importante para la barra
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 // 🔹 Servicios y Librerías Externas
 import { ReportVentasService } from '../report-ventas.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+
+// 🔹 Componentes Modal
+import { DetalleEmpresaModalComponent } from './detalle-empresa-modal.component';
 
 @Component({
     selector: 'app-reporte-ventas-dashboard',
@@ -71,7 +75,8 @@ import html2canvas from 'html2canvas';
         MatDatepickerModule,
         MatNativeDateModule,
         MatButtonModule,
-        MatTooltipModule // Agregado aquí
+        MatTooltipModule,
+        MatDialogModule
     ]
 })
 export class ReportVentasDashboardComponent implements OnInit {
@@ -120,6 +125,12 @@ export class ReportVentasDashboardComponent implements OnInit {
     public porcentajeMetaGlobal: number = 0;
     public segmentosSucursales: any[] = [];
 
+    // 🎯 NUEVO: Variables para Comparativa Física vs Moral
+    public totalVentasFisica: number = 0;
+    public totalVentasMoral: number = 0;
+    public porcentajeFisica: number = 0;
+    public porcentajeMoral: number = 0;
+
     // 🔹 Drilldown
     detalleVentas: any[] = [];
     private datosClasificacionOriginal: any[] = [];
@@ -127,7 +138,8 @@ export class ReportVentasDashboardComponent implements OnInit {
 
     constructor(
         private reportVentasService: ReportVentasService,
-        private router: Router
+        private router: Router,
+        private dialog: MatDialog
     ) { }
 
 
@@ -310,6 +322,16 @@ export class ReportVentasDashboardComponent implements OnInit {
                                 });
 
                             this.graficarDesgloseConsolidado(this.segmentosSucursales);
+
+                            // 📊 Calcular Totales para Comparativa Física vs Moral
+                            this.totalVentasFisica = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.ventaFisica || 0), 0);
+                            this.totalVentasMoral = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.ventaMoral || 0), 0);
+                            
+                            const granTotalVentas = this.totalVentasFisica + this.totalVentasMoral;
+                            this.porcentajeFisica = granTotalVentas > 0 ? (this.totalVentasFisica / granTotalVentas) * 100 : 0;
+                            this.porcentajeMoral = granTotalVentas > 0 ? (this.totalVentasMoral / granTotalVentas) * 100 : 0;
+                            
+                            this.graficarComparativaFisicaVsMoral();
                         }
                     }, 200);
 
@@ -341,6 +363,14 @@ export class ReportVentasDashboardComponent implements OnInit {
         this.totalVentasGlobal = 0;
         this.porcentajeMetaGlobal = 0;
         this.segmentosSucursales = [];
+
+        this.totalVentasFisica = 0;
+        this.totalVentasMoral = 0;
+        this.porcentajeFisica = 0;
+        this.porcentajeMoral = 0;
+        
+        const elFisicaMoral = document.getElementById('chartComparativoEmpresas');
+        if (elFisicaMoral) elFisicaMoral.innerHTML = '';
 
         this.chartOptions = {
             title: { text: '' },
@@ -1235,6 +1265,94 @@ export class ReportVentasDashboardComponent implements OnInit {
                 type: 'pie',
                 data: data
             } as any]
+        });
+    }
+
+    private graficarComparativaFisicaVsMoral(): void {
+        setTimeout(() => {
+            const isDark = document.body.classList.contains('dark');
+            const textColor = isDark ? '#F1F5F9' : '#1E293B';
+            const borderColor = isDark ? '#1E293B' : '#FFFFFF';
+
+            const container = document.getElementById('chartComparativoEmpresas');
+            if (!container) return;
+
+            const granTotal = this.totalVentasFisica + this.totalVentasMoral;
+            if (granTotal === 0) {
+                container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400">Sin ventas registradas</div>';
+                return;
+            }
+
+            const data = [
+                { name: 'Jesús Méndez Arrillaga', y: this.totalVentasFisica, color: '#0ea5e9' },
+                { name: 'JR Ingeniería Eléctrica', y: this.totalVentasMoral, color: '#f43f5e' }
+            ];
+
+            Highcharts.chart(container, {
+                chart: { type: 'pie', backgroundColor: 'transparent', height: 260 },
+                title: { text: null }, // Title is handled by the container itself
+                tooltip: {
+                    pointFormat: 'Venta Total: <b>${point.y:,.2f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+                },
+                credits: { enabled: false },
+                plotOptions: {
+                    pie: {
+                        innerSize: '60%',
+                        borderWidth: 2,
+                        borderColor: borderColor,
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: (event: any) => {
+                                    const tipoEmpresaName = event.point.name;
+                                    this.abrirDetalleFisicaMoral('TODAS', tipoEmpresaName);
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            format: '<b>{point.name}</b><br>{point.percentage:.1f}%',
+                            distance: 15,
+                            style: { fontSize: '11px', textOutline: '0px', color: textColor, fontWeight: 'bold' }
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Comparativa',
+                    type: 'pie',
+                    data: data
+                } as any]
+            });
+        }, 50); // Pequeño delay para asegurar que el DOM (*ngIf) está renderizado
+    }
+
+    public abrirDetalleFisicaMoral(sucursalName: string, tipoEmpresaName: string): void {
+        const isMoral = tipoEmpresaName === 'JR Ingeniería Eléctrica' || tipoEmpresaName === 'Persona Moral';
+        const modalTitle = `Detalle de Ventas - ${tipoEmpresaName}`;
+        const modalSubtitle = `Sucursal: ${sucursalName}`;
+
+        const sucursalNormalizada = (sucursalName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        const facturasFiltradas = this.detalleVentas.filter(d => {
+            const sucDetalle = (d.sucursal || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const coincideSucursal = sucursalNormalizada === 'todas' ? true : sucDetalle.includes(sucursalNormalizada);
+            
+            // Tratamos undefined, null, false, 0 como Persona Física.
+            const isFacturaMoral = d.esMoral === true || d.esMoral === 1 || d.esMoral === '1' || d.esMoral === 'true';
+            const coincideEmpresa = isMoral ? isFacturaMoral : !isFacturaMoral;
+
+            return coincideSucursal && coincideEmpresa;
+        });
+
+        this.dialog.open(DetalleEmpresaModalComponent, {
+            data: {
+                titulo: modalTitle,
+                subtitulo: modalSubtitle,
+                facturas: facturasFiltradas
+            },
+            panelClass: 'custom-dialog-container',
+            width: '1000px',
+            maxWidth: '90vw'
         });
     }
 }
