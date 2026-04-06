@@ -105,3 +105,12 @@ export interface HistorialEstatusDto {
     fechaCambio: string | Date;
     comentarios?: string;
 }
+
+export interface ProveedorDto {
+    codigo: string;
+    nombre: string;
+    rfc: string;
+    cuenta_Bancaria?: string;
+    email?: string;
+    tipo?: string;
+}

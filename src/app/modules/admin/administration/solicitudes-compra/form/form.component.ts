@@ -15,7 +15,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
-import { SolicitudCompraCreateDto, ProductoBuscadorDto } from '../models/solicitud-compra.types';
+import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto } from '../models/solicitud-compra.types';
 import { catchError, debounceTime, distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
@@ -51,6 +51,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     filteredProducts$: Observable<ProductoBuscadorDto[]>[] = [];
     proyectos: any[] = [];
     filteredProyectos$: Observable<any[]>;
+    filteredProveedores$: Observable<ProveedorDto[]>;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     // Select options
@@ -84,6 +85,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.loadBranches();
         this.loadUsers();
         this.loadProjects();
+        this._setupProveedorFilter();
 
         this._route.params.subscribe(params => {
             if (params['id']) {
@@ -208,6 +210,32 @@ export class SolicitudCompraFormComponent implements OnInit {
         const project = event.option.value;
         const label = `${project.proyectoId || project.id} - ${project.nombre || project.nombreProyecto}`;
         this.solicitudForm.get('folioProyecto').setValue(label, { emitEvent: false });
+    }
+
+    private _setupProveedorFilter(): void {
+        const control = this.solicitudForm.get('proveedorSugerido');
+        this.filteredProveedores$ = control.valueChanges.pipe(
+            startWith(''),
+            debounceTime(400),
+            distinctUntilChanged(),
+            switchMap(value => {
+                if (typeof value === 'string' && value.trim().length >= 2) {
+                    return this._solicitudCompraService.buscarProveedores(value.trim());
+                }
+                return of([] as ProveedorDto[]);
+            }),
+            shareReplay(1)
+        );
+    }
+
+    onProveedorSelected(event: any): void {
+        const proveedor = event.option.value as ProveedorDto;
+        
+        this.solicitudForm.patchValue({
+            proveedorSugerido: proveedor.nombre,
+            rfc: proveedor.rfc,
+            datosBancariosProveedor: proveedor.cuenta_Bancaria || ''
+        }, { emitEvent: false });
     }
 
     private _setupCalculationListener(): void {

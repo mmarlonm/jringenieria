@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, catchError, map, Observable, of, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'environments/environment';
-import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto } from './models/solicitud-compra.types';
+import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto, ProveedorDto } from './models/solicitud-compra.types';
 
 @Injectable({
     providedIn: 'root'
@@ -15,6 +15,14 @@ export class SolicitudCompraService {
     private _estatus: BehaviorSubject<CatEstatusCompra[]> = new BehaviorSubject([]);
 
     constructor(private _httpClient: HttpClient) { }
+
+    buscarProveedores(filtro: string = ''): Observable<ProveedorDto[]> {
+        return this._httpClient.get<ProveedorDto[]>(`${environment.apiUrl}/ReportDashboard/buscar-proveedor`, {
+            params: { filtro }
+        }).pipe(
+            catchError(() => of([] as ProveedorDto[]))
+        );
+    }
 
     buscarProductos(filtro: string = ''): Observable<ProductoBuscadorDto[]> {
         return this._httpClient.get<{ success: boolean, data: ProductoBuscadorDto[] }>(`${this.apiUrl}/buscar-productos`, {

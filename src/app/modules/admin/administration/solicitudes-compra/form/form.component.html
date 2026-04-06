@@ -229,9 +229,17 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                                 <mat-form-field appearance="fill" class="w-full">
                                     <mat-label>Nombre / Razón Social del Proveedor</mat-label>
-                                    <input matInput formControlName="proveedorSugerido">
+                                    <input matInput formControlName="proveedorSugerido" [matAutocomplete]="autoProv" placeholder="Escribe para buscar proveedor...">
                                     <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
                                         [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                                    <mat-autocomplete #autoProv="matAutocomplete" (optionSelected)="onProveedorSelected($event)">
+                                        <mat-option *ngFor="let p of (filteredProveedores$ | async)" [value]="p">
+                                            <div class="flex flex-col leading-tight py-1">
+                                                <span class="font-bold text-primary">{{ p.nombre }}</span>
+                                                <span class="text-[10px] text-secondary uppercase tabular-nums">RFC: {{ p.rfc }} | {{ p.tipo }}</span>
+                                            </div>
+                                        </mat-option>
+                                    </mat-autocomplete>
                                 </mat-form-field>
 
                                 <mat-form-field appearance="fill" class="w-full">
