@@ -129,7 +129,24 @@ export class SolicitudCompraService {
     }
 
     descargarArchivo(id: number, nombreArchivo: string): Observable<Blob> {
-        return this._httpClient.get(`${this.apiUrl}/${id}/archivos/${nombreArchivo}`, { responseType: 'blob' });
+        return this._httpClient.get<any>(`${this.apiUrl}/${id}/archivos/${nombreArchivo}`).pipe(
+            map(response => {
+                const base64Content = response.data;
+                const byteCharacters = atob(base64Content);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                
+                const extension = nombreArchivo.split('.').pop()?.toLowerCase();
+                let type = 'application/octet-stream';
+                if (extension === 'pdf') type = 'application/pdf';
+                else if (['png', 'jpg', 'jpeg'].includes(extension)) type = `image/${extension}`;
+                
+                return new Blob([byteArray], { type });
+            })
+        );
     }
 
     eliminarArchivo(id: number, nombreArchivo: string): Observable<any> {
