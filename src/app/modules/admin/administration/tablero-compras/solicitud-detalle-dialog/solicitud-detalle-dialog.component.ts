@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
@@ -11,6 +11,7 @@ import { SolicitudCompra } from '../../solicitudes-compra/models/solicitud-compr
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 
 @Component({
     selector: 'solicitud-detalle-dialog',
@@ -179,17 +180,29 @@ import { catchError } from 'rxjs/operators';
                             <mat-icon class="icon-size-5 mr-2 text-primary" [svgIcon]="'heroicons_solid:paper-clip'"></mat-icon>
                             <span class="text-base font-bold text-gray-800 dark:text-gray-100">Archivos Adjuntos</span>
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-nowrap overflow-x-auto gap-4 pb-4 custom-scrollbar">
                             <div *ngIf="archivos.length === 0" class="text-xs text-secondary italic p-4 border border-dashed rounded-xl w-full text-center">
                                 No hay archivos adjuntos
                             </div>
                             <div *ngFor="let file of archivos" 
-                                 (click)="descargarArchivo(file.nombreArchivo)"
-                                 class="flex items-center p-2 rounded-lg border bg-white dark:bg-gray-800 hover:bg-primary/5 hover:border-primary cursor-pointer transition-all shadow-sm group">
-                                <mat-icon class="icon-size-6 mr-2 text-secondary group-hover:text-primary" [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
-                                <div class="flex flex-col">
-                                    <span class="text-xs font-bold truncate max-w-40">{{ file.nombreArchivo }}</span>
-                                    <span class="text-[9px] text-primary font-bold">Descargar</span>
+                                 class="flex-none flex items-center p-3 rounded-xl border bg-white dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 transition-all shadow-sm group min-w-[220px] max-w-[280px]">
+                                <div class="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center mr-3 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
+                                    <mat-icon class="icon-size-6 text-secondary group-hover:text-indigo-600 dark:group-hover:text-indigo-400" [svgIcon]="file.nombreArchivo.toLowerCase().endsWith('.pdf') ? 'heroicons_solid:document-text' : 'heroicons_solid:photo'"></mat-icon>
+                                </div>
+                                <div class="flex flex-col flex-auto min-w-0">
+                                    <span class="text-xs font-bold truncate pr-2 mb-1.5" [title]="file.nombreArchivo">{{ file.nombreArchivo }}</span>
+                                    <div class="flex items-center gap-4">
+                                        <button (click)="previsualizarArchivo(file.nombreArchivo)" 
+                                              class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline uppercase flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer">
+                                            <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                            Ver
+                                        </button>
+                                        <button (click)="descargarArchivo(file.nombreArchivo)" 
+                                              class="text-[10px] text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold hover:underline uppercase flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer transition-colors">
+                                            <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
+                                            Descargar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -222,7 +235,23 @@ import { catchError } from 'rxjs/operators';
         MatDividerModule,
         MatTableModule,
         MatTooltipModule
-    ]
+    ],
+    styles: [`
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    `]
 })
 export class SolicitudDetalleDialogComponent implements OnInit {
     solicitud: SolicitudCompra | null = null;
@@ -233,7 +262,8 @@ export class SolicitudDetalleDialogComponent implements OnInit {
         public dialogRef: MatDialogRef<SolicitudDetalleDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: { idSolicitud: number },
         private _service: SolicitudCompraService,
-        private _usersService: UsersService
+        private _usersService: UsersService,
+        private _dialog: MatDialog
     ) { }
 
     ngOnInit(): void {
@@ -285,6 +315,21 @@ export class SolicitudDetalleDialogComponent implements OnInit {
             a.download = nombreArchivo;
             a.click();
             window.URL.revokeObjectURL(url);
+        });
+    }
+
+    previsualizarArchivo(nombreArchivo: string): void {
+        this._service.descargarArchivo(this.data.idSolicitud, nombreArchivo).subscribe(blob => {
+            const fileURL = URL.createObjectURL(blob);
+            const isPdf = nombreArchivo.toLowerCase().endsWith('.pdf');
+            
+            this._dialog.open(ImagePreviewDialogComponent, {
+                data: {
+                    url: fileURL,
+                    name: nombreArchivo,
+                    isPdf: isPdf
+                }
+            });
         });
     }
 

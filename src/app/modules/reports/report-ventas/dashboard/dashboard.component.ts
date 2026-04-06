@@ -59,6 +59,7 @@ import html2canvas from 'html2canvas';
 
 // 🔹 Componentes Modal
 import { DetalleEmpresaModalComponent } from './detalle-empresa-modal.component';
+import { DetalleVentaModalComponent } from './detalle-venta-modal.component';
 
 @Component({
     selector: 'app-reporte-ventas-dashboard',
@@ -136,6 +137,7 @@ export class ReportVentasDashboardComponent implements OnInit {
     // 🔹 Drilldown
     detalleVentas: any[] = [];
     private datosClasificacionOriginal: any[] = [];
+    public detalleVentasOriginal: any[] = [];
     public marcaSeleccionada: string | null = null;
 
     public isLoadingIA = false; // Bandera para mostrar spinner en el botón de IA
@@ -256,6 +258,7 @@ export class ReportVentasDashboardComponent implements OnInit {
 
                     // 1. Mapeo de datos (Esto no interactúa con el DOM, va directo)
                     this.mapearKPIs(resp);
+                    this.detalleVentasOriginal = resp.detalle || [];
 
                     // 🛡️ Quitar duplicados por documentoId SOLO para la tabla
                     const mapUnique = new Map();
@@ -1410,6 +1413,24 @@ export class ReportVentasDashboardComponent implements OnInit {
             panelClass: 'custom-dialog-container',
             width: '1000px',
             maxWidth: '90vw'
+        });
+    }
+
+    public abrirDetalleVenta(row: any): void {
+        // Filtrar del detalle original todos los productos que pertenecen a este folio/documento
+        const items = this.detalleVentasOriginal.filter(d => 
+            d.folio === row.folio && d.documentoId === row.documentoId
+        );
+        
+        this.dialog.open(DetalleVentaModalComponent, {
+            data: {
+                folio: row.folio,
+                cliente: row.cliente,
+                fecha: row.fecha,
+                sucursal: row.sucursal,
+                total: row.totalDocumento,
+                items: items
+            }
         });
     }
 }

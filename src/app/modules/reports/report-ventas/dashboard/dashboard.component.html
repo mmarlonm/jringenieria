@@ -484,6 +484,7 @@
                                 <th class="p-2 text-left">Cliente</th>
                                 <th class="p-2 text-left">Vendedor</th>
                                 <th class="p-2 text-right">Total</th>
+                                <th class="p-2 text-center">Acciones</th>
                             </tr>
                         </thead>
 
@@ -507,10 +508,18 @@
                                 <td class="p-2 text-right whitespace-nowrap">
                                     {{ row.totalDocumento | currency:'MXN' }}
                                 </td>
+                                <td class="p-2 text-center whitespace-nowrap">
+                                    <button mat-icon-button color="primary" 
+                                            class="hover:bg-indigo-50 !text-indigo-600"
+                                            matTooltip="Ver partidas de esta venta"
+                                            (click)="abrirDetalleVenta(row)">
+                                        <mat-icon class="!text-lg">visibility</mat-icon>
+                                    </button>
+                                </td>
                             </tr>
 
                             <tr *ngIf="detalleVentas.length === 0">
-                                <td colspan="6" class="p-4 text-center text-gray-400">
+                                <td colspan="7" class="p-4 text-center text-gray-400">
                                     Sin información
                                 </td>
                             </tr>
