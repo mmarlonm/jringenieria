@@ -219,7 +219,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             debounceTime(400),
             distinctUntilChanged(),
             switchMap(value => {
-                if (typeof value === 'string' && value.trim().length >= 2) {
+                // Solo buscar si el control ha sido editado manualmente y tiene al menos 2 caracteres
+                if (control.dirty && typeof value === 'string' && value.trim().length >= 2) {
                     return this._solicitudCompraService.buscarProveedores(value.trim());
                 }
                 return of([] as ProveedorDto[]);

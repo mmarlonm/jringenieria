@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, catchError, map, Observable, of, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'environments/environment';
 import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto, ProveedorDto } from './models/solicitud-compra.types';
@@ -17,10 +17,15 @@ export class SolicitudCompraService {
     constructor(private _httpClient: HttpClient) { }
 
     buscarProveedores(filtro: string = ''): Observable<ProveedorDto[]> {
-        return this._httpClient.get<ProveedorDto[]>(`${environment.apiUrl}/ReportDashboard/buscar-proveedor`, {
-            params: { filtro }
-        }).pipe(
-            catchError(() => of([] as ProveedorDto[]))
+        // Codificar el filtro de forma más agresiva (escapando puntos que causan problemas en algunas APIs de .NET)
+        const filtroCodificado = encodeURIComponent(filtro.trim()).replace(/\./g, '%2E');
+        const url = `${environment.apiUrl}/ReportDashboard/buscar-proveedor?filtro=${filtroCodificado}`;
+        
+        return this._httpClient.get<ProveedorDto[]>(url).pipe(
+            catchError((err) => {
+                console.error('[SolicitudCompraService] Error buscando proveedor:', err);
+                return of([] as ProveedorDto[]);
+            })
         );
     }
 
