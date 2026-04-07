@@ -108,9 +108,15 @@
                                             <span class="text-[9px] font-black text-secondary uppercase tracking-tighter">{{nombreArchivo.split('.').pop()}}</span>
                                         </div>
                                     </div>
-                                    <button mat-icon-button (click)="descargar(nombreArchivo)" color="primary" matTooltip="Descargar Archivo">
-                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <button mat-icon-button (click)="verEvidencia(nombreArchivo)" color="accent" matTooltip="Visualizar Archivo"
+                                                *ngIf="['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(nombreArchivo.toLowerCase().split('.').pop())">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                        </button>
+                                        <button mat-icon-button (click)="descargar(nombreArchivo)" color="primary" matTooltip="Descargar Archivo">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
