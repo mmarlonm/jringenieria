@@ -69,6 +69,28 @@ export class SolicitudCompraFormComponent implements OnInit {
     ];
     sucursales: any[] = [];
     usuarios: any[] = [];
+    
+    // Lista de Bancos en México para el autocompletado
+    bancosMexico: string[] = [
+        'BBVA México',
+        'Santander México',
+        'Citibanamex',
+        'Banorte',
+        'HSBC México',
+        'Scotiabank México',
+        'Banco Inbursa',
+        'Banco del Bajío',
+        'Banca Afirme',
+        'Banregio',
+        'Banco Azteca',
+        'Bancoppel',
+        'Intercam Banco',
+        'Banca Mifel',
+        'Monex',
+        'Banjercito',
+        'Wells Fargo'
+    ];
+    filteredBancos$: Observable<string[]>;
 
     constructor(
         private _formBuilder: FormBuilder,
@@ -86,6 +108,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.loadUsers();
         this.loadProjects();
         this._setupProveedorFilter();
+        this._setupBancoFilter();
 
         this._route.params.subscribe(params => {
             if (params['id']) {
@@ -144,6 +167,9 @@ export class SolicitudCompraFormComponent implements OnInit {
             formaPago: ['', Validators.required],
             razonSocial: ['', Validators.required],
             rfc: [''],
+            banco: [''],
+            cuenta: [''],
+            clabe: [''],
             monto: [0, [Validators.required, Validators.min(0.01)]],
             subtotal: [0],
             iva: [0],
@@ -235,8 +261,64 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.solicitudForm.patchValue({
             proveedorSugerido: proveedor.nombre,
             rfc: proveedor.rfc,
+            banco: proveedor.banco || '',
+            cuenta: proveedor.cuenta || '',
+            clabe: proveedor.clabe || '',
             datosBancariosProveedor: proveedor.cuenta_Bancaria || ''
         }, { emitEvent: false });
+    }
+
+    private _setupBancoFilter(): void {
+        this.filteredBancos$ = this.solicitudForm.get('banco').valueChanges.pipe(
+            startWith(''),
+            map(value => this._filterBancos(value || ''))
+        );
+    }
+
+    private _filterBancos(value: string): string[] {
+        const filterValue = value.toLowerCase();
+        return this.bancosMexico.filter(banco => banco.toLowerCase().includes(filterValue));
+    }
+
+    /**
+     * Formatea la CLABE en tiempo real con guiones (XXX-XXX-XXXXXXXXXXX-X)
+     * @param event Evento de input
+     */
+    formatCLABE(event: any): void {
+        const input = event.target;
+        const formatted = this._getFormattedValueCLABE(input.value);
+        
+        input.value = formatted;
+        this.solicitudForm.get('clabe').setValue(formatted, { emitEvent: false });
+    }
+
+    private _getFormattedValueCLABE(value: string): string {
+        if (!value) return '';
+        let cleanValue = value.replace(/\D/g, ''); // Solo números
+        
+        // Limitar a los 18 dígitos de la CLABE estándar de México
+        if (cleanValue.length > 18) {
+            cleanValue = cleanValue.substring(0, 18);
+        }
+
+        let formatted = '';
+        if (cleanValue.length > 0) {
+            // Primeros 3 (Banco)
+            formatted += cleanValue.substring(0, 3);
+            if (cleanValue.length > 3) {
+                // Siguientes 3 (Plaza)
+                formatted += '-' + cleanValue.substring(3, 6);
+                if (cleanValue.length > 6) {
+                    // Siguientes 11 (Cuenta - No. de cuenta)
+                    formatted += '-' + cleanValue.substring(6, 17);
+                    if (cleanValue.length > 17) {
+                        // Último 1 (Dígito control)
+                        formatted += '-' + cleanValue.substring(17, 18);
+                    }
+                }
+            }
+        }
+        return formatted;
     }
 
     private _setupCalculationListener(): void {
@@ -372,6 +454,12 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadSolicitud(id: number): void {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
             this.solicitudForm.patchValue(solicitud);
+            
+            // Formatear CLABE con guiones para la vista
+            if (solicitud.clabe) {
+                const formatted = this._getFormattedValueCLABE(solicitud.clabe);
+                this.solicitudForm.get('clabe').setValue(formatted, { emitEvent: false });
+            }
             // Clear details array and search observables
             while (this.detalles.length) {
                 this.detalles.removeAt(0);
@@ -464,7 +552,13 @@ export class SolicitudCompraFormComponent implements OnInit {
             return;
         }
 
-        const data = this.solicitudForm.value;
+        const data = { ...this.solicitudForm.value };
+        
+        // Quitar guiones de la CLABE antes de enviar a la API
+        if (data.clabe) {
+            data.clabe = data.clabe.replace(/\D/g, '');
+        }
+
         if (this.isEdit) {
             this._solicitudCompraService.actualizar(data).subscribe(() => {
                 if (this.selectedFile) {

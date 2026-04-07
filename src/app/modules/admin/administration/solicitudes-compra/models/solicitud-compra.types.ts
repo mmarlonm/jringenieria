@@ -26,6 +26,9 @@ export interface SolicitudCompra {
     formaPago?: string;
     razonSocial: string;
     rfc?: string;
+    banco?: string;
+    cuenta?: string;
+    clabe?: string;
     monto?: number;
     cuadranteId?: number;
     idEstatus: number;
@@ -72,6 +75,9 @@ export interface SolicitudCompraCreateDto {
     formaPago?: string;
     razonSocial: string;
     rfc?: string;
+    banco?: string;
+    cuenta?: string;
+    clabe?: string;
     monto?: number;
     cuadranteId?: number;
     detalles: SolicitudCompraDetalleCreateDto[];
@@ -113,4 +119,7 @@ export interface ProveedorDto {
     cuenta_Bancaria?: string;
     email?: string;
     tipo?: string;
+    banco?: string;
+    cuenta?: string;
+    clabe?: string;
 }

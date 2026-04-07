@@ -244,18 +244,48 @@
 
                                 <mat-form-field appearance="fill" class="w-full">
                                     <mat-label>RFC del Proveedor</mat-label>
-                                    <input matInput formControlName="rfc" class="uppercase">
+                                    <input matInput formControlName="rfc" class="uppercase" placeholder="XAXX010101000">
                                     <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
                                         [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
                                 </mat-form-field>
+                            </div>
 
-                                <mat-form-field appearance="fill" class="w-full md:col-span-2">
-                                    <mat-label>Datos bancarios proveedor</mat-label>
-                                    <textarea matInput formControlName="datosBancariosProveedor" rows="2"></textarea>
+                            <!-- Banco, Cuenta, CLABE en 3 columnas -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Banco</mat-label>
+                                    <input matInput formControlName="banco" [matAutocomplete]="autoBanco" placeholder="Selecciona o escribe banco...">
+                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
+                                        [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
+                                    <mat-autocomplete #autoBanco="matAutocomplete">
+                                        <mat-option *ngFor="let banco of (filteredBancos$ | async)" [value]="banco">
+                                            {{ banco }}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Cuenta</mat-label>
+                                    <input matInput formControlName="cuenta" placeholder="Número de cuenta">
                                     <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
                                         [svgIcon]="'heroicons_outline:credit-card'"></mat-icon>
                                 </mat-form-field>
+
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>CLABE Interbancaria</mat-label>
+                                    <input matInput formControlName="clabe" (input)="formatCLABE($event)" maxlength="21" placeholder="XXX-XXX-XXXXXXXXXXX-X">
+                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
+                                        [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
+                                    <mat-hint class="text-[10px] font-medium text-slate-500">18 dígitos (formato automático)</mat-hint>
+                                </mat-form-field>
                             </div>
+
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Observaciones bancarias (Otros datos)</mat-label>
+                                <textarea matInput formControlName="datosBancariosProveedor" rows="2" placeholder="Información adicional para transferencias..."></textarea>
+                                <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
+                                    [svgIcon]="'heroicons_outline:information-circle'"></mat-icon>
+                            </mat-form-field>
                         </div>
                     </div>
 
