@@ -31,7 +31,7 @@ export class CierreTerminalDetailComponent implements OnInit, OnDestroy {
     cierreResponse: CierreTerminalResponse | null = null;
     isLoading: boolean = false;
     
-    displayedColumns: string[] = ['folio', 'proveedor', 'rfc', 'total', 'fecha'];
+    displayedColumns: string[] = ['folio', 'tipo', 'cliente', 'total', 'saldo', 'fecha', 'estatus'];
     
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 

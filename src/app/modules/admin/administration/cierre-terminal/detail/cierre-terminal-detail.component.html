@@ -25,10 +25,8 @@
             <ng-container *ngIf="!isLoading && cierreResponse">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
-                    <!-- Left Column: Info & Observaciones -->
+                    <!-- Info Card -->
                     <div class="lg:col-span-2 space-y-8">
-                        
-                        <!-- General Info Card -->
                         <fuse-card class="flex flex-col w-full p-8 shadow-2xl rounded-3xl border-none bg-white relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-2 h-full bg-primary"></div>
                             
@@ -42,10 +40,10 @@
                                 <span class="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-widest shadow-sm">REGISTRO #{{cierreResponse.detalle.datosCierre.id}}</span>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div class="flex flex-col p-4 bg-gray-50 rounded-2xl border border-gray-100 italic">
                                     <span class="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">Sucursal</span>
-                                    <span class="text-base font-black text-gray-800">{{cierreResponse.detalle.datosCierre.sucursal}}</span>
+                                    <span class="text-base font-black text-gray-800 truncate">{{cierreResponse.detalle.datosCierre.sucursal}}</span>
                                 </div>
                                 <div class="flex flex-col p-4 bg-gray-50 rounded-2xl border border-gray-100 italic">
                                     <span class="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">Fecha</span>
@@ -78,55 +76,12 @@
                                 <p class="text-sm text-gray-600 leading-relaxed">{{cierreResponse.detalle.datosCierre.observaciones || 'Sin observaciones registradas.'}}</p>
                             </div>
                         </fuse-card>
-
-                        <!-- CONTPAQi Section -->
-                        <fuse-card class="flex flex-col w-full p-8 shadow-2xl rounded-3xl border-none bg-white relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
-                            
-                            <div class="flex items-center gap-3 mb-8">
-                                <div class="p-3 bg-emerald-50 rounded-2xl">
-                                    <mat-icon class="icon-size-7 text-emerald-600" [svgIcon]="'heroicons_outline:document-check'"></mat-icon>
-                                </div>
-                                <h3 class="text-xl font-black tracking-tight text-gray-900 italic uppercase">Facturación Real (CONTPAQi)</h3>
-                            </div>
-
-                            <div class="overflow-x-auto">
-                                <table mat-table [dataSource]="cierreResponse.detalle.facturasContpaqi || []" class="w-full">
-                                    <ng-container matColumnDef="folio">
-                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Folio</th>
-                                        <td mat-cell *matCellDef="let f" class="py-4 font-black text-primary italic">{{f.folio}}</td>
-                                    </ng-container>
-                                    <ng-container matColumnDef="proveedor">
-                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Proveedor</th>
-                                        <td mat-cell *matCellDef="let f" class="py-4 text-xs font-bold text-gray-700 leading-tight">{{f.proveedor}}</td>
-                                    </ng-container>
-                                    <ng-container matColumnDef="rfc">
-                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">RFC</th>
-                                        <td mat-cell *matCellDef="let f" class="py-4 text-xs font-bold text-gray-500 italic">{{f.rfc}}</td>
-                                    </ng-container>
-                                    <ng-container matColumnDef="total">
-                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Total</th>
-                                        <td mat-cell *matCellDef="let f" class="py-4 font-black text-emerald-600 italic">{{f.total | currency:'USD'}}</td>
-                                    </ng-container>
-                                    <ng-container matColumnDef="fecha">
-                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Fecha</th>
-                                        <td mat-cell *matCellDef="let f" class="py-4 text-xs font-bold text-gray-500 italic">{{f.fecha | date:'dd/MM/yyyy HH:mm'}}</td>
-                                    </ng-container>
-
-                                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="border-b border-gray-50 last:border-none"></tr>
-                                    
-                                    <tr *matNoDataRow>
-                                        <td colspan="5" class="py-12 text-center italic text-secondary font-medium">No se encontraron facturas vinculadas en CONTPAQi para este cierre.</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </fuse-card>
                     </div>
 
-                    <!-- Right Column: Evidencias -->
-                    <div class="space-y-8">
-                        <fuse-card class="flex flex-col w-full p-8 shadow-2xl rounded-3xl border-none bg-white relative overflow-hidden">
+                    <!-- Side Column: Evidencias & Seguridad -->
+                    <div class="lg:col-span-1 space-y-8 flex flex-col">
+                        <!-- Evidencias -->
+                        <fuse-card class="flex flex-col w-full p-8 shadow-2xl rounded-3xl border-none bg-white relative overflow-hidden h-full">
                             <div class="absolute top-0 left-0 w-2 h-full bg-amber-500"></div>
                             
                             <div class="flex items-center gap-3 mb-8">
@@ -136,12 +91,12 @@
                                 <h3 class="text-lg font-black tracking-tight text-gray-900 italic uppercase">Evidencias</h3>
                             </div>
 
-                            <div *ngIf="!cierreResponse.evidencias || cierreResponse.evidencias.length === 0" class="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                            <div *ngIf="!cierreResponse.evidencias || cierreResponse.evidencias.length === 0" class="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex-auto">
                                 <mat-icon class="icon-size-12 text-gray-300 mb-2" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
                                 <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Sin Archivos</span>
                             </div>
 
-                            <div class="grid grid-cols-1 gap-4" *ngIf="cierreResponse.evidencias && cierreResponse.evidencias.length > 0">
+                            <div class="grid grid-cols-1 gap-4 overflow-y-auto max-h-60" *ngIf="cierreResponse.evidencias && cierreResponse.evidencias.length > 0">
                                 <div *ngFor="let nombreArchivo of cierreResponse.evidencias" 
                                      class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-lg transition-all group">
                                     <div class="flex items-center gap-3 overflow-hidden">
@@ -158,14 +113,75 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Seguridad -->
+                            <div class="mt-8">
+                                <div class="p-4 bg-indigo-600 rounded-2xl shadow-lg text-white relative overflow-hidden group italic">
+                                    <mat-icon class="absolute -right-2 -bottom-2 icon-size-12 text-white/10 group-hover:scale-110 transition-transform" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
+                                    <h4 class="text-[10px] font-black uppercase tracking-widest mb-1 italic">Seguridad</h4>
+                                    <p class="text-[9px] font-medium text-indigo-100 italic leading-tight">Registro firmado digitalmente y auditado.</p>
+                                </div>
+                            </div>
                         </fuse-card>
-                        
-                        <!-- Actions Info -->
-                        <div class="p-6 bg-indigo-600 rounded-3xl shadow-xl text-white relative overflow-hidden group italic">
-                            <mat-icon class="absolute -right-4 -bottom-4 icon-size-24 text-white/10 group-hover:scale-110 transition-transform" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
-                            <h4 class="text-sm font-black uppercase tracking-widest mb-1 italic">Seguridad</h4>
-                            <p class="text-[10px] font-medium text-indigo-100 italic leading-relaxed">Este registro está firmado digitalmente y auditado. Cualquier modificación queda registrada en el log de administración.</p>
-                        </div>
+                    </div>
+
+                    <!-- Bottom Section: Facturación CONTPAQi (Full Width) -->
+                    <div class="lg:col-span-3">
+                        <fuse-card class="flex flex-col w-full p-8 shadow-2xl rounded-3xl border-none bg-white relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                            
+                            <div class="flex items-center gap-3 mb-8">
+                                <div class="p-3 bg-emerald-50 rounded-2xl">
+                                    <mat-icon class="icon-size-7 text-emerald-600" [svgIcon]="'heroicons_outline:document-check'"></mat-icon>
+                                </div>
+                                <h3 class="text-xl font-black tracking-tight text-gray-900 italic uppercase">Facturación Real (CONTPAQi)</h3>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table mat-table [dataSource]="cierreResponse.detalle.facturasContpaqi || []" class="w-full">
+                                    <ng-container matColumnDef="folio">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic pl-4">Folio</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 font-black text-primary italic pl-4 whitespace-nowrap">{{f.serie}} {{f.folio}}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="tipo">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Tipo</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 text-[11px] font-bold text-gray-700 leading-tight italic uppercase min-w-32">{{f.tipo_Factura}}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="cliente">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Cliente</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 text-[11px] font-bold text-gray-700 leading-tight uppercase min-w-48 max-w-64 truncate">{{f.cliente_Proveedor}}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="total">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Total</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 font-black text-emerald-600 italic whitespace-nowrap">{{f.total | currency:'USD'}}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="saldo">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Saldo</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 font-black text-amber-600 italic whitespace-nowrap">{{f.saldo_Pendiente | currency:'USD'}}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="fecha">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic">Fecha</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 text-xs font-bold text-gray-500 italic whitespace-nowrap">{{f.fecha | date:'dd/MM/yyyy'}}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="estatus">
+                                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 italic pr-4">Estatus</th>
+                                        <td mat-cell *matCellDef="let f" class="py-4 pr-4">
+                                            <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest shadow-sm"
+                                                  [ngClass]="{'bg-emerald-100 text-emerald-700': f.estatus === 'Activo', 'bg-red-100 text-red-700': f.estatus !== 'Activo'}">
+                                                {{f.estatus}}
+                                            </span>
+                                        </td>
+                                    </ng-container>
+                                    
+                                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="border-b border-gray-50 last:border-none hover:bg-gray-50/50 transition-colors"></tr>
+                                    
+                                    <tr *matNoDataRow>
+                                        <td colspan="7" class="py-12 text-center italic text-secondary font-medium">No se encontraron facturas vinculadas en CONTPAQi para este cierre.</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </fuse-card>
                     </div>
                 </div>
             </ng-container>

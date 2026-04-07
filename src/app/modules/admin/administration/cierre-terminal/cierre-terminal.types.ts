@@ -27,9 +27,17 @@ export interface CierreTerminalEvidencia {
 }
 
 export interface FacturaContpaqi {
+    serie: string;
     folio: string;
-    proveedor: string;
-    rfc: string;
-    total: number;
+    tipo_Factura: string;
     fecha: string | Date;
+    cliente_Proveedor: string;
+    subtotal: number;
+    iva: number;
+    total: number;
+    saldo_Pendiente: number;
+    estatus: string;
+    banco: string | null;
+    cuenta: string | null;
+    clabe: string | null;
 }
