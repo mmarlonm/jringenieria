@@ -136,6 +136,7 @@ export class TraspasoModalComponent implements OnInit {
         if (id === 1) this.traspaso.almacenOrigenNombre = 'Querétaro';
         if (id === 2) this.traspaso.almacenOrigenNombre = 'Puebla';
         if (id === 3) this.traspaso.almacenOrigenNombre = 'Pachuca';
+        if (id === 4) this.traspaso.almacenOrigenNombre = 'CIAT';
 
         if (this.traspaso.idAlmacenDestino === id) {
             this.traspaso.idAlmacenDestino = null;
@@ -148,6 +149,7 @@ export class TraspasoModalComponent implements OnInit {
         if (id === 1) this.traspaso.almacenDestinoNombre = 'Querétaro';
         if (id === 2) this.traspaso.almacenDestinoNombre = 'Puebla';
         if (id === 3) this.traspaso.almacenDestinoNombre = 'Pachuca';
+        if (id === 4) this.traspaso.almacenDestinoNombre = 'CIAT';
     }
 
     validarStockGlobal(): void {
@@ -157,6 +159,7 @@ export class TraspasoModalComponent implements OnInit {
             if (idOrigen === 1) stock = p.qro;
             if (idOrigen === 2) stock = p.pue;
             if (idOrigen === 3) stock = p.pach;
+            if (idOrigen === 4) stock = p.ciat;
 
             p.errorStock = p.cantidadEnviar > stock || p.cantidadEnviar <= 0;
             p.stockMaximo = stock;

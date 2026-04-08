@@ -70,6 +70,7 @@ export interface ExistenciaSucursalDto {
   qro: number;   // Viene como QRO
   pach: number;  // Viene como PACH
   pue: number;   // Viene como PUE
+  ciat: number;  // Viene como CIAT
   total: number; // Viene como TOTAL
 }
 

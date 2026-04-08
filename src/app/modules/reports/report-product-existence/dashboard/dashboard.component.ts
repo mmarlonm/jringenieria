@@ -59,6 +59,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
         'qro',
         'pach',
         'pue',
+        'ciat',
         'total',
         'acciones'
     ];
@@ -74,6 +75,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     totalQRO: number;
     totalPCH: number;
     totalPUE: number;
+    totalCIAT: number;
     totalGeneral: number;
 
     public productosFiltrados: any[] = [];
@@ -147,6 +149,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
                 this.totalQRO = resp.reduce((acc, curr) => acc + (curr.qro || 0), 0);
                 this.totalPCH = resp.reduce((acc, curr) => acc + (curr.pach || 0), 0);
                 this.totalPUE = resp.reduce((acc, curr) => acc + (curr.pue || 0), 0);
+                this.totalCIAT = resp.reduce((acc, curr) => acc + (curr.ciat || 0), 0);
                 this.totalGeneral = resp.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
                 // Aplicar filtro si ya había texto escrito
@@ -216,6 +219,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
             'QRO',
             'PCH',
             'PUE',
+            'CIAT',
             'Total'
         ];
 
@@ -237,6 +241,7 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
             r.qro,
             r.pach,
             r.pue,
+            r.ciat,
             r.total
         ]);
 
@@ -301,10 +306,16 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     abrirTraspaso(productos: any | any[]): void {
         const productList = Array.isArray(productos) ? productos : [productos];
 
+        // Mapear productos para asegurar que tengan ciat si viene de ExistenciaSucursalDto
+        const mappedProducts = productList.map(p => ({
+            ...p,
+            ciat: p.ciat || 0
+        }));
+
         const dialogRef = this.dialog.open(TraspasoModalComponent, {
             width: '600px', // Aumentado para manejar lista
             data: {
-                productos: productList,
+                productos: mappedProducts,
                 esMoral: this.esMoral
             }
         });
