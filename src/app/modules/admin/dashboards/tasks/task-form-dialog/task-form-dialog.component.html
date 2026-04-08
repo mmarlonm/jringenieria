@@ -16,6 +16,11 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-1">
+                    <button mat-icon-button type="button" (click)="exportToPDF()" class="text-primary hover:bg-primary/10" [disabled]="loading" title="Descargar Reporte PDF">
+                        <mat-icon *ngIf="!loading" class="icon-size-5">download</mat-icon>
+                        <mat-icon *ngIf="loading" class="icon-size-5 animate-spin">sync</mat-icon>
+                    </button>
+
                     <button mat-icon-button type="button" (click)="toggleFullscreen()" class="text-secondary hover:bg-slate-100 dark:hover:bg-slate-800" [title]="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
                         <mat-icon class="icon-size-5">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
                     </button>
@@ -175,6 +180,7 @@
                         </ng-template>
                         <div class="flex flex-col flex-auto h-full p-2 bg-slate-100/30 dark:bg-slate-900/40">
                             <app-tarea-actividades-gantt 
+                                id="gantt-chart-component"
                                 [tareaId]="tareaId"
                                 [assignedUserIds]="form.get('usuarioIds').value"
                                 [allUsers]="userList">

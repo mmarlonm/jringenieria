@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +21,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { fromEvent, Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-tarea-actividades-gantt',
@@ -63,7 +64,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
           <div class="h-14 flex items-center px-4 border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
             Detalles de Actividad
           </div>
-          <div class="flex-auto overflow-y-auto custom-scrollbar scroll-smooth">
+          <div class="flex-auto overflow-y-auto custom-scrollbar" #sidebarScroll (scroll)="onScroll($event, timelineScroll)">
             <div *ngFor="let act of activities" 
                  class="h-24 flex flex-col justify-center px-4 border-b border-slate-100/50 dark:border-slate-800/50 hover:bg-white dark:hover:bg-slate-800/10 transition-all cursor-pointer group"
                  (click)="openDialog(act)">
@@ -115,7 +116,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
         </div>
 
         <!-- Timeline: Scrollable Canvas -->
-        <div class="flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-white dark:bg-slate-900/20 relative shadow-inner">
+        <div class="flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-white dark:bg-slate-900/20 relative shadow-inner" #horizontalTimeline>
           
           <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
             
@@ -130,7 +131,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
             </div>
 
             <!-- Main Timeline Body -->
-            <div class="flex-auto relative overflow-y-auto custom-scrollbar">
+            <div class="flex-auto relative overflow-y-auto overflow-x-hidden custom-scrollbar" #timelineScroll (scroll)="onScroll($event, sidebarScroll)">
               
               <!-- Clean Background Grid -->
               <div class="absolute inset-0 flex pointer-events-none">
@@ -139,8 +140,26 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
                      [ngClass]="{'bg-primary/2': isToday(day)}"></div>
               </div>
 
+              <!-- SVG Connection Layer -->
+              <svg class="absolute inset-0 pointer-events-none overflow-visible z-10" [attr.width]="timelineWidth" [attr.height]="activities.length * 96">
+                <defs>
+                    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                        <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+                    </marker>
+                </defs>
+                <ng-container *ngFor="let act of activities; let i = index">
+                    <path *ngIf="getDependencyPath(act, i) as pathD" 
+                          [attr.d]="pathD" 
+                          fill="none" 
+                          stroke="#94a3b8" 
+                          stroke-width="1.5" 
+                          stroke-linecap="round"
+                          marker-end="url(#arrowhead)" />
+                </ng-container>
+              </svg>
+
               <!-- Content Rows -->
-              <div *ngFor="let act of activities; let i = index" class="h-20 flex items-center relative border-b border-slate-100/10 dark:border-slate-800/5">
+              <div *ngFor="let act of activities; let i = index" class="h-24 flex items-center relative border-b border-slate-100/10 dark:border-slate-800/5">
                 
                 <!-- Modern Interactive Gantt Bar -->
                 <div class="absolute h-9 rounded-xl shadow-md flex items-center overflow-hidden cursor-pointer hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] transition-all duration-300 group ring-1 ring-white/20 dark:ring-slate-700/30"
@@ -205,7 +224,14 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
     :host { display: block; width: 100%; height: 100%; }
   `]
 })
-export class TareaActividadesGanttComponent implements OnInit, OnChanges {
+export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+  @ViewChild('horizontalTimeline') horizontalTimeline!: ElementRef;
+  @ViewChild('sidebarScroll') sidebarScroll!: ElementRef;
+  @ViewChild('timelineScroll') timelineScroll!: ElementRef;
+  
+  private _unsubscribeAll: Subject<any> = new Subject<any>();
+  private _intersectionObserver: IntersectionObserver | null = null;
+  private _scrollAttemptCount: number = 0;
   @Input() tareaId!: number;
   @Input() assignedUserIds: number[] = [];
   @Input() allUsers: any[] = [];
@@ -237,6 +263,41 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.initTimeline();
     this.loadData();
+
+    // Re-centrar si cambia el tamaño de la ventana (maximizar)
+    fromEvent(window, 'resize')
+        .pipe(takeUntil(this._unsubscribeAll))
+        .subscribe(() => {
+            this.scrollToToday();
+        });
+  }
+
+  ngOnDestroy(): void {
+    this._unsubscribeAll.next(null);
+    this._unsubscribeAll.complete();
+    if (this._intersectionObserver) {
+        this._intersectionObserver.disconnect();
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // Configurar observador de visibilidad (para cuando se activa la pestaña)
+    this._intersectionObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            // En cuanto sea visible, intentamos centrarlo
+            this._scrollAttemptCount = 0;
+            this.scrollToToday();
+        }
+    }, { threshold: 0.1 });
+
+    if (this.horizontalTimeline) {
+        this._intersectionObserver.observe(this.horizontalTimeline.nativeElement);
+    }
+
+    // Centrar en "Hoy" al cargar la vista por si acaso
+    setTimeout(() => {
+        this.scrollToToday();
+    }, 1000);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -248,9 +309,18 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges {
     }
   }
 
+  onScroll(event: any, target: HTMLElement): void {
+    const source = event.target as HTMLElement;
+    window.requestAnimationFrame(() => {
+      if (target.scrollTop !== source.scrollTop) {
+        target.scrollTop = source.scrollTop;
+      }
+    });
+  }
+
   initTimeline(): void {
-    this.startDate = startOfDay(subDays(new Date(), 7));
-    this.endDate = addDays(this.startDate, 42); 
+    this.startDate = startOfDay(subDays(new Date(), 30)); // 30 días atrás
+    this.endDate = addDays(this.startDate, 90); // 90 días totales (un trimestre)
     
     this.days = eachDayOfInterval({
       start: this.startDate,
@@ -259,6 +329,27 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges {
 
     this.timelineWidth = this.days.length * this.dayWidth;
     this.calculateTodayMarker();
+  }
+
+  scrollToToday(): void {
+    if (!this.horizontalTimeline || !this.showTodayMarker) return;
+
+    const element = this.horizontalTimeline.nativeElement;
+    
+    // Si el elemento no tiene ancho todavía (está oculto o en medio de renderizado)
+    if (element.scrollWidth <= element.clientWidth && this._scrollAttemptCount < 5) {
+        this._scrollAttemptCount++;
+        setTimeout(() => this.scrollToToday(), 200);
+        return;
+    }
+
+    // Situamos "Hoy" al inicio (borde izquierdo)
+    const scrollPosition = this.todayPosition;
+    
+    element.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: 'auto'
+    });
   }
 
   calculateTodayMarker(): void {
@@ -280,7 +371,9 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges {
 
     this._taskService.getActividades(this.tareaId).subscribe({
       next: (res) => {
-        this.activities = res || [];
+        this.activities = [...(res || [])];
+        // Forzar scroll después de cargar datos
+        setTimeout(() => this.scrollToToday(), 100);
       },
       error: () => {
         this.activities = [
@@ -338,10 +431,14 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges {
         this._taskService.guardarActividad(result).subscribe(() => this.loadData());
         
         if (result.id) {
-          const idx = this.activities.findIndex(a => a.id === result.id);
-          if (idx !== -1) this.activities[idx] = result;
+          const idx = this.activities.findIndex(a => Number(a.id) === Number(result.id));
+          if (idx !== -1) {
+            this.activities[idx] = result;
+            this.activities = [...this.activities]; 
+          }
         } else {
-          this.activities.push({ ...result, id: Math.floor(Math.random() * 1000) });
+          const newAct = { ...result, id: Math.floor(Math.random() * -1000) }; // IDs negativos temporales
+          this.activities = [...this.activities, newAct];
         }
       }
     });
@@ -421,34 +518,73 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges {
   }
 
   getDependencyPath(act: TareaActividad, currentIndex: number): string | null {
-    const pred = this.activities.find(a => a.id === act.predecesoraId);
-    if (!pred) return null;
+    const pId = act.predecesoraId ? Number(act.predecesoraId) : 0;
+    const aId = act.id ? Number(act.id) : 0;
 
-    const predIndex = this.activities.findIndex(a => a.id === act.predecesoraId);
-    if (predIndex === -1) return null;
-
-    const rowHeight = 80;
-    const headerHeight = 56;
+    if (pId <= 0 || pId === aId) return null;
     
-    // Calcular posiciones de las barras
+    const predIndex = this.activities.findIndex(a => Number(a.id) === pId);
+    if (predIndex === -1) return null;
+    
+    const pred = this.activities[predIndex];
+    const rowHeight = 96;
     const predStyles = this.getBarStyles(pred);
     const currStyles = this.getBarStyles(act);
 
-    if (predStyles.display === 'none' || currStyles.display === 'none') return null;
-
-    const startX = parseFloat(predStyles.left) + parseFloat(predStyles.width);
-    const startY = headerHeight + (predIndex * rowHeight) + (rowHeight / 2);
-    
-    const endX = parseFloat(currStyles.left);
-    const endY = headerHeight + (currentIndex * rowHeight) + (rowHeight / 2);
-
-    // Si la predecesora está después (error de lógica del usuario pero posible), dibujamos línea simple
-    if (endX < startX) {
-        return `M ${startX} ${startY} L ${startX + 10} ${startY} L ${startX + 10} ${endY} L ${endX} ${endY}`;
+    if (!predStyles || !currStyles || predStyles.display === 'none' || currStyles.display === 'none') {
+        return null;
     }
 
-    const midX = startX + (endX - startX) / 2;
-    return `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+    const sL = parseFloat(predStyles.left);
+    const sW = parseFloat(predStyles.width);
+    const eL = parseFloat(currStyles.left);
+    if (isNaN(sL) || isNaN(sW) || isNaN(eL)) return null;
+
+    const startX = sL + sW;
+    const startY = (predIndex * rowHeight) + 48;
+    const endX = eL;
+    const endY = (currentIndex * rowHeight) + 48;
+    
+    // Gutter es el borde entre las filas (siempre seguro, lejos del centro h-9)
+    // Si vamos de arriba a abajo, usamos el borde inferior de la fila origen.
+    // Si vamos de abajo a arriba, usamos el borde superior de la fila origen.
+    const gutterY = (currentIndex > predIndex) ? (predIndex + 1) * rowHeight : predIndex * rowHeight;
+    const r = 6; // Radio de curvatura premium
+
+    if (endX >= startX + 25) {
+        // Flujo Progresivo: La linea baja y entra
+        const midX = startX + 12;
+        const dirY = (endY > startY) ? 1 : -1;
+
+        return `M ${startX} ${startY} 
+                L ${midX - r} ${startY} 
+                Q ${midX} ${startY} ${midX} ${startY + dirY * r} 
+                L ${midX} ${endY - dirY * r} 
+                Q ${midX} ${endY} ${midX + r} ${endY} 
+                L ${endX} ${endY}`;
+    } else {
+        // Flujo Solapado (Rodeo): Salir -> Bajar a Gutter -> Ir a la Izquierda -> Bajar a Destino -> Entrar
+        const outX = startX + 15;
+        const inX = endX - 15;
+        const dirY = (endY > startY) ? 1 : -1;
+
+        // Trayectoria: 
+        // 1. Salida horizontal
+        // 2. Bajada a canal (gutter)
+        // 3. Viaje largo a la izquierda por el canal (fuera de las barras)
+        // 4. Bajada/Subida final al nivel del destino
+        // 5. Entrada horizontal limpia
+        return `M ${startX} ${startY} 
+                L ${outX - r} ${startY} 
+                Q ${outX} ${startY} ${outX} ${startY + dirY * r} 
+                L ${outX} ${gutterY - dirY * r} 
+                Q ${outX} ${gutterY} ${outX - r} ${gutterY} 
+                L ${inX + r} ${gutterY} 
+                Q ${inX} ${gutterY} ${inX} ${gutterY + dirY * r} 
+                L ${inX} ${endY - dirY * r} 
+                Q ${inX} ${endY} ${inX + r} ${endY} 
+                L ${endX} ${endY}`;
+    }
   }
 
   formatDay(date: Date): string {

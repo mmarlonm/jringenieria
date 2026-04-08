@@ -33,10 +33,22 @@ import {
     CommonModule
 } from '@angular/common';
 import flatpickr from 'flatpickr';
+import { 
+    addDays, 
+    subDays, 
+    startOfDay, 
+    eachDayOfInterval, 
+    differenceInDays, 
+    format,
+    isToday
+} from 'date-fns';
+import { es } from 'date-fns/locale';
 import { User } from 'app/core/user/user.types';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatMenuModule } from '@angular/material/menu';
+import { DomSanitizer } from '@angular/platform-browser';
 
 import { TaskChatComponent } from '../task-chat/task-chat.component';
 import { TareaActividadesGanttComponent } from '../gantt/tarea-actividades-gantt.component';
@@ -57,6 +69,7 @@ import { TareaActividadesGanttComponent } from '../gantt/tarea-actividades-gantt
         MatSelectModule,
         MatDialogModule,
         MatTabsModule,
+        MatMenuModule,
         TaskChatComponent,
         TareaActividadesGanttComponent
     ]
@@ -68,6 +81,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     isChatCollapsed: boolean = true;
     isScreenSmall: boolean = false;
     isFullscreen: boolean = false;
+    today: Date = new Date();
 
     private flatpickrInstances: { [key: string]: flatpickr.Instance } = {};
 
@@ -91,6 +105,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         private usersService: UsersService,
         private _userService: UserService,
         private _notificationService: ChatNotificationService,
+        private _sanitizer: DomSanitizer,
         @Inject(MAT_DIALOG_DATA) public data: { id?: number, readOnly?: boolean } | null
     ) {
         this.form = this.fb.group({
@@ -116,13 +131,12 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         // Subscribe to the user service
         this._userService.user$
-            .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: User) => {
-                this.user = user["usuario"];
-                if (this.user) {
-                    this.form.get("CreadorId").setValue(this.user.id);
+                const usuario = user ? user['usuario'] : null;
+                if (usuario) {
+                    this.user = usuario;
+                    this.form.get('CreadorId').setValue(this.user.id);
                 }
- // Setea el usuario logueado como creador por defecto
             });
         this.getUsers();
 
@@ -381,5 +395,245 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             });
     }
 
+    // ============================
+    // EXPORTACIÓN PDF
+    // ============================
 
+    getEstatusLabel(estatus: number): string {
+        switch (estatus) {
+            case 1: return 'Pendiente';
+            case 2: return 'En proceso';
+            case 3: return 'Completada';
+            default: return 'Desconocido';
+        }
+    }
+
+    getUserName(id: any): string {
+        if (!this.userList || this.userList.length === 0) return 'Cargando...';
+        const user = this.userList.find(u => Number(u.usuarioId || u.id) === Number(id));
+        return user ? user.nombreUsuario || user.nombre : 'Sin asignar';
+    }
+
+    async exportToPDF(): Promise<void> {
+        if (this.loading) return;
+        this.loading = true;
+
+        try {
+            this._notificationService.showInfo('Preparando Reporte Silencioso', 'Generando cronograma y preparando impresión...');
+
+            // 1. Obtener datos necesarios
+            const id = this.tareaId;
+            const activitiesCount = await (id ? this.taskService.getActividades(id).toPromise() : Promise.resolve([]));
+            const activities = activitiesCount || [];
+
+            // 2. Lógica de Calendario Gantt (2 días atrás, 42 días total)
+            const startDate = startOfDay(subDays(new Date(), 2));
+            const endDate = addDays(startDate, 41);
+            const daysArr = eachDayOfInterval({ start: startDate, end: endDate });
+            const dayWidth = 26; // px - Ajustado para caber con sidebar
+            const sidebarWidth = 200; // px
+
+            // 3. Preparar datos de la tarea
+            const nombre = this.form.get('nombre').value || 'Sin nombre';
+            const estatus = this.getEstatusLabel(this.form.get('estatus').value);
+            const empresa = this.form.get('empresa').value || 'JR INGENIERÍA';
+            const ubicacion = this.form.get('ubicacion').value || 'NO ESPECIFICADA';
+            const comentarios = this.form.get('comentarios').value || 'Sin comentarios.';
+            const team = (this.form.get('usuarioIds').value || []).map(uid => this.getUserName(uid)).join(', ');
+
+            const fInicioE = this.form.get('fechaInicioEstimada').value ? format(new Date(this.form.get('fechaInicioEstimada').value), 'dd/MM/yyyy HH:mm') : '---';
+            const fFinE = this.form.get('fechaFinEstimada').value ? format(new Date(this.form.get('fechaFinEstimada').value), 'dd/MM/yyyy HH:mm') : '---';
+            const fInicioR = this.form.get('fechaInicioReal').value ? format(new Date(this.form.get('fechaInicioReal').value), 'dd/MM/yyyy HH:mm') : '---';
+            const fFinR = this.form.get('fechaFinReal').value ? format(new Date(this.form.get('fechaFinReal').value), 'dd/MM/yyyy HH:mm') : 'EN CURSO';
+
+            // 4. Generar HTML del Gantt Real (con sidebar)
+            const ganttGridHtml = `
+                <div class="gantt-real">
+                    <div class="gantt-layout">
+                        <!-- Sidebar de Actividades -->
+                        <div class="gantt-sidebar" style="width: ${sidebarWidth}px">
+                            <div class="gantt-sidebar-header">Detalle Actividades</div>
+                            <div class="gantt-sidebar-body">
+                                ${activities.map(a => `
+                                    <div class="gantt-sidebar-row">
+                                        <div class="a-name">${a.nombre}</div>
+                                        <div class="a-resp">${a.nombreResponsable} (${a.progreso}%)</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div class="gantt-timeline-wrap">
+                            <div class="gantt-header-dates" style="width: ${daysArr.length * dayWidth}px">
+                                ${daysArr.map(d => `
+                                    <div class="gantt-day-col ${[0, 6].includes(d.getDay()) ? 'weekend' : ''} ${isToday(d) ? 'today' : ''}">
+                                        <div class="day-name">${format(d, 'eee', { locale: es })}</div>
+                                        <div class="day-num">${format(d, 'd')}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="gantt-body" style="width: ${daysArr.length * dayWidth}px">
+                                <!-- Grid Lines -->
+                                <div class="gantt-grid-lines">
+                                    ${daysArr.map(d => `<div class="grid-line ${isToday(d) ? 'today-line' : ''}" style="width: ${dayWidth}px"></div>`).join('')}
+                                </div>
+                                <!-- Actividades -->
+                                ${activities.map((a, i) => {
+                const aStart = startOfDay(new Date(a.fechaInicio));
+                const aEnd = startOfDay(new Date(a.fechaFin));
+                let leftDays = differenceInDays(aStart, startDate);
+                let durationDays = differenceInDays(aEnd, aStart) + 1;
+
+                if (leftDays < 0) {
+                    durationDays += leftDays;
+                    leftDays = 0;
+                }
+                const barWidth = durationDays * dayWidth;
+                const barLeft = leftDays * dayWidth;
+                const color = a.estatus === 3 ? '#10b981' : a.estatus === 2 ? '#3b82f6' : '#f59e0b';
+
+                return barWidth > 0 ? `
+                                        <div class="gantt-row">
+                                            <div class="gantt-bar" style="left: ${barLeft}px; width: ${barWidth}px; background-color: ${color}cc; border: 1.2px solid ${color}">
+                                                <span class="bar-tag">${a.progreso}%</span>
+                                            </div>
+                                        </div>
+                                    ` : '<div class="gantt-row"></div>';
+            }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 5. Construir Iframe de Impresión Silenciosa
+            let printIframe = document.getElementById('print-iframe') as HTMLIFrameElement;
+            if (!printIframe) {
+                printIframe = document.createElement('iframe');
+                printIframe.id = 'print-iframe';
+                printIframe.style.position = 'absolute';
+                printIframe.style.width = '0';
+                printIframe.style.height = '0';
+                printIframe.style.border = 'none';
+                printIframe.style.visibility = 'hidden';
+                document.body.appendChild(printIframe);
+            }
+
+            const htmlContent = `
+                <html>
+                <head>
+                    <title>Reporte - ${nombre}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+                        body { font-family: 'Inter', sans-serif; color: #0f172a; margin: 0; padding: 12mm; background: #fff; font-size: 11px; }
+                        .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2.5px solid #1e40af; padding-bottom: 8px; margin-bottom: 15px; }
+                        .logo { height: 45px; }
+                        .title-box { text-align: right; }
+                        .main-title { font-size: 22px; font-weight: 800; color: #1e40af; margin: 0; text-transform: uppercase; }
+                        
+                        .section { margin-bottom: 15px; page-break-inside: avoid; }
+                        .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #1e40af; background: #f8fafc; border-left: 4px solid #1e40af; padding: 5px 10px; margin-bottom: 8px; }
+                        
+                        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+                        .label { font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+                        .value { font-size: 12px; font-weight: 500; }
+                        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; border: 1px solid currentColor; }
+                        .status-1 { background: #fffbeb; color: #b45309; }
+                        .status-2 { background: #eff6ff; color: #1d4ed8; }
+                        .status-3 { background: #ecfdf5; color: #047857; }
+                        
+                        /* Layout del Gantt Reporte */
+                        .gantt-real { border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff; }
+                        .gantt-layout { display: flex; }
+                        
+                        .gantt-sidebar { flex: 0 0 ${sidebarWidth}px; border-right: 1px solid #e2e8f0; background: #f8fafc; }
+                        .gantt-sidebar-header { height: 35px; display: flex; align-items: center; px: 10px; padding: 0 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; color: #64748b; }
+                        .gantt-sidebar-row { height: 35px; border-bottom: 1px solid #f1f5f9; padding: 0 10px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+                        .a-name { font-weight: 700; font-size: 10px; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                        .a-resp { font-size: 8px; color: #64748b; }
+                        
+                        .gantt-timeline-wrap { flex: auto; overflow: hidden; position: relative; }
+                        .gantt-header-dates { display: flex; height: 35px; border-bottom: 1px solid #e2e8f0; background: #fff; }
+                        .gantt-day-col { flex: 0 0 ${dayWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 8px; border-right: 1px solid #f1f5f9; }
+                        .day-name { font-weight: 700; text-transform: uppercase; color: #94a3b8; }
+                        .day-num { font-weight: 800; color: #475569; }
+                        .weekend { background: #f1f5f9; }
+                        .today { background: #1e40af20; }
+                        .day-num.today { color: #1e40af; }
+                        
+                        .gantt-body { position: relative; min-height: 100px; }
+                        .gantt-grid-lines { display: flex; position: absolute; inset: 0; pointer-events: none; }
+                        .grid-line { flex: 0 0 ${dayWidth}px; border-right: 1px solid #f1f5f9; height: 100%; }
+                        .today-line { border-right: 2px solid #1e40af40 !important; }
+                        
+                        .gantt-row { height: 35px; border-bottom: 1px solid #f1f5f9; position: relative; }
+                        .gantt-bar { position: absolute; top: 10px; height: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                        .bar-tag { font-size: 7px; font-weight: 800; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.3); }
+                        
+                        .footer { margin-top: 25px; padding-top: 5px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 8px; color: #94a3b8; }
+                        .page-break { page-break-before: always; }
+                        @media print { @page { size: A4 landscape; margin: 8mm; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <img src="/images/logo/JR-PNG-SIN-FONDO.png" class="logo">
+                        <div class="title-box">
+                            <h1 class="main-title">Reporte Técnico de Tarea</h1>
+                            <div class="task-id">IDENTIFICADOR: #${id}</div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">I. Datos Generales</div>
+                        <div class="grid">
+                            <div class="field"><div class="label">Tarea</div><div class="value font-bold">${nombre}</div></div>
+                            <div class="field"><div class="label">Estatus</div><div class="badge status-${this.form.get('estatus').value}">${estatus}</div></div>
+                            <div class="field"><div class="label">Empresa</div><div class="value">${empresa}</div></div>
+                            <div class="field"><div class="label">Ubicación</div><div class="value">${ubicacion}</div></div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="grid grid-4" style="background:#f8fafc; padding: 10px; border-radius: 5px;">
+                            <div class="field"><div class="label">Inicio Est.</div><div class="value">${fInicioE}</div></div>
+                            <div class="field"><div class="label">Fin Est.</div><div class="value">${fFinE}</div></div>
+                            <div class="field"><div class="label">Inicio Real</div><div class="value">${fInicioR}</div></div>
+                            <div class="field"><div class="label">Fin Real</div><div class="value">${fFinR}</div></div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">II. Listado y Cronograma (Gantt)</div>
+                        <p style="font-size: 9px; color: #64748b; margin-top: -5px; margin-bottom: 10px;">Visualización desde: ${format(startDate, 'dd/MM/yyyy')} (Hoy -2 días)</p>
+                        ${ganttGridHtml}
+                    </div>
+                    <div class="footer">
+                        <span>JR INGENIERÍA ELÉCTRICA - DEPARTAMENTO TÉCNICO</span>
+                        <span>GENERADO: ${format(new Date(), 'dd/MM/yyyy HH:mm')}</span>
+                    </div>
+                    <script>
+                        window.onload = () => {
+                            setTimeout(() => {
+                                window.print();
+                            }, 600);
+                        };
+                    </script>
+                </body>
+                </html>
+            `;
+
+            const doc = printIframe.contentWindow?.document || printIframe.contentDocument;
+            if (doc) {
+                doc.open();
+                doc.write(htmlContent);
+                doc.close();
+            }
+
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            this._notificationService.showError('Error', 'No se pudo generar el reporte.');
+        } finally {
+            this.loading = false;
+        }
+    }
 }
