@@ -58,6 +58,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
         'qro',
         'pach',
         'pue',
+        'ciat',
         'total',
         'acciones'
     ];
@@ -72,6 +73,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
     totalQRO: number = 0;
     totalPCH: number = 0;
     totalPUE: number = 0;
+    totalCIAT: number = 0;
     totalGeneral: number = 0;
 
     constructor(
@@ -153,6 +155,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
                     this.totalQRO = resp.reduce((acc, curr) => acc + (curr.tablerO_QRO || 0), 0);
                     this.totalPCH = resp.reduce((acc, curr) => acc + (curr.tablerO_PACH || 0), 0);
                     this.totalPUE = resp.reduce((acc, curr) => acc + (curr.tablerO_PUE || 0), 0);
+                    this.totalCIAT = resp.reduce((acc, curr) => acc + (curr.ciat || 0), 0);
                     this.totalGeneral = resp.reduce((acc, curr) => acc + (curr.totaL_TABLEROS || 0), 0);
 
                     // Aplicar filtro si ya había texto escrito
@@ -217,6 +220,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
             'QRO',
             'PCH',
             'PUE',
+            'CIAT',
             'Total'
         ];
 
@@ -236,6 +240,7 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
             r.tablerO_QRO,
             r.tablerO_PACH,
             r.tablerO_PUE,
+            r.ciat,
             r.totaL_TABLEROS
         ]);
 
@@ -302,7 +307,8 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
             ...p,
             qro: p.tablerO_QRO,
             pach: p.tablerO_PACH,
-            pue: p.tablerO_PUE
+            pue: p.tablerO_PUE,
+            ciat: p.ciat
         }));
 
         const dialogRef = this.dialog.open(TraspasoModalComponent, {

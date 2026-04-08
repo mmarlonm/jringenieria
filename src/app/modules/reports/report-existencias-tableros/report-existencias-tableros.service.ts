@@ -68,6 +68,7 @@ export interface ExistenciasTablerosDto {
     tablerO_QRO: number;
     tablerO_PACH: number;
     tablerO_PUE: number;
+    ciat: number;
 
     // Total
     totaL_TABLEROS: number;
