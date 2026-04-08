@@ -33,12 +33,12 @@ import {
     CommonModule
 } from '@angular/common';
 import flatpickr from 'flatpickr';
-import { 
-    addDays, 
-    subDays, 
-    startOfDay, 
-    eachDayOfInterval, 
-    differenceInDays, 
+import {
+    addDays,
+    subDays,
+    startOfDay,
+    eachDayOfInterval,
+    differenceInDays,
     format,
     isToday
 } from 'date-fns';
@@ -579,7 +579,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 </head>
                 <body>
                     <div class="header">
-                        <img src="/images/logo/JR-PNG-SIN-FONDO.png" class="logo">
+                        <img src="/jringenieria/images/logo/JR-PNG-SIN-FONDO.png" class="logo">
                         <div class="title-box">
                             <h1 class="main-title">Reporte Técnico de Tarea</h1>
                             <div class="task-id">IDENTIFICADOR: #${id}</div>
