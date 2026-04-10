@@ -56,6 +56,11 @@
                                 'ring-2 ring-primary bg-primary-50/10 dark:bg-primary-500/5 transition-none': selectedContact && selectedContact.usuarioId === user.usuarioId
                             }" [routerLink]="['./', user.usuarioId]">
 
+                            <!-- User ID Badge -->
+                            <div class="absolute top-4 left-4 flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-[9px] font-black uppercase tracking-tight">
+                                ID: {{ user.usuarioId }}
+                            </div>
+
                             <!-- Status Indicator -->
                             <div class="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                                 [ngClass]="user.activo ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-500/10 dark:text-gray-400'">
