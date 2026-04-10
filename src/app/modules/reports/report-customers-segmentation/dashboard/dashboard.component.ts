@@ -858,10 +858,16 @@ export class ReportCustomersDashboardComponent implements OnInit {
         };
 
         const totalCargos = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
-        const totalSaldos = data.reduce((acc, curr) => {
-            // Si está PAGADA el saldo es 0, de lo contrario es el monto completo
-            return acc + (curr.estatusPago === 'PAGADA' ? 0 : (curr.montoDocumento || 0));
-        }, 0);
+        
+        // Pagos Brutos = Suma de montos de facturas positivas ya pagadas
+        const grossPayments = data
+            .filter(item => (item.montoDocumento || 0) > 0 && item.estatusPago === 'PAGADA')
+            .reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+
+        // Saldo Final = Monto Neto (Facturas - Notas Credito) menos Pagos Brutos.
+        // Si el resultado es negativo pero hay facturas pagadas, limitamos el saldo a 0 (caso GASPE).
+        // Si el monto total es realmente negativo (saldo a favor), se mantiene (caso sobrepago real).
+        const totalSaldos = (totalCargos > 0) ? Math.max(0, totalCargos - grossPayments) : totalCargos;
         const totalAbonos = totalCargos - totalSaldos;
 
         const cliente = data[0].nombreCliente || '';
@@ -874,8 +880,10 @@ export class ReportCustomersDashboardComponent implements OnInit {
         let tableRows = '';
         data.forEach((item, i) => {
             const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
-            const cargo = item.montoDocumento || 0;
-            const saldo = item.estatusPago === 'PAGADA' ? 0 : cargo;
+            const cargo = (item.montoDocumento || 0);
+            // El saldo individual es 0 si está pagada, de lo contrario es el monto.
+            // (El ajuste de las Notas de Crédito se refleja en el Saldo Final del reporte).
+            const saldo = (item.estatusPago === 'PAGADA' ? 0 : cargo);
             const abono = cargo - saldo;
             const estatus = item.estatusPago || '';
             const diasVencidos = calculateDiasVencidos(item.fechaVencimiento, estatus);
