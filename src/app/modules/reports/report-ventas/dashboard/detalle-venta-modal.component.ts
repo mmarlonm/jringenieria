@@ -92,7 +92,9 @@ export interface DetalleVentaData {
                     <ng-container matColumnDef="netoMovimiento">
                         <th mat-header-cell *matHeaderCellDef class="text-slate-400 font-bold border-b border-slate-700 bg-transparent text-right uppercase text-xs tracking-wider pb-4">Subtotal</th>
                         <td mat-cell *matCellDef="let element" class="text-white font-black text-right border-b border-slate-700/40 py-4 whitespace-nowrap text-sm tabular-nums">
-                            {{ element.netoMovimiento | currency:'MXN' }}
+                            <span [ngClass]="{'text-rose-500 font-bold': element.netoMovimiento < 0}">
+                                {{ element.netoMovimiento < 0 ? '(' : '' }}{{ (element.netoMovimiento < 0 ? -element.netoMovimiento : element.netoMovimiento) | currency:'MXN' }}{{ element.netoMovimiento < 0 ? ')' : '' }}
+                            </span>
                         </td>
                     </ng-container>
 

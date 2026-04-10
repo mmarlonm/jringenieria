@@ -46,11 +46,16 @@ export class ReportVentasAgenteService {
   }
 
   /**
-   * Obtiene la lista de todos los agentes válidos
+   * Obtiene la lista de todos los agentes válidos filtrados por sucursal
    * Ideal para poblar el <mat-select> en la vista
    */
-  getAgentes(): Observable<Agente[]> {
-    return this.http.get<Agente[]>(`${this.apiUrl}/agentes`).pipe(
+  getAgentes(sucursal?: string): Observable<Agente[]> {
+    let params = new HttpParams();
+    if (sucursal && sucursal !== 'TODAS') {
+      params = params.set('sucursal', sucursal);
+    }
+
+    return this.http.get<Agente[]>(`${this.apiUrl}/agentes`, { params }).pipe(
       map(agentes => agentes.map(agente => ({
         ...agente,
         nombreAgente: agente.nombreAgente === 'ADRIAN GOMEZ CHACATL' ? 'ADRIAN GOMEZ' : agente.nombreAgente

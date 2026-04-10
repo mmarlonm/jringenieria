@@ -506,7 +506,9 @@
                                     {{ row.vendedor }}
                                 </td>
                                 <td class="p-2 text-right whitespace-nowrap">
-                                    {{ row.totalDocumento | currency:'MXN' }}
+                                    <span [ngClass]="{'text-rose-600 font-bold': row.totalDocumento < 0}">
+                                        {{ row.totalDocumento < 0 ? '(' : '' }}{{ (row.totalDocumento < 0 ? -row.totalDocumento : row.totalDocumento) | currency:'MXN' }}{{ row.totalDocumento < 0 ? ')' : '' }}
+                                    </span>
                                 </td>
                                 <td class="p-2 text-center whitespace-nowrap">
                                     <button mat-icon-button color="primary" 

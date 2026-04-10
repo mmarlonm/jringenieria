@@ -140,7 +140,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
             if (params['vendedor']) {
                 this.nombreVendedorFiltrar = params['vendedor'];
             }
-            this.cargarAgentes();
+            this.cargarAgentes(this.sucursal);
         });
     }
 
@@ -177,21 +177,24 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
         }
     }
 
-    cargarAgentes(): void {
-        this.reportVentasService.getAgentes().subscribe({
+    cargarAgentes(sucursal?: string): void {
+        // Mapeo especial: Pachuca es tratado como Hidalgo en el catálogo de agentes
+        const sucursalBusqueda = sucursal === 'Pachuca' ? 'Hidalgo' : sucursal;
+
+        this.reportVentasService.getAgentes(sucursalBusqueda).subscribe({
             next: (agentes) => {
                 this.listaAgentes = agentes;
 
                 // Si venimos de report-ventas con un vendedor específico
                 if (this.nombreVendedorFiltrar) {
-                    const agente = agentes.find(a => 
+                    const agente = agentes.find(a =>
                         a.nombreAgente.toLowerCase().trim() === this.nombreVendedorFiltrar?.toLowerCase().trim()
                     );
                     if (agente) {
                         this.agenteSeleccionado = agente.agenteId;
                     }
                 }
-                
+
                 this.consultar();
             },
             error: (err) => {
@@ -199,6 +202,15 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
                 this.consultar(); // Consultar de todos modos si falla la carga de agentes
             }
         });
+    }
+
+    /**
+     * Se ejecuta cuando cambia la sucursal.
+     * Recarga la lista de agentes y resetea la selección.
+     */
+    onSucursalChange(): void {
+        this.agenteSeleccionado = 0; // Regresar a TODOS
+        this.cargarAgentes(this.sucursal);
     }
 
     // 🔹 Consulta principal
@@ -673,10 +685,10 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
 
         this.detalleVentas.forEach(row => {
             const fechaParseada = new Date(row.fecha);
-            const fechaStr = isNaN(fechaParseada.getTime()) 
-                ? row.fecha 
+            const fechaStr = isNaN(fechaParseada.getTime())
+                ? row.fecha
                 : fechaParseada.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            
+
             const sucursal = `"${(row.sucursal || '').replace(/"/g, '""')}"`;
             const folio = `"${(row.folio || '').replace(/"/g, '""')}"`;
             const cliente = `"${(row.cliente || '').replace(/"/g, '""')}"`;

@@ -25,7 +25,7 @@
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Sucursal</mat-label>
-            <mat-select [(ngModel)]="sucursal">
+            <mat-select [(ngModel)]="sucursal" (selectionChange)="onSucursalChange()">
                 <mat-option *ngFor="let s of sucursalesDisponibles" [value]="s.value">
                     {{ s.label }}
                 </mat-option>
@@ -268,7 +268,9 @@
                                     {{ row.vendedor }}
                                 </td>
                                 <td class="p-2 text-right whitespace-nowrap">
-                                    {{ row.totalDocumento | currency:'MXN' }}
+                                    <span [ngClass]="{'text-rose-600 font-bold': row.totalDocumento < 0}">
+                                        {{ row.totalDocumento < 0 ? '(' : '' }}{{ (row.totalDocumento < 0 ? -row.totalDocumento : row.totalDocumento) | currency:'MXN' }}{{ row.totalDocumento < 0 ? ')' : '' }}
+                                    </span>
                                 </td>
                             </tr>
 
