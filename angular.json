@@ -51,7 +51,8 @@
                         ],
                         "stylePreprocessorOptions": {
                             "includePaths": [
-                                "src/@fuse/styles"
+                                "src/@fuse/styles",
+                                "node_modules"
                             ]
                         },
                         "styles": [
@@ -88,7 +89,7 @@
                                 }
                             ],
                             "outputHashing": "all",
-                            "baseHref": "/jr-ingenieria/"
+                            "baseHref": "/jringenieria/"
                         },
                         "development": {
                             "optimization": false,
@@ -122,6 +123,12 @@
                         ],
                         "tsConfig": "tsconfig.spec.json",
                         "inlineStyleLanguage": "scss",
+                        "stylePreprocessorOptions": {
+                            "includePaths": [
+                                "src/@fuse/styles",
+                                "node_modules"
+                            ]
+                        },
                         "assets": [
                             {
                                 "glob": "**/*",
