@@ -325,6 +325,50 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.hideCompleted = this.viewConfig.filters['hideCompleted'] === true;
     }
 
+    private _menuTimeout: any;
+    private _lastTrigger: any;
+
+    setViewType(type: 'table' | 'cards'): void {
+        this.viewConfig.viewType = type;
+        this.configService.updateViewType(type);
+        this.processTasks();
+        this._cdr.detectChanges();
+    }
+
+    /**
+     * Abre el menú y cancela cualquier cierre pendiente
+     */
+    openMenu(trigger?: any): void {
+        if (trigger) {
+            this._lastTrigger = trigger;
+        }
+
+        if (this._menuTimeout) {
+            clearTimeout(this._menuTimeout);
+            this._menuTimeout = null;
+        }
+
+        if (trigger) {
+            trigger.openMenu();
+        }
+    }
+
+    /**
+     * Cierra el menú con un pequeño retraso para evitar parpadeos
+     */
+    closeMenu(trigger?: any): void {
+        const tg = trigger || this._lastTrigger;
+        if (!tg) return;
+        
+        if (this._menuTimeout) {
+            clearTimeout(this._menuTimeout);
+        }
+
+        this._menuTimeout = setTimeout(() => {
+            tg.closeMenu();
+        }, 200);
+    }
+
     loadTasks(): void {
         this.taskService.getTasks(Number(this.user.id)).subscribe({
             next: (tasks) => {
@@ -1007,6 +1051,34 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         const user = this.getUserData(userId);
         if (!user) return '#cbd5e0';
         return this.userColors[user.nombreUsuario || user.nombre] || '#64748b';
+    }
+
+    getTaskReadStatus(task: Task, userId: number): 'read' | 'unread' | 'none' {
+        if (task.usuariosLeidos?.includes(userId)) return 'read';
+        if (task.usuariosNoLeidos?.includes(userId)) return 'unread';
+        return 'none';
+    }
+
+    getTaskStatusIcon(status: 'read' | 'unread' | 'none'): string {
+        if (status === 'read') return 'heroicons_mini:check-circle';
+        if (status === 'unread') return 'heroicons_mini:x-circle';
+        return '';
+    }
+
+    getTaskStatusColor(status: 'read' | 'unread' | 'none'): string {
+        if (status === 'read') return '#22c55e'; // green-500
+        if (status === 'unread') return '#ef4444'; // red-500
+        return 'transparent';
+    }
+
+    getAllUsersNames(task: Task): string {
+        if (!task.usuarioIds || task.usuarioIds.length === 0) return 'Nadie asignado';
+        return task.usuarioIds.map(uid => {
+            const name = this.getUserFullName(uid);
+            const status = this.getTaskReadStatus(task, uid);
+            const statusText = status === 'read' ? ' (Leído)' : (status === 'unread' ? ' (No leído)' : '');
+            return `${name}${statusText}`;
+        }).join('\n');
     }
 
 

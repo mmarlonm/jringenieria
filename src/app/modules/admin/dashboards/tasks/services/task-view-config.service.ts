@@ -9,6 +9,7 @@ export interface TaskViewConfig {
     columnWidths: Record<string, string>;
     groupTaskOrder: Record<string, number[]>; // NEW: Task order persistence per group
     groupColumnWidths: Record<string, Record<string, string>>; // NEW: Column width persistence per group
+    viewType?: 'table' | 'cards'; // NEW: View mode persistence
 }
 
 @Injectable({
@@ -38,7 +39,8 @@ export class TaskViewConfigService {
             'acciones': '100px'
         },
         groupTaskOrder: {},
-        groupColumnWidths: {}
+        groupColumnWidths: {},
+        viewType: 'table'
     };
 
     constructor() { }
@@ -102,6 +104,12 @@ export class TaskViewConfigService {
         const config = this.getConfig();
         if (!config.groupTaskOrder) config.groupTaskOrder = {};
         config.groupTaskOrder[groupKey] = taskIds;
+        this.saveConfig(config);
+    }
+
+    updateViewType(viewType: 'table' | 'cards'): void {
+        const config = this.getConfig();
+        config.viewType = viewType;
         this.saveConfig(config);
     }
 

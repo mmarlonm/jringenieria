@@ -232,6 +232,32 @@ td.mat-column-responsable {
     }
 }
 
+/* Badge de estado de lectura en avatares */
+.relative.group\/avatar {
+    margin-right: -4px; // Ajuste para un apilamiento menos denso (-space-x-1 de Tailwind)
+    
+    &:last-child {
+        margin-right: 0;
+    }
+
+    .absolute {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        border: 1px solid #fff;
+        pointer-events: none; 
+    }
+
+    // Asegurar que el icono esté perfectamente centrado y sea proporcional al badge
+    mat-icon {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+    }
+}
+
 .group-container {
     transition: all 0.2s ease-in-out;
 
@@ -641,5 +667,96 @@ td.mat-column-responsable {
     100% {
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
         transform: scale(1);
+    }
+}
+/* Permitir saltos de l�nea en MatTooltips para ver la lista de asignados */
+::ng-deep .mat-mdc-tooltip .mdc-tooltip__surface {
+    white-space: pre-line !important;
+    text-align: left !important;
+    font-size: 11px !important;
+    padding: 8px 12px !important;
+    line-height: 1.4 !important;
+}
+
+/* ==========================================================================
+   SCROLLBAR PERSONALIZADO (MÁS ANCHO PARA MOBILE/TOUCH)
+   ========================================================================== */
+::ng-deep .overflow-y-auto,
+::ng-deep .overflow-x-auto,
+::ng-deep table.mat-table {
+    &::-webkit-scrollbar {
+        width: 14px !important;
+        height: 14px !important;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f1f5f9 !important;
+        border-radius: 10px !important;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1 !important;
+        border-radius: 10px !important;
+        border: 3px solid #f1f5f9 !important;
+
+        &:hover {
+            background: #94a3b8 !important;
+        }
+    }
+}
+
+/* ==========================================================================
+   ESTILOS DE CARDS (VISTA TARJETAS)
+   ========================================================================== */
+.group-card {
+    min-height: 180px;
+    height: 100%;
+    
+    &:hover {
+        transform: translateY(-2px);
+        background-color: #fafafa;
+        
+        .text-main {
+            color: var(--fuse-primary) !important;
+        }
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.grid {
+    display: grid;
+    width: 100%;
+}
+
+/* ==========================================================================
+   RICH TOOLTIP MENU (POPOVER)
+   ========================================================================== */
+::ng-deep .rich-tooltip-menu {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    background: #fff !important;
+    
+    .mat-mdc-menu-content {
+        padding: 0 !important;
+    }
+}
+
+.group\/user {
+    transition: background-color 0.15s ease-in-out;
+    padding: 4px;
+    border-radius: 8px;
+    
+    &:hover {
+        background-color: rgba(241, 245, 249, 0.5);
     }
 }

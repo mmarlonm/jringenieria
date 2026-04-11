@@ -17,6 +17,8 @@ export interface Task {
   empresa: string;
   ubicacion: string;
   cuadranteId?: number | null;
+  usuariosLeidos?: number[];    // IDs de usuarios que han leído la tarea
+  usuariosNoLeidos?: number[];  // IDs de usuarios que NO han leído la tarea
 }
 
 export interface TareaComentario {
