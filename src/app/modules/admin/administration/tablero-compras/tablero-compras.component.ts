@@ -59,6 +59,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         'folioProyecto',
         'prioridad',
         'proveedorSugerido',
+        'banco',
+        'cuenta',
+        'clabe',
         'datosBancarios',
         'fechaRequerida',
         'lugarEntrega',
@@ -109,6 +112,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         cuadranteId: '',
         monto: '',
         tipoCompra: '',
+        banco: '',
+        cuenta: '',
+        clabe: '',
         datosBancariosProveedor: '',
         lugarEntrega: '',
         comentariosObservaciones: ''
@@ -418,6 +424,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 const passCuadrante = !adv.cuadranteId || this.getCuadranteName(data.cuadranteId) === adv.cuadranteId;
                 const passMonto = !adv.monto || String(data.monto).toLowerCase().includes(adv.monto.toLowerCase());
                 const passTipo = !adv.tipoCompra || data.tipoCompra === adv.tipoCompra;
+                const passBanco = !adv.banco || (data.banco || '').toLowerCase().includes(adv.banco.toLowerCase());
+                const passCuenta = !adv.cuenta || (data.cuenta || '').toLowerCase().includes(adv.cuenta.toLowerCase());
+                const passClabe = !adv.clabe || (data.clabe || '').toLowerCase().includes(adv.clabe.toLowerCase());
                 const passBancos = !adv.datosBancariosProveedor || (data.datosBancariosProveedor || '').toLowerCase().includes(adv.datosBancariosProveedor.toLowerCase());
                 const passLugar = !adv.lugarEntrega || (data.lugarEntrega || '').toLowerCase().includes(adv.lugarEntrega.toLowerCase());
                 const passComentarios = !adv.comentariosObservaciones || (data.comentariosObservaciones || '').toLowerCase().includes(adv.comentariosObservaciones.toLowerCase());
@@ -426,7 +435,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                        passIdSolicitud && passFolioOC && passFechaSol && passFechaReq && passSucursal && passArea && 
                        passSolicitante && passProyecto && passFolioProj && passPrioridad && passProveedor && 
                        passMoneda && passCentroCosto && passEstatus && passPago && passCuadrante &&
-                       passMonto && passTipo && passBancos && passLugar && passComentarios;
+                       passMonto && passTipo && passBanco && passCuenta && passClabe && passBancos && passLugar && passComentarios;
             } catch (e) {
                 return true;
             }
@@ -588,6 +597,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             'Folio Proyecto',
             'Prioridad',
             'Proveedor Sugerido',
+            'Banco',
+            'Cuenta',
+            'CLABE',
             'Fecha Requerida',
             'Lugar Entrega',
             'Moneda',
@@ -616,6 +628,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             cleanText(s.folioProyecto),
             cleanText(s.prioridad),
             cleanText(s.proveedorSugerido),
+            cleanText(s.banco),
+            cleanText(s.cuenta),
+            cleanText(s.clabe),
             s.fechaRequerida ? new Date(s.fechaRequerida).toLocaleDateString() : '',
             cleanText(s.lugarEntrega),
             cleanText(s.moneda),
@@ -665,6 +680,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             cuadranteId: '',
             monto: '',
             tipoCompra: '',
+            banco: '',
+            cuenta: '',
+            clabe: '',
             datosBancariosProveedor: '',
             lugarEntrega: '',
             comentariosObservaciones: ''

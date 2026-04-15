@@ -462,6 +462,69 @@
                         <td mat-cell *matCellDef="let s">{{ s.proveedorSugerido }}</td>
                     </ng-container>
 
+                    <!-- Banco -->
+                    <ng-container matColumnDef="banco">
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Banco</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuBanco" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.banco}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuBanco="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Banco</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.banco" (keyup)="onFilterChange()" placeholder="Nombre del banco...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
+                        <td mat-cell *matCellDef="let s">{{ s.banco }}</td>
+                    </ng-container>
+
+                    <!-- Cuenta -->
+                    <ng-container matColumnDef="cuenta">
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>Cuenta</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuCuenta" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.cuenta}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuCuenta="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar Cuenta</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.cuenta" (keyup)="onFilterChange()" placeholder="Número de cuenta...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
+                        <td mat-cell *matCellDef="let s">{{ s.cuenta }}</td>
+                    </ng-container>
+
+                    <!-- CLABE -->
+                    <ng-container matColumnDef="clabe">
+                        <th mat-header-cell *matHeaderCellDef>
+                            <div class="flex items-center gap-2">
+                                <span mat-sort-header>CLABE</span>
+                                <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuClabe" (click)="$event.stopPropagation()">
+                                    <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.clabe}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
+                                </button>
+                                <mat-menu #filterMenuClabe="matMenu" class="p-4 !min-w-64">
+                                    <div (click)="$event.stopPropagation()">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar CLABE</mat-label>
+                                            <input matInput [(ngModel)]="filterValues.clabe" (keyup)="onFilterChange()" placeholder="CLABE interbancaria...">
+                                        </mat-form-field>
+                                    </div>
+                                </mat-menu>
+                            </div>
+                        </th>
+                        <td mat-cell *matCellDef="let s">{{ s.clabe }}</td>
+                    </ng-container>
+
                     <!-- Datos bancarios proveedor -->
                     <ng-container matColumnDef="datosBancarios">
                         <th mat-header-cell *matHeaderCellDef>

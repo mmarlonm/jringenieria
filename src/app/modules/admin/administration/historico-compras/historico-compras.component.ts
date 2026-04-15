@@ -59,6 +59,9 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         'folioProyecto',
         'prioridad',
         'proveedorSugerido',
+        'banco',
+        'cuenta',
+        'clabe',
         'datosBancarios',
         'fechaRequerida',
         'lugarEntrega',
@@ -193,7 +196,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             try {
                 const filterObj = JSON.parse(filter);
                 const searchStr = (filterObj.search || '').toLowerCase();
-                const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.centroCosto} ${data.nombreEstatus}`.toLowerCase();
+                const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.centroCosto} ${data.nombreEstatus} ${data.banco || ''} ${data.cuenta || ''} ${data.clabe || ''}`.toLowerCase();
                 
                 const passSearch = dataStr.includes(searchStr);
                 const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
@@ -291,7 +294,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         const solicitudes = this.dataSource.filteredData;
         if (!solicitudes || solicitudes.length === 0) return;
 
-        const headers = ['Folio', 'Folio OC', 'Fecha', 'Sucursal', 'Área', 'Solicitante', 'Proyecto', 'Prioridad', 'Monto', 'Centro Costo', 'Estatus'];
+        const headers = ['Folio', 'Folio OC', 'Fecha', 'Sucursal', 'Área', 'Solicitante', 'Proyecto', 'Prioridad', 'Proveedor', 'Banco', 'Cuenta', 'CLABE', 'Monto', 'Centro Costo', 'Estatus'];
         const cleanText = (text: any) => `"${String(text || '').replace(/"/g, '""')}"`;
 
         const rows = solicitudes.map(s => [
@@ -303,6 +306,10 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             cleanText(this.getUserLabel(s.idPersonaSolicitante)),
             cleanText(s.proyectoCliente),
             cleanText(s.prioridad),
+            cleanText(s.proveedorSugerido),
+            cleanText(s.banco),
+            cleanText(s.cuenta),
+            cleanText(s.clabe),
             s.monto || 0,
             cleanText(s.centroCosto),
             cleanText(this.getStatusName(s.idEstatus))

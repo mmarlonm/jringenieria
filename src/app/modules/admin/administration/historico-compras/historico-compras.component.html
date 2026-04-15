@@ -229,6 +229,21 @@
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor sugerido</th>
                         <td mat-cell *matCellDef="let s">{{ s.proveedorSugerido }}</td>
                     </ng-container>
+                    
+                    <ng-container matColumnDef="banco">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Banco</th>
+                        <td mat-cell *matCellDef="let s">{{ s.banco }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="cuenta">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Cuenta</th>
+                        <td mat-cell *matCellDef="let s">{{ s.cuenta }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="clabe">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>CLABE</th>
+                        <td mat-cell *matCellDef="let s">{{ s.clabe }}</td>
+                    </ng-container>
 
                     <ng-container matColumnDef="datosBancarios">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Datos bancarios</th>
