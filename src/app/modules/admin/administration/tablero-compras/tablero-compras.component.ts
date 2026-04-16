@@ -237,28 +237,110 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
         if (idEstatus === 5 || estatusNuevo?.nombreEstatus.toLowerCase().includes('orden')) {
             Swal.fire({
-                title: 'Orden de Compra',
-                text: 'Por favor, ingresa el Folio de la Orden de Compra:',
-                input: 'text',
-                inputAttributes: {
-                    autocapitalize: 'off',
-                    required: 'true'
-                },
+                title: '',
+                html: `
+                    <div class="swal-custom-container p-2">
+                        <div class="flex items-center gap-4 mb-8 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden">
+                           <!-- Decorative background element -->
+                           <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
+                           
+                           <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                           </div>
+                           <div class="text-left">
+                               <h4 class="text-lg font-extrabold text-gray-900 tracking-tight leading-tight">Generar Orden de Compra</h4>
+                               <p class="text-xs font-medium text-gray-500 mt-0.5">Asigna el folio oficial de Contpac para proceder</p>
+                           </div>
+                        </div>
+
+                        <div class="space-y-6 text-left">
+                            <div class="group">
+                                <label for="swal-input-folio" class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Folio Contpac / OC <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300 group-focus-within:text-blue-500 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A1 1 0 0111 2.586V4a1 1 0 001 1h1.586A1 1 0 0115 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <input id="swal-input-folio" 
+                                           class="block w-full pl-11 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm font-semibold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all duration-300" 
+                                           placeholder="Ej: BC-123456" 
+                                           type="text">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Archivo OD / Soporte <span class="text-gray-300 font-normal">(Opcional)</span></label>
+                                <div class="drop-zone relative flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50 hover:bg-white hover:border-blue-400 transition-all duration-300 cursor-pointer p-8 group/drop" 
+                                     onclick="document.getElementById('swal-input-file').click()">
+                                    <div class="flex-shrink-0 mb-3 w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover/drop:bg-blue-50 group-hover/drop:text-blue-500 transition-all duration-300">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-sm font-bold text-gray-700">Selecciona o arrastra el archivo</p>
+                                        <p class="text-[10px] text-gray-400 mt-1 font-medium">PDF, JPG, PNG o DOCX (Máx. 10MB)</p>
+                                    </div>
+                                    <input id="swal-input-file" class="hidden" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                    
+                                    <div id="file-preview" class="hidden mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-3 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div class="flex-shrink-0 w-8 h-8 bg-emerald-500 text-white rounded-lg flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-auto min-w-0">
+                                            <p id="file-name" class="text-xs font-bold text-emerald-800 truncate">archivo_seleccionado.pdf</p>
+                                            <p class="text-[9px] text-emerald-600 font-bold uppercase mt-0.5 tracking-tighter">Archivo listo para subir</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
                 showCancelButton: true,
-                confirmButtonText: 'Guardar Estatus',
+                confirmButtonText: 'Generar Orden de Compra',
                 cancelButtonText: 'Cancelar',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-[32px] p-6 shadow-2xl border-0',
+                    confirmButton: 'inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-blue-200 mt-4 mx-2 basis-1/2',
+                    cancelButton: 'inline-flex items-center justify-center px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-2xl transition-all duration-300 mt-4 mx-2 basis-1/2'
+                },
                 showLoaderOnConfirm: true,
-                preConfirm: (folio) => {
+                preConfirm: () => {
+                    const folio = (document.getElementById('swal-input-folio') as HTMLInputElement).value;
+                    const file = (document.getElementById('swal-input-file') as HTMLInputElement).files?.[0];
                     if (!folio) {
-                        Swal.showValidationMessage('El Folio OC es requerido para este estatus');
+                        Swal.showValidationMessage('El Folio OC es requerido');
                         return false;
                     }
-                    return folio;
+                    return { folio, file };
+                },
+                didOpen: () => {
+                    const fileInput = document.getElementById('swal-input-file') as HTMLInputElement;
+                    const fileNameSpan = document.getElementById('file-name');
+                    const filePreview = document.getElementById('file-preview');
+                    const dropZone = document.querySelector('.drop-zone');
+
+                    fileInput.onchange = (e: any) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            fileNameSpan.textContent = file.name;
+                            filePreview.classList.remove('hidden');
+                            dropZone.classList.add('border-emerald-400', 'bg-emerald-50/10');
+                            dropZone.classList.remove('border-gray-200');
+                        }
+                    };
                 },
                 allowOutsideClick: () => !Swal.isLoading()
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
-                    this._ejecutarCambioEstatus(id, idEstatus, result.value);
+                    this._ejecutarCambioEstatus(id, idEstatus, result.value.folio, result.value.file);
                 }
             });
         } else {
@@ -269,7 +351,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 showCancelButton: true,
                 confirmButtonText: 'Sí, cambiar',
                 cancelButtonText: 'Cancelar',
-                reverseButtons: true
+                reverseButtons: true,
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                    confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-primary hover:bg-primary-600 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2',
+                    cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     this._ejecutarCambioEstatus(id, idEstatus);
@@ -278,7 +366,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         }
     }
 
-    private _ejecutarCambioEstatus(id: number, idEstatus: number, folioOc?: string): void {
+    private _ejecutarCambioEstatus(id: number, idEstatus: number, folioOc?: string, archivo?: File): void {
         const userObjStr = localStorage.getItem('userInformation');
         let idUsuario = 0;
         if (userObjStr) {
@@ -293,14 +381,40 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         this._solicitudCompraService.actualizarEstatus(id, idEstatus, folioOc, idUsuario)
             .subscribe({
                 next: () => {
-                    Swal.fire({
-                        title: '¡Éxito!',
-                        text: 'Estatus actualizado correctamente',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    this._solicitudCompraService.getTodas().subscribe();
+                    if (archivo) {
+                        this._solicitudCompraService.subirArchivo(id, archivo)
+                            .subscribe({
+                                next: () => {
+                                    Swal.fire({
+                                        title: '¡Éxito!',
+                                        text: 'Estatus y archivo actualizados correctamente',
+                                        icon: 'success',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    });
+                                    this._solicitudCompraService.getTodas().subscribe();
+                                },
+                                error: (err) => {
+                                    console.error('Error al subir archivo:', err);
+                                    Swal.fire({
+                                        title: 'Estatus actualizado',
+                                        text: 'El estatus se actualizó, pero hubo un error al subir el archivo.',
+                                        icon: 'warning',
+                                        confirmButtonText: 'Entendido'
+                                    });
+                                    this._solicitudCompraService.getTodas().subscribe();
+                                }
+                            });
+                    } else {
+                        Swal.fire({
+                            title: '¡Éxito!',
+                            text: 'Estatus actualizado correctamente',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this._solicitudCompraService.getTodas().subscribe();
+                    }
                 },
                 error: (error) => {
                     console.error('Error al actualizar estatus:', error);

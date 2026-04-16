@@ -309,20 +309,22 @@
                                 Subir Nuevo Archivo
                             </button>
                             <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)"
-                                accept=".pdf,.doc,.docx,.jpg,.png">
+                                multiple accept=".pdf,.doc,.docx,.jpg,.png">
                         </div>
 
-                        <!-- Selected File (Pending Upload) -->
-                        <div *ngIf="selectedFile"
-                            class="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-lg mb-4 animate-in fade-in slide-in-from-top-2">
-                            <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
-                            <div class="flex flex-col flex-1">
-                                <span class="text-sm font-bold text-primary-900">{{ selectedFile.name }}</span>
-                                <span class="text-xs text-primary-600">Pendiente de guardar</span>
+                        <!-- Selected Files (Pending Upload) -->
+                        <div *ngIf="selectedFiles.length > 0" class="flex flex-col gap-2 mb-4">
+                            <div *ngFor="let file of selectedFiles; let i = index"
+                                class="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-lg animate-in fade-in slide-in-from-top-2">
+                                <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                <div class="flex flex-col flex-1">
+                                    <span class="text-sm font-bold text-primary-900">{{ file.name }}</span>
+                                    <span class="text-xs text-primary-600">Pendiente de guardar</span>
+                                </div>
+                                <button mat-icon-button color="warn" (click)="removeSelectedFile(i)">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                                </button>
                             </div>
-                            <button mat-icon-button color="warn" (click)="selectedFile = null; fileInput.value = ''">
-                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
-                            </button>
                         </div>
 
                         <!-- Existing Files -->
@@ -353,7 +355,7 @@
                             </div>
                         </div>
 
-                        <div *ngIf="archivos.length === 0 && !selectedFile"
+                        <div *ngIf="archivos.length === 0 && selectedFiles.length === 0"
                             class="p-6 text-center border-2 border-dashed rounded-xl text-gray-400 bg-white">
                             <mat-icon class="icon-size-10 mb-2 opacity-30"
                                 [svgIcon]="'heroicons_outline:document-plus'"></mat-icon>

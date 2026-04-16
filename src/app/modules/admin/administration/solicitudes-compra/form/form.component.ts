@@ -16,7 +16,7 @@ import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto } from '../models/solicitud-compra.types';
-import { catchError, debounceTime, distinctUntilChanged, filter, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
 
@@ -46,7 +46,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     solicitudForm: FormGroup;
     isEdit: boolean = false;
     solicitudId: number;
-    selectedFile: File | null = null;
+    selectedFiles: File[] = [];
     archivos: any[] = [];
     filteredProducts$: Observable<ProductoBuscadorDto[]>[] = [];
     proyectos: any[] = [];
@@ -540,10 +540,16 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     onFileSelected(event: any): void {
-        const file = event.target.files[0];
-        if (file) {
-            this.selectedFile = file;
+        const files = event.target.files;
+        if (files) {
+            this.selectedFiles.push(...Array.from(files) as File[]);
+            // Reset input to allow selecting the same file again if removed
+            event.target.value = '';
         }
+    }
+
+    removeSelectedFile(index: number): void {
+        this.selectedFiles.splice(index, 1);
     }
 
     save(): void {
@@ -561,10 +567,18 @@ export class SolicitudCompraFormComponent implements OnInit {
 
         if (this.isEdit) {
             this._solicitudCompraService.actualizar(data).subscribe(() => {
-                if (this.selectedFile) {
-                    this._solicitudCompraService.subirArchivo(this.solicitudId, this.selectedFile).subscribe(() => {
-                        this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente con nuevo archivo');
-                        this._router.navigate(['../../'], { relativeTo: this._route });
+                if (this.selectedFiles.length > 0) {
+                    const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(this.solicitudId, file));
+                    forkJoin(uploads).subscribe({
+                        next: () => {
+                            this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente con nuevos archivos');
+                            this._router.navigate(['../../'], { relativeTo: this._route });
+                        },
+                        error: (err) => {
+                            console.error('Error uploading files:', err);
+                            this._chatNotificationService.showError('Error', 'La solicitud se guardó pero hubo un error al subir algunos archivos');
+                            this._router.navigate(['../../'], { relativeTo: this._route });
+                        }
                     });
                 } else {
                     this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente');
@@ -575,10 +589,18 @@ export class SolicitudCompraFormComponent implements OnInit {
             this._solicitudCompraService.crear(data).subscribe((response) => {
                 const newId = response.idSolicitud || response.id;
 
-                if (this.selectedFile && newId) {
-                    this._solicitudCompraService.subirArchivo(newId, this.selectedFile).subscribe(() => {
-                        this._chatNotificationService.showSuccess('Éxito', 'Solicitud y archivo guardados correctamente');
-                        this._router.navigate(['../'], { relativeTo: this._route });
+                if (this.selectedFiles.length > 0 && newId) {
+                    const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(newId, file));
+                    forkJoin(uploads).subscribe({
+                        next: () => {
+                            this._chatNotificationService.showSuccess('Éxito', 'Solicitud y archivos guardados correctamente');
+                            this._router.navigate(['../'], { relativeTo: this._route });
+                        },
+                        error: (err) => {
+                            console.error('Error uploading files:', err);
+                            this._chatNotificationService.showError('Error', 'La solicitud se creó pero hubo un error al subir algunos archivos');
+                            this._router.navigate(['../'], { relativeTo: this._route });
+                        }
                     });
                 } else {
                     this._chatNotificationService.showSuccess('Éxito', 'Solicitud de compra guardada correctamente');
