@@ -5,9 +5,21 @@ cierre-terminal-list {
 
     table {
         background: transparent !important;
-        
+        border-collapse: separate; // Often needed for sticky headers to work perfectly with certain borders
+
         .mat-header-cell {
             background: #F8FAFC !important;
+            z-index: 100 !important;
+        }
+
+        .mat-column-acciones {
+            &.mat-header-cell, &.mat-cell {
+                background: white !important;
+            }
+            &.mat-header-cell {
+                background: #F8FAFC !important;
+                z-index: 101 !important; // Higher z-index for the corner where sticky header and sticky column meet
+            }
         }
 
         .mat-row {
