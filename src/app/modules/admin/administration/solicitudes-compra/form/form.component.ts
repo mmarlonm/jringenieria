@@ -60,7 +60,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     centrosCosto = ['Proyecto específico', 'Operación sucursal', 'Administración'];
     areas = ['Proyectos', 'Almacén', 'Ventas', 'Administración', 'Marketing', 'RH'];
     formasPago = ['CONTADO (PUE)', 'CREDITO (PPD)'];
-    razonesSociales = ['Jesus Ricardo Mendez', 'JR Ingenieria Electrica'];
+    razonesSociales = ['Jesus Ricardo Mendez Arrillaga', 'JR Ingenieria Electrica'];
     cuadrantes = [
         { id: 1, nombre: 'Hacer (Urg. / Imp.)' },
         { id: 2, nombre: 'Planificar (No Urg. / Imp.)' },
