@@ -159,38 +159,13 @@
                             </h3>
 
                             <div class="grid grid-cols-1 gap-4 w-full">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <mat-form-field appearance="fill" class="w-full">
-                                        <mat-label>Moneda</mat-label>
-                                        <mat-select formControlName="moneda">
-                                            <mat-option value="MXN">MXN</mat-option>
-                                            <mat-option value="USD">USD</mat-option>
-                                        </mat-select>
-                                    </mat-form-field>
-
-                                    <mat-form-field appearance="fill" class="w-full">
-                                        <mat-label>Monto Total (Final)</mat-label>
-                                        <input matInput type="number" formControlName="monto">
-                                        <mat-icon matPrefix class="icon-size-5 text-primary opacity-50 mr-2" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
-                                        <mat-error *ngIf="solicitudForm.get('monto')?.hasError('required')">Requerido</mat-error>
-                                        <mat-error *ngIf="solicitudForm.get('monto')?.hasError('min')">Mínimo 0.01</mat-error>
-                                    </mat-form-field>
-                                </div>
-
-                                <div class="px-2 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <div class="flex justify-between text-[11px] text-secondary mb-1">
-                                        <span>Total Piezas:</span>
-                                        <span class="font-bold">{{ solicitudForm.get('totalPiezas').value | number }}</span>
-                                    </div>
-                                    <div class="flex justify-between text-[11px] text-secondary mb-1">
-                                        <span>Subtotal:</span>
-                                        <span class="font-bold">{{ solicitudForm.get('subtotal').value | currency:solicitudForm.get('moneda').value }}</span>
-                                    </div>
-                                    <div class="flex justify-between text-[11px] text-secondary">
-                                        <span>IVA (16%):</span>
-                                        <span class="font-bold">{{ solicitudForm.get('iva').value | currency:solicitudForm.get('moneda').value }}</span>
-                                    </div>
-                                </div>
+                                <mat-form-field appearance="fill" class="w-full">
+                                    <mat-label>Moneda</mat-label>
+                                    <mat-select formControlName="moneda">
+                                        <mat-option value="MXN">MXN</mat-option>
+                                        <mat-option value="USD">USD</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
                             </div>
 
                             <mat-form-field appearance="fill" class="w-full">
@@ -368,7 +343,7 @@
 
         <!-- TAB 2: Detalle de materiales -->
         <mat-tab label="Detalle de materiales">
-            <div class="p-4">
+            <div class="flex flex-col flex-auto p-4 overflow-hidden h-full">
                 <div class="flex items-center justify-between mb-4 mt-2">
                     <h3 class="text-lg font-bold">PRODUCTOS SOLICITADOS</h3>
                     <button mat-raised-button color="primary" (click)="addDetalle()">
@@ -377,17 +352,18 @@
                     </button>
                 </div>
 
-                <div class="overflow-x-auto border rounded-xl shadow-sm bg-white dark:bg-slate-900">
+                <div *ngIf="detalles.length > 0" class="flex-auto overflow-y-auto overflow-x-auto border rounded-xl shadow-sm bg-white dark:bg-slate-900 min-h-0">
                                 <table class="w-full text-left border-collapse min-w-[1100px]">
                                     <thead>
-                                        <tr class="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-secondary">
+                                        <tr class="bg-gray-50 dark:bg-gray-800 text-[11px] uppercase tracking-wider text-secondary">
                                             <th class="p-3 border w-12 text-center">#</th>
                                             <th class="p-3 border min-w-[200px]">Material / Servicio</th>
                                             <th class="p-3 border min-w-[250px]">Descripción / Especificación</th>
-                                            <th class="p-3 border w-24 text-center">Cantidad</th>
-                                            <th class="p-3 border w-32 text-center">Monto</th>
-                                            <th class="p-3 border w-36 text-center">Total Partida</th>
                                             <th class="p-3 border w-24 text-center">Unidad</th>
+                                            <th class="p-3 border w-24 text-center">Cantidad</th>
+                                            <th class="p-3 border w-32 text-center">Costo Unitario</th>
+                                            <th class="p-3 border w-36 text-center">IVA (16%)</th>
+                                            <th class="p-3 border w-36 text-center">Total</th>
                                             <th class="p-3 border min-w-[150px]">Observaciones</th>
                                             <th class="p-3 border w-16 text-center">Acciones</th>
                                         </tr>
@@ -399,12 +375,14 @@
                                     <td class="p-2 border text-center font-bold">
                                         {{ d.get('partida').value }}
                                     </td>
+                                    
+                                    <!-- Material / Servicio -->
                                     <td class="p-2 border relative group/search">
                                         <div class="flex items-center">
                                             <input
-                                                class="w-full p-1 bg-transparent border-none outline-none text-sm placeholder:text-gray-300"
+                                                class="w-full p-1 bg-transparent border-none outline-none text-sm placeholder:text-gray-300 font-medium"
                                                 formControlName="materialServicio" [matAutocomplete]="auto"
-                                                placeholder="Buscar producto o escribir manual..."
+                                                placeholder="Buscar producto..."
                                                 (paste)="onPasteMaterials($event, i, 'materialServicio')">
                                             <mat-icon
                                                 class="icon-size-4 text-gray-400 group-hover/search:text-primary transition-colors"
@@ -415,7 +393,6 @@
                                             class="min-w-100" (optionSelected)="onProductSelected($event, i)">
                                             
                                             <ng-container *ngIf="(filteredProducts$[i] | async) as products">
-                                                <!-- Results from catalog with CONTPAQi Stocks -->
                                                 <mat-option *ngFor="let product of products"
                                                    [value]="product"
                                                    class="h-auto py-3 border-b last:border-0 border-gray-100">
@@ -430,7 +407,6 @@
                                                                {{ product.unidadMedida }}
                                                            </span>
                                                        </div>
-                                                       
                                                        <div class="flex items-center gap-2">
                                                            <div class="w-1.5 h-1.5 rounded-full"
                                                                [ngClass]="(product.existencia || 0) > 0 ? 'bg-emerald-500' : 'bg-rose-500'">
@@ -438,13 +414,11 @@
                                                            <span class="text-[10px] text-gray-500 italic">
                                                                Existencia: <span class="font-bold" [ngClass]="(product.existencia || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'">
                                                                    {{ product.existencia || 0 }}
-                                                               </span> unidades en Almacén <span class="uppercase font-semibold">{{ product.almacen || 'Desconocido' }}</span>
+                                                               </span> unidades
                                                            </span>
                                                        </div>
                                                    </div>
                                                 </mat-option>
-
-                                                <!-- Manual entry hint -->
                                                 <mat-option
                                                     *ngIf="d.get('materialServicio').value?.length >= 2 && products.length === 0"
                                                     disabled class="h-auto py-3">
@@ -458,43 +432,66 @@
                                             </ng-container>
                                         </mat-autocomplete>
                                     </td>
+
+                                    <!-- Descripción -->
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none"
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-xs"
                                             formControlName="descripcionEspecificacion" placeholder="Detalles..."
                                             (paste)="onPasteMaterials($event, i, 'descripcionEspecificacion')">
                                     </td>
-                                    <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center"
-                                            type="number" formControlName="cantidad"
-                                            (paste)="onPasteMaterials($event, i, 'cantidad')">
-                                    </td>
-                                    <td class="p-2 border">
-                                        <input
-                                            class="w-full p-1 bg-transparent border-none outline-none text-right font-bold text-primary"
-                                            type="number" formControlName="monto" placeholder="0.00"
-                                            (paste)="onPasteMaterials($event, i, 'monto')">
-                                    </td>
-                                    <td class="p-2 border">
-                                        <div class="w-full p-1 text-right font-black text-primary opacity-60">
-                                            {{ (detalles.at(i).get('cantidad').value * detalles.at(i).get('monto').value) | number:'1.2-2' }}
-                                        </div>
-                                    </td>
+
+                                    <!-- Unidad -->
                                     <td class="p-2 border">
                                         <select
-                                            class="w-full p-1 bg-transparent border-none outline-none text-center cursor-pointer text-sm"
+                                            class="w-full p-1 bg-transparent border-none outline-none text-center cursor-pointer text-sm font-semibold"
                                             formControlName="unidad">
                                             <option value="" disabled>--</option>
                                             <option value="PZA">PZA</option>
                                             <option value="CAJA">CAJA</option>
                                             <option value="METRO">METRO</option>
                                             <option value="KILO">KILO</option>
+                                            <option value="SERVICIO">SERVICIO</option>
+                                            <option value="LOTE">LOTE</option>
                                         </select>
                                     </td>
+
+                                    <!-- Cantidad -->
                                     <td class="p-2 border">
-                                        <input class="w-full p-1 bg-transparent border-none outline-none"
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-center font-bold"
+                                            type="number" formControlName="cantidad"
+                                            (paste)="onPasteMaterials($event, i, 'cantidad')">
+                                    </td>
+                                    
+                                    <!-- Costo Unitario -->
+                                    <td class="p-2 border">
+                                        <input
+                                            class="w-full p-1 bg-transparent border-none outline-none text-right font-bold text-primary"
+                                            type="number" formControlName="monto" placeholder="0.00"
+                                            (paste)="onPasteMaterials($event, i, 'monto')">
+                                    </td>
+
+                                    <!-- IVA -->
+                                    <td class="p-2 border">
+                                        <div class="w-full p-1 text-right font-medium text-slate-500">
+                                            {{ (d.get('cantidad').value * d.get('monto').value * 0.16) | number:'1.2-2' }}
+                                        </div>
+                                    </td>
+
+                                    <!-- Total -->
+                                    <td class="p-2 border font-black text-primary bg-gray-50/30">
+                                        <div class="w-full p-1 text-right">
+                                            {{ (d.get('cantidad').value * d.get('monto').value * 1.16) | number:'1.2-2' }}
+                                        </div>
+                                    </td>
+
+                                    <!-- Observaciones -->
+                                    <td class="p-2 border">
+                                        <input class="w-full p-1 bg-transparent border-none outline-none text-xs"
                                             formControlName="observaciones"
                                             (paste)="onPasteMaterials($event, i, 'observaciones')">
                                     </td>
+
+                                    <!-- Acciones -->
                                     <td class="p-2 border text-center">
                                         <button mat-icon-button color="warn" (click)="removeDetalle(i)"
                                             matTooltip="Eliminar partida">
@@ -508,12 +505,42 @@
                     </table>
                 </div>
 
-                <div *ngIf="detalles.length === 0"
-                    class="p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4">
-                    <mat-icon class="icon-size-12 mb-2 opacity-50"
+                <!-- Totales Summary -->
+                <div *ngIf="detalles.length > 0" class="flex-none flex justify-end mt-6">
+                    <div class="w-full max-w-xs p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-right-4">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+                                <span>Total Piezas</span>
+                                <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('totalPiezas').value | number }}</span>
+                            </div>
+                            <div class="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
+                            <div class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+                                <span>Subtotal</span>
+                                <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('subtotal').value | currency:solicitudForm.get('moneda').value }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+                                <span>IVA (16%)</span>
+                                <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('iva').value | currency:solicitudForm.get('moneda').value }}</span>
+                            </div>
+                            <div class="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
+                            <div class="flex flex-col pt-1" [formGroup]="solicitudForm">
+                                <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Total</span>
+                                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript w-full" appearance="outline">
+                                    <mat-icon matPrefix class="icon-size-5 text-primary opacity-50 mr-2" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                                    <input matInput type="number" formControlName="monto" class="text-xl font-black text-primary leading-none">
+                                    <span matSuffix class="text-xs font-bold text-secondary ml-2 uppercase">{{ solicitudForm.get('moneda').value }}</span>
+                                </mat-form-field>
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="detalles.length === 0"
+                    class="flex-auto flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4 bg-gray-50/30 dark:bg-transparent">
+                    <mat-icon class="icon-size-16 mb-4 opacity-50"
                         [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
-                    <p class="text-xl font-medium">No hay partidas en esta solicitud.</p>
-                    <p class="text-secondary">Usa el botón "Añadir Partida" para comenzar.</p>
+                    <p class="text-2xl font-semibold text-primary">No hay partidas en esta solicitud</p>
+                    <p class="text-secondary text-lg mt-1">Usa el botón superior para añadir tu primer producto o servicio.</p>
                 </div>
             </div>
         </mat-tab>

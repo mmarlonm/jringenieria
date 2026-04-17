@@ -18,3 +18,29 @@
 ::ng-deep .mat-mdc-autocomplete-panel.min-w-100 {
     min-width: 400px !important;
 }
+
+// Sticky Header for Materials Table
+.overflow-y-auto {
+    table {
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            
+            tr {
+                th {
+                    background-color: white !important;
+                    &.bg-gray-50 {
+                        background-color: white !important;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.dark {
+    .overflow-y-auto table thead tr th {
+        background-color: #1e293b !important; // slate-800
+    }
+}

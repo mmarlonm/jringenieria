@@ -175,7 +175,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             iva: [0],
             totalPiezas: [0],
             cuadranteId: [null, Validators.required],
-            detalles: this._formBuilder.array([])
+            detalles: this._formBuilder.array([], Validators.required)
         });
 
         this._setupCalculationListener();
@@ -204,7 +204,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             cantidad: [1, [Validators.required, Validators.min(0.01)]],
             unidad: ['', Validators.required],
             observaciones: [''],
-            monto: [0, [Validators.min(0)]]
+            monto: [0, [Validators.required, Validators.min(0)]],
+            iva: [0]
         });
 
         const index = this.detalles.length;
@@ -329,13 +330,21 @@ export class SolicitudCompraFormComponent implements OnInit {
             let subtotal = 0;
             let totalPiezas = 0;
             
-            (values || []).forEach((curr) => {
+            (values || []).forEach((curr, i) => {
                 const cantidad = parseFloat(curr.cantidad) || 0;
                 const monto = parseFloat(curr.monto) || 0; // Monto is the unit price
                 const subtotalLinea = Number((cantidad * monto).toFixed(4));
+                const ivaLinea = Number((subtotalLinea * 0.16).toFixed(4));
                 
                 subtotal += subtotalLinea;
                 totalPiezas += cantidad;
+
+                // Update row's IVA display if it changed (silent to avoid infinite loop)
+                const currentIva = Number(curr.iva || 0).toFixed(2);
+                const calcIva = ivaLinea.toFixed(2);
+                if (currentIva !== calcIva) {
+                    this.detalles.at(i).patchValue({ iva: ivaLinea }, { emitEvent: false });
+                }
             });
 
             // Redondear para el cálculo del IVA
@@ -483,10 +492,11 @@ export class SolicitudCompraFormComponent implements OnInit {
                     partida: [d.partida],
                     materialServicio: [d.materialServicio],
                     descripcionEspecificacion: [d.descripcionEspecificacion],
-                    cantidad: [d.cantidad],
-                    unidad: [d.unidad],
+                    cantidad: [d.cantidad, [Validators.required, Validators.min(0.01)]],
+                    unidad: [d.unidad, Validators.required],
                     observaciones: [d.observaciones],
-                    monto: [d.monto || 0]
+                    monto: [d.monto || 0, [Validators.required, Validators.min(0.01)]],
+                    iva: [(d.monto || 0) * (d.cantidad || 0) * 0.16]
                 });
                 this.detalles.push(detalleForm);
             });
@@ -553,8 +563,53 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     save(): void {
+        this.solicitudForm.markAllAsTouched();
+        
         if (this.solicitudForm.invalid) {
-            this._chatNotificationService.showWarning('Atención', 'Por favor complete todos los campos requeridos');
+            const invalidFields = [];
+            const controls = this.solicitudForm.controls;
+            
+            // Map technical names to friendly names
+            const fieldNames: any = {
+                sucursal: 'Sucursal',
+                areaSolicitante: 'Área Solicitante',
+                prioridad: 'Prioridad',
+                tipoCompra: 'Tipo de Compra',
+                centroCosto: 'Centro de Costo',
+                moneda: 'Moneda',
+                formaPago: 'Forma de Pago',
+                razonSocial: 'Razón Social',
+                monto: 'Total',
+                cuadranteId: 'Matriz Eisenhower',
+                detalles: 'Partidas (Detalle de materiales)'
+            };
+
+            for (const name in controls) {
+                if (name !== 'detalles' && controls[name].invalid) {
+                    invalidFields.push(fieldNames[name] || name);
+                }
+            }
+
+            // Check details
+            if (this.detalles.length === 0) {
+                 invalidFields.push('Debe agregar al menos una partida en detalle');
+            } else {
+                this.detalles.controls.forEach((group: FormGroup, i) => {
+                    if (group.invalid) {
+                        invalidFields.push(`Error en partida #${i+1}`);
+                    }
+                });
+            }
+
+            const message = `Faltan campos por completar:\n- ${invalidFields.join('\n- ')}`;
+            this._chatNotificationService.showWarning('Atención', message);
+            
+            // Focus first error
+            const firstInvalidControl = document.querySelector('.mat-form-field-invalid');
+            if (firstInvalidControl) {
+                firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
             return;
         }
 
@@ -566,45 +621,59 @@ export class SolicitudCompraFormComponent implements OnInit {
         }
 
         if (this.isEdit) {
-            this._solicitudCompraService.actualizar(data).subscribe(() => {
-                if (this.selectedFiles.length > 0) {
-                    const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(this.solicitudId, file));
-                    forkJoin(uploads).subscribe({
-                        next: () => {
-                            this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente con nuevos archivos');
-                            this._router.navigate(['../../'], { relativeTo: this._route });
-                        },
-                        error: (err) => {
-                            console.error('Error uploading files:', err);
-                            this._chatNotificationService.showError('Error', 'La solicitud se guardó pero hubo un error al subir algunos archivos');
-                            this._router.navigate(['../../'], { relativeTo: this._route });
-                        }
-                    });
-                } else {
-                    this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente');
-                    this._router.navigate(['../../'], { relativeTo: this._route });
+            this._solicitudCompraService.actualizar(data).subscribe({
+                next: () => {
+                    if (this.selectedFiles.length > 0) {
+                        const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(this.solicitudId, file));
+                        forkJoin(uploads).subscribe({
+                            next: () => {
+                                this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente con nuevos archivos');
+                                this._router.navigate(['../../'], { relativeTo: this._route });
+                            },
+                            error: (err) => {
+                                console.error('Error uploading files:', err);
+                                this._chatNotificationService.showError('Error', 'La solicitud se guardó pero hubo un error al subir algunos archivos');
+                                this._router.navigate(['../../'], { relativeTo: this._route });
+                            }
+                        });
+                    } else {
+                        this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente');
+                        this._router.navigate(['../../'], { relativeTo: this._route });
+                    }
+                },
+                error: (err) => {
+                    console.error('Error updating:', err);
+                    const msg = err.error?.message || err.message || 'Error interno del servidor';
+                    this._chatNotificationService.showError('Error al actualizar', msg);
                 }
             });
         } else {
-            this._solicitudCompraService.crear(data).subscribe((response) => {
-                const newId = response.idSolicitud || response.id;
+            this._solicitudCompraService.crear(data).subscribe({
+                next: (response) => {
+                    const newId = response.idSolicitud || response.id;
 
-                if (this.selectedFiles.length > 0 && newId) {
-                    const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(newId, file));
-                    forkJoin(uploads).subscribe({
-                        next: () => {
-                            this._chatNotificationService.showSuccess('Éxito', 'Solicitud y archivos guardados correctamente');
-                            this._router.navigate(['../'], { relativeTo: this._route });
-                        },
-                        error: (err) => {
-                            console.error('Error uploading files:', err);
-                            this._chatNotificationService.showError('Error', 'La solicitud se creó pero hubo un error al subir algunos archivos');
-                            this._router.navigate(['../'], { relativeTo: this._route });
-                        }
-                    });
-                } else {
-                    this._chatNotificationService.showSuccess('Éxito', 'Solicitud de compra guardada correctamente');
-                    this._router.navigate(['../'], { relativeTo: this._route });
+                    if (this.selectedFiles.length > 0 && newId) {
+                        const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(newId, file));
+                        forkJoin(uploads).subscribe({
+                            next: () => {
+                                this._chatNotificationService.showSuccess('Éxito', 'Solicitud y archivos guardados correctamente');
+                                this._router.navigate(['../'], { relativeTo: this._route });
+                            },
+                            error: (err) => {
+                                console.error('Error uploading files:', err);
+                                this._chatNotificationService.showError('Error', 'La solicitud se creó pero hubo un error al subir algunos archivos');
+                                this._router.navigate(['../'], { relativeTo: this._route });
+                            }
+                        });
+                    } else {
+                        this._chatNotificationService.showSuccess('Éxito', 'Solicitud de compra guardada correctamente');
+                        this._router.navigate(['../'], { relativeTo: this._route });
+                    }
+                },
+                error: (err) => {
+                    console.error('Error creating:', err);
+                    const msg = err.error?.message || err.message || 'Error interno del servidor';
+                    this._chatNotificationService.showError('Error al crear', msg);
                 }
             });
         }

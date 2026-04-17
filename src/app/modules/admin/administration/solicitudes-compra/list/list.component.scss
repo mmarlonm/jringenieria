@@ -25,3 +25,26 @@ table.mat-table {
     width: 80px;
     white-space: nowrap;
 }
+
+// Sticky Header Fixes
+th.mat-header-cell {
+    background-color: white !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    @apply uppercase text-xs font-semibold text-secondary;
+}
+
+.mat-column-folio {
+    @apply bg-white dark:bg-gray-900 z-10;
+}
+
+tr.mat-header-row {
+    background-color: white !important;
+}
+
+.dark {
+    th.mat-header-cell, tr.mat-header-row {
+        background-color: #1e293b !important;
+    }
+}

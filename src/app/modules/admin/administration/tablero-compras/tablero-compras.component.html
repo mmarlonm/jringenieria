@@ -1,7 +1,7 @@
-<div class="flex flex-col flex-auto min-w-0 bg-gray-50/30">
+<div class="absolute inset-0 flex flex-col min-w-0 bg-gray-50/30 overflow-hidden">
 
     <!-- Header -->
-    <div class="flex flex-col p-3 sm:px-6 sm:py-4 border-b bg-white dark:bg-transparent">
+    <div class="flex-none flex flex-col p-2 sm:px-4 sm:py-2 border-b bg-white dark:bg-transparent">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex-auto min-w-0">
                 <div class="flex items-center gap-3">
@@ -42,7 +42,7 @@
         </div>
 
         <!-- Compact Filters Row -->
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 pt-2 items-end">
+        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 pt-1 items-end">
             <!-- Search -->
             <div class="lg:col-span-4">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
@@ -103,13 +103,13 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex-auto p-3 sm:p-5">
+    <div class="flex flex-col flex-auto p-3 sm:p-5 overflow-hidden">
 
         <!-- Reference Design: Process Arrow Flow -->
-        <div class="process-container shadow-sm border border-gray-100 bg-white">
+        <div class="flex-none process-container shadow-sm border border-gray-100 bg-white">
 
             <!-- Arrow Flow -->
-            <div class="arrow-flow mt-6">
+            <div class="arrow-flow mt-4">
                 <!-- A: Creada -->
                 <div class="arrow-step step-1" [class.active]="selectedStatusId === 1" (click)="filterByStatus(1)"
                     [matTooltip]="'Creada'">
@@ -140,14 +140,14 @@
                     <span class="status-label">Cotización</span>
                 </div>
 
-                <!-- D: Aprobación -->
+                <!-- D: Aprobada -->
                 <div class="arrow-step step-4" [class.active]="selectedStatusId === 4" (click)="filterByStatus(4)"
-                    [matTooltip]="'Aprobación'">
+                    [matTooltip]="'Aprobada'">
                     <div class="step-square">
                         <mat-icon svgIcon="heroicons_solid:check-badge" class="text-white icon-size-5"></mat-icon>
                         <span class="count-tag">{{ countAprobacion }}</span>
                     </div>
-                    <span class="status-label">Aprobación</span>
+                    <span class="status-label">Aprobada</span>
                 </div>
 
                 <!-- E: OC -->
@@ -192,7 +192,7 @@
             </div>
 
             <!-- Dotted Timeline Tracker -->
-            <div class="timeline-tracker">
+            <div class="timeline-tracker mb-2">
                 <div class="line-dashed"></div>
                 <!-- Dots aligned with arrows -->
                 <div class="dot-point" [class.active]="selectedStatusId === 1">
@@ -224,8 +224,8 @@
         </div>
 
         <!-- Management Table -->
-        <div class="bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-            <div class="overflow-x-auto min-h-[400px]">
+        <div class="flex flex-col flex-auto min-h-0 bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+            <div class="flex-auto overflow-y-auto overflow-x-auto min-h-0">
                 <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
 
                     <!-- Folio -->
