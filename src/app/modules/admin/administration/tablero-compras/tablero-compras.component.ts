@@ -443,31 +443,50 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         if (estadoFinal === 1) textoEstado = 'Liquidado';
         if (estadoFinal === 2) textoEstado = 'Anticipo';
 
-        if (estadoFinal === 1) {
-            // Liquidado: Show file upload modal
+        if (estadoFinal === 1 || estadoFinal === 2) {
+            // Configuration for the modal based on state
+            const config = {
+                title: estadoFinal === 1 ? 'Marcar como Liquidado' : 'Registrar Anticipo',
+                subtitle: estadoFinal === 1 ? 'Sube el comprobante de pago para finalizar' : 'Sube el comprobante del pago anticipado',
+                confirmText: estadoFinal === 1 ? 'Confirmar Liquidación' : 'Confirmar Anticipo',
+                icon: estadoFinal === 1 
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                gradient: estadoFinal === 1 ? 'from-emerald-50 to-teal-50' : 'from-blue-50 to-sky-50',
+                border: estadoFinal === 1 ? 'border-emerald-100' : 'border-blue-100',
+                iconBg: estadoFinal === 1 ? 'bg-emerald-600' : 'bg-blue-600',
+                iconShadow: estadoFinal === 1 ? 'shadow-emerald-200' : 'shadow-blue-200',
+                dropHover: estadoFinal === 1 ? 'hover:border-emerald-400' : 'hover:border-blue-400',
+                dropIconColor: estadoFinal === 1 ? 'group-hover/drop:text-emerald-500' : 'group-hover/drop:text-blue-500',
+                dropBgColor: estadoFinal === 1 ? 'group-hover/drop:bg-emerald-50' : 'group-hover/drop:bg-blue-50',
+                confirmBg: estadoFinal === 1 ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700',
+                confirmShadow: estadoFinal === 1 ? 'shadow-emerald-200' : 'shadow-blue-200'
+            };
+
+            // Liquidado or Anticipo: Show file upload modal
             Swal.fire({
                 title: '',
                 html: `
                     <div class="swal-custom-container p-2">
-                        <div class="flex items-center gap-4 mb-8 p-5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                           <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
-                           <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-200">
+                        <div class="flex items-center gap-4 mb-8 p-5 bg-gradient-to-br ${config.gradient} rounded-2xl border ${config.border} shadow-sm relative overflow-hidden">
+                           <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-gray-500/5 rounded-full blur-2xl"></div>
+                           <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center ${config.iconBg} text-white rounded-xl shadow-lg ${config.iconShadow}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    ${config.icon}
                                 </svg>
                            </div>
                            <div class="text-left">
-                               <h4 class="text-lg font-extrabold text-gray-900 tracking-tight leading-tight">Marcar como Liquidado</h4>
-                               <p class="text-xs font-medium text-gray-500 mt-0.5">Sube el comprobante de pago para finalizar</p>
+                               <h4 class="text-lg font-extrabold text-gray-900 tracking-tight leading-tight">${config.title}</h4>
+                               <p class="text-xs font-medium text-gray-500 mt-0.5">${config.subtitle}</p>
                            </div>
                         </div>
 
                         <div class="space-y-6 text-left">
                             <div>
-                                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Comprobante de Pago <span class="text-rose-500">*</span></label>
-                                <div class="drop-zone relative flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50 hover:bg-white hover:border-emerald-400 transition-all duration-300 cursor-pointer p-8 group/drop" 
+                                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Comprobante <span class="text-rose-500">*</span></label>
+                                <div class="drop-zone relative flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50 hover:bg-white ${config.dropHover} transition-all duration-300 cursor-pointer p-8 group/drop" 
                                      onclick="document.getElementById('swal-input-file-liq').click()">
-                                    <div class="flex-shrink-0 mb-3 w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover/drop:bg-emerald-50 group-hover/drop:text-emerald-500 transition-all duration-300">
+                                    <div class="flex-shrink-0 mb-3 w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 ${config.dropBgColor} ${config.dropIconColor} transition-all duration-300">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                         </svg>
@@ -494,19 +513,19 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'Confirmar Liquidación',
+                confirmButtonText: config.confirmText,
                 cancelButtonText: 'Cancelar',
                 buttonsStyling: false,
                 customClass: {
                     popup: 'rounded-[32px] p-6 shadow-2xl border-0',
-                    confirmButton: 'inline-flex items-center justify-center px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-emerald-200 mt-4 mx-2 basis-1/2',
+                    confirmButton: `inline-flex items-center justify-center px-8 py-4 ${config.confirmBg} text-white text-sm font-bold rounded-2xl transition-all duration-300 shadow-xl ${config.confirmShadow} mt-4 mx-2 basis-1/2`,
                     cancelButton: 'inline-flex items-center justify-center px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-2xl transition-all duration-300 mt-4 mx-2 basis-1/2'
                 },
                 showLoaderOnConfirm: true,
                 preConfirm: () => {
                     const file = (document.getElementById('swal-input-file-liq') as HTMLInputElement).files?.[0];
                     if (!file) {
-                        Swal.showValidationMessage('El comprobante de pago es requerido');
+                        Swal.showValidationMessage('El comprobante es requerido');
                         return false;
                     }
                     return { file };
@@ -522,8 +541,10 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                         if (file) {
                             fileNameSpan.textContent = file.name;
                             filePreview.classList.remove('hidden');
-                            dropZone.classList.add('border-emerald-400', 'bg-emerald-50/10');
-                            dropZone.classList.remove('border-gray-200');
+                            if (dropZone) {
+                                dropZone.classList.add('border-emerald-400', 'bg-emerald-50/10');
+                                dropZone.classList.remove('border-gray-200');
+                            }
                         }
                     };
                 },
@@ -534,7 +555,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 }
             });
         } else {
-            // Normal state change (Anticipo / Pendiente)
+            // Normal state change (Pendiente)
             this._ejecutarEstadoLiquidacion(row, estadoFinal, textoEstado);
         }
     }
