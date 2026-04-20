@@ -86,12 +86,14 @@ export class ReportExpensesDashboardComponent implements OnInit {
     filtroAreas: string[] = [];
     filtroConceptos: string[] = [];
     filtroTipos: string[] = [];
+    filtroUnidades: number[] = []; // 👈 Nuevo: Filtro de Unidades
     filtroMovimiento: string = ''; // '' = Todos, '1' = Ingresos, '2' = Egresos
 
     // 🔹 Opciones para Filtros (Cargadas de catálogos)
     areas: any[] = [];
     conceptos: any[] = [];
     tipos: any[] = [];
+    unidades: any[] = []; // 👈 Nuevo: Opciones de Unidades
 
     // 🔹 Datos crudos para filtrado cruzado
     private allExpenses: Expense[] = [];
@@ -155,6 +157,12 @@ export class ReportExpensesDashboardComponent implements OnInit {
                 this.tipos = cat.tipos || [];
             }
         });
+
+        // 👈 Nuevo: Cargar Unidades
+        this._expensesService.getUnidadesNegocio().subscribe(unidades => {
+            this.unidades = unidades || [];
+            this._changeDetectorRef.markForCheck();
+        });
     }
 
     private getNombreArea(id: number, expense?: Expense): string {
@@ -211,15 +219,24 @@ export class ReportExpensesDashboardComponent implements OnInit {
 
         this.isLoading = true;
 
-        let unidadId = 1;
+        let fetchUnidadId: number | null = 1;
+        const SUPER_USER_IDS = [5, 13, 14, 16];
+
         try {
             const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const unidad = userInformation.usuario?.unidadNegocio || userInformation;
-            unidadId = unidad.id || unidad.unidadId || 1;
+            const user = userInformation.usuario || {};
+            const userId = user.id || 0;
+            const unidad = user.unidadNegocio || userInformation.unidadNegocio || {};
+            
+            if (SUPER_USER_IDS.includes(userId)) {
+                fetchUnidadId = null;
+            } else {
+                fetchUnidadId = unidad.id || unidad.unidadId || 1;
+            }
         } catch (e) { }
 
         // Obtenemos los gastos crudos para poder hacer cross-filtering real
-        this._expensesService.getExpenses(unidadId).subscribe({
+        this._expensesService.getExpenses(fetchUnidadId).subscribe({
             next: (expenses: Expense[]) => {
                 this.allExpenses = expenses;
                 this.applyLocalFilters();
@@ -243,12 +260,14 @@ export class ReportExpensesDashboardComponent implements OnInit {
             const matchArea = this.filtroAreas.length === 0 || this.filtroAreas.includes(this.getNombreArea(e.areaId, e));
             const matchConcepto = this.filtroConceptos.length === 0 || this.filtroConceptos.includes(this.getNombreConcepto(e.conceptoId, e));
             const matchTipo = this.filtroTipos.length === 0 || this.filtroTipos.includes(this.getNombreTipo(e.tipoId, e));
+            // Filtro de Unidades
+            const matchUnidad = this.filtroUnidades.length === 0 || this.filtroUnidades.includes(e.unidadId);
 
             // Filtro de Movimiento
             const moveType = e.tipoMovimiento?.toString() || (e.esIngreso ? '1' : '2');
             const matchMovimiento = !this.filtroMovimiento || moveType === this.filtroMovimiento;
 
-            return matchAnio && matchMes && matchArea && matchConcepto && matchTipo && matchMovimiento;
+            return matchAnio && matchMes && matchArea && matchConcepto && matchTipo && matchMovimiento && matchUnidad;
         });
 
         this.filteredExpenses = filtered;

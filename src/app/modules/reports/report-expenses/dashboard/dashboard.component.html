@@ -73,6 +73,13 @@
             </mat-select>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Unidad</mat-label>
+            <mat-select [(ngModel)]="filtroUnidades" multiple>
+                <mat-option *ngFor="let u of unidades" [value]="u.id || u.unidadId">{{u.nombre}}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
         <div class="w-full pb-5">
             <button mat-flat-button color="primary"
                 class="w-full h-[50px] !bg-blue-600 hover:!bg-blue-700 !text-white !rounded-lg" (click)="consultar()">

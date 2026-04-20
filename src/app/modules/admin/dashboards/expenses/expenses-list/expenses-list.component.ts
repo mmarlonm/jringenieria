@@ -85,6 +85,9 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     unidadesNegocio: any[] = [];
     currentUserUnidadId: number | null = null;
     currentUserUnidadName: string = '';
+    currentUserId: number | null = null;
+    canSeeAll: boolean = false;
+    private readonly _SUPER_USER_IDS = [5, 13, 14, 16];
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -153,7 +156,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                     this._changeDetectorRef.markForCheck();
 
                     // 4. Una vez tenemos los catálogos, cargamos los gastos
-                    this._expensesService.getExpenses(this.currentUserUnidadId).subscribe();
+                    const fetchUnidadId = this.canSeeAll ? null : this.currentUserUnidadId;
+                    this._expensesService.getExpenses(fetchUnidadId).subscribe();
                 },
                 error: (err) => {
                     console.error('Error cargando catálogos', err);
@@ -246,7 +250,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             const matchFactura = !searchTerms.factura || (data.factura || '').toLowerCase().includes(searchTerms.factura);
             const matchFP = !searchTerms.formaPago || (data.gastoFormaPago?.nombre || '').toLowerCase().includes(searchTerms.formaPago);
             const matchCuenta = !searchTerms.cuenta || (data.gastoCuenta?.nombre || '').toLowerCase().includes(searchTerms.cuenta);
-            const matchUnidad = !searchTerms.unidad || (data.gastoUnidad?.nombre || '').toLowerCase().includes(searchTerms.unidad);
+            const matchUnidad = !searchTerms.unidad || this.getUnidadNombre(data.unidadId).toLowerCase().includes(searchTerms.unidad);
             const matchTM = !searchTerms.tipoMovimiento || data.tipoMovimiento?.toString() === searchTerms.tipoMovimiento;
 
             const matchFolio = !searchTerms.folioFiscal || (data.folioFiscal || '').toLowerCase().includes(searchTerms.folioFiscal);
@@ -645,7 +649,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             next: () => {
                 this.editingId = null;
                 this.isAdding = false;
-                this._expensesService.getExpenses(this.currentUserUnidadId).subscribe();
+                const fetchUnidadId = this.canSeeAll ? null : this.currentUserUnidadId;
+                this._expensesService.getExpenses(fetchUnidadId).subscribe();
                 this._chatNotificationService.showSuccess('Éxito', 'Guardado', 3000);
             }
         });
@@ -674,7 +679,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         }).then((result) => {
             if (result.isConfirmed) {
                 this._expensesService.deleteExpense(id).subscribe(() => {
-                    this._expensesService.getExpenses(this.currentUserUnidadId).subscribe();
+                    const fetchUnidadId = this.canSeeAll ? null : this.currentUserUnidadId;
+                    this._expensesService.getExpenses(fetchUnidadId).subscribe();
                     this._chatNotificationService.showSuccess('Eliminado', 'Se eliminó correctamente', 3000);
                 });
             }
@@ -742,10 +748,14 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
             this.currentUserUnidadId = unidad.id || unidad.unidadId || 1;
             this.currentUserUnidadName = unidad.nombre || 'N/A';
+            this.currentUserId = user.id || 0;
+            this.canSeeAll = this._SUPER_USER_IDS.includes(this.currentUserId);
         } catch (e) {
             console.error('Error al obtener unidadId de localStorage', e);
             this.currentUserUnidadId = 1;
             this.currentUserUnidadName = 'N/A';
+            this.currentUserId = 0;
+            this.canSeeAll = false;
         }
     }
 
