@@ -24,6 +24,7 @@ import { MatLuxonDateModule } from '@angular/material-luxon-adapter';
 // 🔹 Service & Types
 import { SolicitudCompraService } from '../solicitudes-compra/solicitud-compra.service';
 import { SolicitudCompra } from '../solicitudes-compra/models/solicitud-compra.types';
+import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
 
 // Initialize Highcharts modules
 Exporting(Highcharts);
@@ -114,6 +115,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
 
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
+        private _exchangeRateService: ExchangeRateService,
         private _changeDetectorRef: ChangeDetectorRef
     ) { }
 
@@ -176,16 +178,20 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // 1. Calculate KPIs
+        // 1. Calculate KPIs (Converted to MXN)
         this.countSolicitudes = this.solicitudes.length;
-        this.totalMonto = this.solicitudes.reduce((acc, curr) => acc + (curr.monto || 0), 0);
+        this.totalMonto = this.solicitudes.reduce((acc, curr) => {
+            const montoMXN = this._exchangeRateService.convertMontoToMXN(curr.monto || 0, curr.moneda);
+            return acc + montoMXN;
+        }, 0);
         this.promedioMonto = this.countSolicitudes > 0 ? this.totalMonto / this.countSolicitudes : 0;
 
         // 2. Group by Centro de Costo (Monto)
         const centroCostoMap = new Map<string, number>();
         this.solicitudes.forEach(s => {
             const cc = s.centroCosto || 'Sin Centro de Costo';
-            centroCostoMap.set(cc, (centroCostoMap.get(cc) || 0) + (s.monto || 0));
+            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
+            centroCostoMap.set(cc, (centroCostoMap.get(cc) || 0) + montoMXN);
         });
 
         const ccData = Array.from(centroCostoMap.entries())
@@ -217,7 +223,8 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             const baseDate = (s.fechaSolicitud as any).toJSDate ? (s.fechaSolicitud as any).toJSDate() : s.fechaSolicitud;
             const date = moment(baseDate).startOf('day').valueOf();
             
-            timelineMap.set(date, (timelineMap.get(date) || 0) + (s.monto || 0));
+            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
+            timelineMap.set(date, (timelineMap.get(date) || 0) + montoMXN);
         });
 
         // Fill gaps between min and max dates

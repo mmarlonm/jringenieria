@@ -20,6 +20,7 @@ import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/
 import { SolicitudDetalleDialogComponent } from './solicitud-detalle-dialog/solicitud-detalle-dialog.component';
 import { HistorialDialogComponent } from './historial-dialog/historial-dialog.component';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -67,6 +68,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         'lugarEntrega',
         'moneda',
         'monto',
+        'montoMXN',
         'tipoCompra',
         'centroCosto',
         'comentarios',
@@ -150,6 +152,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
         private _usersService: UsersService,
+        public _exchangeRateService: ExchangeRateService,
         private _dialog: MatDialog
     ) {
     }
@@ -858,6 +861,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             'Lugar Entrega',
             'Moneda',
             'Monto',
+            'Monto (MXN)',
             'Tipo Compra',
             'Centro Costo',
             'Estatus',
@@ -889,6 +893,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             cleanText(s.lugarEntrega),
             cleanText(s.moneda),
             s.monto || 0,
+            this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
             cleanText(s.tipoCompra),
             cleanText(s.centroCosto),
             cleanText(s.nombreEstatus),
