@@ -56,68 +56,82 @@
     </div>
 
     <!-- Dashboard Content -->
-    <div *ngIf="!isLoading" class="w-full space-y-6 animate-in fade-in duration-500">
+    <div *ngIf="!isLoading" class="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
         <!-- KPI Cards -->
         <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             
             <!-- Total Monto -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-blue-600 relative overflow-hidden group hover:shadow-md transition-all">
-                <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <mat-icon class="icon-size-24 text-blue-600">payments</mat-icon>
+            <div class="kpi-card bg-gradient-to-br from-indigo-600 to-blue-700 text-white rounded-3xl shadow-xl shadow-blue-200 p-6 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                <div class="flex items-center justify-between relative z-10">
+                    <div class="flex flex-col">
+                        <p class="text-xs font-bold text-indigo-100 uppercase tracking-[0.2em]">Inversión Total</p>
+                        <p class="text-3xl font-black mt-2 tracking-tight">
+                            {{ totalMonto | currency:'MXN' }}
+                        </p>
+                    </div>
+                    <div class="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                        <mat-icon class="icon-size-8 text-white">payments</mat-icon>
+                    </div>
                 </div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Presupuesto Total Solicitado</p>
-                <p class="text-2xl sm:text-3xl font-black text-blue-700 mt-2 tracking-tight">
-                    {{ totalMonto | currency:'MXN' }}
-                </p>
-                <div class="mt-4 flex items-center text-xs font-semibold text-blue-500">
-                    <mat-icon class="icon-size-4 mr-1">info</mat-icon>
-                    Suma total de montos en solicitudes
+                <div class="mt-6 flex items-center text-[10px] font-bold text-indigo-100/80 uppercase tracking-widest relative z-10">
+                    <mat-icon class="icon-size-4 mr-1 text-emerald-300">trending_up</mat-icon>
+                    Flujo de efectivo proyectado
                 </div>
             </div>
 
             <!-- Total Solicitudes -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-emerald-600 relative overflow-hidden group hover:shadow-md transition-all">
-                <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <mat-icon class="icon-size-24 text-emerald-600">shopping_cart</mat-icon>
+            <div class="kpi-card bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-3xl shadow-xl shadow-emerald-200 p-6 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                <div class="flex items-center justify-between relative z-10">
+                    <div class="flex flex-col">
+                        <p class="text-xs font-bold text-emerald-500 uppercase tracking-[0.2em] !text-emerald-50">Volume de Compras</p>
+                        <p class="text-4xl font-black mt-2 tracking-tight">
+                            {{ countSolicitudes }}
+                        </p>
+                    </div>
+                    <div class="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                        <mat-icon class="icon-size-8 text-white">shopping_bag</mat-icon>
+                    </div>
                 </div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Solicitudes</p>
-                <p class="text-3xl font-black text-emerald-700 mt-2 tracking-tight">
-                    {{ countSolicitudes }}
-                </p>
-                <div class="mt-4 flex items-center text-xs font-semibold text-emerald-500">
-                    <mat-icon class="icon-size-4 mr-1">trending_up</mat-icon>
-                    Volumen de requisiciones procesadas
+                <div class="mt-6 flex items-center text-[10px] font-bold text-emerald-100/80 uppercase tracking-widest relative z-10">
+                    <mat-icon class="icon-size-4 mr-1">assignment</mat-icon>
+                    Solicitudes en proceso
                 </div>
             </div>
 
             <!-- Promedio -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-amber-500 relative overflow-hidden group hover:shadow-md transition-all">
-                <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <mat-icon class="icon-size-24 text-amber-500">analytics</mat-icon>
+            <div class="kpi-card bg-gradient-to-br from-amber-400 to-orange-600 text-white rounded-3xl shadow-xl shadow-amber-200 p-6 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                <div class="flex items-center justify-between relative z-10">
+                    <div class="flex flex-col">
+                        <p class="text-xs font-bold text-amber-50 uppercase tracking-[0.2em]">Ticket Promedio</p>
+                        <p class="text-3xl font-black mt-2 tracking-tight">
+                            {{ promedioMonto | currency:'MXN' }}
+                        </p>
+                    </div>
+                    <div class="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                        <mat-icon class="icon-size-8 text-white">analytics</mat-icon>
+                    </div>
                 </div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Ticket Promedio</p>
-                <p class="text-3xl font-black text-amber-700 mt-2 tracking-tight">
-                    {{ promedioMonto | currency:'MXN' }}
-                </p>
-                <div class="mt-4 flex items-center text-xs font-semibold text-amber-600">
+                <div class="mt-6 flex items-center text-[10px] font-bold text-amber-50/80 uppercase tracking-widest relative z-10">
                     <mat-icon class="icon-size-4 mr-1">calculate</mat-icon>
-                    Costo promedio por cada solicitud
+                    Costo medio por requisición
                 </div>
             </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Grid: Other Charts -->
+        <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <!-- Centro de Costo Chart (Large) -->
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 flex flex-col">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
-                        <mat-icon class="mr-2 text-indigo-500">bar_chart</mat-icon>
+            <!-- Centro de Costo Chart -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+                        <mat-icon class="mr-3 text-blue-500 bg-blue-50 p-1.5 rounded-xl !w-10 !h-10 flex items-center justify-center">bar_chart</mat-icon>
                         Inversión por Centro de Costo
                     </h2>
-                    <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded uppercase tracking-tighter">Vista Monetaria</span>
                 </div>
                 <div class="w-full h-[400px]">
                     <highcharts-chart *ngIf="solicitudes.length > 0"
@@ -125,20 +139,19 @@
                         [options]="chartOptionsCentroCosto"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
-                    <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-xl">
-                        No hay datos disponibles para el reporte
+                    <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-2xl h-full">
+                        Sin datos disponibles
                     </div>
                 </div>
             </div>
 
             <!-- Prioridad Chart -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 flex flex-col">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
-                        <mat-icon class="mr-2 text-rose-500">pie_chart</mat-icon>
-                        Distribución de Prioridades
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+                        <mat-icon class="mr-3 text-rose-500 bg-rose-50 p-1.5 rounded-xl !w-10 !h-10 flex items-center justify-center">donut_large</mat-icon>
+                        Urgencia vs. Volumen
                     </h2>
-                    <span class="text-[10px] font-bold bg-rose-50 text-rose-600 px-2 py-1 rounded uppercase tracking-tighter">Volumen</span>
                 </div>
                 <div class="w-full h-[400px]">
                     <highcharts-chart *ngIf="solicitudes.length > 0"
@@ -146,14 +159,41 @@
                         [options]="chartOptionsPrioridad"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
-                    <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-xl">
-                        Sin datos de prioridad
+                    <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-2xl h-full">
+                        Sin métricas de prioridad
                     </div>
                 </div>
             </div>
 
         </div>
 
+        <!-- Hero: Timeline Chart (Full Width) -->
+        <div class="w-full bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex flex-col">
+                    <h2 class="text-xl font-black text-gray-800 flex items-center uppercase tracking-tight">
+                        <div class="w-2 h-8 bg-indigo-600 rounded-full mr-4"></div>
+                        Tendencia Temporal de Compras
+                    </h2>
+                    <p class="text-xs text-secondary font-medium mt-1 ml-6">Inversión diaria basada en la fecha de registro de las solicitudes</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest">
+                        <div class="w-2 h-2 rounded-full bg-indigo-600 mr-2 animate-pulse"></div>
+                        Tiempo Real
+                    </span>
+                </div>
+            </div>
+            <div class="w-full h-[350px]">
+                <highcharts-chart *ngIf="solicitudes.length > 0"
+                    [Highcharts]="Highcharts"
+                    [options]="chartOptionsTimeline"
+                    style="width: 100%; height: 100%; display: block;">
+                </highcharts-chart>
+                <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-3xl h-full border-2 border-dashed">
+                    No se detectaron registros para trazar la línea de tiempo
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
