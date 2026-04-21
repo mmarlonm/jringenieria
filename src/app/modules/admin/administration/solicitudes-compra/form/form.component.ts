@@ -277,8 +277,13 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     onProjectSelected(event: any): void {
         const project = event.option.value;
-        const label = `${project.proyectoId || project.id} - ${project.nombre || project.nombreProyecto}`;
-        this.solicitudForm.get('folioProyecto').setValue(label, { emitEvent: false });
+        const projectLabel = `${project.proyectoId || project.id} - ${project.nombre || project.nombreProyecto}`;
+        const clientLabel = project.nombreCliente || project.cliente || project.clienteNombre || '';
+        
+        this.solicitudForm.patchValue({
+            folioProyecto: projectLabel,
+            cliente: clientLabel || project.nombre || project.nombreProyecto
+        }, { emitEvent: false });
     }
 
     private _setupProveedorFilter(): void {
@@ -506,9 +511,9 @@ export class SolicitudCompraFormComponent implements OnInit {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
             this.solicitudForm.patchValue(solicitud);
             
-            // Forzar cliente si es una solicitud vieja que usaba proyectoCliente
-            if (solicitud.proyectoCliente && !solicitud.cliente) {
-                this.solicitudForm.get('cliente').setValue(solicitud.proyectoCliente);
+            // Si el campo folioProyecto está vacío (legacy) pero existe proyectoCliente, mostrarlo en Proyecto
+            if (!solicitud.folioProyecto && solicitud.proyectoCliente) {
+                this.solicitudForm.get('folioProyecto').setValue(solicitud.proyectoCliente, { emitEvent: false });
             }
 
             // Formatear CLABE con guiones para la vista

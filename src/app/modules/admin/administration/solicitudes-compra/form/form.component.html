@@ -103,20 +103,20 @@
 
                             <div class="grid grid-cols-2 gap-4 w-full">
                                 <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>Proyecto (Buscador)</mat-label>
+                                    <mat-label>Proyecto</mat-label>
                                     <input matInput formControlName="folioProyecto" [matAutocomplete]="autoProject"
                                         placeholder="Buscar proyecto...">
                                     <mat-autocomplete #autoProject="matAutocomplete"
                                         (optionSelected)="onProjectSelected($event)">
                                         <mat-option *ngFor="let p of (filteredProyectos$ | async)" [value]="p">
-                                            <span class="font-bold text-primary">{{ p.proyectoId }}</span>
-                                            <span class="ml-2 text-secondary">{{ p.nombre }}</span>
+                                            <span class="font-bold text-primary">{{ p.proyectoId || p.id }}</span>
+                                            <span class="ml-2 text-secondary">{{ p.nombre || p.nombreProyecto }}</span>
                                         </mat-option>
                                     </mat-autocomplete>
                                 </mat-form-field>
 
                                 <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>Nombre del Cliente</mat-label>
+                                    <mat-label>Cliente</mat-label>
                                     <input matInput formControlName="cliente" [matAutocomplete]="autoClient"
                                         placeholder="Buscar o escribir nombre del cliente...">
                                     <mat-autocomplete #autoClient="matAutocomplete">
