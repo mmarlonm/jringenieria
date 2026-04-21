@@ -81,7 +81,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
 
     // KPIs
     totalSolicitudes: number = 0;
-    investmentTotal: number = 0;
+    totalsByCurrency: { [key: string]: number } = {};
     avgCost: number = 0;
     efficiencyRate: number = 0;
 
@@ -277,11 +277,20 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
     {
         const filtered = this.dataSource.filteredData;
         this.totalSolicitudes = filtered.length;
-        this.investmentTotal = filtered.reduce((acc, s) => {
+        
+        // Multi-currency totals
+        this.totalsByCurrency = {};
+        filtered.forEach(s => {
+            const mon = (s.moneda || 'MXN').toUpperCase();
+            this.totalsByCurrency[mon] = (this.totalsByCurrency[mon] || 0) + (s.monto || 0);
+        });
+
+        // Still calculate a normalized total for the average cost if useful
+        const investmentTotalMXN = filtered.reduce((acc, s) => {
             const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
             return acc + montoMXN;
         }, 0);
-        this.avgCost = this.totalSolicitudes > 0 ? this.investmentTotal / this.totalSolicitudes : 0;
+        this.avgCost = this.totalSolicitudes > 0 ? investmentTotalMXN / this.totalSolicitudes : 0;
         
         const closed = filtered.filter(s => s.idEstatus === 8 || s.nombreEstatus.toLowerCase().includes('cerrada')).length;
         this.efficiencyRate = this.totalSolicitudes > 0 ? (closed / this.totalSolicitudes) * 100 : 0;

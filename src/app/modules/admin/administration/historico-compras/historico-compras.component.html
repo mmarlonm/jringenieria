@@ -15,10 +15,14 @@
                 </div>
 
                 <!-- KPIs Summary in Header -->
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-bold text-secondary uppercase leading-none">Inversión Total</span>
-                        <span class="text-lg font-black text-indigo-600">{{ investmentTotal | currency:'MXN' }}</span>
+                <div class="flex items-center gap-6 mt-2 overflow-x-auto pb-1">
+                    <div *ngFor="let entry of totalsByCurrency | keyvalue" class="flex flex-col border-r border-gray-200 last:border-0 pr-4 last:pr-0">
+                        <span class="text-[9px] font-bold text-secondary uppercase leading-none tracking-wider mb-1">{{ entry.key }}</span>
+                        <span class="text-lg font-black text-indigo-600 leading-none">{{ entry.value | currency:entry.key }}</span>
+                    </div>
+                    <div *ngIf="(totalsByCurrency | keyvalue).length === 0" class="flex flex-col">
+                        <span class="text-[9px] font-bold text-secondary uppercase leading-none tracking-wider mb-1">INVERSIÓN TOTAL</span>
+                        <span class="text-lg font-black text-indigo-600 leading-none">$0.00</span>
                     </div>
                 </div>
             </div>

@@ -75,9 +75,9 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     solicitudes: SolicitudCompra[] = [];
     
     // KPIs
-    totalMonto: number = 0;
+    totalsByCurrency: { [key: string]: number } = {};
     countSolicitudes: number = 0;
-    promedioMonto: number = 0;
+    promedioMonto: number = 0; // Keeping as reference or normalized average
     
     // Chart Options
     chartOptionsCentroCosto: Highcharts.Options = {};
@@ -178,27 +178,44 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // 1. Calculate KPIs (Converted to MXN)
+        // 1. Calculate KPIs (Segmented by Currency)
         this.countSolicitudes = this.solicitudes.length;
-        this.totalMonto = this.solicitudes.reduce((acc, curr) => {
+        this.totalsByCurrency = {};
+        
+        this.solicitudes.forEach(s => {
+            const mon = (s.moneda || 'MXN').toUpperCase();
+            this.totalsByCurrency[mon] = (this.totalsByCurrency[mon] || 0) + (s.monto || 0);
+        });
+
+        // For reference, still calculate a normalized total for the "Average" KPI if useful
+        const totalMontoMXN = this.solicitudes.reduce((acc, curr) => {
             const montoMXN = this._exchangeRateService.convertMontoToMXN(curr.monto || 0, curr.moneda);
             return acc + montoMXN;
         }, 0);
-        this.promedioMonto = this.countSolicitudes > 0 ? this.totalMonto / this.countSolicitudes : 0;
+        this.promedioMonto = this.countSolicitudes > 0 ? totalMontoMXN / this.countSolicitudes : 0;
 
-        // 2. Group by Centro de Costo (Monto)
-        const centroCostoMap = new Map<string, number>();
+        // 2. Group by Centro de Costo AND Moneda
+        const ccMonedaMap = new Map<string, { [moneda: string]: number }>();
+        const uniqueCurrencies = new Set<string>();
+        const uniqueCCs = new Set<string>();
+
         this.solicitudes.forEach(s => {
             const cc = s.centroCosto || 'Sin Centro de Costo';
-            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
-            centroCostoMap.set(cc, (centroCostoMap.get(cc) || 0) + montoMXN);
+            const mon = (s.moneda || 'MXN').toUpperCase();
+            uniqueCurrencies.add(mon);
+            uniqueCCs.add(cc);
+
+            if (!ccMonedaMap.has(cc)) {
+                ccMonedaMap.set(cc, {});
+            }
+            const ccData = ccMonedaMap.get(cc);
+            ccData[mon] = (ccData[mon] || 0) + (s.monto || 0);
         });
 
-        const ccData = Array.from(centroCostoMap.entries())
-            .map(([name, y]) => ({ name, y }))
-            .sort((a, b) => b.y - a.y);
+        const sortedCCs = Array.from(uniqueCCs).sort();
+        const currenciesList = Array.from(uniqueCurrencies).sort();
 
-        // 3. Group by Prioridad (Count)
+        // 3. Group by Prioridad (Count - keep as is, it's independent of amount)
         const prioridadMap = new Map<string, number>();
         this.solicitudes.forEach(s => {
             const p = s.prioridad || 'Normal';
@@ -214,46 +231,70 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
                 return { name, y, color };
             });
 
-        // 4. Group by Date for Timeline (Fill gaps)
-        const timelineMap = new Map<number, number>();
+        // 4. Group by Date AND Moneda for Timeline
+        const timelineMonedaMap = new Map<string, Map<number, number>>();
         this.solicitudes.forEach(s => {
             if (!s.fechaSolicitud) return;
             
-            // Asegurar que manejamos Luxon o string/Date correctamente
+            const mon = (s.moneda || 'MXN').toUpperCase();
             const baseDate = (s.fechaSolicitud as any).toJSDate ? (s.fechaSolicitud as any).toJSDate() : s.fechaSolicitud;
             const date = moment(baseDate).startOf('day').valueOf();
-            
-            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
-            timelineMap.set(date, (timelineMap.get(date) || 0) + montoMXN);
+
+            if (!timelineMonedaMap.has(mon)) {
+                timelineMonedaMap.set(mon, new Map<number, number>());
+            }
+            const dateMap = timelineMonedaMap.get(mon);
+            dateMap.set(date, (dateMap.get(date) || 0) + (s.monto || 0));
         });
 
-        // Fill gaps between min and max dates
-        const timelineData: any[] = [];
-        if (timelineMap.size > 0) {
-            const sortedTimestamps = Array.from(timelineMap.keys()).sort((a, b) => a - b);
-            const start = moment(sortedTimestamps[0]).startOf('day');
-            const end = moment(sortedTimestamps[sortedTimestamps.length - 1]).startOf('day');
+        // Build series for Timeline
+        const timelineSeries: any[] = [];
+        const colors = { 'MXN': '#6366f1', 'USD': '#10b981', 'EURO': '#f59e0b', 'EUR': '#f59e0b' };
+
+        timelineMonedaMap.forEach((dateMap, mon) => {
+            const seriesData: any[] = [];
+            const sortedTimestamps = Array.from(dateMap.keys()).sort((a, b) => a - b);
             
-            for (let m = moment(start); m.isSameOrBefore(end); m.add(1, 'days')) {
-                const ts = m.startOf('day').valueOf(); // Re-ensure start of day
-                const val = timelineMap.get(ts) || 0;
-                timelineData.push({
-                    x: ts,
-                    y: val,
-                    marker: { enabled: val > 0 }
-                });
+            if (sortedTimestamps.length > 0) {
+                const start = moment(sortedTimestamps[0]).startOf('day');
+                const end = moment(sortedTimestamps[sortedTimestamps.length - 1]).startOf('day');
+                
+                for (let m = moment(start); m.isSameOrBefore(end); m.add(1, 'days')) {
+                    const ts = m.startOf('day').valueOf();
+                    const val = dateMap.get(ts) || 0;
+                    seriesData.push({
+                        x: ts,
+                        y: val,
+                        marker: { enabled: val > 0 }
+                    });
+                }
             }
-        }
+
+            timelineSeries.push({
+                name: mon,
+                data: seriesData,
+                color: (colors as any)[mon] || undefined // Let Highcharts pick if not defined
+            });
+        });
+
+        // Build series for Centro de Costo
+        const ccSeries: any[] = currenciesList.map(mon => {
+            return {
+                name: mon,
+                data: sortedCCs.map(cc => ccMonedaMap.get(cc)[mon] || 0),
+                color: (colors as any)[mon] || undefined
+            };
+        });
 
         // 5. Build Charts
-        this.chartOptionsCentroCosto = this._buildCentroCostoChart(ccData);
+        this.chartOptionsCentroCosto = this._buildCentroCostoChart(sortedCCs, ccSeries);
         this.chartOptionsPrioridad = this._buildPrioridadChart(priorityData);
-        this.chartOptionsTimeline = this._buildTimelineChart(timelineData);
+        this.chartOptionsTimeline = this._buildTimelineChart(timelineSeries);
         
         this._changeDetectorRef.markForCheck();
     }
 
-    private _buildTimelineChart(data: any[]): Highcharts.Options {
+    private _buildTimelineChart(series: any[]): Highcharts.Options {
         return {
             ...this.baseTheme,
             chart: { ...this.baseTheme.chart, type: 'areaspline' },
@@ -265,74 +306,66 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             },
             yAxis: {
                 title: { text: null },
-                labels: { format: '${value:.,0f}', style: { color: '#9ca3af', fontSize: '10px' } },
+                labels: { format: '{value:.,0f}', style: { color: '#9ca3af', fontSize: '10px' } },
                 gridLineColor: '#f1f5f9',
                 gridLineDashStyle: 'Dash'
             },
+            legend: {
+                enabled: true,
+                align: 'center',
+                verticalAlign: 'bottom'
+            },
             tooltip: { 
                 ...this.baseTheme.tooltip, 
+                shared: true,
                 xDateFormat: '%A, %e de %B',
-                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>${point.y:,.2f}</b><br/>'
+                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y:,.2f}</b><br/>'
             },
             plotOptions: {
                 areaspline: {
-                    fillColor: {
-                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-                        stops: [
-                            [0, 'rgba(99, 102, 241, 0.3)'],
-                            [1, 'rgba(99, 102, 241, 0)']
-                        ]
-                    },
-                    marker: { radius: 4, symbol: 'circle', lineWidth: 2, lineColor: '#ffffff' },
-                    lineWidth: 3,
-                    states: { hover: { lineWidth: 4 } },
+                    fillOpacity: 0.1,
+                    marker: { radius: 3, symbol: 'circle', lineWidth: 1, lineColor: '#ffffff' },
+                    lineWidth: 2,
+                    states: { hover: { lineWidth: 3 } },
                     threshold: null
                 }
             },
-            series: [{
-                type: 'areaspline',
-                name: 'Inversión Diaria',
-                data: data,
-                color: '#6366f1'
-            }]
+            series: series.map(s => ({ ...s, type: 'areaspline' }))
         };
     }
 
-    private _buildCentroCostoChart(data: any[]): Highcharts.Options {
+    private _buildCentroCostoChart(categories: string[], series: any[]): Highcharts.Options {
         return {
             ...this.baseTheme,
             chart: { ...this.baseTheme.chart, type: 'column' },
             xAxis: {
-                type: 'category',
+                categories: categories,
                 labels: { rotation: -45, style: { fontSize: '10px', color: '#6b7280', fontWeight: '500' } },
                 lineColor: '#e5e7eb'
             },
             yAxis: {
                 title: { text: null },
-                labels: { format: '${value:.,0f}', style: { color: '#9ca3af', fontSize: '10px' } },
+                labels: { format: '{value:.,0f}', style: { color: '#9ca3af', fontSize: '10px' } },
                 gridLineColor: '#f1f5f9'
             },
-            legend: { enabled: false },
-            tooltip: { ...this.baseTheme.tooltip, valuePrefix: '$', valueDecimals: 2 },
+            legend: { 
+                enabled: true,
+                align: 'center',
+                verticalAlign: 'bottom'
+            },
+            tooltip: { 
+                ...this.baseTheme.tooltip, 
+                shared: true,
+                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y:,.2f}</b><br/>'
+            },
             plotOptions: {
                 column: { 
-                    borderRadius: 6, 
+                    borderRadius: 4, 
                     borderWidth: 0,
-                    groupPadding: 0.1,
-                    color: {
-                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-                        stops: [
-                            [0, '#818cf8'],
-                            [1, '#4f46e5']
-                        ]
-                    }
+                    dataLabels: { enabled: false }
                 }
             },
-            series: [{
-                type: 'column',
-                name: 'Monto Total',
-                data: data
-            }]
+            series: series.map(s => ({ ...s, type: 'column' }))
         };
     }
 
@@ -366,7 +399,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     }
 
     private _resetCharts(): void {
-        this.totalMonto = 0;
+        this.totalsByCurrency = {};
         this.countSolicitudes = 0;
         this.promedioMonto = 0;
         this.chartOptionsCentroCosto = {};

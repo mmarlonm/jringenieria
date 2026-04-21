@@ -67,9 +67,12 @@
                 <div class="flex items-center justify-between relative z-10">
                     <div class="flex flex-col">
                         <p class="text-xs font-bold text-indigo-100 uppercase tracking-[0.2em]">Inversión Total</p>
-                        <p class="text-3xl font-black mt-2 tracking-tight">
-                            {{ totalMonto | currency:'MXN' }}
-                        </p>
+                        <div class="mt-2 space-y-1">
+                            <p *ngFor="let entry of totalsByCurrency | keyvalue" class="text-2xl font-black tracking-tight leading-tight">
+                                {{ entry.value | currency:entry.key }}
+                            </p>
+                            <p *ngIf="(totalsByCurrency | keyvalue).length === 0" class="text-2xl font-black mt-2 tracking-tight">$0.00</p>
+                        </div>
                     </div>
                     <div class="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
                         <mat-icon class="icon-size-8 text-white">payments</mat-icon>
