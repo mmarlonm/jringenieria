@@ -20,6 +20,7 @@ import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/
 import { SolicitudDetalleDialogComponent } from '../tablero-compras/solicitud-detalle-dialog/solicitud-detalle-dialog.component';
 import { HistorialDialogComponent } from '../tablero-compras/historial-dialog/historial-dialog.component';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
 
 @Component({
     selector: 'historico-compras',
@@ -67,6 +68,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         'lugarEntrega',
         'moneda',
         'monto',
+        'montoMXN',
         'tipoCompra',
         'centroCosto',
         'comentarios',
@@ -113,6 +115,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
         private _usersService: UsersService,
+        public _exchangeRateService: ExchangeRateService,
         private _dialog: MatDialog,
         private _changeDetectorRef: ChangeDetectorRef
     ) {}
@@ -274,7 +277,10 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
     {
         const filtered = this.dataSource.filteredData;
         this.totalSolicitudes = filtered.length;
-        this.investmentTotal = filtered.reduce((acc, s) => acc + (s.monto || 0), 0);
+        this.investmentTotal = filtered.reduce((acc, s) => {
+            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
+            return acc + montoMXN;
+        }, 0);
         this.avgCost = this.totalSolicitudes > 0 ? this.investmentTotal / this.totalSolicitudes : 0;
         
         const closed = filtered.filter(s => s.idEstatus === 8 || s.nombreEstatus.toLowerCase().includes('cerrada')).length;
@@ -294,7 +300,25 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         const solicitudes = this.dataSource.filteredData;
         if (!solicitudes || solicitudes.length === 0) return;
 
-        const headers = ['Folio', 'Folio OC', 'Fecha', 'Sucursal', 'Área', 'Solicitante', 'Proyecto', 'Prioridad', 'Proveedor', 'Banco', 'Cuenta', 'CLABE', 'Monto', 'Centro Costo', 'Estatus'];
+        const headers = [
+            'Folio', 
+            'Folio OC', 
+            'Fecha', 
+            'Sucursal', 
+            'Área', 
+            'Solicitante', 
+            'Proyecto', 
+            'Prioridad', 
+            'Proveedor', 
+            'Banco', 
+            'Cuenta', 
+            'CLABE', 
+            'Moneda',
+            'Monto', 
+            'Monto (MXN)',
+            'Centro Costo', 
+            'Estatus'
+        ];
         const cleanText = (text: any) => `"${String(text || '').replace(/"/g, '""')}"`;
 
         const rows = solicitudes.map(s => [
@@ -310,7 +334,9 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             cleanText(s.banco),
             cleanText(s.cuenta),
             cleanText(s.clabe),
+            cleanText(s.moneda),
             s.monto || 0,
+            this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
             cleanText(s.centroCosto),
             cleanText(this.getStatusName(s.idEstatus))
         ]);
