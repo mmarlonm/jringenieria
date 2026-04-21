@@ -30,7 +30,7 @@ Exporting(Highcharts);
 
 // Configuración global para evitar desfases de zona horaria en los gráficos
 Highcharts.setOptions({
-    global: {
+    time: {
         useUTC: false
     },
     lang: {
