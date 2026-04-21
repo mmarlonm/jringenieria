@@ -39,15 +39,15 @@ export class ExchangeRateService {
      */
     updateExchangeRate(): Observable<number> {
         return this._httpClient.get<any>(this.apiUrl).pipe(
-            map(response =\u003e {
+            map(response => {
                 const rate = response?.rates?.MXN;
-                if (rate \u0026\u0026 typeof rate === 'number') {
+                if (rate && typeof rate === 'number') {
                     this._currentRate.next(rate);
                     return rate;
                 }
                 throw new Error('Formato de respuesta de API inválido');
             }),
-            catchError(err =\u003e {
+            catchError(err => {
                 console.warn('[ExchangeRateService] Error al obtener tipo de cambio, usando valor de respaldo:', err);
                 // Mantenemos el valor actual (o el default si nunca se actualizó)
                 return of(this._currentRate.value);
