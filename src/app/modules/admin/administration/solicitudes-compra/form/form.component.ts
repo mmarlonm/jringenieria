@@ -12,10 +12,15 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
-import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto } from '../models/solicitud-compra.types';
+import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto, ContpaqiMaterialDto } from '../models/solicitud-compra.types';
+import { ImportarMaterialesDialogComponent } from './importar-materiales-dialog/importar-materiales-dialog.component';
+import { ClientsService } from '../../../catalogs/clients/clients.service';
 import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
@@ -39,7 +44,10 @@ import Swal from 'sweetalert2';
         MatNativeDateModule,
         MatTabsModule,
         MatTooltipModule,
-        MatAutocompleteModule
+        MatAutocompleteModule,
+        MatDialogModule,
+        MatSlideToggleModule,
+        MatSnackBarModule
     ]
 })
 export class SolicitudCompraFormComponent implements OnInit {
@@ -50,7 +58,9 @@ export class SolicitudCompraFormComponent implements OnInit {
     archivos: any[] = [];
     filteredProducts$: Observable<ProductoBuscadorDto[]>[] = [];
     proyectos: any[] = [];
+    clientes: any[] = [];
     filteredProyectos$: Observable<any[]>;
+    filteredClientes$: Observable<any[]>;
     filteredProveedores$: Observable<ProveedorDto[]>;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -96,10 +106,13 @@ export class SolicitudCompraFormComponent implements OnInit {
         private _formBuilder: FormBuilder,
         private _solicitudCompraService: SolicitudCompraService,
         private _projectService: ProjectService,
+        private _clientsService: ClientsService,
         private _usersService: UsersService,
         private _chatNotificationService: ChatNotificationService,
         private _route: ActivatedRoute,
-        private _router: Router
+        private _router: Router,
+        private _dialog: MatDialog,
+        private _snackBar: MatSnackBar
     ) { }
 
     ngOnInit(): void {
@@ -107,6 +120,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.loadBranches();
         this.loadUsers();
         this.loadProjects();
+        this.loadClients();
         this._setupProveedorFilter();
         this._setupBancoFilter();
 
@@ -138,6 +152,13 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
+    loadClients(): void {
+        this._clientsService.getClient().subscribe((clients) => {
+            this.clientes = clients || [];
+            this._setupClientFilter();
+        });
+    }
+
     initForm(): void {
         let userId = 1; // Fallback
         try {
@@ -150,10 +171,13 @@ export class SolicitudCompraFormComponent implements OnInit {
 
         this.solicitudForm = this._formBuilder.group({
             idSolicitud: [0],
+            folioOC: [''],
             sucursal: ['', Validators.required],
             areaSolicitante: ['', Validators.required],
             idPersonaSolicitante: [userId],
             proyectoCliente: [''],
+            cliente: [''],
+            esRecurrente: [false],
             lugarEntrega: [''],
             datosBancariosProveedor: [''],
             comentariosObservaciones: [''],
@@ -230,6 +254,24 @@ export class SolicitudCompraFormComponent implements OnInit {
         return this.proyectos.filter(p =>
             String(p.proyectoId || p.id).toLowerCase().includes(filterValue) ||
             String(p.nombre || p.nombreProyecto).toLowerCase().includes(filterValue)
+        );
+    }
+
+    private _setupClientFilter(): void {
+        const control = this.solicitudForm.get('cliente');
+        this.filteredClientes$ = control.valueChanges.pipe(
+            startWith(''),
+            map(value => {
+                const name = typeof value === 'string' ? value : '';
+                return name ? this._filterClients(name) : this.clientes.slice();
+            })
+        );
+    }
+
+    private _filterClients(name: string): any[] {
+        const filterValue = name.toLowerCase();
+        return this.clientes.filter(c =>
+            String(c.nombre || c.razonSocial || '').toLowerCase().includes(filterValue)
         );
     }
 
@@ -464,6 +506,11 @@ export class SolicitudCompraFormComponent implements OnInit {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
             this.solicitudForm.patchValue(solicitud);
             
+            // Forzar cliente si es una solicitud vieja que usaba proyectoCliente
+            if (solicitud.proyectoCliente && !solicitud.cliente) {
+                this.solicitudForm.get('cliente').setValue(solicitud.proyectoCliente);
+            }
+
             // Formatear CLABE con guiones para la vista
             if (solicitud.clabe) {
                 const formatted = this._getFormattedValueCLABE(solicitud.clabe);
@@ -682,5 +729,108 @@ export class SolicitudCompraFormComponent implements OnInit {
     cancelar(): void {
         const path = this.isEdit ? '../../' : '../';
         this._router.navigate([path], { relativeTo: this._route });
+    }
+
+    importarDesdeContpaqi(): void {
+        const folio = this.solicitudForm.get('folioOC').value;
+        if (!folio || folio.trim() === '') {
+            this._snackBar.open('Debes ingresar un Folio OC para buscar materiales', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        this._snackBar.open('Buscando materiales en CONTPAQi...', 'Cerrar', { duration: 2000 });
+
+        this._solicitudCompraService.obtenerDetalleMateriales(folio).subscribe({
+            next: (materiales) => {
+                if (!materiales || materiales.length === 0) {
+                    this._snackBar.open('No se encontraron materiales para el Folio OC ingresado', 'Cerrar', { duration: 4000 });
+                    return;
+                }
+
+                const dialogRef = this._dialog.open(ImportarMaterialesDialogComponent, {
+                    data: { materiales: materiales, folio: folio },
+                    width: '900px',
+                    disableClose: true
+                });
+
+                dialogRef.afterClosed().subscribe((materialesSeleccionados: ContpaqiMaterialDto[]) => {
+                    if (materialesSeleccionados && materialesSeleccionados.length > 0) {
+                        this._procesarMaterialesImportados(materialesSeleccionados);
+                    }
+                });
+            },
+            error: (err) => {
+                console.error('Error al importar materiales:', err);
+                this._snackBar.open('Error al conectar con CONTPAQi. Verifica el Folio OC.', 'Cerrar', { duration: 5000 });
+            }
+        });
+    }
+
+    private _procesarMaterialesImportados(materiales: ContpaqiMaterialDto[]): void {
+        if (this.detalles.length > 0) {
+            Swal.fire({
+                title: 'Importar Materiales',
+                text: '¿Deseas sobrescribir los materiales actuales o agregarlos al final?',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Agregar al final',
+                denyButtonText: 'Sobrescribir',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6',
+                denyButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this._insertarMateriales(materiales, false);
+                } else if (result.isDenied) {
+                    this._insertarMateriales(materiales, true);
+                }
+            });
+        } else {
+            this._insertarMateriales(materiales, true);
+        }
+    }
+
+    private _insertarMateriales(materiales: ContpaqiMaterialDto[], sobrescribir: boolean): void {
+        if (sobrescribir) {
+            while (this.detalles.length) {
+                this.detalles.removeAt(0);
+            }
+            this.filteredProducts$ = [];
+        }
+
+        materiales.forEach((m) => {
+            const index = this.detalles.length;
+            const unidadNormalizada = this._normalizeUnidad(m.unidad);
+            
+            const detalleForm = this._formBuilder.group({
+                idDetalle: [0],
+                partida: [index + 1],
+                materialServicio: [m.materialServicio, Validators.required],
+                descripcionEspecificacion: [m.descripcion || m.materialServicio],
+                cantidad: [m.cantidad, [Validators.required, Validators.min(0.01)]],
+                unidad: [unidadNormalizada, Validators.required],
+                observaciones: ['Importado de CONTPAQi'],
+                monto: [m.costoUnitario, [Validators.required, Validators.min(0)]],
+                iva: [m.iva]
+            });
+
+            this.detalles.push(detalleForm);
+            this._setupProductSearch(index);
+        });
+
+        this._chatNotificationService.showSuccess('Éxito', `${materiales.length} materiales importados correctamente`);
+    }
+
+    private _normalizeUnidad(u: string): string {
+        if (!u) return 'PZA';
+        const unit = u.trim().toUpperCase();
+        if (['PIEZA', 'PZ', 'PZA', 'PIEZAS', 'PZAS'].includes(unit)) return 'PZA';
+        if (['SERVICIO', 'SER', 'SERV', 'SERVICIOS'].includes(unit)) return 'SERVICIO';
+        if (['CAJA', 'CJ', 'CAJAS'].includes(unit)) return 'CAJA';
+        if (['METRO', 'M', 'MT', 'METROS'].includes(unit)) return 'METRO';
+        if (['KILO', 'KG', 'KILOS', 'KILOGRAMO'].includes(unit)) return 'KILO';
+        if (['LOTE', 'LT', 'LOTES'].includes(unit)) return 'LOTE';
+        return 'PZA'; // Default
     }
 }

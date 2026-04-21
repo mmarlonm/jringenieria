@@ -20,5 +20,9 @@ export default [
     {
         path: 'cierre-terminal',
         loadChildren: () => import('./cierre-terminal/cierre-terminal.routes').then(m => m.default)
+    },
+    {
+        path: 'resumen-compras',
+        loadComponent: () => import('./resumen-compras/resumen-compras.component').then(m => m.ResumenComprasComponent)
     }
 ] as Routes;

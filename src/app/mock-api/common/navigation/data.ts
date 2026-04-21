@@ -46,6 +46,21 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'basic',
                 icon: 'heroicons_outline:calculator',
                 link: '/administration/cierre-terminal'
+            },
+            {
+                id: 'administracion.reportes',
+                title: 'REPORTES',
+                type: 'collapsable',
+                icon: 'heroicons_outline:chart-pie',
+                children: [
+                    {
+                        id: 'administracion.reportes.resumen-compras',
+                        title: 'Resumen de Compras',
+                        type: 'basic',
+                        icon: 'heroicons_outline:presentation-chart-line',
+                        link: '/administration/resumen-compras'
+                    }
+                ]
             }
         ]
     },
@@ -309,7 +324,8 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
             { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
             { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
-            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' }
+            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' },
+            { id: 'administracion.resumen-compras', title: 'Resumen de Compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/resumen-compras' }
         ]
     }
 ];
@@ -328,7 +344,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
             { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
             { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
-            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' }
+            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' },
+            { id: 'administracion.resumen-compras', title: 'Resumen de Compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/resumen-compras' }
         ]
     }
 ];
@@ -348,7 +365,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
             { id: 'administracion.solicitudes-compra', title: 'Solicitud de compras', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/administration/solicitudes-compra' },
             { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
-            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' }
+            { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' },
+            { id: 'administracion.resumen-compras', title: 'Resumen de Compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/resumen-compras' }
         ]
     }
 

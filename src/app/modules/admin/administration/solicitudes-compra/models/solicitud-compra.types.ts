@@ -13,6 +13,8 @@ export interface SolicitudCompra {
     areaSolicitante: string;
     idPersonaSolicitante: number;
     proyectoCliente?: string;
+    cliente?: string;
+    esRecurrente: boolean;
     lugarEntrega?: string;
     datosBancariosProveedor?: string;
     comentariosObservaciones?: string;
@@ -62,6 +64,8 @@ export interface SolicitudCompraCreateDto {
     areaSolicitante: string;
     idPersonaSolicitante: number;
     proyectoCliente?: string;
+    cliente?: string;
+    esRecurrente: boolean;
     lugarEntrega?: string;
     datosBancariosProveedor?: string;
     comentariosObservaciones?: string;
@@ -122,4 +126,15 @@ export interface ProveedorDto {
     banco?: string;
     cuenta?: string;
     clabe?: string;
+}
+
+export interface ContpaqiMaterialDto {
+    materialServicio: string;
+    descripcion: string;
+    unidad: string;
+    cantidad: number;
+    costoUnitario: number;
+    iva: number;
+    total: number;
+    selected?: boolean; // UI only
 }

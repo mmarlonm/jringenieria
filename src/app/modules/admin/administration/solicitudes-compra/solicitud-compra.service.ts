@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, catchError, map, Observable, of, ReplaySubject, tap } from 'rxjs';
 import { environment } from 'environments/environment';
-import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto, ProveedorDto } from './models/solicitud-compra.types';
+import { SolicitudCompra, CatEstatusCompra, SolicitudCompraCreateDto, ProductoBuscadorDto, HistorialEstatusDto, ProveedorDto, ContpaqiMaterialDto } from './models/solicitud-compra.types';
 
 @Injectable({
     providedIn: 'root'
@@ -172,5 +172,11 @@ export class SolicitudCompraService {
 
     actualizarEstadoLiquidacion(idSolicitud: number, nuevoEstado: number): Observable<any> {
         return this._httpClient.put(`${this.apiUrl}/${idSolicitud}/estado-liquidacion`, nuevoEstado);
+    }
+
+    obtenerDetalleMateriales(folio: string): Observable<ContpaqiMaterialDto[]> {
+        return this._httpClient.get<ContpaqiMaterialDto[]>(`${this.apiUrl}/obtener-detalle-materiales`, {
+            params: { identificador: folio }
+        });
     }
 }
