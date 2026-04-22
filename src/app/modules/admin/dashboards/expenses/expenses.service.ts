@@ -106,6 +106,13 @@ export class ExpensesService {
         );
     }
 
+    /**
+     * Actualiza el estatus de pago de un gasto
+     */
+    actualizarEstatusPago(id: number, nuevoEstatus: number): Observable<any> {
+        return this._httpClient.put(`${this.apiUrl}/${id}/estatus-pago`, nuevoEstatus);
+    }
+
     getUnidadesNegocio(): Observable<any[]> {
         return this._httpClient.get<any[]>(`${this.apiUrlProyecto}/unidades-negocio`);
     }

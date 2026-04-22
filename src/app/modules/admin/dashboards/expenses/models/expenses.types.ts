@@ -46,6 +46,7 @@ export interface Expense {
     gastoCuenta?: any;
     gastoTasa?: { valor: number; etiqueta: string };
     gastoUnidad?: { nombre: string };
+    estatusPago?: number; // 0: PENDIENTE, 1: TRANSFERENCIA, 2: EFECTIVO
 }
 
 export interface ExpenseCatalogs {

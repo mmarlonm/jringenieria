@@ -57,7 +57,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     dataSource: MatTableDataSource<Expense> = new MatTableDataSource();
     displayedColumns: string[] = [
         'unidad', 'tipoMovimiento', 'fecha', 'gasto', 'concepto', 'subtipo', 'tipo', 'area', 'cuenta', 'numeroCuenta', 'formaPago',
-        'proveedor', 'factura', 'folioFiscal', 'tipoComprobante', 'moneda', 'descripcion',
+        'proveedor', 'factura', 'folioFiscal', 'tipoComprobante', 'moneda', 'estatusPago', 'descripcion',
         'impuestos', 'tasa', 'mes', 'año', 'registro', 'acciones'
     ];
     searchInputControl: FormControl = new FormControl('');
@@ -109,6 +109,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         moneda: '',
         numeroCuenta: '',
         descripcion: '',
+        estatusPago: '',
         mes: '',
         anio: ''
     };
@@ -258,11 +259,12 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             const matchMoneda = !searchTerms.moneda || (data.moneda || '').toLowerCase().includes(searchTerms.moneda);
             const matchNumCuenta = !searchTerms.numeroCuenta || (data.numeroCuenta || '').toLowerCase().includes(searchTerms.numeroCuenta);
             const matchDesc = !searchTerms.descripcion || ((data.nombreGasto || '') + ' ' + (data.descripcion || '')).toLowerCase().includes(searchTerms.descripcion);
+            const matchEstatusPago = !searchTerms.estatusPago || data.estatusPago?.toString() === searchTerms.estatusPago;
 
             return matchFecha && matchGasto && matchTipo && matchConcepto &&
                 matchSubtipo && matchArea && matchProveedor && matchFactura &&
                 matchFP && matchCuenta && matchUnidad && matchTM &&
-                matchFolio && matchComprobante && matchMoneda && matchNumCuenta && matchDesc;
+                matchFolio && matchComprobante && matchMoneda && matchNumCuenta && matchDesc && matchEstatusPago;
         };
     }
 
@@ -270,7 +272,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.filterValues = {
             fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '',
             unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '',
-            folioFiscal: '', tipoComprobante: '', moneda: '', numeroCuenta: '', descripcion: '',
+            folioFiscal: '', tipoComprobante: '', moneda: '', numeroCuenta: '', descripcion: '', estatusPago: '',
             mes: '', anio: ''
         };
         this.dataSource.filter = '';
@@ -684,6 +686,17 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                     this._chatNotificationService.showSuccess('Eliminado', 'Se eliminó correctamente', 3000);
                 });
             }
+        });
+    }
+
+    cambiarEstatusPago(expense: Expense, nuevoEstatus: number): void {
+        this._expensesService.actualizarEstatusPago(expense.gastoId, nuevoEstatus).subscribe({
+            next: () => {
+                expense.estatusPago = nuevoEstatus;
+                this._changeDetectorRef.markForCheck();
+                this._chatNotificationService.showSuccess('Estatus Actualizado', 'El estatus de pago se actualizó correctamente', 2000);
+            },
+            error: () => this._chatNotificationService.showError('Error', 'No se pudo actualizar el estatus', 5000)
         });
     }
 

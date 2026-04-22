@@ -54,7 +54,7 @@ expenses-list {
             }
         }
 
-        // Gestión de columnas Sticky por resolución
+        // Columnas Sticky por resolucin
         .mat-column-fecha {
             @media (max-width: 768px) {
                 position: static !important;
@@ -117,6 +117,67 @@ expenses-list {
 
         .rounded-xl {
             border-radius: 2rem;
+        }
+    }
+
+    // Status Chips
+    .status-chip {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent !important;
+        font-weight: 800;
+        
+        &:hover {
+            filter: brightness(1.05);
+            transform: translateY(-1px);
+        }
+    }
+
+    // Design: "Iluminar Fila" (Modern & Subtle Glow)
+    .is-pending {
+        td.mat-cell {
+            background-color: #fff1f1 !important; // Soft Red Tint
+            border-bottom: 1px solid #fee2e2 !important;
+            transition: all 0.3s ease;
+        }
+
+        // Inner glow effect
+        &:hover td.mat-cell {
+            background-color: #fef2f2 !important;
+            box-shadow: inset 0 2px 4px 0 rgba(239, 68, 68, 0.05);
+        }
+
+        // Text subtle shift
+        .text-secondary {
+            color: #b91c1c !important; // red-700
+            opacity: 0.85;
+        }
+
+        .font-black, .font-bold {
+            color: #991b1b !important; // red-800
+        }
+
+        // Status Indicator "Blinking" (Subtle Ping)
+        .status-dot {
+            position: relative;
+            &::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: 50%;
+                background-color: #ef4444;
+                animation: ping-red 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                opacity: 0.75;
+            }
+        }
+    }
+
+    @keyframes ping-red {
+        75%, 100% {
+            transform: scale(2.5);
+            opacity: 0;
         }
     }
 }
