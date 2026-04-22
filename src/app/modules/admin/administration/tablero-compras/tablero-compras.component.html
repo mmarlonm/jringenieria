@@ -13,6 +13,14 @@
                     </span>
                 </div>
 
+                <!-- Currency Totals KPI -->
+                <div class="flex items-center gap-6 mt-3 flex-wrap pb-1">
+                    <div *ngFor="let entry of totalsByCurrency | keyvalue" class="flex flex-col border-r border-gray-200 last:border-0 pr-4 last:pr-0">
+                        <span class="text-[9px] font-bold text-secondary uppercase leading-none tracking-wider mb-1">{{ entry.key }}</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ entry.value | currency:entry.key }}</span>
+                    </div>
+                </div>
+
                 <!-- Active Filter Badge -->
                 <div *ngIf="selectedStatusId"
                     class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
@@ -103,7 +111,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col flex-auto p-3 sm:p-5 overflow-hidden">
+    <div class="flex flex-col flex-auto p-3 sm:p-5 md:overflow-hidden overflow-y-auto min-h-0">
 
         <!-- Reference Design: Process Arrow Flow -->
         <div class="flex-none process-container shadow-sm border border-gray-100 bg-white">
@@ -224,8 +232,8 @@
         </div>
 
         <!-- Management Table -->
-        <div class="flex flex-col flex-auto min-h-0 bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-            <div class="flex-auto overflow-y-auto overflow-x-auto min-h-0">
+        <div class="flex flex-col md:flex-auto flex-none bg-card shadow-lg rounded-2xl md:overflow-hidden border border-gray-100">
+            <div class="flex-auto md:overflow-y-auto overflow-x-auto min-h-0">
                 <!-- Desktop Table View -->
                 <div class="hidden md:block">
                     <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">

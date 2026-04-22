@@ -80,7 +80,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col flex-auto p-3 sm:p-5 overflow-hidden">
+    <div class="flex flex-col flex-auto p-3 sm:p-5 md:overflow-hidden overflow-y-auto min-h-0">
 
         <!-- Process Arrow Flow -->
         <div class="flex-none process-container shadow-sm border border-gray-100 bg-white">
@@ -190,8 +190,8 @@
         </div>
 
         <!-- Table -->
-        <div class="flex flex-col flex-auto min-h-0 bg-card shadow-lg rounded-2xl overflow-hidden border border-gray-100 mt-4">
-            <div class="flex-auto overflow-y-auto overflow-x-auto min-h-0">
+        <div class="flex flex-col md:flex-auto flex-none bg-card shadow-lg rounded-2xl md:overflow-hidden border border-gray-100 mt-4">
+            <div class="flex-auto md:overflow-y-auto overflow-x-auto min-h-0">
                 <!-- Desktop View -->
                 <div class="hidden md:block">
                     <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">

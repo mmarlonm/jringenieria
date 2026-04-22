@@ -90,6 +90,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     countTransito: number = 0;    // ID 6
     countRecibido: number = 0;    // ID 7
     countCerrada: number = 0;     // ID 8
+    totalsByCurrency: { [key: string]: number } = {};
 
     usuarios: any[] = [];
     selectedStatusId: number | null = null;
@@ -820,6 +821,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         this.countTransito = solicitudes.filter(s => s.idEstatus === 6 || s.nombreEstatus.toLowerCase().includes('transito') || s.nombreEstatus.toLowerCase().includes('tránsito')).length;
         this.countRecibido = solicitudes.filter(s => s.idEstatus === 7 || s.nombreEstatus.toLowerCase().includes('recibido')).length;
         this.countCerrada = solicitudes.filter(s => s.idEstatus === 8 || s.nombreEstatus.toLowerCase().includes('cerrada')).length;
+
+        // Calculate totals by currency
+        this.totalsByCurrency = {};
+        solicitudes.forEach(s => {
+            const mon = (s.moneda || 'MXN').toUpperCase();
+            this.totalsByCurrency[mon] = (this.totalsByCurrency[mon] || 0) + (s.monto || 0);
+        });
     }
 
     // Detail Helper Methods
