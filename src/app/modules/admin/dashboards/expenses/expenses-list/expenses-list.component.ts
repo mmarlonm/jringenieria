@@ -87,7 +87,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     currentUserUnidadName: string = '';
     currentUserId: number | null = null;
     canSeeAll: boolean = false;
-    private readonly _SUPER_USER_IDS = [5, 13, 14, 16];
+    private readonly _SUPER_USER_IDS = [5, 13, 14, 16, 38];
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     showFilters: boolean = false;

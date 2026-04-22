@@ -65,7 +65,17 @@
                 </mat-form-field>
             </div>
 
-            <div class="lg:col-span-3">
+            <div class="lg:col-span-2">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Tipo</mat-label>
+                    <mat-select [(ngModel)]="filtroTipo" (selectionChange)="onFilterChange()">
+                        <mat-option [value]="''">Todos</mat-option>
+                        <mat-option *ngFor="let t of tiposCompra" [value]="t">{{t}}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="lg:col-span-2">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
                     <mat-label>Fecha Inicio</mat-label>
                     <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio"
@@ -75,7 +85,7 @@
                 </mat-form-field>
             </div>
 
-            <div class="lg:col-span-3">
+            <div class="lg:col-span-2">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
                     <mat-label>Fecha Fin</mat-label>
                     <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="loadByDateRange()">
@@ -413,6 +423,11 @@
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">PROVEEDOR / PROYECTO</span>
                                 <span class="text-sm font-bold text-slate-800 leading-tight">{{ s.proveedorSugerido || 'Sin proveedor' }}</span>
                                 <span class="text-xs text-slate-500 font-medium line-clamp-1 italic">{{ s.proyectoCliente || 'Sin proyecto' }}</span>
+                                <div class="mt-2 flex gap-2">
+                                    <span class="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 italic">
+                                        {{ s.tipoCompra }}
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Amount Row -->

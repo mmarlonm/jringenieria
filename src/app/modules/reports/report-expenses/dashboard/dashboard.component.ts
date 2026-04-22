@@ -220,7 +220,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
         this.isLoading = true;
 
         let fetchUnidadId: number | null = 1;
-        const SUPER_USER_IDS = [5, 13, 14, 16];
+        const SUPER_USER_IDS = [5, 13, 14, 16, 38];
 
         try {
             const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');

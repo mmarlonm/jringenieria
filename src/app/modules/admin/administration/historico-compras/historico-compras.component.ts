@@ -56,6 +56,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         'sucursal',
         'areaSolicitante',
         'solicitante',
+        'tipoCompra',
         'proyectoCliente',
         'folioProyecto',
         'prioridad',
@@ -69,7 +70,6 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         'moneda',
         'monto',
         'montoMXN',
-        'tipoCompra',
         'centroCosto',
         'comentarios',
         'cuadranteId',
@@ -101,10 +101,12 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
     toggleFilters(): void {
         this.showFilters = !this.showFilters;
     }
-    fechaInicio: any = '';
-    fechaFin: any = '';
     filtroSearch: string = '';
     filtroPrioridad: string = '';
+    filtroTipo: string = '';
+    tiposCompra: string[] = [];
+    fechaInicio: any = '';
+    fechaFin: any = '';
 
     prioridadesList = ['Urgente', 'Alta', 'Normal'];
     cuadrantesList = [
@@ -141,6 +143,9 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
                 this.dataSource.sort = this.sort;
                 this._setupFilterPredicate();
                 this._updateFilter();
+                this._calculateKPIs();
+                this._extractUniqueValues(solicitudes);
+                this._changeDetectorRef.markForCheck();
             });
 
         this._usersService.getUsers()
@@ -204,13 +209,14 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             try {
                 const filterObj = JSON.parse(filter);
                 const searchStr = (filterObj.search || '').toLowerCase();
-                const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.centroCosto} ${data.nombreEstatus} ${data.banco || ''} ${data.cuenta || ''} ${data.clabe || ''}`.toLowerCase();
+                const dataStr = `${data.idSolicitud} ${data.folioOC || ''} ${data.sucursal} ${data.areaSolicitante} ${data.proyectoCliente || ''} ${data.centroCosto} ${data.nombreEstatus} ${data.banco || ''} ${data.cuenta || ''} ${data.clabe || ''} ${data.tipoCompra || ''}`.toLowerCase();
                 
                 const passSearch = dataStr.includes(searchStr);
                 const passStatus = filterObj.statusId ? data.idEstatus === filterObj.statusId : true;
                 const passPriority = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
+                const passTipo = filterObj.tipoCompra ? data.tipoCompra === filterObj.tipoCompra : true;
 
-                return passSearch && passStatus && passPriority;
+                return passSearch && passStatus && passPriority && passTipo;
             } catch (e) {
                 return true;
             }
@@ -221,7 +227,8 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         const filterObj = {
             search: this.filtroSearch,
             statusId: this.selectedStatusId,
-            prioridad: this.filtroPrioridad
+            prioridad: this.filtroPrioridad,
+            tipoCompra: this.filtroTipo
         };
         this.dataSource.filter = JSON.stringify(filterObj);
         this._calculateKPIs();
@@ -330,6 +337,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             'Moneda',
             'Monto', 
             'Monto (MXN)',
+            'Tipo Compra',
             'Centro Costo', 
             'Estatus'
         ];
@@ -351,6 +359,7 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             cleanText(s.moneda),
             s.monto || 0,
             this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
+            cleanText(s.tipoCompra),
             cleanText(s.centroCosto),
             cleanText(this.getStatusName(s.idEstatus))
         ]);
@@ -362,5 +371,9 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         link.href = url;
         link.download = `Historico_Compras_${new Date().getTime()}.csv`;
         link.click();
+    }
+
+    private _extractUniqueValues(data: SolicitudCompra[]): void {
+        this.tiposCompra = Array.from(new Set(data.map(i => i.tipoCompra))).filter(x => !!x).sort();
     }
 }
