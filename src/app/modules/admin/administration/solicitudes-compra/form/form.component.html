@@ -386,45 +386,58 @@
 
         <!-- TAB 2: Detalle de materiales -->
         <mat-tab label="Detalle de materiales">
-            <div class="flex flex-col flex-auto p-4 overflow-hidden h-full" [formGroup]="solicitudForm">
-                <div class="flex flex-col sm:flex-row items-center justify-between mb-4 mt-2 gap-4">
-                    <h3 class="text-lg font-bold">PRODUCTOS SOLICITADOS</h3>
-                    
-                    <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-col flex-auto p-4 overflow-y-auto h-full" [formGroup]="solicitudForm">
+                <div class="flex flex-col sm:flex-row items-center justify-between mb-2 mt-0 gap-2">
+                    <h3 class="text-sm font-extrabold text-secondary uppercase tracking-wider">PRODUCTOS SOLICITADOS</h3>
+                            <div class="flex flex-wrap items-center gap-3">
                         <!-- Folio OC Import -->
-                        <div class="flex items-center gap-2 bg-gray-50 border rounded-xl px-4 py-1.5 shadow-inner">
-                            <mat-form-field appearance="fill" class="fuse-mat-dense fuse-mat-no-subscript w-40">
-                                <mat-label>Folio OC</mat-label>
-                                <input matInput formControlName="folioOC" placeholder="Ej: OC-1234">
+                        <div class="flex items-center h-12 px-2 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
+                            <mat-form-field appearance="fill" class="fuse-mat-dense fuse-mat-no-subscript w-32 !bg-transparent">
+                                <mat-label class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Folio OC</mat-label>
+                                <input matInput formControlName="folioOC" placeholder="OC-1234" class="font-bold text-slate-700">
                             </mat-form-field>
-                            <button mat-mini-fab color="primary" class="shadow-sm" 
+                            <button mat-icon-button color="primary" class="w-10 h-10 min-w-10 rounded-lg hover:bg-indigo-100 transition-colors" 
                                     type="button" matTooltip="Importar de CONTPAQi"
                                     (click)="importarDesdeContpaqi()">
-                                <mat-icon [svgIcon]="'heroicons_outline:cloud-arrow-down'"></mat-icon>
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:cloud-arrow-down'"></mat-icon>
                             </button>
                         </div>
 
-                        <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-1.5 shadow-sm">
-                            <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mr-1">PDF</span>
-                            <button mat-mini-fab color="accent" class="shadow-sm" 
+                        <!-- PDF Import -->
+                        <div class="flex items-center h-12 px-3 bg-indigo-50/50 border border-indigo-100 rounded-xl shadow-sm">
+                            <div class="flex flex-col justify-center mr-2">
+                                <span class="text-[8px] font-black text-indigo-400 uppercase tracking-[0.2em] leading-none mb-0.5">FORMATO</span>
+                                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest leading-none">PDF</span>
+                            </div>
+                            <button mat-icon-button color="accent" class="w-10 h-10 min-w-10 rounded-lg hover:bg-pink-100 transition-colors text-pink-500" 
                                     type="button" matTooltip="Importar desde PDF"
                                     (click)="pdfImportInput.click()">
-                                <mat-icon [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
                             </button>
                             <input type="file" #pdfImportInput class="hidden" accept=".pdf" (change)="onPdfFileSelected($event)">
                         </div>
 
+                        <div class="w-px h-8 bg-slate-200 mx-1 hidden sm:block"></div>
 
-                        <div class="w-px h-8 bg-gray-200 mx-2 hidden sm:block"></div>
-
-                        <button mat-raised-button color="primary" (click)="addDetalle()" class="!rounded-xl shadow-md">
+                        <!-- Add Item Button -->
+                        <button mat-flat-button color="primary" (click)="addDetalle()" 
+                                class="!h-12 !rounded-xl !px-6 shadow-sm hover:shadow-md transition-all duration-200">
                             <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-                            Añadir Partida
+                            <span class="font-bold uppercase tracking-wider text-sm">Añadir Partida</span>
                         </button>
                     </div>
                 </div>
+                
+                <div *ngIf="detalles.length === 0"
+                     class="flex-auto flex flex-col items-center justify-center p-6 md:p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4 bg-gray-50/30 dark:bg-transparent min-h-[250px]">
+                    <mat-icon class="icon-size-12 md:icon-size-16 mb-4 opacity-50"
+                        [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
+                    <p class="text-xl md:text-2xl font-semibold text-primary">No hay partidas en esta solicitud</p>
+                    <p class="text-secondary text-sm md:text-lg mt-1">Usa el botón superior para añadir tu primer producto o servicio.</p>
+                </div>
 
-                <div *ngIf="detalles.length > 0" class="flex-auto overflow-y-auto overflow-x-auto border rounded-xl shadow-sm bg-white dark:bg-slate-900 min-h-0">
+                <div *ngIf="detalles.length > 0" 
+                     class="flex-auto overflow-y-auto overflow-x-auto border rounded-xl shadow-sm bg-white dark:bg-slate-900 min-h-[200px] max-h-[500px]">
                                 <table class="w-full text-left border-collapse min-w-[1100px]">
                                     <thead>
                                         <tr class="bg-gray-50 dark:bg-gray-800 text-[11px] uppercase tracking-wider text-secondary">
@@ -621,13 +634,6 @@
                     </div>
                 </div>
 
-            <div *ngIf="detalles.length === 0"
-                    class="flex-auto flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4 bg-gray-50/30 dark:bg-transparent">
-                    <mat-icon class="icon-size-16 mb-4 opacity-50"
-                        [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
-                    <p class="text-2xl font-semibold text-primary">No hay partidas en esta solicitud</p>
-                    <p class="text-secondary text-lg mt-1">Usa el botón superior para añadir tu primer producto o servicio.</p>
-                </div>
             </div>
         </mat-tab>
     </mat-tab-group>
