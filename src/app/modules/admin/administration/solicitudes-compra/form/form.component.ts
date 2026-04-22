@@ -62,7 +62,9 @@ export class SolicitudCompraFormComponent implements OnInit {
     clientes: any[] = [];
     filteredProyectos$: Observable<any[]>;
     filteredClientes$: Observable<any[]>;
-    filteredProveedores$: Observable<ProveedorDto[]>;
+    filteredProveedoresRows$: Observable<ProveedorDto[]>[] = [];
+    filteredBancos$: Observable<string[]>;
+    private _bancoSearch$ = new Subject<string>();
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     // Select options
@@ -101,7 +103,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         'Banjercito',
         'Wells Fargo'
     ];
-    filteredBancos$: Observable<string[]>;
+
 
     constructor(
         private _formBuilder: FormBuilder,
@@ -122,7 +124,6 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.loadUsers();
         this.loadProjects();
         this.loadClients();
-        this._setupProveedorFilter();
         this._setupBancoFilter();
 
         this._route.params.subscribe(params => {
@@ -189,18 +190,20 @@ export class SolicitudCompraFormComponent implements OnInit {
             folioProyecto: [''],
             moneda: ['MXN', Validators.required],
             formaPago: ['', Validators.required],
-            razonSocial: ['', Validators.required],
-            rfc: [''],
-            banco: [''],
-            cuenta: [''],
-            clabe: [''],
+            razonSocial: ['', Validators.required], // Internal company
             monto: [0, [Validators.required, Validators.min(0.01)]],
             subtotal: [0],
             iva: [0],
             totalPiezas: [0],
             cuadranteId: [null, Validators.required],
-            detalles: this._formBuilder.array([], Validators.required)
+            detalles: this._formBuilder.array([], Validators.required),
+            proveedores: this._formBuilder.array([])
         });
+
+        // Initialize with at least one supplier row if not editing
+        if (!this.isEdit) {
+            this.addProveedor();
+        }
 
         this._setupCalculationListener();
     }
@@ -216,6 +219,68 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     get detalles(): FormArray {
         return this.solicitudForm.get('detalles') as FormArray;
+    }
+
+    get proveedoresRows(): FormArray {
+        return this.solicitudForm.get('proveedores') as FormArray;
+    }
+
+    addProveedor(): void {
+        const proveedorForm = this._formBuilder.group({
+            idSolicitudProveedor: [0],
+            razonSocial: ['', Validators.required],
+            rfc: [''],
+            banco: [''],
+            cuenta: [''],
+            clabe: [''],
+            esSeleccionado: [this.proveedoresRows.length === 0], // First one selected by default
+            comentarios: ['']
+        });
+
+        const index = this.proveedoresRows.length;
+        this.proveedoresRows.push(proveedorForm);
+        this._setupProveedorFilterForRow(index);
+    }
+
+    removeProveedor(index: number): void {
+        if (this.proveedoresRows.length <= 1) return;
+        this.proveedoresRows.removeAt(index);
+        this.filteredProveedoresRows$.splice(index, 1);
+    }
+
+    selectProveedorWinner(index: number): void {
+        this.proveedoresRows.controls.forEach((control, i) => {
+            control.get('esSeleccionado').setValue(i === index, { emitEvent: false });
+        });
+    }
+
+    private _setupProveedorFilterForRow(index: number): void {
+        const control = this.proveedoresRows.at(index).get('razonSocial');
+        this.filteredProveedoresRows$[index] = control.valueChanges.pipe(
+            startWith(''),
+            debounceTime(400),
+            distinctUntilChanged(),
+            switchMap(value => {
+                if (typeof value === 'string' && value.trim().length >= 2) {
+                    return this._solicitudCompraService.buscarProveedores(value.trim());
+                }
+                return of([] as ProveedorDto[]);
+            }),
+            shareReplay(1)
+        );
+    }
+
+    onProveedorSelectedForRow(event: any, index: number): void {
+        const proveedor = event.option.value as ProveedorDto;
+        const row = this.proveedoresRows.at(index);
+        
+        row.patchValue({
+            razonSocial: proveedor.nombre,
+            rfc: proveedor.rfc,
+            banco: proveedor.banco || '',
+            cuenta: proveedor.cuenta || '',
+            clabe: proveedor.clabe || ''
+        }, { emitEvent: false });
     }
 
     addDetalle(): void {
@@ -285,40 +350,19 @@ export class SolicitudCompraFormComponent implements OnInit {
         }, { emitEvent: false });
     }
 
-    private _setupProveedorFilter(): void {
-        const control = this.solicitudForm.get('proveedorSugerido');
-        this.filteredProveedores$ = control.valueChanges.pipe(
-            startWith(''),
-            debounceTime(400),
-            distinctUntilChanged(),
-            switchMap(value => {
-                if (control.dirty && typeof value === 'string' && value.trim().length >= 2) {
-                    return this._solicitudCompraService.buscarProveedores(value.trim());
-                }
-                return of([] as ProveedorDto[]);
-            }),
-            shareReplay(1)
-        );
-    }
-
     onProveedorSelected(event: any): void {
-        const proveedor = event.option.value as ProveedorDto;
-        
-        this.solicitudForm.patchValue({
-            proveedorSugerido: proveedor.nombre,
-            rfc: proveedor.rfc,
-            banco: proveedor.banco || '',
-            cuenta: proveedor.cuenta || '',
-            clabe: proveedor.clabe || '',
-            datosBancariosProveedor: proveedor.cuenta_Bancaria || ''
-        }, { emitEvent: false });
+        // Deprecated
     }
 
     private _setupBancoFilter(): void {
-        this.filteredBancos$ = this.solicitudForm.get('banco').valueChanges.pipe(
+        this.filteredBancos$ = this._bancoSearch$.pipe(
             startWith(''),
             map(value => this._filterBancos(value || ''))
         );
+    }
+
+    searchBanco(value: string): void {
+        this._bancoSearch$.next(value);
     }
 
     private _filterBancos(value: string): string[] {
@@ -326,12 +370,17 @@ export class SolicitudCompraFormComponent implements OnInit {
         return this.bancosMexico.filter(banco => banco.toLowerCase().includes(filterValue));
     }
 
-    formatCLABE(event: any): void {
+    formatCLABE(event: any, index?: number): void {
         const input = event.target;
         const formatted = this._getFormattedValueCLABE(input.value);
         
         input.value = formatted;
-        this.solicitudForm.get('clabe').setValue(formatted, { emitEvent: false });
+        if (index !== undefined) {
+            this.proveedoresRows.at(index).get('clabe').setValue(formatted, { emitEvent: false });
+        } else {
+            // Root clabe (deprecated)
+            this.solicitudForm.get('clabe')?.setValue(formatted, { emitEvent: false });
+        }
     }
 
     private _getFormattedValueCLABE(value: string): string {
@@ -464,12 +513,42 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadSolicitud(id: number): void {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
             this.solicitudForm.patchValue(solicitud);
-            if (!solicitud.folioProyecto && solicitud.proyectoCliente) {
-                this.solicitudForm.get('folioProyecto').setValue(solicitud.proyectoCliente, { emitEvent: false });
-            }
-            if (solicitud.clabe) {
-                const formatted = this._getFormattedValueCLABE(solicitud.clabe);
-                this.solicitudForm.get('clabe').setValue(formatted, { emitEvent: false });
+            // CLABE formatting is now handled per provider row
+
+            // Load Providers
+            while (this.proveedoresRows.length) this.proveedoresRows.removeAt(0);
+            this.filteredProveedoresRows$ = [];
+            
+            if (solicitud.proveedores && solicitud.proveedores.length > 0) {
+                solicitud.proveedores.forEach((p, i) => {
+                    const row = this._formBuilder.group({
+                        idSolicitudProveedor: [p.idSolicitudProveedor],
+                        razonSocial: [p.razonSocial, Validators.required],
+                        rfc: [p.rfc],
+                        banco: [p.banco],
+                        cuenta: [p.cuenta],
+                        clabe: [p.clabe],
+                        esSeleccionado: [p.esSeleccionado],
+                        comentarios: [p.comentarios]
+                    });
+                    this.proveedoresRows.push(row);
+                    this._setupProveedorFilterForRow(i);
+                });
+            } else if (this.isEdit) {
+                // Handle legacy data or just add one empty
+                this.addProveedor();
+                // Map legacy data to first row if it exists in root
+                const legacyP = solicitud as any;
+                if (legacyP.razonSocial) {
+                    this.proveedoresRows.at(0).patchValue({
+                        razonSocial: legacyP.razonSocial,
+                        rfc: legacyP.rfc,
+                        banco: legacyP.banco,
+                        cuenta: legacyP.cuenta,
+                        clabe: legacyP.clabe,
+                        esSeleccionado: true
+                    });
+                }
             }
             while (this.detalles.length) this.detalles.removeAt(0);
             this.filteredProducts$ = [];
@@ -587,7 +666,13 @@ export class SolicitudCompraFormComponent implements OnInit {
         }
 
         const data = { ...this.solicitudForm.value };
-        if (data.clabe) data.clabe = data.clabe.replace(/\D/g, '');
+        
+        // Sanitize CLABEs in providers
+        if (data.proveedores) {
+            data.proveedores.forEach((p: any) => {
+                if (p.clabe) p.clabe = p.clabe.replace(/\D/g, '');
+            });
+        }
 
         if (this.isEdit) {
             this._solicitudCompraService.actualizar(data).subscribe({

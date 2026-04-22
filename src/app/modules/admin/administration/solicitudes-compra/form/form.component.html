@@ -205,76 +205,105 @@
                             </mat-form-field>
                         </div>
 
-                        <!-- Panel 4: Información del Proveedor Sugerido (Spans width when wrapped) -->
-                        <div
-                            class="flex flex-col p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 gap-4 lg:col-span-2 xl:col-span-3">
-                            <h3
-                                class="text-sm font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                <mat-icon class="icon-size-5 text-slate-500"
-                                    [svgIcon]="'heroicons_outline:truck'"></mat-icon>
-                                Información del Proveedor Sugerido
-                            </h3>
+                        <!-- Panel 4: Terna de Proveedores -->
+                        <div class="flex flex-col p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 gap-4 lg:col-span-2 xl:col-span-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-4">
+                                <h3 class="text-sm font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                    <mat-icon class="icon-size-5 text-slate-500" [svgIcon]="'heroicons_outline:users'"></mat-icon>
+                                    Terna de Proveedores
+                                </h3>
+                                <button mat-stroked-button color="primary" type="button" (click)="addProveedor()" class="!rounded-xl shadow-sm bg-white">
+                                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                    Añadir Proveedor a la Terna
+                                </button>
+                            </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                                <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>Nombre / Razón Social del Proveedor</mat-label>
-                                    <input matInput formControlName="proveedorSugerido" [matAutocomplete]="autoProv" placeholder="Escribe para buscar proveedor...">
-                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
-                                        [svgIcon]="'heroicons_outline:identification'"></mat-icon>
-                                    <mat-autocomplete #autoProv="matAutocomplete" (optionSelected)="onProveedorSelected($event)">
-                                        <mat-option *ngFor="let p of (filteredProveedores$ | async)" [value]="p">
-                                            <div class="flex flex-col leading-tight py-1">
-                                                <span class="font-bold text-primary">{{ p.nombre }}</span>
-                                                <span class="text-[10px] text-secondary uppercase tabular-nums">RFC: {{ p.rfc }} | {{ p.tipo }}</span>
+                            <div formArrayName="proveedores" class="flex flex-col gap-6">
+                                <div *ngFor="let p of proveedoresRows.controls; let i = index" [formGroupName]="i" 
+                                     class="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 relative group animate-in fade-in slide-in-from-top-2">
+                                    
+                                    <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-50 dark:border-gray-800">
+                                        <div class="flex items-center gap-4">
+                                            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-black text-slate-500">
+                                                {{i + 1}}
                                             </div>
-                                        </mat-option>
-                                    </mat-autocomplete>
-                                </mat-form-field>
+                                            <!-- Selection logic (Radio effect) -->
+                                            <div class="flex items-center gap-2 cursor-pointer select-none" (click)="selectProveedorWinner(i)">
+                                                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+                                                     [ngClass]="p.get('esSeleccionado').value ? 'border-indigo-500 bg-indigo-500 shadow-sm shadow-indigo-200' : 'border-gray-300 group-hover:border-gray-400'">
+                                                    <mat-icon *ngIf="p.get('esSeleccionado').value" class="icon-size-4 text-white">check</mat-icon>
+                                                </div>
+                                                <span class="text-xs font-bold uppercase tracking-widest transition-colors duration-200" 
+                                                      [ngClass]="p.get('esSeleccionado').value ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'">
+                                                    {{ p.get('esSeleccionado').value ? 'PROVEEDOR SELECCIONADO' : 'Seleccionar como Ganador' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button *ngIf="proveedoresRows.length > 1" mat-icon-button color="warn" (click)="removeProveedor(i)" matTooltip="Eliminar de la terna">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                        </button>
+                                    </div>
 
-                                <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>RFC del Proveedor</mat-label>
-                                    <input matInput formControlName="rfc" class="uppercase" placeholder="XAXX010101000">
-                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
-                                        [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
-                                </mat-form-field>
+                                    <!-- Supplier Basic Info -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>Nombre / Razón Social del Proveedor</mat-label>
+                                            <input matInput formControlName="razonSocial" [matAutocomplete]="autoProvRow" placeholder="Escribe para buscar proveedor...">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                                            <mat-autocomplete #autoProvRow="matAutocomplete" (optionSelected)="onProveedorSelectedForRow($event, i)">
+                                                <mat-option *ngFor="let prov of (filteredProveedoresRows$[i] | async)" [value]="prov">
+                                                    <div class="flex flex-col leading-tight py-1">
+                                                        <span class="font-bold text-primary">{{ prov.nombre }}</span>
+                                                        <span class="text-[10px] text-secondary uppercase tabular-nums">RFC: {{ prov.rfc }}</span>
+                                                    </div>
+                                                </mat-option>
+                                            </mat-autocomplete>
+                                            <mat-error *ngIf="p.get('razonSocial')?.hasError('required')">El nombre es obligatorio</mat-error>
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>RFC</mat-label>
+                                            <input matInput formControlName="rfc" class="uppercase" placeholder="XAXX010101000">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                        </mat-form-field>
+                                    </div>
+
+                                    <!-- Bank Info -->
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>Banco</mat-label>
+                                            <input matInput formControlName="banco" [matAutocomplete]="autoBancoRow" 
+                                                   (input)="searchBanco($event.target.value)"
+                                                   placeholder="Selecciona banco...">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
+                                            <mat-autocomplete #autoBancoRow="matAutocomplete">
+                                                <mat-option *ngFor="let banco of (filteredBancos$ | async)" [value]="banco">
+                                                    {{ banco }}
+                                                </mat-option>
+                                            </mat-autocomplete>
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>Cuenta</mat-label>
+                                            <input matInput formControlName="cuenta" placeholder="Número de cuenta">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:credit-card'"></mat-icon>
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>CLABE Interbancaria</mat-label>
+                                            <input matInput formControlName="clabe" (input)="formatCLABE($event, i)" maxlength="21" placeholder="XXX-XXX-XXXXXXXXXXX-X">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
+                                            <mat-hint class="text-[10px] font-medium text-slate-500">18 dígitos requeridos</mat-hint>
+                                        </mat-form-field>
+                                    </div>
+
+                                    <mat-form-field appearance="fill" class="w-full mt-4">
+                                        <mat-label>Comentarios / Observaciones de este proveedor</mat-label>
+                                        <textarea matInput formControlName="comentarios" rows="2" placeholder="Notas sobre cotización, tiempos de entrega, etc."></textarea>
+                                        <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:chat-bubble-bottom-center-text'"></mat-icon>
+                                    </mat-form-field>
+                                </div>
                             </div>
-
-                            <!-- Banco, Cuenta, CLABE en 3 columnas -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                                <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>Banco</mat-label>
-                                    <input matInput formControlName="banco" [matAutocomplete]="autoBanco" placeholder="Selecciona o escribe banco...">
-                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
-                                        [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
-                                    <mat-autocomplete #autoBanco="matAutocomplete">
-                                        <mat-option *ngFor="let banco of (filteredBancos$ | async)" [value]="banco">
-                                            {{ banco }}
-                                        </mat-option>
-                                    </mat-autocomplete>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>Cuenta</mat-label>
-                                    <input matInput formControlName="cuenta" placeholder="Número de cuenta">
-                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
-                                        [svgIcon]="'heroicons_outline:credit-card'"></mat-icon>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="fill" class="w-full">
-                                    <mat-label>CLABE Interbancaria</mat-label>
-                                    <input matInput formControlName="clabe" (input)="formatCLABE($event)" maxlength="21" placeholder="XXX-XXX-XXXXXXXXXXX-X">
-                                    <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
-                                        [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
-                                    <mat-hint class="text-[10px] font-medium text-slate-500">18 dígitos (formato automático)</mat-hint>
-                                </mat-form-field>
-                            </div>
-
-                            <mat-form-field appearance="fill" class="w-full">
-                                <mat-label>Observaciones bancarias (Otros datos)</mat-label>
-                                <textarea matInput formControlName="datosBancariosProveedor" rows="2" placeholder="Información adicional para transferencias..."></textarea>
-                                <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2"
-                                    [svgIcon]="'heroicons_outline:information-circle'"></mat-icon>
-                            </mat-form-field>
                         </div>
                     </div>
 

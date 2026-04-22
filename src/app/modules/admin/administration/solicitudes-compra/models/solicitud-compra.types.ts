@@ -27,10 +27,10 @@ export interface SolicitudCompra {
     moneda: string;
     formaPago?: string;
     razonSocial: string;
-    rfc?: string;
-    banco?: string;
-    cuenta?: string;
-    clabe?: string;
+    rfc?: string; // Provider RFC (flattened for display)
+    banco?: string; // Provider Bank (flattened for display)
+    cuenta?: string; // Provider Account (flattened for display)
+    clabe?: string; // Provider CLABE (flattened for display)
     monto?: number;
     cuadranteId?: number;
     idEstatus: number;
@@ -41,6 +41,19 @@ export interface SolicitudCompra {
     // Relaciones
     estatus: CatEstatusCompra;
     detalles: SolicitudCompraDetalle[];
+    proveedores: SolicitudCompraProveedor[];
+}
+
+export interface SolicitudCompraProveedor {
+    idSolicitudProveedor?: number;
+    idSolicitud?: number;
+    razonSocial: string;
+    rfc?: string;
+    banco?: string;
+    cuenta?: string;
+    clabe?: string;
+    esSeleccionado: boolean;
+    comentarios?: string;
 }
 
 export interface SolicitudCompraDetalle {
@@ -78,13 +91,10 @@ export interface SolicitudCompraCreateDto {
     moneda: string;
     formaPago?: string;
     razonSocial: string;
-    rfc?: string;
-    banco?: string;
-    cuenta?: string;
-    clabe?: string;
     monto?: number;
     cuadranteId?: number;
     detalles: SolicitudCompraDetalleCreateDto[];
+    proveedores: SolicitudCompraProveedor[];
 }
 
 export interface SolicitudCompraDetalleCreateDto {
