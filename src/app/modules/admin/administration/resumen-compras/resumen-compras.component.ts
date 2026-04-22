@@ -83,6 +83,8 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     totalsByCurrency: { [key: string]: number } = {};
     countSolicitudes: number = 0;
     promedioMonto: number = 0; // Keeping as reference or normalized average
+    currenciesList: string[] = [];
+
     
     // Chart Options
     chartOptionsCentroCosto: Highcharts.Options = {};
@@ -301,47 +303,76 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             };
         });
 
-        // 5. Group by Sucursal (Normalized to MXN)
-        const sucursalMap = new Map<string, number>();
+        // 5. Group by Sucursal AND Moneda
+        const sucMonedaMap = new Map<string, { [moneda: string]: number }>();
+        const uniqueSucs = new Set<string>();
+        
         this.solicitudes.forEach(s => {
             const suc = s.sucursal || 'Sin Sucursal';
-            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
-            sucursalMap.set(suc, (sucursalMap.get(suc) || 0) + montoMXN);
+            const mon = (s.moneda || 'MXN').toUpperCase();
+            uniqueSucs.add(suc);
+            uniqueCurrencies.add(mon); // Ensure it's in the global set
+
+            if (!sucMonedaMap.has(suc)) {
+                sucMonedaMap.set(suc, {});
+            }
+            const sucData = sucMonedaMap.get(suc);
+            sucData[mon] = (sucData[mon] || 0) + (s.monto || 0);
         });
 
-        const sucursalData = Array.from(sucursalMap.entries())
-            .map(([name, y]) => ({ name, y }))
-            .sort((a, b) => b.y - a.y);
+        const sortedSucs = Array.from(uniqueSucs).sort();
+        this.currenciesList = Array.from(uniqueCurrencies).sort();
+        const currenciesListFinal = this.currenciesList;
 
-        // 6. Group by Investment Status (Realized vs Pending)
-        const statusMap = new Map<string, number>();
-        let totalRealized = 0;
-        let totalPending = 0;
-        let totalAdvance = 0;
+        const sucursalSeries: any[] = currenciesListFinal.map(mon => {
+            return {
+                name: mon,
+                data: sortedSucs.map(suc => sucMonedaMap.get(suc)[mon] || 0),
+                color: (colors as any)[mon] || undefined
+            };
+        });
+
+        // 6. Group by Investment Status AND Moneda
+        const statusMonedaMap = new Map<string, { [moneda: string]: number }>();
+        // Possible statuses: Liquidado, Anticipo, Pendiente
+        const statuses = ['Liquidado', 'Anticipo', 'Pendiente'];
+        
+        statuses.forEach(status => statusMonedaMap.set(status, {}));
 
         this.solicitudes.forEach(s => {
-            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
-            if (s.estadoLiquidacion === 1) {
-                totalRealized += montoMXN;
-            } else if (s.estadoLiquidacion === 2) {
-                totalAdvance += montoMXN;
-            } else {
-                totalPending += montoMXN;
-            }
+            const mon = (s.moneda || 'MXN').toUpperCase();
+            let status = 'Pendiente';
+            if (s.estadoLiquidacion === 1) status = 'Liquidado';
+            else if (s.estadoLiquidacion === 2) status = 'Anticipo';
+
+            const statusData = statusMonedaMap.get(status);
+            statusData[mon] = (statusData[mon] || 0) + (s.monto || 0);
         });
 
-        const statusData = [
-            { name: 'Liquidado', y: totalRealized, color: '#10b981' },
-            { name: 'Anticipo', y: totalAdvance, color: '#f59e0b' },
-            { name: 'Pendiente', y: totalPending, color: '#ef4444' }
-        ].filter(d => d.y > 0);
+        const liquidacionSeries: any[] = [
+            {
+                name: 'Liquidado',
+                color: '#10b981',
+                data: currenciesListFinal.map(mon => statusMonedaMap.get('Liquidado')[mon] || 0)
+            },
+            {
+                name: 'Anticipo',
+                color: '#f59e0b',
+                data: currenciesListFinal.map(mon => statusMonedaMap.get('Anticipo')[mon] || 0)
+            },
+            {
+                name: 'Pendiente',
+                color: '#ef4444',
+                data: currenciesListFinal.map(mon => statusMonedaMap.get('Pendiente')[mon] || 0)
+            }
+        ];
 
         // 7. Build Charts
         this.chartOptionsCentroCosto = this._buildCentroCostoChart(sortedCCs, ccSeries);
         this.chartOptionsPrioridad = this._buildPrioridadChart(priorityData);
         this.chartOptionsTimeline = this._buildTimelineChart(timelineSeries);
-        this.chartOptionsSucursal = this._buildSucursalChart(sucursalData);
-        this.chartOptionsLiquidacion = this._buildLiquidacionChart(statusData);
+        this.chartOptionsSucursal = this._buildSucursalChart(sortedSucs, sucursalSeries);
+        this.chartOptionsLiquidacion = this._buildLiquidacionChart(currenciesListFinal, liquidacionSeries);
         
         this._changeDetectorRef.markForCheck();
     }
@@ -415,101 +446,62 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
         });
     }
 
-    private _buildSucursalChart(data: any[]): Highcharts.Options {
+    private _buildSucursalChart(categories: string[], series: any[]): Highcharts.Options {
         return Highcharts.merge(this.baseTheme, {
             chart: { type: 'bar' },
             xAxis: {
-                categories: data.map(d => d.name),
+                categories: categories,
                 gridLineWidth: 0,
                 lineColor: '#e5e7eb'
             },
             yAxis: {
-                title: { text: 'Monto Total (MXN)' },
+                title: { text: 'Monto Total' },
                 gridLineColor: '#f3f4f6'
             },
             plotOptions: {
                 bar: {
                     borderRadius: 8,
-                    colorByPoint: true,
-                    colors: ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e']
+                    borderWidth: 0
                 }
             },
-            series: [{
-                name: 'Inversión',
-                data: data.map(d => d.y),
-                showInLegend: false
-            }]
+            legend: { enabled: true },
+            series: series
         });
     }
 
-    private _buildLiquidacionChart(data: any[]): Highcharts.Options {
-        // Find specific values for tooltips/labels
-        const liquidated = data.find(d => d.name === 'Liquidado')?.y || 0;
-        const advance = data.find(d => d.name === 'Anticipo')?.y || 0;
-        const pending = data.find(d => d.name === 'Pendiente')?.y || 0;
-        const total = liquidated + advance + pending;
-
+    private _buildLiquidacionChart(categories: string[], series: any[]): Highcharts.Options {
         return Highcharts.merge(this.baseTheme, {
             chart: { 
-                type: 'bar',
-                height: 180,
-                marginTop: 20
+                type: 'column',
+                height: 250
             },
             xAxis: {
-                categories: ['Inversión Total'],
-                visible: false
+                categories: categories,
+                lineColor: '#e5e7eb'
             },
             yAxis: {
-                min: 0,
-                max: total,
-                title: { text: null },
-                gridLineWidth: 0,
-                labels: { enabled: false }
+                title: { text: 'Monto' },
+                gridLineColor: '#f3f4f6'
             },
             legend: {
                 enabled: true,
                 verticalAlign: 'top',
-                align: 'center',
-                itemStyle: { fontSize: '12px' }
+                align: 'center'
             },
             plotOptions: {
-                series: {
+                column: {
                     stacking: 'normal',
-                    borderRadius: 10,
+                    borderRadius: 6,
                     dataLabels: {
-                        enabled: true,
-                        format: '{point.percentage:.0f}%',
-                        style: { 
-                            fontSize: '14px', 
-                            fontWeight: 'bold', 
-                            color: 'white', 
-                            textOutline: 'none' 
-                        }
+                        enabled: false
                     }
                 }
             },
             tooltip: {
-                valueDecimals: 2,
-                valueSuffix: ' MXN',
-                shared: true
+                shared: true,
+                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y:,.2f}</b><br/>'
             },
-            series: [
-                {
-                    name: 'Liquidado',
-                    data: [liquidated],
-                    color: '#10b981' // emerald-500
-                },
-                {
-                    name: 'Anticipo',
-                    data: [advance],
-                    color: '#f59e0b' // amber-500
-                },
-                {
-                    name: 'Pendiente',
-                    data: [pending],
-                    color: '#ef4444' // red-500
-                }
-            ]
+            series: series
         });
     }
 }

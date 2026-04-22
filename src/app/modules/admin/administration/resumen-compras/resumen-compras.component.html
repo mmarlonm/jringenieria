@@ -213,51 +213,30 @@
                     </highcharts-chart>
                 </div>
 
-                <!-- Detailed Table Breakdown -->
-                <div *ngIf="solicitudes.length > 0" class="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/50">
-                    <table class="w-full text-left text-xs">
+                <!-- Detailed Table Breakdown by Currency -->
+                <div *ngIf="solicitudes.length > 0" class="mt-4 overflow-x-auto rounded-2xl border border-gray-100 bg-gray-50/50">
+                    <table class="w-full text-left text-[10px] sm:text-xs">
                         <thead>
                             <tr class="bg-gray-100/50 text-secondary uppercase tracking-wider font-bold">
-                                <th class="px-4 py-2">Estado</th>
-                                <th class="px-4 py-2 text-right">Monto (MXN)</th>
-                                <th class="px-4 py-2 text-right">%</th>
+                                <th class="px-3 py-2">Moneda</th>
+                                <th class="px-3 py-2 text-right text-emerald-600">Liquidado</th>
+                                <th class="px-3 py-2 text-right text-amber-600">Anticipo</th>
+                                <th class="px-3 py-2 text-right text-red-600">Pendiente</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            <tr class="hover:bg-white transition-colors">
-                                <td class="px-4 py-3 flex items-center gap-2 font-bold">
-                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                    Liquidado
+                            <tr *ngFor="let mon of currenciesList; let i = index" class="hover:bg-white transition-colors">
+                                <td class="px-3 py-2 font-black text-gray-700">
+                                    {{ mon }}
                                 </td>
-                                <td class="px-4 py-3 text-right font-medium text-emerald-600">
-                                    {{ (chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) | currency:'MXN' }}
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ (chartOptionsLiquidacion.series?.[0]?.data?.[i] || 0) | currency:mon }}
                                 </td>
-                                <td class="px-4 py-3 text-right text-secondary">
-                                    {{ (((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) / ((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) || 1)) * 100) | number:'1.0-1' }}%
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ (chartOptionsLiquidacion.series?.[1]?.data?.[i] || 0) | currency:mon }}
                                 </td>
-                            </tr>
-                            <tr class="hover:bg-white transition-colors">
-                                <td class="px-4 py-3 flex items-center gap-2 font-bold">
-                                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-                                    Anticipo
-                                </td>
-                                <td class="px-4 py-3 text-right font-medium text-amber-600">
-                                    {{ (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) | currency:'MXN' }}
-                                </td>
-                                <td class="px-4 py-3 text-right text-secondary">
-                                    {{ (((chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) / ((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) || 1)) * 100) | number:'1.0-1' }}%
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-white transition-colors">
-                                <td class="px-4 py-3 flex items-center gap-2 font-bold">
-                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                                    Pendiente
-                                </td>
-                                <td class="px-4 py-3 text-right font-medium text-red-600">
-                                    {{ (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) | currency:'MXN' }}
-                                </td>
-                                <td class="px-4 py-3 text-right text-secondary">
-                                    {{ (((chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) / ((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) || 1)) * 100) | number:'1.0-1' }}%
+                                <td class="px-3 py-2 text-right font-medium">
+                                    {{ (chartOptionsLiquidacion.series?.[2]?.data?.[i] || 0) | currency:mon }}
                                 </td>
                             </tr>
                         </tbody>
