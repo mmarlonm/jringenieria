@@ -1,14 +1,6 @@
-<div
-  class="fixed bottom-0 top-0 right-0 w-full sm:w-96 lg:sticky lg:left-full lg:h-screen lg:w-16 lg:shadow"
->
-  <div
-    class="bg-card flex h-full w-full flex-col transition-transform duration-400 ease-drawer sm:w-96"
-    [ngClass]="{
-      'translate-x-0 shadow': opened,
-      'translate-x-full': !opened
-    }"
-  >
-  >
+<div class="fixed bottom-0 top-0 left-0 right-0 w-full sm:w-96 z-[999] pointer-events-none lg:sticky lg:left-full lg:h-screen lg:w-16 lg:shadow">
+  <div class="bg-card flex h-full w-full flex-col transition-transform duration-400 ease-drawer sm:w-96 pointer-events-auto" [ngClass]="{'translate-x-0 shadow sm:-translate-x-96 lg:-translate-x-80': opened, 'translate-x-full lg:translate-x-0': !opened}">
+
     <!-- Header -->
     <div
       class="quick-chat-header flex flex-0 cursor-pointer items-center justify-start"

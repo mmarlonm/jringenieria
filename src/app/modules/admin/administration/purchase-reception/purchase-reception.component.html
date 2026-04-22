@@ -1,4 +1,4 @@
-<div class="absolute inset-0 flex flex-col min-w-0 bg-gray-50/30 md:overflow-hidden overflow-y-auto">
+<div class="absolute inset-0 flex flex-col min-w-0 bg-gray-50/30 sm:overflow-hidden overflow-y-auto">
 
     <!-- Header -->
     <div class="flex flex-col p-6 sm:px-10 sm:py-8 border-b bg-white dark:bg-transparent shadow-sm">
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col flex-auto p-3 sm:p-10 md:overflow-y-auto overflow-visible min-h-0">
+    <div class="flex flex-col flex-auto p-3 sm:p-10 sm:overflow-y-auto overflow-visible min-h-0">
         <div class="max-w-screen-2xl mx-auto space-y-8">
 
             <!-- KPI Cards -->
@@ -123,7 +123,7 @@
                 </div>
 
                 <!-- Table Container (Desktop) -->
-                <div class="hidden md:block overflow-x-auto">
+                <div class="hidden sm:block overflow-x-auto">
                     <table mat-table [dataSource]="dataSource" matSort class="w-full">
 
                         <!-- ID Recepcion -->
@@ -294,8 +294,8 @@
                     </table>
                 </div>
 
-                <!-- Mobile Card View (md:hidden) -->
-                <div class="md:hidden space-y-4">
+                <!-- Mobile Card View (sm:hidden) -->
+                <div class="sm:hidden space-y-4">
                     <ng-container *ngIf="dataSource && dataSource.filteredData.length > 0; else noDataMobile">
                         <div *ngFor="let row of dataSource.filteredData" 
                              class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all active:scale-[0.98]"

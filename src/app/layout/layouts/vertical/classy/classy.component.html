@@ -146,8 +146,9 @@
                         </div>
                     </div>
                 </mat-menu>
-                       <!-- Desktop & Tablet Secondary Actions -->
-            <div class="hidden md:flex items-center space-x-2">
+            </div>
+            <!-- Desktop Secondary Actions -->
+            <div class="hidden lg:flex items-center space-x-2">
                 <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
                     @if (!isDark) {
                     <mat-icon class="text-amber-500" [svgIcon]="'heroicons_outline:sun'"></mat-icon>
@@ -159,9 +160,7 @@
                 <button mat-icon-button [matMenuTriggerFor]="calendarMenu">
                     <mat-icon>calendar_today</mat-icon>
                 </button>
-                <button mat-icon-button (click)="quickChat.toggle()">
-                    <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
-                </button>
+
                 <button mat-stroked-button class="google-btn" [ngClass]="{
                     'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
                     'google-expired': googleStatus?.isExpired,
@@ -179,11 +178,8 @@
                 </button>
             </div>
 
-            <!-- Mobile 'More' Menu -->
-            <div class="md:hidden flex items-center">
-                <button mat-icon-button [matMenuTriggerFor]="mobileMoreMenu" class="text-secondary">
-                    <mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon>
-                </button>
+            <div class="lg:hidden flex items-center">
+                <button mat-icon-button [matMenuTriggerFor]="mobileMoreMenu" class="text-secondary"><mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon></button>
                 <mat-menu #mobileMoreMenu="matMenu" class="rounded-2xl shadow-xl border border-gray-100">
                     <button mat-menu-item (click)="toggleScheme()">
                         <div class="flex items-center">
@@ -198,7 +194,7 @@
                             <span class="font-bold ml-3">Calendario</span>
                         </div>
                     </button>
-                    <button mat-menu-item (click)="quickChat.toggle()">
+                    <button mat-menu-item (click)="quickChat.open()">
                         <div class="flex items-center">
                             <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
                             <span class="font-bold ml-3">Team Chat</span>
@@ -219,8 +215,6 @@
                 </mat-menu>
             </div>
         </div>
-    </div>
->
     </div>
 
     <!-- Content -->
@@ -352,3 +346,4 @@
         <app-tareas-calendar #fullCalendar [tareas]="misTareas"></app-tareas-calendar>
     </div>
 </mat-menu>
+
