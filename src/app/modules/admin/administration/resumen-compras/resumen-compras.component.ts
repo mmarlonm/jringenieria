@@ -88,6 +88,8 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     chartOptionsCentroCosto: Highcharts.Options = {};
     chartOptionsPrioridad: Highcharts.Options = {};
     chartOptionsTimeline: Highcharts.Options = {};
+    chartOptionsSucursal: Highcharts.Options = {};
+    chartOptionsLiquidacion: Highcharts.Options = {};
     
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -175,6 +177,14 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
                 this._changeDetectorRef.markForCheck();
             }
         });
+    }
+
+    private _resetCharts(): void {
+        this.chartOptionsCentroCosto = {};
+        this.chartOptionsPrioridad = {};
+        this.chartOptionsTimeline = {};
+        this.chartOptionsSucursal = {};
+        this.chartOptionsLiquidacion = {};
     }
 
     private _processData(): void {
@@ -291,125 +301,215 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             };
         });
 
-        // 5. Build Charts
+        // 5. Group by Sucursal (Normalized to MXN)
+        const sucursalMap = new Map<string, number>();
+        this.solicitudes.forEach(s => {
+            const suc = s.sucursal || 'Sin Sucursal';
+            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
+            sucursalMap.set(suc, (sucursalMap.get(suc) || 0) + montoMXN);
+        });
+
+        const sucursalData = Array.from(sucursalMap.entries())
+            .map(([name, y]) => ({ name, y }))
+            .sort((a, b) => b.y - a.y);
+
+        // 6. Group by Investment Status (Realized vs Pending)
+        const statusMap = new Map<string, number>();
+        let totalRealized = 0;
+        let totalPending = 0;
+        let totalAdvance = 0;
+
+        this.solicitudes.forEach(s => {
+            const montoMXN = this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda);
+            if (s.estadoLiquidacion === 1) {
+                totalRealized += montoMXN;
+            } else if (s.estadoLiquidacion === 2) {
+                totalAdvance += montoMXN;
+            } else {
+                totalPending += montoMXN;
+            }
+        });
+
+        const statusData = [
+            { name: 'Liquidado', y: totalRealized, color: '#10b981' },
+            { name: 'Anticipo', y: totalAdvance, color: '#f59e0b' },
+            { name: 'Pendiente', y: totalPending, color: '#ef4444' }
+        ].filter(d => d.y > 0);
+
+        // 7. Build Charts
         this.chartOptionsCentroCosto = this._buildCentroCostoChart(sortedCCs, ccSeries);
         this.chartOptionsPrioridad = this._buildPrioridadChart(priorityData);
         this.chartOptionsTimeline = this._buildTimelineChart(timelineSeries);
+        this.chartOptionsSucursal = this._buildSucursalChart(sucursalData);
+        this.chartOptionsLiquidacion = this._buildLiquidacionChart(statusData);
         
         this._changeDetectorRef.markForCheck();
     }
 
     private _buildTimelineChart(series: any[]): Highcharts.Options {
-        return {
-            ...this.baseTheme,
-            chart: { ...this.baseTheme.chart, type: 'areaspline' },
+        return Highcharts.merge(this.baseTheme, {
+            chart: { type: 'areaspline' },
             xAxis: {
                 type: 'datetime',
-                dateTimeLabelFormats: { month: '%b %Y', day: '%e %b' },
-                labels: { style: { color: '#6b7280', fontSize: '10px' } },
+                dateTimeLabelFormats: { day: '%e %b', month: '%b %y' },
+                gridLineWidth: 0,
                 lineColor: '#e5e7eb'
             },
             yAxis: {
-                title: { text: null },
-                labels: { format: '{value:.,0f}', style: { color: '#9ca3af', fontSize: '10px' } },
-                gridLineColor: '#f1f5f9',
-                gridLineDashStyle: 'Dash'
-            },
-            legend: {
-                enabled: true,
-                align: 'center',
-                verticalAlign: 'bottom'
-            },
-            tooltip: { 
-                ...this.baseTheme.tooltip, 
-                shared: true,
-                xDateFormat: '%A, %e de %B',
-                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y:,.2f}</b><br/>'
+                title: { text: 'Inversión (MXN)' },
+                gridLineDashStyle: 'Dash',
+                gridLineColor: '#f3f4f6'
             },
             plotOptions: {
                 areaspline: {
                     fillOpacity: 0.1,
-                    marker: { radius: 3, symbol: 'circle', lineWidth: 1, lineColor: '#ffffff' },
-                    lineWidth: 2,
-                    states: { hover: { lineWidth: 3 } },
-                    threshold: null
+                    lineWidth: 3,
+                    marker: { radius: 4, symbol: 'circle' }
                 }
             },
-            series: series.map(s => ({ ...s, type: 'areaspline' }))
-        };
+            series: series
+        });
     }
 
     private _buildCentroCostoChart(categories: string[], series: any[]): Highcharts.Options {
-        return {
-            ...this.baseTheme,
-            chart: { ...this.baseTheme.chart, type: 'column' },
+        return Highcharts.merge(this.baseTheme, {
+            chart: { type: 'column' },
             xAxis: {
                 categories: categories,
                 labels: { rotation: -45, style: { fontSize: '10px', color: '#6b7280', fontWeight: '500' } },
                 lineColor: '#e5e7eb'
             },
             yAxis: {
-                title: { text: null },
-                labels: { format: '{value:.,0f}', style: { color: '#9ca3af', fontSize: '10px' } },
-                gridLineColor: '#f1f5f9'
-            },
-            legend: { 
-                enabled: true,
-                align: 'center',
-                verticalAlign: 'bottom'
-            },
-            tooltip: { 
-                ...this.baseTheme.tooltip, 
-                shared: true,
-                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y:,.2f}</b><br/>'
+                title: { text: 'Inversión' },
+                gridLineColor: '#f3f4f6'
             },
             plotOptions: {
                 column: { 
                     borderRadius: 4, 
-                    borderWidth: 0,
-                    dataLabels: { enabled: false }
-                }
-            },
-            series: series.map(s => ({ ...s, type: 'column' }))
-        };
-    }
-
-    private _buildPrioridadChart(data: any[]): Highcharts.Options {
-        return {
-            ...this.baseTheme,
-            chart: { ...this.baseTheme.chart, type: 'pie' },
-            tooltip: { ...this.baseTheme.tooltip, pointFormat: 'Cantidad: <b>{point.y}</b> ({point.percentage:.1f}%)' },
-            plotOptions: {
-                pie: {
-                    allowPointSelect: true,
-                    cursor: 'pointer',
-                    dataLabels: {
-                        enabled: true,
-                        format: '{point.name}',
-                        style: { fontSize: '10px', fontWeight: 'bold', color: '#4b5563', textOutline: 'none' },
-                        connectorWidth: 1,
-                        distance: 20
-                    },
-                    showInLegend: true,
-                    innerSize: '65%',
                     borderWidth: 0
                 }
             },
+            series: series
+        });
+    }
+
+    private _buildPrioridadChart(data: any[]): Highcharts.Options {
+        return Highcharts.merge(this.baseTheme, {
+            chart: { type: 'pie' },
+            tooltip: { pointFormat: 'Cantidad: <b>{point.y}</b> ({point.percentage:.1f}%)' },
+            plotOptions: {
+                pie: {
+                    innerSize: '65%',
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}',
+                        style: { fontSize: '10px', fontWeight: 'bold', color: '#4b5563', textOutline: 'none' }
+                    },
+                    showInLegend: true
+                }
+            },
             series: [{
-                type: 'pie',
                 name: 'Prioridades',
                 data: data
             }]
-        };
+        });
     }
 
-    private _resetCharts(): void {
-        this.totalsByCurrency = {};
-        this.countSolicitudes = 0;
-        this.promedioMonto = 0;
-        this.chartOptionsCentroCosto = {};
-        this.chartOptionsPrioridad = {};
-        this.chartOptionsTimeline = {};
-        this._changeDetectorRef.markForCheck();
+    private _buildSucursalChart(data: any[]): Highcharts.Options {
+        return Highcharts.merge(this.baseTheme, {
+            chart: { type: 'bar' },
+            xAxis: {
+                categories: data.map(d => d.name),
+                gridLineWidth: 0,
+                lineColor: '#e5e7eb'
+            },
+            yAxis: {
+                title: { text: 'Monto Total (MXN)' },
+                gridLineColor: '#f3f4f6'
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 8,
+                    colorByPoint: true,
+                    colors: ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e']
+                }
+            },
+            series: [{
+                name: 'Inversión',
+                data: data.map(d => d.y),
+                showInLegend: false
+            }]
+        });
+    }
+
+    private _buildLiquidacionChart(data: any[]): Highcharts.Options {
+        // Find specific values for tooltips/labels
+        const liquidated = data.find(d => d.name === 'Liquidado')?.y || 0;
+        const advance = data.find(d => d.name === 'Anticipo')?.y || 0;
+        const pending = data.find(d => d.name === 'Pendiente')?.y || 0;
+        const total = liquidated + advance + pending;
+
+        return Highcharts.merge(this.baseTheme, {
+            chart: { 
+                type: 'bar',
+                height: 180,
+                marginTop: 20
+            },
+            xAxis: {
+                categories: ['Inversión Total'],
+                visible: false
+            },
+            yAxis: {
+                min: 0,
+                max: total,
+                title: { text: null },
+                gridLineWidth: 0,
+                labels: { enabled: false }
+            },
+            legend: {
+                enabled: true,
+                verticalAlign: 'top',
+                align: 'center',
+                itemStyle: { fontSize: '12px' }
+            },
+            plotOptions: {
+                series: {
+                    stacking: 'normal',
+                    borderRadius: 10,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.percentage:.0f}%',
+                        style: { 
+                            fontSize: '14px', 
+                            fontWeight: 'bold', 
+                            color: 'white', 
+                            textOutline: 'none' 
+                        }
+                    }
+                }
+            },
+            tooltip: {
+                valueDecimals: 2,
+                valueSuffix: ' MXN',
+                shared: true
+            },
+            series: [
+                {
+                    name: 'Liquidado',
+                    data: [liquidated],
+                    color: '#10b981' // emerald-500
+                },
+                {
+                    name: 'Anticipo',
+                    data: [advance],
+                    color: '#f59e0b' // amber-500
+                },
+                {
+                    name: 'Pendiente',
+                    data: [pending],
+                    color: '#ef4444' // red-500
+                }
+            ]
+        });
     }
 }

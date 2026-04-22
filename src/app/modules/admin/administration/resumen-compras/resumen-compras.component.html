@@ -175,6 +175,100 @@
                 </div>
             </div>
 
+            <!-- Sucursal Chart -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+                        <mat-icon class="mr-3 text-emerald-500 bg-emerald-50 p-1.5 rounded-xl !w-10 !h-10 flex items-center justify-center">store</mat-icon>
+                        Inversión por Sucursal
+                    </h2>
+                </div>
+                <div class="w-full h-[400px]">
+                    <highcharts-chart *ngIf="solicitudes.length > 0"
+                        [Highcharts]="Highcharts"
+                        [options]="chartOptionsSucursal"
+                        style="width: 100%; height: 100%; display: block;">
+                    </highcharts-chart>
+                    <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-2xl h-full">
+                        Sin datos por sucursal
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liquidación Chart -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+                        <mat-icon class="mr-3 text-amber-500 bg-amber-50 p-1.5 rounded-xl !w-10 !h-10 flex items-center justify-center">account_balance_wallet</mat-icon>
+                        Estado de Inversión
+                    </h2>
+                </div>
+                
+                <!-- Horizontal Progress Bar -->
+                <div class="w-full h-[180px]">
+                    <highcharts-chart *ngIf="solicitudes.length > 0"
+                        [Highcharts]="Highcharts"
+                        [options]="chartOptionsLiquidacion"
+                        style="width: 100%; height: 100%; display: block;">
+                    </highcharts-chart>
+                </div>
+
+                <!-- Detailed Table Breakdown -->
+                <div *ngIf="solicitudes.length > 0" class="mt-4 overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/50">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="bg-gray-100/50 text-secondary uppercase tracking-wider font-bold">
+                                <th class="px-4 py-2">Estado</th>
+                                <th class="px-4 py-2 text-right">Monto (MXN)</th>
+                                <th class="px-4 py-2 text-right">%</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr class="hover:bg-white transition-colors">
+                                <td class="px-4 py-3 flex items-center gap-2 font-bold">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    Liquidado
+                                </td>
+                                <td class="px-4 py-3 text-right font-medium text-emerald-600">
+                                    {{ (chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) | currency:'MXN' }}
+                                </td>
+                                <td class="px-4 py-3 text-right text-secondary">
+                                    {{ (((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) / ((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) || 1)) * 100) | number:'1.0-1' }}%
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-white transition-colors">
+                                <td class="px-4 py-3 flex items-center gap-2 font-bold">
+                                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                                    Anticipo
+                                </td>
+                                <td class="px-4 py-3 text-right font-medium text-amber-600">
+                                    {{ (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) | currency:'MXN' }}
+                                </td>
+                                <td class="px-4 py-3 text-right text-secondary">
+                                    {{ (((chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) / ((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) || 1)) * 100) | number:'1.0-1' }}%
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-white transition-colors">
+                                <td class="px-4 py-3 flex items-center gap-2 font-bold">
+                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                    Pendiente
+                                </td>
+                                <td class="px-4 py-3 text-right font-medium text-red-600">
+                                    {{ (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) | currency:'MXN' }}
+                                </td>
+                                <td class="px-4 py-3 text-right text-secondary">
+                                    {{ (((chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) / ((chartOptionsLiquidacion.series?.[0]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[1]?.data?.[0] || 0) + (chartOptionsLiquidacion.series?.[2]?.data?.[0] || 0) || 1)) * 100) | number:'1.0-1' }}%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div *ngIf="solicitudes.length === 0" class="flex flex-auto items-center justify-center text-gray-400 italic bg-gray-50 rounded-2xl h-[400px]">
+                    Sin datos de liquidación
+                </div>
+            </div>
+
         </div>
 
         <!-- Hero: Timeline Chart (Full Width) -->
