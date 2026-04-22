@@ -24,6 +24,7 @@ import { ClientsService } from '../../../catalogs/clients/clients.service';
 import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
+import * as pdfjsLib from 'pdfjs-dist';
 
 @Component({
     selector: 'solicitud-compra-form',
@@ -146,7 +147,6 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     loadProjects(): void {
         this._projectService.getProjects().subscribe((response: any) => {
-            // Handle the wrapper { code, message, data: [] }
             this.proyectos = response?.data || response || [];
             this._setupProjectFilter();
         });
@@ -160,7 +160,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     initForm(): void {
-        let userId = 1; // Fallback
+        let userId = 1;
         try {
             const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
             const user = userInformation.usuario || {};
@@ -208,7 +208,6 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadBranches(): void {
         this._projectService.getUnidadesDeNegocio().subscribe(branches => {
             this.sucursales = branches;
-            // Add 'Otro' if not present
             if (!this.sucursales.find(s => s.nombre === 'Otro')) {
                 this.sucursales.push({ id: 0, nombre: 'Otro' });
             }
@@ -293,7 +292,6 @@ export class SolicitudCompraFormComponent implements OnInit {
             debounceTime(400),
             distinctUntilChanged(),
             switchMap(value => {
-                // Solo buscar si el control ha sido editado manualmente y tiene al menos 2 caracteres
                 if (control.dirty && typeof value === 'string' && value.trim().length >= 2) {
                     return this._solicitudCompraService.buscarProveedores(value.trim());
                 }
@@ -328,10 +326,6 @@ export class SolicitudCompraFormComponent implements OnInit {
         return this.bancosMexico.filter(banco => banco.toLowerCase().includes(filterValue));
     }
 
-    /**
-     * Formatea la CLABE en tiempo real con guiones (XXX-XXX-XXXXXXXXXXX-X)
-     * @param event Evento de input
-     */
     formatCLABE(event: any): void {
         const input = event.target;
         const formatted = this._getFormattedValueCLABE(input.value);
@@ -342,25 +336,17 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     private _getFormattedValueCLABE(value: string): string {
         if (!value) return '';
-        let cleanValue = value.replace(/\D/g, ''); // Solo números
-        
-        // Limitar a los 18 dígitos de la CLABE estándar de México
-        if (cleanValue.length > 18) {
-            cleanValue = cleanValue.substring(0, 18);
-        }
+        let cleanValue = value.replace(/\D/g, '');
+        if (cleanValue.length > 18) cleanValue = cleanValue.substring(0, 18);
 
         let formatted = '';
         if (cleanValue.length > 0) {
-            // Primeros 3 (Banco)
             formatted += cleanValue.substring(0, 3);
             if (cleanValue.length > 3) {
-                // Siguientes 3 (Plaza)
                 formatted += '-' + cleanValue.substring(3, 6);
                 if (cleanValue.length > 6) {
-                    // Siguientes 11 (Cuenta - No. de cuenta)
                     formatted += '-' + cleanValue.substring(6, 17);
                     if (cleanValue.length > 17) {
-                        // Último 1 (Dígito control)
                         formatted += '-' + cleanValue.substring(17, 18);
                     }
                 }
@@ -379,14 +365,13 @@ export class SolicitudCompraFormComponent implements OnInit {
             
             (values || []).forEach((curr, i) => {
                 const cantidad = parseFloat(curr.cantidad) || 0;
-                const monto = parseFloat(curr.monto) || 0; // Monto is the unit price
+                const monto = parseFloat(curr.monto) || 0;
                 const subtotalLinea = Number((cantidad * monto).toFixed(4));
                 const ivaLinea = Number((subtotalLinea * 0.16).toFixed(4));
                 
                 subtotal += subtotalLinea;
                 totalPiezas += cantidad;
 
-                // Update row's IVA display if it changed (silent to avoid infinite loop)
                 const currentIva = Number(curr.iva || 0).toFixed(2);
                 const calcIva = ivaLinea.toFixed(2);
                 if (currentIva !== calcIva) {
@@ -394,12 +379,10 @@ export class SolicitudCompraFormComponent implements OnInit {
                 }
             });
 
-            // Redondear para el cálculo del IVA
             subtotal = Number(subtotal.toFixed(2));
             const iva = Number((subtotal * 0.16).toFixed(2));
             const total = Number((subtotal + iva).toFixed(2));
 
-            // Actualizar controles de cabecera
             this.solicitudForm.patchValue({
                 subtotal: subtotal,
                 iva: iva,
@@ -413,28 +396,17 @@ export class SolicitudCompraFormComponent implements OnInit {
         const control = this.detalles.at(index).get('materialServicio');
         this.filteredProducts$[index] = control.valueChanges.pipe(
             debounceTime(500),
-            // We keep switchMap but handle errors to prevent the stream from completing
             switchMap(value => {
-                // Only search if it's a string and has at least 2 chars
                 if (typeof value === 'string' && value.trim().length >= 2) {
-                    // Logic to map sucursal to almacen for CONTPAQi
                     const sucursal = this.solicitudForm.get('sucursal').value || '';
-                    
-                    // Normalize to remove accents (e.g., QUERÉTARO -> QUERETARO)
                     let almacen = sucursal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-
-                    if (sucursal.toLowerCase().includes('hidalgo')) {
-                        almacen = 'SANTA JULIA';
-                    }
+                    if (sucursal.toLowerCase().includes('hidalgo')) almacen = 'SANTA JULIA';
 
                     return this._solicitudCompraService.consultarExistenciaContpaqi(value.trim(), almacen)
-                        .pipe(
-                            catchError(() => of([] as ProductoBuscadorDto[]))
-                        );
+                        .pipe(catchError(() => of([] as ProductoBuscadorDto[])));
                 }
                 return of([] as ProductoBuscadorDto[]);
             }),
-            // Use shareReplay to avoid multiple subscriptions breaking the UI logic
             shareReplay(1)
         );
     }
@@ -450,19 +422,14 @@ export class SolicitudCompraFormComponent implements OnInit {
         const product = event.option.value as ProductoBuscadorDto;
         const detailGroup = this.detalles.at(index);
 
-        // Populate fields from selected product
         detailGroup.patchValue({
-            materialServicio: product.nombreProducto, // We patch it back as string for manual edit later
+            materialServicio: product.nombreProducto,
             descripcionEspecificacion: `${product.codigoProducto} - ${product.nombreProducto}`,
             unidad: product.unidadMedida
         }, { emitEvent: false });
 
-        // Force the input to show the name string instead of the object
-        // by resetting the control value to the name string
         setTimeout(() => {
             detailGroup.get('materialServicio').setValue(product.nombreProducto, { emitEvent: false });
-            
-            // Auto-focus the quantity field
             const rowElements = document.querySelectorAll('tbody tr');
             if (rowElements[index]) {
                 const quantityInput = rowElements[index].querySelector('input[formControlName="cantidad"]') as HTMLInputElement;
@@ -477,27 +444,14 @@ export class SolicitudCompraFormComponent implements OnInit {
     onPasteMaterials(event: ClipboardEvent, index: number, field: string): void {
         const clipboardData = event.clipboardData;
         if (!clipboardData) return;
-
         const pastedText = clipboardData.getData('text');
         if (!pastedText) return;
-
-        // Split by lines (Excel uses \r\n or \n)
         const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
-
-        if (lines.length <= 1) return; // Regular single value paste
-
-        // Prevent default paste of the whole block into a single cell
+        if (lines.length <= 1) return;
         event.preventDefault();
-
         lines.forEach((line, i) => {
             const currentIndex = index + i;
-            
-            // If the row doesn't exist, create it
-            if (currentIndex >= this.detalles.length) {
-                this.addDetalle();
-            }
-
-            // Patch the value for the specific field
+            if (currentIndex >= this.detalles.length) this.addDetalle();
             this.detalles.at(currentIndex).get(field).setValue(line.trim());
         });
     }
@@ -510,34 +464,21 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadSolicitud(id: number): void {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
             this.solicitudForm.patchValue(solicitud);
-            
-            // Si el campo folioProyecto está vacío (legacy) pero existe proyectoCliente, mostrarlo en Proyecto
             if (!solicitud.folioProyecto && solicitud.proyectoCliente) {
                 this.solicitudForm.get('folioProyecto').setValue(solicitud.proyectoCliente, { emitEvent: false });
             }
-
-            // Formatear CLABE con guiones para la vista
             if (solicitud.clabe) {
                 const formatted = this._getFormattedValueCLABE(solicitud.clabe);
                 this.solicitudForm.get('clabe').setValue(formatted, { emitEvent: false });
             }
-            // Clear details array and search observables
-            while (this.detalles.length) {
-                this.detalles.removeAt(0);
-            }
+            while (this.detalles.length) this.detalles.removeAt(0);
             this.filteredProducts$ = [];
             solicitud.detalles.forEach(d => {
-                // Si hay monto pero no cantidad, asumimos 1 unidad para no perder el valor en la automatización
                 const cantidad = d.cantidad || 0;
                 const monto = d.monto || 0;
                 let precioUnitario = 0;
-
-                if (cantidad > 0) {
-                    precioUnitario = monto / cantidad;
-                } else if (monto > 0) {
-                    // Item legacy o servicio sin cantidad explícita
-                    precioUnitario = monto;
-                }
+                if (cantidad > 0) precioUnitario = monto / cantidad;
+                else if (monto > 0) precioUnitario = monto;
 
                 const detalleForm = this._formBuilder.group({
                     idDetalle: [d.idDetalle],
@@ -552,10 +493,7 @@ export class SolicitudCompraFormComponent implements OnInit {
                 });
                 this.detalles.push(detalleForm);
             });
-
-            // Setup search for loaded details
             this.detalles.controls.forEach((_, i) => this._setupProductSearch(i));
-
             this.loadArchivos(id);
         });
     }
@@ -605,7 +543,6 @@ export class SolicitudCompraFormComponent implements OnInit {
         const files = event.target.files;
         if (files) {
             this.selectedFiles.push(...Array.from(files) as File[]);
-            // Reset input to allow selecting the same file again if removed
             event.target.value = '';
         }
     }
@@ -616,12 +553,9 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     save(): void {
         this.solicitudForm.markAllAsTouched();
-        
         if (this.solicitudForm.invalid) {
             const invalidFields = [];
             const controls = this.solicitudForm.controls;
-            
-            // Map technical names to friendly names
             const fieldNames: any = {
                 sucursal: 'Sucursal',
                 areaSolicitante: 'Área Solicitante',
@@ -635,42 +569,25 @@ export class SolicitudCompraFormComponent implements OnInit {
                 cuadranteId: 'Matriz Eisenhower',
                 detalles: 'Partidas (Detalle de materiales)'
             };
-
             for (const name in controls) {
-                if (name !== 'detalles' && controls[name].invalid) {
-                    invalidFields.push(fieldNames[name] || name);
-                }
+                if (name !== 'detalles' && controls[name].invalid) invalidFields.push(fieldNames[name] || name);
             }
-
-            // Check details
             if (this.detalles.length === 0) {
                  invalidFields.push('Debe agregar al menos una partida en detalle');
             } else {
                 this.detalles.controls.forEach((group: FormGroup, i) => {
-                    if (group.invalid) {
-                        invalidFields.push(`Error en partida #${i+1}`);
-                    }
+                    if (group.invalid) invalidFields.push(`Error en partida #${i+1}`);
                 });
             }
-
             const message = `Faltan campos por completar:\n- ${invalidFields.join('\n- ')}`;
             this._chatNotificationService.showWarning('Atención', message);
-            
-            // Focus first error
             const firstInvalidControl = document.querySelector('.mat-form-field-invalid');
-            if (firstInvalidControl) {
-                firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
+            if (firstInvalidControl) firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
         const data = { ...this.solicitudForm.value };
-        
-        // Quitar guiones de la CLABE antes de enviar a la API
-        if (data.clabe) {
-            data.clabe = data.clabe.replace(/\D/g, '');
-        }
+        if (data.clabe) data.clabe = data.clabe.replace(/\D/g, '');
 
         if (this.isEdit) {
             this._solicitudCompraService.actualizar(data).subscribe({
@@ -703,7 +620,6 @@ export class SolicitudCompraFormComponent implements OnInit {
             this._solicitudCompraService.crear(data).subscribe({
                 next: (response) => {
                     const newId = response.idSolicitud || response.id;
-
                     if (this.selectedFiles.length > 0 && newId) {
                         const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(newId, file));
                         forkJoin(uploads).subscribe({
@@ -742,22 +658,18 @@ export class SolicitudCompraFormComponent implements OnInit {
             this._snackBar.open('Debes ingresar un Folio OC para buscar materiales', 'Cerrar', { duration: 3000 });
             return;
         }
-
         this._snackBar.open('Buscando materiales en CONTPAQi...', 'Cerrar', { duration: 2000 });
-
         this._solicitudCompraService.obtenerDetalleMateriales(folio).subscribe({
             next: (materiales) => {
                 if (!materiales || materiales.length === 0) {
                     this._snackBar.open('No se encontraron materiales para el Folio OC ingresado', 'Cerrar', { duration: 4000 });
                     return;
                 }
-
                 const dialogRef = this._dialog.open(ImportarMaterialesDialogComponent, {
                     data: { materiales: materiales, folio: folio },
                     width: '900px',
                     disableClose: true
                 });
-
                 dialogRef.afterClosed().subscribe((materialesSeleccionados: ContpaqiMaterialDto[]) => {
                     if (materialesSeleccionados && materialesSeleccionados.length > 0) {
                         this._procesarMaterialesImportados(materialesSeleccionados);
@@ -771,6 +683,274 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
+    onPdfFileSelected(event: any): void {
+        const file = event.target.files[0];
+        if (!file) return;
+        this._snackBar.open('Procesando PDF...', 'Cerrar', { duration: 2000 });
+        this._parsePdfTable(file).then(materiales => {
+            if (!materiales || materiales.length === 0) {
+                this._snackBar.open('No se detectaron tablas de materiales legibles en el PDF', 'Cerrar', { duration: 4000 });
+                return;
+            }
+            const dialogRef = this._dialog.open(ImportarMaterialesDialogComponent, {
+                data: { materiales: materiales, folio: 'PDF Importado' },
+                width: '1000px',
+                disableClose: true
+            });
+            dialogRef.afterClosed().subscribe((materialesSeleccionados: ContpaqiMaterialDto[]) => {
+                if (materialesSeleccionados && materialesSeleccionados.length > 0) {
+                    this._procesarMaterialesImportados(materialesSeleccionados);
+                }
+            });
+        }).catch(err => {
+            console.error('Error parsing PDF:', err);
+            this._snackBar.open('Error al procesar el archivo PDF', 'Cerrar', { duration: 5000 });
+        });
+        event.target.value = '';
+    }
+
+    private async _parsePdfTable(file: File): Promise<ContpaqiMaterialDto[]> {
+        console.log('--- INICIO UNIVERSAL PDF SCANNER ---');
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        const allItems: any[] = [];
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            
+            const items = textContent.items.map((item: any) => ({
+                text: item.str,
+                x: item.transform[4],
+                y: item.transform[5],
+                width: item.width,
+                height: item.height,
+                page: i
+            })).filter(item => item.text.trim() !== '');
+
+            if (items.length > 0) {
+                items.sort((a, b) => b.y - a.y || a.x - b.x);
+                const mergedItems: any[] = [];
+                let current = items[0];
+                
+                for (let j = 1; j < items.length; j++) {
+                    const next = items[j];
+                    const yDiff = Math.abs(next.y - current.y);
+                    const xDiff = next.x - (current.x + current.width);
+                    
+                    const threshold = (current.y > 400 || current.text.length < 3) ? 14 : 6;
+                    
+                    if (yDiff < 2 && xDiff >= -2 && xDiff < threshold) {
+                        current.text += ' ' + next.text; // Espacio para evitar pegar palabras
+                        current.width += next.width + xDiff;
+                    } else {
+                        current.text = current.text.trim();
+                        if (current.text) mergedItems.push(current);
+                        current = next;
+                    }
+                }
+                current.text = current.text.trim();
+                if (current.text) mergedItems.push(current);
+                allItems.push(...mergedItems);
+            }
+        }
+        
+        if (allItems.length === 0) return [];
+
+        // Agrupación por filas con umbral flexible
+        const rows: any[][] = [];
+        let currentRow: any[] = [];
+        const sortedItems = [...allItems].sort((a, b) => a.page - b.page || b.y - a.y || a.x - b.x);
+        
+        sortedItems.forEach((item, index) => {
+            if (index === 0) { currentRow.push(item); } 
+            else {
+                const prev = sortedItems[index - 1];
+                if (Math.abs(item.y - prev.y) < 6 && item.page === prev.page) { currentRow.push(item); } 
+                else {
+                    rows.push(currentRow.sort((a, b) => a.x - b.x));
+                    currentRow = [item];
+                }
+            }
+        });
+        if (currentRow.length > 0) rows.push(currentRow.sort((a, b) => a.x - b.x));
+
+        // IDENTIFICACIÓN DE COLUMNAS CON RESTRICCIONES LÓGICAS
+        const columnMapping: any = { articulo: -1, nombre: -1, unidad: -1, cantidad: -1, precio: -1, total: -1 };
+        const KEYWORDS: any = {
+            articulo: ['ARTICULO', 'ARTÍCULO', 'CODIGO', 'CÓDIGO', 'PARTIDA', 'REF', 'CLAVE', 'SKU', 'ID'],
+            nombre: ['NOMBRE', 'DESCRIPCION', 'DESCRIPCIÓN', 'CONCEPTO', 'DETALLE', 'PRODUCTO', 'ESPECIFICACIÓN', 'DESCRIPCION DEL ARTICULO'],
+            unidad: ['UNIDAD', 'U.MED', 'U.M', 'UM', 'MEDIDA', 'U M', 'UNID', 'UNIT', 'PRESENTACION', 'U/M', 'UNID. MEDIDA'],
+            cantidad: ['CANTIDAD', 'UNIDADES', 'CANT', 'QTY', 'PIEZAS', 'PZAS'],
+            precio: ['PRECIO', 'COSTO', 'UNITARIO', 'P.U.', 'P.UNIT', 'PREC. NE.', 'VALOR UNITARIO', 'PRECIO NE.'],
+            total: ['TOTAL', 'IMPORTE', 'EXTENSIÓN', 'EXTENSION', 'SUBTOTAL', 'SUB TOTAL', 'MONTO', 'NETO', 'TOTAL LINEA']
+        };
+
+        const FOOTER_KEYWORDS = ['SUBTOTAL', 'I.V.A', 'IVA', 'TOTAL', 'NETO', 'CONDICIONES', 'ESTIMADO CLIENTE', 'VIGENCIA', 'EXISTENCIA GRUPAL', 'COMPRA MINIMA', 'SUJETOS A CAMBIOS'];
+
+        let foundHeaderRowIndex = -1;
+        for (let i = 0; i < Math.min(rows.length, 30); i++) {
+            const rowText = rows[i].map(item => item.text.toUpperCase());
+            let matches = 0;
+            const tempMapping: any = { articulo: -1, nombre: -1, unidad: -1, cantidad: -1, precio: -1, total: -1 };
+
+            for (const key in KEYWORDS) {
+                const foundIndex = rowText.findIndex(text => KEYWORDS[key].some((k: string) => text.includes(k) || k.includes(text)));
+                if (foundIndex !== -1) {
+                    tempMapping[key] = rows[i][foundIndex].x;
+                    matches++;
+                }
+            }
+            
+            // VALIDACIÓN LÓGICA: Artículo < Nombre < Cantidad < Precio < Total
+            const hasEssential = tempMapping.nombre !== -1 && (tempMapping.cantidad !== -1 || tempMapping.total !== -1);
+            if (matches >= 2 && hasEssential) {
+                // Verificar orden lógico básico
+                const isOrdered = (tempMapping.articulo === -1 || tempMapping.articulo < tempMapping.nombre) &&
+                                  (tempMapping.articulo === -1 || tempMapping.articulo < tempMapping.cantidad) &&
+                                  (tempMapping.nombre < tempMapping.cantidad || tempMapping.cantidad === -1) &&
+                                  (tempMapping.cantidad < tempMapping.total || tempMapping.cantidad === -1 || tempMapping.total === -1);
+                
+                if (isOrdered) {
+                    Object.assign(columnMapping, tempMapping);
+                    foundHeaderRowIndex = i;
+                    console.log(`CABECERA UNIVERSAL VALIDADA (Fila ${i}):`, rowText.join(' | '));
+                    break;
+                }
+            }
+        }
+
+        console.log('MAPEO FINAL UNIVERSAL:', columnMapping);
+
+        // EXTRACCIÓN CON FILTRADO DE PIE DE PÁGINA
+        const detectedMateriales: ContpaqiMaterialDto[] = [];
+        const hasMapping = columnMapping.nombre !== -1 && (columnMapping.cantidad !== -1 || columnMapping.total !== -1);
+
+        for (let i = foundHeaderRowIndex + 1; i < rows.length; i++) {
+            const row = rows[i];
+            const rowTextStr = row.map(it => it.text.toUpperCase()).join(' ');
+
+            // 1. Detección de Pie de Página o Metadatos
+            if (FOOTER_KEYWORDS.some(key => rowTextStr.includes(key))) {
+                console.log('Fila de metadatos/pie detectada y saltada:', rowTextStr);
+                continue;
+            }
+
+            let material = '';
+            let descripcion = '';
+            let unidadStr = '';
+            let cantidad = 0;
+            let costo = 0;
+            let total = 0;
+
+            if (hasMapping) {
+                row.forEach(item => {
+                    const closest = this._getClosestColumn(item.x, columnMapping);
+                    const text = item.text.trim();
+                    switch(closest) {
+                        case 'articulo': material = text; break;
+                        case 'nombre': descripcion = text; break;
+                        case 'unidad': unidadStr = text; break;
+                        case 'cantidad': cantidad = this._parseNumber(text); break;
+                        case 'precio': costo = this._parseNumber(text); break;
+                        case 'total': total = this._parseNumber(text); break;
+                    }
+                });
+            }
+
+            // Limpieza de código de artículo (Remover índice numeral inicial)
+            if (material) {
+                material = material.replace(/^\d+[\s.-]+/, '').trim();
+            }
+
+            // Normalización
+            if (!material && descripcion) material = descripcion;
+            if (!descripcion && material) descripcion = material;
+
+            // Soporte multi-línea (Solo si está en la zona de descripción)
+            const isJustText = (descripcion || material) && cantidad === 0 && costo === 0 && total === 0;
+            if (isJustText && detectedMateriales.length > 0) {
+                const isNameArea = row.some(it => this._getClosestColumn(it.x, columnMapping) === 'nombre');
+                if (isNameArea) {
+                    const lastIdx = detectedMateriales.length - 1;
+                    detectedMateriales[lastIdx].descripcion += ' ' + row.map(it => it.text).join(' ');
+                    continue;
+                }
+            }
+
+            // Validación de fila de datos real: debe tener al menos un nombre y un valor numérico relevante
+            if ((material || descripcion) && (cantidad > 0 || costo > 0 || total > 0)) {
+                // Prevenir que el material sea solo un número (posible desalineación con precio)
+                if (this._isNumeric(material) && material.length < 10 && costo > 0) {
+                    material = descripcion.substring(0, 50);
+                }
+
+                const finalCant = cantidad || (total > 0 && costo > 0 ? (total / costo) : 1);
+                const finalCosto = costo || (total > 0 && cantidad > 0 ? (total / cantidad) : total);
+                const finalTotal = total || (cantidad * costo) || 0;
+
+                detectedMateriales.push({
+                    materialServicio: (material || descripcion).substring(0, 75),
+                    descripcion: descripcion || material,
+                    unidad: this._normalizeUnidad(unidadStr || 'PZA'),
+                    cantidad: Math.round((finalCant + Number.EPSILON) * 10000) / 10000,
+                    costoUnitario: Math.round((finalCosto + Number.EPSILON) * 100) / 100,
+                    iva: 0,
+                    total: Math.round((finalTotal + Number.EPSILON) * 100) / 100
+                });
+            }
+        }
+
+        console.log(`EXTRACCIÓN FINALIZADA: ${detectedMateriales.length} artículos.`);
+        return detectedMateriales;
+    }
+
+    private _getClosestColumn(x: number, mapping: any): string {
+        let minDiff = Infinity;
+        let closestKey = '';
+        for (const key in mapping) {
+            if (mapping[key] === -1) continue;
+            const diff = Math.abs(x - mapping[key]);
+            // Priorizamos la columna que esté a la derecha o muy cerca a la izquierda
+            if (diff < minDiff && diff < 120) { 
+                minDiff = diff; closestKey = key; 
+            }
+        }
+        return closestKey;
+    }
+
+    private _isNumeric(val: string): boolean {
+        // Mejorado para detectar el formato de miles y moneda
+        const clean = val.replace(/[$,\s]/g, '');
+        return !isNaN(parseFloat(clean)) && isFinite(Number(clean)) && clean !== '';
+    }
+
+    private _parseNumber(val: string): number {
+        if (!val) return 0;
+        // Quitar símbolos de moneda, comas y espacios. 
+        // Manejar caso especial de comas como separadores de decimales vs miles
+        let clean = val.replace(/[$\s]/g, '');
+        // Si hay una coma y un punto, asumimos formato americano (1,234.56)
+        if (clean.includes(',') && clean.includes('.')) {
+            clean = clean.replace(/,/g, '');
+        } else if (clean.includes(',') && !clean.includes('.')) {
+            // Si solo hay coma, podría ser decimal (12,34) o miles (1,234)
+            // Heurística: si hay exactamente 3 dígitos después, es miles.
+            const parts = clean.split(',');
+            if (parts[parts.length-1].length === 3) {
+                clean = clean.replace(/,/g, '');
+            } else {
+                clean = clean.replace(/,/g, '.');
+            }
+        }
+        return parseFloat(clean) || 0;
+    }
+
     private _procesarMaterialesImportados(materiales: ContpaqiMaterialDto[]): void {
         if (this.detalles.length > 0) {
             Swal.fire({
@@ -781,33 +961,22 @@ export class SolicitudCompraFormComponent implements OnInit {
                 showDenyButton: true,
                 confirmButtonText: 'Agregar al final',
                 denyButtonText: 'Sobrescribir',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#3085d6',
-                denyButtonColor: '#d33'
+                cancelButtonText: 'Cancelar'
             }).then((result) => {
-                if (result.isConfirmed) {
-                    this._insertarMateriales(materiales, false);
-                } else if (result.isDenied) {
-                    this._insertarMateriales(materiales, true);
-                }
+                if (result.isConfirmed) this._insertarMateriales(materiales, false);
+                else if (result.isDenied) this._insertarMateriales(materiales, true);
             });
-        } else {
-            this._insertarMateriales(materiales, true);
-        }
+        } else this._insertarMateriales(materiales, true);
     }
 
     private _insertarMateriales(materiales: ContpaqiMaterialDto[], sobrescribir: boolean): void {
         if (sobrescribir) {
-            while (this.detalles.length) {
-                this.detalles.removeAt(0);
-            }
+            while (this.detalles.length) this.detalles.removeAt(0);
             this.filteredProducts$ = [];
         }
-
         materiales.forEach((m) => {
             const index = this.detalles.length;
             const unidadNormalizada = this._normalizeUnidad(m.unidad);
-            
             const detalleForm = this._formBuilder.group({
                 idDetalle: [0],
                 partida: [index + 1],
@@ -815,27 +984,42 @@ export class SolicitudCompraFormComponent implements OnInit {
                 descripcionEspecificacion: [m.descripcion || m.materialServicio],
                 cantidad: [m.cantidad, [Validators.required, Validators.min(0.01)]],
                 unidad: [unidadNormalizada, Validators.required],
-                observaciones: ['Importado de CONTPAQi'],
+                observaciones: ['Importado de PDF'],
                 monto: [m.costoUnitario, [Validators.required, Validators.min(0)]],
                 iva: [m.iva]
             });
-
             this.detalles.push(detalleForm);
             this._setupProductSearch(index);
         });
-
         this._chatNotificationService.showSuccess('Éxito', `${materiales.length} materiales importados correctamente`);
     }
 
     private _normalizeUnidad(u: string): string {
         if (!u) return 'PZA';
-        const unit = u.trim().toUpperCase();
-        if (['PIEZA', 'PZ', 'PZA', 'PIEZAS', 'PZAS'].includes(unit)) return 'PZA';
-        if (['SERVICIO', 'SER', 'SERV', 'SERVICIOS'].includes(unit)) return 'SERVICIO';
-        if (['CAJA', 'CJ', 'CAJAS'].includes(unit)) return 'CAJA';
-        if (['METRO', 'M', 'MT', 'METROS'].includes(unit)) return 'METRO';
-        if (['KILO', 'KG', 'KILOS', 'KILOGRAMO'].includes(unit)) return 'KILO';
-        if (['LOTE', 'LT', 'LOTES'].includes(unit)) return 'LOTE';
-        return 'PZA'; // Default
+        const unit = u.trim().toUpperCase()
+            .replace(/[.]/g, '') // Quitar puntos para normalizar (P.Z.A -> PZA)
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar acentos
+
+        // Mapeo extenso de variaciones
+        if (['PIEZA', 'PZ', 'PZA', 'PIEZAS', 'PZAS', 'PC', 'PCS', 'PIECE', 'EA', 'EACH'].includes(unit)) return 'PZA';
+        if (['SERVICIO', 'SER', 'SERV', 'SERVICIOS', 'SERVICE', 'SRV'].includes(unit)) return 'SERVICIO';
+        if (['CAJA', 'CJ', 'CJA', 'CAJAS', 'BOX', 'BX', 'CJAS'].includes(unit)) return 'CAJA';
+        if (['METRO', 'M', 'MT', 'MTS', 'METROS', 'METER', 'ML', 'METRO LINEAL'].includes(unit)) return 'METRO';
+        if (['KILO', 'KG', 'KGS', 'KILOS', 'KILOGRAMO', 'KILOGRAMOS'].includes(unit)) return 'KILO';
+        if (['LOTE', 'LT', 'LOT', 'LOTES', 'JOB'].includes(unit)) return 'LOTE';
+        if (['PAQUETE', 'PQT', 'PQ', 'PK', 'PKG', 'PAQ'].includes(unit)) return 'PAQUETE';
+        if (['PAR', 'PR', 'PARES'].includes(unit)) return 'PAR';
+        if (['ROLLO', 'RL', 'ROLLOS', 'ROLL'].includes(unit)) return 'ROLLO';
+        if (['LITRO', 'LTR', 'LTS', 'L', 'LITROS'].includes(unit)) return 'LITRO';
+        if (['BOTE', 'BT', 'BOTES'].includes(unit)) return 'BOTE';
+        if (['BOLSA', 'BLS', 'BAG'].includes(unit)) return 'BOLSA';
+        if (['TRAMO', 'TR', 'TRAMOS'].includes(unit)) return 'TRAMO';
+        if (['BARRA', 'BR', 'BARRAS'].includes(unit)) return 'BARRA';
+        if (['PLIEGO', 'PLG'].includes(unit)) return 'PLIEGO';
+        if (['JUEGO', 'JG', 'JGO', 'JUEGOS', 'SET'].includes(unit)) return 'JUEGO';
+        if (['TAMBO', 'TB', 'DRUM'].includes(unit)) return 'TAMBO';
+        
+        // Si no se encuentra en la lista, retornar PZA por defecto pero conservar valor si es razonable
+        return unit.length <= 10 ? unit : 'PZA';
     }
 }

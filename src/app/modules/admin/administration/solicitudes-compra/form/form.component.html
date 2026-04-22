@@ -375,6 +375,17 @@
                             </button>
                         </div>
 
+                        <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-1.5 shadow-sm">
+                            <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mr-1">PDF</span>
+                            <button mat-mini-fab color="accent" class="shadow-sm" 
+                                    type="button" matTooltip="Importar desde PDF"
+                                    (click)="pdfImportInput.click()">
+                                <mat-icon [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                            </button>
+                            <input type="file" #pdfImportInput class="hidden" accept=".pdf" (change)="onPdfFileSelected($event)">
+                        </div>
+
+
                         <div class="w-px h-8 bg-gray-200 mx-2 hidden sm:block"></div>
 
                         <button mat-raised-button color="primary" (click)="addDetalle()" class="!rounded-xl shadow-md">

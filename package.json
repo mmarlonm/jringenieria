@@ -59,6 +59,7 @@
         "ngx-mat-select-search": "^8.0.0",
         "ngx-mat-timepicker": "^20.0.1",
         "ngx-quill": "26.0.1",
+        "pdfjs-dist": "^3.11.174",
         "perfect-scrollbar": "1.5.5",
         "quill": "2.0.2",
         "react": "^19.2.4",
