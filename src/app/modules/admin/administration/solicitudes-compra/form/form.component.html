@@ -577,39 +577,49 @@
                     </table>
                 </div>
 
-                <!-- Totales Summary -->
-                <div *ngIf="detalles.length > 0" class="flex-none flex justify-end mt-6">
+                      <!-- Totales Summary -->
+                <div class="flex-none flex justify-end mt-6">
                     <div class="w-full max-w-xs p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-right-4">
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+                        <div class="space-y-4">
+                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
                                 <span>Total Piezas</span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('totalPiezas').value | number }}</span>
                             </div>
-                            <div class="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
-                            <div class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+                            
+                            <!-- Subtotal (Only if items exist) -->
+                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
                                 <span>Subtotal</span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('subtotal').value | currency:solicitudForm.get('moneda').value }}</span>
                             </div>
-                            <div class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+
+                            <!-- IVA (Only if items exist) -->
+                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
                                 <span>IVA (16%)</span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('iva').value | currency:solicitudForm.get('moneda').value }}</span>
                             </div>
-                            <div class="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
+
+                            <div *ngIf="detalles.length > 0" class="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
+                            
+                            <!-- Total -->
                             <div class="flex flex-col pt-1">
-                                <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Total Solicitado</span>
-                                <div class="flex items-center justify-between px-4 py-3 border rounded-xl bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800">
-                                    <div class="flex items-center">
-                                        <mat-icon class="icon-size-6 text-indigo-600 dark:text-indigo-400 mr-3" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
-                                        <span class="text-2xl font-black text-indigo-700 dark:text-indigo-300 tracking-tight tabular-nums">
-                                            {{ solicitudForm.get('monto').value | currency:solicitudForm.get('moneda').value }}
-                                        </span>
-                                    </div>
-                                    <span class="text-xs font-bold text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-widest">{{ solicitudForm.get('moneda').value }}</span>
+                                <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 ml-1">
+                                    {{ detalles.length > 0 ? 'Total Solicitado' : 'Ingresa el Total de la Solicitud' }}
+                                </span>
+                                <div class="relative group">
+                                    <input type="number" formControlName="monto" 
+                                           [readonly]="detalles.length > 0"
+                                           class="w-full pl-10 pr-12 py-4 text-2xl font-black bg-indigo-50/50 dark:bg-indigo-900/20 border transition-all duration-200 outline-none rounded-2xl tracking-tight tabular-nums"
+                                           [ngClass]="detalles.length > 0 ? 'border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300' : 'border-indigo-300 focus:border-indigo-500 text-indigo-800 group-hover:border-indigo-400'">
+                                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-6 text-indigo-600 dark:text-indigo-400" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-widest">{{ solicitudForm.get('moneda').value }}</span>
                                 </div>
+                                <p *ngIf="detalles.length === 0" class="text-[10px] text-gray-400 mt-2 ml-1 italic">
+                                    * Al no haber partidas, el subtotal e IVA se enviarán en 0.
+                                </p>
                             </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
             <div *ngIf="detalles.length === 0"
                     class="flex-auto flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-2xl text-secondary mt-4 bg-gray-50/30 dark:bg-transparent">

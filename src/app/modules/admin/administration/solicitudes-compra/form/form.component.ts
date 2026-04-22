@@ -196,7 +196,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             iva: [0],
             totalPiezas: [0],
             cuadranteId: [null, Validators.required],
-            detalles: this._formBuilder.array([], Validators.required),
+            detalles: this._formBuilder.array([]), // Removed required validator
             proveedores: this._formBuilder.array([])
         });
 
@@ -428,16 +428,18 @@ export class SolicitudCompraFormComponent implements OnInit {
                 }
             });
 
-            subtotal = Number(subtotal.toFixed(2));
-            const iva = Number((subtotal * 0.16).toFixed(2));
-            const total = Number((subtotal + iva).toFixed(2));
+            if (values.length > 0) {
+                subtotal = Number(subtotal.toFixed(2));
+                const iva = Number((subtotal * 0.16).toFixed(2));
+                const total = Number((subtotal + iva).toFixed(2));
 
-            this.solicitudForm.patchValue({
-                subtotal: subtotal,
-                iva: iva,
-                monto: total,
-                totalPiezas: totalPiezas
-            }, { emitEvent: false });
+                this.solicitudForm.patchValue({
+                    subtotal: subtotal,
+                    iva: iva,
+                    monto: total,
+                    totalPiezas: totalPiezas
+                }, { emitEvent: false });
+            }
         });
     }
 
@@ -651,8 +653,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             for (const name in controls) {
                 if (name !== 'detalles' && controls[name].invalid) invalidFields.push(fieldNames[name] || name);
             }
-            if (this.detalles.length === 0) {
-                 invalidFields.push('Debe agregar al menos una partida en detalle');
+            if (this.detalles.length === 0 && (this.solicitudForm.get('monto').value || 0) <= 0) {
+                 invalidFields.push('Debe agregar al menos una partida o ingresar un monto total');
             } else {
                 this.detalles.controls.forEach((group: FormGroup, i) => {
                     if (group.invalid) invalidFields.push(`Error en partida #${i+1}`);
