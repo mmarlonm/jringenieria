@@ -146,50 +146,81 @@
                         </div>
                     </div>
                 </mat-menu>
+                       <!-- Desktop & Tablet Secondary Actions -->
+            <div class="hidden md:flex items-center space-x-2">
+                <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
+                    @if (!isDark) {
+                    <mat-icon class="text-amber-500" [svgIcon]="'heroicons_outline:sun'"></mat-icon>
+                    } @else {
+                    <mat-icon class="text-blue-400" [svgIcon]="'heroicons_outline:moon'"></mat-icon>
+                    }
+                </button>
+                <fuse-fullscreen class="hidden md:block"></fuse-fullscreen>
+                <button mat-icon-button [matMenuTriggerFor]="calendarMenu">
+                    <mat-icon>calendar_today</mat-icon>
+                </button>
+                <button mat-icon-button (click)="quickChat.toggle()">
+                    <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
+                </button>
+                <button mat-stroked-button class="google-btn" [ngClass]="{
+                    'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
+                    'google-expired': googleStatus?.isExpired,
+                    'google-not-logged': !googleStatus?.isLoggedIn
+                }" (click)="loginWithGoogle()">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon" />
+                </button>
+                <button mat-stroked-button class="google-btn flex items-center justify-center space-x-2" [ngClass]="{
+                    'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
+                    'google-expired': googleStatus?.isExpired,
+                    'google-not-logged': !googleStatus?.isLoggedIn
+                }" (click)="openGoogleEventsModal()" matTooltip="Abrir eventos de Google Calendar">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="Google Calendar"
+                        class="google-calendar-icon" />
+                </button>
             </div>
-            <!---languages></languages-->
-            <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
-                @if (!isDark) {
-                <mat-icon class="text-amber-500" [svgIcon]="'heroicons_outline:sun'"></mat-icon>
-                } @else {
-                <mat-icon class="text-blue-400" [svgIcon]="'heroicons_outline:moon'"></mat-icon>
-                }
-            </button>
-            <fuse-fullscreen class="hidden md:block"></fuse-fullscreen>
-            <!--search [appearance]="'bar'"></search-->
-            <!--shortcuts></shortcuts>
-            <messages></messages-->
-            <!-- Botón de calendario -->
-            <button mat-icon-button [matMenuTriggerFor]="calendarMenu">
-                <mat-icon>calendar_today</mat-icon>
-            </button>
 
-            <button class="lg:hidden" mat-icon-button (click)="quickChat.toggle()">
-                <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
-            </button>
-
-            <!-- 🔹 Nuevo botón: Iniciar sesión con Google -->
-            <button mat-stroked-button class="google-btn" [ngClass]="{
-                'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
-                'google-expired': googleStatus?.isExpired,
-                'google-not-logged': !googleStatus?.isLoggedIn
-            }" (click)="loginWithGoogle()">
-                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon" />
-            </button>
-
-            <button mat-stroked-button class="google-btn flex items-center justify-center space-x-2" [ngClass]="{
-                'google-logged-in': googleStatus?.isLoggedIn && !googleStatus?.isExpired,
-                'google-expired': googleStatus?.isExpired,
-                'google-not-logged': !googleStatus?.isLoggedIn
-            }" (click)="openGoogleEventsModal()" matTooltip="Abrir eventos de Google Calendar">
-                <img src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="Google Calendar"
-                    class="google-calendar-icon" />
-            </button>
-
-
-
-
+            <!-- Mobile 'More' Menu -->
+            <div class="md:hidden flex items-center">
+                <button mat-icon-button [matMenuTriggerFor]="mobileMoreMenu" class="text-secondary">
+                    <mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon>
+                </button>
+                <mat-menu #mobileMoreMenu="matMenu" class="rounded-2xl shadow-xl border border-gray-100">
+                    <button mat-menu-item (click)="toggleScheme()">
+                        <div class="flex items-center">
+                            <mat-icon [class.text-amber-500]="!isDark" [class.text-blue-400]="isDark"
+                                [svgIcon]="isDark ? 'heroicons_outline:moon' : 'heroicons_outline:sun'"></mat-icon>
+                            <span class="font-bold ml-3">{{ isDark ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+                        </div>
+                    </button>
+                    <button mat-menu-item [matMenuTriggerFor]="calendarMenu">
+                        <div class="flex items-center">
+                            <mat-icon>calendar_today</mat-icon>
+                            <span class="font-bold ml-3">Calendario</span>
+                        </div>
+                    </button>
+                    <button mat-menu-item (click)="quickChat.toggle()">
+                        <div class="flex items-center">
+                            <mat-icon [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
+                            <span class="font-bold ml-3">Team Chat</span>
+                        </div>
+                    </button>
+                    <button mat-menu-item (click)="loginWithGoogle()">
+                        <div class="flex items-center">
+                            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="w-5 h-5 mr-3" />
+                            <span class="font-bold">Google Login</span>
+                        </div>
+                    </button>
+                    <button mat-menu-item (click)="openGoogleEventsModal()">
+                         <div class="flex items-center">
+                            <img src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="Calendar" class="w-5 h-5 mr-3" />
+                            <span class="font-bold">Google Calendar</span>
+                        </div>
+                    </button>
+                </mat-menu>
+            </div>
         </div>
+    </div>
+>
     </div>
 
     <!-- Content -->
