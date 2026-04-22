@@ -70,6 +70,11 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     // Filters
     fechaInicio: any = '';
     fechaFin: any = '';
+    showFilters: boolean = true;
+
+    toggleFilters(): void {
+        this.showFilters = !this.showFilters;
+    }
     
     // Data
     solicitudes: SolicitudCompra[] = [];

@@ -46,11 +46,18 @@
                     <mat-icon svgIcon="heroicons_outline:plus" class="mr-2"></mat-icon>
                     <span class="hidden sm:inline">NUEVA SOLICITUD</span>
                 </button>
+                <button mat-icon-button class="md:hidden" (click)="toggleFilters()" matTooltip="Ver/Ocultar Filtros">
+                    <mat-icon [svgIcon]="showFilters ? 'heroicons_outline:chevron-up' : 'heroicons_outline:funnel'"></mat-icon>
+                </button>
+                <button mat-flat-button class="hidden md:inline-flex rounded-lg px-4 bg-gray-100" (click)="toggleFilters()">
+                    <mat-icon [svgIcon]="'heroicons_outline:funnel'" class="mr-2"></mat-icon>
+                    <span>{{ showFilters ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS' }}</span>
+                </button>
             </div>
         </div>
 
         <!-- Compact Filters Row -->
-        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 pt-1 items-end">
+        <div *ngIf="showFilters" class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 pt-1 items-end animate-in fade-in slide-in-from-top-2 duration-300">
             <!-- Search -->
             <div class="lg:col-span-4">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">

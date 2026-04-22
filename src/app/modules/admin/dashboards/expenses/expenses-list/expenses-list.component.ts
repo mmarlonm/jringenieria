@@ -90,6 +90,11 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     private readonly _SUPER_USER_IDS = [5, 13, 14, 16];
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+    showFilters: boolean = false;
+
+    toggleFilters(): void {
+        this.showFilters = !this.showFilters;
+    }
 
     filterValues = {
         fecha: '',

@@ -13,17 +13,24 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <button mat-flat-button color="primary" 
-                    class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-6 !py-2 shadow-md flex items-center"
-                    (click)="consultar()">
-                <mat-icon class="mr-2 icon-size-5">refresh</mat-icon>
-                Actualizar Datos
-            </button>
+                <button mat-flat-button color="primary" 
+                        class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-6 !py-2 shadow-md flex items-center"
+                        (click)="consultar()">
+                    <mat-icon class="mr-2 icon-size-5">refresh</mat-icon>
+                    Actualizar Datos
+                </button>
+                <button mat-icon-button class="sm:hidden" (click)="toggleFilters()" matTooltip="Ver/Ocultar Filtros">
+                    <mat-icon [svgIcon]="showFilters ? 'heroicons_outline:chevron-up' : 'heroicons_outline:funnel'"></mat-icon>
+                </button>
+                <button mat-flat-button class="hidden sm:inline-flex rounded-lg px-4 bg-gray-100" (click)="toggleFilters()">
+                    <mat-icon [svgIcon]="'heroicons_outline:funnel'" class="mr-2"></mat-icon>
+                    <span>{{ showFilters ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS' }}</span>
+                </button>
+            </div>
         </div>
-    </div>
-
-    <!-- Filters Section -->
-    <div class="w-full bg-white rounded-xl shadow-sm p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+    
+        <!-- Filters Section -->
+        <div *ngIf="showFilters" class="w-full bg-white rounded-xl shadow-sm p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center animate-in fade-in slide-in-from-top-2 duration-300">
         
         <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
             <mat-label>Fecha Inicio</mat-label>

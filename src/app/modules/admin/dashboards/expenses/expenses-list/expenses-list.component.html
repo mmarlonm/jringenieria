@@ -1,4 +1,21 @@
         <div class="flex-auto overflow-hidden min-h-0 bg-slate-100/30">
+            <!-- Header for Mobile / Filter Toggle -->
+            <div class="flex-none p-4 flex items-center justify-between bg-white border-b sticky top-0 z-50 md:hidden">
+                <span class="text-lg font-bold text-slate-800">Gastos</span>
+                <button mat-icon-button (click)="toggleFilters()">
+                    <mat-icon [svgIcon]="showFilters ? 'heroicons_outline:chevron-up' : 'heroicons_outline:funnel'"></mat-icon>
+                </button>
+            </div>
+
+            <!-- Mobile Filter Input -->
+            <div *ngIf="showFilters" class="p-4 bg-white border-b md:hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                <mat-form-field class="w-full fuse-mat-no-subscript fuse-mat-rounded" appearance="outline">
+                    <mat-label>Buscar gasto...</mat-label>
+                    <mat-icon matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput [formControl]="searchInputControl" placeholder="Buscar por nombre, factura o proveedor...">
+                </mat-form-field>
+            </div>
+
             <div class="h-full overflow-auto custom-scrollbar">
 
                 <!-- Desktop Table View -->

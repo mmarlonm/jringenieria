@@ -94,6 +94,11 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
     usuarios: any[] = [];
     selectedStatusId: number | null = null;
+    showFilters: boolean = true;
+
+    toggleFilters(): void {
+        this.showFilters = !this.showFilters;
+    }
     
     // Advanced Filters
     filterValues: any = {

@@ -96,6 +96,11 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
 
     usuarios: any[] = [];
     selectedStatusId: number | null = null;
+    showFilters: boolean = true;
+
+    toggleFilters(): void {
+        this.showFilters = !this.showFilters;
+    }
     fechaInicio: any = '';
     fechaFin: any = '';
     filtroSearch: string = '';
