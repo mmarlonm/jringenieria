@@ -73,11 +73,13 @@ export class PresenceService {
 
   private listenToUserStatus() {
     this.hubConnection?.on("UserConnected", (userId: string) => {
-      console.log(`✅ Usuario conectado: ID ${userId} a las ${new Date().toLocaleTimeString()}`);
+      const cleanId = this.extractId(userId);
+      console.log(`✅ Usuario conectado: ID ${cleanId} a las ${new Date().toLocaleTimeString()}`);
     });
 
     this.hubConnection?.on("UserDisconnected", (userId: string) => {
-      console.log(`❌ Usuario desconectado: ID ${userId} a las ${new Date().toLocaleTimeString()}`);
+      const cleanId = this.extractId(userId);
+      console.log(`❌ Usuario desconectado: ID ${cleanId} a las ${new Date().toLocaleTimeString()}`);
     });
   }
 
@@ -113,5 +115,15 @@ export class PresenceService {
 
   public onUsuarioConectado(): Observable<string[]> {
     return this.connectedUsers$;
+  }
+  private extractId(userId: string): string {
+    if (!userId || !userId.startsWith("eyJ") || !userId.includes(".")) return userId;
+    try {
+      const payload = userId.split(".")[1];
+      const decoded = JSON.parse(atob(payload));
+      return decoded.sub || decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || userId;
+    } catch (e) {
+      return userId;
+    }
   }
 }
