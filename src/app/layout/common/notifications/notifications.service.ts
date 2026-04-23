@@ -35,7 +35,7 @@ export class NotificationsService {
             map((data) =>
                 data.map((item: any) => ({
                     id: item.id.toString(),
-                    icon: item.tipo === 'Chat' ? 'heroicons_outline:chat-bubble-left-right' : 'heroicons_outline:clipboard-document-list',
+                    icon: item.tipo === 'Chat' ? 'heroicons_outline:chat-bubble-left-right' : 'heroicons_outline:clipboard-list',
                     title: item.titulo || 'Nueva Notificación',
                     description: item.mensaje,
                     time: new Date(item.fechaAccion || item.fecha || new Date()).toISOString(),

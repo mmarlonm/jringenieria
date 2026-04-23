@@ -125,6 +125,12 @@ export class AuthService {
       const token = this.accessToken;
       if (token && AuthUtils.isTokenExpired(token)) {
         console.warn("🔒 Token expirado. Cerrando sesión automáticamente...");
+        
+        // Registrar evento de seguridad antes de cerrar sesión
+        const user = JSON.parse(this.userInformation || "{}");
+        this._signalRService.stopConnection(); // Detener chat
+        // Nota: ActivitySignalRService se detendrá en signOut()
+        
         this.signOut().subscribe(() => {
           location.reload(); // o router.navigate(['/sign-in']);
         });

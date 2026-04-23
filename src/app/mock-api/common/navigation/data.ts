@@ -99,7 +99,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 id: 'ingenieria.proyectos',
                 title: 'PROYECTOS',
                 type: 'collapsable',
-                icon: 'heroicons_outline:clipboard-document-check',
+                icon: 'heroicons_outline:clipboard-check',
                 children: [
                     { id: 'dashboards.project', title: 'Proyectos', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/dashboards/project' }, // Conservado
                     { id: 'reports.project-progress', title: '*Diagrama de Gant por proyecto', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/reports/project-progress' }
@@ -212,10 +212,10 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 id: 'marketing.encuestas',
                 title: 'ENCUESTAS',
                 type: 'collapsable',
-                icon: 'heroicons_outline:clipboard-document-list',
+                icon: 'heroicons_outline:clipboard-list',
                 children: [
-                    { id: 'dashboards.surveys', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document', link: '/dashboards/surveys' }, // Conservado
-                    { id: 'dashboards.surveys-products', title: 'Encuestas de Productos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' }, // Conservado
+                    { id: 'dashboards.surveys', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-list', link: '/dashboards/surveys' }, // Conservado
+                    { id: 'dashboards.surveys-products', title: 'Encuestas de Productos', type: 'basic', icon: 'heroicons_outline:clipboard-check', link: '/dashboards/surveys-products' }, // Conservado
                     { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
                     { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' }
                 ]
@@ -259,7 +259,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
-            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-text', link: '/rrhh/report-entrada-salida' }
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-list', link: '/rrhh/report-entrada-salida' }
         ]
     },
 
@@ -275,6 +275,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
             { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' },
+            { id: 'apps.activity-monitor', title: 'Monitor de Actividad', type: 'basic', icon: 'heroicons_outline:eye', link: '/security/activity-monitor' },
             { id: 'reports.login-logs', title: 'Historial de Inicios de Sesión', type: 'basic', icon: 'heroicons_outline:finger-print', link: '/reports/login-logs' }
         ]
     }

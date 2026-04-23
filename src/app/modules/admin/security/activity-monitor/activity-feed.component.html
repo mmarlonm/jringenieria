@@ -1,0 +1,65 @@
+<div class="flex flex-col h-full bg-slate-50 dark:bg-slate-950 font-sans overflow-hidden">
+    
+    <!-- Header: Vibrant Sidebar -->
+    <div class="px-6 py-5 border-b dark:border-white/5 bg-white dark:bg-slate-900">
+        <h2 class="text-xs font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase flex items-center">
+            <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_outline:fire"></mat-icon>
+            Live Activity
+        </h2>
+    </div>
+
+    <!-- Feed Container -->
+    <div class="flex-auto overflow-y-auto custom-scrollbar p-4 space-y-4" [@listAnimation]="activities.length">
+        
+        <ng-container *ngFor="let activity of activities; trackBy: trackByFn">
+            <div class="relative pl-8 group">
+                
+                <!-- Vertical Timeline Dot -->
+                <div class="absolute left-0 top-1 w-4 h-4 rounded-full border-4 border-slate-50 dark:border-slate-950 bg-indigo-500 z-10"></div>
+                <!-- Vertical Timeline Line -->
+                <div class="absolute left-[7px] top-4 bottom-[-16px] w-0.5 bg-slate-200 dark:bg-white/5 group-last:hidden"></div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <!-- MODULO TRADUCIDO -->
+                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-widest">
+                            {{ getFriendlyModuleName(activity.urlPath || '') }}
+                        </span>
+                        <span class="text-[8px] font-bold text-slate-400 font-mono">{{ activity.fecha | date: 'HH:mm:ss' }}</span>
+                    </div>
+
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm">
+                                <img *ngIf="activity.avatar" [src]="activity.avatar" class="w-full h-full object-cover">
+                                <div *ngIf="!activity.avatar" class="w-full h-full flex items-center justify-center text-white text-[10px] font-black"
+                                     [style.background-color]="getUserColor(activity.nombreUsuario || '')">
+                                    {{ getUserInitials(activity.nombreUsuario || '') }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="min-w-0 flex-auto">
+                            <p class="text-[11px] font-black text-slate-800 dark:text-white leading-none mb-1 truncate">
+                                {{ activity.nombreUsuario }}
+                            </p>
+                            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 italic line-clamp-2">
+                                {{ activity.accion }}
+                            </p>
+                        </div>
+                        
+                        <button (click)="goToModule(activity.urlPath || '')" class="text-slate-300 hover:text-indigo-500 transition-colors">
+                            <mat-icon class="icon-size-4" svgIcon="heroicons_outline:chevron-right"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- Empty State -->
+        <div *ngIf="activities.length === 0" class="flex flex-col items-center justify-center py-10 opacity-20">
+            <mat-icon class="icon-size-8 mb-2" svgIcon="heroicons_outline:wifi"></mat-icon>
+            <p class="text-[9px] font-black uppercase tracking-widest text-center">Listening...</p>
+        </div>
+    </div>
+</div>

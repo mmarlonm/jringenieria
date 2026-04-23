@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import {
     BehaviorSubject,
     Observable,
+    ReplaySubject,
     filter,
     map,
     of,
@@ -18,8 +19,9 @@ export class UsersService {
     private apiUrl = `${environment.apiUrl}/Profile`; // Asegúrate de que esto sea correcto
     private apiUrlProyecto = `${environment.apiUrl}/Proyecto`;
     private _user: BehaviorSubject<any | null> = new BehaviorSubject(null);
-    private _users: BehaviorSubject<any[] | null> = new BehaviorSubject(null);
+    private _users: ReplaySubject<any[]> = new ReplaySubject<any[]>(1);
     private _allUsers: any[] = [];
+    private _usersLoaded = false;
 
     /**
      * Constructor
@@ -49,13 +51,18 @@ export class UsersService {
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Get contacts
+     * Get contacts - Optimized with caching
      */
-    getUsers(): Observable<any[]> {
+    getUsers(forceRefresh: boolean = false): Observable<any[]> {
+        if (this._usersLoaded && !forceRefresh) {
+            return this.users$.pipe(take(1));
+        }
+
         return this._httpClient.get<any[]>(`${this.apiUrl}/get-users`).pipe(
             tap((contacts) => {
                 this._allUsers = contacts;
                 this._users.next(contacts);
+                this._usersLoaded = true;
             })
         );
     }

@@ -4,19 +4,23 @@ import { PresenceService } from "./presence.service";
 import { Subject, takeUntil, take, filter } from "rxjs";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatSnackBarModule } from "@angular/material/snack-bar";
-import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
-import { SignalRService } from "./signalr.service";
+import { SignalRService } from "./core/signalr/signalr.service";
 import { ChatNotificationService } from "./shared/components/chat-notification/chat-notification.service";
 import { UsersService } from "app/modules/admin/security/users/users.service";
 import { SileoWrapperComponent } from "./shared/components/sileo-wrapper/sileo-wrapper.component";
 import { NotificacionesChatService } from "./notificaciones-chat.service";
+import { UserService } from "app/core/user/user.service";
+import { User } from "app/core/user/user.types";
+import { ActivitySignalRService } from "./core/signalr/activity-signalr.service";
+import { CommonModule } from "@angular/common";
+import { UserTrackerService } from "./core/tracker/user-tracker.service";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
   standalone: true,
-  imports: [RouterOutlet, MatDialogModule, MatSnackBarModule, SileoWrapperComponent],
+  imports: [CommonModule, RouterOutlet, MatDialogModule, MatSnackBarModule, SileoWrapperComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private _unsubscribeAll = new Subject<void>();
@@ -26,81 +30,92 @@ export class AppComponent implements OnInit, OnDestroy {
   private isInactive = false;
   private _dialog = inject(MatDialog);
   private currentUserId: string | null = null;
+  private currentUserName: string = 'Usuario';
+  private currentUserAvatar: string | null = null;
+  
+  // Servicios Inyectados
+  private _signalRService = inject(SignalRService);
+  private _userTrackerService = inject(UserTrackerService);
+  private _notificacionesChatService = inject(NotificacionesChatService);
+  private _usersService = inject(UsersService);
+  private _activitySignalRService = inject(ActivitySignalRService);
+  private _userService = inject(UserService);
 
   constructor(
     private presenceService: PresenceService,
-    private signalRService: SignalRService,
     private chatNotificationService: ChatNotificationService,
-    private _notificacionesChatService: NotificacionesChatService,
-    private _usersService: UsersService,
     private router: Router
   ) { }
 
-  unloadHandler(): void {
-    this.presenceService.stopConnection();
-    this._notificacionesChatService.stopConnection();
-  }
-
   ngOnInit(): void {
+    this.startInactivityWatch();
+    
+    // 1. Obtener identidad del usuario (Replicando Tareas)
+    this._userService.user$
+        .pipe(takeUntil(this._unsubscribeAll))
+        .subscribe((user: User) => {
+            const stored = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const u = user?.["usuario"] || stored?.usuario;
+            
+            if (u) {
+                this.currentUserName = u.nombreUsuario || u.nombre || 'Usuario';
+                this.currentUserAvatar = u.avatar || null;
+                this.currentUserId = u.usuarioId || u.id;
+                console.log('👤 [Identity] Usuario identificado:', this.currentUserName);
+            }
+        });
+
+    // 2. Iniciar servicios core
     this.checkAndStartServices();
 
-    // Re-verificar conexión en cada navegación (por si el usuario acaba de loguearse)
+    // Rastrear navegación automática con Títulos reales
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       takeUntil(this._unsubscribeAll)
-    ).subscribe((event) => {
-      const navEvent = event as NavigationEnd;
-      // Pequeño delay para asegurar que localStorage esté listo tras redirección
+    ).subscribe((event: NavigationEnd) => {
+      // Pequeño delay para dejar que la página cargue y el título cambie
+      setTimeout(() => {
+        // 1. Intentar buscar un título real en el DOM (Fuse/Angular)
+        const domTitle = document.querySelector('h1, .page-title, .title, .breadcrumb-item.active')?.textContent?.trim();
+        
+        // 2. Fallback al título de la pestaña o mapeo manual
+        let moduleName = domTitle || document.title.split('-')[0].trim();
+        
+        if (moduleName === 'JR INGENIERÍA ELÉCTRICA') {
+            // Si el título es el nombre de la empresa, mapeamos por URL para ser más precisos
+            const url = event.urlAfterRedirects || event.url;
+            if (url.includes('users')) moduleName = 'Usuarios';
+            else if (url.includes('roles')) moduleName = 'Roles';
+            else if (url.includes('activity-monitor')) moduleName = 'Monitor Actividad';
+            else if (url.includes('tasks')) moduleName = 'Tareas';
+            else if (url.includes('compras')) moduleName = 'Compras';
+        }
+
+        const urlPath = event.urlAfterRedirects || event.url;
+        this._userTrackerService.registrarEvento(moduleName, 'Acceso al módulo', 'Router', urlPath);
+      }, 800);
+      
       setTimeout(() => this.checkAndStartServices(), 300);
     });
-
-    this.startInactivityWatch();
-
-    // Gatillo ultra-proactivo: Intentar conectar ya mismo y a los 2 segundos
-    this.checkAndStartServices();
-    setTimeout(() => {
-      this.checkAndStartServices();
-      // Prueba de notificación al inicio
-      //this.chatNotificationService.showSuccess('Sistema Listo', 'Las notificaciones de Sileo se han inicializado correctamente.');
-    }, 2000);
-
-    // Watchdog de 60 segundos para asegurar que la conexión se mantenga
-    setInterval(() => this.checkAndStartServices(), 60000);
   }
 
   private checkAndStartServices(): void {
-    const token = localStorage.getItem("accessToken");
-    const storedData = this.safeParse(localStorage.getItem("userInformation"));
-    const userId = storedData?.usuario?.id;
+    const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
+    const token = localStorage.getItem('accessToken');
+    const userId = storedData?.usuario?.usuarioId || storedData?.usuario?.id;
 
-    if (!token || !userId) {
-      this.presenceService.stopConnection();
-      this._notificacionesChatService.stopConnection();
-      return;
+    if (token && userId) {
+      this.currentUserId = userId;
+      this.presenceService.startConnection(userId.toString(), token);
+      this._signalRService.startConnection(); // Hub de Telemetría (con filtro de rol)
+      this._notificacionesChatService.startConnection();
+      this._activitySignalRService.startConnection(); // Hub antiguo (opcional)
+
+      this.subscribeToPresence();
     }
+  }
 
-    // Pre-cargar usuarios si no están cargados (para nombres en notificaciones)
-    //this._usersService.getUsers().subscribe();
-
-    // Check for birthday
-    this.checkBirthday(storedData);
-
-    // Actualizar ID actual para el filtro de mensajes propios
-    this.currentUserId = userId.toString();
-
-    // Conectar Presence y SignalR si no están conectados
-    // PresenceService ya maneja su propio bloqueo interno si ya está conectado
-    this.presenceService.startConnection(token, userId);
-
-    // SignalRService ahora maneja su propio bloqueo si ya está conectado/conectando
-    this.signalRService.startConnection(userId.toString(), token);
-
-    // Nuevo: Iniciar servicio de notificaciones de chat de tareas
-    this._notificacionesChatService.startConnection();
-
-    // Asegurar suscripción única a mensajes
-    this.subscribeToMessages();
-
+  private subscribeToPresence(): void {
     this.presenceService
       .onUsuarioConectado()
       .pipe(takeUntil(this._unsubscribeAll))
@@ -109,52 +124,74 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
-  private isSubscribedToMessages = false;
-  private subscribeToMessages(): void {
-    if (this.isSubscribedToMessages) return;
-    this.isSubscribedToMessages = true;
+  @HostListener('document:click', ['$event'])
+  onGlobalClick(event: MouseEvent): void {
+      const target = event.target as HTMLElement;
+      const logElement = target.closest('[data-log], button, a, .clickable, mat-option, [role="button"]');
+      
+      if (logElement) {
+          const logValue = logElement.getAttribute('data-log');
+          const matIcon = logElement.querySelector('mat-icon')?.textContent?.trim();
+          const elementText = logElement.textContent?.trim() || logElement.getAttribute('aria-label') || logElement.getAttribute('title') || '';
+          
+          // 🧠 Diccionario de Iconos y su significado
+          const iconMap: { [key: string]: string } = {
+              'visibility': 'Ver Detalles',
+              'remove_red_eye': 'Ver Detalles',
+              'edit': 'Editar Registro',
+              'history': 'Ver Histórico',
+              'delete': 'Eliminar',
+              'save': 'Guardar Cambios',
+              'print': 'Imprimir',
+              'download': 'Descargar'
+          };
 
-    this.signalRService.onMensajeRecibido()
-      .pipe(takeUntil(this._unsubscribeAll))
-      .subscribe((nuevoMensaje) => {
-        const remitenteId = nuevoMensaje.remitenteId || nuevoMensaje.contactId || nuevoMensaje.senderId || nuevoMensaje.usuarioId || nuevoMensaje.id;
-        const contenido = nuevoMensaje.contenido || nuevoMensaje.value || nuevoMensaje.mensaje || nuevoMensaje.text || 'Nuevo mensaje';
-        const nombreSugerido = nuevoMensaje.remitenteNombre || nuevoMensaje.senderName || nuevoMensaje.name || 'Equipo CRM';
+          const actionFromIcon = matIcon ? iconMap[matIcon] : null;
+          const keywords = ['editar', 'ver', 'preview', 'detalles', 'histórico', 'eliminar', 'aprobar', 'guardar', 'consultar', 'info'];
+          
+          const isAction = keywords.some(k => elementText.toLowerCase().includes(k)) || logValue || actionFromIcon;
 
-        // Evitar notificaciones de mensajes propios usando el ID de la sesión actual
-        if (remitenteId && this.currentUserId && String(remitenteId) === String(this.currentUserId)) {
-          return;
-        }
+          if (isAction) {
+              const container = logElement.closest('.card, tr, mat-row, .modal-content, .mat-mdc-dialog-container, .drawer');
+              let contextInfo = container?.querySelector('.id-selector, .title-selector, .name-selector, h1, h2, h3, .mat-mdc-dialog-title')?.textContent?.trim().substring(0, 50) || '';
+              
+              if (!contextInfo && container?.tagName === 'TR') {
+                  contextInfo = container.querySelector('td')?.textContent?.trim().substring(0, 30) || '';
+              }
 
-        // Mostrar notificación de inmediato
-        this.chatNotificationService.showNotification(nombreSugerido, contenido);
-
-        // Opcional: Intentar resolver el nombre real si la lista está cargada
-        this._usersService.users$.pipe(take(1)).subscribe(users => {
-          if (users) {
-            const user = users.find(u => (u.usuarioId || u.id) == remitenteId);
-            if (user && user.nombreUsuario && user.nombreUsuario !== nombreSugerido) {
-              // Aquí se podría actualizar, pero Sileo ya mostró el toast. 
-              // Al menos nos servirá para futuros mensajes.
-            }
+              const actionLabel = logValue || actionFromIcon || elementText.substring(0, 40) || 'Acción';
+              const fullAction = `${actionLabel}${contextInfo ? ' -> ' + contextInfo : ''}`;
+              
+              const pageTitle = document.title.split('-')[0].trim() || 'Sistema';
+              const urlPath = this.router.url;
+              
+              this._userTrackerService.registrarEvento(pageTitle, fullAction, logElement.tagName, urlPath);
           }
-        });
-      });
+      }
+  }
+
+  @HostListener('window:beforeunload')
+  unloadHandler(): void {
+    this.stopAllServices();
   }
 
   ngOnDestroy(): void {
     this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
-    this.presenceService.stopConnection();
-    this._notificacionesChatService.stopConnection();
+    this.stopAllServices();
     clearTimeout(this.inactivityTimeout);
-    window.removeEventListener("mousemove", this.resetInactivityTimer);
-    window.removeEventListener("keydown", this.resetInactivityTimer);
-    window.removeEventListener("click", this.resetInactivityTimer);
   }
 
+  private stopAllServices(): void {
+    this.presenceService.stopConnection();
+    this._notificacionesChatService.stopConnection();
+    this._activitySignalRService.stopConnection();
+    this._signalRService.stopConnection();
+  }
+
+  // --- Lógica de Inactividad ---
   startInactivityWatch(): void {
-    this.resetInactivityTimer = this.resetInactivityTimer.bind(this); // ensure `this` is correct
+    this.resetInactivityTimer = this.resetInactivityTimer.bind(this);
     window.addEventListener("mousemove", this.resetInactivityTimer);
     window.addEventListener("keydown", this.resetInactivityTimer);
     window.addEventListener("click", this.resetInactivityTimer);
@@ -163,71 +200,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   resetInactivityTimer(): void {
     clearTimeout(this.inactivityTimeout);
-
     if (this.isInactive) {
       this.isInactive = false;
       this.presenceService.setActive();
     }
-
     this.inactivityTimeout = setTimeout(() => {
       this.isInactive = true;
       this.presenceService.setAway();
     }, this.inactivityLimit);
-  }
-
-  private safeParse(data: string | null): any {
-    try {
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private checkBirthday(userData: any): void {
-    const fechaNacimiento = userData?.usuario?.fechaNacimiento;
-    const userId = userData?.usuario?.id;
-
-    if (!fechaNacimiento || !userId) return;
-
-    // Usar un método más robusto para evitar desfases de zona horaria
-    // Asumiendo formato YYYY-MM-DD o ISO
-    const today = new Date();
-    const todayDay = today.getDate();
-    const todayMonth = today.getMonth() + 1; // getMonth() es 0-11
-
-    let birthDay, birthMonth;
-
-    if (typeof fechaNacimiento === 'string' && fechaNacimiento.includes('-')) {
-      // Si es un string "XXXX-MM-DD...", extraemos directamente los números
-      const parts = fechaNacimiento.split('T')[0].split('-');
-      birthMonth = parseInt(parts[1], 10);
-      birthDay = parseInt(parts[2], 10);
-    } else {
-      const birthDate = new Date(fechaNacimiento);
-      birthDay = birthDate.getDate();
-      birthMonth = birthDate.getMonth() + 1;
-    }
-
-    const isBirthday = birthDay === todayDay && birthMonth === todayMonth;
-
-    if (isBirthday) {
-      const year = today.getFullYear();
-      const storageKey = `birthday_celebrated_${year}_${userId}`;
-      const alreadyCelebrated = localStorage.getItem(storageKey);
-
-      if (!alreadyCelebrated) {
-        this.showBirthdayCelebration();
-        localStorage.setItem(storageKey, 'true');
-      }
-    }
-  }
-
-  private showBirthdayCelebration(): void {
-    this._dialog.open(BirthdayModalComponent, {
-      width: '500px',
-      panelClass: 'birthday-modal-panel',
-      autoFocus: false,
-      disableClose: false
-    });
   }
 }

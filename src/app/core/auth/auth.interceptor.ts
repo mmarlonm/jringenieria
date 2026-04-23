@@ -51,9 +51,18 @@ export const authInterceptor = (
         catchError((error) => {
             // Catch "401 Unauthorized" responses
             if (error instanceof HttpErrorResponse && error.status === 401) {
+                
+                // 🛡️ ESCUDO: Si el error viene de telemetría, NO cerrar sesión.
+                // Simplemente logueamos el error y dejamos que el usuario siga trabajando.
+                if (req.url.includes('/LogsNavegacion')) {
+                    console.error('⚠️ [AuthInterceptor] 401 en Telemetría. El token de logs fue rechazado, pero mantenemos la sesión activa.', req.url);
+                    return throwError(error);
+                }
+
+                console.warn('🔒 [AuthInterceptor] 401 Global detectado. Cerrando sesión...', req.url);
+                
                 // Sign out
                 authService.signOut();
-
                 // Reload the app
                 router.navigate(['/sign-out']);
             }

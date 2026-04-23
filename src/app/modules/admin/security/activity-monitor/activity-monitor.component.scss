@@ -1,0 +1,56 @@
+:host {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+}
+
+.custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+    }
+    .dark &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+// Pulse animation for the vertical timeline
+.absolute.left-12.bg-indigo-500 {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    background-size: 100% 200%;
+    animation: flowPulse 3s linear infinite;
+}
+
+@keyframes flowPulse {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 200%; }
+}
+
+// Rounded cards styling
+.rounded-\[2\.5rem\] {
+    border-radius: 2.5rem;
+}
+
+// Backdrop filter for glassmorphism
+.backdrop-blur-xl {
+    backdrop-filter: blur(20px);
+}
+
+// Smooth transitions for themes
+.transition-colors {
+    transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+
+// Floating effect on hover
+.group:hover {
+    .flex-auto {
+        transform: translateY(-4px);
+    }
+}
