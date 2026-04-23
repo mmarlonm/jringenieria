@@ -45,9 +45,7 @@ export class PresenceService {
         this.hubConnection?.state === signalR.HubConnectionState.Connected &&
         this.isUserActive
       ) {
-        this.hubConnection.invoke("Heartbeat").catch((err) =>
-          // error
-        );
+        this.hubConnection.invoke("Heartbeat").catch((err) => { });
       }
     }, 62000);
   }
