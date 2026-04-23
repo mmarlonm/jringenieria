@@ -27,11 +27,11 @@ export class SignalRService {
 
     const finalToken = token || localStorage.getItem("accessToken");
     if (!finalToken) {
-      console.warn('📡 [SignalRService] Imposible conectar: Falta token');
+      // console.warn('📡 [SignalRService] Imposible conectar: Falta token');
       return;
     }
 
-    console.log('📡 [SignalRService] Iniciando Hub de Chat global...', { userId });
+    // console.log('📡 [SignalRService] Iniciando Hub de Chat global...', { userId });
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.apiUrl}/chatHub?usuarioId=${userId}`, {
@@ -44,7 +44,7 @@ export class SignalRService {
     this.isHandlerRegistered = false;
     this.registerSignalRHandlers();
 
-    this.hubConnection.onreconnecting((error) => console.warn('📡 [SignalRService] Reintentando conexión...', error));
+    this.hubConnection.onreconnecting((error) => { });
     this.hubConnection.onreconnected(() => {
       console.log('✅ [SignalRService] Conexión reestablecida');
       this.connectionEstablished.next(true);
@@ -58,7 +58,7 @@ export class SignalRService {
         this.startHeartbeat();
       })
       .catch((err) => {
-        console.error("❌ [SignalRService] Error crítico al iniciar conexión:", err);
+        // console.error("❌ [SignalRService] Error crítico al iniciar conexión:", err);
         // Permitir reintentos inmediatos limpiando el estado
         this.hubConnection = null;
         this.connectionEstablished.next(false);
@@ -77,13 +77,13 @@ export class SignalRService {
 
   public unirseAlChat(chatId: number): void {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
-      this.hubConnection.invoke("UnirseAlChat", chatId).catch(console.error);
+      this.hubConnection.invoke("UnirseAlChat", chatId).catch(() => { });
     }
   }
 
   public salirDelChat(chatId: number): void {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
-      this.hubConnection.invoke("SalirDelChat", chatId).catch(console.error);
+      this.hubConnection.invoke("SalirDelChat", chatId).catch(() => { });
     }
   }
 
@@ -96,11 +96,11 @@ export class SignalRService {
     this.isHandlerRegistered = true;
 
     const handler = (mensaje: any) => {
-      console.log('📡 [SignalRService] Mensaje RAW recibido:', mensaje);
+      // console.log('📡 [SignalRService] Mensaje RAW recibido:', mensaje);
       try {
         this.mensajeRecibidoSubject.next(mensaje);
       } catch (err) {
-        console.error('❌ [SignalRService] Error emitiendo mensaje:', err);
+        // console.error('❌ [SignalRService] Error emitiendo mensaje:', err);
       }
     };
 

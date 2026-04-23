@@ -105,7 +105,6 @@ export class AddClientComponent implements OnInit {
         this.dialogRef.close(nuevoCliente); // 👈 Devuelve el cliente creado al padre
       },
       error: (error) => {
-        console.error('Error al guardar el cliente:', error);
         this._chatNotificationService.showError('Error', 'No se pudo guardar el cliente. Inténtalo de nuevo más tarde.', 5000);
       }
     });

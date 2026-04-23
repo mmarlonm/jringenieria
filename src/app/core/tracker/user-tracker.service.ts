@@ -76,8 +76,8 @@ export class UserTrackerService {
         // Enviar uno por uno para coincidir con la firma del controlador [FromBody] LogNavegacionDto
         events.forEach(event => {
             this._httpClient.post(this.apiRestUrl, event, { headers }).subscribe({
-                next: () => console.log('✅ [Telemetry] Evento registrado:', event.Accion),
-                error: (err) => console.error('❌ [Telemetry] Error:', err.status)
+                next: () => { },
+                error: (err) => { }
             });
         });
     }

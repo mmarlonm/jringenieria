@@ -30,7 +30,7 @@ export class NotificacionesChatService {
         const userId = storedData?.usuario?.id;
 
         if (!userId) {
-            console.warn('[NotificacionesChatService] No se encontró ID de usuario para SignalR');
+//             console.warn('[NotificacionesChatService] No se encontró ID de usuario para SignalR');
             return;
         }
 
@@ -46,19 +46,19 @@ export class NotificacionesChatService {
 
         this._hubConnection.start()
             .then(() => {
-                console.log('📡 [NotificacionesChatService] Conectado a /chatHub');
+//                 console.log('📡 [NotificacionesChatService] Conectado a /chatHub');
                 
                 // Unirse al grupo personal (Notificaciones directas)
                 // Usamos el nuevo método UnirseAGrupo del backend
                 this._hubConnection?.invoke('UnirseAGrupo', "Usuario_" + userId)
-                    .catch(err => console.error('[NotificacionesChatService] Error en UnirseAGrupo:', err));
+                    .catch(err => { });
 
                 // Escuchar notificaciones de nuevos mensajes en tareas
                 this._hubConnection?.on('NuevaNotificacionChat', (data: { idTarea: number, titulo: string, mensaje: string, fecha: Date }) => {
                     this._handleNewNotification(data);
                 });
             })
-            .catch(err => console.error('[NotificacionesChatService] Error al conectar SignalR:', err));
+            .catch(err => { });
     }
 
     /**

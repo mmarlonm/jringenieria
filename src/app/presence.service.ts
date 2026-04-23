@@ -29,13 +29,13 @@ export class PresenceService {
     this.hubConnection
       .start()
       .then(() => {
-        console.log("✅ SignalR conectado");
+        // console.log("✅ SignalR conectado");
         this.startHeartbeat();
         this.requestConnectedUsers();
         this.listenToConnectedUsers();
         this.listenToUserStatus();
       })
-      .catch((err) => console.error("❌ Error conectando SignalR", err));
+      .catch((err) => { });
   }
 
   private startHeartbeat() {
@@ -46,7 +46,7 @@ export class PresenceService {
         this.isUserActive
       ) {
         this.hubConnection.invoke("Heartbeat").catch((err) =>
-          console.error("Error en Heartbeat", err)
+          // error
         );
       }
     }, 62000);
@@ -63,7 +63,7 @@ export class PresenceService {
     fetch(`${this.apiUrl}/conectados`)
       .then((res) => res.json())
       .then((data) => this.connectedUsersSubject.next(data))
-      .catch((err) => console.error("Error al obtener usuarios conectados", err));
+      .catch((err) => { });
   }
 
   private listenToConnectedUsers() {
@@ -74,25 +74,25 @@ export class PresenceService {
 
   private listenToUserStatus() {
     this.hubConnection?.on("UserConnected", (userId: string) => {
-      console.log(`✅ Usuario conectado: ${userId}`);
+      console.log(`✅ Usuario conectado: ID ${userId} a las ${new Date().toLocaleTimeString()}`);
     });
 
     this.hubConnection?.on("UserDisconnected", (userId: string) => {
-      console.log(`❌ Usuario desconectado: ${userId}`);
+      console.log(`❌ Usuario desconectado: ID ${userId} a las ${new Date().toLocaleTimeString()}`);
     });
   }
 
   setAway(): void {
     if (this.usuarioId) {
       this.isUserActive = false;
-      this.hubConnection?.invoke("SetAway", this.usuarioId.toString()).catch(console.error);
+      this.hubConnection?.invoke("SetAway", this.usuarioId.toString()).catch(() => { });
     }
   }
   
   setActive(): void {
     if (this.usuarioId) {
       this.isUserActive = true;
-      this.hubConnection?.invoke("SetActive", this.usuarioId.toString()).catch(console.error);
+      this.hubConnection?.invoke("SetActive", this.usuarioId.toString()).catch(() => { });
     }
   }
 
@@ -100,15 +100,15 @@ export class PresenceService {
     this.stopHeartbeat();
     if (this.hubConnection) {
       this.hubConnection.stop()
-        .then(() => console.log("🛑 SignalR desconectado"))
-        .catch(err => console.error("Error al desconectar SignalR", err));
+        .then(() => { })
+        .catch(err => { });
       this.hubConnection = undefined;
     }
   }
 
   sendHeartbeat(): void {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
-      this.hubConnection.invoke("Heartbeat").catch(console.error);
+      this.hubConnection.invoke("Heartbeat").catch(() => { });
     }
   }
 

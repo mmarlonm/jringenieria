@@ -68,7 +68,7 @@ export class ActivitySignalRService {
                 
                 // Enviar mensajes encolados
                 if (this._messageQueue.length > 0) {
-                    console.log(`📤 [ActivitySignalR] Enviando ${this._messageQueue.length} mensajes encolados...`);
+                    // console.log(`📤 [ActivitySignalR] Enviando ${this._messageQueue.length} mensajes encolados...`);
                     while (this._messageQueue.length > 0) {
                         const queuedLog = this._messageQueue.shift();
                         if (queuedLog) this.sendLog(queuedLog);
@@ -76,7 +76,7 @@ export class ActivitySignalRService {
                 }
             })
             .catch(err => {
-                console.error('❌ [ActivitySignalR] Error al conectar:', err);
+                // console.error('❌ [ActivitySignalR] Error al conectar:', err);
                 this._connectionStatus.next(false);
             });
 
@@ -99,8 +99,8 @@ export class ActivitySignalRService {
         this._httpClient.post(`${this.apiRestUrl}/registrar`, body, {
             headers: { 'Authorization': `Bearer ${token}` }
         }).subscribe({
-            next: () => console.log('✅ [ActivityLog] Registrado:', log.accion),
-            error: (err) => console.error('❌ [ActivityLog] Error API:', err)
+            next: () => { },
+            error: (err) => { }
         });
     }
 
@@ -139,7 +139,7 @@ export class ActivitySignalRService {
                     this.hubConnection = null;
                     this._connectionStatus.next(false);
                 })
-                .catch(err => console.error('❌ [ActivitySignalR] Error al cerrar conexión:', err));
+                .catch(err => { });
         }
     }
 }
