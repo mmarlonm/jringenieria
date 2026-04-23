@@ -30,7 +30,8 @@ export class PresenceService {
     this.hubConnection
       .start()
       .then(() => {
-        // console.log("✅ SignalR conectado");
+        const cleanId = this.extractId(this.usuarioId || "");
+        console.log(`✅ Usuario conectado: ID ${cleanId} a las ${new Date().toLocaleTimeString()}`);
         this.startHeartbeat();
         this.requestConnectedUsers();
         this.listenToConnectedUsers();
