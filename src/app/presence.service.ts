@@ -20,7 +20,7 @@ export class PresenceService {
 
     this.usuarioId = userId;
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(`${this.apiUrlPresence}/presenceHub?usuarioId=${userId}`, {
+      .withUrl(`${this.apiUrlPresence}/presenceHub?usuarioId=${token}`, {
         accessTokenFactory: () => token,
       })
       .withAutomaticReconnect()
