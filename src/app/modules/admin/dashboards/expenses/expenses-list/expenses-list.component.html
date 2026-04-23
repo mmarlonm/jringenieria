@@ -741,6 +741,14 @@
                     </div>
                 </div>
 
-                <div *ngIf="dataSource.data.length === 0"
-                    class="flex flex-col items-center justify-center p-10 sm:p-20 bg-card rounded-b-xl border-t">
-er-container>
+                <div *ngIf="dataSource.filteredData.length === 0"
+                    class="flex flex-col items-center justify-center p-12 sm:p-32 bg-card">
+                    <div class="relative flex items-center justify-center w-24 h-24 mb-6 rounded-full bg-slate-50">
+                        <mat-icon class="icon-size-12 text-slate-300" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+                        <div class="absolute inset-0 rounded-full border-2 border-dashed border-slate-200 animate-[spin_10s_linear_infinite]"></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-400 tracking-tight">No se encontraron gastos</div>
+                    <div class="text-secondary text-sm font-medium mt-1">No hay datos que coincidan con los filtros aplicados</div>
+                </div>
+            </div>
+        </div>
