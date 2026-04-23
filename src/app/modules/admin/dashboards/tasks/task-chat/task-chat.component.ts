@@ -378,6 +378,7 @@ export class TaskChatComponent implements OnInit, OnDestroy {
         accessTokenFactory: () => localStorage.getItem('accessToken') || ''
       })
       .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.None)
       .build();
 
     this._hubConnection.start()

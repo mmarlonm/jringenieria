@@ -38,6 +38,7 @@ export class SignalRService {
         accessTokenFactory: () => finalToken,
       })
       .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.None)
       .build();
 
     // Resetear flag de handlers para el nuevo objeto de conexión

@@ -51,7 +51,7 @@ export class ActivitySignalRService {
                 accessTokenFactory: () => token
             })
             .withAutomaticReconnect()
-            .configureLogging(LogLevel.Information)
+            .configureLogging(signalR.LogLevel.None)
             .build();
 
         // Registrar manejadores

@@ -52,7 +52,7 @@ export class SignalRService {
                     accessTokenFactory: () => localStorage.getItem('accessToken') || ''
                 })
                 .withAutomaticReconnect()
-                .configureLogging(LogLevel.Information)
+                .configureLogging(signalR.LogLevel.None)
                 .build();
 
             this.hubConnection.start()

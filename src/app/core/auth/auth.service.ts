@@ -65,7 +65,7 @@ export class AuthService {
             const { token, ...userWithoutToken } = response;
             this.userInformation = JSON.stringify(userWithoutToken);
             this._userService.user = response;
-            this._presenceService.startConnection(response.token, response.usuario.id);
+            this._presenceService.startConnection(response.usuario.id.toString(), response.token);
             this._signalRService.startConnection(response.usuario.id.toString(), response.token);
 
             this.startTokenWatcher(); // ⬅️ Inicia verificación periódica del token

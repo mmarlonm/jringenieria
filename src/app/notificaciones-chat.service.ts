@@ -42,6 +42,7 @@ export class NotificacionesChatService {
                 accessTokenFactory: () => localStorage.getItem('accessToken') || ''
             })
             .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.None)
             .build();
 
         this._hubConnection.start()

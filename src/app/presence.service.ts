@@ -15,7 +15,7 @@ export class PresenceService {
 
   private isUserActive = true;
 
-  public startConnection(token: string, userId: string): void {
+  public startConnection(userId: string, token: string): void {
     if (this.hubConnection) return;
 
     this.usuarioId = userId;
@@ -24,6 +24,7 @@ export class PresenceService {
         accessTokenFactory: () => token,
       })
       .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.None)
       .build();
 
     this.hubConnection
