@@ -210,7 +210,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             next: (res: any) => {
                 // Asumimos que el backend retorna: { status: 'ENTRADA' | 'SALIDA' | 'NINGUNO', ... }
                 // O tal vez retorna el último registro
-                console.log('Regreso API Status:', res);
+                // console.log('Regreso API Status:', res);
                 if (res && res.status) {
                     this.asistenciaStatus = res.status;
                 } else if (res && res.tipo) {

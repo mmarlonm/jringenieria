@@ -61,7 +61,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.currentUserName = u.nombreUsuario || u.nombre || 'Usuario';
                 this.currentUserAvatar = u.avatar || null;
                 this.currentUserId = u.usuarioId || u.id;
-                console.log('👤 [Identity] Usuario identificado:', this.currentUserName);
+                // console.log('👤 [Identity] Usuario identificado:', this.currentUserName);
             }
         });
 

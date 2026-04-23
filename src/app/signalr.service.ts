@@ -46,14 +46,14 @@ export class SignalRService {
 
     this.hubConnection.onreconnecting((error) => { });
     this.hubConnection.onreconnected(() => {
-      console.log('✅ [SignalRService] Conexión reestablecida');
+//       console.log('✅ [SignalRService] Conexión reestablecida');
       this.connectionEstablished.next(true);
     });
 
     this.hubConnection
       .start()
       .then(() => {
-        console.log("✅ [SignalRService] Conectado exitosamente y escuchando mensajes");
+//         console.log("✅ [SignalRService] Conectado exitosamente y escuchando mensajes");
         this.connectionEstablished.next(true);
         this.startHeartbeat();
       })

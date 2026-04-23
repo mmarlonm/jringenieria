@@ -63,7 +63,7 @@ export class ActivitySignalRService {
         this.hubConnection
             .start()
             .then(() => {
-                console.log('✅ [ActivitySignalR] Conectado a /navegacionHub');
+//                 console.log('✅ [ActivitySignalR] Conectado a /navegacionHub');
                 this._connectionStatus.next(true);
                 
                 // Enviar mensajes encolados
@@ -135,7 +135,7 @@ export class ActivitySignalRService {
         if (this.hubConnection) {
             this.hubConnection.stop()
                 .then(() => {
-                    console.log('📡 [ActivitySignalR] Conexión cerrada.');
+//                     console.log('📡 [ActivitySignalR] Conexión cerrada.');
                     this.hubConnection = null;
                     this._connectionStatus.next(false);
                 })

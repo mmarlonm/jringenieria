@@ -41,7 +41,7 @@ export class SignalRService {
             const hasRole = roles.includes('pruebas') || userData?.role === 'pruebas' || userData?.nombreRol === 'pruebas';
 
             if (!hasRole) {
-                console.warn('⚠️ [SignalR] Acceso denegado: El usuario no tiene el rol "pruebas"');
+//                 console.warn('⚠️ [SignalR] Acceso denegado: El usuario no tiene el rol "pruebas"');
                 return;
             }
 
@@ -57,10 +57,10 @@ export class SignalRService {
 
             this.hubConnection.start()
                 .then(() => {
-                    console.log('🚀 [SignalR] Conectado al Hub de Navegación');
+//                     console.log('🚀 [SignalR] Conectado al Hub de Navegación');
                     this.registerHandlers();
                 })
-                .catch(err => console.error('❌ [SignalR] Error al conectar:', err));
+                .catch(err => { });
         });
     }
 
@@ -76,7 +76,7 @@ export class SignalRService {
     public stopConnection(): void {
         if (this.hubConnection) {
             this.hubConnection.stop().then(() => {
-                console.log('🛑 [SignalR] Conexión cerrada');
+//                 console.log('🛑 [SignalR] Conexión cerrada');
             });
         }
     }

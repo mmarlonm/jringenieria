@@ -797,7 +797,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     private async _parsePdfTable(file: File): Promise<ContpaqiMaterialDto[]> {
-        console.log('--- INICIO UNIVERSAL PDF SCANNER ---');
+//         console.log('--- INICIO UNIVERSAL PDF SCANNER ---');
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
@@ -906,13 +906,13 @@ export class SolicitudCompraFormComponent implements OnInit {
                 if (isOrdered) {
                     Object.assign(columnMapping, tempMapping);
                     foundHeaderRowIndex = i;
-                    console.log(`CABECERA UNIVERSAL VALIDADA (Fila ${i}):`, rowText.join(' | '));
+//                     console.log(`CABECERA UNIVERSAL VALIDADA (Fila ${i}):`, rowText.join(' | '));
                     break;
                 }
             }
         }
 
-        console.log('MAPEO FINAL UNIVERSAL:', columnMapping);
+//         console.log('MAPEO FINAL UNIVERSAL:', columnMapping);
 
         // EXTRACCIÓN CON FILTRADO DE PIE DE PÁGINA
         const detectedMateriales: ContpaqiMaterialDto[] = [];
@@ -924,7 +924,7 @@ export class SolicitudCompraFormComponent implements OnInit {
 
             // 1. Detección de Pie de Página o Metadatos
             if (FOOTER_KEYWORDS.some(key => rowTextStr.includes(key))) {
-                console.log('Fila de metadatos/pie detectada y saltada:', rowTextStr);
+//                 console.log('Fila de metadatos/pie detectada y saltada:', rowTextStr);
                 continue;
             }
 
@@ -993,7 +993,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             }
         }
 
-        console.log(`EXTRACCIÓN FINALIZADA: ${detectedMateriales.length} artículos.`);
+//         console.log(`EXTRACCIÓN FINALIZADA: ${detectedMateriales.length} artículos.`);
         return detectedMateriales;
     }
 

@@ -97,7 +97,7 @@ export const appConfig: ApplicationConfig = {
                             const data = JSON.parse(userInfo);
                             const userId = data?.usuario?.id;
                             if (userId) {
-                                console.log('[AppConfig] 🚀 Iniciando SignalR desde APP_INITIALIZER');
+                                // console.log('[AppConfig] 🚀 Iniciando SignalR desde APP_INITIALIZER');
                                 signalRService.startConnection(userId.toString(), token);
                             }
                         } catch (e) { }

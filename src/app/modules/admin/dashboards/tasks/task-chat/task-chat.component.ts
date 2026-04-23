@@ -170,7 +170,7 @@ export class TaskChatComponent implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             // SignalR se encargará de removerlo para todos
-            console.log('🗑️ [TaskChat] Petición de eliminación enviada exitosamente');
+//             console.log('🗑️ [TaskChat] Petición de eliminación enviada exitosamente');
           },
           error: (err) => {
             console.error('❌ Error al eliminar comentario:', err);
@@ -371,7 +371,7 @@ export class TaskChatComponent implements OnInit, OnDestroy {
     if (this._hubConnection) return;
 
     const url = `${environment.apiUrlSignal}/chatHub?usuarioId=${this.userId}`;
-    console.log('📡 [TaskChat] Intentando conectar a:', url);
+//     console.log('📡 [TaskChat] Intentando conectar a:', url);
 
     this._hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(url, {
@@ -382,16 +382,16 @@ export class TaskChatComponent implements OnInit, OnDestroy {
 
     this._hubConnection.start()
       .then(() => {
-        console.log('📡 [TaskChat] Conectado exitosamente al Hub de Tarea:', this.tareaId);
+//         console.log('📡 [TaskChat] Conectado exitosamente al Hub de Tarea:', this.tareaId);
 
         // Unirse al grupo de la tarea específica
         this._hubConnection?.invoke('UnirseAGrupo', 'Tarea_' + this.tareaId)
-          .then(() => console.log(`✅ [TaskChat] Unido al grupo Tarea_${this.tareaId}`))
+//           .then(() => console.log(`✅ [TaskChat] Unido al grupo Tarea_${this.tareaId}`))
           .catch(err => console.error('[TaskChat] ❌ Error UnirseAGrupo:', err));
 
         // Manejador común para diferentes nombres de eventos de mensaje
         const messageHandler = (mensaje: any) => {
-          console.log('📬 [TaskChat] Evento de mensaje recibido:', mensaje);
+//           console.log('📬 [TaskChat] Evento de mensaje recibido:', mensaje);
           this._ngZone.run(() => {
             if (!mensaje) return;
 
@@ -416,7 +416,7 @@ export class TaskChatComponent implements OnInit, OnDestroy {
 
         // Nuevo listener para eliminación en tiempo real
         this._hubConnection?.on('ComentarioEliminado', (idComentario: number) => {
-          console.log('🗑️ [TaskChat] Evento de mensaje eliminado:', idComentario);
+//           console.log('🗑️ [TaskChat] Evento de mensaje eliminado:', idComentario);
           this._ngZone.run(() => {
             this.comments = this.comments.filter(c => c.idComentario !== idComentario);
             this._changeDetectorRef.markForCheck();
