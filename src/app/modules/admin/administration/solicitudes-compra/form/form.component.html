@@ -205,7 +205,118 @@
                             </mat-form-field>
                         </div>
 
-                        <!-- Panel 4: Terna de Proveedores -->
+                        <!-- Panel 4: Validación y Control de Aprobación -->
+                        <div
+                            class="relative overflow-hidden p-6 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 group transition-all duration-500 hover:shadow-2xl lg:col-span-1">
+                            <!-- Decorative background glow -->
+                            <div
+                                class="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500">
+                            </div>
+
+                            <div class="relative flex flex-col gap-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2.5 bg-primary/10 rounded-2xl text-primary">
+                                            <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:shield-check'">
+                                            </mat-icon>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <h3
+                                                class="text-base font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight">
+                                                Control de Aprobación</h3>
+                                            <p
+                                                class="text-[10px] text-secondary font-medium uppercase tracking-widest opacity-70">
+                                                Flujo de validación interna</p>
+                                        </div>
+                                    </div>
+
+                                    <div *ngIf="solicitudForm.get('esAprobada').value"
+                                        class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 rounded-2xl border border-emerald-500/20 animate-in fade-in zoom-in duration-500">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:check-badge'">
+                                        </mat-icon>
+                                        <span class="text-xs font-black uppercase tracking-wider">Certificada</span>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4">
+                                    <mat-form-field appearance="outline"
+                                        class="fuse-mat-no-subscript fuse-mat-rounded w-full">
+                                        <mat-label>Responsable de la Revisión</mat-label>
+                                        <mat-select formControlName="idAprobador">
+                                            <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">
+                                                <div class="flex items-center gap-2 py-1">
+                                                    <div
+                                                        class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                                                        {{ (user.nombre || user.nombreUsuario ||
+                                                        'U').substring(0,1).toUpperCase() }}
+                                                    </div>
+                                                    <span class="text-sm font-semibold">{{user.nombreUsuario ||
+                                                        user.nombre || user.email}}</span>
+                                                </div>
+                                            </mat-option>
+                                        </mat-select>
+                                        <mat-icon matPrefix class="icon-size-5 mr-2"
+                                            [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+                                    </mat-form-field>
+
+                                    <div class="mt-2 p-5 rounded-3xl border border-dashed transition-all duration-500"
+                                        [ngClass]="solicitudForm.get('esAprobada').value 
+                                            ? 'bg-gradient-to-br from-emerald-50/50 to-white border-emerald-200' 
+                                            : 'bg-slate-50/50 border-slate-200'">
+
+                                        <div class="flex items-center justify-between gap-6">
+                                            <div class="flex flex-col flex-auto min-w-0">
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="text-[10px] font-black uppercase tracking-widest"
+                                                        [ngClass]="solicitudForm.get('esAprobada').value ? 'text-emerald-700' : 'text-slate-500'">
+                                                        Estatus Operativo
+                                                    </span>
+                                                </div>
+                                                <h4 class="text-xl font-black leading-none truncate"
+                                                    [ngClass]="solicitudForm.get('esAprobada').value ? 'text-emerald-600' : 'text-slate-400'">
+                                                    {{ solicitudForm.get('esAprobada').value ? 'SOLICITUD APROBADA' :
+                                                    'ESPERANDO VALIDACIÓN' }}
+                                                </h4>
+                                                <div *ngIf="solicitudForm.get('esAprobada').value"
+                                                    class="mt-2 flex items-center gap-2">
+                                                    <mat-icon class="icon-size-3.5 text-emerald-500"
+                                                        [svgIcon]="'heroicons_solid:calendar'"></mat-icon>
+                                                    <span class="text-[10px] text-emerald-600/70 font-bold tabular-nums">
+                                                        {{ solicitudForm.get('fechaAprobacion').value |
+                                                        date:'dd/MM/yyyy • HH:mm' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <button mat-flat-button
+                                                class="!rounded-2xl !h-14 !px-8 shadow-lg shadow-primary/20 transition-all duration-300 active:scale-95"
+                                                [color]="solicitudForm.get('esAprobada').value ? 'accent' : 'primary'"
+                                                [disabled]="solicitudForm.get('esAprobada').value || solicitudForm.get('idAprobador').value !== currentUserId"
+                                                (click)="aprobarSolicitud()">
+                                                <div class="flex flex-col items-center leading-none">
+                                                    <mat-icon class="icon-size-5 mb-1"
+                                                        [svgIcon]="solicitudForm.get('esAprobada').value ? 'heroicons_solid:check' : 'heroicons_solid:key'">
+                                                    </mat-icon>
+                                                    <span class="text-[10px] font-black uppercase tracking-widest">{{
+                                                        solicitudForm.get('esAprobada').value ? 'APROBADA' : 'AUTORIZAR'
+                                                        }}</span>
+                                                </div>
+                                            </button>
+                                        </div>
+
+                                        <!-- Footer warning -->
+                                        <div *ngIf="!solicitudForm.get('esAprobada').value && solicitudForm.get('idAprobador').value !== currentUserId"
+                                            class="mt-4 flex items-center gap-2 p-3 bg-white/60 rounded-xl border border-slate-100 text-[10px] text-slate-500 font-medium italic">
+                                            <mat-icon class="icon-size-4 text-amber-500"
+                                                [svgIcon]="'heroicons_solid:exclamation-triangle'"></mat-icon>
+                                            Sólo el revisor asignado puede realizar la firma digital de aprobación.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 5: Terna de Proveedores -->
                         <div class="flex flex-col p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 gap-4 lg:col-span-2 xl:col-span-3">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-4">
                                 <h3 class="text-sm font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">

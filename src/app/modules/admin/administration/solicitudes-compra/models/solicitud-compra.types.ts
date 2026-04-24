@@ -38,6 +38,11 @@ export interface SolicitudCompra {
     datosFacturaContpaqi?: any;
     estadoLiquidacion: number;
 
+    // Aprobación
+    idAprobador?: number;
+    esAprobada: boolean;
+    fechaAprobacion?: string | Date;
+
     // Relaciones
     estatus: CatEstatusCompra;
     detalles: SolicitudCompraDetalle[];
@@ -93,6 +98,7 @@ export interface SolicitudCompraCreateDto {
     razonSocial: string;
     monto?: number;
     cuadranteId?: number;
+    idAprobador?: number;
     detalles: SolicitudCompraDetalleCreateDto[];
     proveedores: SolicitudCompraProveedor[];
 }

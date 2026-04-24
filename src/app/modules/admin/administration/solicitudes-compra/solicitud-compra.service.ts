@@ -179,4 +179,11 @@ export class SolicitudCompraService {
             params: { identificador: folio }
         });
     }
+
+    aprobarCheck(idSolicitud: number, idUsuario: number): Observable<any> {
+        const params = new HttpParams()
+            .set('idSolicitud', idSolicitud.toString())
+            .set('idUsuario', idUsuario.toString());
+        return this._httpClient.post(`${this.apiUrl}/aprobar-check`, null, { params });
+    }
 }

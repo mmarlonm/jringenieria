@@ -26,7 +26,7 @@ import Swal from 'sweetalert2';
 })
 export class SolicitudCompraListComponent implements OnInit {
     solicitudes$: Observable<SolicitudCompra[]>;
-    displayedColumns: string[] = ['folio', 'fecha', 'sucursal', 'area', 'prioridad', 'cuadranteId', 'estatus', 'acciones'];
+    displayedColumns: string[] = ['folio', 'esAprobada', 'fecha', 'sucursal', 'area', 'prioridad', 'cuadranteId', 'estatus', 'acciones'];
     filterValue: string = '';
     count: number = 0;
 

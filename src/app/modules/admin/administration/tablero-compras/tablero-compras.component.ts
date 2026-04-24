@@ -51,6 +51,7 @@ import Swal from 'sweetalert2';
 export class TableroComprasComponent implements OnInit, OnDestroy {
     displayedColumns: string[] = [
         'folio',
+        'esAprobada',
         'folioOC',
         'fechaSolicitud',
         'sucursal',

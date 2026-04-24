@@ -86,6 +86,21 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">RFC Proveedor</span>
                         <span class="font-medium uppercase">{{ solicitud.rfc }}</span>
                     </div>
+                    <!-- Aprobación Info -->
+                    <div class="flex flex-col" *ngIf="solicitud.idAprobador">
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Aprobador Asignado</span>
+                        <span class="font-semibold">{{ getSolicitanteName(solicitud.idAprobador) }}</span>
+                    </div>
+                    <div class="flex flex-col" *ngIf="solicitud.esAprobada">
+                        <span class="text-xs font-bold uppercase text-emerald-600 tracking-wider">Estado Aprobación</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <mat-icon class="icon-size-4 text-emerald-500" [svgIcon]="'heroicons_solid:check-badge'"></mat-icon>
+                            <span class="font-bold text-emerald-700 uppercase">Aprobada</span>
+                        </div>
+                        <span class="text-[10px] text-emerald-500 font-medium" *ngIf="solicitud.fechaAprobacion">
+                            {{ solicitud.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                    </div>
                 </div>
 
                 <mat-divider></mat-divider>

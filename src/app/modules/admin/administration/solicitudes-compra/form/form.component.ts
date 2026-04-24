@@ -66,6 +66,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     filteredBancos$: Observable<string[]>;
     private _bancoSearch$ = new Subject<string>();
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+    currentUserId: number = 0;
 
     // Select options
     prioridades = ['Urgente', 'Alta', 'Normal'];
@@ -126,6 +127,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         this.loadClients();
         this._setupBancoFilter();
 
+        this.currentUserId = this._getCurrentUserId();
         this._route.params.subscribe(params => {
             if (params['id']) {
                 this.isEdit = true;
@@ -133,6 +135,18 @@ export class SolicitudCompraFormComponent implements OnInit {
                 this.loadSolicitud(this.solicitudId);
             }
         });
+    }
+
+    private _getCurrentUserId(): number {
+        let userId = 1;
+        try {
+            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const user = userInformation.usuario || {};
+            userId = user.id || user.usuarioId || 1;
+        } catch (e) {
+            console.error('Error reading user from localStorage', e);
+        }
+        return userId;
     }
 
     ngOnDestroy(): void {
@@ -161,21 +175,15 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     initForm(): void {
-        let userId = 1;
-        try {
-            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const user = userInformation.usuario || {};
-            userId = user.id || user.usuarioId || 1;
-        } catch (e) {
-            console.error('Error reading user from localStorage', e);
-        }
-
         this.solicitudForm = this._formBuilder.group({
             idSolicitud: [0],
             folioOC: [''],
             sucursal: ['', Validators.required],
             areaSolicitante: ['', Validators.required],
-            idPersonaSolicitante: [userId],
+            idPersonaSolicitante: [this.currentUserId],
+            idAprobador: [null, Validators.required],
+            esAprobada: [false],
+            fechaAprobacion: [null],
             proyectoCliente: [''],
             cliente: [''],
             esRecurrente: [false],
@@ -576,6 +584,44 @@ export class SolicitudCompraFormComponent implements OnInit {
             });
             this.detalles.controls.forEach((_, i) => this._setupProductSearch(i));
             this.loadArchivos(id);
+        });
+    }
+
+    aprobarSolicitud(): void {
+        if (!this.isEdit || !this.solicitudId) {
+            this._chatNotificationService.showWarning('Atención', 'La solicitud debe estar guardada antes de ser aprobada.');
+            return;
+        }
+
+        const idUsuario = this.currentUserId;
+        
+        Swal.fire({
+            title: '¿Aprobar solicitud?',
+            text: 'Esta acción notificará al solicitante y bloqueará cambios adicionales de aprobación.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, aprobar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._solicitudCompraService.aprobarCheck(this.solicitudId, idUsuario).subscribe({
+                    next: () => {
+                        this._chatNotificationService.showSuccess('Éxito', 'Solicitud aprobada. Se ha notificado al solicitante.');
+                        this.solicitudForm.patchValue({
+                            esAprobada: true,
+                            fechaAprobacion: new Date()
+                        });
+                    },
+                    error: (err) => {
+                        console.error('Error aprobando solicitud:', err);
+                        const msg = err.error?.message || err.message || 'Error al aprobar la solicitud';
+                        this._chatNotificationService.showError('Error', msg);
+                        // El checkbox se controla por el valor de esAprobada, que no cambió si hubo error
+                    }
+                });
+            }
         });
     }
 
