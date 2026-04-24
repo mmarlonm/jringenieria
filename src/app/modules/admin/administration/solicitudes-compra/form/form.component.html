@@ -243,7 +243,7 @@
                                         class="fuse-mat-no-subscript fuse-mat-rounded w-full">
                                         <mat-label>Responsable de la Revisión</mat-label>
                                         <mat-select formControlName="idAprobador">
-                                            <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">
+                                            <mat-option *ngFor="let user of aprobadores" [value]="user.usuarioId">
                                                 <div class="flex items-center gap-2 py-1">
                                                     <div
                                                         class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
@@ -727,18 +727,17 @@
                             <!-- Total -->
                             <div class="flex flex-col pt-1">
                                 <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 ml-1">
-                                    {{ detalles.length > 0 ? 'Total Solicitado' : 'Ingresa el Total de la Solicitud' }}
+                                    Total Solicitado (Calculado)
                                 </span>
                                 <div class="relative group">
                                     <input type="number" formControlName="monto" 
-                                           [readonly]="detalles.length > 0"
-                                           class="w-full pl-10 pr-12 py-4 text-2xl font-black bg-indigo-50/50 dark:bg-indigo-900/20 border transition-all duration-200 outline-none rounded-2xl tracking-tight tabular-nums"
-                                           [ngClass]="detalles.length > 0 ? 'border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300' : 'border-indigo-300 focus:border-indigo-500 text-indigo-800 group-hover:border-indigo-400'">
+                                           readonly
+                                           class="w-full pl-10 pr-12 py-4 text-2xl font-black bg-indigo-50/50 dark:bg-indigo-900/20 border transition-all duration-200 outline-none rounded-2xl tracking-tight tabular-nums border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
                                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-6 text-indigo-600 dark:text-indigo-400" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
                                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-indigo-600/50 dark:text-indigo-400/50 uppercase tracking-widest">{{ solicitudForm.get('moneda').value }}</span>
                                 </div>
-                                <p *ngIf="detalles.length === 0" class="text-[10px] text-gray-400 mt-2 ml-1 italic">
-                                    * Al no haber partidas, el subtotal e IVA se enviarán en 0.
+                                <p class="text-[10px] text-gray-400 mt-2 ml-1 italic">
+                                    * El total se calcula automáticamente sumando el detalle de materiales.
                                 </p>
                             </div>
                         </div>

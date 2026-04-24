@@ -83,6 +83,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     ];
     sucursales: any[] = [];
     usuarios: any[] = [];
+    aprobadores: any[] = [];
     
     // Lista de Bancos en México para el autocompletado
     bancosMexico: string[] = [
@@ -157,6 +158,10 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadUsers(): void {
         this._usersService.getUsers().subscribe(users => {
             this.usuarios = users || [];
+            const allowedApproverIds = [14, 13, 16, 6, 12, 43, 18];
+            this.aprobadores = this.usuarios.filter(user => 
+                allowedApproverIds.includes(user.usuarioId || user.id)
+            );
         });
     }
 
@@ -447,6 +452,13 @@ export class SolicitudCompraFormComponent implements OnInit {
                     monto: total,
                     totalPiezas: totalPiezas
                 }, { emitEvent: false });
+            } else {
+                this.solicitudForm.patchValue({
+                    subtotal: 0,
+                    iva: 0,
+                    monto: 0,
+                    totalPiezas: 0
+                }, { emitEvent: false });
             }
         });
     }
@@ -699,8 +711,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             for (const name in controls) {
                 if (name !== 'detalles' && controls[name].invalid) invalidFields.push(fieldNames[name] || name);
             }
-            if (this.detalles.length === 0 && (this.solicitudForm.get('monto').value || 0) <= 0) {
-                 invalidFields.push('Debe agregar al menos una partida o ingresar un monto total');
+            if (this.detalles.length === 0) {
+                 invalidFields.push('Es obligatorio agregar al menos un material (partida) para crear la solicitud');
             } else {
                 this.detalles.controls.forEach((group: FormGroup, i) => {
                     if (group.invalid) invalidFields.push(`Error en partida #${i+1}`);
