@@ -11,19 +11,34 @@
         </div>
 
         <!-- Main actions -->
-        <div class="mt-4 flex items-center sm:mt-6">
+        <div class="mt-4 flex flex-col sm:flex-row items-center sm:mt-6 gap-4">
             <!-- Search -->
-            <div class="flex-auto">
-                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
-                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                    <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" [autocomplete]="'off'" [placeholder]="'Buscar solicitud'">
+            <div class="flex-auto w-full sm:max-w-xs md:max-w-sm">
+                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-full" [subscriptSizing]="'dynamic'">
+                    <mat-icon class="icon-size-5 text-secondary" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" [autocomplete]="'off'" [placeholder]="'Buscar por folio, sucursal o área...'">
                 </mat-form-field>
             </div>
-            <!-- Add button -->
-            <button class="ml-4" mat-flat-button color="primary" [routerLink]="['./new']">
-                <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
-                <span class="button-text ml-2">Nueva Solicitud</span>
-            </button>
+
+            <!-- Spacer -->
+            <div class="hidden sm:block flex-auto"></div>
+
+            <!-- Filter and Add -->
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap hidden md:block">Sucursal:</span>
+                    <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-48 sm:w-56" [subscriptSizing]="'dynamic'">
+                        <mat-select [(ngModel)]="selectedSucursal" (selectionChange)="applyFilter()">
+                            <mat-option *ngFor="let s of sucursales" [value]="s.nombre">{{ s.nombre }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <button mat-flat-button color="primary" [routerLink]="['./new']" class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center">
+                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:plus"></mat-icon>
+                    <span class="ml-2 text-sm font-bold uppercase tracking-wider">Nueva</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -31,7 +46,7 @@
     <div class="flex flex-col flex-auto overflow-hidden p-3 sm:p-5">
         <div class="flex flex-col flex-auto mat-elevation-z8 bg-card rounded-2xl overflow-hidden border min-h-0">
             <div class="flex-auto overflow-y-auto overflow-x-auto">
-            <table mat-table [dataSource]="solicitudes$ | async" matSort class="w-full">
+            <table mat-table [dataSource]="filteredSolicitudes$ | async" matSort class="w-full">
                 <!-- Folio -->
                 <ng-container matColumnDef="folio">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
