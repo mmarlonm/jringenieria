@@ -243,7 +243,7 @@
                                         class="fuse-mat-no-subscript fuse-mat-rounded w-full">
                                         <mat-label>Responsable de la Revisión</mat-label>
                                         <mat-select formControlName="idAprobador">
-                                            <mat-option *ngFor="let user of aprobadores" [value]="user.usuarioId">
+                                            <mat-option *ngFor="let user of aprobadores" [value]="user.usuarioId || user.id">
                                                 <div class="flex items-center gap-2 py-1">
                                                     <div
                                                         class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
@@ -471,6 +471,12 @@
                                     <span class="text-xs text-gray-500">Archivo guardado</span>
                                 </div>
                                 <div class="flex gap-1">
+                                    <button *ngIf="file.nombreArchivo.toLowerCase().endsWith('.pdf')"
+                                        mat-icon-button color="accent"
+                                        (click)="descargarArchivo(file.nombreArchivo, true)" matTooltip="Visualizar">
+                                        <mat-icon class="icon-size-5"
+                                            [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                    </button>
                                     <button mat-icon-button color="primary"
                                         (click)="descargarArchivo(file.nombreArchivo)" matTooltip="Descargar">
                                         <mat-icon class="icon-size-5"

@@ -25,6 +25,7 @@ import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, 
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
 import * as pdfjsLib from 'pdfjs-dist';
+import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 
 @Component({
     selector: 'solicitud-compra-form',
@@ -48,7 +49,8 @@ import * as pdfjsLib from 'pdfjs-dist';
         MatAutocompleteModule,
         MatDialogModule,
         MatSlideToggleModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        ImagePreviewDialogComponent
     ]
 })
 export class SolicitudCompraFormComponent implements OnInit {
@@ -158,10 +160,12 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadUsers(): void {
         this._usersService.getUsers().subscribe(users => {
             this.usuarios = users || [];
-            const allowedApproverIds = [14, 13, 16, 6, 12, 43, 18, 9];
-            this.aprobadores = this.usuarios.filter(user => 
-                allowedApproverIds.includes(user.usuarioId || user.id)
-            );
+            const allowedApproverIds = [14, 13, 16, 6, 12, 20, 18, 9];
+            
+            this.aprobadores = this.usuarios.filter(user => {
+                const id = user.usuarioId || user.id;
+                return allowedApproverIds.includes(Number(id));
+            });
         });
     }
 
@@ -647,14 +651,48 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
-    descargarArchivo(nombreArchivo: string): void {
-        this._solicitudCompraService.descargarArchivo(this.solicitudId, nombreArchivo).subscribe((response: Blob) => {
-            const a = document.createElement('a');
-            const objectUrl = URL.createObjectURL(response);
-            a.href = objectUrl;
-            a.download = nombreArchivo;
-            a.click();
-            URL.revokeObjectURL(objectUrl);
+    descargarArchivo(nombreArchivo: string, preview: boolean = false): void {
+        this._solicitudCompraService.descargarArchivo(this.solicitudId, nombreArchivo).subscribe(async (response: Blob) => {
+            const extension = nombreArchivo.split('.').pop()?.toLowerCase() || '';
+            const isPdf = extension === 'pdf';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+
+            if (preview && (isPdf || isImage)) {
+                let fileData: any;
+                if (isPdf) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    fileData = new Uint8Array(arrayBuffer);
+                    this._openPreviewDialog(fileData, nombreArchivo, true);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        fileData = e.target.result;
+                        this._openPreviewDialog(fileData, nombreArchivo, false);
+                    };
+                    reader.readAsDataURL(response);
+                }
+            } else {
+                const objectUrl = URL.createObjectURL(response);
+                const a = document.createElement('a');
+                a.href = objectUrl;
+                a.download = nombreArchivo;
+                a.click();
+                URL.revokeObjectURL(objectUrl);
+            }
+        });
+    }
+
+    private _openPreviewDialog(url: any, name: string, isPdf: boolean): void {
+        this._dialog.open(ImagePreviewDialogComponent, {
+            data: {
+                url: url,
+                name: name,
+                isPdf: isPdf
+            },
+            panelClass: 'bg-transparent',
+            maxWidth: isPdf ? '95vw' : '90vw',
+            width: isPdf ? '1100px' : 'auto',
+            backdropClass: ['bg-black', 'bg-opacity-80']
         });
     }
 

@@ -244,7 +244,7 @@
                 <!-- Desktop Table View -->
                 <div class="hidden md:block">
                     <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
-                        <!-- [Columns remain same, I'm just wrapping them] -->
+                        <!-- Folio -->
                         <ng-container matColumnDef="folio" sticky>
                             <th mat-header-cell *matHeaderCellDef>
                                 <div class="flex items-center gap-2">
@@ -262,7 +262,16 @@
                                     </mat-menu>
                                 </div>
                             </th>
-                            <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
+                            <td mat-cell *matCellDef="let s">
+                                <div class="flex items-center gap-2">
+                                    <button mat-icon-button class="w-8 h-8 min-h-8 text-primary hover:bg-primary-50 transition-colors"
+                                            (click)="verDetalle(s.idSolicitud); $event.stopPropagation()"
+                                            matTooltip="Ver detalle">
+                                        <mat-icon class="icon-size-4.5" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                    </button>
+                                    <span class="font-bold text-primary">{{ s.idSolicitud }}</span>
+                                </div>
+                            </td>
                         </ng-container>
 
                         <ng-container matColumnDef="esAprobada">
@@ -838,14 +847,9 @@
                         </ng-container>
 
                         <ng-container matColumnDef="acciones">
-                            <th mat-header-cell *matHeaderCellDef class="text-center w-28">Acciones</th>
+                            <th mat-header-cell *matHeaderCellDef class="text-center w-16">Acciones</th>
                             <td mat-cell *matCellDef="let s" class="text-center">
                                 <div class="flex items-center justify-center gap-1">
-                                    <button mat-icon-button (click)="verDetalle(s.idSolicitud); $event.stopPropagation()"
-                                        matTooltip="Ver detalle">
-                                        <mat-icon class="icon-size-5 text-primary"
-                                            [svgIcon]="'heroicons_solid:eye'"></mat-icon>
-                                    </button>
                                     <button mat-icon-button [matMenuTriggerFor]="actionsMenu" matTooltip="Más acciones">
                                         <mat-icon class="icon-size-5 text-secondary"
                                             [svgIcon]="'heroicons_solid:ellipsis-vertical'"></mat-icon>

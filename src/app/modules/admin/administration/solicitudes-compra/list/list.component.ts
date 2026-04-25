@@ -17,6 +17,8 @@ import { BehaviorSubject, combineLatest, map, Observable, take } from 'rxjs';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatSelectModule } from '@angular/material/select';
 import Swal from 'sweetalert2';
+import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
     selector: 'solicitud-compra-list',
@@ -24,12 +26,12 @@ import Swal from 'sweetalert2';
     styleUrls: ['./list.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatTableModule, MatInputModule, MatTooltipModule, MatSortModule, FormsModule, MatMenuModule, MatPaginatorModule, MatSelectModule]
+    imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatTableModule, MatInputModule, MatTooltipModule, MatSortModule, FormsModule, MatMenuModule, MatPaginatorModule, MatSelectModule, MatDialogModule, ImagePreviewDialogComponent]
 })
 export class SolicitudCompraListComponent implements OnInit {
     solicitudes$: Observable<SolicitudCompra[]>;
     filteredSolicitudes$: Observable<SolicitudCompra[]>;
-    displayedColumns: string[] = ['folio', 'esAprobada', 'fecha', 'sucursal', 'area', 'prioridad', 'cuadranteId', 'estatus', 'acciones'];
+    displayedColumns: string[] = ['folio', 'esAprobada', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'acciones'];
     filterValue: string = '';
     selectedSucursal: string = 'Todas';
     sucursales: any[] = [];
@@ -38,7 +40,8 @@ export class SolicitudCompraListComponent implements OnInit {
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
         private _projectService: ProjectService,
-        private _chatNotificationService: ChatNotificationService
+        private _chatNotificationService: ChatNotificationService,
+        private _dialog: MatDialog
     ) { }
 
     ngOnInit(): void {
@@ -161,5 +164,96 @@ export class SolicitudCompraListComponent implements OnInit {
             case 4: return '#38bdf8'; // sky-400
             default: return '#9ca3af'; // gray-400
         }
+    }
+
+    verArchivos(solicitud: SolicitudCompra): void {
+        this._solicitudCompraService.getArchivos(solicitud.idSolicitud).subscribe(response => {
+            if (response && response.success && response.archivos && response.archivos.length > 0) {
+                const archivos = response.archivos;
+                
+                if (archivos.length === 1) {
+                    this._descargarArchivo(solicitud.idSolicitud, archivos[0]);
+                } else {
+                    const inputOptions = {};
+                    archivos.forEach(a => {
+                        inputOptions[a] = a;
+                    });
+
+                    Swal.fire({
+                        title: 'Cotizaciones Adjuntas',
+                        text: 'Selecciona el archivo que deseas visualizar',
+                        input: 'select',
+                        inputOptions: inputOptions,
+                        showCancelButton: true,
+                        confirmButtonText: 'Ver Archivo',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#4F46E5',
+                        customClass: {
+                            confirmButton: 'rounded-xl',
+                            cancelButton: 'rounded-xl'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            this._descargarArchivo(solicitud.idSolicitud, result.value);
+                        }
+                    });
+                }
+            } else {
+                this._chatNotificationService.showWarning('Sin adjuntos', 'Esta solicitud no tiene archivos o cotizaciones adjuntas.');
+            }
+        });
+    }
+
+    private _descargarArchivo(id: number, nombre: string): void {
+        this._solicitudCompraService.descargarArchivo(id, nombre).subscribe(async (blob: Blob) => {
+            const extension = nombre.split('.').pop()?.toLowerCase() || '';
+            const isPdf = extension === 'pdf';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+
+            if (isPdf || isImage) {
+                let fileData: any;
+                if (isPdf) {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    fileData = new Uint8Array(arrayBuffer);
+                    this._openPreviewDialog(fileData, nombre, true);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        fileData = e.target.result;
+                        this._openPreviewDialog(fileData, nombre, false);
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = nombre;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }
+        });
+    }
+
+    private _openPreviewDialog(url: any, name: string, isPdf: boolean): void {
+        this._dialog.open(ImagePreviewDialogComponent, {
+            data: {
+                url: url,
+                name: name,
+                isPdf: isPdf
+            },
+            panelClass: 'bg-transparent',
+            maxWidth: isPdf ? '95vw' : '90vw',
+            width: isPdf ? '1100px' : 'auto',
+            backdropClass: ['bg-black', 'bg-opacity-80']
+        });
+    }
+
+    getSelectedProvider(solicitud: SolicitudCompra): string {
+        if (!solicitud.proveedores || solicitud.proveedores.length === 0) {
+            return 'Sin asignar';
+        }
+        const seleccionado = solicitud.proveedores.find(p => p.esSeleccionado);
+        return seleccionado ? seleccionado.razonSocial : 'Sin asignar';
     }
 }
