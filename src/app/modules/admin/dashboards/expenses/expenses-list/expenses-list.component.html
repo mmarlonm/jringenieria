@@ -1,10 +1,29 @@
-        <div class="flex flex-col flex-auto md:overflow-hidden overflow-y-auto min-h-0 bg-white">
+<div class="flex flex-col w-full h-full overflow-hidden min-h-0 bg-slate-50">
             <!-- Header for Mobile / Filter Toggle -->
             <div class="flex-none p-4 flex items-center justify-between bg-white border-b sticky top-0 z-50 md:hidden">
                 <span class="text-lg font-bold text-slate-800">Gastos</span>
-                <button mat-icon-button (click)="toggleFilters()">
-                    <mat-icon [svgIcon]="showFilters ? 'heroicons_outline:chevron-up' : 'heroicons_outline:funnel'"></mat-icon>
-                </button>
+                <div class="flex items-center space-x-1">
+                    <button mat-icon-button (click)="addNew()" class="text-primary-600">
+                        <mat-icon [svgIcon]="'heroicons_solid:plus-circle'"></mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="toggleFilters()">
+                        <mat-icon [svgIcon]="showFilters ? 'heroicons_outline:chevron-up' : 'heroicons_outline:funnel'"></mat-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop Header -->
+            <div class="flex-none p-6 flex items-center justify-between bg-white border-b shadow-sm md:flex hidden z-10">
+                <div class="flex flex-col">
+                    <h2 class="text-3xl font-black text-slate-800 tracking-tight">Gastos</h2>
+                    <span class="text-secondary font-medium">Gestión y control de egresos e ingresos</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button mat-flat-button [color]="'primary'" class="rounded-xl px-6 h-11" (click)="addNew()">
+                        <mat-icon [svgIcon]="'heroicons_solid:plus'" class="mr-2 icon-size-5"></mat-icon>
+                        <span class="font-bold">Nuevo Gasto</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Mobile Filter Input -->
@@ -16,7 +35,7 @@
                 </mat-form-field>
             </div>
 
-            <div class="md:max-h-[calc(100vh-110px)] md:overflow-auto overflow-visible custom-scrollbar">
+            <div class="flex-auto overflow-auto custom-scrollbar min-h-0 m-4 sm:m-6 rounded-2xl shadow-sm border bg-card max-h-[calc(100vh-280px)]">
 
                 <!-- Desktop Table View -->
                 <div class="hidden md:block">
@@ -751,4 +770,5 @@
                     <div class="text-secondary text-sm font-medium mt-1">No hay datos que coincidan con los filtros aplicados</div>
                 </div>
             </div>
+
         </div>

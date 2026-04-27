@@ -21,6 +21,7 @@ import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types
 import Swal from 'sweetalert2';
 import moment from 'moment';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { ExpenseDetailsComponent } from '../expense-details/expense-details.component';
 
 @Component({
     selector: 'expenses-list',
@@ -123,7 +124,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         private _changeDetectorRef: ChangeDetectorRef,
         private _expensesService: ExpensesService,
         private _fb: FormBuilder,
-        private _chatNotificationService: ChatNotificationService
+        private _chatNotificationService: ChatNotificationService,
+        private _matDialog: MatDialog
     ) { }
 
     ngOnInit(): void {
@@ -664,9 +666,12 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     }
 
     viewExpense(expense: Expense): void {
-        this.selectedExpense = expense;
-        this.matDrawer.open();
-        this._changeDetectorRef.markForCheck();
+        this._matDialog.open(ExpenseDetailsComponent, {
+            data: { expense },
+            width: '600px',
+            maxWidth: '100vw',
+            panelClass: 'expense-details-dialog'
+        });
     }
 
     deleteExpense(id: number): void {
