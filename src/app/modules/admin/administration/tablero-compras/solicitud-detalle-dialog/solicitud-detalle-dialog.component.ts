@@ -179,6 +179,33 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                     </div>
                 </div>
 
+                <!-- Selected Provider Bank Info -->
+                <div class="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20" 
+                     *ngIf="solicitud.banco || solicitud.cuenta || solicitud.clabe || solicitud.datosBancariosProveedor">
+                    <div class="flex items-center mb-4 text-blue-700 dark:text-blue-400">
+                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:building-library'"></mat-icon>
+                        <span class="text-base font-bold uppercase tracking-tight">Información Bancaria del Proveedor Seleccionado</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex flex-col" *ngIf="solicitud.banco">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Banco</span>
+                            <span class="text-sm font-bold text-gray-700">{{ solicitud.banco }}</span>
+                        </div>
+                        <div class="flex flex-col" *ngIf="solicitud.cuenta">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Cuenta</span>
+                            <span class="text-sm font-bold text-gray-700">{{ solicitud.cuenta }}</span>
+                        </div>
+                        <div class="flex flex-col" *ngIf="solicitud.clabe">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">CLABE</span>
+                            <span class="text-sm font-bold text-gray-700">{{ solicitud.clabe }}</span>
+                        </div>
+                        <div class="flex flex-col col-span-full" *ngIf="solicitud.datosBancariosProveedor">
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Otros Datos Bancarios</span>
+                            <span class="text-sm font-medium text-gray-600 italic">{{ solicitud.datosBancariosProveedor }}</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Observations & Files -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Observations -->
@@ -291,8 +318,12 @@ export class SolicitudDetalleDialogComponent implements OnInit {
             consolidado: this._service.getDetalleConsolidado(this.data.idSolicitud).pipe(catchError(() => of(null))),
             users: this._usersService.getUsers()
         }).subscribe(res => {
+            const selectedProv = res.solicitud.proveedores?.find(p => p.esSeleccionado);
             this.solicitud = {
                 ...res.solicitud,
+                banco: res.solicitud.banco || selectedProv?.banco || '',
+                cuenta: res.solicitud.cuenta || selectedProv?.cuenta || '',
+                clabe: res.solicitud.clabe || selectedProv?.clabe || '',
                 datosFiscales: res.consolidado?.datosFiscales || res.solicitud?.datosFacturaContpaqi
             } as any;
             this.usuarios = res.users || [];

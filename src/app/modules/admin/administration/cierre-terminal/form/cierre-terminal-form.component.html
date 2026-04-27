@@ -20,7 +20,7 @@
             <mat-form-field class="w-full fuse-mat-dense">
                 <mat-label class="font-bold italic">Sucursal</mat-label>
                 <mat-select formControlName="unidadDeNegocioId">
-                    <mat-option *ngFor="let u of unidadesNegocio" [value]="u.unidadId">{{u.nombre}}</mat-option>
+                    <mat-option *ngFor="let u of unidadesNegocio" [value]="u.unidadId || u.UnidadId">{{u.nombre || u.Nombre}}</mat-option>
                 </mat-select>
                 <mat-icon matPrefix class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
             </mat-form-field>
@@ -76,10 +76,40 @@
                 <mat-icon matPrefix class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:chat-bubble-left-right'"></mat-icon>
             </mat-form-field>
 
-            <!-- Evidencias (Solo Agregar) -->
-            <div class="sm:col-span-2 mt-4" *ngIf="!isEdit">
+            <!-- Evidencias -->
+            <div class="sm:col-span-2 mt-4">
                 <mat-divider class="mb-6"></mat-divider>
-                <h3 class="text-sm font-black uppercase tracking-widest text-secondary mb-4 italic">Evidencias</h3>
+                
+                <!-- Archivos Existentes (Solo en Edición) -->
+                <ng-container *ngIf="isEdit && existingFiles.length > 0">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-secondary mb-3 italic">Evidencias Actuales</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                        <div *ngFor="let nombreArchivo of existingFiles" 
+                             class="flex items-center justify-between p-3 bg-amber-50 rounded-2xl border border-amber-100 hover:bg-white hover:shadow-md transition-all group">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="min-w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                    <mat-icon class="icon-size-4" [svgIcon]="nombreArchivo.toLowerCase().endsWith('.pdf') ? 'heroicons_outline:document-text' : 'heroicons_outline:photo'"></mat-icon>
+                                </div>
+                                <div class="flex flex-col overflow-hidden">
+                                    <span class="text-[11px] font-black text-gray-700 truncate italic" [matTooltip]="nombreArchivo">{{nombreArchivo}}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button mat-icon-button (click)="verEvidencia(nombreArchivo)" color="accent" matTooltip="Visualizar" class="w-8 h-8 min-h-8"
+                                        *ngIf="['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(nombreArchivo.toLowerCase().split('.').pop())">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                </button>
+                                <button mat-icon-button (click)="descargar(nombreArchivo)" color="primary" matTooltip="Descargar" class="w-8 h-8 min-h-8">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <h3 class="text-sm font-black uppercase tracking-widest text-secondary mb-4 italic">
+                    {{ isEdit ? 'Agregar Nuevas Evidencias' : 'Evidencias' }}
+                </h3>
                 
                 <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                      (click)="fileInput.click()"
@@ -93,13 +123,14 @@
                     <span class="text-xs text-secondary italic">(JPG, PNG o PDF)</span>
                 </div>
 
-                <!-- Lista de archivos seleccionados -->
+                <!-- Lista de archivos seleccionados (Nuevos) -->
                 <div class="mt-4 flex flex-wrap gap-2" *ngIf="selectedFiles.length > 0">
                     <div *ngFor="let file of selectedFiles; let i = index" 
-                         class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 rounded-xl text-xs font-bold text-gray-700 shadow-sm animate-in fade-in zoom-in duration-300">
-                        <mat-icon class="icon-size-4 text-secondary" [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
+                         class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-xl text-xs font-bold text-primary shadow-sm animate-in fade-in zoom-in duration-300 border border-primary/20">
+                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:document-plus'"></mat-icon>
                         <span class="max-w-40 truncate">{{ file.name }}</span>
-                        <button type="button" class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-300" (click)="removeFile(i)">
+                        <span class="px-1.5 py-0.5 bg-primary text-white text-[8px] rounded uppercase font-black">Nuevo</span>
+                        <button type="button" class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-primary/20" (click)="removeFile(i)">
                             <mat-icon class="icon-size-3.5 text-red-500" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
                         </button>
                     </div>

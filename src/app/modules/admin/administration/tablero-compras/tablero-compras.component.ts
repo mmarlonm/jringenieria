@@ -185,12 +185,24 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         this._solicitudCompraService.solicitudes$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((solicitudes) => {
-                this.dataSource.data = solicitudes;
+                // Flatten provider bank info for display
+                const mapped = (solicitudes || []).map(s => {
+                    const selectedProv = s.proveedores?.find(p => p.esSeleccionado);
+                    return {
+                        ...s,
+                        banco: s.banco || selectedProv?.banco || '',
+                        cuenta: s.cuenta || selectedProv?.cuenta || '',
+                        clabe: s.clabe || selectedProv?.clabe || '',
+                        proveedorSugerido: s.proveedorSugerido || selectedProv?.razonSocial || ''
+                    };
+                });
+
+                this.dataSource.data = mapped;
                 this.dataSource.sort = this.sort;
                 this._setupFilterPredicate();
-                this._updateFilter(); // Initialize current filter state
+                this._updateFilter();
                 this._calculateKPIs();
-                this._extractUniqueValues(solicitudes);
+                this._extractUniqueValues(mapped);
             });
 
         // Get users
