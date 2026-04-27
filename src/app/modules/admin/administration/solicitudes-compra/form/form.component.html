@@ -1,15 +1,15 @@
-<div class="absolute inset-0 flex flex-col overflow-hidden p-6 bg-card">
-    <h1 class="text-2xl font-bold mb-4">
+<div class="absolute inset-0 flex flex-col overflow-hidden p-0 md:p-6 bg-card">
+    <h1 class="text-xl sm:text-2xl font-bold mb-2 sm:mb-4 px-4 sm:px-0 pt-4 sm:pt-0">
         {{ isEdit ? "Editar Solicitud de Compra" : "Nueva Solicitud de Compra" }}
     </h1>
 
     <mat-tab-group class="h-full flex-1 overflow-hidden">
         <!-- TAB 1: Información General -->
         <mat-tab label="Información General">
-            <div class="p-4">
+            <div class="p-0 sm:p-4">
 
                 <div
-                    class="flex items-center gap-4 p-4 mt-2 mb-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+                    class="flex items-center gap-4 p-3 sm:p-4 mx-2 sm:mx-0 mt-4 sm:mt-2 mb-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
                     <div
                         class="flex items-center justify-center min-w-[3rem] h-12 rounded-xl bg-indigo-500 shadow-inner">
                         <mat-icon class="icon-size-6 text-white" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
@@ -38,7 +38,7 @@
 
                         <!-- Panel 1: Datos Internos -->
                         <div
-                            class="flex flex-col p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
+                            class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
                             <h3
                                 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <mat-icon class="icon-size-5"
@@ -87,7 +87,7 @@
 
                         <!-- Panel 2: Detalles del Requerimiento -->
                         <div
-                            class="flex flex-col p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
+                            class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
                             <h3
                                 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:shopping-cart'"></mat-icon>
@@ -164,7 +164,7 @@
 
                         <!-- Panel 3: Finanzas y Logística -->
                         <div
-                            class="flex flex-col p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
+                            class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2">
                             <h3
                                 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <mat-icon class="icon-size-5"
@@ -207,7 +207,7 @@
 
                         <!-- Panel 4: Validación y Control de Aprobación -->
                         <div
-                            class="relative overflow-hidden p-6 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 group transition-all duration-500 hover:shadow-2xl lg:col-span-1">
+                            class="relative overflow-hidden p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 group transition-all duration-500 hover:shadow-2xl lg:col-span-1">
                             <!-- Decorative background glow -->
                             <div
                                 class="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500">
@@ -317,7 +317,7 @@
                         </div>
 
                         <!-- Panel 5: Terna de Proveedores -->
-                        <div class="flex flex-col p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 gap-4 lg:col-span-2 xl:col-span-3">
+                        <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-slate-50 dark:bg-slate-800/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 gap-4 lg:col-span-2 xl:col-span-3">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-4">
                                 <h3 class="text-sm font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
                                     <mat-icon class="icon-size-5 text-slate-500" [svgIcon]="'heroicons_outline:users'"></mat-icon>
@@ -331,7 +331,7 @@
 
                             <div formArrayName="proveedores" class="flex flex-col gap-6">
                                 <div *ngFor="let p of proveedoresRows.controls; let i = index" [formGroupName]="i" 
-                                     class="p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 relative group animate-in fade-in slide-in-from-top-2">
+                                     class="p-3 sm:p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 relative group animate-in fade-in slide-in-from-top-2">
                                     
                                     <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-50 dark:border-gray-800">
                                         <div class="flex items-center gap-4">
@@ -427,7 +427,7 @@
                     </div>
 
                     <!-- Nota / Archivo Adjunto -->
-                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <div class="mt-6 p-4 mx-2 sm:mx-0 bg-gray-50 rounded-xl border border-gray-200">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold flex items-center gap-2">
                                 <mat-icon class="text-primary" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
@@ -503,7 +503,7 @@
 
         <!-- TAB 2: Detalle de materiales -->
         <mat-tab label="Detalle de materiales">
-            <div class="flex flex-col flex-auto p-4 overflow-y-auto h-full" [formGroup]="solicitudForm">
+            <div class="flex flex-col flex-auto p-0 sm:p-4 overflow-y-auto h-full" [formGroup]="solicitudForm">
                 <div class="flex flex-col sm:flex-row items-center justify-between mb-2 mt-0 gap-2">
                     <h3 class="text-sm font-extrabold text-secondary uppercase tracking-wider">PRODUCTOS SOLICITADOS</h3>
                             <div class="flex flex-wrap items-center gap-3">
@@ -755,7 +755,7 @@
     </mat-tab-group>
 
     <!-- Botones Flotantes (btn-float) -->
-    <div class="flex justify-end gap-2 mb-4 btn-float z-99">
+    <div class="flex justify-end gap-2 mb-4 px-4 sm:px-0 btn-float z-99">
         <button mat-raised-button color="warn" type="button" (click)="cancelar()">
             Cancelar
         </button>
