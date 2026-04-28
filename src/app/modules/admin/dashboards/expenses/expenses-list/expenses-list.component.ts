@@ -293,13 +293,13 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             fecha: [moment(), Validators.required],
             nombreGasto: ['', Validators.required],
             unidadId: [null, Validators.required], // 👈 AÑADIDO
-            tipoId: [{ value: null, disabled: false }, Validators.required],
-            conceptoId: [{ value: null, disabled: true }, Validators.required],
-            subtipoId: [{ value: null, disabled: true }, Validators.required],
-            areaId: [{ value: null, disabled: true }, Validators.required],
-            proveedor: [{ value: null, disabled: true }, Validators.required],
-            formaPagoId: [{ value: null, disabled: true }, Validators.required],
-            cuentaId: [{ value: null, disabled: true }, Validators.required],
+            tipoId: [null, Validators.required],
+            conceptoId: [null, Validators.required],
+            subtipoId: [null, Validators.required],
+            areaId: [null, Validators.required],
+            proveedor: [null, Validators.required],
+            formaPagoId: [null, Validators.required],
+            cuentaId: [null, Validators.required],
             cantidad: [0, [Validators.required, Validators.min(0.01)]],
             factura: ['', Validators.required],
             tipoMovimiento: [null],
@@ -314,57 +314,16 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             razonSocial: ['']
         });
 
-        // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects)
+        // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects) - ELIMINADA
+        // Todos los campos permanecen habilitados por defecto
 
-        // Tipo -> Concepto
-        this.rowForm.get('tipoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('conceptoId');
-            if (val != null) {
-                nextCtrl.enable();
-            } else {
-                this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
-            }
-            this._changeDetectorRef.detectChanges();
-        });
-
-        // Concepto -> Subtipo
+        // Solo mantenemos la lógica de filtrado de subtipos por concepto para que el select sea útil
         this.rowForm.get('conceptoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('subtipoId');
             if (val != null) {
                 this.subtiposFiltrados = this.catalogs?.subtipos?.filter(s => s.conceptoId == val) || [];
-                nextCtrl.enable();
             } else {
                 this.subtiposFiltrados = this.catalogs?.subtipos || [];
-                this._disableChain(['subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
             }
-            this._changeDetectorRef.detectChanges();
-        });
-
-        // Subtipo -> Area
-        this.rowForm.get('subtipoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('areaId');
-            val != null ? nextCtrl.enable() : this._disableChain(['areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
-            this._changeDetectorRef.detectChanges();
-        });
-
-        // Area -> Proveedor
-        this.rowForm.get('areaId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('proveedor');
-            val != null ? nextCtrl.enable() : this._disableChain(['proveedor', 'formaPagoId', 'cuentaId']);
-            this._changeDetectorRef.detectChanges();
-        });
-
-        // Proveedor -> Forma Pago
-        this.rowForm.get('proveedor').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('formaPagoId');
-            val != null ? nextCtrl.enable() : this._disableChain(['formaPagoId', 'cuentaId']);
-            this._changeDetectorRef.detectChanges();
-        });
-
-        // Forma Pago -> Cuenta
-        this.rowForm.get('formaPagoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            const nextCtrl = this.rowForm.get('cuentaId');
-            val != null ? nextCtrl.enable() : this._disableChain(['cuentaId']);
             this._changeDetectorRef.detectChanges();
         });
 
@@ -477,13 +436,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         return this.catalogs.proveedores.find(p => p.proveedorId === id)?.nombre || '';
     }
 
-    private _disableChain(controls: string[]): void {
-        controls.forEach(name => {
-            const ctrl = this.rowForm.get(name);
-            ctrl.disable();
-            ctrl.setValue(null);
-        });
-    }
+
 
     private _onCuentaChange(cuentaId: number): void {
         const ctrl = this.rowForm.get('numeroCuenta');
@@ -547,7 +500,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             unidadId: this.currentUserUnidadId
         });
 
-        this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
+
 
         const newData = [{ gastoId: 0, unidadId: this.currentUserUnidadId } as Expense, ...this.dataSource.data];
         this.dataSource.data = newData;
@@ -558,26 +511,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.editingId = expense.gastoId;
         this.isAdding = false;
 
-        this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
 
-        if (expense.tipoId != null) {
-            this.rowForm.get('conceptoId').enable();
-            if (expense.conceptoId != null) {
-                this.rowForm.get('subtipoId').enable();
-                if (expense.subtipoId != null) {
-                    this.rowForm.get('areaId').enable();
-                    if (expense.areaId != null) {
-                        this.rowForm.get('proveedor').enable();
-                        if (expense.proveedor != null) {
-                            this.rowForm.get('formaPagoId').enable();
-                            if (expense.formaPagoId != null) {
-                                this.rowForm.get('cuentaId').enable();
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         this.rowForm.patchValue(expense);
         if (expense.conceptoId != null) {

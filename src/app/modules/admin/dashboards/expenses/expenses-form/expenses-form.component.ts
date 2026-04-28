@@ -139,23 +139,15 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         this.expenseForm.get('cantidad').valueChanges.subscribe(() => this._calculateTax());
         this.expenseForm.get('tasaId').valueChanges.subscribe(() => this._calculateTax());
 
-        // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects) - Igual que en la lista para consistencia
+        // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects) - ELIMINADA
+        // Todos los campos permanecen habilitados por defecto
 
-        // Tipo -> Concepto
-        this.expenseForm.get('tipoId').valueChanges.subscribe(val => {
-            const ctrl = this.expenseForm.get('conceptoId');
-            val != null ? ctrl.enable() : this._disableChain(['conceptoId', 'subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
-        });
-
-        // Concepto -> Subtipo (Este ya tiene onConceptoChange en el HTML, pero aseguramos estado aquí)
+        // Solo mantenemos la lógica de filtrado de subtipos por concepto para que el select sea útil
         this.expenseForm.get('conceptoId').valueChanges.subscribe(val => {
-            const ctrl = this.expenseForm.get('subtipoId');
             if (val != null) {
                 this.subtiposFiltrados = this.todosLosSubtipos.filter(s => s.conceptoId == val);
-                ctrl.enable();
             } else {
                 this.subtiposFiltrados = this.todosLosSubtipos;
-                this._disableChain(['subtipoId', 'areaId', 'proveedor', 'formaPagoId', 'cuentaId']);
             }
             this._changeDetectorRef.markForCheck();
         });
@@ -251,15 +243,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         return item.folio || '';
     }
 
-    private _disableChain(controls: string[]): void {
-        controls.forEach(name => {
-            const ctrl = this.expenseForm.get(name);
-            if (ctrl) {
-                ctrl.disable();
-                ctrl.setValue(null);
-            }
-        });
-    }
+
 
     private _calculateTax(): void {
         const cantidad = this.expenseForm.get('cantidad').value || 0;
