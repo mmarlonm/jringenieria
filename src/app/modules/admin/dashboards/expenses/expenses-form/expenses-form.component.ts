@@ -92,6 +92,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
             tipoComprobante: ['I'], // I, E, P
             moneda: ['MXN'], // Por defecto MXN
             numeroCuenta: [''],
+            razonSocial: [''],
             descripcion: [''],
             tipoMovimiento: [2] // Default Egreso (Numeric)
         });
@@ -322,7 +323,8 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
             TipoMovimiento: expenseData.tipoMovimiento,
             FolioFiscal: expenseData.folioFiscal,
             TipoComprobante: expenseData.tipoComprobante,
-            Moneda: expenseData.moneda
+            Moneda: expenseData.moneda,
+            RazonSocial: expenseData.razonSocial
         };
 
         const request = this.isEdit

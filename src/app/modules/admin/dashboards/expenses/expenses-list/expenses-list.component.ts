@@ -57,7 +57,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     dataSource: MatTableDataSource<Expense> = new MatTableDataSource();
     displayedColumns: string[] = [
-        'unidad', 'tipoMovimiento', 'fecha', 'gasto', 'concepto', 'subtipo', 'tipo', 'area', 'cuenta', 'numeroCuenta', 'formaPago',
+        'unidad', 'razonSocial', 'tipoMovimiento', 'fecha', 'gasto', 'concepto', 'subtipo', 'tipo', 'area', 'cuenta', 'numeroCuenta', 'formaPago',
         'proveedor', 'factura', 'folioFiscal', 'tipoComprobante', 'moneda', 'estatusPago', 'descripcion',
         'impuestos', 'tasa', 'mes', 'año', 'registro', 'acciones'
     ];
@@ -104,6 +104,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         concepto: '',
         subtipo: '',
         unidad: '',
+        razonSocial: '',
         area: '',
         proveedor: '',
         factura: '',
@@ -189,7 +190,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     // Función auxiliar para comparar filtros vacíos
     private _emptyFilter() {
-        return { fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '', unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '' };
+        return { fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '', unidad: '', razonSocial: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '' };
     }
 
     // 🔹 NUEVO: Función para aplicar filtro desde el encabezado
@@ -259,6 +260,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             const matchFP = !searchTerms.formaPago || (data.gastoFormaPago?.nombre || '').toLowerCase().includes(searchTerms.formaPago);
             const matchCuenta = !searchTerms.cuenta || (data.gastoCuenta?.nombre || '').toLowerCase().includes(searchTerms.cuenta);
             const matchUnidad = !searchTerms.unidad || this.getUnidadNombre(data.unidadId).toLowerCase().includes(searchTerms.unidad);
+            const matchRazonSocial = !searchTerms.razonSocial || (data.razonSocial || '').toLowerCase().includes(searchTerms.razonSocial);
             const matchTM = !searchTerms.tipoMovimiento || data.tipoMovimiento?.toString() === searchTerms.tipoMovimiento;
 
             const matchFolio = !searchTerms.folioFiscal || (data.folioFiscal || '').toLowerCase().includes(searchTerms.folioFiscal);
@@ -270,7 +272,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
             return matchFecha && matchGasto && matchTipo && matchConcepto &&
                 matchSubtipo && matchArea && matchProveedor && matchFactura &&
-                matchFP && matchCuenta && matchUnidad && matchTM &&
+                matchFP && matchCuenta && matchUnidad && matchRazonSocial && matchTM &&
                 matchFolio && matchComprobante && matchMoneda && matchNumCuenta && matchDesc && matchEstatusPago;
         };
     }
@@ -278,7 +280,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     public _resetColumnFilters(): void {
         this.filterValues = {
             fecha: '', gasto: '', tipo: '', concepto: '', subtipo: '',
-            unidad: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '',
+            unidad: '', razonSocial: '', area: '', proveedor: '', factura: '', formaPago: '', cuenta: '', tipoMovimiento: '',
             folioFiscal: '', tipoComprobante: '', moneda: '', numeroCuenta: '', descripcion: '', estatusPago: '',
             mes: '', anio: ''
         };
@@ -308,7 +310,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             folioFiscal: [''],
             tipoComprobante: [''],
             moneda: ['MXN', Validators.required],
-            numeroCuenta: ['']
+            numeroCuenta: [''],
+            razonSocial: ['']
         });
 
         // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects)
@@ -647,7 +650,8 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             TipoMovimiento: data.tipoMovimiento,
             FolioFiscal: data.folioFiscal,
             TipoComprobante: data.tipoComprobante,
-            Moneda: data.moneda
+            Moneda: data.moneda,
+            RazonSocial: data.razonSocial
         };
 
         const request = this.isAdding

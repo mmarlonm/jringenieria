@@ -33,6 +33,7 @@ export interface Expense {
     tipoComprobante?: string;   // I, E, P
     moneda: string;             // MXN, USD, EUR
     numeroCuenta?: string;      // Terminación de cuenta
+    razonSocial?: string;
 
     fechaRegistro?: string | Date;
 

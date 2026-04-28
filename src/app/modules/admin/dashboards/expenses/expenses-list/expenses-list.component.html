@@ -393,6 +393,30 @@
                                 </td>
                             </ng-container>
 
+                            <ng-container matColumnDef="razonSocial">
+                                <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
+                                    <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Razón Social</span>
+                                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                        <mat-select (selectionChange)="applyColumnFilter('razonSocial', $event.value)">
+                                            <mat-option value="">Todas</mat-option>
+                                            <mat-option value="JR Ingenieria Electrica">JR Ingenieria Electrica</mat-option>
+                                            <mat-option value="Jesus Ricado Mendez Arrillaga">Jesus Ricado Mendez Arrillaga</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </th>
+                                <td mat-cell *matCellDef="let row" class="p-2 bg-card border-b text-xs">
+                                    <ng-container *ngIf="editingId === row.gastoId; else viewRazonSocial">
+                                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                            <mat-select formControlName="razonSocial">
+                                                <mat-option value="JR Ingenieria Electrica">JR Ingenieria Electrica</mat-option>
+                                                <mat-option value="Jesus Ricado Mendez Arrillaga">Jesus Ricado Mendez Arrillaga</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </ng-container>
+                                    <ng-template #viewRazonSocial>{{row.razonSocial || 'N/A'}}</ng-template>
+                                </td>
+                            </ng-container>
+
                             <ng-container matColumnDef="area">
                                 <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-4 border-b w-60">
                                     <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Areas
@@ -682,7 +706,7 @@
                             <div class="flex items-start justify-between">
                                 <div class="flex flex-col min-w-0">
                                     <span class="text-[10px] font-bold text-secondary uppercase tracking-wider mb-0.5">
-                                        {{getUnidadNombre(row.unidadId)}}
+                                        {{getUnidadNombre(row.unidadId)}} <span *ngIf="row.razonSocial">| {{row.razonSocial}}</span>
                                     </span>
                                     <h3 class="font-extrabold text-slate-900 truncate pr-2">
                                         {{row.nombreGasto}}

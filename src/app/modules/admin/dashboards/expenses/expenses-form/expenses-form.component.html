@@ -85,6 +85,14 @@
                 </mat-select>
             </mat-form-field>
 
+            <mat-form-field class="fuse-mat-no-subscript" appearance="outline">
+                <mat-label>Razón Social</mat-label>
+                <mat-select formControlName="razonSocial">
+                    <mat-option value="JR Ingenieria Electrica">JR Ingenieria Electrica</mat-option>
+                    <mat-option value="Jesus Ricado Mendez Arrillaga">Jesus Ricado Mendez Arrillaga</mat-option>
+                </mat-select>
+            </mat-form-field>
+
             <mat-form-field class="fuse-mat-no-subscript" appearance="outline"
                 [ngClass]="{'bg-gray-100 opacity-60': expenseForm.get('conceptoId').disabled}">
                 <mat-label>Tus Conceptos</mat-label>
