@@ -668,8 +668,13 @@
                                         </ng-container>
                                         <ng-template #defaultActions>
                                             <button mat-icon-button class="text-slate-400 hover:text-blue-600"
-                                                (click)="viewExpense(row)"><mat-icon class="icon-size-5"
-                                                    [svgIcon]="'heroicons_outline:eye'"></mat-icon></button>
+                                                (click)="viewExpense(row)" matTooltip="Ver Detalles">
+                                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                            </button>
+                                            <button mat-icon-button class="text-slate-400 hover:text-indigo-600"
+                                                (click)="openArchivosModal(row)" matTooltip="Documentos/Facturas">
+                                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
+                                            </button>
                                             <button mat-icon-button class="text-slate-400 hover:text-amber-600"
                                                 (click)="editExpense(row)"><mat-icon class="icon-size-5"
                                                     [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon></button>
@@ -722,6 +727,10 @@
                                     <button mat-menu-item (click)="viewExpense(row)">
                                         <mat-icon [svgIcon]="'heroicons_outline:eye'"></mat-icon>
                                         <span>Detalles</span>
+                                    </button>
+                                    <button mat-menu-item (click)="openArchivosModal(row)">
+                                        <mat-icon [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
+                                        <span>Documentos/Facturas</span>
                                     </button>
                                     <button mat-menu-item (click)="editExpense(row)">
                                         <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>

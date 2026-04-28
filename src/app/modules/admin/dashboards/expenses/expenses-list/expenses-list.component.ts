@@ -21,6 +21,7 @@ import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types
 import Swal from 'sweetalert2';
 import moment from 'moment';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { GastoArchivosModalComponent } from '../gasto-archivos-modal/gasto-archivos-modal.component';
 import { ExpenseDetailsComponent } from '../expense-details/expense-details.component';
 
 @Component({
@@ -600,6 +601,15 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                 this._expensesService.getExpenses(fetchUnidadId).subscribe();
                 this._chatNotificationService.showSuccess('Éxito', 'Guardado', 3000);
             }
+        });
+    }
+
+    openArchivosModal(expense: Expense): void {
+        this._matDialog.open(GastoArchivosModalComponent, {
+            data: { gastoId: expense.gastoId },
+            width: '600px',
+            autoFocus: false,
+            panelClass: 'gasto-archivos-modal-panel'
         });
     }
 

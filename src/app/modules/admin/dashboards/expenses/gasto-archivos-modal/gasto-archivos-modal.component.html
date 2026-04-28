@@ -1,0 +1,76 @@
+<div class="flex flex-col max-h-screen overflow-hidden">
+    <div class="flex items-center justify-between p-4 sm:p-6 border-b bg-gray-50 dark:bg-transparent">
+        <div class="flex flex-col">
+            <span class="text-[10px] sm:text-xs font-semibold text-secondary uppercase tracking-wider">Gestión de Documentos</span>
+            <h2 class="text-lg sm:text-2xl font-extrabold leading-none">Archivos del Gasto #{{data.gastoId}}</h2>
+        </div>
+        <button mat-icon-button (click)="dialogRef.close()" [matTooltip]="'Cerrar'">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <mat-dialog-content class="p-4 sm:p-6">
+        <!-- Subida de archivos -->
+        <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-6 sm:mb-8 p-3 sm:p-4 bg-primary-50 rounded-2xl border border-primary-100">
+            <div class="flex-auto w-full">
+                <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)">
+                <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-dashed border-primary-300 cursor-pointer hover:bg-primary-100 transition-colors"
+                     (click)="fileInput.click()">
+                    <mat-icon class="text-primary icon-size-5 sm:icon-size-6" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                    <span class="text-xs sm:text-sm font-medium text-primary-700 truncate">
+                        {{ selectedFile ? selectedFile.name : 'Seleccionar factura...' }}
+                    </span>
+                </div>
+            </div>
+            <button mat-flat-button color="primary" class="w-full sm:w-auto h-10 sm:h-12 px-6 sm:px-8 rounded-xl" 
+                    [disabled]="!selectedFile || isUploading" (click)="subirArchivo()">
+                <mat-icon *ngIf="!isUploading" [svgIcon]="'heroicons_outline:arrow-up-tray'" class="mr-2"></mat-icon>
+                <span *ngIf="!isUploading">Subir</span>
+                <span *ngIf="isUploading" class="flex items-center">
+                    <mat-icon class="animate-spin mr-2" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                    Subiendo...
+                </span>
+            </button>
+        </div>
+
+        <mat-progress-bar *ngIf="isUploading" mode="indeterminate" class="mb-4"></mat-progress-bar>
+
+        <!-- Lista de archivos -->
+        <div class="flex flex-col">
+            <h3 class="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
+                <mat-icon class="mr-2 text-secondary icon-size-5 sm:icon-size-6" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
+                Archivos Adjuntos
+            </h3>
+
+            <div *ngIf="isLoading" class="flex items-center justify-center py-8 sm:py-12">
+                <mat-icon class="animate-spin text-primary icon-size-6 sm:icon-size-8" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+            </div>
+
+            <mat-list *ngIf="!isLoading && archivos.length > 0" class="p-0 space-y-1.5 sm:space-y-2">
+                <mat-list-item *ngFor="let archivo of archivos" 
+                               class="group bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all h-auto py-2 sm:py-3">
+                    <mat-icon matListItemIcon class="text-slate-400 icon-size-5 sm:icon-size-6" [svgIcon]="getFileIcon(archivo)"></mat-icon>
+                    <div matListItemTitle class="font-bold text-slate-700 truncate pr-2 sm:pr-4 text-xs sm:text-sm">{{archivo}}</div>
+                    
+                    <div matListItemMeta class="flex items-center space-x-0.5 sm:space-x-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button mat-icon-button class="text-blue-600 hover:bg-blue-50 w-8 h-8 sm:w-10 sm:h-10" (click)="descargarArchivo(archivo)" matTooltip="Ver / Descargar">
+                            <mat-icon class="icon-size-4 sm:icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                        </button>
+                        <button mat-icon-button class="text-rose-600 hover:bg-rose-50 w-8 h-8 sm:w-10 sm:h-10" (click)="eliminarArchivo(archivo)" matTooltip="Eliminar">
+                            <mat-icon class="icon-size-4 sm:icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                        </button>
+                    </div>
+                </mat-list-item>
+            </mat-list>
+
+            <div *ngIf="!isLoading && archivos.length === 0" class="flex flex-col items-center justify-center py-8 sm:py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <mat-icon class="icon-size-10 sm:icon-size-12 text-slate-300 mb-2" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
+                <p class="text-slate-400 font-medium text-xs sm:text-sm">No hay archivos adjuntos</p>
+            </div>
+        </div>
+    </mat-dialog-content>
+
+    <div class="flex items-center justify-end p-4 sm:p-6 border-t bg-gray-50 dark:bg-transparent">
+        <button mat-button (click)="dialogRef.close()">Cerrar</button>
+    </div>
+</div>

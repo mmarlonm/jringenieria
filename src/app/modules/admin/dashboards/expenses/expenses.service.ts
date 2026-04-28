@@ -129,4 +129,38 @@ export class ExpensesService {
     getDetalleFolioContpaq(folio: string, rfc: string): Observable<any> {
         return this._httpClient.get<any>(`${environment.apiUrl}/ReportDashboard/contpaq-detalle-folio?folio=${folio}&rfc=${rfc}`);
     }
+
+    // -----------------------------------------------------------------------------------------------------
+    // @ File management methods
+    // -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Sube un archivo asociado a un gasto
+     */
+    subirArchivo(id: number, archivo: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        return this._httpClient.post(`${this.apiUrl}/${id}/archivo`, formData);
+    }
+
+    /**
+     * Obtiene la lista de nombres de archivos asociados a un gasto
+     */
+    getArchivos(id: number): Observable<string[]> {
+        return this._httpClient.get<string[]>(`${this.apiUrl}/${id}/archivos`);
+    }
+
+    /**
+     * Descarga/Visualiza un archivo de un gasto
+     */
+    descargarArchivo(id: number, nombre: string): Observable<any> {
+        return this._httpClient.get<any>(`${this.apiUrl}/${id}/archivo/${nombre}`);
+    }
+
+    /**
+     * Elimina un archivo de un gasto
+     */
+    eliminarArchivo(id: number, nombre: string): Observable<any> {
+        return this._httpClient.delete(`${this.apiUrl}/${id}/archivo/${nombre}`);
+    }
 }
