@@ -24,11 +24,14 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                 <div class="md:col-span-1">
                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
-                        <mat-label>Folio OC</mat-label>
-                        <input matInput (keyup.enter)="onSearchOC($event)" placeholder="Ej. 123">
+                        <mat-label>Folio Solicitud</mat-label>
+                        <input matInput #folioInput (keyup.enter)="onSearchOC($event)" placeholder="Ej. 123">
                         <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:hashtag'"></mat-icon>
+                        <button mat-icon-button matSuffix (click)="onSearchOC({target: folioInput})">
+                            <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                        </button>
                     </mat-form-field>
-                    <p class="text-[10px] text-secondary mt-1 italic">Presiona Enter para buscar OC</p>
+                    <p class="text-[10px] text-secondary mt-1 italic">Presiona Enter o el botón para buscar</p>
                 </div>
 
                 <div class="md:col-span-1">
@@ -45,7 +48,7 @@
                             </mat-option>
                         </mat-autocomplete>
                     </mat-form-field>
-                    <p class="text-[10px] text-secondary mt-1 italic">Búsqueda manual si Folio OC falla</p>
+                    <p class="text-[10px] text-secondary mt-1 italic">Búsqueda manual si Folio Solicitud falla</p>
                 </div>
 
                 <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">

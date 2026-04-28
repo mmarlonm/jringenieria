@@ -48,6 +48,7 @@ import { ExpenseDetailsComponent } from '../expense-details/expense-details.comp
         MatSidenavModule,
         MatDividerModule,
         MatAutocompleteModule,
+        GastoArchivosModalComponent,
         CurrencyPipe,
         DatePipe
     ],
