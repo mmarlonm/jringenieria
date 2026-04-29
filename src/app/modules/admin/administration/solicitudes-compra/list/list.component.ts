@@ -19,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import Swal from 'sweetalert2';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { UsersService } from 'app/modules/admin/security/users/users.service';
 
 @Component({
     selector: 'solicitud-compra-list',
@@ -31,15 +32,17 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 export class SolicitudCompraListComponent implements OnInit {
     solicitudes$: Observable<SolicitudCompra[]>;
     filteredSolicitudes$: Observable<SolicitudCompra[]>;
-    displayedColumns: string[] = ['folio', 'esAprobada', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'acciones'];
+    displayedColumns: string[] = ['folio', 'esAprobada', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'nombreUsuarioCreacion', 'createdDate', 'acciones'];
     filterValue: string = '';
     selectedSucursal: string = 'Todas';
     sucursales: any[] = [];
+    usuarios: any[] = [];
     count: number = 0;
 
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
         private _projectService: ProjectService,
+        private _usersService: UsersService,
         private _chatNotificationService: ChatNotificationService,
         private _dialog: MatDialog
     ) { }
@@ -47,6 +50,7 @@ export class SolicitudCompraListComponent implements OnInit {
     ngOnInit(): void {
         this.solicitudes$ = this._solicitudCompraService.solicitudes$;
         this.loadBranches();
+        this.loadUsers();
         
         this.filteredSolicitudes$ = combineLatest([
             this.solicitudes$,
@@ -117,6 +121,7 @@ export class SolicitudCompraListComponent implements OnInit {
             const matchesSearch = !this.filterValue || 
                 s.idSolicitud.toString().includes(this.filterValue.toLowerCase()) ||
                 (s.sucursal || '').toLowerCase().includes(this.filterValue.toLowerCase()) ||
+                (s.nombreUsuarioCreacion || '').toLowerCase().includes(this.filterValue.toLowerCase()) ||
                 (s.areaSolicitante || '').toLowerCase().includes(this.filterValue.toLowerCase());
             
             const matchesSucursal = this.selectedSucursal === 'Todas' || s.sucursal === this.selectedSucursal;
@@ -255,5 +260,17 @@ export class SolicitudCompraListComponent implements OnInit {
         }
         const seleccionado = solicitud.proveedores.find(p => p.esSeleccionado);
         return seleccionado ? seleccionado.razonSocial : 'Sin asignar';
+    }
+
+    loadUsers(): void {
+        this._usersService.getUsers().subscribe(users => {
+            this.usuarios = users || [];
+        });
+    }
+
+    getUserName(id: any): string {
+        if (!id || !this.usuarios) return '';
+        const user = this.usuarios.find(u => (u.usuarioId || u.id) == id);
+        return user ? (user.nombreUsuario || user.nombre || '') : '';
     }
 }

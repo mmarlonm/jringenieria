@@ -14,16 +14,23 @@
 table.mat-table {
     width: 100%;
     table-layout: auto;
+
+    th, td {
+        white-space: nowrap !important;
+        max-width: 500px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
 }
 
 .mat-column-actions {
-    width: 120px;
-    white-space: nowrap;
+    width: 100px;
 }
 
 .mat-column-folio {
-    width: 80px;
-    white-space: nowrap;
+    width: 60px;
 }
 
 // Sticky Header Fixes
@@ -36,7 +43,14 @@ th.mat-header-cell {
 }
 
 .mat-column-folio {
-    @apply bg-white dark:bg-gray-900 z-10;
+    @apply bg-white dark:bg-gray-900;
+    z-index: 20 !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 2px 0 4px -1px rgba(0, 0, 0, 0.05);
+}
+
+th.mat-column-folio {
+    z-index: 110 !important; // Above other headers
 }
 
 tr.mat-header-row {

@@ -47,10 +47,33 @@
         <div class="flex flex-col flex-auto mat-elevation-z8 bg-card rounded-2xl overflow-hidden border min-h-0">
             <div class="flex-auto overflow-y-auto overflow-x-auto">
             <table mat-table [dataSource]="filteredSolicitudes$ | async" matSort class="w-full">
+                <!-- Creado Por -->
+                <ng-container matColumnDef="nombreUsuarioCreacion">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Creado Por</th>
+                    <td mat-cell *matCellDef="let s">
+                        <div class="flex items-center gap-2" *ngIf="s.idUsuarioLogueado && getUserName(s.idUsuarioLogueado)">
+                            <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                                {{ (getUserName(s.idUsuarioLogueado)).charAt(0) }}
+                            </div>
+                            <span class="text-xs font-medium text-gray-700 whitespace-nowrap" [matTooltip]="getUserName(s.idUsuarioLogueado)">
+                                {{ getUserName(s.idUsuarioLogueado) }}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Fecha Creación -->
+                <ng-container matColumnDef="createdDate">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha Creación</th>
+                    <td mat-cell *matCellDef="let s" class="text-xs font-bold text-gray-600">
+                        {{ s.createdDate | date:'dd/MM/yyyy HH:mm' }}
+                    </td>
+                </ng-container>
+
                 <!-- Folio -->
-                <ng-container matColumnDef="folio">
+                <ng-container matColumnDef="folio" sticky>
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
-                    <td mat-cell *matCellDef="let s" class="font-bold text-primary">{{ s.idSolicitud }}</td>
+                    <td mat-cell *matCellDef="let s" class="font-bold text-primary bg-white dark:bg-gray-900">{{ s.idSolicitud }}</td>
                 </ng-container>
 
                 <!-- Aprobación -->
@@ -69,7 +92,7 @@
 
                 <!-- Fecha -->
                 <ng-container matColumnDef="fecha">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha Solicitud</th>
                     <td mat-cell *matCellDef="let s">{{ s.fechaSolicitud | date:'dd/MM/yyyy' }}</td>
                 </ng-container>
 
@@ -123,7 +146,7 @@
                 <ng-container matColumnDef="estatus">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Estatus</th>
                     <td mat-cell *matCellDef="let s">
-                        <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700">
+                        <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700 whitespace-nowrap">
                             {{ s.nombreEstatus }}
                         </span>
                     </td>
@@ -133,7 +156,7 @@
                 <ng-container matColumnDef="proveedor">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor</th>
                     <td mat-cell *matCellDef="let s">
-                        <span class="text-xs font-medium text-slate-600 truncate block max-w-40" [matTooltip]="getSelectedProvider(s)">
+                        <span class="text-xs font-medium text-slate-600 whitespace-nowrap block" [matTooltip]="getSelectedProvider(s)">
                             {{ getSelectedProvider(s) }}
                         </span>
                     </td>

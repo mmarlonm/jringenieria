@@ -641,6 +641,49 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
+    openEisenhowerInfo(): void {
+        Swal.fire({
+            title: 'Guía: Matriz de Eisenhower',
+            html: `
+                <div class="flex flex-col gap-4 text-left p-2">
+                    <div class="flex gap-3 items-start p-3 bg-rose-50 rounded-xl border border-rose-100">
+                        <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white font-bold shrink-0">Q1</div>
+                        <div>
+                            <div class="font-bold text-rose-700">Importante y Urgente (Hacer ahora)</div>
+                            <div class="text-xs text-rose-600/80">Tareas críticas que requieren atención inmediata. Ej: Crisis, problemas apremiantes o plazos límite.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start p-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <div class="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold shrink-0">Q2</div>
+                        <div>
+                            <div class="font-bold text-amber-700">Importante, No Urgente (Planificar)</div>
+                            <div class="text-xs text-amber-600/80">Tareas para objetivos a largo plazo. Ej: Prevención, planificación y nuevas oportunidades.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <div class="w-8 h-8 rounded-full bg-emerald-400 flex items-center justify-center text-white font-bold shrink-0">Q3</div>
+                        <div>
+                            <div class="font-bold text-emerald-700">No Importante, Urgente (Delegar)</div>
+                            <div class="text-xs text-emerald-600/80">Tareas que deben hacerse pronto pero no por ti. Ej: Algunas llamadas o interrupciones.</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start p-3 bg-sky-50 rounded-xl border border-sky-100">
+                        <div class="w-8 h-8 rounded-full bg-sky-400 flex items-center justify-center text-white font-bold shrink-0">Q4</div>
+                        <div>
+                            <div class="font-bold text-sky-700">No Importante, No Urgente (Eliminar)</div>
+                            <div class="text-xs text-sky-600/80">Actividades que consumen tiempo sin aportar valor. Ej: Tareas triviales o distracciones.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#6366f1',
+            customClass: {
+                container: 'z-[99999]'
+            }
+        });
+    }
+
     loadArchivos(id: number): void {
         this._solicitudCompraService.getArchivos(id).subscribe(response => {
             if (response && response.success && Array.isArray(response.archivos)) {
@@ -763,7 +806,10 @@ export class SolicitudCompraFormComponent implements OnInit {
             return;
         }
 
-        const data = { ...this.solicitudForm.value };
+        const data = { 
+            ...this.solicitudForm.value,
+            IdUsuarioLogueado: this.currentUserId
+        };
         
         // Sanitize CLABEs in providers
         if (data.proveedores) {

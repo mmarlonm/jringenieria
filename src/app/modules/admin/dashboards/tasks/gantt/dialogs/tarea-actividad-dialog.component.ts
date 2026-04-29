@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { TareaActividad } from '../../models/task-activity.model';
 
 @Component({
@@ -22,7 +23,8 @@ import { TareaActividad } from '../../models/task-activity.model';
     MatSelectModule,
     MatButtonModule,
     MatDatepickerModule,
-    MatIconModule
+    MatIconModule,
+    TextFieldModule
   ],
   template: `
     <div class="flex flex-col max-w-160 min-w-80 overflow-hidden bg-card text-default">
@@ -37,7 +39,7 @@ import { TareaActividad } from '../../models/task-activity.model';
         <!-- Nombre -->
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Nombre de la actividad</mat-label>
-          <input matInput formControlName="nombre" placeholder="Ej. Diseño de UI" />
+          <textarea matInput formControlName="nombre" placeholder="Ej. Diseño de UI" rows="2" cdkTextareaAutosize></textarea>
           <mat-icon matSuffix class="text-secondary">description</mat-icon>
         </mat-form-field>
 
