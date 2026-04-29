@@ -32,7 +32,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 export class SolicitudCompraListComponent implements OnInit {
     solicitudes$: Observable<SolicitudCompra[]>;
     filteredSolicitudes$: Observable<SolicitudCompra[]>;
-    displayedColumns: string[] = ['folio', 'esAprobada', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'nombreUsuarioCreacion', 'createdDate', 'acciones'];
+    displayedColumns: string[] = ['folio', 'esAprobada', 'aprobacionCredito', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'nombreUsuarioCreacion', 'createdDate', 'acciones'];
     filterValue: string = '';
     selectedSucursal: string = 'Todas';
     sucursales: any[] = [];

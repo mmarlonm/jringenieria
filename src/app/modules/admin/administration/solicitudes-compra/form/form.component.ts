@@ -213,6 +213,9 @@ export class SolicitudCompraFormComponent implements OnInit {
             iva: [0],
             totalPiezas: [0],
             cuadranteId: [null, Validators.required],
+            idAprobadorCredito: [null],
+            esAprobadaCredito: [false],
+            fechaAprobacionCredito: [null],
             detalles: this._formBuilder.array([]), // Removed required validator
             proveedores: this._formBuilder.array([])
         });
@@ -223,6 +226,23 @@ export class SolicitudCompraFormComponent implements OnInit {
         }
 
         this._setupCalculationListener();
+        this._setupFormaPagoListener();
+    }
+
+    private _setupFormaPagoListener(): void {
+        this.solicitudForm.get('formaPago').valueChanges.pipe(
+            takeUntil(this._unsubscribeAll),
+            startWith(this.solicitudForm.get('formaPago').value)
+        ).subscribe(value => {
+            const approverControl = this.solicitudForm.get('idAprobadorCredito');
+            if (value === 'CREDITO (PPD)') {
+                approverControl.setValidators([Validators.required]);
+            } else {
+                approverControl.clearValidators();
+                approverControl.setValue(null, { emitEvent: false });
+            }
+            approverControl.updateValueAndValidity({ emitEvent: false });
+        });
     }
 
     loadBranches(): void {
@@ -634,7 +654,43 @@ export class SolicitudCompraFormComponent implements OnInit {
                         console.error('Error aprobando solicitud:', err);
                         const msg = err.error?.message || err.message || 'Error al aprobar la solicitud';
                         this._chatNotificationService.showError('Error', msg);
-                        // El checkbox se controla por el valor de esAprobada, que no cambió si hubo error
+                    }
+                });
+            }
+        });
+    }
+
+    aprobarCredito(): void {
+        if (!this.isEdit || !this.solicitudId) {
+            this._chatNotificationService.showWarning('Atención', 'La solicitud debe estar guardada antes de aprobar el crédito.');
+            return;
+        }
+
+        const idUsuario = this.currentUserId;
+        
+        Swal.fire({
+            title: '¿Aprobar crédito?',
+            text: 'Esta acción validará el crédito para esta solicitud.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, aprobar crédito',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._solicitudCompraService.aprobarCredito(this.solicitudId, idUsuario).subscribe({
+                    next: () => {
+                        this._chatNotificationService.showSuccess('Éxito', 'Crédito aprobado correctamente.');
+                        this.solicitudForm.patchValue({
+                            esAprobadaCredito: true,
+                            fechaAprobacionCredito: new Date()
+                        });
+                    },
+                    error: (err) => {
+                        console.error('Error aprobando crédito:', err);
+                        const msg = err.error?.message || err.message || 'Error al aprobar el crédito';
+                        this._chatNotificationService.showError('Error', msg);
                     }
                 });
             }

@@ -186,4 +186,8 @@ export class SolicitudCompraService {
             .set('idUsuario', idUsuario.toString());
         return this._httpClient.post(`${this.apiUrl}/aprobar-check`, null, { params });
     }
+
+    aprobarCredito(id: number, idUsuario: number): Observable<any> {
+        return this._httpClient.patch(`${this.apiUrl}/${id}/aprobar-credito`, idUsuario);
+    }
 }

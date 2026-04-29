@@ -52,6 +52,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     displayedColumns: string[] = [
         'folio',
         'esAprobada',
+        'aprobacionCredito',
         'folioOC',
         'fechaSolicitud',
         'sucursal',
@@ -653,6 +654,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                         data.folioProyecto,
                         data.prioridad,
                         data.proveedorSugerido,
+                        data.nombreAprobadorCredito,
                         data.moneda,
                         data.monto,
                         data.tipoCompra,

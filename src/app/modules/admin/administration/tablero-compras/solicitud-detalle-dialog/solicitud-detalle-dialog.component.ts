@@ -91,6 +91,18 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">Aprobador Asignado</span>
                         <span class="font-semibold">{{ getSolicitanteName(solicitud.idAprobador) }}</span>
                     </div>
+                    <!-- Aprobación de Crédito Info -->
+                    <div class="flex flex-col" *ngIf="solicitud.idAprobadorCredito && solicitud.formaPago === 'CREDITO (PPD)'">
+                        <span class="text-xs font-bold uppercase text-amber-600 tracking-wider">Aprobador de Crédito</span>
+                        <span class="font-semibold">{{ getSolicitanteName(solicitud.idAprobadorCredito) }}</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <mat-icon class="icon-size-4" [ngClass]="solicitud.esAprobadaCredito ? 'text-amber-500' : 'text-slate-300'" 
+                                      [svgIcon]="solicitud.esAprobadaCredito ? 'heroicons_solid:check-circle' : 'heroicons_solid:clock'"></mat-icon>
+                            <span class="font-bold uppercase text-[10px]" [ngClass]="solicitud.esAprobadaCredito ? 'text-amber-700' : 'text-slate-400'">
+                                {{ solicitud.esAprobadaCredito ? 'Crédito Aprobado' : 'Crédito Pendiente' }}
+                            </span>
+                        </div>
+                    </div>
                     <div class="flex flex-col" *ngIf="solicitud.esAprobada">
                         <span class="text-xs font-bold uppercase text-emerald-600 tracking-wider">Estado Aprobación</span>
                         <div class="flex items-center gap-2 mt-1">

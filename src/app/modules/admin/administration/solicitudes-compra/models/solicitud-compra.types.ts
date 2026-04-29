@@ -42,6 +42,12 @@ export interface SolicitudCompra {
     esAprobada: boolean;
     fechaAprobacion?: string | Date;
 
+    // Aprobación de Crédito
+    idAprobadorCredito?: number;
+    nombreAprobadorCredito?: string;
+    esAprobadaCredito: boolean;
+    fechaAprobacionCredito?: string | Date;
+
     // Auditoría
     createdDate?: string | Date;
     idUsuarioLogueado?: number;
@@ -103,6 +109,7 @@ export interface SolicitudCompraCreateDto {
     monto?: number;
     cuadranteId?: number;
     idAprobador?: number;
+    idAprobadorCredito?: number;
     IdUsuarioLogueado?: number;
     detalles: SolicitudCompraDetalleCreateDto[];
     proveedores: SolicitudCompraProveedor[];

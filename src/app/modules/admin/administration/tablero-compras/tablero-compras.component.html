@@ -275,17 +275,39 @@
                         </ng-container>
 
                         <ng-container matColumnDef="esAprobada">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>Validación</th>
-                            <td mat-cell *matCellDef="let s">
-                                <div class="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shadow-sm border transition-all duration-300"
-                                     [ngClass]="s.esAprobada 
-                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50' 
-                                        : 'bg-amber-50 text-amber-600 border-amber-200/50'">
-                                    <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="s.esAprobada ? 'heroicons_solid:check-badge' : 'heroicons_solid:clock'"></mat-icon>
-                                    {{ s.esAprobada ? 'Aprobada' : 'Pendiente' }}
-                                </div>
-                            </td>
-                        </ng-container>
+                             <th mat-header-cell *matHeaderCellDef mat-sort-header>Validación</th>
+                             <td mat-cell *matCellDef="let s">
+                                 <div class="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shadow-sm border transition-all duration-300"
+                                      [ngClass]="s.esAprobada 
+                                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50' 
+                                         : 'bg-amber-50 text-amber-600 border-amber-200/50'">
+                                     <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="s.esAprobada ? 'heroicons_solid:check-badge' : 'heroicons_solid:clock'"></mat-icon>
+                                     {{ s.esAprobada ? 'Aprobada' : 'Pendiente' }}
+                                 </div>
+                             </td>
+                         </ng-container>
+ 
+                         <ng-container matColumnDef="aprobacionCredito">
+                             <th mat-header-cell *matHeaderCellDef mat-sort-header>Crédito</th>
+                             <td mat-cell *matCellDef="let s">
+                                 <div *ngIf="s.formaPago === 'CREDITO (PPD)'" class="flex flex-col gap-1 py-2">
+                                     <div class="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shadow-sm border transition-all duration-300"
+                                          [ngClass]="s.esAprobadaCredito 
+                                             ? 'bg-amber-50 text-amber-600 border-amber-200/50' 
+                                             : 'bg-slate-50 text-slate-400 border-slate-200/50'">
+                                         <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="s.esAprobadaCredito ? 'heroicons_solid:check-circle' : 'heroicons_solid:clock'"></mat-icon>
+                                         {{ s.esAprobadaCredito ? 'Aprobado' : 'Pendiente' }}
+                                     </div>
+                                     <span class="text-[9px] text-secondary font-bold truncate max-w-[100px]" 
+                                           [matTooltip]="(s.nombreAprobadorCredito && s.nombreAprobadorCredito !== 'Sin asignar' ? s.nombreAprobadorCredito : getUserLabel(s.idAprobadorCredito)) || 'Sin asignar'">
+                                         {{ (s.nombreAprobadorCredito && s.nombreAprobadorCredito !== 'Sin asignar' ? s.nombreAprobadorCredito : getUserLabel(s.idAprobadorCredito)) || 'Sin asignar' }}
+                                     </span>
+                                 </div>
+                                 <div *ngIf="s.formaPago !== 'CREDITO (PPD)'" class="text-[9px] text-gray-300 italic">
+                                     N/A
+                                 </div>
+                             </td>
+                         </ng-container>
 
                         <ng-container matColumnDef="folioOC">
                             <th mat-header-cell *matHeaderCellDef>
