@@ -411,7 +411,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
 
     private _buildLiquidacionChart(categories: string[], series: any[]): any {
         return Highcharts.merge(this.baseTheme, {
-            chart: { type: 'column', height: 250 },
+            chart: { type: 'column', height: 320 },
             xAxis: { categories: categories, lineColor: '#e5e7eb' },
             yAxis: { title: { text: 'Monto' }, gridLineColor: '#f3f4f6' },
             plotOptions: { column: { stacking: 'normal', borderRadius: 6, dataLabels: { enabled: false } } },
@@ -421,7 +421,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
 
     private _buildFormaPagoChart(categories: string[], series: any[]): any {
         return Highcharts.merge(this.baseTheme, {
-            chart: { type: 'column', height: 250 },
+            chart: { type: 'column', height: 320 },
             xAxis: { categories: categories, lineColor: '#e5e7eb' },
             yAxis: { title: { text: 'Monto' }, gridLineColor: '#f3f4f6' },
             plotOptions: { column: { borderRadius: 6, dataLabels: { enabled: false } } },
