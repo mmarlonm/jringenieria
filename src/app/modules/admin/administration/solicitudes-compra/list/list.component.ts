@@ -273,4 +273,42 @@ export class SolicitudCompraListComponent implements OnInit {
         const user = this.usuarios.find(u => (u.usuarioId || u.id) == id);
         return user ? (user.nombreUsuario || user.nombre || '') : '';
     }
+
+    // Status color mapping
+    getColorByEstatus(nombre: string): string {
+        if (!nombre) return '#C4C4C4';
+        const n = nombre.toLowerCase();
+
+        if (n.includes('creada')) return '#880E4F';
+        if (n.includes('revision') || n.includes('revisión')) return '#E91E63';
+        if (n.includes('cotizacion') || n.includes('cotización')) return '#FF9800';
+        if (n.includes('aprobada') || n.includes('aprobación') || n.includes('aprobacion')) return '#8BC34A';
+        if (n.includes('orden')) return '#03A9F4';
+        if (n.includes('transito') || n.includes('tránsito')) return '#2196F3';
+        if (n.includes('recibido')) return '#3F51B5';
+        if (n.includes('cerrada')) return '#1A237E';
+
+        return '#C4C4C4';
+    }
+
+    getFillColorByEstatus(nombre: string): string {
+        return this.getColorByEstatus(nombre) + '15';
+    }
+
+    // Priority color mapping
+    getColorByPrioridad(nombre: string): string {
+        if (!nombre) return '#94a3b8';
+        const n = nombre.toLowerCase();
+
+        if (n.includes('urgente')) return '#f43f5e'; // rose-500
+        if (n.includes('alta')) return '#fbbf24'; // amber-400
+        if (n.includes('normal')) return '#38bdf8'; // sky-400
+        if (n.includes('venta confirmada')) return '#7c3aed'; // violet-600
+
+        return '#94a3b8'; // slate-400
+    }
+
+    getFillColorByPrioridad(nombre: string): string {
+        return this.getColorByPrioridad(nombre) + '15';
+    }
 }

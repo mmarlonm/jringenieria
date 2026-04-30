@@ -149,7 +149,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     filtroPrioridad: string = '';
     filtroCuadrante: any = '';
 
-    prioridadesList = ['Urgente', 'Alta', 'Normal'];
+    prioridadesList = ['Urgente', 'Alta', 'Normal', 'Venta Confirmada'];
     cuadrantesList = [
         { id: 1, nombre: 'Importante y Urgente' },
         { id: 2, nombre: 'Importante, No Urgente' },
@@ -862,6 +862,20 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             case 4: return '#38bdf8'; // bg-sky-400
             default: return '#94a3b8'; // gray-400
         }
+    }
+
+    getColorByPrioridad(prioridad: string): string {
+        if (!prioridad) return '#94a3b8';
+        const n = prioridad.toLowerCase();
+        if (n.includes('urgente')) return '#f43f5e';
+        if (n.includes('alta')) return '#fbbf24';
+        if (n.includes('normal')) return '#38bdf8';
+        if (n.includes('venta confirmada')) return '#7c3aed';
+        return '#94a3b8';
+    }
+
+    getFillColorByPrioridad(prioridad: string): string {
+        return this.getColorByPrioridad(prioridad) + '15';
     }
 
     // -----------------------------------------------------------------------------------------------------
