@@ -76,6 +76,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     totalsByCurrency: { [key: string]: number } = {};
     countSolicitudes: number = 0;
     promedioMonto: number = 0;
+    totalVentaConfirmada: { [moneda: string]: number } = {};
     currenciesList: string[] = [];
 
     chartOptionsCentroCosto: any = {};
@@ -180,6 +181,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
         this.chartOptionsFormaPago = {};
         this.chartOptionsArea = {};
         this.chartOptionsTimelinePago = {};
+        this.totalVentaConfirmada = {};
     }
 
     private _processData(): void {
@@ -190,10 +192,18 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
 
         this.countSolicitudes = this.solicitudes.length;
         this.totalsByCurrency = {};
+        this.totalVentaConfirmada = {};
         
         this.solicitudes.forEach(s => {
             const mon = (s.moneda || 'MXN').toUpperCase();
             this.totalsByCurrency[mon] = (this.totalsByCurrency[mon] || 0) + (s.monto || 0);
+
+            // Check for Venta Confirmada (Priority or Type)
+            const prio = (s.prioridad || '').toLowerCase();
+            const tipo = (s.tipoCompra || '').toLowerCase();
+            if (prio.includes('venta confirmada') || tipo.includes('venta confirmada')) {
+                this.totalVentaConfirmada[mon] = (this.totalVentaConfirmada[mon] || 0) + (s.monto || 0);
+            }
         });
 
         const totalMontoMXN = this.solicitudes.reduce((acc, curr) => {
@@ -234,6 +244,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             if (name.toLowerCase().includes('urgente')) color = { radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 }, stops: [[0, '#fb7185'], [1, '#e11d48']] };
             if (name.toLowerCase().includes('alta')) color = { radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 }, stops: [[0, '#fcd34d'], [1, '#d97706']] };
             if (name.toLowerCase().includes('normal')) color = { radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 }, stops: [[0, '#7dd3fc'], [1, '#0284c7']] };
+            if (name.toLowerCase().includes('venta confirmada')) color = { radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 }, stops: [[0, '#a78bfa'], [1, '#7c3aed']] }; // Purple/Violet
             return { name, y, color };
         });
 

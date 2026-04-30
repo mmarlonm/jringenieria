@@ -71,7 +71,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     currentUserId: number = 0;
 
     // Select options
-    prioridades = ['Urgente', 'Alta', 'Normal'];
+    prioridades = ['Urgente', 'Alta', 'Normal', 'Venta Confirmada'];
     tiposCompra = ['Material para proyecto', 'Inventario almacén', 'Herramienta', 'Consumible', 'Servicio', 'VENTA CONFIRMADA'];
     centrosCosto = ['Proyecto específico', 'Operación sucursal', 'Administración'];
     areas = ['Proyectos', 'Almacén', 'Ventas', 'Administración', 'Marketing', 'RH'];
@@ -86,7 +86,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     sucursales: any[] = [];
     usuarios: any[] = [];
     aprobadores: any[] = [];
-    
+
     // Lista de Bancos en México para el autocompletado
     bancosMexico: string[] = [
         'BBVA México',
@@ -161,7 +161,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         this._usersService.getUsers().subscribe(users => {
             this.usuarios = users || [];
             const allowedApproverIds = [14, 13, 16, 6, 12, 20, 18, 9];
-            
+
             this.aprobadores = this.usuarios.filter(user => {
                 const id = user.usuarioId || user.id;
                 return allowedApproverIds.includes(Number(id));
@@ -310,7 +310,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     onProveedorSelectedForRow(event: any, index: number): void {
         const proveedor = event.option.value as ProveedorDto;
         const row = this.proveedoresRows.at(index);
-        
+
         row.patchValue({
             razonSocial: proveedor.nombre,
             rfc: proveedor.rfc,
@@ -380,7 +380,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         const project = event.option.value;
         const projectLabel = `${project.proyectoId || project.id} - ${project.nombre || project.nombreProyecto}`;
         const clientLabel = project.nombreCliente || project.cliente || project.clienteNombre || '';
-        
+
         this.solicitudForm.patchValue({
             folioProyecto: projectLabel,
             cliente: clientLabel || project.nombre || project.nombreProyecto
@@ -410,7 +410,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     formatCLABE(event: any, index?: number): void {
         const input = event.target;
         const formatted = this._getFormattedValueCLABE(input.value);
-        
+
         input.value = formatted;
         if (index !== undefined) {
             this.proveedoresRows.at(index).get('clabe').setValue(formatted, { emitEvent: false });
@@ -448,13 +448,13 @@ export class SolicitudCompraFormComponent implements OnInit {
         ).subscribe((values: any[]) => {
             let subtotal = 0;
             let totalPiezas = 0;
-            
+
             (values || []).forEach((curr, i) => {
                 const cantidad = parseFloat(curr.cantidad) || 0;
                 const monto = parseFloat(curr.monto) || 0;
                 const subtotalLinea = Number((cantidad * monto).toFixed(4));
                 const ivaLinea = Number((subtotalLinea * 0.16).toFixed(4));
-                
+
                 subtotal += subtotalLinea;
                 totalPiezas += cantidad;
 
@@ -564,7 +564,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             // Load Providers
             while (this.proveedoresRows.length) this.proveedoresRows.removeAt(0);
             this.filteredProveedoresRows$ = [];
-            
+
             if (solicitud.proveedores && solicitud.proveedores.length > 0) {
                 solicitud.proveedores.forEach((p, i) => {
                     const row = this._formBuilder.group({
@@ -630,7 +630,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         }
 
         const idUsuario = this.currentUserId;
-        
+
         Swal.fire({
             title: '¿Aprobar solicitud?',
             text: 'Esta acción notificará al solicitante y bloqueará cambios adicionales de aprobación.',
@@ -667,7 +667,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         }
 
         const idUsuario = this.currentUserId;
-        
+
         Swal.fire({
             title: '¿Aprobar crédito?',
             text: 'Esta acción validará el crédito para esta solicitud.',
@@ -849,10 +849,10 @@ export class SolicitudCompraFormComponent implements OnInit {
                 if (name !== 'detalles' && controls[name].invalid) invalidFields.push(fieldNames[name] || name);
             }
             if (this.detalles.length === 0) {
-                 invalidFields.push('Es obligatorio agregar al menos un material (partida) para crear la solicitud');
+                invalidFields.push('Es obligatorio agregar al menos un material (partida) para crear la solicitud');
             } else {
                 this.detalles.controls.forEach((group: FormGroup, i) => {
-                    if (group.invalid) invalidFields.push(`Error en partida #${i+1}`);
+                    if (group.invalid) invalidFields.push(`Error en partida #${i + 1}`);
                 });
             }
             const message = `Faltan campos por completar:\n- ${invalidFields.join('\n- ')}`;
@@ -862,11 +862,11 @@ export class SolicitudCompraFormComponent implements OnInit {
             return;
         }
 
-        const data = { 
+        const data = {
             ...this.solicitudForm.value,
             IdUsuarioLogueado: this.currentUserId
         };
-        
+
         // Sanitize CLABEs in providers
         if (data.proveedores) {
             data.proveedores.forEach((p: any) => {
@@ -995,20 +995,20 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     private async _parsePdfTable(file: File): Promise<ContpaqiMaterialDto[]> {
-//         console.log('--- INICIO UNIVERSAL PDF SCANNER ---');
+        //         console.log('--- INICIO UNIVERSAL PDF SCANNER ---');
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
-        
+
         const arrayBuffer = await file.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         const pdf = await loadingTask.promise;
         const allItems: any[] = [];
-        
+
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
-            
+
             const items = textContent.items.map((item: any) => ({
                 text: item.str,
                 x: item.transform[4],
@@ -1022,14 +1022,14 @@ export class SolicitudCompraFormComponent implements OnInit {
                 items.sort((a, b) => b.y - a.y || a.x - b.x);
                 const mergedItems: any[] = [];
                 let current = items[0];
-                
+
                 for (let j = 1; j < items.length; j++) {
                     const next = items[j];
                     const yDiff = Math.abs(next.y - current.y);
                     const xDiff = next.x - (current.x + current.width);
-                    
+
                     const threshold = (current.y > 400 || current.text.length < 3) ? 14 : 6;
-                    
+
                     if (yDiff < 2 && xDiff >= -2 && xDiff < threshold) {
                         current.text += ' ' + next.text; // Espacio para evitar pegar palabras
                         current.width += next.width + xDiff;
@@ -1044,19 +1044,19 @@ export class SolicitudCompraFormComponent implements OnInit {
                 allItems.push(...mergedItems);
             }
         }
-        
+
         if (allItems.length === 0) return [];
 
         // Agrupación por filas con umbral flexible
         const rows: any[][] = [];
         let currentRow: any[] = [];
         const sortedItems = [...allItems].sort((a, b) => a.page - b.page || b.y - a.y || a.x - b.x);
-        
+
         sortedItems.forEach((item, index) => {
-            if (index === 0) { currentRow.push(item); } 
+            if (index === 0) { currentRow.push(item); }
             else {
                 const prev = sortedItems[index - 1];
-                if (Math.abs(item.y - prev.y) < 6 && item.page === prev.page) { currentRow.push(item); } 
+                if (Math.abs(item.y - prev.y) < 6 && item.page === prev.page) { currentRow.push(item); }
                 else {
                     rows.push(currentRow.sort((a, b) => a.x - b.x));
                     currentRow = [item];
@@ -1091,26 +1091,26 @@ export class SolicitudCompraFormComponent implements OnInit {
                     matches++;
                 }
             }
-            
+
             // VALIDACIÓN LÓGICA: Artículo < Nombre < Cantidad < Precio < Total
             const hasEssential = tempMapping.nombre !== -1 && (tempMapping.cantidad !== -1 || tempMapping.total !== -1);
             if (matches >= 2 && hasEssential) {
                 // Verificar orden lógico básico
                 const isOrdered = (tempMapping.articulo === -1 || tempMapping.articulo < tempMapping.nombre) &&
-                                  (tempMapping.articulo === -1 || tempMapping.articulo < tempMapping.cantidad) &&
-                                  (tempMapping.nombre < tempMapping.cantidad || tempMapping.cantidad === -1) &&
-                                  (tempMapping.cantidad < tempMapping.total || tempMapping.cantidad === -1 || tempMapping.total === -1);
-                
+                    (tempMapping.articulo === -1 || tempMapping.articulo < tempMapping.cantidad) &&
+                    (tempMapping.nombre < tempMapping.cantidad || tempMapping.cantidad === -1) &&
+                    (tempMapping.cantidad < tempMapping.total || tempMapping.cantidad === -1 || tempMapping.total === -1);
+
                 if (isOrdered) {
                     Object.assign(columnMapping, tempMapping);
                     foundHeaderRowIndex = i;
-//                     console.log(`CABECERA UNIVERSAL VALIDADA (Fila ${i}):`, rowText.join(' | '));
+                    //                     console.log(`CABECERA UNIVERSAL VALIDADA (Fila ${i}):`, rowText.join(' | '));
                     break;
                 }
             }
         }
 
-//         console.log('MAPEO FINAL UNIVERSAL:', columnMapping);
+        //         console.log('MAPEO FINAL UNIVERSAL:', columnMapping);
 
         // EXTRACCIÓN CON FILTRADO DE PIE DE PÁGINA
         const detectedMateriales: ContpaqiMaterialDto[] = [];
@@ -1122,7 +1122,7 @@ export class SolicitudCompraFormComponent implements OnInit {
 
             // 1. Detección de Pie de Página o Metadatos
             if (FOOTER_KEYWORDS.some(key => rowTextStr.includes(key))) {
-//                 console.log('Fila de metadatos/pie detectada y saltada:', rowTextStr);
+                //                 console.log('Fila de metadatos/pie detectada y saltada:', rowTextStr);
                 continue;
             }
 
@@ -1137,7 +1137,7 @@ export class SolicitudCompraFormComponent implements OnInit {
                 row.forEach(item => {
                     const closest = this._getClosestColumn(item.x, columnMapping);
                     const text = item.text.trim();
-                    switch(closest) {
+                    switch (closest) {
                         case 'articulo': material = text; break;
                         case 'nombre': descripcion = text; break;
                         case 'unidad': unidadStr = text; break;
@@ -1191,7 +1191,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             }
         }
 
-//         console.log(`EXTRACCIÓN FINALIZADA: ${detectedMateriales.length} artículos.`);
+        //         console.log(`EXTRACCIÓN FINALIZADA: ${detectedMateriales.length} artículos.`);
         return detectedMateriales;
     }
 
@@ -1202,8 +1202,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             if (mapping[key] === -1) continue;
             const diff = Math.abs(x - mapping[key]);
             // Priorizamos la columna que esté a la derecha o muy cerca a la izquierda
-            if (diff < minDiff && diff < 120) { 
-                minDiff = diff; closestKey = key; 
+            if (diff < minDiff && diff < 120) {
+                minDiff = diff; closestKey = key;
             }
         }
         return closestKey;
@@ -1227,7 +1227,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             // Si solo hay coma, podría ser decimal (12,34) o miles (1,234)
             // Heurística: si hay exactamente 3 dígitos después, es miles.
             const parts = clean.split(',');
-            if (parts[parts.length-1].length === 3) {
+            if (parts[parts.length - 1].length === 3) {
                 clean = clean.replace(/,/g, '');
             } else {
                 clean = clean.replace(/,/g, '.');
@@ -1303,7 +1303,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         if (['PLIEGO', 'PLG'].includes(unit)) return 'PLIEGO';
         if (['JUEGO', 'JG', 'JGO', 'JUEGOS', 'SET'].includes(unit)) return 'JUEGO';
         if (['TAMBO', 'TB', 'DRUM'].includes(unit)) return 'TAMBO';
-        
+
         // Si no se encuentra en la lista, retornar PZA por defecto pero conservar valor si es razonable
         return unit.length <= 10 ? unit : 'PZA';
     }
