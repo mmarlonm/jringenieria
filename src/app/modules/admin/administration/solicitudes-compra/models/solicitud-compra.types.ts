@@ -57,6 +57,7 @@ export interface SolicitudCompra {
     estatus: CatEstatusCompra;
     detalles: SolicitudCompraDetalle[];
     proveedores: SolicitudCompraProveedor[];
+    anticipos?: AnticipoDto[];
 }
 
 export interface SolicitudCompraProveedor {
@@ -165,4 +166,13 @@ export interface ContpaqiMaterialDto {
     iva: number;
     total: number;
     selected?: boolean; // UI only
+}
+
+export interface AnticipoDto {
+    idAnticipo?: number;
+    monto: number;
+    fechaProgramada: string | Date;
+    comentarios?: string;
+    idEstatusPago?: number;
+    fechaRegistro?: string | Date;
 }

@@ -21,6 +21,7 @@ import { SolicitudDetalleDialogComponent } from './solicitud-detalle-dialog/soli
 import { HistorialDialogComponent } from './historial-dialog/historial-dialog.component';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
+import { AnticipoDialogComponent } from './anticipo-dialog/anticipo-dialog.component';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -45,7 +46,8 @@ import Swal from 'sweetalert2';
         RouterLink,
         MatDatepickerModule,
         MatNativeDateModule,
-        MatSelectModule
+        MatSelectModule,
+        AnticipoDialogComponent
     ]
 })
 export class TableroComprasComponent implements OnInit, OnDestroy {
@@ -72,6 +74,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         'moneda',
         'monto',
         'montoMXN',
+        'anticipoTotal',
         'centroCosto',
         'comentarios',
         'cuadranteId',
@@ -93,6 +96,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     countRecibido: number = 0;    // ID 7
     countCerrada: number = 0;     // ID 8
     totalsByCurrency: { [key: string]: number } = {};
+    totalsAnticipoByCurrency: { [key: string]: number } = {};
 
     usuarios: any[] = [];
     selectedStatusId: number | null = null;
@@ -194,7 +198,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                         banco: s.banco || selectedProv?.banco || '',
                         cuenta: s.cuenta || selectedProv?.cuenta || '',
                         clabe: s.clabe || selectedProv?.clabe || '',
-                        proveedorSugerido: s.proveedorSugerido || selectedProv?.razonSocial || ''
+                        proveedorSugerido: s.proveedorSugerido || selectedProv?.razonSocial || '',
+                        anticipoTotal: (s.anticipos || []).reduce((acc, a) => acc + (a.monto || 0), 0)
                     };
                 });
 
@@ -466,7 +471,24 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         if (estadoFinal === 1) textoEstado = 'Liquidado';
         if (estadoFinal === 2) textoEstado = 'Anticipo';
 
-        if (estadoFinal === 1 || estadoFinal === 2) {
+        if (estadoFinal === 2) {
+            // OPEN ANTICIPO DIALOG
+            const dialogRef = this._dialog.open(AnticipoDialogComponent, {
+                width: '100%',
+                maxWidth: '500px',
+                data: { monto: row.monto },
+                autoFocus: false
+            });
+
+            dialogRef.afterClosed().subscribe(result => {
+                if (result) {
+                    this._ejecutarEstadoLiquidacion(row, estadoFinal, textoEstado, null, [result]);
+                }
+            });
+            return;
+        }
+
+        if (estadoFinal === 1) {
             // Configuration for the modal based on state
             const config = {
                 title: estadoFinal === 1 ? 'Marcar como Liquidado' : 'Registrar Anticipo',
@@ -583,8 +605,25 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         }
     }
 
-    private _ejecutarEstadoLiquidacion(row: any, estadoFinal: number, textoEstado: string, archivo?: File): void {
-        this._solicitudCompraService.actualizarEstadoLiquidacion(row.idSolicitud, estadoFinal)
+    private _ejecutarEstadoLiquidacion(row: any, estadoFinal: number, textoEstado: string, archivo?: File, anticipos?: any[]): void {
+        const userObjStr = localStorage.getItem('userInformation');
+        let idUsuario = 0;
+        if (userObjStr) {
+            try {
+                const userObj = JSON.parse(userObjStr);
+                idUsuario = userObj?.usuario?.id || 0;
+            } catch (e) {
+                console.error('Error parsing user object from localStorage', e);
+            }
+        }
+
+        const payload = {
+            nuevoEstado: estadoFinal,
+            idUsuario: idUsuario,
+            anticipos: anticipos || []
+        };
+
+        this._solicitudCompraService.actualizarEstadoLiquidacion(row.idSolicitud, payload)
             .subscribe({
                 next: () => {
                     row.estadoLiquidacion = estadoFinal;
@@ -844,9 +883,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
         // Calculate totals by currency
         this.totalsByCurrency = {};
+        this.totalsAnticipoByCurrency = {};
         solicitudes.forEach(s => {
             const mon = (s.moneda || 'MXN').toUpperCase();
             this.totalsByCurrency[mon] = (this.totalsByCurrency[mon] || 0) + (s.monto || 0);
+            
+            const totalAnt = (s.anticipos || []).reduce((acc, a) => acc + (a.monto || 0), 0);
+            this.totalsAnticipoByCurrency[mon] = (this.totalsAnticipoByCurrency[mon] || 0) + totalAnt;
         });
     }
 

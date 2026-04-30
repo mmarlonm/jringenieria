@@ -25,6 +25,9 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                     <div class="mt-1 flex items-center text-secondary font-medium" *ngIf="solicitud">
                         Folio: <span class="ml-1 font-bold text-default">{{ solicitud.idSolicitud || data.idSolicitud }}</span>
                         <span class="ml-3" *ngIf="solicitud.folioOC">Folio OC: <span class="ml-1 font-bold text-amber-600">{{ solicitud.folioOC }}</span></span>
+                        <span class="ml-3 px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded-full text-[10px] font-black" *ngIf="solicitud.totalAnticipado > 0">
+                            Anticipado: {{ solicitud.totalAnticipado | currency:solicitud.moneda }}
+                        </span>
                         <span class="mx-2">•</span>
                         Status: <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white uppercase" 
                                       [style.background-color]="getColorById(solicitud.idEstatus)">
@@ -218,6 +221,35 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                     </div>
                 </div>
 
+                <!-- Anticipos Section -->
+                <div class="p-6 bg-amber-50/30 dark:bg-amber-900/5 rounded-2xl border border-amber-100/50" 
+                     *ngIf="solicitud.anticipos && solicitud.anticipos.length > 0">
+                    <div class="flex items-center mb-4 text-amber-700 dark:text-amber-400">
+                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:banknotes'"></mat-icon>
+                        <span class="text-base font-bold uppercase tracking-tight">Registro de Anticipos</span>
+                    </div>
+                    <div class="overflow-x-auto border rounded-xl bg-white/50">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-amber-50/50 text-[10px] font-bold uppercase text-amber-900/60">
+                                    <th class="px-4 py-2">Fecha Prog.</th>
+                                    <th class="px-4 py-2 text-right">Monto</th>
+                                    <th class="px-4 py-2">Comentarios</th>
+                                    <th class="px-4 py-2 text-center">Registro</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-amber-100/30">
+                                <tr *ngFor="let ant of solicitud.anticipos">
+                                    <td class="px-4 py-2 font-bold">{{ ant.fechaProgramada | date:'dd/MM/yyyy' }}</td>
+                                    <td class="px-4 py-2 text-right font-black text-amber-700">{{ ant.monto | currency:solicitud.moneda }}</td>
+                                    <td class="px-4 py-2 italic text-gray-600">{{ ant.comentarios || '-' }}</td>
+                                    <td class="px-4 py-2 text-center text-[10px] text-gray-400 font-medium">{{ ant.fechaRegistro | date:'dd/MM HH:mm' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Observations & Files -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Observations -->
@@ -336,7 +368,8 @@ export class SolicitudDetalleDialogComponent implements OnInit {
                 banco: res.solicitud.banco || selectedProv?.banco || '',
                 cuenta: res.solicitud.cuenta || selectedProv?.cuenta || '',
                 clabe: res.solicitud.clabe || selectedProv?.clabe || '',
-                datosFiscales: res.consolidado?.datosFiscales || res.solicitud?.datosFacturaContpaqi
+                datosFiscales: res.consolidado?.datosFiscales || res.solicitud?.datosFacturaContpaqi,
+                totalAnticipado: (res.solicitud.anticipos || []).reduce((acc, a) => acc + (a.monto || 0), 0)
             } as any;
             this.usuarios = res.users || [];
             this.loadFiles();

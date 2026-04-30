@@ -222,6 +222,37 @@
                             </mat-form-field>
                         </div>
 
+                        <!-- Panel 3.1: Anticipos (Sólo lectura en edición) -->
+                        <div *ngIf="isEdit && anticipos && anticipos.length > 0"
+                            class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-amber-50/30 dark:bg-amber-900/10 rounded-2xl border border-amber-100/50 gap-2">
+                            <h3 class="text-sm font-extrabold text-amber-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+                                Anticipos Registrados
+                            </h3>
+                            <div class="overflow-x-auto border rounded-xl bg-white/50">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr class="bg-amber-100/50 text-[10px] font-bold uppercase text-amber-900/60">
+                                            <th class="px-4 py-2">Fecha Prog.</th>
+                                            <th class="px-4 py-2 text-right">Monto</th>
+                                            <th class="px-4 py-2">Comentarios</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-amber-100/20">
+                                        <tr *ngFor="let ant of anticipos">
+                                            <td class="px-4 py-2 font-bold">{{ ant.fechaProgramada | date:'dd/MM/yyyy' }}</td>
+                                            <td class="px-4 py-2 text-right font-black text-amber-700">
+                                                {{ ant.monto | currency:solicitudForm.get('moneda').value }}
+                                            </td>
+                                            <td class="px-4 py-2 italic text-gray-600 truncate max-w-[150px]" [matTooltip]="ant.comentarios">
+                                                {{ ant.comentarios || '-' }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- Panel 4: Validación y Control de Aprobación -->
                         <div
                             class="relative overflow-hidden p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 group transition-all duration-500 hover:shadow-2xl lg:col-span-1">

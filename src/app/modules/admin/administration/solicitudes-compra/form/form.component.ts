@@ -18,7 +18,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
-import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto, ContpaqiMaterialDto } from '../models/solicitud-compra.types';
+import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto, ContpaqiMaterialDto, AnticipoDto } from '../models/solicitud-compra.types';
 import { ImportarMaterialesDialogComponent } from './importar-materiales-dialog/importar-materiales-dialog.component';
 import { ClientsService } from '../../../catalogs/clients/clients.service';
 import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
@@ -69,6 +69,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     private _bancoSearch$ = new Subject<string>();
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     currentUserId: number = 0;
+    anticipos: AnticipoDto[] = [];
 
     // Select options
     prioridades = ['Urgente', 'Alta', 'Normal', 'Venta Confirmada'];
@@ -558,6 +559,7 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     loadSolicitud(id: number): void {
         this._solicitudCompraService.getPorId(id).subscribe(solicitud => {
+            this.anticipos = solicitud.anticipos || [];
             this.solicitudForm.patchValue(solicitud);
             // CLABE formatting is now handled per provider row
 
