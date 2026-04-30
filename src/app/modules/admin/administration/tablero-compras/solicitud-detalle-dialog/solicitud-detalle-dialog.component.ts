@@ -82,8 +82,19 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                         <span class="font-medium">{{ solicitud.centroCosto }}</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Moneda / Monto</span>
-                        <span class="font-bold text-primary">{{ solicitud.moneda }} {{ solicitud.monto | number:'1.2-2' }}</span>
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Información Financiera</span>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-primary">{{ solicitud.moneda }} {{ solicitud.monto | number:'1.2-2' }} <span class="text-[10px] text-secondary font-normal">(Total)</span></span>
+                            <ng-container *ngIf="solicitud.totalAnticipado > 0">
+                                <span class="text-[11px] font-bold text-amber-600 leading-none mt-1">- {{ solicitud.totalAnticipado | number:'1.2-2' }} <span class="text-[9px] font-normal italic uppercase tracking-tighter">(Anticipos)</span></span>
+                                <div class="flex flex-col border-t mt-1 pt-1">
+                                    <span class="text-sm font-black text-emerald-600 leading-none">
+                                        {{ solicitud.saldoPendiente | number:'1.2-2' }}
+                                    </span>
+                                    <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Saldo Restante</span>
+                                </div>
+                            </ng-container>
+                        </div>
                     </div>
                     <div class="flex flex-col" *ngIf="solicitud.rfc">
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">RFC Proveedor</span>
@@ -224,9 +235,15 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                 <!-- Anticipos Section -->
                 <div class="p-6 bg-amber-50/30 dark:bg-amber-900/5 rounded-2xl border border-amber-100/50" 
                      *ngIf="solicitud.anticipos && solicitud.anticipos.length > 0">
-                    <div class="flex items-center mb-4 text-amber-700 dark:text-amber-400">
-                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:banknotes'"></mat-icon>
-                        <span class="text-base font-bold uppercase tracking-tight">Registro de Anticipos</span>
+                    <div class="flex items-center justify-between mb-4 text-amber-700 dark:text-amber-400">
+                        <div class="flex items-center">
+                            <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:banknotes'"></mat-icon>
+                            <span class="text-base font-bold uppercase tracking-tight">Registro de Anticipos</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-bold uppercase text-secondary leading-none mb-1">Total Anticipado</span>
+                            <span class="text-sm font-black">{{ solicitud.totalAnticipado | currency:solicitud.moneda }}</span>
+                        </div>
                     </div>
                     <div class="overflow-x-auto border rounded-xl bg-white/50">
                         <table class="w-full text-left text-xs border-collapse">
@@ -369,7 +386,8 @@ export class SolicitudDetalleDialogComponent implements OnInit {
                 cuenta: res.solicitud.cuenta || selectedProv?.cuenta || '',
                 clabe: res.solicitud.clabe || selectedProv?.clabe || '',
                 datosFiscales: res.consolidado?.datosFiscales || res.solicitud?.datosFacturaContpaqi,
-                totalAnticipado: (res.solicitud.anticipos || []).reduce((acc, a) => acc + (a.monto || 0), 0)
+                totalAnticipado: (res.solicitud.anticipos || []).reduce((acc, a) => acc + (a.monto || 0), 0),
+                saldoPendiente: (res.solicitud.monto || 0) - (res.solicitud.anticipos || []).reduce((acc, a) => acc + (a.monto || 0), 0)
             } as any;
             this.usuarios = res.users || [];
             this.loadFiles();
