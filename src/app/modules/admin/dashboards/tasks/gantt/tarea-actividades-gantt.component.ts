@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -257,7 +257,8 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
   constructor(
     private _matDialog: MatDialog,
     private _taskService: TaskService,
-    private _usersService: UsersService
+    private _usersService: UsersService,
+    private _cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -268,7 +269,7 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
     fromEvent(window, 'resize')
         .pipe(takeUntil(this._unsubscribeAll))
         .subscribe(() => {
-            this.scrollToToday();
+            this.scrollToTarget();
         });
   }
 
@@ -286,7 +287,7 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
         if (entries[0].isIntersecting) {
             // En cuanto sea visible, intentamos centrarlo
             this._scrollAttemptCount = 0;
-            this.scrollToToday();
+            this.scrollToTarget();
         }
     }, { threshold: 0.1 });
 
@@ -294,9 +295,9 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
         this._intersectionObserver.observe(this.horizontalTimeline.nativeElement);
     }
 
-    // Centrar en "Hoy" al cargar la vista por si acaso
+    // Centrar en el objetivo al cargar la vista por si acaso
     setTimeout(() => {
-        this.scrollToToday();
+        this.scrollToTarget();
     }, 1000);
   }
 
@@ -318,9 +319,14 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
     });
   }
 
-  initTimeline(): void {
-    this.startDate = startOfDay(subDays(new Date(), 30)); // 30 días atrás
-    this.endDate = addDays(this.startDate, 90); // 90 días totales (un trimestre)
+  initTimeline(customStart?: Date, customEnd?: Date): void {
+    if (customStart && customEnd) {
+        this.startDate = startOfDay(customStart);
+        this.endDate = startOfDay(customEnd);
+    } else {
+        this.startDate = startOfDay(subDays(new Date(), 30)); // 30 días atrás por defecto
+        this.endDate = addDays(this.startDate, 90); // 90 días totales (un trimestre)
+    }
     
     this.days = eachDayOfInterval({
       start: this.startDate,
@@ -331,24 +337,74 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
     this.calculateTodayMarker();
   }
 
-  scrollToToday(): void {
-    if (!this.horizontalTimeline || !this.showTodayMarker) return;
+  adjustTimelineRange(): void {
+    if (!this.activities || this.activities.length === 0) {
+        this.initTimeline();
+        return;
+    }
+
+    let minDate = new Date();
+    let maxDate = new Date();
+
+    this.activities.forEach(act => {
+        const start = new Date(act.fechaInicio);
+        const end = new Date(act.fechaFin);
+        if (start < minDate) minDate = start;
+        if (end > maxDate) maxDate = end;
+    });
+
+    // Aseguramos que "Hoy" esté incluido también
+    const today = new Date();
+    if (today < minDate) minDate = today;
+    if (today > maxDate) maxDate = today;
+
+    // Añadir margen (15 días antes y 30 días después para planificación)
+    const finalStart = subDays(minDate, 15);
+    const finalEnd = addDays(maxDate, 30);
+    
+    this.initTimeline(finalStart, finalEnd);
+    this._cdr.detectChanges();
+  }
+
+  scrollToTarget(): void {
+    if (!this.horizontalTimeline) return;
 
     const element = this.horizontalTimeline.nativeElement;
     
     // Si el elemento no tiene ancho todavía (está oculto o en medio de renderizado)
-    if (element.scrollWidth <= element.clientWidth && this._scrollAttemptCount < 5) {
+    // Usamos un margen de seguridad más amplio para detectar que el contenido ha cargado
+    if (element.scrollWidth <= element.clientWidth && this._scrollAttemptCount < 15) {
         this._scrollAttemptCount++;
-        setTimeout(() => this.scrollToToday(), 200);
+        setTimeout(() => this.scrollToTarget(), 200);
         return;
     }
 
-    // Situamos "Hoy" al inicio (borde izquierdo)
-    const scrollPosition = this.todayPosition;
+    // Reiniciar contador al tener éxito
+    this._scrollAttemptCount = 0;
+
+    // Determinamos la posición objetivo
+    let targetPos = 0;
+
+    if (this.activities && this.activities.length > 0) {
+        // Prioridad 1: Fecha de fin de la última actividad
+        const lastDate = this.activities.reduce((latest, act) => {
+            const currentEnd = new Date(act.fechaFin);
+            return currentEnd > latest ? currentEnd : latest;
+        }, new Date(0));
+
+        if (lastDate.getTime() > 0) {
+            const diff = differenceInDays(startOfDay(lastDate), this.startDate);
+            // Posicionamos un poco antes del final para que se vea la barra
+            targetPos = (diff - 4) * this.dayWidth;
+        }
+    } else if (this.showTodayMarker) {
+        // Prioridad 2: Hoy
+        targetPos = this.todayPosition;
+    }
     
     element.scrollTo({
-        left: Math.max(0, scrollPosition),
-        behavior: 'auto'
+        left: Math.max(0, targetPos),
+        behavior: 'smooth'
     });
   }
 
@@ -372,8 +428,9 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
     this._taskService.getActividades(this.tareaId).subscribe({
       next: (res) => {
         this.activities = [...(res || [])];
-        // Forzar scroll después de cargar datos
-        setTimeout(() => this.scrollToToday(), 100);
+        this.adjustTimelineRange();
+        // Forzar scroll después de cargar datos y ajustar rango
+        setTimeout(() => this.scrollToTarget(), 150);
       },
       error: () => {
         this.activities = [

@@ -52,6 +52,11 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 import { TaskChatComponent } from '../task-chat/task-chat.component';
 import { TareaActividadesGanttComponent } from '../gantt/tarea-actividades-gantt.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ImagePreviewDialogComponent } from '../task-media-dialog/task-media-dialog-viewer.component';
+import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
+import { environment } from 'environments/environment';
+import { differenceInDays as diffInDays } from 'date-fns';
 
 @Component({
     selector: 'app-task-form-dialog',
@@ -94,8 +99,12 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     // ============================
     tareaId!: number;
     files: any[] = [];
+    pendingFiles: any[] = []; // Archivos seleccionados antes de crear la tarea (con previewUrl si es imagen)
     selectedFile: File | null = null;
     categoriaArchivo: string = '';
+
+    onlyOfficeDocsUrl: any = environment.apiOnlyOffice;
+    onlyOfficeApiUrl: any = `${environment.apiUrl}/Tareas`;
 
 
     constructor(
@@ -106,6 +115,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         private _userService: UserService,
         private _notificationService: ChatNotificationService,
         private _sanitizer: DomSanitizer,
+        private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: { id?: number, readOnly?: boolean } | null
     ) {
         this.form = this.fb.group({
@@ -272,10 +282,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         } else {
             this.taskService.createTask(task).subscribe({
                 next: (id: number) => {
-                    this.loading = false;
                     this.tareaId = id;
-                    this.loadFiles();
-                    this.dialogRef.close('refresh');
+                    
+                    // Si hay archivos pendientes, los subimos ahora que tenemos ID
+                    if (this.pendingFiles.length > 0) {
+                        this.uploadPendingFiles(id);
+                    } else {
+                        this.loading = false;
+                        this.dialogRef.close('refresh');
+                    }
                 },
                 error: (err) => {
                     this.loading = false;
@@ -283,6 +298,37 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 }
             });
         }
+    }
+
+    private uploadPendingFiles(id: number): void {
+        let uploadedCount = 0;
+        const total = this.pendingFiles.length;
+
+        this.pendingFiles.forEach(pending => {
+            const formData = new FormData();
+            formData.append('tareaId', id.toString());
+            formData.append('categoria', 'General');
+            formData.append('archivo', pending.file);
+
+            this.taskService.uploadFile(formData).subscribe({
+                next: () => {
+                    uploadedCount++;
+                    if (uploadedCount === total) {
+                        this.loading = false;
+                        this.pendingFiles = [];
+                        this.dialogRef.close('refresh');
+                    }
+                },
+                error: () => {
+                    uploadedCount++;
+                    if (uploadedCount === total) {
+                        this.loading = false;
+                        this.pendingFiles = [];
+                        this.dialogRef.close('refresh');
+                    }
+                }
+            });
+        });
     }
 
 
@@ -313,28 +359,163 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
     onFileSelected(event: any): void {
         const files: FileList = event.target.files;
-        if (!files?.length || !this.tareaId) return;
+        if (!files?.length) return;
 
         Array.from(files).forEach(file => {
-            const formData = new FormData();
-            formData.append('tareaId', this.tareaId.toString());
-            formData.append('categoria', 'General'); // 👈 fija o dinámica
-            formData.append('archivo', file);
+            if (this.tareaId) {
+                // Subida inmediata (Edición)
+                const formData = new FormData();
+                formData.append('tareaId', this.tareaId.toString());
+                formData.append('categoria', 'General');
+                formData.append('archivo', file);
 
-            this.taskService.uploadFile(formData).subscribe({
-                next: () => {
-                    this.loadFiles();
-                    this._notificationService.showSuccess('Archivo subido', `Se ha adjuntado "${file.name}" correctamente.`);
-                },
-                error: err => {
-                    console.error('Error al subir archivo', err);
-                    this._notificationService.showError('Error de carga', `No se pudo subir el archivo "${file.name}".`);
+                this.taskService.uploadFile(formData).subscribe({
+                    next: () => {
+                        this.loadFiles();
+                        this._notificationService.showSuccess('Archivo subido', `Se ha adjuntado "${file.name}" correctamente.`);
+                    },
+                    error: err => {
+                        console.error('Error al subir archivo', err);
+                        this._notificationService.showError('Error de carga', `No se pudo subir el archivo "${file.name}".`);
+                    }
+                });
+            } else {
+                // Guardar en pendientes (Creación)
+                const extension = file.name.split('.').pop()?.toLowerCase() || '';
+                let previewUrl = null;
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
+                    previewUrl = URL.createObjectURL(file);
                 }
-            });
+
+                this.pendingFiles.push({
+                    file,
+                    previewUrl,
+                    name: file.name
+                });
+                this._notificationService.showInfo('Archivo preparado', `"${file.name}" se subirá al guardar la tarea.`);
+            }
         });
 
         // Reset input para permitir subir el mismo archivo otra vez
         event.target.value = '';
+    }
+
+    removePendingFile(index: number): void {
+        const pending = this.pendingFiles[index];
+        if (pending.previewUrl) {
+            URL.revokeObjectURL(pending.previewUrl);
+        }
+        this.pendingFiles.splice(index, 1);
+    }
+
+    abrirArchivo(file: any): void {
+        const fileExtension = file.nombreArchivo.split('.').pop()?.toLowerCase() || '';
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'pdf'];
+        const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+
+        if (imageExtensions.includes(fileExtension)) {
+            this.verImagen(file, fileExtension);
+        } else if (docExtensions.includes(fileExtension)) {
+            this.editarDocumento(file, fileExtension);
+        } else {
+            this.download(file);
+        }
+    }
+
+    verImagen(file: any, extension: string): void {
+        this.taskService.downloadFile(this.tareaId, file.categoria, file.nombreArchivo)
+            .subscribe({
+                next: (resp) => {
+                    if (resp && resp.data) {
+                        const isPdf = extension === 'pdf';
+                        let fileData: any;
+
+                        if (isPdf) {
+                            const binaryString = window.atob(resp.data);
+                            const len = binaryString.length;
+                            const bytes = new Uint8Array(len);
+                            for (let i = 0; i < len; i++) {
+                                bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            fileData = bytes;
+                        } else {
+                            fileData = `data:image/${extension};base64,${resp.data}`;
+                        }
+
+                        this.dialog.open(ImagePreviewDialogComponent, {
+                            data: {
+                                url: fileData,
+                                name: file.nombreArchivo,
+                                isPdf: isPdf
+                            },
+                            panelClass: 'bg-transparent',
+                            maxWidth: isPdf ? '95vw' : '90vw',
+                            width: isPdf ? '1200px' : 'auto',
+                            backdropClass: ['bg-black', 'bg-opacity-80']
+                        });
+                    }
+                },
+                error: (err) => {
+                    console.error('Error al cargar archivo:', err);
+                }
+            });
+    }
+
+    editarDocumento(archivo: any, fileExtension: string): void {
+        const documentType = this.getDocumentType(fileExtension);
+        if (!documentType) return;
+
+        const safeFileName = archivo.nombreArchivo
+            .replace(/[^a-zA-Z0-9_.-]/g, "__")
+            .replace(/\.(?=[^\.]+$)/, "--");
+
+        const userID = JSON.parse(localStorage.getItem('userInformation')).usuario.id;
+
+        this.taskService.getToken(this.tareaId, archivo.categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
+            if (tokenResponse && tokenResponse.token) {
+                this.dialog.open(OnlyOfficeEditorComponent, {
+                    width: '90vw',
+                    height: '90vh',
+                    data: {
+                        documentServerUrl: this.onlyOfficeDocsUrl,
+                        editorConfig: {
+                            document: {
+                                fileType: fileExtension,
+                                key: `${archivo.id || '0'}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
+                                title: archivo.nombreArchivo,
+                                url: `${this.onlyOfficeApiUrl}/editfileTarea?tareaId=${this.tareaId}&categoria=${archivo.categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+                            },
+                            documentType: documentType,
+                            editorConfig: {
+                                callbackUrl: `${this.onlyOfficeApiUrl}/callbackTarea`
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    getDocumentType(ext: string): string | null {
+        if (['doc', 'docx', 'rtf', 'txt'].includes(ext)) return 'word';
+        if (['xls', 'xlsx', 'csv'].includes(ext)) return 'cell';
+        if (['ppt', 'pptx'].includes(ext)) return 'slide';
+        return null;
+    }
+
+    previsualizarPendiente(pending: any): void {
+        if (!pending.previewUrl) return;
+        
+        this.dialog.open(ImagePreviewDialogComponent, {
+            data: {
+                url: pending.previewUrl,
+                name: pending.name,
+                isPdf: false
+            },
+            panelClass: 'bg-transparent',
+            maxWidth: '90vw',
+            backdropClass: ['bg-black', 'bg-opacity-80']
+        });
     }
 
 

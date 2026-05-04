@@ -494,12 +494,18 @@
                           {{ unreadCounts.get(task.id) }}
                         </div>
                       </div>
+                      <button mat-icon-button class="icon-size-7 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                        matTooltip="Visualizar Tarea" (click)="openTaskDialog(task.id, true)">
+                        <mat-icon class="icon-size-4" svgIcon="heroicons_solid:eye"></mat-icon>
+                      </button>
                       <button mat-icon-button class="icon-size-7 text-primary hover:bg-primary/10"
-                        matTooltip="Editar Tarea" (click)="openTaskDialog(task.id)"><mat-icon class="icon-size-4"
-                          svgIcon="heroicons_solid:pencil"></mat-icon></button>
+                        matTooltip="Editar Tarea" (click)="openTaskDialog(task.id)">
+                        <mat-icon class="icon-size-4" svgIcon="heroicons_solid:pencil"></mat-icon>
+                      </button>
                       <button mat-icon-button class="icon-size-7 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
-                        matTooltip="Eliminar Tarea" (click)="deleteTask(task.id)"><mat-icon class="icon-size-4"
-                          svgIcon="heroicons_solid:trash"></mat-icon></button>
+                        matTooltip="Eliminar Tarea" (click)="deleteTask(task.id)">
+                        <mat-icon class="icon-size-4" svgIcon="heroicons_solid:trash"></mat-icon>
+                      </button>
                     </div>
                   </td>
                 </ng-container>
@@ -538,6 +544,9 @@
                     <div class="flex items-center gap-1" (click)="$event.stopPropagation()">
                       <button mat-icon-button class="icon-size-7 text-green-500" (click)="openChat(task)">
                         <mat-icon class="icon-size-4" svgIcon="heroicons_solid:chat-bubble-left-right"></mat-icon>
+                      </button>
+                      <button mat-icon-button class="icon-size-7 text-blue-500" (click)="openTaskDialog(task.id, true)">
+                        <mat-icon class="icon-size-4" svgIcon="heroicons_solid:eye"></mat-icon>
                       </button>
                       <button mat-icon-button class="icon-size-7 text-primary" (click)="openTaskDialog(task.id)">
                         <mat-icon class="icon-size-4" svgIcon="heroicons_solid:pencil"></mat-icon>

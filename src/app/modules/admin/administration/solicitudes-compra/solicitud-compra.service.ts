@@ -142,7 +142,8 @@ export class SolicitudCompraService {
     }
 
     descargarArchivo(id: number, nombreArchivo: string): Observable<Blob> {
-        return this._httpClient.get<any>(`${this.apiUrl}/${id}/archivos/${nombreArchivo}`).pipe(
+        const nombreCodificado = encodeURIComponent(nombreArchivo);
+        return this._httpClient.get<any>(`${this.apiUrl}/${id}/archivos/${nombreCodificado}`).pipe(
             map(response => {
                 const base64Content = response.data;
                 const byteCharacters = atob(base64Content);
@@ -163,7 +164,8 @@ export class SolicitudCompraService {
     }
 
     eliminarArchivo(id: number, nombreArchivo: string): Observable<any> {
-        return this._httpClient.delete(`${this.apiUrl}/${id}/archivos/${nombreArchivo}`);
+        const nombreCodificado = encodeURIComponent(nombreArchivo);
+        return this._httpClient.delete(`${this.apiUrl}/${id}/archivos/${nombreCodificado}`);
     }
 
     getDetalleConsolidado(idSolicitud: number): Observable<any> {
