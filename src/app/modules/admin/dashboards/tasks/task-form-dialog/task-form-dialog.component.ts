@@ -43,6 +43,7 @@ import {
     isToday
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import { User } from 'app/core/user/user.types';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -176,11 +177,17 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         this.flatpickrInstances[controlName] = flatpickr(el, {
             enableTime: true,
             time_24hr: true,
-            dateFormat: 'Y-m-d H:i',
-            defaultDate: this.form.get(controlName)?.value ?? null,
-            onChange: (selectedDates) => {
-                // Actualiza FormControl con la fecha/hora seleccionada
-                this.form.get(controlName)?.setValue(selectedDates[0] ?? null);
+            dateFormat: 'd/m/Y H:i',
+            locale: Spanish,
+            allowInput: false, // Forzamos el uso del calendario para evitar errores de formato manual
+            disableMobile: true,
+            minuteIncrement: 1,
+            defaultDate: this.form.get(controlName)?.value ?? (this.data?.id ? null : new Date()),
+            onChange: (selectedDates, dateStr) => {
+                this.form.get(controlName)?.setValue(dateStr || null);
+            },
+            onClose: (selectedDates, dateStr) => {
+                this.form.get(controlName)?.setValue(dateStr || null);
             }
         });
     }
@@ -191,10 +198,10 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             this.form.patchValue({
                 nombre: task.nombre,
                 comentarios: task.comentarios,
-                fechaInicioEstimada: task.fechaInicioEstimada ? new Date(task.fechaInicioEstimada) : null,
-                fechaFinEstimada: task.fechaFinEstimada ? new Date(task.fechaFinEstimada) : null,
-                fechaInicioReal: task.fechaInicioReal ? new Date(task.fechaInicioReal) : null,
-                fechaFinReal: task.fechaFinReal ? new Date(task.fechaFinReal) : null,
+                fechaInicioEstimada: task.fechaInicioEstimada ? format(new Date(task.fechaInicioEstimada), 'dd/MM/yyyy HH:mm') : null,
+                fechaFinEstimada: task.fechaFinEstimada ? format(new Date(task.fechaFinEstimada), 'dd/MM/yyyy HH:mm') : null,
+                fechaInicioReal: task.fechaInicioReal ? format(new Date(task.fechaInicioReal), 'dd/MM/yyyy HH:mm') : null,
+                fechaFinReal: task.fechaFinReal ? format(new Date(task.fechaFinReal), 'dd/MM/yyyy HH:mm') : null,
                 usuarioIds: task.usuarioIds ?? [],
                 empresa: task.empresa,
                 ubicacion: task.ubicacion,
@@ -243,6 +250,20 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
         const formValue = this.form.value;
 
+        function parseDate(val: any): Date | null {
+            if (!val) return null;
+            if (val instanceof Date) return val;
+            try {
+                // Formato: dd/mm/yyyy hh:mm
+                const parts = val.split(' ');
+                const dateParts = parts[0].split('/');
+                const timeParts = parts[1].split(':');
+                return new Date(+dateParts[2], +dateParts[1] - 1, +dateParts[0], +timeParts[0], +timeParts[1]);
+            } catch (e) {
+                return null;
+            }
+        }
+
         // Función para convertir Date local a ISO string sin aplicar desfase horario
         function toLocalISOString(date: Date | null): string | null {
             if (!date) return null;
@@ -259,10 +280,10 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         // Crear el objeto task con fechas corregidas
         const task = {
             ...formValue,
-            fechaInicioEstimada: toLocalISOString(formValue.fechaInicioEstimada),
-            fechaFinEstimada: toLocalISOString(formValue.fechaFinEstimada),
-            fechaInicioReal: toLocalISOString(formValue.fechaInicioReal),
-            fechaFinReal: toLocalISOString(formValue.fechaFinReal),
+            fechaInicioEstimada: toLocalISOString(parseDate(formValue.fechaInicioEstimada)),
+            fechaFinEstimada: toLocalISOString(parseDate(formValue.fechaFinEstimada)),
+            fechaInicioReal: toLocalISOString(parseDate(formValue.fechaInicioReal)),
+            fechaFinReal: toLocalISOString(parseDate(formValue.fechaFinReal)),
             empresa: formValue.empresa,
             ubicacion: formValue.ubicacion,
             cuadranteId: formValue.cuadranteId

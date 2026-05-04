@@ -366,7 +366,7 @@
                   <td mat-cell *matCellDef="let task"
                     class="border-r border-b dark:border-gray-800 text-center text-[10px] text-secondary px-2 whitespace-nowrap"
                     [style.background-color]="getFillColorByEstatusId(task.estatus)"
-                    [ngStyle]="getColumnWidth('fechaInicioEstimada')">{{ task.fechaInicioEstimada | date: 'dd MMM' }}
+                    [ngStyle]="getColumnWidth('fechaInicioEstimada')">{{ task.fechaInicioEstimada | date: 'dd/MM HH:mm' }}
                   </td>
                 </ng-container>
 
@@ -383,7 +383,7 @@
                   <td mat-cell *matCellDef="let task"
                     class="border-r border-b dark:border-gray-800 text-center text-[10px] text-secondary px-2 whitespace-nowrap"
                     [style.background-color]="getFillColorByEstatusId(task.estatus)"
-                    [ngStyle]="getColumnWidth('fechaFinEstimada')">{{ task.fechaFinEstimada | date: 'dd MMM' }}</td>
+                    [ngStyle]="getColumnWidth('fechaFinEstimada')">{{ task.fechaFinEstimada | date: 'dd/MM HH:mm' }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="comentarios">
@@ -599,8 +599,7 @@
                     <div class="flex items-center gap-3 text-secondary">
                       <div class="flex items-center gap-1">
                         <mat-icon class="icon-size-3" svgIcon="heroicons_mini:calendar"></mat-icon>
-                        <span class="text-[9px] font-bold">{{ (task.fechaFinEstimada | date: 'dd/MM') || 'Sin fecha'
-                          }}</span>
+                        <span class="text-[9px] font-bold">{{ (task.fechaFinEstimada | date: 'dd/MM HH:mm') || 'Sin fecha' }}</span>
                       </div>
                       <div class="flex items-center gap-1" *ngIf="task.ubicacion">
                         <mat-icon class="icon-size-3" svgIcon="heroicons_mini:map-pin"></mat-icon>

@@ -65,27 +65,23 @@
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
                                 <mat-form-field appearance="outline" class="fuse-mat-dense">
                                     <mat-label>In. Est.</mat-label>
-                                    <input matInput [matDatepicker]="pickerIE" formControlName="fechaInicioEstimada" />
-                                    <mat-datepicker-toggle matSuffix [for]="pickerIE"></mat-datepicker-toggle>
-                                    <mat-datepicker #pickerIE></mat-datepicker>
+                                    <input matInput id="fechaInicioEstimada" formControlName="fechaInicioEstimada" placeholder="dd/mm/aaaa hh:mm" class="flatpickr-input-custom" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">calendar_today</mat-icon>
                                 </mat-form-field>
                                 <mat-form-field appearance="outline" class="fuse-mat-dense">
                                     <mat-label>Fin Est.</mat-label>
-                                    <input matInput [matDatepicker]="pickerFE" formControlName="fechaFinEstimada" />
-                                    <mat-datepicker-toggle matSuffix [for]="pickerFE"></mat-datepicker-toggle>
-                                    <mat-datepicker #pickerFE></mat-datepicker>
+                                    <input matInput id="fechaFinEstimada" formControlName="fechaFinEstimada" placeholder="dd/mm/aaaa hh:mm" class="flatpickr-input-custom" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">calendar_today</mat-icon>
                                 </mat-form-field>
                                 <mat-form-field appearance="outline" class="fuse-mat-dense">
                                     <mat-label>In. Real</mat-label>
-                                    <input matInput [matDatepicker]="pickerIR" formControlName="fechaInicioReal" />
-                                    <mat-datepicker-toggle matSuffix [for]="pickerIR"></mat-datepicker-toggle>
-                                    <mat-datepicker #pickerIR></mat-datepicker>
+                                    <input matInput id="fechaInicioReal" formControlName="fechaInicioReal" placeholder="dd/mm/aaaa hh:mm" class="flatpickr-input-custom" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">event_available</mat-icon>
                                 </mat-form-field>
                                 <mat-form-field appearance="outline" class="fuse-mat-dense">
                                     <mat-label>Fin Real</mat-label>
-                                    <input matInput [matDatepicker]="pickerFR" formControlName="fechaFinReal" />
-                                    <mat-datepicker-toggle matSuffix [for]="pickerFR"></mat-datepicker-toggle>
-                                    <mat-datepicker #pickerFR></mat-datepicker>
+                                    <input matInput id="fechaFinReal" formControlName="fechaFinReal" placeholder="dd/mm/aaaa hh:mm" class="flatpickr-input-custom" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">event_available</mat-icon>
                                 </mat-form-field>
                             </div>
 

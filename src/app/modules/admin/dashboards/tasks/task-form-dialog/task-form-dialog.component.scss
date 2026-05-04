@@ -201,3 +201,29 @@ mat-form-field {
 }
 
 
+// Estilos para Flatpickr dentro de MatFormField
+.flatpickr-input-custom {
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+    padding-bottom: 2px !important;
+}
+
+// Estilos globales para el popup de Flatpickr (Material Theme)
+::ng-deep .flatpickr-calendar {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    font-family: inherit !important;
+    
+    &.hasTime .flatpickr-time {
+        border-top: 1px solid #e2e8f0 !important;
+        padding: 5px 0 !important;
+    }
+
+    .flatpickr-day.selected {
+        background: #4F46E5 !important;
+        border-color: #4F46E5 !important;
+    }
+}
+
+
