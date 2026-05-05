@@ -399,8 +399,9 @@
                   <td mat-cell *matCellDef="let task"
                     class="border-r border-b dark:border-gray-800 px-2 truncate text-[11px] text-secondary opacity-60 whitespace-nowrap"
                     [style.background-color]="getFillColorByEstatusId(task.estatus)"
-                    [ngStyle]="getColumnWidth('comentarios')" [matTooltip]="task.comentarios">{{ task.comentarios || '-'
-                    }}</td>
+                    [ngStyle]="getColumnWidth('comentarios')" [matTooltip]="stripHtml(task.comentarios)">
+                    <div class="truncate" [innerHTML]="task.comentarios || '-'"></div>
+                  </td>
                 </ng-container>
                 <ng-container matColumnDef="empresa">
                   <th mat-header-cell *matHeaderCellDef [appResizeColumn]="'empresa'"

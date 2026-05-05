@@ -116,78 +116,109 @@
                             </mat-form-field>
 
                             <!-- Fila 6: Comentarios -->
-                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-4">
-                                <mat-label>Comentarios</mat-label>
-                                <textarea matInput rows="2" cdkTextareaAutosize formControlName="comentarios"></textarea>
-                            </mat-form-field>
-
-                            <!-- Secciones de Soporte -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t dark:border-gray-800">
-                                <div class="links-section">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <h3 class="text-xs font-bold uppercase tracking-wider text-secondary">Links Externos</h3>
-                                        <button mat-icon-button type="button" size="small" (click)="addLink()" [disabled]="data?.readOnly" class="w-7 h-7 bg-primary/10 text-primary">
+                            <!-- Fila 6: Comentarios con Rich Text -->
+                            <div class="flex flex-col mb-4">
+                                <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">Comentarios</span>
+                                <quill-editor [modules]="quillModules" formControlName="comentarios"
+                                    class="bg-card rounded border dark:border-gray-700 min-h-[120px]"
+                                    placeholder="Añade detalles, notas o instrucciones...">
+                                </quill-editor>
+                            </div>
+                            
+                            <!-- Secciones de Soporte: Links y Archivos -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 mt-10 border-t-2 dark:border-gray-800">
+                                
+                                <!-- Sección de Links -->
+                                <div class="support-section-card">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-2">
+                                            <mat-icon class="icon-size-5 text-primary" svgIcon="heroicons_outline:link"></mat-icon>
+                                            <h3 class="text-sm font-bold uppercase tracking-wider text-main">Links Externos</h3>
+                                        </div>
+                                        <button mat-mini-fab color="primary" type="button" (click)="addLink()" [disabled]="data?.readOnly" class="w-8 h-8">
                                             <mat-icon class="icon-size-4">add</mat-icon>
                                         </button>
                                     </div>
-                                    <div formArrayName="links" class="max-h-32 overflow-y-auto pr-1">
-                                        <div *ngFor="let ctrl of links.controls; let i = index" class="flex items-center gap-2 mb-2">
-                                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                                    
+                                    <div formArrayName="links" class="max-h-48 overflow-y-auto pr-1">
+                                        <div *ngFor="let ctrl of links.controls; let i = index" class="link-item flex items-center gap-2">
+                                            <mat-form-field appearance="fill" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                                                <mat-icon matPrefix class="icon-size-4 text-hint mr-2" svgIcon="heroicons_mini:globe-alt"></mat-icon>
                                                 <input matInput [formControlName]="i" placeholder="https://..." class="text-xs" />
                                             </mat-form-field>
-                                            <button mat-icon-button color="warn" (click)="removeLink(i)" class="w-7 h-7" [disabled]="data?.readOnly">
+                                            <button mat-icon-button color="warn" (click)="removeLink(i)" class="w-8 h-8" [disabled]="data?.readOnly">
                                                 <mat-icon class="icon-size-4">delete</mat-icon>
                                             </button>
+                                        </div>
+                                        <div *ngIf="links.length === 0" class="text-xs text-secondary italic text-center py-4 bg-gray-50/50 rounded-lg border border-dashed">
+                                            No hay links asociados
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="files-section">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <h3 class="text-xs font-bold uppercase tracking-wider text-secondary">Archivos Adjuntos</h3>
-                                        <button mat-icon-button color="primary" size="small" (click)="fileInput.click()" [disabled]="data?.readOnly" class="w-7 h-7 bg-primary/10">
+                                <!-- Sección de Archivos -->
+                                <div class="support-section-card">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-2">
+                                            <mat-icon class="icon-size-5 text-primary" svgIcon="heroicons_outline:paper-clip"></mat-icon>
+                                            <h3 class="text-sm font-bold uppercase tracking-wider text-main">Archivos Adjuntos</h3>
+                                        </div>
+                                        <button mat-mini-fab color="primary" type="button" (click)="fileInput.click()" [disabled]="data?.readOnly" class="w-8 h-8">
                                             <mat-icon class="icon-size-4">attach_file</mat-icon>
                                         </button>
                                         <input type="file" #fileInput multiple hidden (change)="onFileSelected($event)" />
                                     </div>
 
-                                    <!-- Lista de Archivos (Subidos y Pendientes) -->
-                                    <div *ngIf="files?.length || pendingFiles.length; else noFiles" class="max-h-32 overflow-y-auto pr-1">
-                                        <!-- Archivos Pendientes (Solo creación) -->
-                                        <div *ngFor="let pending of pendingFiles; let i = index" class="p-2 mb-1 border border-primary/30 rounded-lg flex items-center justify-between bg-primary/5 dark:bg-primary/10">
-                                            <div class="flex items-center gap-2 overflow-hidden">
-                                                <mat-icon class="icon-size-4 text-primary">upload_file</mat-icon>
+                                    <div class="max-h-64 overflow-y-auto pr-1">
+                                        <!-- Archivos Pendientes (Por subir) -->
+                                        <div *ngFor="let pending of pendingFiles; let i = index" class="file-item flex items-center justify-between border-primary/30 bg-primary/5">
+                                            <div class="flex items-center gap-3 overflow-hidden">
+                                                <div class="w-8 h-8 rounded bg-primary/20 flex items-center justify-center shrink-0">
+                                                    <mat-icon class="icon-size-4 text-primary animate-pulse">upload_file</mat-icon>
+                                                </div>
                                                 <div class="flex flex-col overflow-hidden">
-                                                    <span class="text-[10px] font-bold text-primary leading-none">PENDIENTE</span>
-                                                    <span class="text-[11px] font-medium truncate w-32" title="{{ pending.name }}">{{ pending.name }}</span>
+                                                    <span class="text-[9px] font-bold text-primary uppercase">PENDIENTE</span>
+                                                    <span class="text-[11px] font-semibold truncate w-32 text-main" title="{{ pending.name }}">{{ pending.name }}</span>
                                                 </div>
                                             </div>
-                                            <div class="flex items-center">
-                                                <button *ngIf="pending.previewUrl" mat-icon-button class="w-7 h-7 text-primary" (click)="previsualizarPendiente(pending)" matTooltip="Previsualizar">
+                                            <div class="flex items-center gap-1">
+                                                <button *ngIf="pending.previewUrl" mat-icon-button class="w-8 h-8 text-primary" (click)="previsualizarPendiente(pending)" matTooltip="Previsualizar">
                                                     <mat-icon class="icon-size-4">visibility</mat-icon>
                                                 </button>
-                                                <button mat-icon-button class="w-7 h-7 text-rose-500" (click)="removePendingFile(i)" [disabled]="data?.readOnly">
+                                                <button mat-icon-button class="w-8 h-8 text-rose-500" (click)="removePendingFile(i)" [disabled]="data?.readOnly">
                                                     <mat-icon class="icon-size-4">close</mat-icon>
                                                 </button>
                                             </div>
                                         </div>
 
                                         <!-- Archivos ya subidos -->
-                                        <div *ngFor="let file of files" class="p-2 mb-1 border rounded-lg flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
-                                            <div class="flex items-center gap-2 overflow-hidden">
-                                                <mat-icon class="icon-size-4 text-primary">insert_drive_file</mat-icon>
-                                                <span class="text-[11px] font-medium truncate w-32" title="{{ file.nombreArchivo }}">{{ file.nombreArchivo }}</span>
+                                        <div *ngFor="let file of files" class="file-item flex items-center justify-between">
+                                            <div class="flex items-center gap-3 overflow-hidden">
+                                                <div class="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                                                    <mat-icon class="icon-size-4 text-secondary">insert_drive_file</mat-icon>
+                                                </div>
+                                                <div class="flex flex-col overflow-hidden">
+                                                    <span class="text-[11px] font-semibold truncate w-32 text-main" title="{{ file.nombreArchivo }}">{{ file.nombreArchivo }}</span>
+                                                    <span class="text-[9px] text-secondary uppercase font-bold">{{ file.tipo || 'Archivo' }}</span>
+                                                </div>
                                             </div>
-                                            <div class="flex items-center">
-                                                <button mat-icon-button class="w-7 h-7 text-blue-500" (click)="abrirArchivo(file)" matTooltip="Previsualizar">
+                                            <div class="flex items-center gap-1">
+                                                <button mat-icon-button class="w-8 h-8 text-blue-500" (click)="abrirArchivo(file)" matTooltip="Previsualizar">
                                                     <mat-icon class="icon-size-4">visibility</mat-icon>
                                                 </button>
-                                                <button mat-icon-button class="w-7 h-7" (click)="download(file)"><mat-icon class="icon-size-4 text-secondary">download</mat-icon></button>
-                                                <button mat-icon-button class="w-7 h-7" color="warn" (click)="remove(file)" [disabled]="data?.readOnly"><mat-icon class="icon-size-4 text-delete_outline">delete_outline</mat-icon></button>
+                                                <button mat-icon-button class="w-8 h-8 text-secondary" (click)="download(file)" matTooltip="Descargar">
+                                                    <mat-icon class="icon-size-4">download</mat-icon>
+                                                </button>
+                                                <button mat-icon-button color="warn" (click)="remove(file)" [disabled]="data?.readOnly" matTooltip="Eliminar">
+                                                    <mat-icon class="icon-size-4">delete</mat-icon>
+                                                </button>
                                             </div>
                                         </div>
+
+                                        <div *ngIf="files.length === 0 && pendingFiles.length === 0" class="text-xs text-secondary italic text-center py-6 bg-slate-50/30 dark:bg-slate-900/10 rounded-xl border border-dashed">
+                                            No hay archivos asociados
+                                        </div>
                                     </div>
-                                    <ng-template #noFiles><div class="text-[11px] text-secondary italic text-center py-4 bg-slate-50/30 dark:bg-slate-900/20 rounded-lg">No hay archivos aún.</div></ng-template>
                                 </div>
                             </div>
                         </div>

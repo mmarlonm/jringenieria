@@ -50,6 +50,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
+import { QuillModule } from 'ngx-quill';
 
 import { TaskChatComponent } from '../task-chat/task-chat.component';
 import { TareaActividadesGanttComponent } from '../gantt/tarea-actividades-gantt.component';
@@ -77,7 +78,8 @@ import { differenceInDays as diffInDays } from 'date-fns';
         MatTabsModule,
         MatMenuModule,
         TaskChatComponent,
-        TareaActividadesGanttComponent
+        TareaActividadesGanttComponent,
+        QuillModule
     ]
 })
 export class TaskFormDialogComponent implements OnInit, AfterViewInit {
@@ -107,6 +109,18 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     onlyOfficeDocsUrl: any = environment.apiOnlyOffice;
     onlyOfficeApiUrl: any = `${environment.apiUrl}/Tareas`;
 
+
+    // Configuración de Quill enriquecida
+    quillModules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }], // Resaltados y colores
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            [{ 'align': [] }],
+            ['clean']
+        ]
+    };
 
     constructor(
         private dialogRef: MatDialogRef<TaskFormDialogComponent>,

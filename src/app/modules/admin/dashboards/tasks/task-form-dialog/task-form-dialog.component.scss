@@ -201,6 +201,7 @@ mat-form-field {
 }
 
 
+
 // Estilos para Flatpickr dentro de MatFormField
 .flatpickr-input-custom {
     font-size: 13px !important;
@@ -224,6 +225,49 @@ mat-form-field {
         background: #4F46E5 !important;
         border-color: #4F46E5 !important;
     }
+}
+
+// Estilos para secciones de Soporte (Links y Archivos)
+.support-section-card {
+    background: rgba(var(--fuse-bg-card-rgb), 0.5);
+    border: 1px solid rgba(var(--fuse-border-rgb), 0.5);
+    border-radius: 16px;
+    padding: 16px;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        border-color: var(--fuse-primary-500);
+        box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+    }
+}
+
+.link-item, .file-item {
+    background: var(--fuse-bg-default);
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--fuse-border);
+    margin-bottom: 8px;
+    transition: transform 0.1s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        border-color: var(--fuse-primary-300);
+    }
+}
+
+// Ajuste para el editor Quill para que no se vea "apretado"
+::ng-deep .ql-container {
+    font-family: inherit !important;
+    font-size: 14px !important;
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+}
+
+::ng-deep .ql-toolbar {
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    background: var(--fuse-bg-default) !important;
+    border-bottom: none !important;
 }
 
 

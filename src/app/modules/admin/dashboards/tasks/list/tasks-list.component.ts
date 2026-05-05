@@ -1433,4 +1433,13 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             setTimeout(() => { this.updateFlag = true; }, 100);
         }
     }
+
+    /**
+     * Elimina etiquetas HTML de un string
+     */
+    stripHtml(html: string): string {
+        if (!html) return '';
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return doc.body.textContent || "";
+    }
 }
