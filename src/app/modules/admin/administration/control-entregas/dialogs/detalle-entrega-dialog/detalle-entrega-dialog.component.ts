@@ -57,9 +57,10 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
         private _controlEntregasService: ControlEntregasService,
         private _dialog: MatDialog
     ) {
-        this.folio = data.folio;
-        this.tempFolio = data.folio;
+        this.folio = data.folio || '';
+        this.tempFolio = data.folio || '';
         this.isReadOnly = data.readOnly || false;
+        this.idFacturaMaestro = 0; // Forzamos 0 para asegurar que el buscador se vea en nuevos
     }
 
     ngOnInit(): void {

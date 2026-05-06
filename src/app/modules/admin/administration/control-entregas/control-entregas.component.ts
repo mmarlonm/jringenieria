@@ -76,7 +76,18 @@ export class ControlEntregasComponent implements OnInit, OnDestroy {
     }
 
     sincronizarNuevo(): void {
-        this.verDetalle('');
+        const dialogRef = this._dialog.open(DetalleEntregaDialogComponent, {
+            data: { folio: '', readOnly: false },
+            width: '100%',
+            maxWidth: '1200px',
+            maxHeight: '90vh',
+            autoFocus: false,
+            panelClass: 'custom-dialog-container'
+        });
+
+        dialogRef.afterClosed().subscribe(() => {
+            this.cargarMaestro();
+        });
     }
 
     verDetalle(folio: string): void {
