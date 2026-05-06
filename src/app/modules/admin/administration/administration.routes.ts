@@ -24,5 +24,9 @@ export default [
     {
         path: 'resumen-compras',
         loadComponent: () => import('./resumen-compras/resumen-compras.component').then(m => m.ResumenComprasComponent)
+    },
+    {
+        path: 'control-entregas',
+        loadChildren: () => import('./control-entregas/control-entregas.routes').then(m => m.default)
     }
 ] as Routes;

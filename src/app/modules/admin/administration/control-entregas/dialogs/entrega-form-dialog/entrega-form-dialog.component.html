@@ -1,0 +1,69 @@
+<div class="flex flex-col max-w-160 w-full overflow-hidden bg-card rounded-2xl shadow-xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between h-16 pl-6 pr-4 bg-[#212529] text-white">
+        <div class="flex items-center">
+            <mat-icon class="text-current" [svgIcon]="'heroicons_outline:shopping-cart'"></mat-icon>
+            <span class="ml-2 text-lg font-semibold tracking-tight">Registrar Entrega Detallada</span>
+        </div>
+        <button mat-icon-button (click)="close()" [tabIndex]="-1">
+            <mat-icon class="text-current" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 sm:p-8 overflow-y-auto">
+        <!-- Info Card -->
+        <div class="flex flex-col p-4 mb-8 bg-gray-50 rounded-xl border border-gray-100">
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Producto / Partida</div>
+            <div class="text-md font-bold text-gray-900 leading-tight mb-4">
+                {{data.material.descripcion}}
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Facturado</span>
+                    <span class="text-lg font-extrabold text-blue-600">{{data.material.cantidadFacturada}}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Entregado</span>
+                    <span class="text-lg font-extrabold text-emerald-600">{{data.material.surtidoAcumulado}}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Faltante</span>
+                    <span class="text-lg font-extrabold text-rose-600">{{data.material.surtidoPendiente}}</span>
+                </div>
+            </div>
+        </div>
+
+        <form [formGroup]="form" class="flex flex-col">
+            <!-- Nueva Cantidad -->
+            <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                <mat-label>Nueva Cantidad a Entregar</mat-label>
+                <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon>
+                <input matInput type="number" formControlName="cantidadAEntregar" placeholder="0.00" autocomplete="off">
+                <mat-error *ngIf="form.get('cantidadAEntregar').hasError('required')">La cantidad es requerida</mat-error>
+                <mat-error *ngIf="form.get('cantidadAEntregar').hasError('min')">Debe ser mayor a 0</mat-error>
+                <mat-error *ngIf="form.get('cantidadAEntregar').hasError('max')">No puede exceder el faltante ({{data.material.surtidoPendiente}})</mat-error>
+            </mat-form-field>
+
+            <!-- Observaciones -->
+            <mat-form-field class="w-full mt-6" [subscriptSizing]="'dynamic'">
+                <mat-label>Observaciones de Almacén</mat-label>
+                <textarea matInput formControlName="observaciones" placeholder="Detalles adicionales sobre la entrega..." rows="3"></textarea>
+            </mat-form-field>
+        </form>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end p-6 bg-gray-50 border-t">
+        <button mat-button (click)="close()">
+            Cancelar
+        </button>
+        <button class="ml-3 px-8 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100" 
+                mat-flat-button 
+                [disabled]="form.invalid"
+                (click)="save()">
+            Confirmar Entrega
+        </button>
+    </div>
+</div>

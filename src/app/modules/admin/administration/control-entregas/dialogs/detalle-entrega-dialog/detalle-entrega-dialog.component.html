@@ -1,0 +1,226 @@
+<div class="flex flex-col w-full max-w-7xl overflow-hidden bg-card rounded-2xl shadow-xl">
+    <!-- Header -->
+    <div class="flex-none flex flex-col p-6 sm:py-8 sm:px-10 border-b bg-white dark:bg-transparent">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-3xl font-extrabold leading-none tracking-tight">
+                    {{ isReadOnly ? 'Visualización de Control' : 'Configuración de Control' }}
+                </div>
+                <div class="text-secondary ml-0.5 font-medium mt-1">
+                    {{ folio ? 'Sincronizado con factura ' + folio : 'Ingrese un folio para iniciar el control físico' }}
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Buscador de Folio (Solo si no hay uno cargado o estamos en modo nuevo) -->
+                <div *ngIf="!idFacturaMaestro && !isReadOnly" class="flex items-center gap-3">
+                    <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-60">
+                        <mat-icon class="icon-size-5 text-secondary" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                        <input matInput 
+                               [(ngModel)]="tempFolio"
+                               (keyup.enter)="sincronizarFolio()"
+                               placeholder="Folio de Factura...">
+                    </mat-form-field>
+                    
+                    <button mat-flat-button 
+                            color="primary" 
+                            (click)="sincronizarFolio()" 
+                            [disabled]="isLoading"
+                            class="h-10 rounded-lg px-6 shadow-sm shadow-primary/20 font-bold uppercase tracking-wider text-xs">
+                        Consultar ERP
+                    </button>
+                </div>
+                
+                <button mat-icon-button (click)="close()" [tabIndex]="-1">
+                    <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-auto overflow-y-auto max-h-[75vh] bg-gray-50/50 p-6 sm:p-10">
+        
+        <!-- 1. SECCIÓN: CONFIGURACIÓN MAESTRA -->
+        <div class="bg-white rounded-2xl shadow-sm border p-8 mb-8 transition-all duration-300">
+            <div class="flex items-center mb-8">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mr-4 shadow-sm border border-indigo-100">
+                    <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                </div>
+                <div>
+                    <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Información de la Factura</h3>
+                    <p class="text-xs text-secondary font-medium tracking-wide uppercase mt-0.5">Encabezado del registro maestro</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Folio -->
+                <div class="flex flex-col">
+                    <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Folio Factura</label>
+                    <mat-form-field class="fuse-mat-no-subscript w-full">
+                        <input matInput [(ngModel)]="folio" [disabled]="true" class="font-extrabold text-indigo-600">
+                    </mat-form-field>
+                </div>
+                <!-- Cliente -->
+                <div class="flex flex-col md:col-span-2">
+                    <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Nombre del Cliente</label>
+                    <mat-form-field class="fuse-mat-no-subscript w-full">
+                        <input matInput [(ngModel)]="nombreCliente" [disabled]="isReadOnly" placeholder="Ej. Juan Perez">
+                    </mat-form-field>
+                </div>
+                <!-- Fecha -->
+                <div class="flex flex-col">
+                    <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Fecha Facturación</label>
+                    <mat-form-field class="fuse-mat-no-subscript w-full">
+                        <input matInput type="date" [(ngModel)]="fechaFacturacion" [disabled]="isReadOnly">
+                    </mat-form-field>
+                </div>
+                <!-- Auditoría / Estado -->
+                <div class="flex flex-col md:col-span-2">
+                    <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Estado del Registro</label>
+                    <div class="flex items-center h-12 px-5 bg-emerald-50/50 text-emerald-700 rounded-lg border border-emerald-100/50">
+                        <mat-icon class="icon-size-4 mr-3 text-emerald-500" [svgIcon]="'heroicons_solid:check-badge'"></mat-icon>
+                        <span class="text-xs font-black uppercase tracking-widest">Sincronizado con ERP CONTPAQi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. SECCIÓN: DETALLE DE PARTIDAS -->
+        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden transition-all duration-300">
+            <div class="px-8 py-6 border-b bg-gray-50/30 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 mr-4 border border-amber-100">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:list-bullet'"></mat-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-gray-900 tracking-tight">Libro de Partidas</h3>
+                        <p class="text-[10px] text-secondary font-bold uppercase tracking-tighter">Control de envíos físicos</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table mat-table [dataSource]="dataSource" class="w-full">
+
+                    <!-- Producto Column -->
+                    <ng-container matColumnDef="producto">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-secondary"> 
+                            Material / Concepto 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5">
+                            <div class="flex flex-col">
+                                <span class="font-extrabold text-gray-800 leading-tight">{{row.descripcion}}</span>
+                                <span class="text-[10px] text-secondary mt-1 font-bold tracking-widest">COD: {{row.codigoProducto}}</span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Total Column -->
+                    <ng-container matColumnDef="cantidadFacturada">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-right text-secondary"> 
+                            Meta (Facturado) 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5 text-right font-black text-gray-400">
+                            {{row.cantidadFacturada}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Enviado Column -->
+                    <ng-container matColumnDef="entregado">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-center text-secondary"> 
+                            Enviadas 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5 text-center">
+                            <div *ngIf="!isReadOnly" class="flex items-center justify-center">
+                                <input type="number" 
+                                       class="w-20 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-center text-xs font-black text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                       [(ngModel)]="row.surtidoAcumulado"
+                                       (ngModelChange)="recalcularDesdeEnviado(row)">
+                            </div>
+                            <span *ngIf="isReadOnly" class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-black text-xs border border-emerald-100">
+                                {{row.surtidoAcumulado}}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Faltante Column -->
+                    <ng-container matColumnDef="saldo">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-right text-secondary"> 
+                            Pendientes 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5 text-right font-black text-sm" [ngClass]="row.surtidoPendiente > 0 ? 'text-rose-500' : 'text-emerald-500'">
+                            {{row.surtidoPendiente}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Estatus Column -->
+                    <ng-container matColumnDef="estatus">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-center text-secondary"> 
+                            Estatus 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5 text-center">
+                            <div class="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm border"
+                                 [ngClass]="getStatusClass(row.status)">
+                                {{row.status}}
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Acciones Column -->
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-center text-secondary"> 
+                            Acciones 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5 text-center">
+                            <div *ngIf="!isReadOnly && idFacturaMaestro > 0" class="flex items-center justify-center gap-2">
+                                <button mat-flat-button 
+                                        color="primary"
+                                        class="h-8 min-w-0 px-3 rounded-lg text-[9px] font-black uppercase tracking-tighter shadow-sm"
+                                        [disabled]="row.surtidoPendiente <= 0"
+                                        (click)="confirmarEnvioRapido(row)">
+                                    <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="'heroicons_outline:truck'"></mat-icon>
+                                    Enviar
+                                </button>
+                            </div>
+                            <span *ngIf="isReadOnly" class="text-[9px] text-gray-300 font-black uppercase tracking-widest">Bloqueado</span>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="['producto', 'cantidadFacturada', 'entregado', 'saldo', 'estatus', 'acciones']" class="bg-gray-50 border-b"></tr>
+                    <tr mat-row *matRowDef="let row; columns: ['producto', 'cantidadFacturada', 'entregado', 'saldo', 'estatus', 'acciones'];" class="hover:bg-gray-50/30 transition-colors"></tr>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="flex items-center justify-end p-6 bg-white border-t gap-4">
+        <button mat-button 
+                (click)="close()"
+                class="h-10 rounded-lg px-8 text-secondary font-bold uppercase tracking-wider text-xs">
+            Cancelar
+        </button>
+
+        <button *ngIf="isNewSyncMode && !isReadOnly" 
+                mat-flat-button 
+                color="primary" 
+                [disabled]="isLoading || dataSource.data.length === 0"
+                (click)="guardarConfiguracion()"
+                class="h-10 rounded-lg px-8 shadow-sm shadow-primary/20 font-bold uppercase tracking-wider text-xs">
+            <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:check-badge'"></mat-icon>
+            Guardar Control
+        </button>
+
+        <button *ngIf="idFacturaMaestro > 0 && !isReadOnly" 
+                mat-flat-button 
+                color="primary" 
+                [disabled]="isLoading"
+                (click)="actualizarConfiguracion()"
+                class="h-10 rounded-lg px-8 shadow-sm shadow-primary/20 font-bold uppercase tracking-wider text-xs">
+            <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+            Actualizar Registro
+        </button>
+    </div>
+</div>

@@ -1,0 +1,151 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-card">
+    <!-- Header -->
+    <div class="flex-none flex flex-col p-6 sm:py-6 sm:px-10 border-b bg-white dark:bg-transparent">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-4xl font-extrabold leading-none tracking-tight text-gray-900">
+                    Control de Entregas
+                </div>
+                <div class="text-secondary ml-0.5 font-medium mt-1">
+                    Gestión de envíos físicos y cumplimiento de facturas
+                </div>
+            </div>
+
+            <!-- Botón Agregar (Estilo Solicitud de Compra) -->
+            <button mat-flat-button 
+                    color="primary" 
+                    (click)="sincronizarNuevo()" 
+                    class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon>
+                <span class="ml-2 text-sm font-bold uppercase tracking-wider">Nuevo Control</span>
+            </button>
+        </div>
+
+        <!-- Barra de Búsqueda -->
+        <div class="mt-4 flex flex-col sm:flex-row items-center sm:mt-6 gap-4">
+            <div class="flex-auto w-full sm:max-w-md">
+                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-full" [subscriptSizing]="'dynamic'">
+                    <mat-icon class="icon-size-5 text-secondary" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput 
+                           (keyup)="applyFilter($event)" 
+                           [autocomplete]="'off'" 
+                           placeholder="Buscar por folio de factura o cliente...">
+                </mat-form-field>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-auto overflow-hidden p-3 sm:p-5 bg-gray-50/50">
+        <div class="flex flex-col flex-auto mat-elevation-z8 bg-white rounded-2xl overflow-hidden border min-h-0">
+            <div class="flex-auto overflow-y-auto">
+                <table mat-table [dataSource]="dataSource" matSort class="w-full">
+
+                    <!-- Folio Column -->
+                    <ng-container matColumnDef="folio">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 uppercase text-[11px] font-bold tracking-wider text-secondary px-6 py-4"> 
+                            Folio Factura 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-4">
+                            <span class="font-extrabold text-primary text-sm">{{row.folio}}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Cliente Column -->
+                    <ng-container matColumnDef="cliente">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 uppercase text-[11px] font-bold tracking-wider text-secondary px-6 py-4"> 
+                            Cliente 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-4">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-700">{{row.cliente}}</span>
+                                <span class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{{row.itemsCount}} Partidas en control</span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Avance Column -->
+                    <ng-container matColumnDef="avance">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 uppercase text-[11px] font-bold tracking-wider text-secondary px-6 py-4 text-center"> 
+                            Progreso de Envío 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-4">
+                            <div class="flex flex-col items-center justify-center min-w-[150px]">
+                                <div class="flex items-center justify-between w-full mb-1 px-1">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase">Faltan {{row.saldoTotal}} piezas</span>
+                                    <span class="text-[10px] font-extrabold text-blue-600">{{ (row.entregadoTotal / row.cantidadTotal) * 100 | number:'1.0-0' }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden border border-gray-50">
+                                    <div class="bg-blue-600 h-full rounded-full transition-all duration-1000" 
+                                         [style.width.%]="(row.entregadoTotal / row.cantidadTotal) * 100">
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Estatus Column -->
+                    <ng-container matColumnDef="estatus">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 uppercase text-[11px] font-bold tracking-wider text-secondary px-6 py-4 text-center"> 
+                            Estado Físico 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-4 text-center">
+                            <div class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border transition-all duration-300"
+                                 [ngClass]="getStatusClass(row.estatus)">
+                                {{row.estatus}}
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Acciones Column -->
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 uppercase text-[11px] font-bold tracking-wider text-secondary px-6 py-4 text-center"> 
+                            Acciones 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button mat-icon-button 
+                                        color="primary"
+                                        class="hover:bg-blue-50 rounded-lg transition-all"
+                                        matTooltip="Ver Detalle de Envío"
+                                        (click)="$event.stopPropagation(); verDetalle(row.folio)">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                </button>
+                                <button mat-icon-button 
+                                        color="accent"
+                                        class="hover:bg-amber-50 rounded-lg transition-all"
+                                        matTooltip="Editar Registro"
+                                        (click)="$event.stopPropagation(); editar(row)">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                                </button>
+                                <button mat-icon-button 
+                                        color="warn"
+                                        class="hover:bg-rose-50 rounded-lg transition-all"
+                                        matTooltip="Eliminar"
+                                        (click)="$event.stopPropagation(); eliminar(row)">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/50 transition-colors cursor-pointer" (click)="verDetalle(row.folio)"></tr>
+
+                </table>
+
+                <!-- Loader -->
+                <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-12">
+                    <mat-progress-spinner [diameter]="40" [mode]="'indeterminate'"></mat-progress-spinner>
+                    <span class="mt-4 text-sm font-medium text-secondary tracking-widest uppercase">Cargando Tablero...</span>
+                </div>
+
+                <!-- No Data -->
+                <div *ngIf="!isLoading && dataSource.data.length === 0" class="flex flex-col items-center justify-center p-12">
+                    <mat-icon class="icon-size-24 text-gray-200" [svgIcon]="'heroicons_outline:clipboard-document-list'"></mat-icon>
+                    <span class="mt-4 text-lg font-bold text-gray-400">No hay controles registrados</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
