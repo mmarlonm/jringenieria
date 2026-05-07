@@ -20,6 +20,8 @@ export interface MaterialEntregaDto {
     surtidoPendiente: number;
     status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE';
     nuevaObservacion?: string;
+    precioUnitario?: number;
+    importe?: number;
 }
 
 export interface MaestroEntregaDto {

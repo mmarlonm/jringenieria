@@ -15,6 +15,9 @@ import { MaterialEntregaDto, RegistroEntregaDto } from '../../models/control-ent
 import { EntregaFormDialogComponent } from '../entrega-form-dialog/entrega-form-dialog.component';
 import Swal from 'sweetalert2';
 
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+
 @Component({
     selector: 'detalle-entrega-dialog',
     templateUrl: './detalle-entrega-dialog.component.html',
@@ -469,6 +472,95 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             this.dialogRef.updateSize('95vw', 'auto');
             this.dialogRef.updatePosition({ top: 'auto', left: 'auto' });
         }
+    }
+
+    get subtotal(): number {
+        return this.dataSource.data.reduce((acc, row) => acc + (row.importe || 0), 0);
+    }
+
+    get iva(): number {
+        return this.subtotal * 0.16;
+    }
+
+    get total(): number {
+        return this.subtotal + this.iva;
+    }
+
+    descargarPDF(): void {
+        const element = document.getElementById('pdf-template');
+        if (!element) return;
+
+        // Mostrar temporalmente el elemento para la captura
+        element.style.display = 'block';
+
+        html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: 1000 // Asegurar un ancho consistente para el renderizado
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Remision_${this.folio}.pdf`);
+            
+            // Ocultar de nuevo
+            element.style.display = 'none';
+        });
+    }
+
+    numeroALetras(n: number): string {
+        const unidades = ['', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+        const decenas = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+        const decenas2 = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+        const centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+
+        const leerGrupo = (n: number) => {
+            let output = '';
+            if (n === 100) return 'CIEN';
+            if (n >= 100) {
+                output += centenas[Math.floor(n / 100)] + ' ';
+                n %= 100;
+            }
+            if (n >= 10 && n < 20) {
+                output += decenas[n - 10];
+            } else {
+                if (n >= 20) {
+                    output += decenas2[Math.floor(n / 10)];
+                    if (n % 10 > 0) output += ' Y ' + unidades[n % 10];
+                } else {
+                    output += unidades[n];
+                }
+            }
+            return output.trim();
+        };
+
+        const entero = Math.floor(n);
+        const decimal = Math.round((n - entero) * 100);
+        let resultado = '';
+
+        if (entero === 0) resultado = 'CERO';
+        else {
+            const millones = Math.floor(entero / 1000000);
+            const miles = Math.floor((entero % 1000000) / 1000);
+            const resto = entero % 1000;
+
+            if (millones > 0) {
+                resultado += (millones === 1 ? 'UN MILLON' : leerGrupo(millones) + ' MILLONES') + ' ';
+            }
+            if (miles > 0) {
+                resultado += (miles === 1 ? 'MIL' : leerGrupo(miles) + ' MIL') + ' ';
+            }
+            if (resto > 0) {
+                resultado += leerGrupo(resto);
+            }
+        }
+
+        const centavos = decimal.toString().padStart(2, '0');
+        return `${resultado.trim()} PESOS ${centavos}/100 M.N.`;
     }
 
     close(): void {

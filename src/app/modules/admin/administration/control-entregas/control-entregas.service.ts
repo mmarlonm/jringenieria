@@ -82,7 +82,9 @@ export class ControlEntregasService {
             historialSurtidos: [],
             surtidoAcumulado: 0,
             surtidoPendiente: item.cantidad || item.cantidadFacturada || 0,
-            status: 'PENDIENTE'
+            status: 'PENDIENTE',
+            precioUnitario: item.precio || item.precioUnitario || 0,
+            importe: item.total || item.importe || 0
         }));
     }
 
@@ -106,7 +108,9 @@ export class ControlEntregasService {
                     historialSurtidos: p.surtidos || p.historialSurtidos || [],
                     surtidoAcumulado: p.surtidoAcumulado || 0,
                     surtidoPendiente: p.surtidoPendiente || 0,
-                    status: (p.surtidoPendiente <= 0) ? 'COMPLETO' : (p.surtidoAcumulado > 0 ? 'PARCIAL' : 'PENDIENTE')
+                    status: (p.surtidoPendiente <= 0) ? 'COMPLETO' : (p.surtidoAcumulado > 0 ? 'PARCIAL' : 'PENDIENTE'),
+                    precioUnitario: p.precioUnitario || 0,
+                    importe: p.importe || 0
                 }));
             }),
             catchError(() => {

@@ -44,6 +44,15 @@
                     </button>
                 </div>
                 
+                <button mat-flat-button 
+                        color="primary" 
+                        (click)="descargarPDF()" 
+                        [disabled]="dataSource.data.length === 0"
+                        class="h-10 rounded-xl px-6 shadow-sm shadow-blue-200 font-bold uppercase tracking-wider text-xs bg-blue-600">
+                    <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:document-arrow-down'"></mat-icon>
+                    Descargar PDF
+                </button>
+
                 <button mat-icon-button (click)="toggleFullScreen()" [matTooltip]="isFullScreen ? 'Restaurar' : 'Expandir'">
                     <mat-icon class="text-secondary" [svgIcon]="isFullScreen ? 'heroicons_outline:arrows-pointing-in' : 'heroicons_outline:arrows-pointing-out'"></mat-icon>
                 </button>
@@ -284,5 +293,113 @@
             <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
             Actualizar Registro
         </button>
+    </div>
+</div>
+
+<!-- PDF Template (Hidden) -->
+<div id="pdf-template" style="position: fixed; left: -9999px; top: 0; width: 850px; padding: 40px; background: white; color: #1e293b; font-family: 'Inter', sans-serif;">
+    <!-- Logo and Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <img src="images/logo/JR-PNG-SIN-FONDO.png" style="height: 100px; width: auto;" alt="Logo JR">
+            <h1 style="font-size: 32px; font-weight: 900; color: #1e40af; margin: 0; letter-spacing: -1px;">JR INGENIERÍA ELÉCTRICA</h1>
+        </div>
+        <div style="text-align: right;">
+            <div style="border: 2px solid #1e293b; border-radius: 8px; overflow: hidden;">
+                <div style="background: #1e293b; color: white; padding: 4px 12px; font-size: 10px; font-weight: 900; text-transform: uppercase;">Folio Remisión</div>
+                <div style="padding: 8px 12px; font-size: 18px; font-weight: 900;">{{folio}}</div>
+            </div>
+            <div style="margin-top: 10px; font-size: 11px; color: #64748b;">
+                <strong>FECHA:</strong> {{fechaFacturacion | date:'dd/MM/yyyy'}}<br>
+                <strong>CLIENTE ID:</strong> 000{{idFacturaMaestro || 'N/A'}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Info -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; font-size: 11px; line-height: 1.5;">
+        <div>
+            <h3 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px; text-transform: uppercase; color: #64748b; font-weight: 900;">Emisor</h3>
+            <strong>JR INGENIERÍA ELÉCTRICA</strong><br>
+            Av. Pirineos No. 500 bodega 11, Col, Benito Juarez<br>
+            Querétaro, Qro. CP 76120<br>
+            Tel: 442 297 5796 | 771 397 46 89<br>
+            E-mail: ventas&#64;jringenieriaelectrica.net
+        </div>
+        <div>
+            <h3 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px; text-transform: uppercase; color: #64748b; font-weight: 900;">Cliente</h3>
+            <strong style="font-size: 13px;">{{nombreCliente}}</strong><br>
+            RFC: XAXX010101000<br>
+            Dirección: Conocida<br>
+            Teléfono: -
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px;">
+        <thead>
+            <tr style="background: #1e40af; color: white; text-align: left; text-transform: uppercase;">
+                <th style="padding: 10px; border: 1px solid #1e3a8a;">No.</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a;">Código</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a;">Descripción</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: center;">Fact.</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: center;">Entregado</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: center;">Pendiente</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: right;">P.U.</th>
+                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let row of dataSource.data; let i = index" [style.background]="i % 2 === 0 ? '#f8fafc' : 'white'">
+                <td style="padding: 8px; border: 1px solid #e2e8f0;">{{i + 1}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: 700;">{{row.codigoProducto}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0;">{{row.descripcion}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">{{row.cantidadFacturada}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #059669;">{{row.surtidoAcumulado}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #dc2626;">{{row.surtidoPendiente}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: right;">{{row.precioUnitario | currency}}</td>
+                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: 700;">{{row.importe | currency}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Summary -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <div style="max-width: 60%;">
+            <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 10px;">
+                <strong style="color: #475569; display: block; margin-bottom: 4px; text-transform: uppercase;">Monto en Letra:</strong>
+                <span style="font-weight: 700;">{{ numeroALetras(total) }}</span>
+            </div>
+            <div style="margin-top: 20px; font-size: 9px; color: #94a3b8; line-height: 1.4;">
+                * Esta remisión ampara la entrega física de los materiales descritos.<br>
+                * Favor de revisar su material al recibirlo. No se aceptan reclamaciones después de 24 horas.
+            </div>
+        </div>
+        <div style="width: 250px;">
+            <table style="width: 100%; font-size: 12px; line-height: 2;">
+                <tr>
+                    <td style="text-align: right; color: #64748b;">Subtotal:</td>
+                    <td style="text-align: right; font-weight: 700;">{{ subtotal | currency }}</td>
+                </tr>
+                <tr>
+                    <td style="text-align: right; color: #64748b;">IVA (16%):</td>
+                    <td style="text-align: right; font-weight: 700;">{{ iva | currency }}</td>
+                </tr>
+                <tr style="font-size: 18px; color: #1e40af;">
+                    <td style="text-align: right; font-weight: 900;">Total:</td>
+                    <td style="text-align: right; font-weight: 900; border-top: 2px solid #1e40af; padding-top: 8px;">{{ total | currency }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Footer / Signature -->
+    <div style="margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; text-align: center;">
+        <div>
+            <div style="border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; font-weight: 700;">Entrega: JR Ingeniería Eléctrica</div>
+        </div>
+        <div>
+            <div style="border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; font-weight: 700;">Recibe: Firma y Sello Cliente</div>
+        </div>
     </div>
 </div>
