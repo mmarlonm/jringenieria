@@ -50,6 +50,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
     fechaFacturacion: string = new Date().toISOString().split('T')[0];
     isNewSyncMode: boolean = false;
     isReadOnly: boolean = false;
+    isFullScreen: boolean = false;
 
     constructor(
         public dialogRef: MatDialogRef<DetalleEntregaDialogComponent>,
@@ -173,7 +174,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                     partida.surtidos.push({
                         cantidadEntregada: m.surtidoAcumulado,
                         idUsuarioAlmacen: idUsuario,
-                        observaciones: 'Surtido inicial al configurar'
+                        observaciones: m.nuevaObservacion || 'Surtido inicial al configurar'
                     });
                 }
 
@@ -235,7 +236,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                         idSurtido: 0,
                         cantidadEntregada: m.surtidoAcumulado - originalAcumulado,
                         idUsuarioAlmacen: idUsuario,
-                        observaciones: 'Actualización manual de control físico'
+                        observaciones: m.nuevaObservacion || 'Actualización manual de control físico'
                     });
                 }
 
@@ -287,33 +288,45 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                const userObjStr = localStorage.getItem('userInformation');
-                let idUsuario = 0;
-                if (userObjStr) {
-                    try {
-                        const userObj = JSON.parse(userObjStr);
-                        idUsuario = userObj?.usuario?.id || 0;
-                    } catch (e) {}
-                }
-
-                const payload: RegistroEntregaDto = {
-                    idPartida: row.idPartida,
-                    cantidadEntregada: row.surtidoPendiente,
-                    idUsuarioAlmacen: idUsuario,
-                    observaciones: 'Envío total del faltante'
-                };
-
-                this.isLoading = true;
-                this._controlEntregasService.registrarEntrega(payload).subscribe({
-                    next: () => {
-                        this.isLoading = false;
-                        Swal.fire('¡Enviado!', 'Se ha registrado la entrega.', 'success');
-                        this.buscarDetalle(false);
-                    },
-                    error: () => {
-                        this.isLoading = false;
-                        Swal.fire('Error', 'No se pudo registrar el envío.', 'error');
+                Swal.fire({
+                    title: 'Comentarios / Observaciones',
+                    text: 'Agregue una nota opcional para este envío:',
+                    input: 'text',
+                    inputPlaceholder: 'Ej: Se entrega a mensajería, Envío parcial urgente...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar y Enviar',
+                    cancelButtonText: 'Omitir'
+                }).then((noteResult) => {
+                    const observaciones = noteResult.value || 'Envío total del faltante';
+                    
+                    const userObjStr = localStorage.getItem('userInformation');
+                    let idUsuario = 0;
+                    if (userObjStr) {
+                        try {
+                            const userObj = JSON.parse(userObjStr);
+                            idUsuario = userObj?.usuario?.id || 0;
+                        } catch (e) {}
                     }
+
+                    const payload: RegistroEntregaDto = {
+                        idPartida: row.idPartida,
+                        cantidadEntregada: row.surtidoPendiente,
+                        idUsuarioAlmacen: idUsuario,
+                        observaciones: observaciones
+                    };
+
+                    this.isLoading = true;
+                    this._controlEntregasService.registrarEntrega(payload).subscribe({
+                        next: () => {
+                            this.isLoading = false;
+                            Swal.fire('¡Enviado!', 'Se ha registrado la entrega.', 'success');
+                            this.buscarDetalle(false);
+                        },
+                        error: () => {
+                            this.isLoading = false;
+                            Swal.fire('Error', 'No se pudo registrar el envío.', 'error');
+                        }
+                    });
                 });
             }
         });
@@ -332,6 +345,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             'cantidadFacturada',
             'entregado',
             'saldo',
+            'observaciones',
             'estatus',
             'acciones'
         ];
@@ -441,6 +455,19 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             case 'PARCIAL': return 'bg-amber-100 text-amber-700 border-amber-200';
             case 'PENDIENTE': return 'bg-slate-100 text-slate-700 border-slate-200';
             default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        }
+    }
+
+    toggleFullScreen(): void {
+        this.isFullScreen = !this.isFullScreen;
+        if (this.isFullScreen) {
+            this.dialogRef.addPanelClass('full-screen-dialog');
+            this.dialogRef.updateSize('100vw', '100vh');
+            this.dialogRef.updatePosition({ top: '0', left: '0' });
+        } else {
+            this.dialogRef.removePanelClass('full-screen-dialog');
+            this.dialogRef.updateSize('95vw', 'auto');
+            this.dialogRef.updatePosition({ top: 'auto', left: 'auto' });
         }
     }
 

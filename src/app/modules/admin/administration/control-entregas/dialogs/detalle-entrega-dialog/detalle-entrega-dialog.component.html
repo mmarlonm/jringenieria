@@ -1,4 +1,14 @@
-<div class="flex flex-col w-full max-w-7xl overflow-hidden bg-card rounded-2xl shadow-xl">
+<style>
+    .full-screen-dialog {
+        max-width: none !important;
+        max-height: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+    }
+</style>
+
+<div class="flex flex-col w-full h-full overflow-hidden bg-card transition-all duration-300"
+     [ngClass]="isFullScreen ? 'rounded-none' : 'rounded-xl shadow-xl'">
     <!-- Header -->
     <div class="flex-none flex flex-col p-6 sm:py-8 sm:px-10 border-b bg-white dark:bg-transparent">
         <div class="flex items-center justify-between">
@@ -34,6 +44,10 @@
                     </button>
                 </div>
                 
+                <button mat-icon-button (click)="toggleFullScreen()" [matTooltip]="isFullScreen ? 'Restaurar' : 'Expandir'">
+                    <mat-icon class="text-secondary" [svgIcon]="isFullScreen ? 'heroicons_outline:arrows-pointing-in' : 'heroicons_outline:arrows-pointing-out'"></mat-icon>
+                </button>
+                
                 <button mat-icon-button (click)="close()" [tabIndex]="-1">
                     <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
                 </button>
@@ -42,10 +56,11 @@
     </div>
 
     <!-- Content Area -->
-    <div class="flex-auto overflow-y-auto max-h-[75vh] bg-gray-50/50 p-6 sm:p-10">
+    <div class="flex-auto overflow-y-auto bg-gray-50/50 p-4 sm:p-6 transition-all"
+         [ngClass]="isFullScreen ? 'h-full' : 'max-h-[80vh]'">
         
         <!-- 1. SECCIÓN: CONFIGURACIÓN MAESTRA -->
-        <div class="bg-white rounded-2xl shadow-sm border p-8 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border p-4 sm:p-6 mb-6">
             <div class="flex items-center mb-8">
                 <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mr-4 shadow-sm border border-indigo-100">
                     <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
@@ -88,8 +103,8 @@
         </div>
 
         <!-- 2. SECCIÓN: DETALLE DE PARTIDAS -->
-        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-            <div class="px-8 py-6 border-b bg-gray-50/30">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50/30">
                 <div class="flex items-center">
                     <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 mr-4 border border-amber-100">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:list-bullet'"></mat-icon>
@@ -111,6 +126,21 @@
                                 <span class="font-extrabold text-gray-800 leading-tight">{{row.descripcion}}</span>
                                 <span class="text-[10px] text-secondary mt-1 font-bold tracking-widest">SKU: {{row.codigoProducto}}</span>
                             </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Dynamic History Columns -->
+                    <ng-container *ngFor="let col of dynamicColumns; let i = index" [matColumnDef]="col">
+                        <th mat-header-cell *matHeaderCellDef class="px-4 py-4 uppercase text-[9px] font-black tracking-tighter text-blue-500 text-center border-b"> 
+                            E-{{i + 1}} 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-4 py-5 text-center">
+                            <span *ngIf="row.historialSurtidos[i] !== undefined" 
+                                  [matTooltip]="row.historialSurtidos[i].observaciones || row.historialSurtidos[i].observacion || ''"
+                                  class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-50 text-slate-600 text-[10px] font-black border border-slate-100 cursor-help">
+                                {{row.historialSurtidos[i].cantidadEntregada || row.historialSurtidos[i]}}
+                            </span>
+                            <span *ngIf="row.historialSurtidos[i] === undefined" class="text-gray-200 text-[10px] font-bold">-</span>
                         </td>
                     </ng-container>
 
@@ -152,6 +182,35 @@
                         </td>
                     </ng-container>
 
+                    <!-- Observaciones Column -->
+                    <ng-container matColumnDef="observaciones">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-secondary"> 
+                            Observaciones 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-6 py-5">
+                            <div *ngIf="!isReadOnly" class="flex flex-col gap-2">
+                                <input type="text" 
+                                       class="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                       placeholder="Nota del envío actual..."
+                                       [(ngModel)]="row.nuevaObservacion">
+                            </div>
+
+                            <!-- Historial de Observaciones -->
+                            <div *ngIf="row.historialSurtidos?.length > 0" class="flex flex-col gap-1 mt-1">
+                                <div *ngFor="let s of row.historialSurtidos; let j = index" class="flex items-start gap-2 group">
+                                    <span class="flex-none text-[8px] font-black text-blue-400 bg-blue-50 px-1 rounded border border-blue-100 mt-0.5">E{{j+1}}</span>
+                                    <span class="text-[9px] text-secondary italic leading-tight group-hover:text-gray-900 transition-colors">
+                                        {{s.observaciones || s.observacion || '-'}}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <span *ngIf="isReadOnly && (!row.historialSurtidos || row.historialSurtidos.length === 0)" class="text-[10px] text-secondary italic">
+                                Sin observaciones
+                            </span>
+                        </td>
+                    </ng-container>
+
                     <!-- Estatus Column -->
                     <ng-container matColumnDef="estatus">
                         <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-6 py-4 uppercase text-[10px] font-bold tracking-wider text-center text-secondary"> 
@@ -184,8 +243,8 @@
                         </td>
                     </ng-container>
 
-                    <tr mat-header-row *matHeaderRowDef="['producto', 'cantidadFacturada', 'entregado', 'saldo', 'estatus', 'acciones']"></tr>
-                    <tr mat-row *matRowDef="let row; columns: ['producto', 'cantidadFacturada', 'entregado', 'saldo', 'estatus', 'acciones'];" class="hover:bg-gray-50/30 transition-colors"></tr>
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/30 transition-colors"></tr>
 
                 </table>
 

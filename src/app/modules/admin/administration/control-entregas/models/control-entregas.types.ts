@@ -15,10 +15,11 @@ export interface MaterialEntregaDto {
     codigoProducto: string;
     descripcion: string;
     cantidadFacturada: number;
-    historialSurtidos: number[];
+    historialSurtidos: any[];
     surtidoAcumulado: number;
     surtidoPendiente: number;
     status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE';
+    nuevaObservacion?: string;
 }
 
 export interface MaestroEntregaDto {

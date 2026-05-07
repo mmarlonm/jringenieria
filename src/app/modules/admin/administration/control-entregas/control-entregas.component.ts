@@ -78,9 +78,9 @@ export class ControlEntregasComponent implements OnInit, OnDestroy {
     sincronizarNuevo(): void {
         const dialogRef = this._dialog.open(DetalleEntregaDialogComponent, {
             data: { folio: '', readOnly: false },
-            width: '100%',
-            maxWidth: '1200px',
-            maxHeight: '90vh',
+            width: '95vw',
+            maxWidth: '1600px',
+            maxHeight: '95vh',
             autoFocus: false,
             panelClass: 'custom-dialog-container'
         });
@@ -93,9 +93,9 @@ export class ControlEntregasComponent implements OnInit, OnDestroy {
     verDetalle(folio: string): void {
         const dialogRef = this._dialog.open(DetalleEntregaDialogComponent, {
             data: { folio, readOnly: true },
-            width: '100%',
-            maxWidth: '1200px',
-            maxHeight: '90vh',
+            width: '95vw',
+            maxWidth: '1600px',
+            maxHeight: '95vh',
             autoFocus: false,
             panelClass: 'custom-dialog-container'
         });
@@ -108,9 +108,9 @@ export class ControlEntregasComponent implements OnInit, OnDestroy {
     editar(row: MaestroEntregaDto): void {
         const dialogRef = this._dialog.open(DetalleEntregaDialogComponent, {
             data: { folio: row.folio, readOnly: false },
-            width: '100%',
-            maxWidth: '1200px',
-            maxHeight: '90vh',
+            width: '95vw',
+            maxWidth: '1600px',
+            maxHeight: '95vh',
             autoFocus: false,
             panelClass: 'custom-dialog-container'
         });

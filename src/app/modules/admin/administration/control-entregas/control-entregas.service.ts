@@ -103,7 +103,7 @@ export class ControlEntregasService {
                     codigoProducto: p.codigoProducto,
                     descripcion: p.descripcion,
                     cantidadFacturada: p.cantidadFacturada,
-                    historialSurtidos: p.historialSurtidos || [],
+                    historialSurtidos: p.surtidos || p.historialSurtidos || [],
                     surtidoAcumulado: p.surtidoAcumulado || 0,
                     surtidoPendiente: p.surtidoPendiente || 0,
                     status: (p.surtidoPendiente <= 0) ? 'COMPLETO' : (p.surtidoAcumulado > 0 ? 'PARCIAL' : 'PENDIENTE')
