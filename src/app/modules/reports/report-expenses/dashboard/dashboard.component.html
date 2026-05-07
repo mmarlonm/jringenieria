@@ -75,7 +75,8 @@
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Unidad</mat-label>
-            <mat-select [(ngModel)]="filtroUnidades" multiple>
+            <mat-select [(ngModel)]="filtroUnidades">
+                <mat-option [value]="0">Todos</mat-option>
                 <mat-option *ngFor="let u of unidades" [value]="u.id || u.unidadId">{{u.nombre}}</mat-option>
             </mat-select>
         </mat-form-field>
@@ -128,13 +129,39 @@
                 </p>
             </div>
         </div>
+
+        <!-- 🔹 Desglose de KPIs por Sucursal (Solo cuando es "Todos") -->
+        <div *ngIf="filtroUnidades === 0 && kpisPorUnidad.length > 0" class="w-full bg-white rounded-xl shadow p-6">
+            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Desglose por Sucursal</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div *ngFor="let kpi of kpisPorUnidad" class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <p class="text-xs font-black text-blue-600 uppercase mb-2">{{ kpi.nombre }}</p>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-500">Ingresos:</span>
+                            <span class="font-bold text-emerald-600">{{ kpi.ingresos | currency:'MXN' }}</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-500">Egresos:</span>
+                            <span class="font-bold text-rose-600">{{ kpi.egresos | currency:'MXN' }}</span>
+                        </div>
+                        <div class="flex justify-between text-xs pt-1 border-t border-gray-200">
+                            <span class="text-gray-500 font-bold">Balance:</span>
+                            <span class="font-bold" [ngClass]="kpi.balance >= 0 ? 'text-blue-600' : 'text-amber-600'">
+                                {{ kpi.balance | currency:'MXN' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-white rounded-xl shadow p-4">
                 <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
                     Evolución de Movimientos (Ingresos vs Egresos)
                 </h2>
                 <div class="w-full h-[350px]">
-                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsTiempo"
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsTiempo" [oneToOne]="true"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
                 </div>
@@ -145,7 +172,7 @@
                     Distribución de Movimientos
                 </h2>
                 <div class="w-full h-[350px]">
-                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsMovimiento"
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsMovimiento" [oneToOne]="true"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
                 </div>
@@ -158,7 +185,7 @@
                     Movimientos por Área
                 </h2>
                 <div class="w-full h-[350px]">
-                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsArea"
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsArea" [oneToOne]="true"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
                 </div>
@@ -169,7 +196,7 @@
                     Movimientos por Concepto
                 </h2>
                 <div class="w-full h-[350px]">
-                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsConcepto"
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsConcepto" [oneToOne]="true"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
                 </div>
@@ -180,12 +207,24 @@
                     Movimientos por Tipo
                 </h2>
                 <div class="w-full h-[350px]">
-                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsTipo"
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsTipo" [oneToOne]="true"
                         style="width: 100%; height: 100%; display: block;">
                     </highcharts-chart>
                 </div>
             </div>
+        </div>
 
+        <div class="w-full grid grid-cols-1 gap-6">
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-base sm:text-lg font-semibold mb-2 text-gray-800">
+                    Movimientos por Sucursal (Unidad de Negocio)
+                </h2>
+                <div class="w-full h-[350px]">
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptionsUnidad" [oneToOne]="true"
+                        style="width: 100%; height: 100%; display: block;">
+                    </highcharts-chart>
+                </div>
+            </div>
         </div>
 
         <!-- 🔹 Nueva Tabla de Detalle -->
@@ -205,28 +244,28 @@
                     </span>
                 </div>
             </div>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto max-h-[500px]">
                 <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Fecha</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Descripción</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Tipo</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Concepto</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Subtipo</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Área</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Proveedor</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Cuenta</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">No. Cuenta</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Forma Pago</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Factura</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Folio Fiscal</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Tipo Comprobante</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap">Movimiento</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-center">Moneda</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-right">Importe</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-right">Impuestos</th>
-                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-center">Unidad</th>
+                    <thead class="sticky top-0 z-10">
+                        <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider shadow-sm">
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Fecha</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Descripción</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Tipo</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Concepto</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Subtipo</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Área</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Proveedor</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Cuenta</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">No. Cuenta</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Forma Pago</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Factura</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Folio Fiscal</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Tipo Comprobante</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap bg-gray-50">Movimiento</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-center bg-gray-50">Moneda</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-right bg-gray-50">Importe</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-right bg-gray-50">Impuestos</th>
+                            <th class="px-6 py-3 font-bold border-b whitespace-nowrap text-center bg-gray-50">Unidad</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

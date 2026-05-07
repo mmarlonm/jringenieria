@@ -86,7 +86,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
     filtroAreas: string[] = [];
     filtroConceptos: string[] = [];
     filtroTipos: string[] = [];
-    filtroUnidades: number[] = []; // 👈 Nuevo: Filtro de Unidades
+    filtroUnidades: number = 0; // 👈 Cambiado a single number y default 0 (Todos)
     filtroMovimiento: string = ''; // '' = Todos, '1' = Ingresos, '2' = Egresos
 
     // 🔹 Opciones para Filtros (Cargadas de catálogos)
@@ -110,6 +110,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
     balance: number = 0;
     totalTransacciones: number = 0;
     proporcionGastosVentas: number = 0;
+    kpisPorUnidad: any[] = []; // 👈 Nuevo: Desglose de KPIs por sucursal
 
     // 🔹 Opciones de Gráficas (Tema Claro)
     chartOptionsTiempo: Highcharts.Options = {};
@@ -117,6 +118,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
     chartOptionsConcepto: Highcharts.Options = {};
     chartOptionsTipo: Highcharts.Options = {};
     chartOptionsMovimiento: Highcharts.Options = {};
+    chartOptionsUnidad: Highcharts.Options = {}; // 👈 Nuevo: Gastos por Sucursal
 
     // 🔹 Configuración Base (Tema Claro)
     private baseTheme: Highcharts.Options = {
@@ -161,6 +163,9 @@ export class ReportExpensesDashboardComponent implements OnInit {
         // 👈 Nuevo: Cargar Unidades
         this._expensesService.getUnidadesNegocio().subscribe(unidades => {
             this.unidades = unidades || [];
+            if (this.allExpenses.length > 0) {
+                this.applyLocalFilters();
+            }
             this._changeDetectorRef.markForCheck();
         });
     }
@@ -204,7 +209,9 @@ export class ReportExpensesDashboardComponent implements OnInit {
 
     private getNombreUnidad(id: number, expense?: Expense): string {
         if (expense?.gastoUnidad) return expense.gastoUnidad.nombre;
-        return id ? id.toString() : 'S/U';
+        const found = this.unidades?.find(u => (u.id || u.unidadId) === id);
+        if (found) return found.nombre;
+        return id ? `Unidad ${id}` : 'S/U';
     }
 
     /**
@@ -261,7 +268,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
             const matchConcepto = this.filtroConceptos.length === 0 || this.filtroConceptos.includes(this.getNombreConcepto(e.conceptoId, e));
             const matchTipo = this.filtroTipos.length === 0 || this.filtroTipos.includes(this.getNombreTipo(e.tipoId, e));
             // Filtro de Unidades
-            const matchUnidad = this.filtroUnidades.length === 0 || this.filtroUnidades.includes(e.unidadId);
+            const matchUnidad = this.filtroUnidades === 0 || e.unidadId === this.filtroUnidades;
 
             // Filtro de Movimiento
             const moveType = e.tipoMovimiento?.toString() || (e.esIngreso ? '1' : '2');
@@ -283,6 +290,32 @@ export class ReportExpensesDashboardComponent implements OnInit {
 
         this.totalGastos = this.totalEgresos; // Gasto es sinónimo de Egreso en este contexto
         this.balance = this.totalIngresos - this.totalEgresos;
+
+        // 2.1 Desglose por Unidad para KPIs
+        this.kpisPorUnidad = [];
+        if (this.filtroUnidades === 0) {
+            this.unidades.forEach(u => {
+                const uId = u.id || u.unidadId;
+                const expensesUnidad = filtered.filter(e => e.unidadId === uId);
+                
+                if (expensesUnidad.length > 0) {
+                    const ing = expensesUnidad
+                        .filter(e => e.tipoMovimiento?.toString() === '1' || e.esIngreso)
+                        .reduce((acc, curr) => acc + curr.cantidad, 0);
+                    const egr = expensesUnidad
+                        .filter(e => e.tipoMovimiento?.toString() === '2' || !e.esIngreso)
+                        .reduce((acc, curr) => acc + curr.cantidad, 0);
+                        
+                    this.kpisPorUnidad.push({
+                        nombre: u.nombre || `Unidad ${uId}`,
+                        ingresos: ing,
+                        egresos: egr,
+                        balance: ing - egr,
+                        transacciones: expensesUnidad.length
+                    });
+                }
+            });
+        }
 
         // --- Gráfica Tiempo (Spline con 2 líneas) ---
         const mesesMap: { [key: number]: string } = {
@@ -310,31 +343,72 @@ export class ReportExpensesDashboardComponent implements OnInit {
         }
         // --- Preparación de Datos Agrupados (Área, Concepto, Tipo) ---
         const prepareGroupedData = (getter: (id: number, e: Expense) => string, idField: keyof Expense) => {
-            const categorias = new Set<string>();
-            const ingMap = new Map<string, number>();
-            const egrMap = new Map<string, number>();
+            const categoriasSet = new Set<string>();
+            filtered.forEach(e => categoriasSet.add(getter.call(this, e[idField] as number, e)));
+            const catArray = Array.from(categoriasSet).sort();
+            
+            const series: any[] = [];
+            const isTodos = this.filtroUnidades === 0 && this.unidades.length > 0;
 
-            filtered.forEach(e => {
-                const name = getter.call(this, e[idField] as number, e);
-                categorias.add(name);
-                if (e.tipoMovimiento?.toString() === '1' || e.esIngreso === true) {
-                    ingMap.set(name, (ingMap.get(name) || 0) + e.cantidad);
-                } else {
-                    egrMap.set(name, (egrMap.get(name) || 0) + e.cantidad);
-                }
-            });
+            if (!isTodos) {
+                // Caso normal: Un solo Ingreso y un solo Egreso
+                const ingData = catArray.map(cat => 
+                    filtered.filter(e => getter.call(this, e[idField] as number, e) === cat && (e.tipoMovimiento?.toString() === '1' || e.esIngreso))
+                    .reduce((acc, curr) => acc + curr.cantidad, 0)
+                );
+                const egrData = catArray.map(cat => 
+                    filtered.filter(e => getter.call(this, e[idField] as number, e) === cat && (e.tipoMovimiento?.toString() === '2' || e.esIngreso === false))
+                    .reduce((acc, curr) => acc + curr.cantidad, 0)
+                );
+                series.push({ name: 'Ingresos', data: ingData, color: '#10b981', stack: 'ing', type: 'column' });
+                series.push({ name: 'Egresos', data: egrData, color: '#f43f5e', stack: 'egr', type: 'column' });
+            } else {
+                // Caso "Todos": Segmentar por Unidad y usar Stacking
+                const unitColors = ['#3b82f6', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16'];
+                
+                this.unidades.forEach((u, uIdx) => {
+                    const uId = u.id || u.unidadId;
+                    const uName = u.nombre || `Unidad ${uId}`;
+                    const baseColor = unitColors[uIdx % unitColors.length];
 
-            const catArray = Array.from(categorias).sort();
-            return {
-                categorias: catArray,
-                ingresos: catArray.map(c => ingMap.get(c) || 0),
-                egresos: catArray.map(c => egrMap.get(c) || 0)
-            };
+                    const ingData = catArray.map(cat => 
+                        filtered.filter(e => e.unidadId === uId && getter.call(this, e[idField] as number, e) === cat && (e.tipoMovimiento?.toString() === '1' || e.esIngreso))
+                        .reduce((acc, curr) => acc + curr.cantidad, 0)
+                    );
+                    const egrData = catArray.map(cat => 
+                        filtered.filter(e => e.unidadId === uId && getter.call(this, e[idField] as number, e) === cat && (e.tipoMovimiento?.toString() === '2' || e.esIngreso === false))
+                        .reduce((acc, curr) => acc + curr.cantidad, 0)
+                    );
+
+                    if (ingData.some(v => v > 0)) {
+                        series.push({ 
+                            name: `${uName} (Ing)`, 
+                            data: ingData, 
+                            stack: 'ing',
+                            color: baseColor,
+                            type: 'column'
+                        });
+                    }
+                    if (egrData.some(v => v > 0)) {
+                        series.push({ 
+                            name: `${uName} (Egr)`, 
+                            data: egrData, 
+                            stack: 'egr',
+                            color: baseColor,
+                            opacity: 0.7,
+                            type: 'column'
+                        });
+                    }
+                });
+            }
+
+            return { categorias: catArray, series };
         };
 
         const areaGroup = prepareGroupedData(this.getNombreArea, 'areaId');
         const conceptoGroup = prepareGroupedData(this.getNombreConcepto, 'conceptoId');
         const tipoGroup = prepareGroupedData(this.getNombreTipo, 'tipoId');
+        const unidadGroup = prepareGroupedData(this.getNombreUnidad, 'unidadId');
 
         // --- Gráfica Distribución Movimiento ---
         const movimientoData = [
@@ -347,12 +421,14 @@ export class ReportExpensesDashboardComponent implements OnInit {
         this.chartOptionsArea = this.buildChartGroupedOptions('Movimientos por Área', areaGroup);
         this.chartOptionsConcepto = this.buildChartGroupedOptions('Movimientos por Concepto', conceptoGroup);
         this.chartOptionsTipo = this.buildChartGroupedOptions('Movimientos por Tipo', tipoGroup);
+        this.chartOptionsUnidad = this.buildChartGroupedOptions('Movimientos por Sucursal', unidadGroup);
         this.chartOptionsMovimiento = this.buildChartMovimientoOptions(movimientoData);
 
         this._changeDetectorRef.detectChanges();
     }
 
     private buildChartTiempoOptions(categories: string[], ingresos: number[], egresos: number[]): Highcharts.Options {
+        // ... (existing logic, maybe update to show units too if needed, but let's stick to bars first)
         return {
             ...this.baseTheme,
             chart: { type: 'spline', backgroundColor: 'transparent' },
@@ -376,7 +452,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
                     type: 'spline',
                     name: 'Ingresos',
                     data: ingresos,
-                    color: '#10b981', // Verde esmeralda
+                    color: '#10b981',
                     lineWidth: 3,
                     marker: { enabled: true, radius: 4 },
                     visible: this.filtroMovimiento !== '2'
@@ -385,7 +461,7 @@ export class ReportExpensesDashboardComponent implements OnInit {
                     type: 'spline',
                     name: 'Egresos',
                     data: egresos,
-                    color: '#f43f5e', // Rosa/Rojo
+                    color: '#f43f5e',
                     lineWidth: 3,
                     marker: { enabled: true, radius: 4 },
                     visible: this.filtroMovimiento !== '1'
@@ -398,7 +474,10 @@ export class ReportExpensesDashboardComponent implements OnInit {
         const isColumn = group.categorias.length <= 5;
         return {
             ...this.baseTheme,
-            chart: { type: isColumn ? 'column' : 'bar', backgroundColor: 'transparent' },
+            chart: { 
+                type: isColumn ? 'column' : 'bar', 
+                backgroundColor: 'transparent' 
+            },
             xAxis: {
                 categories: group.categorias,
                 labels: { style: { color: '#6b7280' } },
@@ -409,27 +488,27 @@ export class ReportExpensesDashboardComponent implements OnInit {
                 labels: { style: { color: '#6b7280' }, format: '${value:.,0f}' },
                 gridLineColor: '#f3f4f6'
             },
-            tooltip: { ...this.baseTheme.tooltip, valuePrefix: '$', valueDecimals: 2 },
-            plotOptions: {
-                column: { borderRadius: 4 },
-                bar: { borderRadius: 4 }
+            tooltip: { 
+                ...this.baseTheme.tooltip, 
+                valuePrefix: '$', 
+                valueDecimals: 2,
+                shared: true
             },
-            series: [
-                {
-                    name: 'Ingresos',
-                    data: group.ingresos,
-                    color: '#10b981',
-                    type: isColumn ? 'column' : 'bar',
-                    visible: this.filtroMovimiento !== '2'
+            plotOptions: {
+                column: { 
+                    stacking: 'normal',
+                    borderRadius: 4 
                 },
-                {
-                    name: 'Egresos',
-                    data: group.egresos,
-                    color: '#f43f5e',
-                    type: isColumn ? 'column' : 'bar',
-                    visible: this.filtroMovimiento !== '1'
+                bar: { 
+                    stacking: 'normal',
+                    borderRadius: 4 
                 }
-            ]
+            },
+            series: group.series.filter((s: any) => {
+                if (this.filtroMovimiento === '1') return s.stack === 'ing';
+                if (this.filtroMovimiento === '2') return s.stack === 'egr';
+                return true;
+            })
         };
     }
 
