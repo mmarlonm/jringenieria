@@ -33,6 +33,7 @@ export class EntregaFormDialogComponent implements OnInit {
     ) {
         this.form = this._formBuilder.group({
             cantidadAEntregar: [null, [Validators.required, Validators.min(0.0001), Validators.max(data.material.surtidoPendiente)]],
+            guia: [''], // 👈 Nuevo
             observaciones: ['']
         });
     }

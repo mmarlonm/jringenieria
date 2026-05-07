@@ -45,6 +45,13 @@
                 <mat-error *ngIf="form.get('cantidadAEntregar').hasError('min')">Debe ser mayor a 0</mat-error>
                 <mat-error *ngIf="form.get('cantidadAEntregar').hasError('max')">No puede exceder el faltante ({{data.material.surtidoPendiente}})</mat-error>
             </mat-form-field>
+            
+            <!-- Guía -->
+            <mat-form-field class="w-full mt-6" [subscriptSizing]="'dynamic'">
+                <mat-label>Guía de Rastreo / Paquetería</mat-label>
+                <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:truck'"></mat-icon>
+                <input matInput formControlName="guia" placeholder="Número de guía o referencia de transporte">
+            </mat-form-field>
 
             <!-- Observaciones -->
             <mat-form-field class="w-full mt-6" [subscriptSizing]="'dynamic'">

@@ -14,6 +14,13 @@ export class ControlEntregasService {
     constructor(private _httpClient: HttpClient) { }
 
     /**
+     * Busca información de cliente y folio en CONTPAQi
+     */
+    buscarFactura(filtro: string): Observable<any> {
+        return this._httpClient.get<any>(`${this.apiUrl}/buscar/${filtro}`);
+    }
+
+    /**
      * Obtiene el listado maestro de folios configurados (Estructura Jerárquica)
      */
     obtenerMaestroEntregas(): Observable<MaestroEntregaDto[]> {
@@ -39,7 +46,9 @@ export class ControlEntregasService {
                         saldoTotal: saldoTotal,
                         estatus: estatus,
                         ultimaSincronizacion: m.updatedDate || m.createdDate || m.fechaFacturacion || new Date(),
-                        fechaFacturacion: m.fechaFacturacion
+                        fechaFacturacion: m.fechaFacturacion,
+                        ordenCompra: m.ordenCompra,
+                        totalFactura: m.totalFactura
                     };
                 });
             }),
@@ -76,14 +85,14 @@ export class ControlEntregasService {
             nombreCliente: item.cliente || 'CLIENTE ERP',
             idPartida: 0,
             numeroPartida: index + 1,
-            codigoProducto: item.materialServicio || item.codigoProducto || '',
+            codigoProducto: item.codigoProducto || item.materialServicio || '',
             descripcion: item.descripcion || item.materialServicio || '',
             cantidadFacturada: item.cantidad || item.cantidadFacturada || 0,
             historialSurtidos: [],
             surtidoAcumulado: 0,
             surtidoPendiente: item.cantidad || item.cantidadFacturada || 0,
             status: 'PENDIENTE',
-            precioUnitario: item.precio || item.precioUnitario || 0,
+            precioUnitario: item.costoUnitario || item.precio || item.precioUnitario || 0,
             importe: item.total || item.importe || 0
         }));
     }

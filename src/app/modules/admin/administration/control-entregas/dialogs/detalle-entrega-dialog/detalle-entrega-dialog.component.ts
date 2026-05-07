@@ -13,6 +13,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { ControlEntregasService } from '../../control-entregas.service';
 import { MaterialEntregaDto, RegistroEntregaDto } from '../../models/control-entregas.types';
 import { EntregaFormDialogComponent } from '../entrega-form-dialog/entrega-form-dialog.component';
+import { SurtidoDetalleDialogComponent } from '../surtido-detalle-dialog/surtido-detalle-dialog.component';
+import { PdfPreviewDialogComponent } from '../pdf-preview-dialog/pdf-preview-dialog.component';
 import Swal from 'sweetalert2';
 
 import { jsPDF } from 'jspdf';
@@ -50,6 +52,9 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
 
     idFacturaMaestro: number = 0;
     nombreCliente: string = '';
+    ordenCompra: string = '';
+    totalFactura: number = 0; // 👈 Nuevo
+    enviosAplanados: any[] = []; // 👈 Nuevo: Para el reporte PDF
     fechaFacturacion: string = new Date().toISOString().split('T')[0];
     isNewSyncMode: boolean = false;
     isReadOnly: boolean = false;
@@ -84,7 +89,26 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             return;
         }
         this.folio = this.tempFolio;
-        this.buscarDetalle(true); 
+
+        // Intentamos buscar información del cliente primero
+        this.isLoading = true;
+        this._controlEntregasService.buscarFactura(this.folio).subscribe({
+            next: (info) => {
+                if (info && info.cliente_Proveedor) {
+                    this.nombreCliente = info.cliente_Proveedor;
+                } else if (info && info.razonSocial) {
+                    this.nombreCliente = info.razonSocial;
+                }
+                if (info && info.total) {
+                    this.totalFactura = info.total;
+                }
+                this.buscarDetalle(true);
+            },
+            error: () => {
+                // Si falla la búsqueda de info de cliente, igual intentamos buscar materiales
+                this.buscarDetalle(true);
+            }
+        });
     }
 
     buscarDetalle(isNewSync: boolean = false): void {
@@ -111,9 +135,11 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
 
                     if (materiales.length > 0) {
                         const m = materiales[0];
-                        // Solo actualizamos el nombre si es una sincronización nueva
+                        // Solo actualizamos el nombre si es una sincronización nueva y el nombre no es el genérico
                         if (isNewSync) {
-                            this.nombreCliente = m.nombreCliente;
+                            if (m.nombreCliente && m.nombreCliente !== 'CLIENTE ERP') {
+                                this.nombreCliente = m.nombreCliente;
+                            }
                         } else {
                             // Si ya existe, intentamos obtener el idMaestro
                             // Nota: En una implementación real, el DTO debería traer el idFacturaMaestro
@@ -132,6 +158,12 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                                 this.idFacturaMaestro = maestro.idFacturaMaestro || 0;
                                 if (maestro.fechaFacturacion) {
                                     this.fechaFacturacion = new Date(maestro.fechaFacturacion).toISOString().split('T')[0];
+                                }
+                                if (maestro.ordenCompra) {
+                                    this.ordenCompra = maestro.ordenCompra;
+                                }
+                                if (maestro.totalFactura) {
+                                    this.totalFactura = maestro.totalFactura;
                                 }
                             }
                         });
@@ -161,6 +193,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             folioFactura: this.folio,
             nombreCliente: this.nombreCliente,
             fechaFacturacion: this.fechaFacturacion,
+            ordenCompra: this.ordenCompra,
+            totalFactura: this.totalFactura, // 👈 Nuevo
             sincronizadoDesdeContpaq: true,
             createdBy: idUsuario,
             partidas: this.dataSource.data.map(m => {
@@ -169,6 +203,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                     codigoProducto: m.codigoProducto ? m.codigoProducto.substring(0, 50) : '',
                     descripcion: m.descripcion,
                     cantidadFacturada: m.cantidadFacturada,
+                    precioUnitario: m.precioUnitario || 0,
                     surtidos: []
                 };
 
@@ -177,6 +212,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                     partida.surtidos.push({
                         cantidadEntregada: m.surtidoAcumulado,
                         idUsuarioAlmacen: idUsuario,
+                        guia: m.nuevaGuia || '',
+                        fechaEntrega: new Date().toISOString(),
                         observaciones: m.nuevaObservacion || 'Surtido inicial al configurar'
                     });
                 }
@@ -216,6 +253,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             folioFactura: this.folio,
             nombreCliente: this.nombreCliente,
             fechaFacturacion: this.fechaFacturacion,
+            ordenCompra: this.ordenCompra,
+            totalFactura: this.totalFactura, // 👈 Nuevo
             updatedBy: idUsuario,
             partidas: this.dataSource.data.map(m => {
                 const partida: any = {
@@ -225,6 +264,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                     codigoProducto: m.codigoProducto ? m.codigoProducto.substring(0, 50) : '',
                     descripcion: m.descripcion,
                     cantidadFacturada: m.cantidadFacturada,
+                    precioUnitario: m.precioUnitario || 0,
                     surtidos: []
                 };
 
@@ -239,6 +279,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                         idSurtido: 0,
                         cantidadEntregada: m.surtidoAcumulado - originalAcumulado,
                         idUsuarioAlmacen: idUsuario,
+                        guia: m.nuevaGuia || '',
+                        fechaEntrega: new Date().toISOString(),
                         observaciones: m.nuevaObservacion || 'Actualización manual de control físico'
                     });
                 }
@@ -315,7 +357,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                         idPartida: row.idPartida,
                         cantidadEntregada: row.surtidoPendiente,
                         idUsuarioAlmacen: idUsuario,
-                        observaciones: observaciones
+                        observaciones: observaciones,
+                        guia: '' // Guía vacía para envío rápido
                     };
 
                     this.isLoading = true;
@@ -344,10 +387,13 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
 
         this.displayedColumns = [
             'producto',
+            'precioUnitario',
+            'importe',
             ...this.dynamicColumns,
             'cantidadFacturada',
             'entregado',
             'saldo',
+            'guia',
             'observaciones',
             'estatus',
             'acciones'
@@ -391,7 +437,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             idPartida: material.idPartida,
             cantidadEntregada: cantidad,
             idUsuarioAlmacen: idUsuario,
-            observaciones: 'Entrega rápida desde tablero'
+            observaciones: 'Entrega rápida desde tablero',
+            guia: ''
         };
 
         this.isLoading = true;
@@ -429,7 +476,8 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
             idPartida: material.idPartida,
             cantidadEntregada: datos.cantidadAEntregar,
             idUsuarioAlmacen: idUsuario,
-            observaciones: datos.observaciones
+            observaciones: datos.observaciones,
+            guia: datos.guia
         };
 
         this.isLoading = true;
@@ -449,6 +497,15 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                 const msg = err.error?.message || 'Error al registrar';
                 Swal.fire('Atención', msg, 'warning');
             }
+        });
+    }
+
+    verDetalleSurtido(material: MaterialEntregaDto): void {
+        this._dialog.open(SurtidoDetalleDialogComponent, {
+            data: { material },
+            width: '100%',
+            maxWidth: '800px',
+            autoFocus: false
         });
     }
 
@@ -475,7 +532,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
     }
 
     get subtotal(): number {
-        return this.dataSource.data.reduce((acc, row) => acc + (row.importe || 0), 0);
+        return this.dataSource.data.reduce((acc, row) => acc + (row.cantidadFacturada * (row.precioUnitario || 0)), 0);
     }
 
     get iva(): number {
@@ -490,26 +547,59 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
         const element = document.getElementById('pdf-template');
         if (!element) return;
 
-        // Mostrar temporalmente el elemento para la captura
-        element.style.display = 'block';
-
-        html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: 1000 // Asegurar un ancho consistente para el renderizado
-        }).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Remision_${this.folio}.pdf`);
-            
-            // Ocultar de nuevo
-            element.style.display = 'none';
+        // Aplanar los envíos para el PDF
+        this.enviosAplanados = [];
+        this.dataSource.data.forEach(material => {
+            if (material.historialSurtidos && material.historialSurtidos.length > 0) {
+                material.historialSurtidos.forEach(surtido => {
+                    this.enviosAplanados.push({
+                        codigo: material.codigoProducto,
+                        descripcion: material.descripcion,
+                        cantidad: surtido.cantidadEntregada,
+                        fecha: surtido.fechaEntrega || surtido.fechaCreacion || new Date(),
+                        guia: surtido.guia || 'N/A',
+                        precioUnitario: material.precioUnitario || 0,
+                        total: (surtido.cantidadEntregada * (material.precioUnitario || 0)) * 1.16 // Aproximado con IVA
+                    });
+                });
+            }
         });
+
+        this.isLoading = true;
+        element.style.display = 'block';
+        element.style.visibility = 'visible';
+
+        // Pequeño retardo para asegurar que Angular renderice el *ngFor
+        setTimeout(() => {
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: 1000
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                
+                element.style.display = 'none';
+                element.style.visibility = 'hidden';
+                this.isLoading = false;
+
+                const blob = pdf.output('blob');
+                this._dialog.open(PdfPreviewDialogComponent, {
+                    data: { 
+                        blob: blob, 
+                        filename: `Remision_${this.folio}.pdf` 
+                    },
+                    width: '90vw',
+                    maxWidth: '1200px',
+                    panelClass: 'preview-pdf-dialog'
+                });
+            });
+        }, 500);
     }
 
     numeroALetras(n: number): string {

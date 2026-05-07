@@ -64,6 +64,16 @@
         </div>
     </div>
 
+    <!-- 🔹 Overlay de Carga para PDF -->
+    <div *ngIf="isLoading" class="absolute inset-0 z-[999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-all">
+        <div class="relative flex items-center justify-center">
+            <div class="w-20 h-20 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <mat-icon class="absolute icon-size-8 text-blue-600 animate-pulse" [svgIcon]="'heroicons_outline:document-arrow-down'"></mat-icon>
+        </div>
+        <p class="mt-4 text-sm font-black text-blue-700 uppercase tracking-[0.2em] animate-pulse">Generando Documento...</p>
+        <p class="mt-1 text-[10px] text-gray-400 font-bold">Por favor espere un momento</p>
+    </div>
+
     <!-- Content Area -->
     <div class="flex-auto overflow-y-auto bg-gray-50/50 p-4 sm:p-6 transition-all"
          [ngClass]="isFullScreen ? 'h-full' : 'max-h-[80vh]'">
@@ -100,6 +110,19 @@
                     <input type="date" class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50"
                            [(ngModel)]="fechaFacturacion" [disabled]="isReadOnly">
                 </div>
+                <!-- Orden de Compra -->
+                <div class="flex flex-col">
+                    <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Orden de Compra</label>
+                    <input class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50"
+                           [(ngModel)]="ordenCompra" [disabled]="isReadOnly" placeholder="No. de orden de compra">
+                </div>
+                <!-- Total Factura (Dinámico) -->
+                <div class="flex flex-col">
+                    <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Total Materiales</label>
+                    <div class="px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl text-sm font-black text-blue-700">
+                        {{ total | currency:'MXN' }}
+                    </div>
+                </div>
                 <!-- Estado Sincronización -->
                 <div class="flex flex-col md:col-span-2">
                     <label class="text-[11px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Origen de Datos</label>
@@ -135,6 +158,26 @@
                                 <span class="font-extrabold text-gray-800 leading-tight">{{row.descripcion}}</span>
                                 <span class="text-[10px] text-secondary mt-1 font-bold tracking-widest">SKU: {{row.codigoProducto}}</span>
                             </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Precio Unitario Column -->
+                    <ng-container matColumnDef="precioUnitario">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-4 py-4 uppercase text-[10px] font-bold tracking-wider text-right text-secondary"> 
+                            P. Unitario 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-4 py-5 text-right font-mono text-xs">
+                            {{row.precioUnitario | currency:'MXN'}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Importe Column -->
+                    <ng-container matColumnDef="importe">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-4 py-4 uppercase text-[10px] font-bold tracking-wider text-right text-secondary"> 
+                            Importe 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-4 py-5 text-right font-black text-indigo-600 text-xs">
+                            {{row.importe | currency:'MXN'}}
                         </td>
                     </ng-container>
 
@@ -188,6 +231,32 @@
                         </th>
                         <td mat-cell *matCellDef="let row" class="px-6 py-5 text-right font-black text-sm" [ngClass]="row.surtidoPendiente > 0 ? 'text-rose-500' : 'text-emerald-500'">
                             {{row.surtidoPendiente}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Guía Column -->
+                    <ng-container matColumnDef="guia">
+                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50/50 px-4 py-4 uppercase text-[10px] font-bold tracking-wider text-secondary text-center"> 
+                            Guía 
+                        </th>
+                        <td mat-cell *matCellDef="let row" class="px-4 py-5">
+                            <div *ngIf="!isReadOnly" class="flex flex-col gap-2">
+                                <input type="text" 
+                                       class="w-full px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl text-xs font-bold text-blue-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-blue-300"
+                                       placeholder="No. Guía..."
+                                       [(ngModel)]="row.nuevaGuia">
+                            </div>
+                            
+                            <!-- Historial de Guías -->
+                            <div *ngIf="row.historialSurtidos?.length > 0" class="flex flex-wrap gap-1 mt-1 justify-center">
+                                <div *ngFor="let s of row.historialSurtidos; let j = index" class="group">
+                                    <span *ngIf="s.guia" 
+                                          class="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[8px] font-mono border border-gray-200 group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-200 transition-colors"
+                                          [matTooltip]="'Guía del envío E' + (j+1)">
+                                        {{s.guia}}
+                                    </span>
+                                </div>
+                            </div>
                         </td>
                     </ng-container>
 
@@ -248,6 +317,14 @@
                                     Finalizar Partida
                                 </button>
                             </div>
+                            <div class="flex items-center justify-center mt-2">
+                                <button mat-button
+                                        class="h-7 min-w-0 px-2 rounded-lg text-[8px] font-bold text-blue-600 border border-blue-100 hover:bg-blue-50"
+                                        (click)="verDetalleSurtido(row)">
+                                    <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                    Ver Historial / Guía
+                                </button>
+                            </div>
                             <span *ngIf="isReadOnly" class="text-[9px] text-gray-300 font-black uppercase tracking-widest">Lectura</span>
                         </td>
                     </ng-container>
@@ -297,7 +374,7 @@
 </div>
 
 <!-- PDF Template (Hidden) -->
-<div id="pdf-template" style="position: fixed; left: -9999px; top: 0; width: 850px; padding: 40px; background: white; color: #1e293b; font-family: 'Inter', sans-serif;">
+<div id="pdf-template" style="position: absolute; left: 0; top: 0; width: 850px; padding: 40px; background: white; color: #1e293b; font-family: 'Inter', sans-serif; z-index: -1; visibility: hidden;">
     <!-- Logo and Header -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
         <div style="display: flex; align-items: center; gap: 20px;">
@@ -311,6 +388,7 @@
             </div>
             <div style="margin-top: 10px; font-size: 11px; color: #64748b;">
                 <strong>FECHA:</strong> {{fechaFacturacion | date:'dd/MM/yyyy'}}<br>
+                <strong>O. COMPRA:</strong> {{ordenCompra || 'N/A'}}<br>
                 <strong>CLIENTE ID:</strong> 000{{idFacturaMaestro || 'N/A'}}
             </div>
         </div>
@@ -335,30 +413,57 @@
         </div>
     </div>
 
-    <!-- Items Table -->
+    <!-- 1. Tabla Resumen de Materiales -->
+    <h3 style="font-size: 14px; font-weight: 900; color: #1e40af; margin-bottom: 10px; text-transform: uppercase;">Resumen de Materiales</h3>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px;">
         <thead>
-            <tr style="background: #1e40af; color: white; text-align: left; text-transform: uppercase;">
-                <th style="padding: 10px; border: 1px solid #1e3a8a;">No.</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a;">Código</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a;">Descripción</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: center;">Fact.</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: center;">Entregado</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: center;">Pendiente</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: right;">P.U.</th>
-                <th style="padding: 10px; border: 1px solid #1e3a8a; text-align: right;">Total</th>
+            <tr style="background: #1e293b; color: white; text-align: left; text-transform: uppercase;">
+                <th style="padding: 8px; border: 1px solid #0f172a;">Código</th>
+                <th style="padding: 8px; border: 1px solid #0f172a;">Descripción</th>
+                <th style="padding: 8px; border: 1px solid #0f172a; text-align: center;">Facturado</th>
+                <th style="padding: 8px; border: 1px solid #0f172a; text-align: center;">Entregado</th>
+                <th style="padding: 8px; border: 1px solid #0f172a; text-align: center;">Faltante</th>
+                <th style="padding: 8px; border: 1px solid #0f172a; text-align: right;">P. Unitario</th>
+                <th style="padding: 8px; border: 1px solid #0f172a; text-align: right;">Total Línea</th>
             </tr>
         </thead>
         <tbody>
             <tr *ngFor="let row of dataSource.data; let i = index" [style.background]="i % 2 === 0 ? '#f8fafc' : 'white'">
-                <td style="padding: 8px; border: 1px solid #e2e8f0;">{{i + 1}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: 700;">{{row.codigoProducto}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0;">{{row.descripcion}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">{{row.cantidadFacturada}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #059669;">{{row.surtidoAcumulado}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #dc2626;">{{row.surtidoPendiente}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: right;">{{row.precioUnitario | currency}}</td>
-                <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: 700;">{{row.importe | currency}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0; font-weight: 700;">{{row.codigoProducto}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0;">{{row.descripcion}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: center;">{{row.cantidadFacturada}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #059669;">{{row.surtidoAcumulado}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #dc2626;">{{row.surtidoPendiente}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">{{row.precioUnitario | currency}}</td>
+                <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: 700;">{{(row.cantidadFacturada * row.precioUnitario) | currency}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 2. Tabla Detalle de Envíos Realizados -->
+    <h3 style="font-size: 14px; font-weight: 900; color: #059669; margin-bottom: 10px; text-transform: uppercase;">Historial de Envíos (Detalle de Guías)</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 9px;">
+        <thead>
+            <tr style="background: #ecfdf5; color: #065f46; text-align: left; text-transform: uppercase;">
+                <th style="padding: 6px 10px; border: 1px solid #d1fae5;">Fecha Envío</th>
+                <th style="padding: 6px 10px; border: 1px solid #d1fae5;">Código</th>
+                <th style="padding: 6px 10px; border: 1px solid #d1fae5;">Material</th>
+                <th style="padding: 6px 10px; border: 1px solid #d1fae5; text-align: center;">Cantidad Enviada</th>
+                <th style="padding: 6px 10px; border: 1px solid #d1fae5; text-align: center;">Guía / Rastreo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let env of enviosAplanados; let i = index">
+                <td style="padding: 4px 10px; border: 1px solid #f1f5f9; font-weight: 700;">{{env.fecha | date:'dd/MM/yyyy'}}</td>
+                <td style="padding: 4px 10px; border: 1px solid #f1f5f9;">{{env.codigo}}</td>
+                <td style="padding: 4px 10px; border: 1px solid #f1f5f9;">{{env.descripcion}}</td>
+                <td style="padding: 4px 10px; border: 1px solid #f1f5f9; text-align: center; font-weight: 900;">{{env.cantidad}}</td>
+                <td style="padding: 4px 10px; border: 1px solid #f1f5f9; text-align: center;">
+                    <span style="font-family: monospace; color: #047857; font-weight: 700;">{{env.guia}}</span>
+                </td>
+            </tr>
+            <tr *ngIf="enviosAplanados.length === 0">
+                <td colspan="5" style="padding: 20px; text-align: center; color: #94a3b8; font-style: italic;">No se han registrado envíos físicos aún.</td>
             </tr>
         </tbody>
     </table>
