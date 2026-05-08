@@ -14,6 +14,8 @@ import { User } from "app/core/user/user.types";
 import { ActivitySignalRService } from "./core/signalr/activity-signalr.service";
 import { CommonModule } from "@angular/common";
 import { UserTrackerService } from "./core/tracker/user-tracker.service";
+import { ProfileService } from "app/modules/admin/pages/profile/profile.services";
+import { BirthdayModalComponent } from "app/shared/components/birthday-modal/birthday-modal.component";
 
 @Component({
   selector: "app-root",
@@ -40,6 +42,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private _usersService = inject(UsersService);
   private _activitySignalRService = inject(ActivitySignalRService);
   private _userService = inject(UserService);
+  private _profileService = inject(ProfileService);
+
+  private birthdayChecked = false;
 
   constructor(
     private presenceService: PresenceService,
@@ -60,7 +65,14 @@ export class AppComponent implements OnInit, OnDestroy {
             if (u) {
                 this.currentUserName = u.nombreUsuario || u.nombre || 'Usuario';
                 this.currentUserAvatar = u.avatar || null;
-                this.currentUserId = u.usuarioId || u.id;
+                
+                const newUserId = u.usuarioId || u.id;
+                if (this.currentUserId !== newUserId) {
+                    this.birthdayChecked = false;
+                }
+                this.currentUserId = newUserId;
+                
+                this.checkBirthday(this.currentUserId);
                 // console.log('👤 [Identity] Usuario identificado:', this.currentUserName);
             }
         });
@@ -208,5 +220,47 @@ export class AppComponent implements OnInit, OnDestroy {
       this.isInactive = true;
       this.presenceService.setAway();
     }, this.inactivityLimit);
+  }
+
+  private checkBirthday(userId: string): void {
+      if (!userId || this.birthdayChecked) return;
+      
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const storageKey = `birthdayCelebrated_${userId}_${currentYear}`;
+      
+      if (localStorage.getItem(storageKey) === 'true') {
+          this.birthdayChecked = true;
+          return;
+      }
+
+      this.birthdayChecked = true;
+
+      this._profileService.getProfile(Number(userId)).subscribe({
+          next: (res: any) => {
+              if (res && res.usuarioInformacion && res.usuarioInformacion.fechaNacimiento) {
+                  const birthDateStr = res.usuarioInformacion.fechaNacimiento;
+                  const match = birthDateStr.match(/-(\d{2})-(\d{2})/);
+                  if (match) {
+                      const birthMonth = parseInt(match[1], 10);
+                      const birthDay = parseInt(match[2], 10);
+                      
+                      const currentMonth = today.getMonth() + 1;
+                      const currentDay = today.getDate();
+                      
+                      if (birthMonth === currentMonth && birthDay === currentDay) {
+                          this._dialog.open(BirthdayModalComponent, {
+                              width: '450px',
+                              panelClass: 'birthday-modal-panel'
+                          });
+                          localStorage.setItem(storageKey, 'true');
+                      }
+                  }
+              }
+          },
+          error: () => {
+              this.birthdayChecked = false; // Permitir reintento si falló
+          }
+      });
   }
 }
