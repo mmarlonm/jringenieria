@@ -33,69 +33,60 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <!-- Total Recepciones -->
                 <mat-card
-                    class="relative overflow-hidden p-4 rounded-3xl border-none shadow-xl bg-gradient-to-br from-indigo-600 to-indigo-800 text-white group transition-all hover:scale-[1.02]">
-                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <mat-icon class="icon-size-32" [svgIcon]="'heroicons_outline:archive-box'"></mat-icon>
+                    class="relative overflow-hidden p-3 rounded-2xl border-none shadow-lg bg-gradient-to-br from-indigo-600 to-indigo-800 text-white group transition-all hover:scale-[1.01]">
+                    <div class="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <mat-icon class="icon-size-20" [svgIcon]="'heroicons_outline:archive-box'"></mat-icon>
                     </div>
                     <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-xs font-black uppercase tracking-widest text-indigo-100">Total
-                                Histórico</span>
-                            <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
-                                <mat-icon class="icon-size-5 text-white"
-                                    [svgIcon]="'heroicons_solid:list-bullet'"></mat-icon>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-100">Total Histórico</span>
+                            <div class="p-1.5 bg-white/20 rounded-lg backdrop-blur-md">
+                                <mat-icon class="icon-size-4 text-white" [svgIcon]="'heroicons_solid:list-bullet'"></mat-icon>
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-5xl font-black mb-1 leading-none tracking-tighter">{{ totalRecepciones
-                                }}</span>
-                            <span class="text-xs font-bold text-indigo-200 uppercase tracking-widest">Recepciones
-                                Registradas</span>
+                            <span class="text-3xl font-black mb-0.5 leading-none tracking-tighter">{{ totalRecepciones }}</span>
+                            <span class="text-[10px] font-bold text-indigo-200 uppercase tracking-widest">Recepciones Registradas</span>
                         </div>
                     </div>
                 </mat-card>
 
                 <!-- Hoy -->
                 <mat-card
-                    class="relative overflow-hidden p-4 rounded-3xl border-none shadow-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white group transition-all hover:scale-[1.02]">
-                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <mat-icon class="icon-size-32" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                    class="relative overflow-hidden p-3 rounded-2xl border-none shadow-lg bg-gradient-to-br from-emerald-500 to-teal-700 text-white group transition-all hover:scale-[1.01]">
+                    <div class="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <mat-icon class="icon-size-20" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
                     </div>
                     <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex items-center justify-between mb-4">
-                            <span
-                                class="text-xs font-black uppercase tracking-widest text-emerald-500 bg-white/90 px-2 py-0.5 rounded-full">Hoy</span>
-                            <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
-                                <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:bolt'"></mat-icon>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-white/90 px-2 py-0.5 rounded-full">Hoy</span>
+                            <div class="p-1.5 bg-white/20 rounded-lg backdrop-blur-md">
+                                <mat-icon class="icon-size-4 text-white" [svgIcon]="'heroicons_solid:bolt'"></mat-icon>
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-5xl font-black mb-1 leading-none tracking-tighter">{{ hoyRecepciones
-                                }}</span>
-                            <span class="text-xs font-bold text-emerald-100 uppercase tracking-widest">Nuevas hoy</span>
+                            <span class="text-3xl font-black mb-0.5 leading-none tracking-tighter">{{ hoyRecepciones }}</span>
+                            <span class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest">Nuevas hoy</span>
                         </div>
                     </div>
                 </mat-card>
 
                 <!-- Semana -->
                 <mat-card
-                    class="relative overflow-hidden p-4 rounded-3xl border-none shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white group transition-all hover:scale-[1.02]">
-                    <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <mat-icon class="icon-size-32" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
+                    class="relative overflow-hidden p-3 rounded-2xl border-none shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white group transition-all hover:scale-[1.01]">
+                    <div class="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <mat-icon class="icon-size-20" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
                     </div>
                     <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-xs font-black uppercase tracking-widest text-amber-100">Últimos 7
-                                días</span>
-                            <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
-                                <mat-icon class="icon-size-5 text-white" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-amber-100">Últimos 7 días</span>
+                            <div class="p-1.5 bg-white/20 rounded-lg backdrop-blur-md">
+                                <mat-icon class="icon-size-4 text-white" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-5xl font-black mb-1 leading-none tracking-tighter">{{ semanaRecepciones
-                                }}</span>
-                            <span class="text-xs font-bold text-amber-100 uppercase tracking-widest">Registros
-                                semanales</span>
+                            <span class="text-3xl font-black mb-0.5 leading-none tracking-tighter">{{ semanaRecepciones }}</span>
+                            <span class="text-[10px] font-bold text-amber-100 uppercase tracking-widest">Registros semanales</span>
                         </div>
                     </div>
                 </mat-card>
@@ -113,11 +104,27 @@
                                 placeholder="Buscar por folio, sucursal, proyecto..." #input>
                         </mat-form-field>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button mat-stroked-button class="rounded-xl border-gray-300">
-                            <mat-icon class="icon-size-5 mr-2"
-                                [svgIcon]="'heroicons_outline:adjustments-horizontal'"></mat-icon>
-                            Filtros Avanzados
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Fecha Inicio -->
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-36" subscriptSizing="dynamic">
+                            <mat-label>Desde</mat-label>
+                            <input matInput [matDatepicker]="startPicker" [(ngModel)]="fechaInicio" (dateChange)="loadData()">
+                            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                            <mat-datepicker #startPicker></mat-datepicker>
+                        </mat-form-field>
+
+                        <!-- Fecha Fin -->
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-36" subscriptSizing="dynamic">
+                            <mat-label>Hasta</mat-label>
+                            <input matInput [matDatepicker]="endPicker" [(ngModel)]="fechaFin" (dateChange)="loadData()">
+                            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                            <mat-datepicker #endPicker></mat-datepicker>
+                        </mat-form-field>
+
+                        <!-- Refresh Button -->
+                        <button mat-icon-button class="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors"
+                            (click)="loadData()" matTooltip="Recargar datos">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
                         </button>
                     </div>
                 </div>

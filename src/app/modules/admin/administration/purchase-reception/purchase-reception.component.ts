@@ -70,8 +70,8 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
     hoyRecepciones: number = 0;
     semanaRecepciones: number = 0;
 
-    fechaInicio: any = '';
-    fechaFin: any = '';
+    fechaInicio: Date;
+    fechaFin: Date;
     filtroSearch: string = '';
 
     @ViewChild(MatSort) sort: MatSort;
@@ -90,8 +90,8 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
         // Default dates
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        this.fechaInicio = firstDay.toISOString().split('T')[0];
-        this.fechaFin = now.toISOString().split('T')[0];
+        this.fechaInicio = firstDay;
+        this.fechaFin = now;
 
         this.loadData();
     }
@@ -111,7 +111,12 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
 
     loadData(): void {
         this.isLoading = true;
-        this._receptionService.getRecepciones(this.fechaInicio, this.fechaFin)
+        
+        // Format dates for API
+        const fInicio = this.fechaInicio ? this._formatDate(this.fechaInicio) : '';
+        const fFin = this.fechaFin ? this._formatDate(this.fechaFin) : '';
+
+        this._receptionService.getRecepciones(fInicio, fFin)
             .subscribe({
                 next: (res: any) => {
                     this.dataSource.data = res.data || res || [];
@@ -124,6 +129,14 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
                     this._notificationService.showError('Error', 'No se pudieron cargar las recepciones');
                 }
             });
+    }
+
+    private _formatDate(date: Date): string {
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     private _calculateKPIs(): void {
