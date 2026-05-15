@@ -140,7 +140,13 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
         // 2. Escuchar cambios en los datos (Suscribirse al BehaviorSubject del servicio)
         this._expensesService.expenses$
-            .pipe(takeUntil(this._unsubscribeAll))
+            .pipe(
+                takeUntil(this._unsubscribeAll),
+                map(expenses => {
+                    if (this.canSeeAll) return expenses;
+                    return expenses.filter(e => e.unidadId === this.currentUserUnidadId);
+                })
+            )
             .subscribe((expenses: Expense[]) => {
                 this.dataSource.data = expenses;
                 // Aplicar filtros existentes si los hay
@@ -674,7 +680,12 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             if (unidad) return unidad.nombre;
         }
 
-        // Prioridad 2: Si el ID coincide con el usuario actual y tenemos el nombre de sesión, usarlo como fallback
+        // Prioridad 2: Fallbacks conocidos para evitar "N/A"
+        if (unidadId === 1) return 'Querétaro';
+        if (unidadId === 2) return 'Puebla';
+        if (unidadId === 3) return 'Hidalgo';
+
+        // Prioridad 3: Si el ID coincide con el usuario actual y tenemos el nombre de sesión, usarlo como fallback
         if (unidadId == this.currentUserUnidadId && this.currentUserUnidadName) {
             return this.currentUserUnidadName;
         }
