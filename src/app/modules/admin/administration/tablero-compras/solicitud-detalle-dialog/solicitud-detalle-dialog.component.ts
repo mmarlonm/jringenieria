@@ -402,17 +402,7 @@ export class SolicitudDetalleDialogComponent implements OnInit {
 
     loadFiles(): void {
         this._service.getArchivos(this.data.idSolicitud).subscribe(res => {
-            // Robust handling of different API response formats
-            let filesList = [];
-            if (Array.isArray(res)) {
-                filesList = res;
-            } else if (res && res.archivos && Array.isArray(res.archivos)) {
-                filesList = res.archivos;
-            } else if (res && res.data && Array.isArray(res.data)) {
-                filesList = res.data;
-            }
-            
-            this.archivos = filesList.map(nombre => ({ nombreArchivo: nombre }));
+            this.archivos = (res || []).map(nombre => ({ nombreArchivo: nombre }));
         });
     }
 

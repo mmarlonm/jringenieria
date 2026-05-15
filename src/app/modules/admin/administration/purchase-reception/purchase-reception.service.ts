@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from 'environments/environment';
 
 @Injectable({
@@ -23,6 +23,10 @@ export class PurchaseReceptionService {
         return this._httpClient.post(`${this.apiUrl}/recepcion/registrar`, data);
     }
 
+    eliminarRecepcion(id: number): Observable<any> {
+        return this._httpClient.delete(`${this.apiUrl}/recepcion/${id}`);
+    }
+
     getRecepciones(fechaInicio?: string, fechaFin?: string): Observable<any[]> {
         const params: any = {};
         if (fechaInicio) params.fechaInicio = fechaInicio;
@@ -30,15 +34,17 @@ export class PurchaseReceptionService {
         return this._httpClient.get<any[]>(`${this.apiUrl}/recepcion/todas`, { params });
     }
 
-    subirArchivos(idRecepcion: number, evidencia: File, comprobante: File): Observable<any> {
+    subirArchivoRecepcion(idRecepcion: number, archivo: File, tipo: string): Observable<any> {
         const formData = new FormData();
-        if (evidencia) formData.append('evidencia', evidencia);
-        if (comprobante) formData.append('comprobante', comprobante);
-        return this._httpClient.post(`${this.apiUrl}/recepcion/subir-archivos/${idRecepcion}`, formData);
+        formData.append('archivo', archivo);
+        formData.append('tipo', tipo);
+        return this._httpClient.post(`${this.apiUrl}/recepcion/subir-archivo/${idRecepcion}`, formData);
     }
 
-    getArchivosRecepcion(id: number): Observable<any> {
-        return this._httpClient.get<any>(`${this.apiUrl}/recepcion/${id}/archivos`);
+    getArchivosRecepcion(id: number): Observable<string[]> {
+        return this._httpClient.get<any>(`${this.apiUrl}/recepcion/${id}/archivos`).pipe(
+            map(res => res.data || res || [])
+        );
     }
 
     actualizarEstatusRecepcion(idRecepcion: number, nuevoEstatus: number): Observable<any> {
@@ -47,6 +53,10 @@ export class PurchaseReceptionService {
 
     descargarArchivo(idSolicitud: number, nombreArchivo: string): Observable<any> {
         return this._httpClient.get<any>(`${this.apiUrl}/recepcion/${idSolicitud}/descargar-archivo/${nombreArchivo}`);
+    }
+
+    eliminarArchivo(idSolicitud: number, tipo: string, nombreArchivo: string): Observable<any> {
+        return this._httpClient.delete(`${this.apiUrl}/recepcion/${idSolicitud}/archivos/${tipo}/${nombreArchivo}`);
     }
 
     /**

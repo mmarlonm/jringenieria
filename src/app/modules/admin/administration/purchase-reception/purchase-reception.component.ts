@@ -14,12 +14,14 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { Subject, takeUntil } from 'rxjs';
 import { PurchaseReceptionService } from './purchase-reception.service';
 import { UsersService } from '../../security/users/users.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { PurchaseReceptionFormDialogComponent } from './purchase-reception-form-dialog.component';
 import { PurchaseReceptionDetailsDialogComponent } from './purchase-reception-details-dialog.component';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'purchase-reception',
@@ -43,6 +45,7 @@ import { PurchaseReceptionDetailsDialogComponent } from './purchase-reception-de
         MatTooltipModule,
         MatDialogModule,
         MatNativeDateModule,
+        MatDividerModule,
         PurchaseReceptionDetailsDialogComponent
     ]
 })
@@ -211,5 +214,38 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
                     this._notificationService.showError('Error', 'No se pudo actualizar el estatus');
                 }
             });
+    }
+
+    eliminarRecepcion(reception: any): void {
+        const id = reception.idRecepcion || reception.id;
+        
+        Swal.fire({
+            title: '¿Eliminar recepción?',
+            text: `Se eliminará la recepción #${id} y todos sus archivos adjuntos. Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            background: '#ffffff',
+            customClass: {
+                confirmButton: 'rounded-xl px-6 py-2 text-sm font-bold',
+                cancelButton: 'rounded-xl px-6 py-2 text-sm font-bold'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._receptionService.eliminarRecepcion(id).subscribe({
+                    next: () => {
+                        this._notificationService.showSuccess('Éxito', 'Recepción eliminada correctamente');
+                        this.loadData();
+                    },
+                    error: (err) => {
+                        console.error('Error al eliminar recepción:', err);
+                        this._notificationService.showError('Error', 'No se pudo eliminar la recepción');
+                    }
+                });
+            }
+        });
     }
 }

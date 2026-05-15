@@ -274,10 +274,16 @@
                                 </button>
                                 <mat-menu #menu="matMenu" class="rounded-xl shadow-xl border-none">
                                     <button mat-menu-item (click)="openDetailsDialog(row)">
-                                        <mat-icon class="icon-size-5 text-indigo-500"
-                                            [svgIcon]="'heroicons_outline:eye'"></mat-icon>
-                                        <span>Ver Detalles</span>
-                                    </button>
+                                         <mat-icon class="icon-size-5 text-indigo-500"
+                                             [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                         <span>Ver Detalles</span>
+                                     </button>
+                                     <mat-divider class="my-1"></mat-divider>
+                                     <button mat-menu-item (click)="eliminarRecepcion(row)">
+                                         <mat-icon class="icon-size-5 text-red-500"
+                                             [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                         <span class="text-red-600 font-bold">Eliminar Recepción</span>
+                                     </button>
                                 </mat-menu>
                             </td>
                         </ng-container>

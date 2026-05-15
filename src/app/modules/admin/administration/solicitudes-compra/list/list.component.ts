@@ -172,9 +172,8 @@ export class SolicitudCompraListComponent implements OnInit {
     }
 
     verArchivos(solicitud: SolicitudCompra): void {
-        this._solicitudCompraService.getArchivos(solicitud.idSolicitud).subscribe(response => {
-            if (response && response.success && response.archivos && response.archivos.length > 0) {
-                const archivos = response.archivos;
+        this._solicitudCompraService.getArchivos(solicitud.idSolicitud).subscribe(archivos => {
+            if (archivos && archivos.length > 0) {
                 
                 if (archivos.length === 1) {
                     this._descargarArchivo(solicitud.idSolicitud, archivos[0]);

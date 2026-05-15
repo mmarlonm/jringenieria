@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -17,7 +17,7 @@ import { PurchaseReceptionService } from './purchase-reception.service';
 import { UsersService } from '../../security/users/users.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { FormControl } from '@angular/forms';
-import { Subject, takeUntil, debounceTime, switchMap, of, catchError } from 'rxjs';
+import { Subject, takeUntil, debounceTime, switchMap, of, catchError, forkJoin } from 'rxjs';
 
 @Component({
     selector: 'purchase-reception-form-dialog',
@@ -26,6 +26,7 @@ import { Subject, takeUntil, debounceTime, switchMap, of, catchError } from 'rxj
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         ReactiveFormsModule,
         MatButtonModule,
         MatDatepickerModule,
@@ -44,12 +45,15 @@ import { Subject, takeUntil, debounceTime, switchMap, of, catchError } from 'rxj
 })
 export class PurchaseReceptionFormDialogComponent implements OnInit {
     receptionForm: FormGroup;
-    invoiceSearchControl: FormControl = new FormControl('');
     ocData: any = null;
     usuarios: any[] = [];
-    filteredFoliosFactura: any[] = [];
-    evidenciaFile: File | null = null;
-    comprobanteFile: File | null = null;
+    selectedFiles: { file: File, type: string }[] = [];
+    fileTypes = [
+        { value: 'Facturas', label: 'Factura', color: 'text-emerald-500', icon: 'heroicons_outline:document-text' },
+        { value: 'Evidencias', label: 'Evidencia', color: 'text-blue-500', icon: 'heroicons_outline:camera' },
+        { value: 'Pagos', label: 'Pago/Anticipo', color: 'text-amber-500', icon: 'heroicons_outline:cash' }
+    ];
+    selectedType: string = 'Facturas';
     isLoading: boolean = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -65,7 +69,6 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
     ngOnInit(): void {
         this.initForm();
         this.loadUsers();
-        this._setupInvoiceSearch();
     }
 
     ngOnDestroy(): void {
@@ -87,7 +90,8 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             quienRecibioId: [null, Validators.required],
             dondeRecibio: ['', Validators.required],
             CondicionesComentarios: [''],
-            estatus: [0, Validators.required]
+            estatus: [0, Validators.required],
+            folioInternoFactura: ['']
         });
     }
 
@@ -99,10 +103,11 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
         this._receptionService.getDetalleConsolidado(folio).subscribe({
             next: (res) => {
                 this.ocData = res;
-                if (res && res.idSolicitud) {
+                if (res) {
                     this.receptionForm.patchValue({
                         idSolicitud: res.idSolicitud || folio,
-                        lugarEntrega: res.lugarEntrega || ''
+                        lugarEntrega: res.lugarEntrega || '',
+                        folioInternoFactura: res.datosFiscales?.folioInternoFactura || ''
                     });
                 }
                 this.isLoading = false;
@@ -110,75 +115,29 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             error: () => {
                 this.ocData = null;
                 this.isLoading = false;
-                this._notificationService.showError('Error', 'No se encontró información para el folio ingresado. Prueba buscar la factura manualmente.');
+                this._notificationService.showError('Error', 'No se encontró información para el folio ingresado.');
             }
         });
     }
 
-    private _setupInvoiceSearch(): void {
-        this.invoiceSearchControl.valueChanges.pipe(
-            debounceTime(2000),
-            switchMap(val => {
-                if (typeof val !== 'string' || !val.trim()) return of([]);
-                const query = val.trim();
-                return this._receptionService.buscarFoliosContpaq(query).pipe(
-                    catchError(() => of([]))
-                );
-            }),
-            takeUntil(this._unsubscribeAll)
-        ).subscribe(res => {
-            this.filteredFoliosFactura = res;
-        });
-    }
 
-    displayFolioFn(item: any): string {
-        if (!item) return '';
-        if (typeof item === 'string') return item;
-        return item.folio || '';
-    }
 
-    onFolioContpaqSelected(event: MatAutocompleteSelectedEvent): void {
-        const option = event.option.value;
-        if (!option) return;
-
-        this.isLoading = true;
-        this._receptionService.getDetalleFolioContpaq(option.folio, option.rfc).subscribe({
-            next: (detalle) => {
-                if (!detalle) return;
-
-                // Actualizar datos fiscales en ocData
-                if (!this.ocData) {
-                    this.ocData = { datosFiscales: {} };
-                } else if (!this.ocData.datosFiscales) {
-                    this.ocData.datosFiscales = {};
-                }
-
-                this.ocData.datosFiscales = {
-                    ...this.ocData.datosFiscales,
-                    totalFactura: detalle.total || 0,
-                    folioInternoFactura: detalle.folio || '',
-                    nombreProveedor: detalle.proveedor || '',
-                    rfcProveedor: detalle.rfc || '',
-                    folioFiscal_UUID: detalle.uuid || '',
-                    moneda: (detalle.moneda === 'MXP' ? 'MXN' : detalle.moneda) || 'MXN'
-                };
-
-                this.isLoading = false;
-                this._notificationService.showSuccess('Factura vinculada', `Datos de ${detalle.proveedor} cargados correctamente`);
-            },
-            error: () => {
-                this.isLoading = false;
-                this._notificationService.showError('Error', 'No se pudo obtener el detalle de la factura desde CONTPAQi');
+    onFileSelected(event: any): void {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                this.selectedFiles.push({
+                    file: files[i],
+                    type: this.selectedType
+                });
             }
-        });
-    }
-
-    onFileSelected(event: any, type: 'evidencia' | 'comprobante'): void {
-        const file = event.target.files[0];
-        if (file) {
-            if (type === 'evidencia') this.evidenciaFile = file;
-            else this.comprobanteFile = file;
         }
+        // Reset input
+        event.target.value = '';
+    }
+
+    removeFile(index: number): void {
+        this.selectedFiles.splice(index, 1);
     }
 
     submit(): void {
@@ -199,16 +158,21 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             proyectoCliente: this.ocData?.proyectoCliente,
             monto: this.ocData?.datosFiscales?.totalFactura,
             moneda: this.ocData?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (this.ocData?.datosFiscales?.moneda?.trim() || 'MXN'),
-            estatus: this.receptionForm.value.estatus
+            estatus: this.receptionForm.value.estatus,
+            folioInternoFactura: this.receptionForm.value.folioInternoFactura
         };
 
         this._receptionService.registrarRecepcion(payload).subscribe({
             next: (res) => {
                 const idRecepcion = res.idRecepcion || res.id;
-                if (this.evidenciaFile || this.comprobanteFile) {
-                    this._receptionService.subirArchivos(idRecepcion, this.evidenciaFile, this.comprobanteFile).subscribe({
+                if (this.selectedFiles.length > 0) {
+                    const uploads = this.selectedFiles.map(f => 
+                        this._receptionService.subirArchivoRecepcion(idRecepcion, f.file, f.type)
+                    );
+                    
+                    forkJoin(uploads).subscribe({
                         next: () => this.handleSuccess(),
-                        error: () => this.handleError('Error al subir los archivos')
+                        error: () => this.handleError('Error al subir algunos archivos')
                     });
                 } else {
                     this.handleSuccess();

@@ -114,28 +114,53 @@
                 <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
                 <h3 class="text-sm font-black text-gray-900 flex items-center gap-2 mb-4 uppercase tracking-tighter">
                     <mat-icon class="icon-size-5 text-indigo-500" [svgIcon]="'heroicons_solid:paper-clip'"></mat-icon>
-                    Archivos Digitales
+                    Gestión de Archivos Digitales
                 </h3>
 
-                <div *ngIf="archivos.length === 0" class="flex flex-col items-center justify-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <mat-icon class="icon-size-10 text-gray-300 mb-2" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">No hay archivos cargados</span>
+                <div *ngIf="archivos.length === 0" class="flex flex-col items-center justify-center py-10 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
+                    <mat-icon class="icon-size-12 text-gray-200 mb-2" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Sin archivos registrados</span>
                 </div>
 
-                <div *ngIf="archivos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div *ngFor="let file of archivos" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-md transition-all group">
-                        <div class="flex items-center gap-3 overflow-hidden">
-                            <div class="min-w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                                <mat-icon class="icon-size-5" [svgIcon]="file.toLowerCase().endsWith('.pdf') ? 'heroicons_outline:document-text' : 'heroicons_outline:photo'"></mat-icon>
+                <div *ngIf="archivos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div *ngFor="let file of archivos" 
+                         class="group relative flex flex-col p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300"
+                         [ngClass]="getFileConfig(file).bg">
+                        
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                                 [ngClass]="getFileConfig(file).bg + ' ' + getFileConfig(file).color">
+                                <mat-icon class="icon-size-7" [svgIcon]="getFileConfig(file).icon"></mat-icon>
                             </div>
-                            <div class="flex flex-col overflow-hidden">
-                                <span class="text-xs font-bold text-gray-700 truncate" [matTooltip]="file">{{ file }}</span>
-                                <span class="text-[9px] font-black text-secondary uppercase tracking-tighter">{{ file.split('.').pop() }}</span>
+                            
+                            <div class="flex gap-1">
+                                <button mat-icon-button (click)="previsualizar(file)" 
+                                        class="w-8 h-8 min-h-8 bg-white/80 hover:bg-white text-indigo-600 shadow-sm" 
+                                        matTooltip="Previsualizar">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                </button>
+                                <button mat-icon-button (click)="descargar(file)" 
+                                        class="w-8 h-8 min-h-8 bg-white/80 hover:bg-white text-blue-600 shadow-sm" 
+                                        matTooltip="Descargar">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                                </button>
+                                <button mat-icon-button (click)="eliminar(file)" 
+                                        class="w-8 h-8 min-h-8 bg-white/80 hover:bg-white text-red-600 shadow-sm" 
+                                        matTooltip="Eliminar">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                </button>
                             </div>
                         </div>
-                        <button mat-icon-button (click)="descargar(file)" color="primary" matTooltip="Descargar">
-                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
-                        </button>
+
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[10px] font-black uppercase tracking-widest mb-0.5 opacity-60" 
+                                  [ngClass]="getFileConfig(file).color">
+                                {{ getFileConfig(file).label }}
+                            </span>
+                            <span class="text-xs font-bold text-gray-800 truncate leading-tight" [matTooltip]="file">
+                                {{ file }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </mat-card>

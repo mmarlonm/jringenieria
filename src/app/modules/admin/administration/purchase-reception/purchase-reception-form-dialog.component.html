@@ -37,18 +37,10 @@
                 <div class="md:col-span-1">
                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
                         <mat-label>Factura (CONTPAQi)</mat-label>
-                        <input matInput [formControl]="invoiceSearchControl" [matAutocomplete]="auto" placeholder="Buscar folio/uuid...">
-                        <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFolioFn" (optionSelected)="onFolioContpaqSelected($event)">
-                            <mat-option *ngFor="let folio of filteredFoliosFactura" [value]="folio">
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-sm">{{ folio.folio }}</span>
-                                    <span class="text-[10px] text-secondary truncate">{{ folio.proveedor }} - {{ folio.total | currency }}</span>
-                                </div>
-                            </mat-option>
-                        </mat-autocomplete>
+                        <input matInput formControlName="folioInternoFactura" placeholder="Ej. F-123, F-456">
+                        <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
                     </mat-form-field>
-                    <p class="text-[10px] text-secondary mt-1 italic">Búsqueda manual si Folio Solicitud falla</p>
+                    <p class="text-[10px] text-secondary mt-1 italic">Ingresa folios separados por coma</p>
                 </div>
 
                 <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -156,24 +148,74 @@
                 <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
                 <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
                     <mat-icon class="icon-size-5 text-indigo-500 opacity-70" [svgIcon]="'heroicons_solid:paper-clip'"></mat-icon>
-                    D. Carga de Archivos Requeridos
+                    D. Carga de Archivos Requeridos (Clasificación Inteligente)
                 </h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group"
-                         (click)="evidenciaInput.click()">
-                        <mat-icon class="icon-size-10 text-secondary mb-2 group-hover:text-indigo-500" [svgIcon]="'heroicons_outline:camera'"></mat-icon>
-                        <span class="text-sm font-bold text-gray-700">Evidencia Fotográfica</span>
-                        <span class="text-[11px] text-secondary mt-1 text-center truncate w-full px-2">{{ evidenciaFile ? evidenciaFile.name : 'Click para subir archivos' }}</span>
-                        <input type="file" #evidenciaInput class="hidden" (change)="onFileSelected($event, 'evidencia')" accept="image/*">
+                <div class="flex flex-col space-y-6">
+                    <!-- Selector Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                        <div class="md:col-span-1">
+                            <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                                <mat-label>Tipo de Archivo</mat-label>
+                                <mat-select [(ngModel)]="selectedType" [ngModelOptions]="{standalone: true}">
+                                    <mat-option *ngFor="let type of fileTypes" [value]="type.value">
+                                        <div class="flex items-center gap-2">
+                                            <mat-icon class="icon-size-5" [ngClass]="type.color" [svgIcon]="type.icon"></mat-icon>
+                                            <span>{{ type.label }}</span>
+                                        </div>
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="md:col-span-2 flex items-center gap-3">
+                            <div class="flex-auto flex items-center justify-center p-2 border-2 border-dashed border-gray-200 rounded-xl hover:bg-white hover:border-indigo-400 cursor-pointer transition-all group h-[48px]"
+                                 (click)="fileInput.click()">
+                                <mat-icon class="icon-size-5 text-secondary mr-2 group-hover:text-indigo-500" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                                <span class="text-xs font-bold text-gray-700">Seleccionar archivos para {{ selectedType }}</span>
+                                <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" multiple>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group"
-                         (click)="comprobanteInput.click()">
-                        <mat-icon class="icon-size-10 text-secondary mb-2 group-hover:text-indigo-500" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
-                        <span class="text-sm font-bold text-gray-700">Comprobante de Pago</span>
-                        <span class="text-[11px] text-secondary mt-1 text-center truncate w-full px-2">{{ comprobanteFile ? comprobanteFile.name : 'Click para subir archivos' }}</span>
-                        <input type="file" #comprobanteInput class="hidden" (change)="onFileSelected($event, 'comprobante')" accept=".pdf,.jpg,.png">
+                    <!-- Selected Files List -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" *ngIf="selectedFiles.length > 0">
+                        <div *ngFor="let item of selectedFiles; let i = index" 
+                             class="group relative flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-2">
+                            
+                            <!-- Icon based on type -->
+                            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                                 [ngClass]="{
+                                    'bg-emerald-50 text-emerald-600': item.type === 'Facturas',
+                                    'bg-blue-50 text-blue-600': item.type === 'Evidencias',
+                                    'bg-amber-50 text-amber-600': item.type === 'Pagos'
+                                 }">
+                                <mat-icon class="icon-size-5" 
+                                          [svgIcon]="item.type === 'Facturas' ? 'heroicons_outline:document-text' : 
+                                                    (item.type === 'Evidencias' ? 'heroicons_outline:camera' : 'heroicons_outline:cash')">
+                                </mat-icon>
+                            </div>
+
+                            <div class="flex-auto min-w-0">
+                                <p class="text-xs font-bold text-gray-800 truncate" [matTooltip]="item.file.name">{{ item.file.name }}</p>
+                                <p class="text-[10px] font-medium uppercase tracking-wider"
+                                   [ngClass]="{
+                                      'text-emerald-500': item.type === 'Facturas',
+                                      'text-blue-500': item.type === 'Evidencias',
+                                      'text-amber-500': item.type === 'Pagos'
+                                   }">{{ item.type }}</p>
+                            </div>
+
+                            <button mat-icon-button class="w-8 h-8 min-h-8 text-gray-400 hover:text-red-500" (click)="removeFile(i)">
+                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="selectedFiles.length === 0" class="flex flex-col items-center justify-center py-8 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
+                        <mat-icon class="icon-size-12 text-gray-200 mb-2" [svgIcon]="'heroicons_outline:document-plus'"></mat-icon>
+                        <p class="text-sm font-medium text-gray-400">No hay archivos seleccionados</p>
+                        <p class="text-[11px] text-gray-300 mt-1">Sube facturas, evidencias o comprobantes de pago</p>
                     </div>
                 </div>
             </mat-card>

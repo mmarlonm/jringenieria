@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { Subject, takeUntil } from 'rxjs';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { SolicitudCompraService } from '../solicitudes-compra/solicitud-compra.service';
 import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/solicitud-compra.types';
 import { SolicitudDetalleDialogComponent } from './solicitud-detalle-dialog/solicitud-detalle-dialog.component';
@@ -482,7 +482,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
             dialogRef.afterClosed().subscribe(result => {
                 if (result) {
-                    this._ejecutarEstadoLiquidacion(row, estadoFinal, textoEstado, null, [result]);
+                    this._ejecutarEstadoLiquidacion(row, estadoFinal, textoEstado, result.archivos, [result]);
                 }
             });
             return;
@@ -568,12 +568,12 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 },
                 showLoaderOnConfirm: true,
                 preConfirm: () => {
-                    const file = (document.getElementById('swal-input-file-liq') as HTMLInputElement).files?.[0];
-                    if (!file) {
+                    const files = (document.getElementById('swal-input-file-liq') as HTMLInputElement).files;
+                    if (!files || files.length === 0) {
                         Swal.showValidationMessage('El comprobante es requerido');
                         return false;
                     }
-                    return { file };
+                    return { archivos: Array.from(files) };
                 },
                 didOpen: () => {
                     const fileInput = document.getElementById('swal-input-file-liq') as HTMLInputElement;
@@ -596,7 +596,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 allowOutsideClick: () => !Swal.isLoading()
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
-                    this._ejecutarEstadoLiquidacion(row, estadoFinal, textoEstado, result.value.file);
+                    this._ejecutarEstadoLiquidacion(row, estadoFinal, textoEstado, result.value.archivos);
                 }
             });
         } else {
@@ -605,7 +605,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         }
     }
 
-    private _ejecutarEstadoLiquidacion(row: any, estadoFinal: number, textoEstado: string, archivo?: File, anticipos?: any[]): void {
+    private _ejecutarEstadoLiquidacion(row: any, estadoFinal: number, textoEstado: string, archivos?: File[], anticipos?: any[]): void {
         const userObjStr = localStorage.getItem('userInformation');
         let idUsuario = 0;
         if (userObjStr) {
@@ -627,12 +627,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: () => {
                     row.estadoLiquidacion = estadoFinal;
-                    if (archivo) {
-                        this._solicitudCompraService.subirArchivo(row.idSolicitud, archivo).subscribe({
+                    if (archivos && archivos.length > 0) {
+                        const uploads = archivos.map(file => this._solicitudCompraService.subirArchivo(row.idSolicitud, file, 'Pagos'));
+                        forkJoin(uploads).subscribe({
                             next: () => {
                                 Swal.fire({
                                     title: '¡Éxito!',
-                                    text: `Estado actualizado a ${textoEstado} con comprobante`,
+                                    text: `Estado actualizado a ${textoEstado} con ${archivos.length} comprobante(s)`,
                                     icon: 'success',
                                     timer: 2000,
                                     showConfirmButton: false

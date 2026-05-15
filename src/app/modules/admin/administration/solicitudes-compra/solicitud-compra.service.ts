@@ -131,14 +131,17 @@ export class SolicitudCompraService {
         return this._httpClient.delete(`${this.apiUrl}/${id}`);
     }
 
-    subirArchivo(id: number, archivo: File): Observable<any> {
+    subirArchivo(id: number, archivo: File, tipo: string = 'Facturas'): Observable<any> {
         const formData = new FormData();
         formData.append('archivo', archivo);
+        formData.append('tipo', tipo);
         return this._httpClient.post(`${this.apiUrl}/${id}/archivos`, formData);
     }
 
-    getArchivos(id: number): Observable<any> {
-        return this._httpClient.get<any>(`${this.apiUrl}/${id}/archivos`);
+    getArchivos(id: number): Observable<string[]> {
+        return this._httpClient.get<any>(`${this.apiUrl}/${id}/archivos`).pipe(
+            map(res => res.archivos || res.data || res || [])
+        );
     }
 
     descargarArchivo(id: number, nombreArchivo: string): Observable<Blob> {
@@ -163,9 +166,11 @@ export class SolicitudCompraService {
         );
     }
 
-    eliminarArchivo(id: number, nombreArchivo: string): Observable<any> {
+    eliminarArchivo(id: number, nombreArchivo: string, tipo?: string): Observable<any> {
         const nombreCodificado = encodeURIComponent(nombreArchivo);
-        return this._httpClient.delete(`${this.apiUrl}/${id}/archivos/${nombreCodificado}`);
+        const params: any = {};
+        if (tipo) params.tipo = tipo;
+        return this._httpClient.delete(`${this.apiUrl}/${id}/archivos/${nombreCodificado}`, { params });
     }
 
     getDetalleConsolidado(idSolicitud: number): Observable<any> {

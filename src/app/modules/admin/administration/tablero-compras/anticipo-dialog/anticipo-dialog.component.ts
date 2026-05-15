@@ -59,12 +59,52 @@ import { DateTime } from 'luxon';
 
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Comentarios</mat-label>
-                    <textarea matInput formControlName="comentarios" rows="3" placeholder="Detalles sobre el anticipo..."></textarea>
+                    <textarea matInput formControlName="comentarios" rows="2" placeholder="Detalles sobre el anticipo..."></textarea>
                 </mat-form-field>
+
+                <div class="flex flex-col space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Comprobantes / Cotizaciones <span class="text-gray-300 font-normal italic">(Opcional)</span></label>
+                        <button type="button" mat-button color="primary" class="h-8 text-[11px] font-bold" (click)="fileInput.click()">
+                            <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                            Añadir Archivo
+                        </button>
+                    </div>
+
+                    <!-- Selected Files List -->
+                    <div *ngIf="archivos.length > 0" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                        <div *ngFor="let file of archivos; let i = index"
+                             class="flex items-center gap-3 p-3 bg-amber-50/50 border border-amber-100 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200 group">
+                            <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                            </div>
+                            <div class="flex flex-col flex-1 min-w-0">
+                                <span class="text-xs font-bold text-gray-700 truncate">{{ file.name }}</span>
+                                <span class="text-[9px] text-amber-600 font-medium uppercase tracking-wider">Listo para subir</span>
+                            </div>
+                            <button type="button" mat-icon-button (click)="removeFile(i)" class="w-7 h-7 min-h-7 text-gray-400 hover:text-red-500 transition-colors">
+                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Drop Zone / Initial State -->
+                    <div *ngIf="archivos.length === 0" 
+                         class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-gray-50 hover:border-amber-400 cursor-pointer transition-all group"
+                         (click)="fileInput.click()">
+                        <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-amber-100 group-hover:text-amber-500 transition-all">
+                            <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                        </div>
+                        <p class="mt-2 text-xs font-bold text-gray-500">Haz clic para adjuntar comprobantes</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">PDF, Imágenes (Máx. 10MB)</p>
+                    </div>
+
+                    <input type="file" #fileInput class="hidden" (change)="onFilesSelected($event)" multiple accept=".pdf,.jpg,.jpeg,.png">
+                </div>
 
                 <div class="flex items-center justify-end pt-4 border-t gap-2">
                     <button mat-button type="button" (click)="onNoClick()">Cancelar</button>
-                    <button mat-flat-button color="primary" [disabled]="anticipoForm.invalid">
+                    <button mat-flat-button color="primary" [disabled]="anticipoForm.invalid" class="bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-6">
                         <mat-icon class="mr-2 icon-size-5">check</mat-icon>
                         Confirmar Anticipo
                     </button>
@@ -75,6 +115,7 @@ import { DateTime } from 'luxon';
 })
 export class AnticipoDialogComponent implements OnInit {
     anticipoForm: FormGroup;
+    archivos: File[] = [];
 
     constructor(
         public dialogRef: MatDialogRef<AnticipoDialogComponent>,
@@ -90,6 +131,19 @@ export class AnticipoDialogComponent implements OnInit {
         });
     }
 
+    onFilesSelected(event: any): void {
+        const files: FileList = event.target.files;
+        if (files) {
+            for (let i = 0; i < files.length; i++) {
+                this.archivos.push(files.item(i));
+            }
+        }
+    }
+
+    removeFile(index: number): void {
+        this.archivos.splice(index, 1);
+    }
+
     onNoClick(): void {
         this.dialogRef.close();
     }
@@ -101,7 +155,8 @@ export class AnticipoDialogComponent implements OnInit {
         const result = {
             monto: formValue.monto,
             fechaProgramada: formValue.fechaProgramada.toJSDate ? formValue.fechaProgramada.toJSDate() : formValue.fechaProgramada,
-            comentarios: formValue.comentarios
+            comentarios: formValue.comentarios,
+            archivos: this.archivos
         };
         
         this.dialogRef.close(result);

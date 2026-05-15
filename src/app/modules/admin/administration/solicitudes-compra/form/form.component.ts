@@ -743,9 +743,9 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     loadArchivos(id: number): void {
-        this._solicitudCompraService.getArchivos(id).subscribe(response => {
-            if (response && response.success && Array.isArray(response.archivos)) {
-                this.archivos = response.archivos.map(nombre => ({ nombreArchivo: nombre }));
+        this._solicitudCompraService.getArchivos(id).subscribe(archivos => {
+            if (Array.isArray(archivos)) {
+                this.archivos = archivos.map(nombre => ({ nombreArchivo: nombre }));
             } else {
                 this.archivos = [];
             }
