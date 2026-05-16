@@ -1,43 +1,102 @@
-<div class="birthday-card relative overflow-hidden">
-    <!-- Animated background patterns -->
-    <div class="patterns">
-        <div class="circle c1"></div>
-        <div class="circle c2"></div>
-    </div>
+<div class="birthday-container relative flex items-center justify-center">
+    
+    <!-- SVG Filter for Electric Displacement -->
+    <svg class="absolute invisible w-0 h-0 pointer-events-none">
+        <defs>
+            <filter id="turbulent-displace" colorInterpolationFilters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise1" seed="1" />
+                <feOffset in="noise1" dx="0" dy="0" result="offsetNoise1">
+                    <animate attributeName="dy" values="700; 0" dur="6s" repeatCount="indefinite" calcMode="linear" />
+                </feOffset>
 
-    <div class="content p-8 md:p-12 flex flex-col items-center text-center relative z-10 backdrop-blur-md">
-        <!-- Close icon -->
-        <button mat-icon-button (click)="close()" class="close-btn">
-            <mat-icon svgIcon="heroicons_outline:x-mark"></mat-icon>
-        </button>
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise2" seed="1" />
+                <feOffset in="noise2" dx="0" dy="0" result="offsetNoise2">
+                    <animate attributeName="dy" values="0; -700" dur="6s" repeatCount="indefinite" calcMode="linear" />
+                </feOffset>
 
-        <!-- Premium Illustration/Icon -->
-        <div class="icon-wrapper mb-8">
-            <div class="glow"></div>
-            <mat-icon class="birthday-icon" svgIcon="heroicons_outline:cake"></mat-icon>
-        </div>
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise1" seed="2" />
+                <feOffset in="noise1" dx="0" dy="0" result="offsetNoise3">
+                    <animate attributeName="dx" values="490; 0" dur="6s" repeatCount="indefinite" calcMode="linear" />
+                </feOffset>
 
-        <h1 class="celebrate-text">¡Feliz Cumpleaños!</h1>
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise2" seed="2" />
+                <feOffset in="noise2" dx="0" dy="0" result="offsetNoise4">
+                    <animate attributeName="dx" values="0; -490" dur="6s" repeatCount="indefinite" calcMode="linear" />
+                </feOffset>
 
-        <div class="divider"></div>
+                <feComposite in="offsetNoise1" in2="offsetNoise2" result="part1" />
+                <feComposite in="offsetNoise3" in2="offsetNoise4" result="part2" />
+                <feBlend in="part1" in2="part2" mode="color-dodge" result="combinedNoise" />
 
-        <p class="subtitle mt-4 mb-10 text-gray-700 dark:text-gray-300">
-            Hoy celebramos tu camino, tus logros y la gran persona que eres.
-        </p>
+                <feDisplacementMap in="SourceGraphic" in2="combinedNoise" scale="30" xChannelSelector="R" yChannelSelector="B" />
+            </filter>
+        </defs>
+    </svg>
 
-        <!-- High-Impact Quote Card -->
-        <div class="quote-card group" (click)="celebrate()">
-            <div class="quote-icon-top">
-                <mat-icon svgIcon="heroicons_outline:chat-bubble-left-right"></mat-icon>
+    <!-- Main Premium Card -->
+    <div class="premium-card relative z-10 w-full max-w-xl mx-4">
+        
+        <!-- Electric Border Layers -->
+        <div class="electric-border-wrapper absolute inset-0 rounded-[40px] pointer-events-none">
+            <div class="border-outer">
+                <div class="electric-main-border"></div>
             </div>
-            <p class="quote-text italic">
-                "{{ randomPhrase }}"
-            </p>
-            <div class="interaction-hint">Haz clic para celebrar de nuevo ✨</div>
+            <div class="glow-layer-1"></div>
+            <div class="glow-layer-2"></div>
+            <div class="overlay-1"></div>
+        </div>
+        
+        <!-- Animated Background Blur Blobs -->
+        <div class="blobs">
+            <div class="blob b1"></div>
+            <div class="blob b2"></div>
         </div>
 
-        <button mat-flat-button class="celebrate-btn mt-10" (click)="celebrate()">
-            <span>¡Sigue Brillando!</span>
-        </button>
+        <div class="content-wrapper relative z-20 w-full p-8 md:p-14 flex flex-col items-center text-center">
+            
+            <!-- Close Button -->
+            <button mat-icon-button (click)="close()" class="absolute top-4 right-4 text-white/40 hover:text-white transition-all duration-300">
+                <mat-icon svgIcon="heroicons_outline:x-mark"></mat-icon>
+            </button>
+
+            <!-- Hero Section -->
+            <div class="hero-visual mb-8 relative">
+                <div class="aura"></div>
+                <div class="floating-assets">
+                    <span class="asset a1">🎈</span>
+                    <span class="asset a2">✨</span>
+                    <span class="asset a3">🎁</span>
+                </div>
+                <div class="icon-frame">
+                    <mat-icon class="hero-icon" svgIcon="heroicons_outline:cake"></mat-icon>
+                </div>
+            </div>
+
+            <!-- Typography -->
+            <div class="branding mb-10">
+                <h1 class="main-title">¡Feliz Cumpleaños!</h1>
+                <div class="gradient-bar mx-auto"></div>
+                <p class="main-message mt-6">
+                    Es un día muy especial para todos nosotros, porque hoy celebramos tu vida.
+                </p>
+            </div>
+
+            <!-- Interactive Quote -->
+            <div class="quote-card group" (click)="celebrate()">
+                <div class="quote-icon">“</div>
+                <p class="quote-text italic">
+                    {{ randomPhrase }}
+                </p>
+                <div class="interaction-hint mt-6 flex items-center justify-center space-x-3 opacity-40">
+                    <span class="pulse-dot"></span>
+                    <span class="hint-label">Toca para celebrar de nuevo</span>
+                </div>
+            </div>
+
+            <!-- CTA Button -->
+            <button mat-flat-button class="cta-action mt-12 w-full sm:w-auto" (click)="celebrate()">
+                <span class="btn-label">Sigue Brillando</span>
+            </button>
+        </div>
     </div>
 </div>

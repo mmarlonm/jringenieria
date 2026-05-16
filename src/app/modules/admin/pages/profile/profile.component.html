@@ -1,312 +1,324 @@
-<div class="flex min-w-0 flex-auto flex-col">
+<style>
+    @keyframes fadeInSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInSlideUp 0.6s ease-out forwards;
+    }
+
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+
+    .profile-card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .profile-card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .avatar-glow:hover {
+        box-shadow: 0 0 25px rgba(var(--fuse-primary-rgb), 0.5);
+        transform: scale(1.02);
+        transition: all 0.3s ease;
+    }
+
+    .status-glow {
+        position: relative;
+    }
+
+    .status-glow::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 15px currentColor;
+        opacity: 0.5;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 0.5; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+        100% { transform: scale(0.95); opacity: 0.5; }
+    }
+</style>
+
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50 dark:bg-transparent overflow-hidden">
+
     <!-- Header -->
-    <div class="bg-card flex flex-col shadow">
-        <!-- Cover image -->
-        <div>
-            <img class="h-40 object-cover lg:h-80" src="images/pages/profile/cover-jr-site.jpg" alt="Cover image" />
+    <div class="relative flex flex-col items-center flex-0 w-full overflow-hidden shadow-md">
+        <!-- Cover image with overlay -->
+        <div class="absolute inset-0 z-0">
+            <img class="object-cover w-full h-full filter blur-sm opacity-60" 
+                 src="images/pages/profile/cover-jr-site.jpg" alt="Cover image" />
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
         </div>
 
-        <!-- User info -->
-        <div class="bg-card mx-auto flex w-full max-w-5xl flex-0 flex-col items-center px-8 lg:h-18 lg:flex-row">
-            <!-- Avatar -->
-            <div class="relative">
-                <!-- Imagen del avatar -->
-                <div class="-mt-26 rounded-full lg:-mt-22">
-                    <img class="ring-bg-card h-32 w-32 rounded-full ring-4"
-                        [src]="baseAavatar || 'images/avatars/male-04.jpg'" alt="User avatar" />
+        <!-- User profile header content -->
+        <div class="relative z-10 flex flex-col items-center w-full max-w-5xl px-6 py-10 lg:flex-row lg:items-end lg:px-8">
+            <div class="relative group animate-fade-in-up">
+                <div class="w-32 h-32 p-1 bg-white rounded-full shadow-xl dark:bg-gray-800 lg:w-40 lg:h-40 avatar-glow transition-all duration-300">
+                    <img class="object-cover w-full h-full rounded-full ring-4 ring-white dark:ring-gray-800"
+                         [src]="baseAavatar || 'images/avatars/male-04.jpg'" alt="User avatar" />
+                </div>
+                <!-- Avatar edit button overlay on hover -->
+                <button
+                    class="absolute bottom-2 right-2 flex items-center justify-center h-10 w-10 bg-primary text-white rounded-full shadow-lg hover:bg-primary-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                    title="Editar avatar" (click)="fileInput.click()">
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:camera'"></mat-icon>
+                </button>
+                <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" />
+            </div>
+
+            <!-- User basic info -->
+            <div class="flex flex-col items-center mt-6 lg:items-start lg:ml-8 lg:mb-4 text-center lg:text-left animate-fade-in-up delay-100">
+                <h1 class="text-3xl font-bold tracking-tight text-white drop-shadow-md lg:text-4xl">
+                    {{user?.nombreUsuario}}
+                </h1>
+                <div class="flex flex-wrap justify-center mt-1 text-white/90 drop-shadow-sm lg:justify-start">
+                    <div class="flex items-center mr-4">
+                        <mat-icon class="mr-1.5 icon-size-4 text-inherit" [svgIcon]="'heroicons_solid:mail'"></mat-icon>
+                        <span class="text-md font-medium">{{user?.email}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Actions removed to be floating -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-auto p-6 sm:p-10 pb-32">
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3 max-w-7xl mx-auto w-full">
+            
+            <div class="lg:col-span-1 space-y-8 animate-fade-in-up delay-200">
+                <!-- Profile Status Card -->
+                <div class="flex flex-col p-8 bg-card shadow rounded-2xl overflow-hidden border-t-4 border-primary profile-card-hover">
+                    <h2 class="text-xl font-bold tracking-tight">Resumen de Cuenta</h2>
+                    <div class="mt-6 space-y-4">
+                        <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <div class="flex items-center justify-center w-10 h-10 mr-4 bg-blue-100 text-blue-600 rounded-full">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:user'"></mat-icon>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-secondary leading-none">ID de Usuario</span>
+                                <span class="mt-1 font-semibold">#{{user?.id}}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <div class="flex items-center justify-center w-10 h-10 mr-4 bg-green-100 text-green-600 rounded-full">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:check-circle'"></mat-icon>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-secondary leading-none">Estado</span>
+                                <span class="mt-1 font-semibold text-green-600 status-glow">Activo</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="font-bold text-md uppercase tracking-wider text-secondary">Acerca de</h3>
+                        <p class="mt-4 text-md leading-relaxed text-secondary">
+                            Bienvenido a tu panel de perfil. Aquí puedes gestionar tu información personal, configuraciones de seguridad y detalles de contacto. Mantén tu información actualizada para una mejor experiencia.
+                        </p>
+                    </div>
+
+                    <div class="mt-8 pt-8 border-t space-y-4">
+                        <div class="flex items-center text-secondary">
+                            <mat-icon class="mr-3 icon-size-5" [svgIcon]="'heroicons_solid:map-pin'"></mat-icon>
+                            <span class="text-sm">{{userinformationForm.get('direccion')?.value || 'Dirección no especificada'}}</span>
+                        </div>
+                        <div class="flex items-center text-secondary">
+                            <mat-icon class="mr-3 icon-size-5" [svgIcon]="'heroicons_solid:cake'"></mat-icon>
+                            <span class="text-sm">{{userinformationForm.get('fechaNacimiento')?.value | date:'longDate' : '' : 'es'}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-8 animate-fade-in-up delay-300">
+                
+                <!-- Account Settings Form -->
+                <div class="bg-card shadow rounded-2xl overflow-hidden profile-card-hover">
+                    <div class="flex items-center px-8 py-6 border-b bg-gray-50/50 dark:bg-transparent">
+                        <mat-icon class="mr-3 text-primary" [svgIcon]="'heroicons_solid:user-circle'"></mat-icon>
+                        <h2 class="text-xl font-bold">Configuración de la Cuenta</h2>
+                    </div>
+                    
+                    <div class="p-8">
+                        <form [formGroup]="userForm" class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                            <!-- Nombre de Usuario -->
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Nombre de Usuario</mat-label>
+                                <input matInput formControlName="nombreUsuario" placeholder="Ej. juanperez" />
+                                <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:user'"></mat-icon>
+                                <mat-error *ngIf="userForm.get('nombreUsuario')?.hasError('required')">Requerido</mat-error>
+                            </mat-form-field>
+
+                            <!-- Email -->
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Correo Electrónico</mat-label>
+                                <input matInput formControlName="email" type="email" placeholder="ejemplo@correo.com" />
+                                <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:mail'"></mat-icon>
+                                <mat-error *ngIf="userForm.get('email')?.hasError('required')">Requerido</mat-error>
+                                <mat-error *ngIf="userForm.get('email')?.hasError('email')">Formato inválido</mat-error>
+                            </mat-form-field>
+
+                            <div class="col-span-1 sm:col-span-2 mt-4 mb-2 pb-2 border-b">
+                                <h3 class="font-semibold text-lg">Seguridad y Contraseña</h3>
+                                <p class="text-sm text-secondary">Deja en blanco si no deseas cambiar tu contraseña.</p>
+                            </div>
+
+                            <!-- Contraseña Actual -->
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Contraseña actual</mat-label>
+                                <input matInput [type]="hideCurrentPassword ? 'password' : 'text'"
+                                    formControlName="currentPasswordUser" />
+                                <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:lock-closed'"></mat-icon>
+                                <button mat-icon-button matSuffix (click)="hideCurrentPassword = !hideCurrentPassword" type="button">
+                                    <mat-icon class="icon-size-5">{{ hideCurrentPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                </button>
+                            </mat-form-field>
+
+                            <!-- Nueva Contraseña -->
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Nueva contraseña</mat-label>
+                                <input matInput [type]="hideNewPassword ? 'password' : 'text'"
+                                    formControlName="newPasswordUser" />
+                                <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:shield-check'"></mat-icon>
+                                <button mat-icon-button matSuffix (click)="hideNewPassword = !hideNewPassword" type="button">
+                                    <mat-icon class="icon-size-5">{{ hideNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                </button>
+                                <mat-error *ngIf="userForm.get('newPasswordUser')?.hasError('minlength')">Mínimo 6 caracteres</mat-error>
+                            </mat-form-field>
+
+                            <!-- Confirmar Nueva Contraseña -->
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Confirmar nueva contraseña</mat-label>
+                                <input matInput [type]="hideConfirmPassword ? 'password' : 'text'"
+                                    formControlName="confirmPasswordUser" />
+                                <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:shield-check'"></mat-icon>
+                                <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
+                                    <mat-icon class="icon-size-5">{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                </button>
+                                <mat-error *ngIf="userForm.errors?.passwordMismatch">Las contraseñas no coinciden</mat-error>
+                            </mat-form-field>
+                        </form>
+                    </div>
                 </div>
 
-                <!-- Botón de editar avatar -->
-                <button
-                    class="absolute bottom-2 right-2 flex items-center justify-center h-8 w-8 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    title="Editar avatar" (click)="fileInput.click()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-4 h-4">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-4.572l2.036 2.036-8.036 8.036H9v-2.036l8.036-8.036z" />
-                    </svg>
-                </button>
+                <!-- Personal Information Form -->
+                <div class="bg-card shadow rounded-2xl overflow-hidden profile-card-hover">
+                    <div class="flex items-center px-8 py-6 border-b bg-gray-50/50 dark:bg-transparent">
+                        <mat-icon class="mr-3 text-primary" [svgIcon]="'heroicons_solid:identification'"></mat-icon>
+                        <h2 class="text-xl font-bold">Información Personal</h2>
+                    </div>
+                    
+                    <div class="p-8">
+                        <form [formGroup]="userinformationForm" class="space-y-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Sexo</mat-label>
+                                    <mat-select formControlName="sexo">
+                                        <mat-option [value]="1">Hombre</mat-option>
+                                        <mat-option [value]="2">Mujer</mat-option>
+                                    </mat-select>
+                                    <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:user-group'"></mat-icon>
+                                </mat-form-field>
 
-                <!-- Input para seleccionar archivo -->
-                <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" />
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Fecha de Nacimiento</mat-label>
+                                    <input matInput formControlName="fechaNacimiento" [matDatepicker]="picker">
+                                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                    <mat-datepicker #picker></mat-datepicker>
+                                    <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:cake'"></mat-icon>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="pt-4 border-t">
+                                <h3 class="font-semibold text-lg mb-4 flex items-center">
+                                    <mat-icon class="mr-2 text-red-500 icon-size-5" [svgIcon]="'heroicons_solid:phone'"></mat-icon>
+                                    Contactos de Emergencia
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Nombre (C.1)</mat-label>
+                                        <input matInput formControlName="nombreContacto1" />
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Parentesco</mat-label>
+                                        <input matInput formControlName="parentesco1" />
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Teléfono</mat-label>
+                                        <input matInput formControlName="NumeroContacto1" />
+                                    </mat-form-field>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2 mt-4">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Nombre (C.2)</mat-label>
+                                        <input matInput formControlName="nombreContacto2" />
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Parentesco</mat-label>
+                                        <input matInput formControlName="parentesco2" />
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Teléfono</mat-label>
+                                        <input matInput formControlName="NumeroContacto2" />
+                                    </mat-form-field>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t">
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Dirección de Residencia</mat-label>
+                                    <textarea matInput formControlName="direccion" rows="3"></textarea>
+                                    <mat-icon matPrefix class="icon-size-5 mr-2 mt-1" [svgIcon]="'heroicons_solid:home'"></mat-icon>
+                                </mat-form-field>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Mobile Save button removed to be floating -->
             </div>
         </div>
     </div>
 
-    <!-- Main -->
-    <div class="mx-auto flex w-full max-w-5xl flex-auto justify-center p-6 sm:p-8">
-        <!-- Column -->
-        <div class="mr-8 hidden flex-col items-start lg:flex">
-            <!-- About me -->
-            <fuse-card class="flex w-full max-w-80 flex-col p-8">
-                <div class="text-2xl font-semibold leading-tight">About Me</div>
-                <div class="mt-4">
-                    I’m a friendly kitchen assistant who suffers from a severe
-                    phobia of buttons.
-                    <br /><br />
-                    Brother of Elijah Jay Watkins, who has phobia of buttons and
-                    trust issues.
-                </div>
-                <hr class="my-6 w-full border-t" />
-                <div class="flex flex-col">
-                    <div class="flex items-center">
-                        <mat-icon class="mr-3 icon-size-5" [svgIcon]="'heroicons_solid:map-pin'"></mat-icon>
-                        <span class="leading-none">London, UK</span>
-                    </div>
-                    <div class="mt-4 flex items-center">
-                        <mat-icon class="mr-3 icon-size-5" [svgIcon]="'heroicons_solid:briefcase'"></mat-icon>
-                        <span class="leading-none">ACME Corp. Lead UX Designer</span>
-                    </div>
-                    <div class="mt-4 flex items-center">
-                        <mat-icon class="mr-3 icon-size-5" [svgIcon]="'heroicons_solid:cake'"></mat-icon>
-                        <span class="leading-none">April, 24</span>
-                    </div>
-                </div>
-                <a class="mt-8 px-6" mat-flat-button [color]="'primary'" [routerLink]="['./']">
-                    See complete bio
-                </a>
-            </fuse-card>
+    <!-- Floating Actions -->
+    <div class="fixed bottom-12 right-24 z-[999] flex items-center gap-4 animate-fade-in-up">
+        <!-- Cancelar Button -->
+        <button mat-flat-button class="bg-gray-200 text-gray-700 rounded-full px-6 h-12 shadow-lg hover:bg-gray-300 transition-all"
+                [routerLink]="['/dashboards/analytics']">
+            <mat-icon class="mr-2 icon-size-5" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+            Cancelar
+        </button>
 
-
-
-            <!-- Groups -->
-           <!-- <fuse-card class="mt-8 flex w-full max-w-80 flex-col px-8 pb-4 pt-6">
-                <div class="flex items-center justify-between">
-                    <div class="text-2xl font-semibold leading-tight">
-                        Groups
-                    </div>
-                    <div class="-mr-3">
-                        <button mat-icon-button [matMenuTriggerFor]="listCard02Menu">
-                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:ellipsis-vertical'"></mat-icon>
-                        </button>
-                        <mat-menu #listCard02Menu="matMenu">
-                            <button mat-menu-item>Search for groups</button>
-                        </mat-menu>
-                    </div>
-                </div>
-                <div class="mt-5 flex flex-col">
-                    <div class="flex items-center">
-                        <img class="mr-4 h-14 w-14 rounded object-cover" src="images/cards/coffee-shop-01-320x200.jpg"
-                            alt="Card cover image" />
-                        <div class="flex min-w-0 flex-col">
-                            <div class="font-medium leading-none">
-                                The Port Cafe
-                            </div>
-                            <div class="mt-1 truncate text-md leading-none">
-                                Best cafe of the downtown New York
-                            </div>
-                            <div class="text-secondary mt-2 text-md leading-none">
-                                1.2k followers
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex items-center">
-                        <img class="mr-4 h-14 w-14 rounded object-cover" src="images/cards/coffee-shop-02-512x512.jpg"
-                            alt="Card cover image" />
-                        <div class="flex min-w-0 flex-col">
-                            <div class="font-medium leading-none">
-                                Design House LLC.
-                            </div>
-                            <div class="mt-1 truncate text-md leading-none">
-                                UI/UX, brand and product design
-                            </div>
-                            <div class="text-secondary mt-2 text-md leading-none">
-                                957 followers
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex items-center">
-                        <img class="mr-4 h-14 w-14 rounded object-cover" src="images/cards/coffee-shop-03-320x320.jpg"
-                            alt="Card cover image" />
-                        <div class="flex min-w-0 flex-col">
-                            <div class="font-medium leading-none">
-                                Crax Laser Tag
-                            </div>
-                            <div class="mt-1 truncate text-md leading-none">
-                                30% off with group of 6 people
-                            </div>
-                            <div class="text-secondary mt-2 text-md leading-none">
-                                342 followers
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex items-center">
-                        <img class="mr-4 h-14 w-14 rounded object-cover" src="images/cards/sneakers-01-320x200.jpg"
-                            alt="Card cover image" />
-                        <div class="flex min-w-0 flex-col">
-                            <div class="font-medium leading-none">
-                                Roadster Clothing Inc.
-                            </div>
-                            <div class="mt-1 truncate text-md leading-none">
-                                $25 off on orders $500 and over
-                            </div>
-                            <div class="text-secondary mt-2 text-md leading-none">
-                                4.7k followers
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="-mx-3 mt-6 flex items-center">
-                    <a class="px-3" mat-button [color]="'primary'" [routerLink]="['./']">
-                        See all groups
-                    </a>
-                </div>
-            </fuse-card>-->
-
-
-        </div>
-
-        <!-- Column -->
-        <div class="flex flex-col items-start">
-            <!-- Create Post -->
-            <fuse-card class="flex w-full max-w-140 flex-col p-6 pb-6 sm:p-8">
-                <div class="text-xl font-semibold">Informacion de Perfil</div>
-                <div class="mt-8 flex flex-col items-start sm:flex-row">
-                    <form [formGroup]="userForm">
-                        <!-- Nombre de Usuario -->
-                        <mat-form-field appearance="outline" class="w-full mb-4">
-                            <mat-label>Nombre de Usuario</mat-label>
-                            <input matInput formControlName="nombreUsuario" />
-                            <mat-error *ngIf="userForm.get('nombreUsuario')?.hasError('required')">
-                                El nombre de usuario es obligatorio
-                            </mat-error>
-                            <mat-error *ngIf="userForm.get('nombreUsuario')?.hasError('maxlength')">
-                                Máximo 100 caracteres
-                            </mat-error>
-                        </mat-form-field>
-
-                        <!-- Email -->
-                        <mat-form-field appearance="outline" class="w-full mb-4">
-                            <mat-label>Email</mat-label>
-                            <input matInput formControlName="email" type="email" />
-                            <mat-error *ngIf="userForm.get('email')?.hasError('required')">
-                                El correo electrónico es obligatorio
-                            </mat-error>
-                            <mat-error *ngIf="userForm.get('email')?.hasError('email')">
-                                El correo electrónico no es válido
-                            </mat-error>
-                            <mat-error *ngIf="userForm.get('email')?.hasError('maxlength')">
-                                Máximo 255 caracteres
-                            </mat-error>
-                        </mat-form-field>
-
-                        <mat-form-field appearance="outline" class="w-full mb-4">
-                            <mat-label>Contraseña actual</mat-label>
-                            <input matInput [type]="hideCurrentPassword ? 'password' : 'text'"
-                                formControlName="currentPasswordUser" />
-                            <button mat-icon-button matSuffix (click)="hideCurrentPassword = !hideCurrentPassword"
-                                [attr.aria-label]="'Mostrar contraseña actual'"
-                                [attr.aria-pressed]="!hideCurrentPassword">
-                                <mat-icon>{{ hideCurrentPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                            </button>
-                            <mat-error *ngIf="userForm.get('currentPasswordUser')?.hasError('required')">
-                                La contraseña actual es requerida.
-                            </mat-error>
-                        </mat-form-field>
-
-                        <mat-form-field appearance="outline">
-                            <mat-label>Nueva contraseña</mat-label>
-                            <input matInput [type]="hideNewPassword ? 'password' : 'text'"
-                                formControlName="newPasswordUser" />
-                            <button mat-icon-button matSuffix (click)="hideNewPassword = !hideNewPassword"
-                                [attr.aria-label]="'Mostrar nueva contraseña'" [attr.aria-pressed]="!hideNewPassword">
-                                <mat-icon>{{ hideNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                            </button>
-                            <mat-error *ngIf="userForm.get('newPasswordUser')?.hasError('required')">
-                                La nueva contraseña es requerida.
-                            </mat-error>
-                            <mat-error *ngIf="userForm.get('newPasswordUser')?.hasError('minlength')">
-                                La nueva contraseña debe tener al menos 6 caracteres.
-                            </mat-error>
-                        </mat-form-field>
-
-                        <mat-form-field appearance="outline">
-                            <mat-label>Confirmar nueva contraseña</mat-label>
-                            <input matInput [type]="hideConfirmPassword ? 'password' : 'text'"
-                                formControlName="confirmPasswordUser" />
-                            <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword"
-                                [attr.aria-label]="'Mostrar confirmación de contraseña'"
-                                [attr.aria-pressed]="!hideConfirmPassword">
-                                <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                            </button>
-                            <mat-error *ngIf="userForm.get('confirmPasswordUser')?.hasError('required')">
-                                Debes confirmar la nueva contraseña.
-                            </mat-error>
-                            <mat-error *ngIf="userForm.errors?.passwordMismatch">
-                                Las contraseñas no coinciden.
-                            </mat-error>
-                        </mat-form-field>
-
-                        
-                    </form>
-                </div>
-            </fuse-card>
-        </div>
-        
+        <!-- Guardar Button -->
+        <button mat-flat-button color="primary" class="rounded-full px-8 h-12 shadow-lg hover:shadow-primary-500/30 transition-all"
+                [disabled]="userForm.invalid || loading"
+                (click)="onSubmit()">
+            <mat-icon *ngIf="!loading" class="mr-2 icon-size-5" [svgIcon]="'heroicons_solid:check'"></mat-icon>
+            <mat-icon *ngIf="loading" class="mr-2 icon-size-5 animate-spin" [svgIcon]="'heroicons_solid:refresh'"></mat-icon>
+            <span *ngIf="!loading">Guardar</span>
+            <span *ngIf="loading">Guardando...</span>
+        </button>
     </div>
-    <div class="ml-6 mr-6">
-            <fuse-card class="mt-8 flex w-full flex-col px-8 pb-4 pt-6">
-                <div class="text-xl font-semibold">Informacion Personal del Perfil</div>
-                <form [formGroup]="userinformationForm">
-                <div class="mt-8 flex flex-col items-start sm:flex-row grid grid-cols-2 gap-4">
-                    <mat-form-field>
-                        <mat-label>Sexo</mat-label>
-                        <mat-select formControlName="sexo">
-                            <mat-option [value]="1">Hombre</mat-option>
-                            <mat-option [value]="2">Mujer</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field>
-                        <mat-label>Fecha de Cumpleaños</mat-label>
-                        <input matInput formControlName="fechaNacimiento" [matDatepicker]="picker">
-                        <mat-hint>MM/DD/YYYY</mat-hint>
-                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-datepicker #picker></mat-datepicker>
-                    </mat-form-field>
-                </div>
-                
-                <div class="mt-8 flex flex-col items-start sm:flex-row grid grid-cols-3 gap-4">
-                    <mat-form-field>
-                        <mat-label>Numero de contacto emergencia 1</mat-label>
-                        <input matInput formControlName="NumeroContacto1" />
-                    </mat-form-field>
-                    <mat-form-field>
-                        <mat-label>Nombre</mat-label>
-                        <input matInput formControlName="nombreContacto1" />
-                    </mat-form-field>
-                    <mat-form-field>
-                        <mat-label>Parentesco</mat-label>
-                        <input matInput formControlName="parentesco1" />
-                    </mat-form-field>
-                     <mat-form-field>
-                        <mat-label>Numero de contacto emergencia 2</mat-label>
-                        <input matInput formControlName="NumeroContacto2" />
-                    </mat-form-field>
-                    <mat-form-field>
-                        <mat-label>Nombre</mat-label>
-                        <input matInput formControlName="nombreContacto2" />
-                    </mat-form-field>
-                    <mat-form-field>
-                        <mat-label>Parentesco</mat-label>
-                        <input matInput formControlName="parentesco2" />
-                    </mat-form-field>
-                </div>
-                <div class=" flex flex-col items-start sm:flex-row w-full ">
-                    <mat-form-field class="mt-2 w-full flex flex-col " >
-                        <mat-label>Dirección</mat-label>
-                        <input matInput formControlName="direccion" />
-                    </mat-form-field>
-                </div>
-                </form>
-            </fuse-card>
-           
-        </div>
-         <!-- Botón Guardar -->
-                        <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
-                            <button mat-raised-button color="primary" [disabled]="userForm.invalid"
-                                (click)="onSubmit()">
-                                Guardar Cambios
-                            </button>
-                        </div>
-
 </div>

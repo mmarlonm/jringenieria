@@ -26,6 +26,19 @@
                 @if (!user?.avatar) {
                 <mat-icon class="icon-size-24" [svgIcon]="'heroicons_solid:user-circle'"></mat-icon>
                 }
+
+                <!-- Gorro de cumpleaños y festejos -->
+                @if (isBirthdayToday) {
+                    <div class="absolute -top-6 -right-5 text-6xl animate-bounce filter drop-shadow-xl z-20 pointer-events-none" title="¡Feliz Cumpleaños!">
+                        🥳
+                    </div>
+                    <div class="absolute -top-7 -left-5 text-4xl animate-pulse z-20 pointer-events-none rotate-12">
+                        🎉
+                    </div>
+                    <div class="absolute -bottom-2 -left-2 text-4xl animate-pulse z-20">
+                        🎂
+                    </div>
+                }
             </div>
             <div class="mt-6 flex w-full flex-col items-center justify-center">
                 <div

@@ -107,7 +107,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this._userTrackerService.registrarEvento(moduleName, 'Acceso al módulo', 'Router', urlPath);
       }, 800);
       
-      setTimeout(() => this.checkAndStartServices(), 300);
+      setTimeout(() => {
+        this.checkAndStartServices();
+        if (this.currentUserId) this.checkBirthday(this.currentUserId);
+      }, 300);
     });
   }
 
@@ -223,43 +226,63 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private checkBirthday(userId: string): void {
-      if (!userId || this.birthdayChecked) return;
+      if (!userId) return;
       
       const today = new Date();
       const currentYear = today.getFullYear();
       const storageKey = `birthdayCelebrated_${userId}_${currentYear}`;
       
+      // Si ya lo celebró hoy, no hacer nada
       if (localStorage.getItem(storageKey) === 'true') {
-          this.birthdayChecked = true;
           return;
       }
 
+      // Evitar múltiples llamadas simultáneas
+      if (this.birthdayChecked) return;
       this.birthdayChecked = true;
+
+      console.log('🎂 [Birthday] Verificando fecha para usuario:', userId);
 
       this._profileService.getProfile(Number(userId)).subscribe({
           next: (res: any) => {
               if (res && res.usuarioInformacion && res.usuarioInformacion.fechaNacimiento) {
                   const birthDateStr = res.usuarioInformacion.fechaNacimiento;
-                  const match = birthDateStr.match(/-(\d{2})-(\d{2})/);
-                  if (match) {
-                      const birthMonth = parseInt(match[1], 10);
-                      const birthDay = parseInt(match[2], 10);
-                      
-                      const currentMonth = today.getMonth() + 1;
-                      const currentDay = today.getDate();
-                      
-                      if (birthMonth === currentMonth && birthDay === currentDay) {
-                          this._dialog.open(BirthdayModalComponent, {
-                              width: '450px',
-                              panelClass: 'birthday-modal-panel'
-                          });
-                          localStorage.setItem(storageKey, 'true');
+                  
+                  // Intentar parsear de varias formas
+                  const birthDate = new Date(birthDateStr);
+                  let birthMonth, birthDay;
+
+                  if (!isNaN(birthDate.getTime())) {
+                      birthMonth = birthDate.getUTCMonth() + 1;
+                      birthDay = birthDate.getUTCDate();
+                  } else {
+                      // Fallback a regex si el parseo falla
+                      const match = birthDateStr.match(/-(\d{2})-(\d{2})/);
+                      if (match) {
+                          birthMonth = parseInt(match[1], 10);
+                          birthDay = parseInt(match[2], 10);
                       }
+                  }
+
+                  const currentMonth = today.getMonth() + 1;
+                  const currentDay = today.getDate();
+
+                  console.log(`🎂 [Birthday] Comparando: Naci(${birthDay}/${birthMonth}) vs Hoy(${currentDay}/${currentMonth})`);
+                  
+                  if (birthMonth === currentMonth && birthDay === currentDay) {
+                      console.log('🎉 [Birthday] ¡ES EL CUMPLEAÑOS! Mostrando modal...');
+                      this._dialog.open(BirthdayModalComponent, {
+                          maxWidth: '95vw',
+                          maxHeight: '95vh',
+                          panelClass: 'birthday-modal-panel'
+                      });
+                      localStorage.setItem(storageKey, 'true');
                   }
               }
           },
-          error: () => {
-              this.birthdayChecked = false; // Permitir reintento si falló
+          error: (err) => {
+              console.error('❌ [Birthday] Error al obtener perfil:', err);
+              this.birthdayChecked = false; // Permitir reintento
           }
       });
   }

@@ -93,6 +93,7 @@ import { FuseConfigService } from '@fuse/services/config';
 import { FuseConfig } from '@fuse/services/config/config.types';
 import { PersonalManagementService } from 'app/modules/rrhh/personal-management/personal-management.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { ProfileService } from 'app/modules/admin/pages/profile/profile.services';
 
 @Component({
     selector: 'classy-layout',
@@ -124,6 +125,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     isScreenSmall: boolean;
     navigation: Navigation;
     user: User;
+    isBirthdayToday: boolean = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     misTareas: any[] = [];
 
@@ -163,7 +165,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private _taskConfigService: TaskViewConfigService,
         private _personalManagementService: PersonalManagementService,
         private _ngZone: NgZone,
-        private _chatNotificationService: ChatNotificationService
+        private _chatNotificationService: ChatNotificationService,
+        private _profileService: ProfileService
     ) { }
 
     // ----------------------------------------------------------
@@ -184,6 +187,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((user: any) => {
                 this.user = user['usuario'];
+                this._checkBirthday();
             });
 
         this._fuseMediaWatcherService.onMediaChange$
@@ -198,6 +202,33 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
         this.checkGoogleStatus();
         this.checkDailyStatus();
+    }
+
+    private _checkBirthday(): void {
+        const userId = this.user?.id || this.user?.['usuarioId'];
+        if (!userId) return;
+
+        this._profileService.getProfile(Number(userId)).subscribe({
+            next: (res: any) => {
+                if (res && res.usuarioInformacion && res.usuarioInformacion.fechaNacimiento) {
+                    const birthDateStr = res.usuarioInformacion.fechaNacimiento;
+                    const today = new Date();
+                    
+                    const match = birthDateStr.match(/-(\d{2})-(\d{2})/);
+                    if (match) {
+                        const birthMonth = parseInt(match[1], 10);
+                        const birthDay = parseInt(match[2], 10);
+                        
+                        const currentMonth = today.getMonth() + 1;
+                        const currentDay = today.getDate();
+                        
+                        if (birthMonth === currentMonth && birthDay === currentDay) {
+                            this.isBirthdayToday = true;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**

@@ -75,6 +75,7 @@ export class ProfileComponent implements OnInit {
   hideNewPassword: boolean = true;
   hideConfirmPassword: boolean = true;
   countdown: number = 5;
+  loading: boolean = false;
   constructor(
     private _userService: UserService,
     private cdRef: ChangeDetectorRef,
@@ -216,15 +217,25 @@ export class ProfileComponent implements OnInit {
     const { UsuarioInformacionId, sexo, fechaNacimiento, NumeroContacto1, NumeroContacto2, nombreContacto1, nombreContacto2, parentesco1, parentesco2, direccion } = this.userinformationForm.value;
     const id = this.user.id;
     const obj = { nombreUsuario, email, id, UsuarioInformacion: { UsuarioInformacionId, sexo, fechaNacimiento, NumeroContacto1, NumeroContacto2, nombreContacto1, nombreContacto2, parentesco1, parentesco2, direccion } };
+    this.loading = true;
+    this.cdRef.markForCheck();
+
     // Actualizar datos del usuario
-    this._userService.updateUser(obj).subscribe(
-      () => {
-        this._chatNotificationService.showSuccess('Éxito', 'Datos de usuario actualizados correctamente', 3000);
-      },
-      (error) => {
-        this._chatNotificationService.showError('Error', 'Error al actualizar datos de usuario', 3000);
-      }
-    );
+    this._userService.updateUser(obj)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdRef.markForCheck();
+        })
+      )
+      .subscribe(
+        () => {
+          this._chatNotificationService.showSuccess('Éxito', 'Datos de usuario actualizados correctamente', 3000);
+        },
+        (error) => {
+          this._chatNotificationService.showError('Error', 'Error al actualizar datos de usuario', 3000);
+        }
+      );
 
     // Cambiar contraseña si se completó
     if (currentPasswordUser && newPasswordUser && confirmPasswordUser) {

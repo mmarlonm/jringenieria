@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,17 +10,18 @@ import { confetti } from 'app/shared/utils/confetti.utils';
     standalone: true,
     imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
     templateUrl: './birthday-modal.component.html',
-    styleUrls: ['./birthday-modal.component.scss']
+    styleUrls: ['./birthday-modal.component.scss'],
+    encapsulation: ViewEncapsulation.None
 })
-export class BirthdayModalComponent implements OnInit {
+export class BirthdayModalComponent implements OnInit, OnDestroy {
     private _dialogRef = inject(MatDialogRef<BirthdayModalComponent>);
 
     phrases: string[] = [
-        "El éxito no es el final, el fracaso no es fatal: es el coraje para continuar lo que cuenta.",
-        "Tu única competencia eres tú mismo de ayer. ¡Sigue superándote!",
-        "No cuentes los días, haz que los días cuenten. ¡Felicidades por un año más de impacto!",
-        "Cree en tu potencial infinito. Tus únicas limitaciones son las que tú mismo te impones.",
-        "Un año más para ser la mejor versión de ti mismo. El mundo espera tu genialidad."
+        "Que este nuevo año de vida te traiga tanta alegría y luz como la que aportas a nuestro equipo todos los días.",
+        "Hoy celebramos no solo tu cumpleaños, sino la increíble persona que eres. ¡Gracias por inspirarnos siempre!",
+        "Tu energía y dedicación hacen de este lugar algo especial. Que hoy recibas todo el cariño que mereces.",
+        "Un año más de vida es un regalo hermoso. Deseamos que este nuevo ciclo esté lleno de paz, salud y momentos inolvidables.",
+        "Detrás de cada gran logro hay personas excepcionales como tú. ¡Que tengas un cumpleaños tan extraordinario como tú lo eres!"
     ];
 
     randomPhrase: string = '';
@@ -32,6 +33,10 @@ export class BirthdayModalComponent implements OnInit {
         setTimeout(() => {
             this.celebrate();
         }, 500);
+    }
+
+    ngOnDestroy(): void {
+        // Cleanup if needed
     }
 
     celebrate(): void {
