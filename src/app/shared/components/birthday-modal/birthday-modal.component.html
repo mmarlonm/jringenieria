@@ -1,50 +1,11 @@
 <div class="birthday-container relative flex items-center justify-center">
     
-    <!-- SVG Filter for Electric Displacement -->
-    <svg class="absolute invisible w-0 h-0 pointer-events-none">
-        <defs>
-            <filter id="turbulent-displace" colorInterpolationFilters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
-                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise1" seed="1" />
-                <feOffset in="noise1" dx="0" dy="0" result="offsetNoise1">
-                    <animate attributeName="dy" values="700; 0" dur="6s" repeatCount="indefinite" calcMode="linear" />
-                </feOffset>
-
-                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise2" seed="1" />
-                <feOffset in="noise2" dx="0" dy="0" result="offsetNoise2">
-                    <animate attributeName="dy" values="0; -700" dur="6s" repeatCount="indefinite" calcMode="linear" />
-                </feOffset>
-
-                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise1" seed="2" />
-                <feOffset in="noise1" dx="0" dy="0" result="offsetNoise3">
-                    <animate attributeName="dx" values="490; 0" dur="6s" repeatCount="indefinite" calcMode="linear" />
-                </feOffset>
-
-                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise2" seed="2" />
-                <feOffset in="noise2" dx="0" dy="0" result="offsetNoise4">
-                    <animate attributeName="dx" values="0; -490" dur="6s" repeatCount="indefinite" calcMode="linear" />
-                </feOffset>
-
-                <feComposite in="offsetNoise1" in2="offsetNoise2" result="part1" />
-                <feComposite in="offsetNoise3" in2="offsetNoise4" result="part2" />
-                <feBlend in="part1" in2="part2" mode="color-dodge" result="combinedNoise" />
-
-                <feDisplacementMap in="SourceGraphic" in2="combinedNoise" scale="30" xChannelSelector="R" yChannelSelector="B" />
-            </filter>
-        </defs>
-    </svg>
-
     <!-- Main Premium Card -->
     <div class="premium-card relative z-10 w-full max-w-xl mx-4">
         
-        <!-- Electric Border Layers -->
-        <div class="electric-border-wrapper absolute inset-0 rounded-[40px] pointer-events-none">
-            <div class="border-outer">
-                <div class="electric-main-border"></div>
-            </div>
-            <div class="glow-layer-1"></div>
-            <div class="glow-layer-2"></div>
-            <div class="overlay-1"></div>
-        </div>
+        <!-- ⚡ Lightweight Performance-Optimized Electric Border -->
+        <div class="fast-electric-border"></div>
+
         
         <!-- Animated Background Blur Blobs -->
         <div class="blobs">
