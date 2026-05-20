@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import html2pdf from 'html2pdf.js';
 
 @Component({
     selector: 'detalle-entrega-dialog',
@@ -566,8 +567,7 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
         });
 
         this.isLoading = true;
-        element.style.display = 'block';
-        element.style.visibility = 'visible';
+        element.classList.remove('pdf-template-hidden');
 
         // Pequeño retardo para asegurar que Angular renderice el *ngFor
         setTimeout(() => {
@@ -577,15 +577,98 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                 logging: false,
                 windowWidth: 1000
             }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                const containerRect = element.getBoundingClientRect();
+                const avoidElements = Array.from(element.querySelectorAll('tr, .pdf-avoid-cut'));
                 
-                element.style.display = 'none';
-                element.style.visibility = 'hidden';
+                const boundaries = avoidElements.map(el => {
+                    const rect = el.getBoundingClientRect();
+                    return {
+                        top: rect.top - containerRect.top,
+                        bottom: rect.bottom - containerRect.top
+                    };
+                }).sort((a, b) => a.top - b.top);
+
+                // Primera página: sin margen superior (ya tiene el header), 15mm de margen inferior
+                const pageHeightPxFirst = ((297 - 15) * 850) / 210; // 1141.90px
+                // Páginas subsiguientes: 15mm de margen superior y 15mm de margen inferior
+                const pageHeightPxSubsequent = ((297 - 15 - 15) * 850) / 210; // 1081.19px
+
+                const slices: { start: number; end: number }[] = [];
+                let currentY = 0;
+                const totalHeight = element.scrollHeight;
+
+                while (currentY < totalHeight) {
+                    const limit = currentY === 0 ? pageHeightPxFirst : pageHeightPxSubsequent;
+                    let targetEnd = currentY + limit;
+
+                    // Si el remanente de altura al final del documento es muy pequeño (< 50px),
+                    // se consolida en la página actual para evitar generar una página adicional en blanco
+                    if (totalHeight - targetEnd < 50) {
+                        slices.push({ start: currentY, end: totalHeight });
+                        break;
+                    }
+
+                    if (targetEnd >= totalHeight) {
+                        slices.push({ start: currentY, end: totalHeight });
+                        break;
+                    }
+
+                    // Check if targetEnd cuts through any boundary
+                    let splitBoundary = null;
+                    for (const b of boundaries) {
+                        if (b.top < targetEnd && b.bottom > targetEnd && (b.bottom - b.top) < limit) {
+                            splitBoundary = b;
+                            break;
+                        }
+                    }
+
+                    if (splitBoundary && splitBoundary.top > currentY) {
+                        targetEnd = splitBoundary.top;
+                    }
+
+                    // Volver a verificar tras ajustar el corte por filas de la tabla
+                    if (totalHeight - targetEnd < 50) {
+                        slices.push({ start: currentY, end: totalHeight });
+                        break;
+                    }
+
+                    slices.push({ start: currentY, end: targetEnd });
+                    currentY = targetEnd;
+                }
+
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+                const scaleCanvas = canvas.width / 850;
+
+                slices.forEach((slice, index) => {
+                    if (index > 0) {
+                        pdf.addPage();
+                    }
+
+                    const sliceHeightPx = slice.end - slice.start;
+                    const sliceHeightCanvas = sliceHeightPx * scaleCanvas;
+
+                    // Create canvas for the slice
+                    const sliceCanvas = document.createElement('canvas');
+                    sliceCanvas.width = canvas.width;
+                    sliceCanvas.height = sliceHeightCanvas;
+
+                    const ctx = sliceCanvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(
+                            canvas,
+                            0, slice.start * scaleCanvas, canvas.width, sliceHeightCanvas,
+                            0, 0, canvas.width, sliceHeightCanvas
+                        );
+                    }
+
+                    const sliceImgData = sliceCanvas.toDataURL('image/png');
+                    const sliceHeightPdf = sliceHeightPx * (210 / 850);
+                    const yOffset = index === 0 ? 0 : 15; // 15mm top margin on pages > 1
+                    pdf.addImage(sliceImgData, 'PNG', 0, yOffset, pdfWidth, sliceHeightPdf);
+                });
+
+                element.classList.add('pdf-template-hidden');
                 this.isLoading = false;
 
                 const blob = pdf.output('blob');
@@ -594,10 +677,15 @@ export class DetalleEntregaDialogComponent implements OnInit, OnDestroy {
                         blob: blob, 
                         filename: `Remision_${this.folio}.pdf` 
                     },
-                    width: '90vw',
-                    maxWidth: '1200px',
+                    width: '80vw',
+                    height: '90vh',
+                    maxWidth: '1000px',
                     panelClass: 'preview-pdf-dialog'
                 });
+            }).catch(err => {
+                console.error('Error al generar PDF:', err);
+                element.classList.add('pdf-template-hidden');
+                this.isLoading = false;
             });
         }, 500);
     }

@@ -8,7 +8,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 @Component({
     selector: 'pdf-preview-dialog',
     template: `
-        <div class="flex flex-col h-[90vh] w-[80vw] max-w-[1000px] overflow-hidden bg-gray-100 rounded-2xl shadow-2xl">
+        <div class="flex flex-col w-full h-full overflow-hidden bg-gray-100">
             <!-- Header -->
             <div class="flex items-center justify-between h-16 pl-6 pr-4 bg-[#1e293b] text-white shrink-0">
                 <div class="flex items-center">
@@ -42,9 +42,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         </div>
     `,
     styles: [`
-        .mat-mdc-dialog-container .mdc-dialog__surface {
+        .preview-pdf-dialog .mat-mdc-dialog-container {
+            padding: 0 !important;
+        }
+        .preview-pdf-dialog .mdc-dialog__surface {
             border-radius: 16px !important;
             overflow: hidden !important;
+            padding: 0 !important;
         }
     `],
     standalone: true,

@@ -5,6 +5,9 @@
         width: 100vw !important;
         height: 100vh !important;
     }
+    .pdf-template-hidden {
+        display: none !important;
+    }
 </style>
 
 <div class="flex flex-col w-full h-full overflow-hidden bg-card transition-all duration-300"
@@ -374,7 +377,7 @@
 </div>
 
 <!-- PDF Template (Hidden) -->
-<div id="pdf-template" style="position: absolute; left: 0; top: 0; width: 850px; padding: 40px; background: white; color: #1e293b; font-family: 'Inter', sans-serif; z-index: -1; visibility: hidden;">
+<div id="pdf-template" class="pdf-template-hidden" style="position: absolute; left: 0; top: 0; width: 850px; padding: 40px; background: white; color: #1e293b; font-family: 'Inter', sans-serif; z-index: -1;">
     <!-- Logo and Header -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
         <div style="display: flex; align-items: center; gap: 20px;">
@@ -428,7 +431,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let row of dataSource.data; let i = index" [style.background]="i % 2 === 0 ? '#f8fafc' : 'white'">
+            <tr *ngFor="let row of dataSource.data; let i = index" [style.background]="i % 2 === 0 ? '#f8fafc' : 'white'" style="page-break-inside: avoid; break-inside: avoid;">
                 <td style="padding: 6px 8px; border: 1px solid #e2e8f0; font-weight: 700;">{{row.codigoProducto}}</td>
                 <td style="padding: 6px 8px; border: 1px solid #e2e8f0;">{{row.descripcion}}</td>
                 <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: center;">{{row.cantidadFacturada}}</td>
@@ -441,7 +444,7 @@
     </table>
 
     <!-- 2. Tabla Detalle de Envíos Realizados -->
-    <h3 style="font-size: 14px; font-weight: 900; color: #059669; margin-bottom: 10px; text-transform: uppercase;">Historial de Envíos (Detalle de Guías)</h3>
+    <h3 class="pdf-avoid-cut" style="font-size: 14px; font-weight: 900; color: #059669; margin-bottom: 10px; text-transform: uppercase;">Historial de Envíos (Detalle de Guías)</h3>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 9px;">
         <thead>
             <tr style="background: #ecfdf5; color: #065f46; text-align: left; text-transform: uppercase;">
@@ -453,7 +456,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let env of enviosAplanados; let i = index">
+            <tr *ngFor="let env of enviosAplanados; let i = index" style="page-break-inside: avoid; break-inside: avoid;">
                 <td style="padding: 4px 10px; border: 1px solid #f1f5f9; font-weight: 700;">{{env.fecha | date:'dd/MM/yyyy'}}</td>
                 <td style="padding: 4px 10px; border: 1px solid #f1f5f9;">{{env.codigo}}</td>
                 <td style="padding: 4px 10px; border: 1px solid #f1f5f9;">{{env.descripcion}}</td>
@@ -468,43 +471,46 @@
         </tbody>
     </table>
 
-    <!-- Summary -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-        <div style="max-width: 60%;">
-            <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 10px;">
-                <strong style="color: #475569; display: block; margin-bottom: 4px; text-transform: uppercase;">Monto en Letra:</strong>
-                <span style="font-weight: 700;">{{ numeroALetras(total) }}</span>
+    <!-- Sección de Totales y Firmas Agrupados para evitar separación -->
+    <div class="pdf-avoid-cut" style="page-break-inside: avoid; break-inside: avoid;">
+        <!-- Summary -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="max-width: 60%;">
+                <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 10px;">
+                    <strong style="color: #475569; display: block; margin-bottom: 4px; text-transform: uppercase;">Monto en Letra:</strong>
+                    <span style="font-weight: 700;">{{ numeroALetras(total) }}</span>
+                </div>
+                <div style="margin-top: 20px; font-size: 9px; color: #94a3b8; line-height: 1.4;">
+                    * Esta remisión ampara la entrega física de los materiales descritos.<br>
+                    * Favor de revisar su material al recibirlo. No se aceptan reclamaciones después de 24 horas.
+                </div>
             </div>
-            <div style="margin-top: 20px; font-size: 9px; color: #94a3b8; line-height: 1.4;">
-                * Esta remisión ampara la entrega física de los materiales descritos.<br>
-                * Favor de revisar su material al recibirlo. No se aceptan reclamaciones después de 24 horas.
+            <div style="width: 250px;">
+                <table style="width: 100%; font-size: 12px; line-height: 2;">
+                    <tr>
+                        <td style="text-align: right; color: #64748b;">Subtotal:</td>
+                        <td style="text-align: right; font-weight: 700;">{{ subtotal | currency }}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right; color: #64748b;">IVA (16%):</td>
+                        <td style="text-align: right; font-weight: 700;">{{ iva | currency }}</td>
+                    </tr>
+                    <tr style="font-size: 18px; color: #1e40af;">
+                        <td style="text-align: right; font-weight: 900;">Total:</td>
+                        <td style="text-align: right; font-weight: 900; border-top: 2px solid #1e40af; padding-top: 8px;">{{ total | currency }}</td>
+                    </tr>
+                </table>
             </div>
         </div>
-        <div style="width: 250px;">
-            <table style="width: 100%; font-size: 12px; line-height: 2;">
-                <tr>
-                    <td style="text-align: right; color: #64748b;">Subtotal:</td>
-                    <td style="text-align: right; font-weight: 700;">{{ subtotal | currency }}</td>
-                </tr>
-                <tr>
-                    <td style="text-align: right; color: #64748b;">IVA (16%):</td>
-                    <td style="text-align: right; font-weight: 700;">{{ iva | currency }}</td>
-                </tr>
-                <tr style="font-size: 18px; color: #1e40af;">
-                    <td style="text-align: right; font-weight: 900;">Total:</td>
-                    <td style="text-align: right; font-weight: 900; border-top: 2px solid #1e40af; padding-top: 8px;">{{ total | currency }}</td>
-                </tr>
-            </table>
-        </div>
-    </div>
 
-    <!-- Footer / Signature -->
-    <div style="margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; text-align: center;">
-        <div>
-            <div style="border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; font-weight: 700;">Entrega: JR Ingeniería Eléctrica</div>
-        </div>
-        <div>
-            <div style="border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; font-weight: 700;">Recibe: Firma y Sello Cliente</div>
+        <!-- Footer / Signature -->
+        <div style="margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; text-align: center;">
+            <div>
+                <div style="border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; font-weight: 700;">Entrega: JR Ingeniería Eléctrica</div>
+            </div>
+            <div>
+                <div style="border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; font-weight: 700;">Recibe: Firma y Sello Cliente</div>
+            </div>
         </div>
     </div>
 </div>
