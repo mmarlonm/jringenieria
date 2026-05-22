@@ -1,9 +1,9 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { EventosService, Asistente } from '../eventos.service';
+import { EventosService } from '../eventos.service';
 
 @Component({
     selector: 'escanear-pase',
@@ -17,7 +17,7 @@ import { EventosService, Asistente } from '../eventos.service';
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EscanearPaseComponent implements OnInit {
+export class EscanearPaseComponent implements OnInit, OnDestroy {
     private _eventosService = inject(EventosService);
     private _cdr = inject(ChangeDetectorRef);
 
@@ -25,6 +25,9 @@ export class EscanearPaseComponent implements OnInit {
     public scanState: 'idle' | 'scanning' | 'success' | 'duplicate' | 'error' = 'idle';
     public scanResult: any = null;
     public tokenInput: string = '';
+    public cameraError: string = '';
+
+    private _html5QrCode: any = null;
 
     // Quick Test Options (derived from service assistants)
     public availableTickets: { label: string; token: string; status: 'present' | 'absent' }[] = [];
@@ -56,21 +59,104 @@ export class EscanearPaseComponent implements OnInit {
                 this._cdr.markForCheck();
             }
         });
+
+        // Load scanner library and initialize
+        this.loadScannerScript().then(() => {
+            this.startCamera();
+        }).catch(err => {
+            console.error('Error loading QR Scanner library', err);
+            this.cameraError = 'No se pudo cargar la librería del escáner.';
+            this._cdr.markForCheck();
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.stopCamera();
+    }
+
+    // --- Dynamic Script Loader ---
+    private loadScannerScript(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if ((window as any).Html5Qrcode) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/html5-qrcode';
+            script.type = 'text/javascript';
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = (err) => reject(err);
+            document.head.appendChild(script);
+        });
+    }
+
+    // --- Camera Controls ---
+    public startCamera(): void {
+        this.cameraError = '';
+        this._cdr.markForCheck();
+
+        const Html5Qrcode = (window as any).Html5Qrcode;
+        if (!Html5Qrcode) {
+            console.warn('Html5Qrcode library not loaded.');
+            return;
+        }
+
+        // Initialize scanner if not already created
+        if (!this._html5QrCode) {
+            this._html5QrCode = new Html5Qrcode("reader");
+        }
+
+        const config = { 
+            fps: 10, 
+            qrbox: (width: number, height: number) => {
+                const size = Math.min(width, height) * 0.75;
+                return { width: size, height: size };
+            }
+        };
+
+        this._html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            (decodedText: string) => {
+                this.onScanToken(decodedText);
+            },
+            (errorMessage: string) => {
+                // Ignore verbose non-detection frame logging
+            }
+        ).catch((err: any) => {
+            console.error("No se pudo iniciar la cámara: ", err);
+            this.cameraError = 'No se pudo iniciar la cámara. Asegúrese de otorgar permisos de acceso.';
+            this._cdr.markForCheck();
+        });
+    }
+
+    public stopCamera(): Promise<void> {
+        if (this._html5QrCode && this._html5QrCode.isScanning) {
+            return this._html5QrCode.stop().then(() => {
+                this._cdr.markForCheck();
+            }).catch((err: any) => {
+                console.error("Error stopping camera: ", err);
+            });
+        }
+        return Promise.resolve();
     }
 
     // --- QR Scanning Flow ---
-
     public onScanToken(token: string): void {
         if (!token) return;
         
+        // Stop the camera as soon as a scan is detected
+        this.stopCamera();
+
         this.tokenInput = token;
         this.scanState = 'scanning';
         this.scanResult = null;
         this._cdr.markForCheck();
 
-        // Simulate camera delay (1 second laser sweep)
-        setTimeout(() => {
-            this._eventosService.checkInPublico(token).subscribe(res => {
+        // Perform backend check-in directly
+        this._eventosService.checkInPublico(token).subscribe({
+            next: (res) => {
                 if (res.status === 'SUCCESS') {
                     this.scanState = 'success';
                     this.scanResult = res.asistente;
@@ -85,8 +171,14 @@ export class EscanearPaseComponent implements OnInit {
                     this.playBeep('error');
                 }
                 this._cdr.markForCheck();
-            });
-        }, 1000);
+            },
+            error: (err) => {
+                this.scanState = 'error';
+                this.scanResult = { message: err?.error?.mensaje || 'Error al conectar con el servidor.' };
+                this.playBeep('error');
+                this._cdr.markForCheck();
+            }
+        });
     }
 
     public onScanManualSubmit(): void {
@@ -100,10 +192,10 @@ export class EscanearPaseComponent implements OnInit {
         this.scanResult = null;
         this.tokenInput = '';
         this._cdr.markForCheck();
+        this.startCamera();
     }
 
     // --- Audio Feedback Synth ---
-
     private playBeep(type: 'success' | 'warning' | 'error'): void {
         try {
             const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;

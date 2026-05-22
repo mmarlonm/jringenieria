@@ -23,40 +23,42 @@
         <!-- STATUS STATE 1: IDLE / SCANNING -->
         <div *ngIf="scanState === 'idle' || scanState === 'scanning'" class="w-full max-w-sm flex flex-col items-center gap-6">
             
-            <!-- CAMERA SIMULATOR FRAME -->
+            <!-- CAMERA SCREEN FRAME -->
             <div class="relative w-72 h-72 rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-slate-900/50 flex flex-col items-center justify-center transition-all duration-300">
                 
                 <!-- Target Corner Reticles -->
-                <div class="absolute top-4 left-4 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl"></div>
-                <div class="absolute top-4 right-4 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr"></div>
-                <div class="absolute bottom-4 left-4 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl"></div>
-                <div class="absolute bottom-4 right-4 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br"></div>
+                <div class="absolute top-4 left-4 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl z-20"></div>
+                <div class="absolute top-4 right-4 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr z-20"></div>
+                <div class="absolute bottom-4 left-4 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl z-20"></div>
+                <div class="absolute bottom-4 right-4 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br z-20"></div>
                 
-                <!-- Animated Scanner Laser (Only active when scanning) -->
-                <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-80"
-                     [ngClass]="{'laser-animation': scanState === 'scanning', 'hidden': scanState !== 'scanning'}">
+                <!-- Animated Scanner Laser (Only active when scanning or idle) -->
+                <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-80 z-20"
+                     [ngClass]="{'laser-animation': scanState === 'idle' || scanState === 'scanning'}">
                 </div>
 
-                <div class="absolute inset-x-0 h-24 bg-indigo-500/10 pointer-events-none"
-                     [ngClass]="{'laser-shadow-animation': scanState === 'scanning', 'hidden': scanState !== 'scanning'}">
+                <div class="absolute inset-x-0 h-24 bg-indigo-500/10 pointer-events-none z-20"
+                     [ngClass]="{'laser-shadow-animation': scanState === 'idle' || scanState === 'scanning'}">
                 </div>
 
-                <!-- Idle view -->
-                <div *ngIf="scanState === 'idle'" class="flex flex-col items-center text-center p-6 z-10">
-                    <div class="p-4 bg-slate-800/40 rounded-full mb-4 animate-bounce">
-                        <mat-icon class="text-indigo-400 icon-size-10" fontIcon="heroicons_outline:camera"></mat-icon>
+                <!-- HTML5 QR Reader Live feed container -->
+                <div id="reader" class="absolute inset-0 w-full h-full z-10" [class.hidden]="scanState !== 'idle' || cameraError"></div>
+
+                <!-- Camera Error Msg -->
+                <div *ngIf="cameraError && scanState === 'idle'" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-center p-6 z-30 animate-fade-in">
+                    <div class="p-4 bg-rose-500/10 rounded-full mb-3">
+                        <mat-icon class="text-rose-500 icon-size-8" fontIcon="heroicons_outline:exclamation-circle"></mat-icon>
                     </div>
-                    <p class="text-sm font-semibold text-slate-300">Esperando pase QR...</p>
-                    <p class="text-xs text-slate-500 mt-2">Use los botones rápidos de prueba abajo o ingrese un token manual.</p>
+                    <p class="text-xs text-rose-400 font-semibold leading-relaxed px-2">{{ cameraError }}</p>
                 </div>
 
-                <!-- Scanning view -->
-                <div *ngIf="scanState === 'scanning'" class="flex flex-col items-center text-center p-6 z-10">
+                <!-- Processing view (shown when verifying token against API) -->
+                <div *ngIf="scanState === 'scanning'" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 text-center p-6 z-30">
                     <div class="p-4 bg-indigo-500/10 rounded-full mb-4">
                         <mat-icon class="text-indigo-400 icon-size-10 animate-pulse" fontIcon="heroicons_outline:arrow-path"></mat-icon>
                     </div>
-                    <p class="text-sm font-bold text-indigo-400 tracking-wide uppercase animate-pulse">Escaneando...</p>
-                    <p class="text-xs text-slate-400 mt-2">Validando firma digital del pase</p>
+                    <p class="text-sm font-bold text-indigo-400 tracking-wide uppercase animate-pulse">Procesando...</p>
+                    <p class="text-xs text-slate-400 mt-2">Validando pase en el servidor</p>
                 </div>
             </div>
 
@@ -105,15 +107,17 @@
                         <span class="text-slate-500 font-medium">Tipo de Pase</span>
                         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold"
                               [ngClass]="{
-                                  'bg-amber-500/15 text-amber-400 border border-amber-500/20': scanResult?.tipo === 'General',
-                                  'bg-pink-500/15 text-pink-400 border border-pink-500/20': scanResult?.tipo === 'Estudiante'
+                                  'bg-amber-500/15 text-amber-400 border border-amber-500/20': scanResult?.tipo === 'General' || scanResult?.tipoAsistente === 'General',
+                                  'bg-pink-500/15 text-pink-400 border border-pink-500/20': scanResult?.tipo === 'Estudiante' || scanResult?.tipoAsistente === 'Estudiante'
                               }">
-                            {{ scanResult?.tipo }}
+                            {{ scanResult?.tipo || scanResult?.tipoAsistente }}
                         </span>
                     </div>
-                    <div class="flex justify-between items-center py-1.5 border-b border-slate-900" *ngIf="scanResult?.organizacion">
-                        <span class="text-slate-500 font-medium">Entidad / Escuela</span>
-                        <span class="text-slate-200 font-semibold max-w-[200px] truncate">{{ scanResult?.organizacion }}</span>
+                    <div class="flex justify-between items-center py-1.5 border-b border-slate-900" *ngIf="scanResult?.organizacion || scanResult?.universidadRepresentas || scanResult?.empresaRepresenta">
+                        <span class="text-slate-500 font-medium">Organización</span>
+                        <span class="text-slate-200 font-semibold max-w-[200px] truncate">
+                            {{ scanResult?.organizacion || scanResult?.universidadRepresentas || scanResult?.empresaRepresenta }}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-1.5">
                         <span class="text-slate-500 font-medium">Hora de Ingreso</span>
@@ -158,7 +162,9 @@
                 <div class="w-full space-y-3 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-6 text-left text-sm">
                     <div class="flex justify-between items-center py-1.5">
                         <span class="text-slate-500 font-medium">Primer Ingreso</span>
-                        <span class="text-amber-400 font-semibold">{{ scanResult?.fechaCheckIn }}</span>
+                        <span class="text-amber-400 font-semibold">
+                            {{ scanResult?.fechaCheckIn | date:'dd/MM/yyyy HH:mm:ss' }}
+                        </span>
                     </div>
                 </div>
 
@@ -191,7 +197,7 @@
                     Pase Inválido
                 </h2>
 
-                <p class="text-sm text-slate-400 mb-6">
+                <p class="text-sm text-slate-400 mb-6 font-medium">
                     {{ scanResult?.message || 'El código escaneado no coincide con ningún registro autorizado o el evento no se encuentra activo.' }}
                 </p>
 
@@ -290,5 +296,13 @@
 
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom styles to force video tag to cover reader */
+#reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 1.5rem;
 }
 </style>
