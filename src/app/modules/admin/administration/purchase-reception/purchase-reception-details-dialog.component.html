@@ -117,6 +117,36 @@
                     Gestión de Archivos Digitales
                 </h3>
 
+                <!-- Selector Controls for Uploading -->
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 items-center">
+                    <div class="md:col-span-1">
+                        <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+                            <mat-label>Tipo de Archivo</mat-label>
+                            <mat-select [(ngModel)]="selectedType">
+                                <mat-option *ngFor="let type of fileTypes" [value]="type.value">
+                                    <div class="flex items-center gap-2">
+                                        <mat-icon class="icon-size-5" [ngClass]="type.color" [svgIcon]="type.icon"></mat-icon>
+                                        <span>{{ type.label }}</span>
+                                    </div>
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="md:col-span-2 flex items-center gap-3">
+                        <div class="flex-auto flex items-center justify-center p-2 border-2 border-dashed border-gray-200 rounded-xl hover:bg-white hover:border-indigo-400 cursor-pointer transition-all group h-[48px]"
+                             [ngClass]="{'opacity-50 pointer-events-none': isUploading}"
+                             (click)="fileInput.click()">
+                            <mat-icon *ngIf="!isUploading" class="icon-size-5 text-secondary mr-2 group-hover:text-indigo-500" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                            <mat-icon *ngIf="isUploading" class="animate-spin icon-size-5 mr-2 text-indigo-500" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
+                            <span class="text-xs font-bold text-gray-700">
+                                {{ isUploading ? 'Subiendo archivo...' : 'Seleccionar y subir archivo' }}
+                            </span>
+                            <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" [disabled]="isUploading">
+                        </div>
+                    </div>
+                </div>
+
                 <div *ngIf="archivos.length === 0" class="flex flex-col items-center justify-center py-10 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
                     <mat-icon class="icon-size-12 text-gray-200 mb-2" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Sin archivos registrados</span>

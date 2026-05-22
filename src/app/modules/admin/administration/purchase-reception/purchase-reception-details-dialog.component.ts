@@ -9,6 +9,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PurchaseReceptionService } from './purchase-reception.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
 
 @Component({
     selector: 'purchase-reception-details-dialog',
@@ -22,13 +26,24 @@ import { ChatNotificationService } from 'app/shared/components/chat-notification
         MatIconModule,
         MatCardModule,
         MatDividerModule,
-        MatTooltipModule
+        MatTooltipModule,
+        FormsModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatOptionModule
     ]
 })
 export class PurchaseReceptionDetailsDialogComponent implements OnInit {
     reception: any = null;
     archivos: string[] = [];
     isLoading: boolean = true;
+    fileTypes = [
+        { value: 'Facturas', label: 'Factura', color: 'text-emerald-500', icon: 'heroicons_outline:document-text' },
+        { value: 'Evidencias', label: 'Evidencia', color: 'text-blue-500', icon: 'heroicons_outline:camera' },
+        { value: 'Pagos', label: 'Pago/Anticipo', color: 'text-amber-500', icon: 'heroicons_outline:cash' }
+    ];
+    selectedType: string = 'Facturas';
+    isUploading: boolean = false;
 
     constructor(
         public matDialogRef: MatDialogRef<PurchaseReceptionDetailsDialogComponent>,
@@ -142,6 +157,32 @@ export class PurchaseReceptionDetailsDialogComponent implements OnInit {
             },
             error: () => this._notificationService.showError('Error', 'No se pudo abrir el archivo')
         });
+    }
+
+    getFileLabel(value: string): string {
+        const found = this.fileTypes.find(t => t.value === value);
+        return found ? found.label : value;
+    }
+
+    onFileSelected(event: any): void {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        this.isUploading = true;
+        this._receptionService.subirArchivoRecepcion(this.data.idRecepcion, file, this.selectedType).subscribe({
+            next: () => {
+                this.isUploading = false;
+                this._notificationService.showSuccess('Éxito', 'Archivo subido correctamente');
+                this.loadFiles();
+            },
+            error: (err) => {
+                this.isUploading = false;
+                this._notificationService.showError('Error', 'No se pudo subir el archivo');
+                console.error(err);
+            }
+        });
+        // Reset input
+        event.target.value = '';
     }
 
     close(): void {
