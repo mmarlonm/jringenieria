@@ -143,9 +143,25 @@ export class EventosService implements OnDestroy {
             .build();
 
         // Register event listeners
-        this.hubConnection.on('ReceiveLiveMetrics', (metrics: DashboardMetricasDto) => {
-            console.log('📡 [SignalR] Received live metrics update:', metrics);
-            this._metricas.next(metrics);
+        this.hubConnection.on('ReceiveLiveMetrics', (res: any) => {
+            console.log('📡 [SignalR] Received live metrics update:', res);
+            if (res) {
+                const mapped: DashboardMetricasDto = {
+                    totalRegistrados: res.totalRegistrados || 0,
+                    totalAsistieron: res.totalAsistieron || 0,
+                    publicoGeneral: res.totalGenerales || res.publicoGeneral || 0,
+                    estudiantes: res.totalEstudiantes || res.estudiantes || 0,
+                    historialAsistenciaTiempoReal: (res.historialAsistenciaTiempoReal || []).map((h: any) => ({
+                        hora: h.hora,
+                        cantidad: h.cantidad
+                    })),
+                    mediosDifusion: (res.distribucionMedios || res.mediosDifusion || []).map((m: any) => ({
+                        medio: m.name || m.medio,
+                        cantidad: m.value || m.cantidad
+                    }))
+                };
+                this._metricas.next(mapped);
+            }
         });
 
         // Connection status triggers

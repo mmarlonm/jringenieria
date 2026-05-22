@@ -102,9 +102,12 @@ export class EscanearPaseComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Initialize scanner if not already created
-        if (!this._html5QrCode) {
+        // Initialize/Recreate scanner instance to avoid internal state machine conflicts
+        try {
             this._html5QrCode = new Html5Qrcode("reader");
+        } catch (e) {
+            console.error("Error creating Html5Qrcode instance: ", e);
+            return;
         }
 
         const config = { 
@@ -134,11 +137,14 @@ export class EscanearPaseComponent implements OnInit, OnDestroy {
     public stopCamera(): Promise<void> {
         if (this._html5QrCode && this._html5QrCode.isScanning) {
             return this._html5QrCode.stop().then(() => {
+                this._html5QrCode = null;
                 this._cdr.markForCheck();
             }).catch((err: any) => {
                 console.error("Error stopping camera: ", err);
+                this._html5QrCode = null;
             });
         }
+        this._html5QrCode = null;
         return Promise.resolve();
     }
 
@@ -146,38 +152,38 @@ export class EscanearPaseComponent implements OnInit, OnDestroy {
     public onScanToken(token: string): void {
         if (!token) return;
         
-        // Stop the camera as soon as a scan is detected
-        this.stopCamera();
+        // Stop the camera as soon as a scan is detected, then send to backend
+        this.stopCamera().then(() => {
+            this.tokenInput = token;
+            this.scanState = 'scanning';
+            this.scanResult = null;
+            this._cdr.markForCheck();
 
-        this.tokenInput = token;
-        this.scanState = 'scanning';
-        this.scanResult = null;
-        this._cdr.markForCheck();
-
-        // Perform backend check-in directly
-        this._eventosService.checkInPublico(token).subscribe({
-            next: (res) => {
-                if (res.status === 'SUCCESS') {
-                    this.scanState = 'success';
-                    this.scanResult = res.asistente;
-                    this.playBeep('success');
-                } else if (res.status === 'DUPLICADO') {
-                    this.scanState = 'duplicate';
-                    this.scanResult = res.asistente;
-                    this.playBeep('warning');
-                } else {
+            // Perform backend check-in directly
+            this._eventosService.checkInPublico(token).subscribe({
+                next: (res) => {
+                    if (res.status === 'SUCCESS') {
+                        this.scanState = 'success';
+                        this.scanResult = res.asistente;
+                        this.playBeep('success');
+                    } else if (res.status === 'DUPLICADO') {
+                        this.scanState = 'duplicate';
+                        this.scanResult = res.asistente;
+                        this.playBeep('warning');
+                    } else {
+                        this.scanState = 'error';
+                        this.scanResult = { message: res.message };
+                        this.playBeep('error');
+                    }
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
                     this.scanState = 'error';
-                    this.scanResult = { message: res.message };
+                    this.scanResult = { message: err?.error?.mensaje || 'Error al conectar con el servidor.' };
                     this.playBeep('error');
+                    this._cdr.markForCheck();
                 }
-                this._cdr.markForCheck();
-            },
-            error: (err) => {
-                this.scanState = 'error';
-                this.scanResult = { message: err?.error?.mensaje || 'Error al conectar con el servidor.' };
-                this.playBeep('error');
-                this._cdr.markForCheck();
-            }
+            });
         });
     }
 
@@ -192,7 +198,11 @@ export class EscanearPaseComponent implements OnInit, OnDestroy {
         this.scanResult = null;
         this.tokenInput = '';
         this._cdr.markForCheck();
-        this.startCamera();
+        
+        // Wait 150ms for Angular DOM rendering to fully display the #reader container before starting camera
+        setTimeout(() => {
+            this.startCamera();
+        }, 150);
     }
 
     // --- Audio Feedback Synth ---
