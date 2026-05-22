@@ -263,6 +263,21 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
         ]
     },
+    // ==========================================================================================
+    // SECCIÓN: EVENTOS
+    // ==========================================================================================
+    {
+        id: 'eventos',
+        title: 'EVENTOS',
+        subtitle: 'Gestión y pases QR',
+        type: 'group',
+        icon: 'heroicons_outline:calendar',
+        children: [
+            { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
+            { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
+        ]
+    },
 
     // ==========================================================================================
     // SECCIÓN: SEGURIDAD (Conservada)
@@ -316,6 +331,18 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: []
     },
     {
+        id: 'eventos',
+        title: 'Eventos',
+        tooltip: 'Gestión de Eventos',
+        type: 'aside',
+        icon: 'heroicons_outline:calendar',
+        children: [
+            { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
+            { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
+        ]
+    },
+    {
         id: 'administracion',
         title: 'Administración',
         tooltip: 'Administración',
@@ -339,6 +366,17 @@ export const futuristicNavigation: FuseNavigationItem[] = [
     { id: 'marketing', title: 'MARKETING', type: 'group', children: [] },
     { id: 'apps', title: 'SEGURIDAD', type: 'group', children: [] },
     {
+        id: 'eventos',
+        title: 'EVENTOS',
+        type: 'group',
+        icon: 'heroicons_outline:calendar',
+        children: [
+            { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
+            { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
+        ]
+    },
+    {
         id: 'administracion',
         title: 'ADMINISTRACIÓN',
         type: 'group',
@@ -359,6 +397,17 @@ export const horizontalNavigation: FuseNavigationItem[] = [
     { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
+    {
+        id: 'eventos',
+        title: 'Eventos',
+        type: 'group',
+        icon: 'heroicons_outline:calendar',
+        children: [
+            { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
+            { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
+        ]
+    },
     {
         id: 'administracion',
         title: 'Administración',

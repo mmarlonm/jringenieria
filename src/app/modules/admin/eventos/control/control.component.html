@@ -1,0 +1,355 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50 dark:bg-slate-900 p-6 md:p-8 space-y-6">
+
+    <!-- FLOATING TOAST NOTIFICATION -->
+    <div *ngIf="toast.show" 
+         [ngClass]="{
+             'bg-emerald-500 text-white': toast.type === 'success',
+             'bg-red-500 text-white': toast.type === 'error',
+             'bg-amber-500 text-slate-950': toast.type === 'warning'
+         }"
+         class="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border border-white/10 transition-all duration-300 animate-slide-in-right">
+        <mat-icon class="icon-size-5" 
+                  [fontIcon]="toast.type === 'success' ? 'heroicons_solid:check-circle' : toast.type === 'error' ? 'heroicons_solid:x-circle' : 'heroicons_solid:exclamation-triangle'">
+        </mat-icon>
+        <span class="text-sm font-semibold tracking-wide font-sans">{{ toast.message }}</span>
+    </div>
+
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-slate-800">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-sans">
+                Control de Asistentes
+            </h1>
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                Administración y registro de participantes al Foro Energiza.
+            </p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <!-- Bulk Send QR (Alert variant) -->
+            <button 
+                (click)="onReenviarQRMasivo()"
+                [disabled]="bulkResending"
+                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-amber-700/50 shadow-md transition-all duration-150 w-full md:w-auto">
+                <!-- Loader inside button -->
+                <svg *ngIf="bulkResending" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <mat-icon *ngIf="!bulkResending" class="icon-size-5" fontIcon="heroicons_outline:paper-airplane"></mat-icon>
+                <span>{{ bulkResending ? 'Despachando...' : 'Reenvío Masivo de QR' }}</span>
+            </button>
+
+            <!-- Register Attendee -->
+            <button 
+                (click)="openRegisterModal()"
+                class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-all duration-150 w-full md:w-auto">
+                <mat-icon class="icon-size-5" fontIcon="heroicons_outline:plus-circle"></mat-icon>
+                <span>Registrar Asistente</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="flex items-center bg-white dark:bg-slate-850 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm">
+        <div class="relative w-full max-w-md">
+            <input 
+                type="text" 
+                [(ngModel)]="searchQuery" 
+                (ngModelChange)="filterAsistentes()"
+                placeholder="Buscar por nombre, correo, empresa, universidad o ID..." 
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            />
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <mat-icon class="icon-size-5" fontIcon="heroicons_outline:magnifying-glass"></mat-icon>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA TABLE -->
+    <div class="bg-white dark:bg-slate-850 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">ID</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Nombre Completo</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Correo</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Tipo</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Estatus QR</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Asistencia</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Check-In</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-150 dark:divide-slate-800">
+                    <tr *ngFor="let a of filteredAsistentes" class="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <!-- ID -->
+                        <td class="px-6 py-4 text-sm font-semibold text-slate-400">
+                            <span>{{ a.id }}</span>
+                        </td>
+                        <!-- Full Name -->
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-slate-800 dark:text-white">{{ a.nombre }} {{ a.apellidos }}</div>
+                            <div class="text-xs text-slate-400 font-medium">
+                                {{ a.tipo === 'General' ? a.empresa : a.universidad }}
+                            </div>
+                        </td>
+                        <!-- Email -->
+                        <td class="px-6 py-4 text-sm font-medium text-slate-500 dark:text-slate-400">{{ a.correo }}</td>
+                        <!-- Type -->
+                        <td class="px-6 py-4">
+                            <span [ngClass]="{
+                                'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900': a.tipo === 'General',
+                                'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/20 dark:text-pink-400 dark:border-pink-900': a.tipo === 'Estudiante'
+                            }" class="px-2.5 py-1 rounded-md text-xs font-bold border">
+                                {{ a.tipo }}
+                            </span>
+                        </td>
+                        <!-- QR Status -->
+                        <td class="px-6 py-4">
+                            <span [ngClass]="{
+                                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900': a.estatusQR === 'Enviado',
+                                'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-800': a.estatusQR === 'Pendiente'
+                            }" class="px-2.5 py-1 rounded-md text-xs font-bold border">
+                                {{ a.estatusQR }}
+                            </span>
+                        </td>
+                        <!-- Attendance -->
+                        <td class="px-6 py-4">
+                            <span [ngClass]="{
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400': a.asistencia === 'Presente',
+                                'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-400': a.asistencia === 'Faltante'
+                            }" class="px-2.5 py-1 rounded-md text-xs font-extrabold">
+                                {{ a.asistencia }}
+                            </span>
+                        </td>
+                        <!-- Check In Date -->
+                        <td class="px-6 py-4">
+                            <span *ngIf="a.fechaCheckIn" class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                <mat-icon class="icon-size-3.5 text-emerald-500" fontIcon="heroicons_solid:clock"></mat-icon>
+                                {{ a.fechaCheckIn }}
+                            </span>
+                            <span *ngIf="!a.fechaCheckIn" class="text-xs font-medium text-slate-300 dark:text-slate-600">—</span>
+                        </td>
+                        <!-- Actions -->
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <!-- Edit -->
+                                <button (click)="openEditModal(a)" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                    <mat-icon class="icon-size-5" fontIcon="heroicons_outline:pencil-square"></mat-icon>
+                                </button>
+                                <!-- Send QR Individual -->
+                                <button 
+                                    (click)="onReenviarQRIndividual(a.id)" 
+                                    [disabled]="resendingId === a.id"
+                                    class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50">
+                                    
+                                    <svg *ngIf="resendingId === a.id" class="animate-spin h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <mat-icon *ngIf="resendingId !== a.id" class="icon-size-5" fontIcon="heroicons_outline:envelope"></mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="filteredAsistentes.length === 0">
+                        <td colspan="8" class="px-6 py-12 text-center text-slate-400 text-sm font-semibold">
+                            No se encontraron asistentes para esta búsqueda.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL UPSERT (Create/Edit Form) -->
+    <div *ngIf="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+        
+        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-850 rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 flex flex-col my-8">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-slate-900 border-b border-gray-150 dark:border-slate-800">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white font-sans">
+                    {{ isEditing ? 'Editar Registro' : 'Nuevo Registro de Asistente' }}
+                </h3>
+                <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg transition-colors">
+                    <mat-icon class="icon-size-6" fontIcon="heroicons_outline:x-mark"></mat-icon>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <div class="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+                
+                <!-- Profile Type Switcher -->
+                <div class="flex items-center justify-center p-1 bg-gray-100 dark:bg-slate-900 rounded-xl max-w-sm mx-auto">
+                    <button 
+                        (click)="onPerfilChanged('General')"
+                        [ngClass]="{'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm': formModel.tipo === 'General'}"
+                        class="flex-1 py-2 text-sm font-bold text-slate-500 rounded-lg transition-all">
+                        Público General
+                    </button>
+                    <button 
+                        (click)="onPerfilChanged('Estudiante')"
+                        [ngClass]="{'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm': formModel.tipo === 'Estudiante'}"
+                        class="flex-1 py-2 text-sm font-bold text-slate-500 rounded-lg transition-all">
+                        Estudiantes
+                    </button>
+                </div>
+
+                <!-- Fields Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- Nombre -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Nombre *</label>
+                        <input type="text" [(ngModel)]="formModel.nombre" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                    
+                    <!-- Apellidos -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Apellidos *</label>
+                        <input type="text" [(ngModel)]="formModel.apellidos" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+
+                    <!-- Correo -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Correo Electrónico *</label>
+                        <input type="email" [(ngModel)]="formModel.correo" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                    
+                    <!-- Telefono -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Número Telefónico *</label>
+                        <input type="tel" [(ngModel)]="formModel.telefono" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+
+                </div>
+
+                <!-- ASSISTANCE DATE CHECKBOXES -->
+                <div class="flex flex-col space-y-2">
+                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400">Fecha de Asistencia * (Selecciona días)</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-300">
+                            <input type="checkbox" [(ngModel)]="formModel.asistencias['16 de Octubre']" class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500" />
+                            <span>16 de Octubre</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-300">
+                            <input type="checkbox" [(ngModel)]="formModel.asistencias['17 de Octubre']" class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500" />
+                            <span>17 de Octubre</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- CONDITIONAL FIELDS: PUBLIC GENERAL -->
+                <div *ngIf="formModel.tipo === 'General'" class="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-gray-150 dark:border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Dirección/Ciudad</label>
+                        <input type="text" [(ngModel)]="formModel.direccion" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Ocupación/Cargo</label>
+                        <input type="text" [(ngModel)]="formModel.ocupacion" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Empresa</label>
+                        <input type="text" [(ngModel)]="formModel.empresa" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                </div>
+
+                <!-- CONDITIONAL FIELDS: ESTUDIANTES -->
+                <div *ngIf="formModel.tipo === 'Estudiante'" class="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-gray-150 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Universidad que Representas</label>
+                        <input type="text" [(ngModel)]="formModel.universidad" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Carrera que Cursas</label>
+                        <input type="text" [(ngModel)]="formModel.carrera" class="px-4 py-2.5 rounded-xl text-sm border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"/>
+                    </div>
+                </div>
+
+                <!-- CHECKBOXES: COMO TE ENTERASTE -->
+                <div class="flex flex-col space-y-2">
+                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400">¿Cómo te enteraste del evento?</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <label *ngFor="let k of ['Facebook', 'LinkedIn', 'Página Web', 'Recomendación']" class="flex items-center gap-2 cursor-pointer text-sm text-slate-600 dark:text-slate-300">
+                            <input type="checkbox" [(ngModel)]="formModel.comoSeEntero[k]" class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500" />
+                            <span>{{ k }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- CHECKBOXES: MOTIVACION -->
+                <div class="flex flex-col space-y-2">
+                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400">¿Qué te motivó a asistir?</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label *ngFor="let k of ['Networking', 'Aprendizaje', 'Desarrollo Profesional', 'Créditos Académicos']" class="flex items-center gap-2 cursor-pointer text-sm text-slate-600 dark:text-slate-300">
+                            <input type="checkbox" [(ngModel)]="formModel.motivacion[k]" class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500" />
+                            <span>{{ k }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- DROPDOWN: MEDIO SEGUIMIENTO DESEADO -->
+                <div class="flex flex-col w-full sm:max-w-xs">
+                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Medio de seguimiento deseado</label>
+                    <mat-form-field appearance="outline" class="fuse-mat-no-subscript w-full">
+                        <mat-select [(value)]="formModel.medioSeguimiento">
+                            <mat-option value="Correo">Sí, enviar información por Correo</mat-option>
+                            <mat-option value="WhatsApp">Sí, enviar información por WhatsApp</mat-option>
+                            <mat-option value="Ninguno">No, gracias</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-slate-900 border-t border-gray-150 dark:border-slate-800">
+                <button (click)="closeModal()" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-800 rounded-xl transition-all">
+                    Cancelar
+                </button>
+                <button (click)="onSave()" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md rounded-xl transition-all">
+                    {{ isEditing ? 'Actualizar' : 'Guardar' }}
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CSS Animations -->
+<style>
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+</style>

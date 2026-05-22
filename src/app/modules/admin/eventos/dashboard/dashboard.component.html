@@ -1,0 +1,214 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50 dark:bg-slate-900 p-6 md:p-8 space-y-6">
+    
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-slate-800">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-sans">
+                Eventos: Live Report
+            </h1>
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                Monitoreo en tiempo real de registros y control de accesos al Tuzoforum.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <!-- SignalR Connection Status Badge -->
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-850 shadow-sm border border-gray-150 dark:border-slate-800">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span *ngIf="signalrStatus === 'Connected'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span *ngIf="signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span [ngClass]="{
+                        'bg-emerald-500': signalrStatus === 'Connected',
+                        'bg-amber-500': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
+                        'bg-slate-400': signalrStatus === 'Disconnected'
+                    }" class="relative inline-flex rounded-full h-2.5 w-2.5"></span>
+                </span>
+                <span class="text-slate-600 dark:text-slate-300">
+                    SignalR: {{ signalrStatus === 'Connected' ? 'En Vivo' : signalrStatus === 'Disconnected' ? 'Desconectado' : 'Reconectando...' }}
+                </span>
+            </div>
+
+
+
+            <!-- Multi-annual Edition Filter -->
+            <div class="min-w-[200px]">
+                <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
+                    <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)">
+                        <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
+                            {{ ed.nombre }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" *ngIf="metricas">
+        
+        <!-- CARD 1: Total Registrados -->
+        <div class="relative overflow-hidden bg-white dark:bg-slate-850 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Registrados</p>
+                    <h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1 transition-all duration-300">
+                        {{ metricas.totalRegistrados }}
+                    </h3>
+                </div>
+                <div class="p-3 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                    <mat-icon class="icon-size-6" fontIcon="heroicons_outline:ticket"></mat-icon>
+                </div>
+            </div>
+            <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-4 flex items-center gap-1">
+                <span class="text-emerald-500 flex items-center">↑ 100%</span>
+                <span>inscripciones guardadas</span>
+            </div>
+        </div>
+
+        <!-- CARD 2: Total Asistieron -->
+        <div class="relative overflow-hidden bg-white dark:bg-slate-850 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Asistieron</p>
+                    <h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
+                        {{ metricas.totalAsistieron }}
+                    </h3>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <mat-icon class="icon-size-6" fontIcon="heroicons_outline:check-badge"></mat-icon>
+                </div>
+            </div>
+            
+            <!-- Sleek Progress Bar -->
+            <div class="mt-4">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+                    <span>Tasa de Asistencia</span>
+                    <span class="text-indigo-600 dark:text-indigo-400">{{ getAsistenciaPorcentaje() }}%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                        class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500 ease-out" 
+                        [style.width.%]="getAsistenciaPorcentaje()"
+                    ></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3: Público General -->
+        <div class="relative overflow-hidden bg-white dark:bg-slate-850 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Público General</p>
+                    <h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
+                        {{ metricas.publicoGeneral }}
+                    </h3>
+                </div>
+                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-xl">
+                    <mat-icon class="icon-size-6" fontIcon="heroicons_outline:user"></mat-icon>
+                </div>
+            </div>
+            <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-4">
+                Perfiles profesionales y corporativos
+            </div>
+        </div>
+
+        <!-- CARD 4: Estudiantes -->
+        <div class="relative overflow-hidden bg-white dark:bg-slate-850 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estudiantes</p>
+                    <h3 class="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
+                        {{ metricas.estudiantes }}
+                    </h3>
+                </div>
+                <div class="p-3 bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 rounded-xl">
+                    <mat-icon class="icon-size-6" fontIcon="heroicons_outline:academic-cap"></mat-icon>
+                </div>
+            </div>
+            <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-4">
+                Pase de acceso con descuento académico
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CHARTS GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Chart 1: Historial de Asistencia por Hora -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-850 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">Historial de Asistencia</h2>
+                    <p class="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">
+                        Flujo de ingresos de visitantes por hora (tiempo real)
+                    </p>
+                </div>
+                <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+                    Live Flow
+                </span>
+            </div>
+            
+            <div class="mt-6 w-full h-[320px]">
+                <apx-chart
+                    *ngIf="chartAsistencia.series && chartAsistencia.series.length > 0"
+                    [series]="chartAsistencia.series"
+                    [chart]="chartAsistencia.chart"
+                    [colors]="chartAsistencia.colors"
+                    [stroke]="chartAsistencia.stroke"
+                    [fill]="chartAsistencia.fill"
+                    [xaxis]="chartAsistencia.xaxis"
+                    [yaxis]="chartAsistencia.yaxis"
+                    [grid]="chartAsistencia.grid"
+                    [tooltip]="chartAsistencia.tooltip"
+                    [dataLabels]="chartAsistencia.dataLabels"
+                ></apx-chart>
+                <div *ngIf="!chartAsistencia.series || chartAsistencia.series.length === 0" class="flex items-center justify-center h-full text-slate-400 text-sm">
+                    Sin datos de check-in disponibles.
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 2: Medios de Difusión -->
+        <div class="bg-white dark:bg-slate-850 p-6 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">Canales de Difusión</h2>
+                    <p class="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">
+                        ¿Cómo se enteraron del evento?
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-6 w-full h-[320px] flex items-center justify-center">
+                <apx-chart
+                    *ngIf="chartMedios.series && chartMedios.series.length > 0"
+                    [series]="chartMedios.series"
+                    [chart]="chartMedios.chart"
+                    [labels]="chartMedios.labels"
+                    [colors]="chartMedios.colors"
+                    [legend]="chartMedios.legend"
+                    [plotOptions]="chartMedios.plotOptions"
+                    [tooltip]="chartMedios.tooltip"
+                    [dataLabels]="chartMedios.dataLabels"
+                ></apx-chart>
+                <div *ngIf="!chartMedios.series || chartMedios.series.length === 0" class="flex items-center justify-center h-full text-slate-400 text-sm">
+                    Sin estadísticas de difusión.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Styles for toggle switch in Tailwind -->
+<style>
+.toggle-checkbox:checked {
+  right: 0;
+  border-color: #4f46e5;
+}
+.toggle-checkbox:checked + .toggle-label {
+  background-color: #4f46e5;
+}
+</style>

@@ -134,7 +134,17 @@ export const appRoutes: Route[] = [
                 path: 'administration', loadChildren: () => import('app/modules/admin/administration/administration.routes')
             },
             { path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes') },
-            { path: 'profile', loadChildren: () => import('app/modules/admin/pages/profile/profile.routes') }
+            { path: 'profile', loadChildren: () => import('app/modules/admin/pages/profile/profile.routes') },
+            {
+                path: 'eventos', children: [
+                    { path: 'dashboard', loadComponent: () => import('app/modules/admin/eventos/dashboard/dashboard.component').then(m => m.EventosDashboardComponent) },
+                    { path: 'control', loadComponent: () => import('app/modules/admin/eventos/control/control.component').then(m => m.EventosControlComponent) }
+                ]
+            }
         ]
+    },
+    {
+        path: 'eventos/escanear-pase',
+        loadComponent: () => import('app/modules/admin/eventos/escanear-pase/escanear-pase.component').then(m => m.EscanearPaseComponent)
     }
 ];

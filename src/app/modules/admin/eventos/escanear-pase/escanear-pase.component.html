@@ -1,0 +1,294 @@
+<div class="relative flex flex-col flex-auto min-h-screen w-full bg-slate-950 text-slate-100 font-sans overflow-x-hidden select-none">
+    
+    <!-- HEADER -->
+    <header class="w-full bg-slate-900/60 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <mat-icon class="text-white icon-size-6" fontIcon="heroicons_outline:qr-code"></mat-icon>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white">Tuzoforum</h1>
+                <p class="text-xs text-indigo-400 font-semibold tracking-wider uppercase">Acceso Perimetral</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-xs font-semibold text-slate-400">Terminal Activa</span>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWPORT (MOBILE CENTERED) -->
+    <main class="flex-auto flex flex-col items-center justify-center px-4 py-8 relative">
+        
+        <!-- STATUS STATE 1: IDLE / SCANNING -->
+        <div *ngIf="scanState === 'idle' || scanState === 'scanning'" class="w-full max-w-sm flex flex-col items-center gap-6">
+            
+            <!-- CAMERA SIMULATOR FRAME -->
+            <div class="relative w-72 h-72 rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-slate-900/50 flex flex-col items-center justify-center transition-all duration-300">
+                
+                <!-- Target Corner Reticles -->
+                <div class="absolute top-4 left-4 w-6 h-6 border-t-4 border-l-4 border-indigo-500 rounded-tl"></div>
+                <div class="absolute top-4 right-4 w-6 h-6 border-t-4 border-r-4 border-indigo-500 rounded-tr"></div>
+                <div class="absolute bottom-4 left-4 w-6 h-6 border-b-4 border-l-4 border-indigo-500 rounded-bl"></div>
+                <div class="absolute bottom-4 right-4 w-6 h-6 border-b-4 border-r-4 border-indigo-500 rounded-br"></div>
+                
+                <!-- Animated Scanner Laser (Only active when scanning) -->
+                <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-80"
+                     [ngClass]="{'laser-animation': scanState === 'scanning', 'hidden': scanState !== 'scanning'}">
+                </div>
+
+                <div class="absolute inset-x-0 h-24 bg-indigo-500/10 pointer-events-none"
+                     [ngClass]="{'laser-shadow-animation': scanState === 'scanning', 'hidden': scanState !== 'scanning'}">
+                </div>
+
+                <!-- Idle view -->
+                <div *ngIf="scanState === 'idle'" class="flex flex-col items-center text-center p-6 z-10">
+                    <div class="p-4 bg-slate-800/40 rounded-full mb-4 animate-bounce">
+                        <mat-icon class="text-indigo-400 icon-size-10" fontIcon="heroicons_outline:camera"></mat-icon>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-300">Esperando pase QR...</p>
+                    <p class="text-xs text-slate-500 mt-2">Use los botones rápidos de prueba abajo o ingrese un token manual.</p>
+                </div>
+
+                <!-- Scanning view -->
+                <div *ngIf="scanState === 'scanning'" class="flex flex-col items-center text-center p-6 z-10">
+                    <div class="p-4 bg-indigo-500/10 rounded-full mb-4">
+                        <mat-icon class="text-indigo-400 icon-size-10 animate-pulse" fontIcon="heroicons_outline:arrow-path"></mat-icon>
+                    </div>
+                    <p class="text-sm font-bold text-indigo-400 tracking-wide uppercase animate-pulse">Escaneando...</p>
+                    <p class="text-xs text-slate-400 mt-2">Validando firma digital del pase</p>
+                </div>
+            </div>
+
+            <!-- Manual input field for fallback/keyin -->
+            <div class="w-full flex items-center gap-2 bg-slate-900 border border-slate-800 p-1.5 rounded-2xl shadow-inner">
+                <input 
+                    type="text" 
+                    [(ngModel)]="tokenInput"
+                    (keyup.enter)="onScanManualSubmit()"
+                    placeholder="Ingresar Token / ID Manual..." 
+                    class="bg-transparent border-0 outline-none text-sm text-slate-200 placeholder-slate-600 px-3 py-2 flex-auto w-full focus:ring-0"
+                    [disabled]="scanState === 'scanning'"
+                />
+                <button 
+                    (click)="onScanManualSubmit()"
+                    [disabled]="!tokenInput.trim() || scanState === 'scanning'"
+                    class="flex items-center justify-center p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-850 disabled:text-slate-600 text-white transition-colors duration-200"
+                >
+                    <mat-icon class="icon-size-5" fontIcon="heroicons_outline:arrow-right"></mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- STATUS STATE 2: SUCCESS FLASH -->
+        <div *ngIf="scanState === 'success'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-emerald-500/30 bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
+            <!-- Fullscreen-like Flash Border Glow -->
+            <div class="absolute inset-0 border-2 border-emerald-500 rounded-3xl animate-pulse pointer-events-none"></div>
+            
+            <div class="p-8 flex flex-col items-center text-center">
+                <!-- Color feedback circle -->
+                <div class="h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center mb-6 animate-scale-up">
+                    <mat-icon class="text-emerald-500 icon-size-10" fontIcon="heroicons_outline:check-circle"></mat-icon>
+                </div>
+
+                <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase mb-2">
+                    Acceso Autorizado
+                </span>
+
+                <h2 class="text-2xl font-extrabold text-white leading-tight mb-4">
+                    {{ scanResult?.nombreCompleto }}
+                </h2>
+
+                <!-- Info Cards -->
+                <div class="w-full space-y-3 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-6 text-left text-sm">
+                    <div class="flex justify-between items-center py-1.5 border-b border-slate-900">
+                        <span class="text-slate-500 font-medium">Tipo de Pase</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                              [ngClass]="{
+                                  'bg-amber-500/15 text-amber-400 border border-amber-500/20': scanResult?.tipo === 'General',
+                                  'bg-pink-500/15 text-pink-400 border border-pink-500/20': scanResult?.tipo === 'Estudiante'
+                              }">
+                            {{ scanResult?.tipo }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center py-1.5 border-b border-slate-900" *ngIf="scanResult?.organizacion">
+                        <span class="text-slate-500 font-medium">Entidad / Escuela</span>
+                        <span class="text-slate-200 font-semibold max-w-[200px] truncate">{{ scanResult?.organizacion }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1.5">
+                        <span class="text-slate-500 font-medium">Hora de Ingreso</span>
+                        <span class="text-slate-400 font-mono">{{ scanResult?.fechaCheckIn | date:'HH:mm:ss' }}</span>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <button 
+                    (click)="resetScanner()"
+                    class="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold tracking-wide transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+                >
+                    Entendido / Escanear Siguiente
+                </button>
+            </div>
+        </div>
+
+        <!-- STATUS STATE 3: DUPLICATE FLASH -->
+        <div *ngIf="scanState === 'duplicate'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-amber-500/30 bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
+            <!-- Glow border -->
+            <div class="absolute inset-0 border-2 border-amber-500 rounded-3xl animate-pulse pointer-events-none"></div>
+
+            <div class="p-8 flex flex-col items-center text-center">
+                <!-- Warning icon -->
+                <div class="h-20 w-20 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center mb-6 animate-scale-up">
+                    <mat-icon class="text-amber-500 icon-size-10" fontIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+                </div>
+
+                <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase mb-2">
+                    Acceso Duplicado
+                </span>
+
+                <h2 class="text-2xl font-extrabold text-white leading-tight mb-4">
+                    {{ scanResult?.nombreCompleto }}
+                </h2>
+
+                <p class="text-sm text-slate-400 mb-6">
+                    Este pase ya ha registrado un ingreso previo para esta edición del evento.
+                </p>
+
+                <!-- Info Cards -->
+                <div class="w-full space-y-3 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-6 text-left text-sm">
+                    <div class="flex justify-between items-center py-1.5">
+                        <span class="text-slate-500 font-medium">Primer Ingreso</span>
+                        <span class="text-amber-400 font-semibold">{{ scanResult?.fechaCheckIn }}</span>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <button 
+                    (click)="resetScanner()"
+                    class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold tracking-wide transition-all duration-200 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
+                >
+                    Volver a Escanear
+                </button>
+            </div>
+        </div>
+
+        <!-- STATUS STATE 4: ERROR FLASH -->
+        <div *ngIf="scanState === 'error'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-rose-500/30 bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
+            <!-- Glow border -->
+            <div class="absolute inset-0 border-2 border-rose-500 rounded-3xl animate-pulse pointer-events-none"></div>
+
+            <div class="p-8 flex flex-col items-center text-center">
+                <!-- Error icon -->
+                <div class="h-20 w-20 rounded-full bg-rose-500/10 border-2 border-rose-500 flex items-center justify-center mb-6 animate-scale-up">
+                    <mat-icon class="text-rose-500 icon-size-10" fontIcon="heroicons_outline:x-circle"></mat-icon>
+                </div>
+
+                <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase mb-2">
+                    Acceso Denegado
+                </span>
+
+                <h2 class="text-2xl font-extrabold text-white leading-tight mb-4">
+                    Pase Inválido
+                </h2>
+
+                <p class="text-sm text-slate-400 mb-6">
+                    {{ scanResult?.message || 'El código escaneado no coincide con ningún registro autorizado o el evento no se encuentra activo.' }}
+                </p>
+
+                <!-- Reset Button -->
+                <button 
+                    (click)="resetScanner()"
+                    class="w-full py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold tracking-wide transition-all duration-200 shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30"
+                >
+                    Intentar de Nuevo
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- OPERATOR CONTROL DRAW PANEL (QUICK TEST CONTROLS) -->
+    <footer class="w-full bg-slate-900/80 backdrop-blur-md border-t border-slate-800/80 px-6 py-6 z-10">
+        <div class="max-w-xl mx-auto flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <mat-icon class="icon-size-4 text-indigo-400" fontIcon="heroicons_outline:cog"></mat-icon>
+                    Panel de Operador (Simulador de Lectores)
+                </span>
+                <span class="text-[10px] text-slate-500 font-mono">X-Staff-Key Configured</span>
+            </div>
+
+            <!-- Quick Tickets Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                <button 
+                    *ngFor="let ticket of availableTickets"
+                    (click)="onScanToken(ticket.token)"
+                    [disabled]="scanState === 'scanning'"
+                    class="flex flex-col items-start p-3 rounded-xl border bg-slate-950/40 text-left hover:bg-slate-950/80 transition-all duration-200 disabled:opacity-50"
+                    [ngClass]="{
+                        'border-emerald-500/20 hover:border-emerald-500/50 text-emerald-300': ticket.status === 'absent' && ticket.token !== '00000000-0000-0000-0000-000000000000',
+                        'border-amber-500/20 hover:border-amber-500/50 text-amber-300': ticket.status === 'present',
+                        'border-rose-500/20 hover:border-rose-500/50 text-rose-300': ticket.token === '00000000-0000-0000-0000-000000000000'
+                    }"
+                >
+                    <span class="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded mb-1.5"
+                          [ngClass]="{
+                              'bg-emerald-500/10 text-emerald-400': ticket.status === 'absent' && ticket.token !== '00000000-0000-0000-0000-000000000000',
+                              'bg-amber-500/10 text-amber-400': ticket.status === 'present',
+                              'bg-rose-500/10 text-rose-400': ticket.token === '00000000-0000-0000-0000-000000000000'
+                          }">
+                        {{ ticket.token === '00000000-0000-0000-0000-000000000000' ? 'FALLA' : (ticket.status === 'absent' ? 'ÉXITO' : 'DUPLICADO') }}
+                    </span>
+                    <span class="text-xs font-semibold truncate w-full">{{ ticket.label }}</span>
+                    <span class="text-[9px] font-mono text-slate-500 mt-1 truncate w-full">{{ ticket.token }}</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+<!-- Styles for animations and laser scanner -->
+<style>
+@keyframes laserSweep {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+@keyframes laserShadow {
+  0% { top: -20px; opacity: 0; }
+  25% { opacity: 0.6; }
+  50% { top: 100%; opacity: 0; }
+  75% { opacity: 0.6; }
+  100% { top: -20px; opacity: 0; }
+}
+
+.laser-animation {
+  position: absolute;
+  animation: laserSweep 2s infinite linear;
+}
+
+.laser-shadow-animation {
+  position: absolute;
+  animation: laserShadow 2s infinite linear;
+}
+
+@keyframes scaleUp {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+</style>
