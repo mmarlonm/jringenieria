@@ -87,6 +87,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     sucursales: any[] = [];
     usuarios: any[] = [];
     aprobadores: any[] = [];
+    aprobadoresCredito: any[] = [];
 
     // Lista de Bancos en México para el autocompletado
     bancosMexico: string[] = [
@@ -161,11 +162,17 @@ export class SolicitudCompraFormComponent implements OnInit {
     loadUsers(): void {
         this._usersService.getUsers().subscribe(users => {
             this.usuarios = users || [];
-            const allowedApproverIds = [14, 13, 16, 6, 12, 20, 18, 9];
+            const allowedApproverIds = [14, 13, 16, 6, 12, 20, 18, 9, 53];
+            const allowedCreditoApproverIds = [14, 13, 16, 6, 12, 20, 18, 9];
 
             this.aprobadores = this.usuarios.filter(user => {
                 const id = user.usuarioId || user.id;
                 return allowedApproverIds.includes(Number(id));
+            });
+
+            this.aprobadoresCredito = this.usuarios.filter(user => {
+                const id = user.usuarioId || user.id;
+                return allowedCreditoApproverIds.includes(Number(id));
             });
         });
     }
