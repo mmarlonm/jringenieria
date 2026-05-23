@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,7 +17,7 @@ import { EventosService } from '../eventos.service';
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EscanearPaseComponent implements OnInit, OnDestroy {
+export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     private _eventosService = inject(EventosService);
     private _cdr = inject(ChangeDetectorRef);
 
@@ -59,10 +59,14 @@ export class EscanearPaseComponent implements OnInit, OnDestroy {
                 this._cdr.markForCheck();
             }
         });
+    }
 
+    ngAfterViewInit(): void {
         // Load scanner library and initialize
         this.loadScannerScript().then(() => {
-            this.startCamera();
+            setTimeout(() => {
+                this.startCamera();
+            }, 150);
         }).catch(err => {
             console.error('Error loading QR Scanner library', err);
             this.cameraError = 'No se pudo cargar la librería del escáner.';

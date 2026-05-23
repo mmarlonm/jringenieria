@@ -1,23 +1,23 @@
-<div class="relative flex flex-col flex-auto min-h-screen w-full bg-slate-950 text-slate-100 font-sans overflow-x-hidden select-none">
+<div class="relative flex flex-col flex-auto min-h-screen w-full bg-gray-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans overflow-x-hidden select-none">
     
     <!-- Mesh Glow Background Elements -->
-    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none"></div>
 
     <!-- HEADER -->
-    <header class="relative w-full bg-slate-900/40 backdrop-blur-md border-b border-slate-850 px-6 py-4 flex items-center justify-between z-10 shadow-lg shadow-black/10">
+    <header class="relative w-full bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border-b border-gray-200 dark:border-slate-855 px-6 py-4 flex items-center justify-between z-10 shadow-sm dark:shadow-lg dark:shadow-black/10">
         <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/30">
                 <mat-icon class="text-white icon-size-6 animate-pulse" fontIcon="heroicons_outline:qr-code"></mat-icon>
             </div>
             <div>
-                <h1 class="text-lg font-bold tracking-tight text-white">Tuzoforum</h1>
-                <p class="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Acceso Perimetral</p>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Tuzoforum</h1>
+                <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase">Acceso Perimetral</p>
             </div>
         </div>
-        <div class="flex items-center gap-2.5 px-3 py-1 rounded-full bg-slate-950/60 border border-slate-800 shadow-inner">
-            <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-            <span class="text-[11px] font-bold text-slate-400 tracking-wide">Terminal Activa</span>
+        <div class="flex items-center gap-2.5 px-3 py-1 rounded-full bg-white/80 dark:bg-slate-950/60 border border-gray-200 dark:border-slate-800 shadow-sm dark:shadow-inner">
+            <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] dark:shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-wide">Terminal Activa</span>
         </div>
     </header>
 
@@ -28,13 +28,13 @@
         <div *ngIf="scanState === 'idle' || scanState === 'scanning'" class="w-full max-w-sm flex flex-col items-center gap-8">
             
             <!-- CAMERA SCREEN FRAME -->
-            <div class="relative w-76 h-76 rounded-[2.5rem] overflow-hidden border-4 border-slate-800/80 shadow-[0_0_50px_rgba(99,102,241,0.15)] bg-slate-900/50 flex flex-col items-center justify-center transition-all duration-300">
+            <div class="relative w-76 h-76 rounded-[2.5rem] overflow-hidden border-4 border-gray-300 dark:border-slate-800/80 shadow-2xl dark:shadow-[0_0_50px_rgba(99,102,241,0.15)] bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center transition-all duration-300">
                 
                 <!-- Target Corner Reticles -->
-                <div class="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
-                <div class="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
-                <div class="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
-                <div class="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
+                <div class="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-indigo-650 dark:border-indigo-500 rounded-tl shadow-[0_0_12px_rgba(99,102,241,0.3)] dark:shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
+                <div class="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-indigo-650 dark:border-indigo-500 rounded-tr shadow-[0_0_12px_rgba(99,102,241,0.3)] dark:shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
+                <div class="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-indigo-650 dark:border-indigo-500 rounded-bl shadow-[0_0_12px_rgba(99,102,241,0.3)] dark:shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
+                <div class="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-indigo-650 dark:border-indigo-500 rounded-br shadow-[0_0_12px_rgba(99,102,241,0.3)] dark:shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20"></div>
                 
                 <!-- Animated Scanner Laser (Only active when scanning or idle) -->
                 <div class="absolute inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent opacity-90 z-20"
@@ -49,37 +49,37 @@
                 <div id="reader" class="absolute inset-0 w-full h-full z-10" [class.hidden]="scanState !== 'idle' || cameraError"></div>
 
                 <!-- Camera Error Msg -->
-                <div *ngIf="cameraError && scanState === 'idle'" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/95 text-center p-6 z-30 animate-fade-in">
+                <div *ngIf="cameraError && scanState === 'idle'" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-950/95 text-center p-6 z-30 animate-fade-in">
                     <div class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-full mb-3">
-                        <mat-icon class="text-rose-500 icon-size-8" fontIcon="heroicons_outline:exclamation-circle"></mat-icon>
+                        <mat-icon class="text-rose-600 dark:text-rose-500 icon-size-8" fontIcon="heroicons_outline:exclamation-circle"></mat-icon>
                     </div>
-                    <p class="text-xs text-rose-400 font-semibold leading-relaxed px-4">{{ cameraError }}</p>
+                    <p class="text-xs text-rose-600 dark:text-rose-400 font-semibold leading-relaxed px-4">{{ cameraError }}</p>
                 </div>
 
                 <!-- Processing view (shown when verifying token against API) -->
-                <div *ngIf="scanState === 'scanning'" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-center p-6 z-30 animate-fade-in">
+                <div *ngIf="scanState === 'scanning'" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-950/90 text-center p-6 z-30 animate-fade-in">
                     <div class="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-4">
-                        <mat-icon class="text-indigo-400 icon-size-10 animate-spin" fontIcon="heroicons_outline:arrow-path"></mat-icon>
+                        <mat-icon class="text-indigo-650 dark:text-indigo-400 icon-size-10 animate-spin" fontIcon="heroicons_outline:arrow-path"></mat-icon>
                     </div>
-                    <p class="text-sm font-black text-indigo-400 tracking-widest uppercase animate-pulse">Procesando...</p>
-                    <p class="text-xs text-slate-400 mt-2 font-medium">Validando pase en el servidor</p>
+                    <p class="text-sm font-black text-indigo-650 dark:text-indigo-400 tracking-widest uppercase animate-pulse">Procesando...</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Validando pase en el servidor</p>
                 </div>
             </div>
 
             <!-- Manual input field for fallback/keyin -->
-            <div class="w-full flex items-center gap-2 bg-slate-900/60 border border-slate-800 p-2 rounded-2xl shadow-xl backdrop-blur-md">
+            <div class="w-full flex items-center gap-2 bg-white dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 p-2 rounded-2xl shadow-md dark:shadow-xl backdrop-blur-md">
                 <input 
                     type="text" 
                     [(ngModel)]="tokenInput"
                     (keyup.enter)="onScanManualSubmit()"
                     placeholder="Ingresar Token / ID Manual..." 
-                    class="bg-transparent border-0 outline-none text-sm text-slate-200 placeholder-slate-650 px-3 py-2 flex-auto w-full focus:ring-0"
+                    class="bg-transparent border-0 outline-none text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-650 px-3 py-2 flex-auto w-full focus:ring-0"
                     [disabled]="scanState === 'scanning'"
                 />
                 <button 
                     (click)="onScanManualSubmit()"
                     [disabled]="!tokenInput.trim() || scanState === 'scanning'"
-                    class="flex items-center justify-center p-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white transition-colors duration-200 shadow-md shadow-indigo-600/10"
+                    class="flex items-center justify-center p-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-150 disabled:text-gray-400 dark:disabled:bg-slate-850 dark:disabled:text-slate-600 text-white transition-colors duration-200 shadow-md shadow-indigo-600/10"
                 >
                     <mat-icon class="icon-size-5" fontIcon="heroicons_outline:arrow-right"></mat-icon>
                 </button>
@@ -87,45 +87,45 @@
         </div>
 
         <!-- STATUS STATE 2: SUCCESS FLASH -->
-        <div *ngIf="scanState === 'success'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.15)] border border-emerald-500/40 bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
+        <div *ngIf="scanState === 'success'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-xl dark:shadow-[0_0_50px_rgba(16,185,129,0.15)] border border-emerald-350 dark:border-emerald-500/40 bg-white dark:bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
             <!-- Fullscreen-like Flash Border Glow -->
             <div class="absolute inset-0 border-2 border-emerald-500 rounded-3xl animate-pulse pointer-events-none"></div>
             
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Color feedback circle -->
-                <div class="h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(16,185,129,0.25)]">
-                    <mat-icon class="text-emerald-500 icon-size-10" fontIcon="heroicons_outline:check-circle"></mat-icon>
+                <div class="h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(16,185,129,0.15)] dark:shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+                    <mat-icon class="text-emerald-600 dark:text-emerald-500 icon-size-10" fontIcon="heroicons_outline:check-circle"></mat-icon>
                 </div>
 
-                <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase mb-3">
+                <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase mb-3">
                     Acceso Autorizado
                 </span>
 
-                <h2 class="text-2xl font-black text-white leading-tight mb-5">
+                <h2 class="text-2xl font-black text-slate-850 dark:text-white leading-tight mb-5">
                     {{ scanResult?.nombreCompleto }}
                 </h2>
 
                 <!-- Info Cards -->
-                <div class="w-full space-y-3.5 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-6 text-left text-sm">
-                    <div class="flex justify-between items-center py-1 border-b border-slate-900">
-                        <span class="text-slate-500 font-bold text-xs uppercase tracking-wider">Tipo de Pase</span>
+                <div class="w-full space-y-3.5 bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-150 dark:border-slate-800/80 mb-6 text-left text-sm">
+                    <div class="flex justify-between items-center py-1 border-b border-gray-250 dark:border-slate-900">
+                        <span class="text-slate-500 dark:text-slate-500 font-bold text-xs uppercase tracking-wider">Tipo de Pase</span>
                         <span class="px-3 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase"
                               [ngClass]="{
-                                  'bg-amber-500/15 text-amber-400 border border-amber-500/25': scanResult?.tipo === 'General' || scanResult?.tipoAsistente === 'General',
-                                  'bg-pink-500/15 text-pink-400 border border-pink-500/25': scanResult?.tipo === 'Estudiante' || scanResult?.tipoAsistente === 'Estudiante'
+                                  'bg-amber-100 text-amber-800 border border-amber-250 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/25': scanResult?.tipo === 'General' || scanResult?.tipoAsistente === 'General',
+                                  'bg-pink-100 text-pink-850 border border-pink-250 dark:bg-pink-500/15 dark:text-pink-400 dark:border-pink-500/25': scanResult?.tipo === 'Estudiante' || scanResult?.tipoAsistente === 'Estudiante'
                               }">
                             {{ scanResult?.tipo || scanResult?.tipoAsistente }}
                         </span>
                     </div>
-                    <div class="flex justify-between items-center py-1 border-b border-slate-900" *ngIf="scanResult?.organizacion || scanResult?.universidadRepresentas || scanResult?.empresaRepresenta">
-                        <span class="text-slate-500 font-bold text-xs uppercase tracking-wider">Organización</span>
-                        <span class="text-slate-200 font-bold max-w-[200px] truncate">
+                    <div class="flex justify-between items-center py-1 border-b border-gray-250 dark:border-slate-900" *ngIf="scanResult?.organizacion || scanResult?.universidadRepresentas || scanResult?.empresaRepresenta">
+                        <span class="text-slate-500 dark:text-slate-500 font-bold text-xs uppercase tracking-wider">Organización</span>
+                        <span class="text-slate-750 dark:text-slate-200 font-bold max-w-[200px] truncate">
                             {{ scanResult?.organizacion || scanResult?.universidadRepresentas || scanResult?.empresaRepresenta }}
                         </span>
                     </div>
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-500 font-bold text-xs uppercase tracking-wider">Hora de Ingreso</span>
-                        <span class="text-slate-400 font-mono font-bold">{{ scanResult?.fechaCheckIn | date:'HH:mm:ss' }}</span>
+                        <span class="text-slate-500 dark:text-slate-500 font-bold text-xs uppercase tracking-wider">Hora de Ingreso</span>
+                        <span class="text-slate-655 dark:text-slate-400 font-mono font-bold">{{ scanResult?.fechaCheckIn | date:'HH:mm:ss' }}</span>
                     </div>
                 </div>
 
@@ -140,33 +140,33 @@
         </div>
 
         <!-- STATUS STATE 3: DUPLICATE FLASH -->
-        <div *ngIf="scanState === 'duplicate'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.15)] border border-amber-500/40 bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
+        <div *ngIf="scanState === 'duplicate'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-xl dark:shadow-[0_0_50px_rgba(245,158,11,0.15)] border border-amber-300 dark:border-amber-500/40 bg-white dark:bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
             <!-- Glow border -->
             <div class="absolute inset-0 border-2 border-amber-500 rounded-3xl animate-pulse pointer-events-none"></div>
 
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Warning icon -->
-                <div class="h-20 w-20 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(245,158,11,0.25)]">
-                    <mat-icon class="text-amber-500 icon-size-10" fontIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+                <div class="h-20 w-20 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(245,158,11,0.15)] dark:shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+                    <mat-icon class="text-amber-600 dark:text-amber-500 icon-size-10" fontIcon="heroicons_outline:exclamation-triangle"></mat-icon>
                 </div>
 
-                <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase mb-3">
+                <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase mb-3">
                     Acceso Duplicado
                 </span>
 
-                <h2 class="text-2xl font-black text-white leading-tight mb-4">
+                <h2 class="text-2xl font-black text-slate-850 dark:text-white leading-tight mb-4">
                     {{ scanResult?.nombreCompleto }}
                 </h2>
 
-                <p class="text-sm text-slate-400 mb-6 font-medium">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
                     Este pase ya ha registrado un ingreso previo para esta edición del evento.
                 </p>
 
                 <!-- Info Cards -->
-                <div class="w-full space-y-3.5 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-6 text-left text-sm">
+                <div class="w-full space-y-3.5 bg-gray-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-gray-150 dark:border-slate-800/80 mb-6 text-left text-sm">
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-500 font-bold text-xs uppercase tracking-wider">Primer Ingreso</span>
-                        <span class="text-amber-400 font-bold">{{ scanResult?.fechaCheckIn }}</span>
+                        <span class="text-slate-500 dark:text-slate-500 font-bold text-xs uppercase tracking-wider">Primer Ingreso</span>
+                        <span class="text-amber-600 dark:text-amber-400 font-bold">{{ scanResult?.fechaCheckIn }}</span>
                     </div>
                 </div>
 
@@ -181,32 +181,32 @@
         </div>
 
         <!-- STATUS STATE 4: ERROR FLASH -->
-        <div *ngIf="scanState === 'error'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(244,63,94,0.15)] border border-rose-500/40 bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
+        <div *ngIf="scanState === 'error'" class="w-full max-w-sm rounded-3xl overflow-hidden shadow-xl dark:shadow-[0_0_50px_rgba(244,63,94,0.15)] border border-rose-300 dark:border-rose-500/40 bg-white dark:bg-slate-900/90 backdrop-blur-xl relative transition-all duration-300 animate-fade-in">
             <!-- Glow border -->
             <div class="absolute inset-0 border-2 border-rose-500 rounded-3xl animate-pulse pointer-events-none"></div>
 
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Error icon -->
-                <div class="h-20 w-20 rounded-full bg-rose-500/10 border-2 border-rose-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(244,63,94,0.25)]">
-                    <mat-icon class="text-rose-500 icon-size-10" fontIcon="heroicons_outline:x-circle"></mat-icon>
+                <div class="h-20 w-20 rounded-full bg-rose-500/10 border-2 border-rose-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(244,63,94,0.15)] dark:shadow-[0_0_15px_rgba(244,63,94,0.25)]">
+                    <mat-icon class="text-rose-600 dark:text-rose-500 icon-size-10" fontIcon="heroicons_outline:x-circle"></mat-icon>
                 </div>
 
-                <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase mb-3">
+                <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 uppercase mb-3">
                     Acceso Denegado
                 </span>
 
-                <h2 class="text-2xl font-black text-white leading-tight mb-4">
+                <h2 class="text-2xl font-black text-slate-850 dark:text-white leading-tight mb-4">
                     Pase Inválido
                 </h2>
 
-                <p class="text-sm text-slate-400 mb-6 font-medium">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
                     {{ scanResult?.message || 'El código escaneado no coincide con ningún registro autorizado o el evento no se encuentra activo.' }}
                 </p>
 
                 <!-- Reset Button -->
                 <button 
                     (click)="resetScanner()"
-                    class="w-full py-4 rounded-2xl bg-rose-500 hover:bg-rose-400 text-slate-950 font-black tracking-wider uppercase text-xs transition-all duration-200 shadow-lg shadow-rose-500/20 hover:shadow-rose-500/35"
+                    class="w-full py-4 rounded-2xl bg-rose-550 hover:bg-rose-500 text-white font-black tracking-wider uppercase text-xs transition-all duration-200 shadow-md shadow-rose-550/20"
                 >
                     Intentar de Nuevo
                 </button>
@@ -216,14 +216,14 @@
     </main>
 
     <!-- OPERATOR CONTROL DRAW PANEL (QUICK TEST CONTROLS) -->
-    <footer class="w-full bg-slate-900/40 backdrop-blur-md border-t border-slate-800/80 px-6 py-6 z-10 shadow-2xl">
+    <footer class="w-full bg-white/80 dark:bg-slate-900/40 backdrop-blur-md border-t border-gray-200 dark:border-slate-800/80 px-6 py-6 z-10 shadow-xl dark:shadow-2xl">
         <div class="max-w-xl mx-auto flex flex-col gap-4">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <mat-icon class="icon-size-4 text-indigo-400" fontIcon="heroicons_outline:cog"></mat-icon>
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <mat-icon class="icon-size-4 text-indigo-500 dark:text-indigo-400" fontIcon="heroicons_outline:cog"></mat-icon>
                     Panel de Operador (Simulador de Lectores)
                 </span>
-                <span class="text-[10px] text-indigo-500 font-mono font-bold tracking-wide">X-Staff-Key Configured</span>
+                <span class="text-[10px] text-indigo-650 dark:text-indigo-500 font-mono font-bold tracking-wide">X-Staff-Key Configured</span>
             </div>
 
             <!-- Quick Tickets Grid -->
@@ -232,23 +232,23 @@
                     *ngFor="let ticket of availableTickets"
                     (click)="onScanToken(ticket.token)"
                     [disabled]="scanState === 'scanning'"
-                    class="flex flex-col items-start p-3.5 rounded-2xl border bg-slate-950/40 text-left hover:bg-slate-950/80 transition-all duration-200 disabled:opacity-50 hover:border-slate-700/60 shadow-lg"
+                    class="flex flex-col items-start p-3.5 rounded-2xl border bg-gray-50 border-gray-200 dark:bg-slate-950/40 text-left hover:bg-white dark:hover:bg-slate-950/80 transition-all duration-200 disabled:opacity-50 hover:border-slate-300 dark:hover:border-slate-700/60 shadow-sm dark:shadow-lg"
                     [ngClass]="{
-                        'border-emerald-500/20 hover:border-emerald-500/50 text-emerald-300': ticket.status === 'absent' && ticket.token !== '00000000-0000-0000-0000-000000000000',
-                        'border-amber-500/20 hover:border-amber-500/50 text-amber-300': ticket.status === 'present',
-                        'border-rose-500/20 hover:border-rose-500/50 text-rose-300': ticket.token === '00000000-0000-0000-0000-000000000000'
+                        'border-emerald-500/20 dark:border-emerald-500/20 hover:border-emerald-500/50 text-emerald-600 dark:text-emerald-300': ticket.status === 'absent' && ticket.token !== '00000000-0000-0000-0000-000000000000',
+                        'border-amber-500/20 dark:border-amber-500/20 hover:border-amber-500/50 text-amber-600 dark:text-amber-300': ticket.status === 'present',
+                        'border-rose-500/20 dark:border-rose-500/20 hover:border-rose-500/50 text-rose-600 dark:text-rose-300': ticket.token === '00000000-0000-0000-0000-000000000000'
                     }"
                 >
                     <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded mb-2"
                           [ngClass]="{
-                              'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': ticket.status === 'absent' && ticket.token !== '00000000-0000-0000-0000-000000000000',
-                              'bg-amber-500/10 text-amber-400 border border-amber-500/20': ticket.status === 'present',
-                              'bg-rose-500/10 text-rose-400 border border-rose-500/20': ticket.token === '00000000-0000-0000-0000-000000000000'
+                              'bg-emerald-550/10 text-emerald-650 border border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400': ticket.status === 'absent' && ticket.token !== '00000000-0000-0000-0000-000000000000',
+                              'bg-amber-550/10 text-amber-655 border border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400': ticket.status === 'present',
+                              'bg-rose-550/10 text-rose-655 border border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400': ticket.token === '00000000-0000-0000-0000-000000000000'
                           }">
                         {{ ticket.token === '00000000-0000-0000-0000-000000000000' ? 'FALLA' : (ticket.status === 'absent' ? 'ÉXITO' : 'DUPLICADO') }}
                     </span>
-                    <span class="text-xs font-bold truncate w-full">{{ ticket.label }}</span>
-                    <span class="text-[9px] font-mono text-slate-500 mt-1 truncate w-full">{{ ticket.token }}</span>
+                    <span class="text-xs font-bold truncate w-full text-slate-800 dark:text-white">{{ ticket.label }}</span>
+                    <span class="text-[9px] font-mono text-slate-400 dark:text-slate-500 mt-1 truncate w-full">{{ ticket.token }}</span>
                 </button>
             </div>
         </div>

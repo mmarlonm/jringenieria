@@ -1,37 +1,37 @@
-<div class="relative flex flex-col flex-auto min-h-screen w-full bg-slate-950 text-slate-100 font-sans overflow-x-hidden p-6 md:p-8 space-y-6">
+<div class="relative flex flex-col flex-auto min-h-screen w-full bg-gray-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans overflow-x-hidden p-6 md:p-8 space-y-6">
     <!-- Mesh Glow Background Elements -->
-    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none"></div>
     
     <!-- HEADER -->
-    <div class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800/80 z-10">
+    <div class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-slate-800/80 z-10">
         <div>
             <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest bg-indigo-650/10 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-500/20 uppercase">
                     Control Panel
                 </span>
             </div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-white mt-1">
-                Eventos <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">Live Report</span>
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
+                Eventos <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-500 to-emerald-500 dark:from-indigo-400 dark:via-purple-400 dark:to-emerald-400">Live Report</span>
             </h1>
-            <p class="text-sm font-medium text-slate-400 mt-1.5">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1.5">
                 Monitoreo en tiempo real de registros y control de accesos al Tuzoforum.
             </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <!-- SignalR Connection Status Badge -->
-            <div class="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800 shadow-lg shadow-black/20">
+            <div class="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900/60 backdrop-blur-md border border-gray-200 dark:border-slate-800 shadow-sm dark:shadow-lg dark:shadow-black/20">
                 <span class="relative flex h-2.5 w-2.5">
                     <span *ngIf="signalrStatus === 'Connected'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span *ngIf="signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                     <span [ngClass]="{
                         'bg-emerald-500': signalrStatus === 'Connected',
                         'bg-amber-500': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
-                        'bg-slate-500': signalrStatus === 'Disconnected'
+                        'bg-slate-400 dark:bg-slate-500': signalrStatus === 'Disconnected'
                     }" class="relative inline-flex rounded-full h-2.5 w-2.5"></span>
                 </span>
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                     SignalR: {{ signalrStatus === 'Connected' ? 'En Vivo' : signalrStatus === 'Disconnected' ? 'Desconectado' : 'Conectando...' }}
                 </span>
             </div>
@@ -39,7 +39,7 @@
             <!-- Multi-annual Edition Filter -->
             <div class="min-w-[200px]">
                 <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
-                    <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-sm text-slate-200">
+                    <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-sm text-slate-700 dark:text-slate-200">
                         <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
                             {{ ed.nombre }}
                         </mat-option>
@@ -53,23 +53,23 @@
     <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 z-10" *ngIf="metricas">
         
         <!-- CARD 1: Total Registrados -->
-        <div class="relative overflow-hidden bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-xl transition-all duration-300 hover:border-indigo-500/30 hover:shadow-indigo-500/5 group hover:-translate-y-1">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-xl transition-all duration-300 hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 group hover:-translate-y-1">
             <!-- Glow background hover -->
             <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             <div class="flex items-start justify-between relative z-10">
                 <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Registrados</p>
-                    <h3 class="text-4xl font-black text-white mt-2 tracking-tight">
+                    <p class="text-[10px] font-black text-slate-450 dark:text-slate-400 uppercase tracking-widest">Total Registrados</p>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">
                         {{ metricas.totalRegistrados }}
                     </h3>
                 </div>
-                <div class="p-3.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-2xl shadow-inner">
+                <div class="p-3.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-650 dark:text-indigo-400 rounded-2xl shadow-sm dark:shadow-inner">
                     <mat-icon class="icon-size-6" fontIcon="heroicons_outline:ticket"></mat-icon>
                 </div>
             </div>
-            <div class="text-[11px] font-semibold text-slate-400 mt-5 flex items-center gap-1.5 relative z-10">
-                <span class="text-emerald-400 flex items-center gap-0.5">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-5 flex items-center gap-1.5 relative z-10">
+                <span class="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                     <mat-icon class="icon-size-3.5" fontIcon="heroicons_mini:arrow-trending-up"></mat-icon>
                     100%
                 </span>
@@ -78,31 +78,31 @@
         </div>
 
         <!-- CARD 2: Total Asistieron -->
-        <div class="relative overflow-hidden bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-xl transition-all duration-300 hover:border-emerald-500/30 hover:shadow-emerald-500/5 group hover:-translate-y-1">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-xl transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 group hover:-translate-y-1">
             <!-- Glow background hover -->
             <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             <div class="flex items-start justify-between relative z-10">
                 <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asistencia Confirmada</p>
-                    <h3 class="text-4xl font-black text-white mt-2 tracking-tight">
+                    <p class="text-[10px] font-black text-slate-450 dark:text-slate-400 uppercase tracking-widest">Asistencia Confirmada</p>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">
                         {{ metricas.totalAsistieron }}
                     </h3>
                 </div>
-                <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl shadow-inner">
+                <div class="p-3.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-emerald-650 dark:text-emerald-400 rounded-2xl shadow-sm dark:shadow-inner">
                     <mat-icon class="icon-size-6" fontIcon="heroicons_outline:check-badge"></mat-icon>
                 </div>
             </div>
             
             <!-- Sleek Progress Bar -->
             <div class="mt-5 relative z-10">
-                <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 mb-1.5">
+                <div class="flex justify-between items-center text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">
                     <span>Tasa de Asistencia</span>
-                    <span class="text-indigo-400 font-extrabold">{{ getAsistenciaPorcentaje() }}%</span>
+                    <span class="text-indigo-650 dark:text-indigo-400 font-extrabold">{{ getAsistenciaPorcentaje() }}%</span>
                 </div>
-                <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-white/5">
+                <div class="w-full h-2.5 bg-gray-100 dark:bg-slate-950 rounded-full overflow-hidden p-0.5 border border-gray-205 dark:border-white/5">
                     <div 
-                        class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(99,102,241,0.5)]" 
+                        class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(99,102,241,0.2)] dark:shadow-[0_0_8px_rgba(99,102,241,0.5)]" 
                         [style.width.%]="getAsistenciaPorcentaje()"
                     ></div>
                 </div>
@@ -110,43 +110,43 @@
         </div>
 
         <!-- CARD 3: Público General -->
-        <div class="relative overflow-hidden bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-xl transition-all duration-300 hover:border-amber-500/30 hover:shadow-amber-500/5 group hover:-translate-y-1">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-xl transition-all duration-300 hover:border-amber-300 dark:hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 group hover:-translate-y-1">
             <!-- Glow background hover -->
             <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             <div class="flex items-start justify-between relative z-10">
                 <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Público General</p>
-                    <h3 class="text-4xl font-black text-white mt-2 tracking-tight">
+                    <p class="text-[10px] font-black text-slate-450 dark:text-slate-400 uppercase tracking-widest">Público General</p>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">
                         {{ metricas.publicoGeneral }}
                     </h3>
                 </div>
-                <div class="p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl shadow-inner">
+                <div class="p-3.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 text-amber-650 dark:text-amber-400 rounded-2xl shadow-sm dark:shadow-inner">
                     <mat-icon class="icon-size-6" fontIcon="heroicons_outline:user"></mat-icon>
                 </div>
             </div>
-            <div class="text-[11px] font-medium text-slate-400 mt-5 relative z-10">
+            <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-5 relative z-10">
                 Perfiles profesionales y corporativos
             </div>
         </div>
 
         <!-- CARD 4: Estudiantes -->
-        <div class="relative overflow-hidden bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-xl transition-all duration-300 hover:border-pink-500/30 hover:shadow-pink-500/5 group hover:-translate-y-1">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-xl transition-all duration-300 hover:border-pink-300 dark:hover:border-pink-500/30 hover:shadow-lg hover:shadow-pink-500/5 group hover:-translate-y-1">
             <!-- Glow background hover -->
             <div class="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             <div class="flex items-start justify-between relative z-10">
                 <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estudiantes</p>
-                    <h3 class="text-4xl font-black text-white mt-2 tracking-tight">
+                    <p class="text-[10px] font-black text-slate-450 dark:text-slate-400 uppercase tracking-widest">Estudiantes</p>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">
                         {{ metricas.estudiantes }}
                     </h3>
                 </div>
-                <div class="p-3.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 rounded-2xl shadow-inner">
+                <div class="p-3.5 bg-pink-550/10 border border-pink-100 dark:border-pink-500/20 text-pink-650 dark:text-pink-400 rounded-2xl shadow-sm dark:shadow-inner">
                     <mat-icon class="icon-size-6" fontIcon="heroicons_outline:academic-cap"></mat-icon>
                 </div>
             </div>
-            <div class="text-[11px] font-medium text-slate-400 mt-5 relative z-10">
+            <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-5 relative z-10">
                 Pases con validación estudiantil activa
             </div>
         </div>
@@ -157,15 +157,15 @@
     <div class="relative grid grid-cols-1 lg:grid-cols-3 gap-6 z-10">
         
         <!-- Chart 1: Historial de Asistencia por Hora -->
-        <div class="lg:col-span-2 bg-slate-900/30 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-xl flex flex-col justify-between">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900/30 backdrop-blur-md p-6 rounded-3xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-xl flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-150 dark:border-slate-800/80">
                 <div>
-                    <h2 class="text-lg font-bold text-white">Historial de Asistencia</h2>
-                    <p class="text-xs font-medium text-slate-400 mt-0.5">
+                    <h2 class="text-lg font-bold text-slate-850 dark:text-white">Historial de Asistencia</h2>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                         Flujo de ingresos de visitantes por hora (tiempo real)
                     </p>
                 </div>
-                <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-indigo-650/10 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-500/20">
                     Live Flow
                 </span>
             </div>
@@ -188,23 +188,23 @@
                     }"
                     [xaxis]="chartAsistencia.xaxis"
                     [yaxis]="chartAsistencia.yaxis"
-                    [grid]="{ borderColor: '#1e293b', strokeDashArray: 4 }"
+                    [grid]="{ borderColor: 'rgba(148, 163, 184, 0.1)', strokeDashArray: 4 }"
                     [tooltip]="chartAsistencia.tooltip"
                     [dataLabels]="chartAsistencia.dataLabels"
                 ></apx-chart>
                 <div *ngIf="!chartAsistencia.series || chartAsistencia.series.length === 0" class="flex flex-col items-center justify-center h-full text-slate-500 gap-2">
-                    <mat-icon class="icon-size-8 animate-pulse text-slate-600" fontIcon="heroicons_outline:chart-bar"></mat-icon>
+                    <mat-icon class="icon-size-8 animate-pulse text-slate-400" fontIcon="heroicons_outline:chart-bar"></mat-icon>
                     <span class="text-xs font-semibold">Sin datos de check-in disponibles.</span>
                 </div>
             </div>
         </div>
 
         <!-- Chart 2: Medios de Difusión -->
-        <div class="bg-slate-900/30 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-xl flex flex-col justify-between">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+        <div class="bg-white dark:bg-slate-900/30 backdrop-blur-md p-6 rounded-3xl border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-xl flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-150 dark:border-slate-800/80">
                 <div>
-                    <h2 class="text-lg font-bold text-white">Canales de Difusión</h2>
-                    <p class="text-xs font-medium text-slate-400 mt-0.5">
+                    <h2 class="text-lg font-bold text-slate-855 dark:text-white">Canales de Difusión</h2>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                         ¿Cómo se enteraron del evento?
                     </p>
                 </div>
@@ -221,7 +221,7 @@
                         position: 'bottom',
                         fontSize: '11px',
                         fontFamily: 'Inter, sans-serif',
-                        labels: { colors: '#94a3b8' },
+                        labels: { colors: '#64748b' },
                         itemMargin: { horizontal: 6, vertical: 4 }
                     }"
                     [plotOptions]="{
@@ -231,7 +231,7 @@
                                 labels: {
                                     show: true,
                                     name: { show: true, fontSize: '12px', color: '#94a3b8' },
-                                    value: { show: true, fontSize: '22px', color: '#ffffff', fontWeight: 'bold' },
+                                    value: { show: true, fontSize: '22px', color: 'inherit', fontWeight: 'bold' },
                                     total: { show: true, label: 'Total', color: '#94a3b8' }
                                 }
                             }
@@ -241,7 +241,7 @@
                     [dataLabels]="chartMedios.dataLabels"
                 ></apx-chart>
                 <div *ngIf="!chartMedios.series || chartMedios.series.length === 0" class="flex flex-col items-center justify-center h-full text-slate-500 gap-2">
-                    <mat-icon class="icon-size-8 animate-pulse text-slate-600" fontIcon="heroicons_outline:pie-chart"></mat-icon>
+                    <mat-icon class="icon-size-8 animate-pulse text-slate-400" fontIcon="heroicons_outline:pie-chart"></mat-icon>
                     <span class="text-xs font-semibold">Sin estadísticas de difusión.</span>
                 </div>
             </div>
