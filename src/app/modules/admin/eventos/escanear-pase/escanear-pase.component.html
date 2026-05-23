@@ -8,7 +8,7 @@
     <header class="relative w-full bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border-b border-gray-200 dark:border-slate-855 px-6 py-4 flex items-center justify-between z-10 shadow-sm dark:shadow-lg dark:shadow-black/10">
         <div class="flex items-center gap-3">
             <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/30">
-                <mat-icon class="text-white icon-size-6 animate-pulse" fontIcon="heroicons_outline:qr-code"></mat-icon>
+                <mat-icon class="text-white icon-size-6 animate-pulse" svgIcon="heroicons_outline:qr-code"></mat-icon>
             </div>
             <div>
                 <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Tuzoforum</h1>
@@ -51,7 +51,7 @@
                 <!-- Camera Error Msg -->
                 <div *ngIf="cameraError && scanState === 'idle'" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-950/95 text-center p-6 z-30 animate-fade-in">
                     <div class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-full mb-3">
-                        <mat-icon class="text-rose-600 dark:text-rose-500 icon-size-8" fontIcon="heroicons_outline:exclamation-circle"></mat-icon>
+                        <mat-icon class="text-rose-600 dark:text-rose-500 icon-size-8" svgIcon="heroicons_outline:exclamation-circle"></mat-icon>
                     </div>
                     <p class="text-xs text-rose-600 dark:text-rose-400 font-semibold leading-relaxed px-4">{{ cameraError }}</p>
                 </div>
@@ -59,7 +59,7 @@
                 <!-- Processing view (shown when verifying token against API) -->
                 <div *ngIf="scanState === 'scanning'" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-950/90 text-center p-6 z-30 animate-fade-in">
                     <div class="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-4">
-                        <mat-icon class="text-indigo-650 dark:text-indigo-400 icon-size-10 animate-spin" fontIcon="heroicons_outline:arrow-path"></mat-icon>
+                        <mat-icon class="text-indigo-650 dark:text-indigo-400 icon-size-10 animate-spin" svgIcon="heroicons_outline:arrow-path"></mat-icon>
                     </div>
                     <p class="text-sm font-black text-indigo-650 dark:text-indigo-400 tracking-widest uppercase animate-pulse">Procesando...</p>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Validando pase en el servidor</p>
@@ -81,7 +81,7 @@
                     [disabled]="!tokenInput.trim() || scanState === 'scanning'"
                     class="flex items-center justify-center p-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-150 disabled:text-gray-400 dark:disabled:bg-slate-850 dark:disabled:text-slate-600 text-white transition-colors duration-200 shadow-md shadow-indigo-600/10"
                 >
-                    <mat-icon class="icon-size-5" fontIcon="heroicons_outline:arrow-right"></mat-icon>
+                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:arrow-right"></mat-icon>
                 </button>
             </div>
         </div>
@@ -94,7 +94,7 @@
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Color feedback circle -->
                 <div class="h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(16,185,129,0.15)] dark:shadow-[0_0_15px_rgba(16,185,129,0.25)]">
-                    <mat-icon class="text-emerald-600 dark:text-emerald-500 icon-size-10" fontIcon="heroicons_outline:check-circle"></mat-icon>
+                    <mat-icon class="text-emerald-600 dark:text-emerald-500 icon-size-10" svgIcon="heroicons_outline:check-circle"></mat-icon>
                 </div>
 
                 <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase mb-3">
@@ -147,7 +147,7 @@
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Warning icon -->
                 <div class="h-20 w-20 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(245,158,11,0.15)] dark:shadow-[0_0_15px_rgba(245,158,11,0.25)]">
-                    <mat-icon class="text-amber-600 dark:text-amber-500 icon-size-10" fontIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+                    <mat-icon class="text-amber-600 dark:text-amber-500 icon-size-10" svgIcon="heroicons_outline:exclamation-triangle"></mat-icon>
                 </div>
 
                 <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase mb-3">
@@ -188,7 +188,7 @@
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Error icon -->
                 <div class="h-20 w-20 rounded-full bg-rose-500/10 border-2 border-rose-500 flex items-center justify-center mb-6 animate-scale-up shadow-[0_0_15px_rgba(244,63,94,0.15)] dark:shadow-[0_0_15px_rgba(244,63,94,0.25)]">
-                    <mat-icon class="text-rose-600 dark:text-rose-500 icon-size-10" fontIcon="heroicons_outline:x-circle"></mat-icon>
+                    <mat-icon class="text-rose-600 dark:text-rose-500 icon-size-10" svgIcon="heroicons_outline:x-circle"></mat-icon>
                 </div>
 
                 <span class="px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 uppercase mb-3">
@@ -220,7 +220,7 @@
         <div class="max-w-xl mx-auto flex flex-col gap-4">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <mat-icon class="icon-size-4 text-indigo-500 dark:text-indigo-400" fontIcon="heroicons_outline:cog"></mat-icon>
+                    <mat-icon class="icon-size-4 text-indigo-500 dark:text-indigo-400" svgIcon="heroicons_outline:cog"></mat-icon>
                     Panel de Operador (Simulador de Lectores)
                 </span>
                 <span class="text-[10px] text-indigo-650 dark:text-indigo-500 font-mono font-bold tracking-wide">X-Staff-Key Configured</span>

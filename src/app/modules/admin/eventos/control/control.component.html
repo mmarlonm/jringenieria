@@ -9,7 +9,7 @@
          }"
          class="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border border-white/10 transition-all duration-300 animate-slide-in-right">
         <mat-icon class="icon-size-5" 
-                  [fontIcon]="toast.type === 'success' ? 'heroicons_solid:check-circle' : toast.type === 'error' ? 'heroicons_solid:x-circle' : 'heroicons_solid:exclamation-triangle'">
+                  [svgIcon]="toast.type === 'success' ? 'heroicons_solid:check-circle' : toast.type === 'error' ? 'heroicons_solid:x-circle' : 'heroicons_solid:exclamation-triangle'">
         </mat-icon>
         <span class="text-sm font-semibold tracking-wide font-sans">{{ toast.message }}</span>
     </div>
@@ -37,7 +37,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <mat-icon *ngIf="!bulkResending" class="icon-size-5" fontIcon="heroicons_outline:paper-airplane"></mat-icon>
+                <mat-icon *ngIf="!bulkResending" class="icon-size-5" svgIcon="heroicons_outline:paper-airplane"></mat-icon>
                 <span>{{ bulkResending ? 'Despachando...' : 'Reenvío Masivo de QR' }}</span>
             </button>
 
@@ -45,7 +45,7 @@
             <button 
                 (click)="openRegisterModal()"
                 class="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-all duration-150 w-full md:w-auto">
-                <mat-icon class="icon-size-5" fontIcon="heroicons_outline:plus-circle"></mat-icon>
+                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:plus-circle"></mat-icon>
                 <span>Registrar Asistente</span>
             </button>
         </div>
@@ -62,7 +62,7 @@
                 class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             />
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <mat-icon class="icon-size-5" fontIcon="heroicons_outline:magnifying-glass"></mat-icon>
+                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
             </div>
         </div>
     </div>
@@ -128,7 +128,7 @@
                         <!-- Check In Date -->
                         <td class="px-6 py-4">
                             <span *ngIf="a.fechaCheckIn" class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                                <mat-icon class="icon-size-3.5 text-emerald-500" fontIcon="heroicons_solid:clock"></mat-icon>
+                                <mat-icon class="icon-size-3.5 text-emerald-500" svgIcon="heroicons_solid:clock"></mat-icon>
                                 {{ a.fechaCheckIn }}
                             </span>
                             <span *ngIf="!a.fechaCheckIn" class="text-xs font-medium text-slate-300 dark:text-slate-600">—</span>
@@ -138,7 +138,7 @@
                             <div class="flex items-center justify-center gap-2">
                                 <!-- Edit -->
                                 <button (click)="openEditModal(a)" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                    <mat-icon class="icon-size-5" fontIcon="heroicons_outline:pencil-square"></mat-icon>
+                                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:pencil-square"></mat-icon>
                                 </button>
                                 <!-- Send QR Individual -->
                                 <button 
@@ -150,7 +150,7 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    <mat-icon *ngIf="resendingId !== a.id" class="icon-size-5" fontIcon="heroicons_outline:envelope"></mat-icon>
+                                    <mat-icon *ngIf="resendingId !== a.id" class="icon-size-5" svgIcon="heroicons_outline:envelope"></mat-icon>
                                 </button>
                             </div>
                         </td>
@@ -176,7 +176,7 @@
                     {{ isEditing ? 'Editar Registro' : 'Nuevo Registro de Asistente' }}
                 </h3>
                 <button (click)="closeModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg transition-colors">
-                    <mat-icon class="icon-size-6" fontIcon="heroicons_outline:x-mark"></mat-icon>
+                    <mat-icon class="icon-size-6" svgIcon="heroicons_outline:x-mark"></mat-icon>
                 </button>
             </div>
 
