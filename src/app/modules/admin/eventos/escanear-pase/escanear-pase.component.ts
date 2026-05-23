@@ -134,6 +134,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const config = { 
             fps: 10, 
+            aspectRatio: 1.0,
             qrbox: (width: number, height: number) => {
                 const size = Math.min(width, height) * 0.75;
                 return { width: size, height: size };

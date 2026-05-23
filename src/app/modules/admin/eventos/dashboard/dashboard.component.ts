@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { NgApexchartsModule, ApexOptions } from 'ng-apexcharts';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { EventosService, DashboardMetricasDto, EventoEdicion } from '../eventos.service';
+import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente } from '../eventos.service';
 
 @Component({
     selector: 'eventos-dashboard',
@@ -34,7 +34,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public ediciones: EventoEdicion[] = [];
     public selectedEventoId: number = 2026;
     public signalrStatus: string = 'Disconnected';
-
+    public ultimosIngresos: Asistente[] = [];
 
     // ApexCharts Configurations
     public chartAsistencia: ApexOptions = {};
@@ -64,7 +64,18 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                 this._cdr.markForCheck();
             });
 
-
+        // Subscribe to Assistants stream to display recent real-time check-ins
+        this._eventosService.asistentes$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(list => {
+                if (list) {
+                    this.ultimosIngresos = list
+                        .filter(a => a.asistencia === 'Presente' && a.fechaCheckIn)
+                        .sort((a, b) => b.id - a.id) // Sort by descending database ID (newest first)
+                        .slice(0, 5); // Take the top 5
+                    this._cdr.markForCheck();
+                }
+            });
 
         // Subscribe to Metrics stream (SignalR ReceiveLiveMetrics + REST Fallback)
         this._eventosService.metricas$
@@ -87,8 +98,6 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         this._eventosService.setSeleccionEdicion(eventoId);
     }
 
-
-
     public getAsistenciaPorcentaje(): number {
         if (!this.metricas || this.metricas.totalRegistrados === 0) return 0;
         return Math.round((this.metricas.totalAsistieron / this.metricas.totalRegistrados) * 100);
@@ -101,8 +110,9 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         this.chartAsistencia = {
             chart: {
                 type: 'area',
-                height: 320,
+                height: 250,
                 toolbar: { show: false },
+                background: 'transparent',
                 animations: { enabled: true, speed: 800 }
             },
             colors: ['#6366f1'], // Indigo
@@ -131,11 +141,11 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                 }
             },
             grid: {
-                borderColor: '#f1f5f9',
+                borderColor: 'rgba(148, 163, 184, 0.08)',
                 strokeDashArray: 4
             },
             tooltip: {
-                theme: 'light',
+                theme: 'dark',
                 x: { show: true },
                 y: {
                     title: { formatter: () => 'Check-ins: ' }
@@ -148,15 +158,16 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             chart: {
                 type: 'donut',
                 height: 320,
+                background: 'transparent',
                 animations: { enabled: true, speed: 600 }
             },
             colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899'],
             labels: [],
             legend: {
                 position: 'bottom',
-                fontSize: '13px',
+                fontSize: '11px',
                 fontFamily: 'Inter, sans-serif',
-                labels: { colors: '#64748b' },
+                labels: { colors: '#94a3b8' },
                 itemMargin: { horizontal: 8, vertical: 4 }
             },
             plotOptions: {
@@ -167,21 +178,22 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                             show: true,
                             name: {
                                 show: true,
-                                fontSize: '14px',
+                                fontSize: '13px',
                                 fontFamily: 'Inter, sans-serif',
-                                color: '#64748b'
+                                color: '#94a3b8'
                             },
                             value: {
                                 show: true,
                                 fontSize: '24px',
-                                fontFamily: 'Outfit, Inter, sans-serif',
-                                color: '#1e293b',
+                                fontFamily: 'Inter, sans-serif',
+                                fontWeight: 'bold',
+                                color: '#6366f1', // Always Indigo for high contrast readability
                                 formatter: (val) => val
                             },
                             total: {
                                 show: true,
                                 label: 'Total',
-                                color: '#64748b',
+                                color: '#94a3b8',
                                 formatter: (w) => {
                                     return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toString();
                                 }
@@ -190,8 +202,12 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                     }
                 }
             },
+            stroke: {
+                width: 2,
+                colors: ['rgba(30, 41, 59, 0.2)']
+            },
             dataLabels: { enabled: false },
-            tooltip: { theme: 'light' }
+            tooltip: { theme: 'dark' }
         };
     }
 

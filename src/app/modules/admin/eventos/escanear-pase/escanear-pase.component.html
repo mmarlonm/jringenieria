@@ -301,10 +301,16 @@
 }
 
 /* Custom styles to force video tag to cover reader */
+#reader {
+  border: none !important;
+  overflow: hidden !important;
+  border-radius: 2.2rem !important;
+}
 #reader video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  border-radius: 2.2rem;
+  object-position: center !important;
+  border-radius: 2.2rem !important;
 }
 </style>
