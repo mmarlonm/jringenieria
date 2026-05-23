@@ -111,7 +111,7 @@ export class EventosService implements OnDestroy {
         
         // If we are changing event, leave previous group and stop
         if (this.hubConnection) {
-            this.hubConnection.invoke('LeaveEventoGroup', String(oldId))
+            this.hubConnection.invoke('LeaveEventoGroup', Number(oldId))
                 .then(() => {
                     console.log(`📡 [SignalR] Left group for event ${oldId}`);
                     this.stopAndCleanConnection();
@@ -171,7 +171,7 @@ export class EventosService implements OnDestroy {
 
         this.hubConnection.onreconnected(() => {
             this._signalrStatus.next('Connected');
-            this.hubConnection?.invoke('JoinEventoGroup', String(eventoId))
+            this.hubConnection?.invoke('JoinEventoGroup', Number(eventoId))
                 .catch(err => console.error('📡 [SignalR] Error joining group after reconnect:', err));
         });
 
@@ -184,7 +184,7 @@ export class EventosService implements OnDestroy {
             .then(() => {
                 this._signalrStatus.next('Connected');
                 console.log(`📡 [SignalR] Connected to /eventoHub for event ${eventoId}`);
-                this.hubConnection?.invoke('JoinEventoGroup', String(eventoId))
+                this.hubConnection?.invoke('JoinEventoGroup', Number(eventoId))
                     .then(() => console.log(`📡 [SignalR] Joined group: ${eventoId}`))
                     .catch(err => console.error('📡 [SignalR] Error invoking JoinEventoGroup:', err));
             })
@@ -196,7 +196,7 @@ export class EventosService implements OnDestroy {
 
     public disconnectFromEventHub(eventoId: number): void {
         if (this.hubConnection) {
-            this.hubConnection.invoke('LeaveEventoGroup', String(eventoId))
+            this.hubConnection.invoke('LeaveEventoGroup', Number(eventoId))
                 .then(() => {
                     console.log(`📡 [SignalR] Left group ${eventoId}`);
                     this.stopAndCleanConnection();
