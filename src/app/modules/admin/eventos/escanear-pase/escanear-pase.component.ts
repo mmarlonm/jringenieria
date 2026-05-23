@@ -103,14 +103,32 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         const Html5Qrcode = (window as any).Html5Qrcode;
         if (!Html5Qrcode) {
             console.warn('Html5Qrcode library not loaded.');
+            this.cameraError = 'Librería de escáner no disponible.';
+            this._cdr.markForCheck();
             return;
         }
 
-        // Initialize/Recreate scanner instance to avoid internal state machine conflicts
+        // Check if browser blocks camera access due to insecure context (HTTP)
+        if (!window.isSecureContext) {
+            console.warn('Insecure Context: Camera access is blocked by the browser.');
+            this.cameraError = 'Para usar la cámara, debes usar HTTPS o localhost. En red local, inicia "ng serve --ssl" o agrega la URL a "Insecure origins treated as secure" en chrome://flags.';
+            this._cdr.markForCheck();
+            return;
+        }
+
+        if (this._html5QrCode && this._html5QrCode.isScanning) {
+            console.log("Scanner is already running.");
+            return;
+        }
+
         try {
-            this._html5QrCode = new Html5Qrcode("reader");
+            if (!this._html5QrCode) {
+                this._html5QrCode = new Html5Qrcode("reader");
+            }
         } catch (e) {
             console.error("Error creating Html5Qrcode instance: ", e);
+            this.cameraError = 'Error al inicializar el escáner.';
+            this._cdr.markForCheck();
             return;
         }
 
@@ -122,19 +140,58 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             }
         };
 
-        this._html5QrCode.start(
-            { facingMode: "environment" }, 
-            config, 
-            (decodedText: string) => {
-                this.onScanToken(decodedText);
-            },
-            (errorMessage: string) => {
-                // Ignore verbose non-detection frame logging
+        // Enumerate devices to request permission and choose the best camera
+        Html5Qrcode.getCameras().then((devices: any[]) => {
+            if (devices && devices.length > 0) {
+                // Find a rear/back camera
+                let cameraId = devices[0].id;
+                const backCamera = devices.find(device => {
+                    const label = (device.label || '').toLowerCase();
+                    return label.includes('back') || 
+                           label.includes('rear') || 
+                           label.includes('trasera') || 
+                           label.includes('ambiente') || 
+                           label.includes('environment') || 
+                           label.includes('dir 1') || 
+                           label.includes('secondary');
+                });
+                
+                if (backCamera) {
+                    cameraId = backCamera.id;
+                    console.log("Using back camera:", backCamera.label);
+                } else {
+                    console.log("No explicit back camera found, using default:", devices[0].label);
+                }
+
+                return this._html5QrCode.start(
+                    cameraId, 
+                    config, 
+                    (decodedText: string) => this.onScanToken(decodedText),
+                    (errorMessage: string) => { /* ignore */ }
+                );
+            } else {
+                console.warn("No camera devices found, falling back to facingMode constraint");
+                return this._html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    (decodedText: string) => this.onScanToken(decodedText),
+                    (errorMessage: string) => { /* ignore */ }
+                );
             }
-        ).catch((err: any) => {
-            console.error("No se pudo iniciar la cámara: ", err);
-            this.cameraError = 'No se pudo iniciar la cámara. Asegúrese de otorgar permisos de acceso.';
-            this._cdr.markForCheck();
+        }).catch((err: any) => {
+            console.warn("getCameras or start failed, trying fallback facingMode directly:", err);
+            if (this._html5QrCode) {
+                return this._html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    (decodedText: string) => this.onScanToken(decodedText),
+                    (errorMessage: string) => { /* ignore */ }
+                ).catch((fallbackErr: any) => {
+                    console.error("Camera start failed completely: ", fallbackErr);
+                    this.cameraError = 'No se pudo iniciar la cámara. Asegúrese de otorgar permisos de acceso y de que no esté en uso por otra aplicación.';
+                    this._cdr.markForCheck();
+                });
+            }
         });
     }
 
