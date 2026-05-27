@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { EventosService } from '../eventos.service';
+import { EventosService, ActividadMetricsDto, Actividad } from '../eventos.service';
 
 @Component({
     selector: 'escanear-pase',
@@ -21,6 +21,12 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     private _eventosService = inject(EventosService);
     private _cdr = inject(ChangeDetectorRef);
 
+    // Scan Mode: 'general' (Entrada General) or activity ID (number)
+    public scanMode: 'general' | number = 'general';
+    public availableTalleres: Actividad[] = [];
+    public selectedTallerMetrics: ActividadMetricsDto | null = null;
+    public selectedEventoId: number = 2026;
+
     // State Variables
     public scanState: 'idle' | 'scanning' | 'success' | 'duplicate' | 'error' = 'idle';
     public scanResult: any = null;
@@ -33,6 +39,18 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public availableTickets: { label: string; token: string; status: 'present' | 'absent' }[] = [];
 
     ngOnInit(): void {
+        // Subscribe to Selected Event ID
+        this._eventosService.selectedEventoId$.subscribe(id => {
+            this.selectedEventoId = id;
+            this.loadAvailableTalleres();
+            this._cdr.markForCheck();
+        });
+
+        // Watch workshop metrics to keep capacity indicator updated in real-time
+        this._eventosService.talleresMetrics$.subscribe(metrics => {
+            this.updateSelectedTallerMetrics(metrics);
+        });
+
         // Load assistants to populate helper quick-scan buttons for the operator
         this._eventosService.asistentes$.subscribe(list => {
             if (list.length > 0) {
@@ -59,6 +77,49 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                 this._cdr.markForCheck();
             }
         });
+    }
+
+    public get now(): Date {
+        return new Date();
+    }
+
+    // --- Loading Workshops ---
+    public loadAvailableTalleres(): void {
+        this._eventosService.getTalleresPorEvento(this.selectedEventoId).subscribe({
+            next: (list) => {
+                this.availableTalleres = list || [];
+                this._cdr.markForCheck();
+            },
+            error: (err) => {
+                console.error('Error loading talleres for scanner dropdown:', err);
+            }
+        });
+    }
+
+    public onModeChange(): void {
+        const metrics = this._eventosService.talleresMetricsValue;
+        this.updateSelectedTallerMetrics(metrics);
+        
+        // Reset camera scanning and restart it
+        this.stopCamera().then(() => {
+            this.scanState = 'idle';
+            this.scanResult = null;
+            this.tokenInput = '';
+            this._cdr.markForCheck();
+            setTimeout(() => {
+                this.startCamera();
+            }, 150);
+        });
+    }
+
+    private updateSelectedTallerMetrics(metrics: ActividadMetricsDto[]): void {
+        if (this.scanMode === 'general') {
+            this.selectedTallerMetrics = null;
+        } else {
+            const tallerId = Number(this.scanMode);
+            this.selectedTallerMetrics = (metrics || []).find(m => m.actividadId === tallerId) || null;
+        }
+        this._cdr.markForCheck();
     }
 
     ngAfterViewInit(): void {
@@ -221,31 +282,75 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             this.scanResult = null;
             this._cdr.markForCheck();
 
-            // Perform backend check-in directly
-            this._eventosService.checkInPublico(token).subscribe({
-                next: (res) => {
-                    if (res.status === 'SUCCESS') {
-                        this.scanState = 'success';
-                        this.scanResult = res.asistente;
-                        this.playBeep('success');
-                    } else if (res.status === 'DUPLICADO') {
-                        this.scanState = 'duplicate';
-                        this.scanResult = res.asistente;
-                        this.playBeep('warning');
-                    } else {
+            if (this.scanMode === 'general') {
+                // Perform backend check-in directly
+                this._eventosService.checkInPublico(token).subscribe({
+                    next: (res) => {
+                        if (res.status === 'SUCCESS') {
+                            this.scanState = 'success';
+                            this.scanResult = res.asistente;
+                            this.playBeep('success');
+                        } else if (res.status === 'DUPLICADO') {
+                            this.scanState = 'duplicate';
+                            this.scanResult = res.asistente;
+                            this.playBeep('warning');
+                        } else {
+                            this.scanState = 'error';
+                            this.scanResult = { message: res.message };
+                            this.playBeep('error');
+                        }
+                        this._cdr.markForCheck();
+                    },
+                    error: (err) => {
                         this.scanState = 'error';
-                        this.scanResult = { message: res.message };
+                        this.scanResult = { message: err?.error?.mensaje || 'Error al conectar con el servidor.' };
                         this.playBeep('error');
+                        this._cdr.markForCheck();
                     }
-                    this._cdr.markForCheck();
-                },
-                error: (err) => {
-                    this.scanState = 'error';
-                    this.scanResult = { message: err?.error?.mensaje || 'Error al conectar con el servidor.' };
-                    this.playBeep('error');
-                    this._cdr.markForCheck();
-                }
-            });
+                });
+            } else {
+                // Taller o Conferencia específico
+                const tallerId = Number(this.scanMode);
+                this._eventosService.checkInTaller(token, tallerId).subscribe({
+                    next: (res) => {
+                        // Map the response format to match what escanear-pase.component.html expects!
+                        this.scanResult = {
+                            nombreCompleto: res.nombreAsistente,
+                            tipo: res.tipoAsistente,
+                            organizacion: res.organizacion,
+                            fechaCheckIn: new Date().toISOString(),
+                            mensaje: res.mensaje // "¡Acceso Autorizado!" o "Re-ingreso Autorizado"
+                        };
+                        
+                        if (res.mensaje.includes('Re-ingreso')) {
+                            this.scanState = 'duplicate';
+                            this.playBeep('warning');
+                        } else {
+                            this.scanState = 'success';
+                            this.playBeep('success');
+                        }
+                        this._eventosService.loadTalleresMetrics(this.selectedEventoId); // refresh metrics
+                        this._cdr.markForCheck();
+                    },
+                    error: (err) => {
+                        this.scanState = 'error';
+                        
+                        let errMsg = 'Acceso Denegado o Error del Servidor.';
+                        if (err.error && err.error.mensaje) {
+                            errMsg = err.error.mensaje;
+                        } else if (err.error && typeof err.error === 'string') {
+                            errMsg = err.error;
+                        }
+
+                        this.scanResult = {
+                            message: errMsg
+                        };
+                        this.playBeep('error');
+                        this._eventosService.loadTalleresMetrics(this.selectedEventoId); // refresh metrics
+                        this._cdr.markForCheck();
+                    }
+                });
+            }
         });
     }
 

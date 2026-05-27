@@ -43,6 +43,41 @@ export interface EventoEdicion {
     anio: number;
 }
 
+export interface ActividadMetricsDto {
+    actividadId: number;
+    titulo: string;
+    tipo: 'Pago' | 'Gratuito';
+    cupoMaximo: number;
+    registradosActuales: number;
+    ingresaronActuales: number;
+    fechaHoraInicio: string;
+    fechaHoraFin: string;
+    disponibles: number;
+    estaLleno: boolean;
+}
+
+export interface Actividad {
+    id: number;
+    eventoId: number;
+    titulo: string;
+    expositor: string;
+    tipo: 'Pago' | 'Gratuito';
+    cupoMaximo: number;
+    ubicacionLugar: string;
+    fechaHoraInicio: string;
+    fechaHoraFin: string;
+    fechaCreacion: string;
+    registradosActuales: number;
+}
+
+export interface AccesoTallerResultDto {
+    exito: boolean;
+    mensaje: string;
+    nombreAsistente: string;
+    tipoAsistente: string;
+    organizacion: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -77,6 +112,13 @@ export class EventosService implements OnDestroy {
     });
     public metricas$ = this._metricas.asObservable();
 
+    private _talleresMetrics = new BehaviorSubject<ActividadMetricsDto[]>([]);
+    public talleresMetrics$ = this._talleresMetrics.asObservable();
+
+    public get talleresMetricsValue(): ActividadMetricsDto[] {
+        return this._talleresMetrics.value;
+    }
+
     // SignalR Variables
     private hubConnection: signalR.HubConnection | null = null;
     private _signalrStatus = new BehaviorSubject<'Connected' | 'Disconnected' | 'Reconnecting' | 'Connecting'>('Disconnected');
@@ -92,6 +134,7 @@ export class EventosService implements OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(eventoId => {
                 this.loadAsistentesPorEvento(eventoId);
+                this.loadTalleresMetrics(eventoId);
                 // Restart SignalR connection for the new group
                 this.connectToEventHub(eventoId);
             });
@@ -161,6 +204,13 @@ export class EventosService implements OnDestroy {
                     }))
                 };
                 this._metricas.next(mapped);
+            }
+        });
+
+        this.hubConnection.on('ReceiveTalleresMetrics', (res: ActividadMetricsDto[]) => {
+            console.log('📡 [SignalR] Received live workshop metrics update:', res);
+            if (res) {
+                this._talleresMetrics.next(res);
             }
         });
 
@@ -479,5 +529,50 @@ export class EventosService implements OnDestroy {
             const v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
+    }
+
+    // --- Talleres / Actividades HTTP Client Methods ---
+
+    public loadTalleresMetrics(eventoId: number): void {
+        this._http.get<ActividadMetricsDto[]>(`${this.apiBase}/Asistentes/talleres-metrics/${eventoId}`)
+            .subscribe({
+                next: (res) => {
+                    if (res) {
+                        this._talleresMetrics.next(res);
+                    }
+                },
+                error: (err) => {
+                    console.error('⚠️ [API Error] Failed to load talleres metrics:', err);
+                }
+            });
+    }
+
+    public getTalleresPorEvento(eventoId: number): Observable<Actividad[]> {
+        return this._http.get<Actividad[]>(`${this.apiBase}/Asistentes/talleres/${eventoId}`);
+    }
+
+    public crearTaller(taller: any): Observable<Actividad> {
+        return this._http.post<Actividad>(`${this.apiBase}/Asistentes/talleres`, taller);
+    }
+
+    public editarTaller(id: number, taller: any): Observable<Actividad> {
+        return this._http.put<Actividad>(`${this.apiBase}/Asistentes/talleres/${id}`, taller);
+    }
+
+    public getTalleresPreasignados(asistenteId: number): Observable<number[]> {
+        return this._http.get<number[]>(`${this.apiBase}/Asistentes/${asistenteId}/talleres-pago`);
+    }
+
+    public preAsignarTalleres(payload: { asistenteId: number; actividadIds: number[] }): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/Asistentes/pre-asignar-talleres`, payload);
+    }
+
+    public checkInTaller(tokenQR: string, actividadId: number): Observable<any> {
+        const headers = new HttpHeaders({
+            'Content-Type': 'application/json',
+            'X-Staff-Event-Key': 'ForoEnergizaPachuca_Key_2026'
+        });
+        const body = { tokenQr: tokenQR, actividadId: actividadId };
+        return this._http.post<any>(`${this.apiBase}/Asistentes/check-in-taller`, body, { headers });
     }
 }

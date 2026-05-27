@@ -275,6 +275,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
@@ -339,6 +340,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
@@ -373,6 +375,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
@@ -405,6 +408,7 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },

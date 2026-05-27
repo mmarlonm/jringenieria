@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { NgApexchartsModule, ApexOptions } from 'ng-apexcharts';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente } from '../eventos.service';
+import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente, ActividadMetricsDto } from '../eventos.service';
 
 @Component({
     selector: 'eventos-dashboard',
@@ -35,6 +35,11 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public selectedEventoId: number = 2026;
     public signalrStatus: string = 'Disconnected';
     public ultimosIngresos: Asistente[] = [];
+    public talleresMetrics: ActividadMetricsDto[] = [];
+
+    private fullAnnouncedIds = new Set<number>();
+    private soonAnnouncedIds = new Set<number>();
+    private checkSoonInterval: any;
 
     // ApexCharts Configurations
     public chartAsistencia: ApexOptions = {};
@@ -53,6 +58,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(id => {
                 this.selectedEventoId = id;
+                this._eventosService.loadTalleresMetrics(id);
                 this._cdr.markForCheck();
             });
 
@@ -64,7 +70,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                 this._cdr.markForCheck();
             });
 
-        // Subscribe to Assistants stream to display recent real-time check-ins
+        // Subscribe to Assistants stream to display real-time check-ins
         this._eventosService.asistentes$
             .pipe(takeUntil(this.destroy$))
             .subscribe(list => {
@@ -85,11 +91,32 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                 this.updateCharts(metrics);
                 this._cdr.markForCheck();
             });
+
+        // Subscribe to Workshop Metrics stream
+        this._eventosService.talleresMetrics$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(metrics => {
+                this.talleresMetrics = metrics || [];
+                this.checkFullWorkshopsAlerts(this.talleresMetrics);
+                this._cdr.markForCheck();
+            });
+
+        // Check starting soon workshops and setup interval
+        this.checkWorkshopsStartingSoon();
+        this.checkSoonInterval = setInterval(() => {
+            this.checkWorkshopsStartingSoon();
+        }, 30000);
     }
 
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
+        if (this.checkSoonInterval) {
+            clearInterval(this.checkSoonInterval);
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
     }
 
     // --- UI Interactions ---
@@ -101,6 +128,19 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public getAsistenciaPorcentaje(): number {
         if (!this.metricas || this.metricas.totalRegistrados === 0) return 0;
         return Math.round((this.metricas.totalAsistieron / this.metricas.totalRegistrados) * 100);
+    }
+
+    // --- Workshop Capacity Helpers ---
+    public getOccupancyPercent(taller: ActividadMetricsDto): number {
+        if (!taller || taller.cupoMaximo === 0) return 0;
+        return Math.min(100, Math.round((taller.ingresaronActuales / taller.cupoMaximo) * 100));
+    }
+
+    public getProgressBarColor(taller: ActividadMetricsDto): string {
+        const percent = this.getOccupancyPercent(taller);
+        if (percent < 70) return 'bg-emerald-500';
+        if (percent < 100) return 'bg-amber-500';
+        return 'bg-rose-500 animate-pulse';
     }
 
     // --- Chart Helpers ---
@@ -239,5 +279,78 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             series: counts,
             labels: labels
         };
+    }
+
+    private checkFullWorkshopsAlerts(metrics: ActividadMetricsDto[]): void {
+        metrics.forEach(taller => {
+            const isFull = taller.estaLleno || (taller.ingresaronActuales >= taller.cupoMaximo);
+            if (isFull) {
+                if (!this.fullAnnouncedIds.has(taller.actividadId)) {
+                    this.fullAnnouncedIds.add(taller.actividadId);
+                    const announcement = `Atención: El taller "${taller.titulo}" ha alcanzado su cupo máximo.`;
+                    this.playChimeThenAnnounce(announcement);
+                }
+            } else {
+                if (this.fullAnnouncedIds.has(taller.actividadId)) {
+                    this.fullAnnouncedIds.delete(taller.actividadId);
+                }
+            }
+        });
+    }
+
+    private checkWorkshopsStartingSoon(): void {
+        const now = new Date();
+        this.talleresMetrics.forEach(taller => {
+            if (!taller.fechaHoraInicio) return;
+            const startTime = new Date(taller.fechaHoraInicio);
+            const diffMs = startTime.getTime() - now.getTime();
+            const diffMins = diffMs / (1000 * 60);
+
+            // Announce if workshop starts in 10 to 15.5 minutes
+            if (diffMins > 10 && diffMins <= 15.5 && !this.soonAnnouncedIds.has(taller.actividadId)) {
+                this.soonAnnouncedIds.add(taller.actividadId);
+                const announcement = `El taller "${taller.titulo}" iniciará en quince minutos. Por favor, proceda a su sala.`;
+                this.playChimeThenAnnounce(announcement);
+            }
+        });
+    }
+
+    private announceText(text: string): void {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    private playChimeThenAnnounce(announcement: string): void {
+        try {
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const playTone = (freq: number, start: number, duration: number) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, start);
+                gain.gain.setValueAtTime(0, start);
+                gain.gain.linearRampToValueAtTime(0.15, start + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+                osc.start(start);
+                osc.stop(start + duration);
+            };
+
+            playTone(587.33, audioCtx.currentTime, 0.4); // D5
+            playTone(880.00, audioCtx.currentTime + 0.15, 0.5); // A5
+
+            setTimeout(() => {
+                this.announceText(announcement);
+            }, 500);
+        } catch (e) {
+            this.announceText(announcement);
+        }
     }
 }

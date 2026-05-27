@@ -138,7 +138,8 @@ export const appRoutes: Route[] = [
             {
                 path: 'eventos', children: [
                     { path: 'dashboard', loadComponent: () => import('app/modules/admin/eventos/dashboard/dashboard.component').then(m => m.EventosDashboardComponent) },
-                    { path: 'control', loadComponent: () => import('app/modules/admin/eventos/control/control.component').then(m => m.EventosControlComponent) }
+                    { path: 'control', loadComponent: () => import('app/modules/admin/eventos/control/control.component').then(m => m.EventosControlComponent) },
+                    { path: 'gestion-talleres', loadComponent: () => import('app/modules/admin/eventos/gestion-talleres/gestion-talleres.component').then(m => m.GestionTalleresComponent) }
                 ]
             }
         ]

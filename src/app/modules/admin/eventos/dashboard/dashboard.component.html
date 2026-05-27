@@ -242,7 +242,140 @@
                 <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-550/10">Online</span>
             </div>
         </div>
-
     </div>
 
+    <!-- WORKSHOPS LIVE OCCUPANCY SECTION -->
+    <div class="relative z-10 pt-4">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-slate-850 mb-6">
+            <div>
+                <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <mat-icon class="icon-size-5 text-indigo-500 animate-pulse" svgIcon="heroicons_outline:chart-bar"></mat-icon>
+                    Ocupación de Talleres en Tiempo Real
+                </h2>
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                    Monitoreo de cupos y disponibilidad de las actividades en vivo vía SignalR.
+                </p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="talleresMetrics.length === 0" class="py-12 flex flex-col items-center justify-center text-slate-500 gap-2 text-center border border-dashed border-gray-300 dark:border-slate-800 rounded-2xl bg-gray-50/30 dark:bg-slate-900/10">
+            <div class="p-2 bg-slate-100 dark:bg-slate-900/50 rounded-full">
+                <mat-icon class="icon-size-6 text-slate-400" svgIcon="heroicons_outline:chart-bar"></mat-icon>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Sin talleres registrados</h4>
+                <p class="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5 max-w-sm">
+                    Las métricas de los talleres aparecerán cuando se configuren actividades en el sistema.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Workshops Cards Grid -->
+        <div *ngIf="talleresMetrics.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div *ngFor="let taller of talleresMetrics" 
+                 [ngClass]="{
+                     'border-rose-500/80 shadow-lg shadow-rose-500/5 animate-pulse-subtle bg-rose-500/[0.02]': (taller.ingresaronActuales >= taller.cupoMaximo),
+                     'bg-white dark:bg-slate-900/35 border-gray-200 dark:border-white/5': !(taller.ingresaronActuales >= taller.cupoMaximo)
+                 }"
+                 class="group relative border rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-indigo-500/30 dark:hover:border-indigo-500/20 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                
+                <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500/0 via-indigo-500/0 to-indigo-500/[0.01] group-hover:to-indigo-500/[0.03] transition-all pointer-events-none"></div>
+
+                <div>
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase border"
+                              [ngClass]="{
+                                  'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20': taller.tipo === 'Pago',
+                                  'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-350 dark:border-slate-700': taller.tipo === 'Gratuito'
+                              }">
+                            {{ taller.tipo === 'Pago' ? 'De Pago' : 'Gratuito' }}
+                        </span>
+                        
+                        <span *ngIf="taller.estaLleno || (taller.ingresaronActuales >= taller.cupoMaximo)" 
+                              class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-455 animate-pulse uppercase tracking-wider">
+                            <span class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></span>
+                            LLENO
+                        </span>
+                    </div>
+
+                    <h3 class="text-sm font-black leading-snug group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors duration-200 mb-1"
+                        [ngClass]="{
+                            'text-rose-605 dark:text-rose-400': (taller.ingresaronActuales >= taller.cupoMaximo),
+                            'text-slate-855 dark:text-white': !(taller.ingresaronActuales >= taller.cupoMaximo)
+                        }">
+                        {{ taller.titulo }}
+                    </h3>
+                    <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <mat-icon class="icon-size-3.5 text-slate-450" svgIcon="heroicons_outline:user"></mat-icon>
+                        {{ taller.expositor }}
+                    </p>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-1">
+                        <mat-icon class="icon-size-3.5 text-slate-450" svgIcon="heroicons_outline:map-pin"></mat-icon>
+                        {{ taller.ubicacionLugar }}
+                    </p>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-1 font-mono font-bold">
+                        <mat-icon class="icon-size-3.5 text-slate-450" svgIcon="heroicons_outline:clock"></mat-icon>
+                        <span>{{ taller.fechaHoraInicio | date:'dd MMM' }} • {{ taller.fechaHoraInicio | date:'HH:mm' }} - {{ taller.fechaHoraFin | date:'HH:mm' }}</span>
+                    </p>
+                </div>
+
+                <div class="mt-4 border-t border-gray-150 dark:border-slate-800/80 pt-4">
+
+                    <!-- Asistencia Real vs Cupo Máximo -->
+                    <div class="flex justify-between items-baseline mb-1.5">
+                        <span class="text-[9px] font-black uppercase tracking-widest"
+                              [ngClass]="{
+                                  'text-rose-500': (taller.ingresaronActuales >= taller.cupoMaximo),
+                                  'text-slate-405 dark:text-slate-500': !(taller.ingresaronActuales >= taller.cupoMaximo)
+                              }">
+                            Ingresaron hoy
+                        </span>
+                        <span class="text-xs font-bold"
+                              [ngClass]="{
+                                  'text-rose-550 dark:text-rose-400 font-extrabold': (taller.ingresaronActuales >= taller.cupoMaximo),
+                                  'text-slate-855 dark:text-white': !(taller.ingresaronActuales >= taller.cupoMaximo)
+                              }">
+                            {{ taller.ingresaronActuales }}
+                            <span class="text-[10px] font-medium"
+                                  [ngClass]="{'text-rose-400/80': (taller.ingresaronActuales >= taller.cupoMaximo), 'text-slate-400 dark:text-slate-500': !(taller.ingresaronActuales >= taller.cupoMaximo)}">
+                                / {{ taller.cupoMaximo }} cupo máx.
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full h-2 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden mb-2 border border-gray-200/50 dark:border-white/5">
+                        <div class="h-full rounded-full transition-all duration-500"
+                             [ngClass]="getProgressBarColor(taller)"
+                             [style.width.%]="getOccupancyPercent(taller)">
+                        </div>
+                    </div>
+
+                    <!-- Disponibles + Registrados -->
+                    <div class="flex items-center justify-between text-[11px] font-bold mt-1">
+                        <span class="text-slate-400 dark:text-slate-500">Disponibles:</span>
+                        <span [ngClass]="{'text-rose-500 font-extrabold': taller.disponibles === 0, 'text-emerald-600 dark:text-emerald-400': taller.disponibles > 0}">
+                          {{ taller.disponibles === 0 ? '¡Sin lugares!' : taller.disponibles + ' libres' }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] mt-1">
+                        <span class="text-slate-400 dark:text-slate-500">Registrados (CRM):</span>
+                        <span class="text-slate-500 dark:text-slate-400 font-semibold">{{ taller.registradosActuales }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+@keyframes pulseSubtle {
+    0%, 100% { border-color: rgba(244, 63, 94, 0.35); box-shadow: 0 10px 15px -3px rgba(244, 63, 94, 0.04); }
+    50% { border-color: rgba(244, 63, 94, 0.7); box-shadow: 0 10px 15px -3px rgba(244, 63, 94, 0.12); }
+}
+.animate-pulse-subtle {
+    animation: pulseSubtle 2s infinite ease-in-out;
+}
+</style>
+
