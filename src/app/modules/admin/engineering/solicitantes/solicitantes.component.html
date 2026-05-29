@@ -1,0 +1,96 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-gray-50/30">
+    <!-- Header -->
+    <div class="flex-none flex flex-col p-4 sm:px-8 sm:py-6 border-b bg-white">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 italic">
+                    Catálogo de Solicitantes
+                </h1>
+                <p class="text-secondary mt-1 font-medium">
+                    {{ solicitantesCount }} {{ solicitantesCount === 1 ? 'solicitante registrado' : 'solicitantes registrados' }}
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button mat-flat-button color="primary" class="rounded-lg px-6" (click)="addSolicitante()">
+                    <mat-icon svgIcon="heroicons_outline:plus" class="mr-2"></mat-icon>
+                    <span>NUEVO SOLICITANTE</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="mt-4 flex items-center">
+            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full max-w-120" subscriptSizing="dynamic">
+                <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'" placeholder="Buscar solicitante por nombre, celular, empresa o área..." />
+            </mat-form-field>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-auto p-4 sm:p-8 overflow-y-auto min-h-0">
+        @if (solicitantesCount > 0) {
+        <div class="bg-card shadow-lg rounded-2xl border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
+                    <!-- ID -->
+                    <ng-container matColumnDef="idSolicitante">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
+                        <td mat-cell *matCellDef="let s" class="font-semibold text-primary"> #{{ s.idSolicitante }} </td>
+                    </ng-container>
+
+                    <!-- Nombre Completo -->
+                    <ng-container matColumnDef="nombreCompleto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Nombre Completo </th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-gray-800"> {{ s.nombreCompleto }} </td>
+                    </ng-container>
+
+                    <!-- Celular -->
+                    <ng-container matColumnDef="celular">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Celular </th>
+                        <td mat-cell *matCellDef="let s" class="text-slate-600"> {{ s.celular || '-' }} </td>
+                    </ng-container>
+
+                    <!-- Empresa -->
+                    <ng-container matColumnDef="empresa">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Empresa </th>
+                        <td mat-cell *matCellDef="let s" class="font-medium text-slate-700"> {{ s.empresa }} </td>
+                    </ng-container>
+
+                    <!-- Area -->
+                    <ng-container matColumnDef="area">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Área </th>
+                        <td mat-cell *matCellDef="let s" class="text-slate-500"> {{ s.area || '-' }} </td>
+                    </ng-container>
+
+                    <!-- Acciones -->
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef class="text-center w-28"> Acciones </th>
+                        <td mat-cell *matCellDef="let s" class="text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button mat-icon-button color="accent" class="text-indigo-500 hover:bg-indigo-50 transition-colors" (click)="editSolicitante(s)" matTooltip="Editar">
+                                    <mat-icon>edit</mat-icon>
+                                </button>
+                                <button mat-icon-button color="warn" class="text-rose-500 hover:bg-rose-50 transition-colors" (click)="deleteSolicitante(s.idSolicitante)" matTooltip="Eliminar">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Table Rows -->
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="bg-gray-50"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/50"></tr>
+                </table>
+            </div>
+            <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons class="border-t"></mat-paginator>
+        </div>
+        } @else {
+        <div class="flex flex-col items-center justify-center p-12 text-center bg-white border border-dashed border-gray-200 rounded-3xl">
+            <mat-icon class="icon-size-16 text-slate-300" svgIcon="heroicons_outline:user-group"></mat-icon>
+            <h2 class="text-xl font-bold mt-4 text-slate-800">No hay solicitantes registrados</h2>
+            <p class="text-slate-500 mt-1">Comienza agregando un solicitante haciendo clic en "Nuevo Solicitante".</p>
+        </div>
+        }
+    </div>
+</div>

@@ -75,6 +75,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:cog',
         children: [
             // Elementos directos
+            { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
+            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
@@ -305,7 +307,10 @@ export const compactNavigation: FuseNavigationItem[] = [
         tooltip: 'Ingeniería',
         type: 'aside',
         icon: 'heroicons_outline:cog',
-        children: []
+        children: [
+            { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
+            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' }
+        ]
     },
     {
         id: 'comercializacion',
