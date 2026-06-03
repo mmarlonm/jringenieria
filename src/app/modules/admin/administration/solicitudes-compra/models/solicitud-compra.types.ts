@@ -32,6 +32,7 @@ export interface SolicitudCompra {
     cuenta?: string; // Provider Account (flattened for display)
     clabe?: string; // Provider CLABE (flattened for display)
     monto?: number;
+    isrRetenido?: number;
     cuadranteId?: number;
     idEstatus: number;
     nombreEstatus: string;
@@ -108,6 +109,7 @@ export interface SolicitudCompraCreateDto {
     formaPago?: string;
     razonSocial: string;
     monto?: number;
+    isrRetenido?: number;
     cuadranteId?: number;
     idAprobador?: number;
     idAprobadorCredito?: number;

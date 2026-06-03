@@ -887,7 +887,17 @@
                                 <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('iva').value | currency:solicitudForm.get('moneda').value }}</span>
                             </div>
 
-                            <div *ngIf="detalles.length > 0" class="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
+                            <!-- ISR Retenido -->
+                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold mt-2">
+                                <span>ISR Retenido</span>
+                                <div class="w-24">
+                                    <input type="number" formControlName="isrRetenido"
+                                        class="w-full p-1 bg-transparent border-b border-gray-300 dark:border-gray-600 outline-none text-right font-bold text-sm text-gray-900 dark:text-gray-100 focus:border-primary transition-colors"
+                                        placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div *ngIf="detalles.length > 0" class="w-full h-px bg-gray-200 dark:bg-gray-700 mt-2"></div>
                             
                             <!-- Total -->
                             <div class="flex flex-col pt-1">

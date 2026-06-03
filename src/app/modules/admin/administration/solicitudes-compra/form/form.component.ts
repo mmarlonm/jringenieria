@@ -219,6 +219,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             monto: [0, [Validators.required, Validators.min(0.01)]],
             subtotal: [0],
             iva: [0],
+            isrRetenido: [0],
             totalPiezas: [0],
             cuadranteId: [null, Validators.required],
             idAprobadorCredito: [null],
@@ -454,45 +455,58 @@ export class SolicitudCompraFormComponent implements OnInit {
             debounceTime(100),
             takeUntil(this._unsubscribeAll)
         ).subscribe((values: any[]) => {
-            let subtotal = 0;
-            let totalPiezas = 0;
+            this._calcularTotales(values);
+        });
 
-            (values || []).forEach((curr, i) => {
-                const cantidad = parseFloat(curr.cantidad) || 0;
-                const monto = parseFloat(curr.monto) || 0;
-                const subtotalLinea = Number((cantidad * monto).toFixed(4));
-                const ivaLinea = Number((subtotalLinea * 0.16).toFixed(4));
+        this.solicitudForm.get('isrRetenido')?.valueChanges.pipe(
+            debounceTime(100),
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(() => {
+            this._calcularTotales(this.detalles.value);
+        });
+    }
 
-                subtotal += subtotalLinea;
-                totalPiezas += cantidad;
+    private _calcularTotales(values: any[]): void {
+        let subtotal = 0;
+        let totalPiezas = 0;
 
-                const currentIva = Number(curr.iva || 0).toFixed(2);
-                const calcIva = ivaLinea.toFixed(2);
-                if (currentIva !== calcIva) {
-                    this.detalles.at(i).patchValue({ iva: ivaLinea }, { emitEvent: false });
-                }
-            });
+        (values || []).forEach((curr, i) => {
+            const cantidad = parseFloat(curr.cantidad) || 0;
+            const monto = parseFloat(curr.monto) || 0;
+            const subtotalLinea = Number((cantidad * monto).toFixed(4));
+            const ivaLinea = Number((subtotalLinea * 0.16).toFixed(4));
 
-            if (values.length > 0) {
-                subtotal = Number(subtotal.toFixed(2));
-                const iva = Number((subtotal * 0.16).toFixed(2));
-                const total = Number((subtotal + iva).toFixed(2));
+            subtotal += subtotalLinea;
+            totalPiezas += cantidad;
 
-                this.solicitudForm.patchValue({
-                    subtotal: subtotal,
-                    iva: iva,
-                    monto: total,
-                    totalPiezas: totalPiezas
-                }, { emitEvent: false });
-            } else {
-                this.solicitudForm.patchValue({
-                    subtotal: 0,
-                    iva: 0,
-                    monto: 0,
-                    totalPiezas: 0
-                }, { emitEvent: false });
+            const currentIva = Number(curr.iva || 0).toFixed(2);
+            const calcIva = ivaLinea.toFixed(2);
+            if (currentIva !== calcIva) {
+                this.detalles.at(i).patchValue({ iva: ivaLinea }, { emitEvent: false });
             }
         });
+
+        const isrRetenido = parseFloat(this.solicitudForm.get('isrRetenido')?.value) || 0;
+
+        if (values.length > 0) {
+            subtotal = Number(subtotal.toFixed(2));
+            const iva = Number((subtotal * 0.16).toFixed(2));
+            const total = Number((subtotal + iva - isrRetenido).toFixed(2));
+
+            this.solicitudForm.patchValue({
+                subtotal: subtotal,
+                iva: iva,
+                monto: total > 0 ? total : 0,
+                totalPiezas: totalPiezas
+            }, { emitEvent: false });
+        } else {
+            this.solicitudForm.patchValue({
+                subtotal: 0,
+                iva: 0,
+                monto: 0,
+                totalPiezas: 0
+            }, { emitEvent: false });
+        }
     }
 
     private _setupProductSearch(index: number): void {
