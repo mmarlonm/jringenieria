@@ -38,23 +38,42 @@ export class SolicitudCompraService {
         );
     }
 
-    consultarExistenciaContpaqi(busqueda: string, almacen: string): Observable<ProductoBuscadorDto[]> {
+    consultarExistenciaContpaqi(busqueda: string): Observable<ProductoBuscadorDto[]> {
         return this._httpClient.get<any>(`${this.apiUrl}/consultar-existencia-contpaqi`, {
-            params: { busqueda, almacen }
+            params: { busqueda }
         }).pipe(
             map(response => {
                 // Determine if the data is wrapped in { data: [...] } or is a direct array
                 const rawData = response?.data !== undefined ? response.data : response;
                 const data = Array.isArray(rawData) ? rawData : [];
                 
-                return data.map(p => ({
-                    productoId: 0,
-                    codigoProducto: p.codigo || p.codigoProducto || '',
-                    nombreProducto: p.producto || p.nombreProducto || '',
-                    existencia: p.cantidadReal !== undefined ? p.cantidadReal : (p.existencia || 0),
-                    almacen: p.almacen || p.warehouse || almacen,
-                    unidadMedida: p.unidadMedida || 'PZ'
-                }));
+                const grouped = new Map<string, ProductoBuscadorDto>();
+                
+                data.forEach(p => {
+                    const codigo = p.codigo || p.codigoProducto || '';
+                    const cantidad = p.cantidadReal !== undefined ? p.cantidadReal : (p.existencia || 0);
+                    const almacen = p.almacen || p.warehouse || '';
+                    
+                    if (!grouped.has(codigo)) {
+                        grouped.set(codigo, {
+                            productoId: 0,
+                            codigoProducto: codigo,
+                            nombreProducto: p.producto || p.nombreProducto || '',
+                            existencia: 0,
+                            almacen: '',
+                            unidadMedida: p.unidadMedida || 'PZ',
+                            existenciasDesglosadas: []
+                        });
+                    }
+                    
+                    const prod = grouped.get(codigo);
+                    prod.existencia += cantidad;
+                    if (almacen) {
+                        prod.existenciasDesglosadas.push({ almacen, cantidad });
+                    }
+                });
+                
+                return Array.from(grouped.values());
             }),
             catchError(err => {
                 console.error('Error en consultarExistenciaContpaqi:', err);

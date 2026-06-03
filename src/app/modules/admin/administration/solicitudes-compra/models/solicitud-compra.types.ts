@@ -33,6 +33,7 @@ export interface SolicitudCompra {
     clabe?: string; // Provider CLABE (flattened for display)
     monto?: number;
     isrRetenido?: number;
+    descuento?: number;
     cuadranteId?: number;
     idEstatus: number;
     nombreEstatus: string;
@@ -110,6 +111,7 @@ export interface SolicitudCompraCreateDto {
     razonSocial: string;
     monto?: number;
     isrRetenido?: number;
+    descuento?: number;
     cuadranteId?: number;
     idAprobador?: number;
     idAprobadorCredito?: number;
@@ -136,6 +138,7 @@ export interface ProductoBuscadorDto {
     unidadMedida: string;
     existencia?: number;
     almacen?: string;
+    existenciasDesglosadas?: { almacen: string, cantidad: number }[];
 }
 
 export interface HistorialEstatusDto {

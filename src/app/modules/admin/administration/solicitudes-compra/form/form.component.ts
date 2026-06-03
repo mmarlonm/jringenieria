@@ -220,6 +220,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             subtotal: [0],
             iva: [0],
             isrRetenido: [0],
+            descuento: [0],
             totalPiezas: [0],
             cuadranteId: [null, Validators.required],
             idAprobadorCredito: [null],
@@ -464,6 +465,13 @@ export class SolicitudCompraFormComponent implements OnInit {
         ).subscribe(() => {
             this._calcularTotales(this.detalles.value);
         });
+
+        this.solicitudForm.get('descuento')?.valueChanges.pipe(
+            debounceTime(100),
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(() => {
+            this._calcularTotales(this.detalles.value);
+        });
     }
 
     private _calcularTotales(values: any[]): void {
@@ -487,11 +495,12 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
 
         const isrRetenido = parseFloat(this.solicitudForm.get('isrRetenido')?.value) || 0;
+        const descuento = parseFloat(this.solicitudForm.get('descuento')?.value) || 0;
 
         if (values.length > 0) {
             subtotal = Number(subtotal.toFixed(2));
             const iva = Number((subtotal * 0.16).toFixed(2));
-            const total = Number((subtotal + iva - isrRetenido).toFixed(2));
+            const total = Number((subtotal + iva - isrRetenido - descuento).toFixed(2));
 
             this.solicitudForm.patchValue({
                 subtotal: subtotal,
@@ -515,11 +524,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             debounceTime(500),
             switchMap(value => {
                 if (typeof value === 'string' && value.trim().length >= 2) {
-                    const sucursal = this.solicitudForm.get('sucursal').value || '';
-                    let almacen = sucursal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-                    if (sucursal.toLowerCase().includes('hidalgo')) almacen = 'SANTA JULIA';
-
-                    return this._solicitudCompraService.consultarExistenciaContpaqi(value.trim(), almacen)
+                    return this._solicitudCompraService.consultarExistenciaContpaqi(value.trim())
                         .pipe(catchError(() => of([] as ProductoBuscadorDto[])));
                 }
                 return of([] as ProductoBuscadorDto[]);

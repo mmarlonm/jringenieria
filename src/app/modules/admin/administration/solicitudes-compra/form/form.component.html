@@ -768,15 +768,25 @@
                                                                {{ product.unidadMedida }}
                                                            </span>
                                                        </div>
-                                                       <div class="flex items-center gap-2">
-                                                           <div class="w-1.5 h-1.5 rounded-full"
-                                                               [ngClass]="(product.existencia || 0) > 0 ? 'bg-emerald-500' : 'bg-rose-500'">
+                                                       <div class="flex flex-col gap-1 mt-1">
+                                                           <div class="flex items-center gap-2">
+                                                               <div class="w-1.5 h-1.5 rounded-full"
+                                                                   [ngClass]="(product.existencia || 0) > 0 ? 'bg-emerald-500' : 'bg-rose-500'">
+                                                               </div>
+                                                               <span class="text-[10px] text-gray-500 font-medium">
+                                                                   Total: <span class="font-bold" [ngClass]="(product.existencia || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'">
+                                                                       {{ product.existencia || 0 }}
+                                                                   </span> unidades
+                                                               </span>
                                                            </div>
-                                                           <span class="text-[10px] text-gray-500 italic">
-                                                               Existencia: <span class="font-bold" [ngClass]="(product.existencia || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'">
-                                                                   {{ product.existencia || 0 }}
-                                                               </span> unidades
-                                                           </span>
+                                                           <div *ngIf="product.existenciasDesglosadas?.length > 0" class="flex flex-wrap gap-2 pl-3">
+                                                               <div *ngFor="let ex of product.existenciasDesglosadas" class="flex items-center gap-1 text-[9px]">
+                                                                   <span class="text-slate-400 font-medium uppercase">{{ ex.almacen }}:</span>
+                                                                   <span class="font-bold" [ngClass]="ex.cantidad > 0 ? 'text-emerald-600' : 'text-rose-500'">
+                                                                       {{ ex.cantidad }}
+                                                                   </span>
+                                                               </div>
+                                                           </div>
                                                        </div>
                                                    </div>
                                                 </mat-option>
@@ -892,6 +902,16 @@
                                 <span>ISR Retenido</span>
                                 <div class="w-24">
                                     <input type="number" formControlName="isrRetenido"
+                                        class="w-full p-1 bg-transparent border-b border-gray-300 dark:border-gray-600 outline-none text-right font-bold text-sm text-gray-900 dark:text-gray-100 focus:border-primary transition-colors"
+                                        placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <!-- Descuento -->
+                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold mt-2">
+                                <span>Descuento</span>
+                                <div class="w-24">
+                                    <input type="number" formControlName="descuento"
                                         class="w-full p-1 bg-transparent border-b border-gray-300 dark:border-gray-600 outline-none text-right font-bold text-sm text-gray-900 dark:text-gray-100 focus:border-primary transition-colors"
                                         placeholder="0.00">
                                 </div>
