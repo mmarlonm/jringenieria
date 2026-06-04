@@ -1,0 +1,253 @@
+<div class="absolute inset-0 flex flex-col min-w-0 bg-gray-50/30 md:overflow-hidden overflow-y-auto">
+
+    <!-- Header -->
+    <div class="flex-none flex flex-col p-4 sm:px-8 sm:py-4 border-b bg-white">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex-auto min-w-0">
+                <div class="flex items-center gap-3">
+                    <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 italic">
+                        Control de Ejecución
+                    </div>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
+                        {{ dataSource.data.length }} proyectos en ejecución
+                    </span>
+                </div>
+                <div class="text-sm text-gray-500 mt-1">Gestión colaborativa de información del proyecto.</div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-2">
+                <button mat-flat-button class="rounded-lg px-4 bg-gray-100" (click)="toggleFilters()">
+                    <mat-icon [svgIcon]="'heroicons_outline:funnel'" class="mr-2"></mat-icon>
+                    <span>{{ showFilters ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS' }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters Row -->
+        <div *ngIf="showFilters" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 items-end animate-in fade-in slide-in-from-top-2 duration-300">
+            <!-- Search -->
+            <div class="sm:col-span-1">
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Buscador</mat-label>
+                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput (keyup)="applyFilter($event)" [placeholder]="'Buscar por proyecto, cliente...'" autocomplete="off">
+                </mat-form-field>
+            </div>
+            <!-- Date range start -->
+            <div>
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Fecha de Inicio</mat-label>
+                    <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" (dateChange)="getSeguimientos()">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerInicio></mat-datepicker>
+                </mat-form-field>
+            </div>
+            <!-- Date range end -->
+            <div>
+                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                    <mat-label>Fecha de Fin</mat-label>
+                    <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="getSeguimientos()">
+                    <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFin></mat-datepicker>
+                </mat-form-field>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Table -->
+    <div class="flex flex-col flex-auto p-4 sm:p-8 md:overflow-y-auto overflow-visible min-h-0">
+        <div class="flex flex-col md:flex-auto flex-none bg-card shadow-lg rounded-2xl md:overflow-hidden border border-gray-100">
+            <div class="flex-auto md:overflow-y-auto overflow-x-auto min-h-0">
+                <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
+
+                    <!-- ID -->
+                    <ng-container matColumnDef="idSeguimiento" sticky>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+                        <td mat-cell *matCellDef="let s">
+                            <span class="font-bold text-primary">#{{ s.idSeguimiento }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Proyecto -->
+                    <ng-container matColumnDef="proyecto">
+                        <th mat-header-cell *matHeaderCellDef>Proyecto (Empresa - Actividad)</th>
+                        <td mat-cell *matCellDef="let s" class="py-3 pr-4">
+                            <div class="font-bold text-slate-800 whitespace-nowrap">{{ s.empresa }}</div>
+                            <div class="text-xs text-slate-500 max-w-xs truncate" [matTooltip]="s.actividad">{{ s.actividad }}</div>
+                            <div class="text-[10px] text-indigo-500 font-medium">Solicita: {{ s.nombreSolicitante }}</div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Utilidad -->
+                    <ng-container matColumnDef="utilidadEsperada">
+                        <th mat-header-cell *matHeaderCellDef>Utilidad Esperada</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-emerald-600 whitespace-nowrap">
+                            {{ s.utilidadEsperada ? (s.utilidadEsperada | currency:'MXN':'symbol':'1.2-2') : '-' }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Fechas -->
+                    <ng-container matColumnDef="fechas">
+                        <th mat-header-cell *matHeaderCellDef>Inicio - Fin</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">
+                            <div class="text-xs"><span class="font-bold text-slate-600">I:</span> {{ s.fechaInicioProyecto ? (s.fechaInicioProyecto | date:'shortDate') : '-' }}</div>
+                            <div class="text-xs"><span class="font-bold text-slate-600">F:</span> {{ s.fechaFinProyecto ? (s.fechaFinProyecto | date:'shortDate') : '-' }}</div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Recursos -->
+                    <ng-container matColumnDef="recursos">
+                        <th mat-header-cell *matHeaderCellDef>Recursos</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap text-[11px] font-bold">
+                            {{ s.disponibilidadRecursos || '-' }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Riesgo y Prioridad -->
+                    <ng-container matColumnDef="riesgoPrioridad">
+                        <th mat-header-cell *matHeaderCellDef>Riesgo / Prioridad</th>
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">
+                            <div class="text-[10px] uppercase font-bold text-rose-600">{{ s.riesgoTecnico || '-' }}</div>
+                            <div class="text-[10px] font-medium text-slate-500">{{ s.nivelPrioridad || '-' }}</div>
+                        </td>
+                    </ng-container>
+
+                    <!-- AST -->
+                    <ng-container matColumnDef="ast">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">AST's</th>
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="astMenu" (click)="$event.stopPropagation()">
+                            <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
+                                [ngClass]="getEstatusColorClass(s.estatusAst, astOptions)">
+                                {{ getEstatusName(s.estatusAst, astOptions) }}
+                            </div>
+                            <mat-menu #astMenu="matMenu">
+                                <button mat-menu-item *ngFor="let opt of astOptions" (click)="cambiarEstatus(s.idSeguimiento, 'ast', opt.id)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="opt.color"></div>
+                                        <span>{{ opt.label }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Gantt -->
+                    <ng-container matColumnDef="gantt">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">Prog. Gantt</th>
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="ganttMenu" (click)="$event.stopPropagation()">
+                            <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
+                                [ngClass]="getEstatusColorClass(s.estatusProgramaGantt, ganttOptions)">
+                                {{ getEstatusName(s.estatusProgramaGantt, ganttOptions) }}
+                            </div>
+                            <mat-menu #ganttMenu="matMenu">
+                                <button mat-menu-item *ngFor="let opt of ganttOptions" (click)="cambiarEstatus(s.idSeguimiento, 'gantt', opt.id)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="opt.color"></div>
+                                        <span>{{ opt.label }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- IMSS -->
+                    <ng-container matColumnDef="imss">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">IMSS/SUA</th>
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="imssMenu" (click)="$event.stopPropagation()">
+                            <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
+                                [ngClass]="getEstatusColorClass(s.estatusImssSua, imssOptions)">
+                                {{ getEstatusName(s.estatusImssSua, imssOptions) }}
+                            </div>
+                            <mat-menu #imssMenu="matMenu">
+                                <button mat-menu-item *ngFor="let opt of imssOptions" (click)="cambiarEstatus(s.idSeguimiento, 'imss', opt.id)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="opt.color"></div>
+                                        <span>{{ opt.label }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Adquisicion -->
+                    <ng-container matColumnDef="adquisicion">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">Materiales</th>
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="adqMenu" (click)="$event.stopPropagation()">
+                            <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
+                                [ngClass]="getEstatusColorClass(s.estatusAdquisicionMateriales, adquisicionOptions)">
+                                {{ getEstatusName(s.estatusAdquisicionMateriales, adquisicionOptions) }}
+                            </div>
+                            <mat-menu #adqMenu="matMenu">
+                                <button mat-menu-item *ngFor="let opt of adquisicionOptions" (click)="cambiarEstatus(s.idSeguimiento, 'adquisicion', opt.id)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="opt.color"></div>
+                                        <span>{{ opt.label }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Construccion -->
+                    <ng-container matColumnDef="construccion">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">Construcción</th>
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="constMenu" (click)="$event.stopPropagation()">
+                            <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
+                                [ngClass]="getEstatusColorClass(s.estatusConstruccionEntrega, construccionOptions)">
+                                {{ getEstatusName(s.estatusConstruccionEntrega, construccionOptions) }}
+                            </div>
+                            <mat-menu #constMenu="matMenu">
+                                <button mat-menu-item *ngFor="let opt of construccionOptions" (click)="cambiarEstatus(s.idSeguimiento, 'construccion', opt.id)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="opt.color"></div>
+                                        <span>{{ opt.label }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Reporte -->
+                    <ng-container matColumnDef="reporte">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">Reporte</th>
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="repMenu" (click)="$event.stopPropagation()">
+                            <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
+                                [ngClass]="getEstatusColorClass(s.estatusReporte, reporteOptions)">
+                                {{ getEstatusName(s.estatusReporte, reporteOptions) }}
+                            </div>
+                            <mat-menu #repMenu="matMenu">
+                                <button mat-menu-item *ngFor="let opt of reporteOptions" (click)="cambiarEstatus(s.idSeguimiento, 'reporte', opt.id)">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="opt.color"></div>
+                                        <span>{{ opt.label }}</span>
+                                    </div>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Acciones -->
+                    <ng-container matColumnDef="acciones" stickyEnd>
+                        <th mat-header-cell *matHeaderCellDef class="text-center w-16">Data</th>
+                        <td mat-cell *matCellDef="let s" class="text-center">
+                            <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors bg-white shadow-sm border" (click)="editarEjecucion(s)" matTooltip="Actualizar datos">
+                                <mat-icon class="icon-size-5">edit</mat-icon>
+                            </button>
+                        </td>
+                    </ng-container>
+
+                    <!-- Filas -->
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50/50"></tr>
+                </table>
+            </div>
+
+            <div *ngIf="dataSource.data.length === 0" class="p-12 text-center text-secondary bg-white">
+                No se encontraron proyectos para mostrar.
+            </div>
+
+            <mat-paginator [pageSizeOptions]="[15, 30, 50]" showFirstLastButtons class="border-t bg-white"></mat-paginator>
+        </div>
+    </div>
+</div>

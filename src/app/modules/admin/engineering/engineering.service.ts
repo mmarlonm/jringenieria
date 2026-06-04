@@ -33,12 +33,36 @@ export interface SeguimientoProyecto {
     fechaActualizacion?: string;
 }
 
+export interface SeguimientoEjecucion {
+    idEjecucion: number;
+    idSeguimiento: number;
+    utilidadEsperada?: number;
+    disponibilidadRecursos?: string;
+    fechaInicioProyecto?: string;
+    fechaFinProyecto?: string;
+    riesgoTecnico?: string;
+    nivelPrioridad?: string;
+    contratoFolio?: string;
+    fianzaFolio?: string;
+    estatusAst: number;
+    estatusProgramaGantt: number;
+    estatusImssSua: number;
+    estatusAdquisicionMateriales: number;
+    estatusConstruccionEntrega: number;
+    estatusReporte: number;
+    fechaActualizacion?: string;
+    actividad?: string;
+    nombreSolicitante?: string;
+    empresa?: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class EngineeringService {
     private apiSolicitantes = `${environment.apiUrl}/CatalogoSolicitantes`;
     private apiSeguimiento = `${environment.apiUrl}/SeguimientoProyectos`;
+    private apiSeguimientoEjecucion = `${environment.apiUrl}/SeguimientoEjecucion`;
 
     constructor(private _http: HttpClient) { }
 
@@ -97,5 +121,27 @@ export class EngineeringService {
 
     updateEstatusAprobacion(id: number, estatus: number): Observable<any> {
         return this._http.put(`${this.apiSeguimiento}/${id}/estatus-aprobacion`, estatus);
+    }
+
+    // ==========================================
+    // 🛠️ CONTROL DE EJECUCIÓN
+    // ==========================================
+    getSeguimientosEjecucion(fechaInicio?: string, fechaFin?: string): Observable<SeguimientoEjecucion[]> {
+        let params = new HttpParams();
+        if (fechaInicio) {
+            params = params.set('fechaInicio', fechaInicio);
+        }
+        if (fechaFin) {
+            params = params.set('fechaFin', fechaFin);
+        }
+        return this._http.get<SeguimientoEjecucion[]>(this.apiSeguimientoEjecucion, { params });
+    }
+
+    saveSeguimientoEjecucion(ejecucion: any): Observable<any> {
+        return this._http.post(this.apiSeguimientoEjecucion, ejecucion);
+    }
+
+    updateEstatusEjecucionRapido(idSeguimiento: number, campo: string, estatus: number): Observable<any> {
+        return this._http.put(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/estatus/${campo}`, estatus);
     }
 }

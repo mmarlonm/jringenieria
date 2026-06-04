@@ -77,6 +77,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             // Elementos directos
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
@@ -309,7 +310,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:cog',
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
-            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' }
+            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' }
         ]
     },
     {
@@ -368,7 +370,16 @@ export const compactNavigation: FuseNavigationItem[] = [
 ];
 
 export const futuristicNavigation: FuseNavigationItem[] = [
-    { id: 'ingenieria', title: 'INGENIERIA', type: 'group', children: [] },
+    { 
+        id: 'ingenieria', 
+        title: 'INGENIERIA', 
+        type: 'group', 
+        children: [
+            { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
+            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' }
+        ] 
+    },
     { id: 'comercializacion', title: 'COMERCIALIZACION', type: 'group', children: [] },
     { id: 'marketing', title: 'MARKETING', type: 'group', children: [] },
     { id: 'apps', title: 'SEGURIDAD', type: 'group', children: [] },
@@ -401,7 +412,17 @@ export const futuristicNavigation: FuseNavigationItem[] = [
 ];
 
 export const horizontalNavigation: FuseNavigationItem[] = [
-    { id: 'ingenieria', title: 'Ingeniería', type: 'group', icon: 'heroicons_outline:cog', children: [] },
+    { 
+        id: 'ingenieria', 
+        title: 'Ingeniería', 
+        type: 'group', 
+        icon: 'heroicons_outline:cog', 
+        children: [
+            { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
+            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' }
+        ] 
+    },
     { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },

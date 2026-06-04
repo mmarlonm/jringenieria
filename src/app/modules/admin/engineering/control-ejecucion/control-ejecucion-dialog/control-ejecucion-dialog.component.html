@@ -1,0 +1,136 @@
+<div class="flex flex-col max-h-screen -m-6 bg-slate-50">
+    <!-- Header: Modern Gradient & Pattern -->
+    <div class="relative flex flex-col items-center justify-center pt-8 pb-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 overflow-hidden shadow-md">
+        <!-- Abstract Background Elements -->
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent"></div>
+        
+        <button mat-icon-button (click)="data = null" matDialogClose class="absolute top-3 right-3 text-white/70 hover:text-white transition-colors">
+            <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+
+        <div class="relative z-10 flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/20 ring-4 ring-indigo-500/30 mb-3 shadow-[0_0_15px_rgba(99,102,241,0.3)]">
+            <mat-icon class="icon-size-8 text-indigo-200" [svgIcon]="'heroicons_outline:wrench-screwdriver'"></mat-icon>
+        </div>
+        <div class="relative z-10 text-2xl font-black text-white tracking-tight">Editar Ejecución</div>
+        <div class="relative z-10 text-sm font-medium text-indigo-200/80 mt-1">Configuración y seguimiento del proyecto</div>
+    </div>
+
+    <!-- Form content -->
+    <div class="flex flex-col flex-auto p-6 sm:p-8 overflow-y-auto">
+        <form [formGroup]="form" class="flex flex-col w-full space-y-6">
+
+            <!-- Section 1: Financial & Resources -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                    <div class="p-2 bg-indigo-50 rounded-lg">
+                        <mat-icon class="text-indigo-500 icon-size-5" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                    </div>
+                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Recursos y Utilidad</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Utilidad Esperada</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+                        <input matInput type="number" formControlName="utilidadEsperada" placeholder="0.00">
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Disponibilidad de Recursos</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:users'"></mat-icon>
+                        <mat-select formControlName="disponibilidadRecursos">
+                            <mat-option *ngFor="let opt of recursosOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Section 2: Timeline -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                    <div class="p-2 bg-emerald-50 rounded-lg">
+                        <mat-icon class="text-emerald-500 icon-size-5" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+                    </div>
+                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cronograma del Proyecto</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Inicio</mat-label>
+                        <input matInput [matDatepicker]="startPicker" formControlName="fechaInicioProyecto">
+                        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #startPicker></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fecha Fin Estimada</mat-label>
+                        <input matInput [matDatepicker]="endPicker" formControlName="fechaFinProyecto">
+                        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #endPicker></mat-datepicker>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Section 3: Risk & Priority -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                    <div class="p-2 bg-rose-50 rounded-lg">
+                        <mat-icon class="text-rose-500 icon-size-5" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                    </div>
+                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Evaluación de Riesgos</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Riesgo Técnico</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:shield-exclamation'"></mat-icon>
+                        <mat-select formControlName="riesgoTecnico">
+                            <mat-option *ngFor="let opt of riesgoOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Nivel de Prioridad</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:flag'"></mat-icon>
+                        <mat-select formControlName="nivelPrioridad">
+                            <mat-option *ngFor="let opt of prioridadOptions" [value]="opt">{{ opt }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Section 4: Documentation -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                    <div class="p-2 bg-amber-50 rounded-lg">
+                        <mat-icon class="text-amber-500 icon-size-5" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                    </div>
+                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Documentación Legal</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Contrato (Folio)</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:clipboard-document-check'"></mat-icon>
+                        <input matInput formControlName="contratoFolio">
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fianza (Folio)</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:document-check'"></mat-icon>
+                        <input matInput formControlName="fianzaFolio">
+                    </mat-form-field>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end px-6 py-5 border-t border-slate-200 bg-white shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-2xl z-10">
+        <button mat-button matDialogClose class="mr-3 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl px-5 font-bold transition-colors">
+            Cancelar
+        </button>
+        <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()" class="rounded-xl px-8 py-2 bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all font-bold">
+            Guardar Cambios
+        </button>
+    </div>
+</div>
