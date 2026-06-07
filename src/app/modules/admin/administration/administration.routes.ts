@@ -28,5 +28,9 @@ export default [
     {
         path: 'control-entregas',
         loadChildren: () => import('./control-entregas/control-entregas.routes').then(m => m.default)
+    },
+    {
+        path: 'proveedores',
+        loadChildren: () => import('./proveedores/proveedores.routes').then(m => m.default)
     }
 ] as Routes;

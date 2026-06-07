@@ -61,6 +61,43 @@ export const defaultNavigation: FuseNavigationItem[] = [
                         link: '/administration/resumen-compras'
                     },
                 ]
+            },
+            {
+                id: 'administracion.proveedores',
+                title: 'Proveedores',
+                type: 'collapsable',
+                icon: 'heroicons_outline:user-group',
+                children: [
+                    {
+                        id: 'administracion.proveedores.cuestionario',
+                        title: 'Cuestionario de Alta',
+                        type: 'basic',
+                        icon: 'heroicons_outline:clipboard-document-list',
+                        link: '/administration/proveedores/cuestionario'
+                    },
+                    {
+                        id: 'administracion.proveedores.maestro',
+                        title: 'Catálogo Maestro',
+                        type: 'basic',
+                        icon: 'heroicons_outline:book-open',
+                        link: '/administration/proveedores/maestro'
+                    },
+                    {
+                        id: 'administracion.proveedores.reportes',
+                        title: 'Reportes',
+                        type: 'collapsable',
+                        icon: 'heroicons_outline:chart-pie',
+                        children: [
+                            {
+                                id: 'administracion.proveedores.reportes.resumen',
+                                title: 'Resumen',
+                                type: 'basic',
+                                icon: 'heroicons_outline:presentation-chart-line',
+                                link: '/administration/proveedores/reportes/resumen'
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },
@@ -364,7 +401,10 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
             { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' },
             { id: 'administracion.resumen-compras', title: 'Resumen de Compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/resumen-compras' },
-            { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' }
+            { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' },
+            { id: 'administracion.proveedores.cuestionario', title: 'Cuestionario de Alta', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/administration/proveedores/cuestionario' },
+            { id: 'administracion.proveedores.maestro', title: 'Catálogo Maestro', type: 'basic', icon: 'heroicons_outline:book-open', link: '/administration/proveedores/maestro' },
+            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' }
         ]
     }
 ];
@@ -406,7 +446,10 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
             { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' },
             { id: 'administracion.resumen-compras', title: 'Resumen de Compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/resumen-compras' },
-            { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' }
+            { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' },
+            { id: 'administracion.proveedores.cuestionario', title: 'Cuestionario de Alta', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/administration/proveedores/cuestionario' },
+            { id: 'administracion.proveedores.maestro', title: 'Catálogo Maestro', type: 'basic', icon: 'heroicons_outline:book-open', link: '/administration/proveedores/maestro' },
+            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' }
         ]
     }
 ];
@@ -450,7 +493,10 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'administracion.recepcion-compras', title: 'Recepción de Compras', type: 'basic', icon: 'heroicons_outline:archive-box', link: '/administration/recepcion-compras' },
             { id: 'administracion.cierre-terminal', title: 'Cierre de Terminal', type: 'basic', icon: 'heroicons_outline:calculator', link: '/administration/cierre-terminal' },
             { id: 'administracion.resumen-compras', title: 'Resumen de Compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/resumen-compras' },
-            { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' }
+            { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' },
+            { id: 'administracion.proveedores.cuestionario', title: 'Cuestionario de Alta', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/administration/proveedores/cuestionario' },
+            { id: 'administracion.proveedores.maestro', title: 'Catálogo Maestro', type: 'basic', icon: 'heroicons_outline:book-open', link: '/administration/proveedores/maestro' },
+            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' }
         ]
     }
 

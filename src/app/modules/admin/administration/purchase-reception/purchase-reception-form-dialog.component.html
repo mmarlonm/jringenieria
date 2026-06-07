@@ -90,6 +90,24 @@
                                 <mat-option [value]="1">Completado</mat-option>
                             </mat-select>
                         </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Calidad del Producto/Servicio</mat-label>
+                            <mat-select formControlName="puntajeCalidad">
+                                <mat-option [value]="100">100 - Excelente / Sin retrabajos</mat-option>
+                                <mat-option [value]="80">80 - Regular / Observaciones menores</mat-option>
+                                <mat-option [value]="60">60 - Deficiente / Fallas o Devoluciones</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Entrega a Tiempo</mat-label>
+                            <mat-select formControlName="puntajeEntrega">
+                                <mat-option [value]="100">100 - En tiempo o antes</mat-option>
+                                <mat-option [value]="80">80 - Retraso menor justificado</mat-option>
+                                <mat-option [value]="60">60 - Retraso frecuente o sin aviso</mat-option>
+                            </mat-select>
+                        </mat-form-field>
                     </div>
 
                     <div class="space-y-4">

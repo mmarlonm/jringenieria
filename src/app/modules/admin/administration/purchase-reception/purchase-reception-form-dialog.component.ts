@@ -91,7 +91,9 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             dondeRecibio: ['', Validators.required],
             CondicionesComentarios: [''],
             estatus: [0, Validators.required],
-            folioInternoFactura: ['']
+            folioInternoFactura: [''],
+            puntajeCalidad: [100, Validators.required],
+            puntajeEntrega: [100, Validators.required]
         });
     }
 

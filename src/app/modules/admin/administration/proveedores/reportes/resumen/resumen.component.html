@@ -1,0 +1,207 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-50/50 p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-white rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-primary/10 text-primary rounded-2xl">
+                <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:presentation-chart-line'"></mat-icon>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 italic">Reportes de Proveedores</h1>
+                <p class="text-sm font-medium text-secondary">Indicadores de control de calidad, clasificaciones y cumplimiento de proveedores</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button mat-flat-button color="primary" class="rounded-xl px-6 font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all" (click)="cargarReporte()">
+                <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                Actualizar Datos
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <!-- Title Banner matching Excel style but premium -->
+        <div class="bg-[#1e4d7c] text-white py-4 px-6 text-center text-lg font-black tracking-wider uppercase border-b border-gray-200">
+            Resumen del Módulo de Proveedores
+        </div>
+
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="h-1"></mat-progress-bar>
+
+        <!-- Grid for both tables -->
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Table: Indicators (lg:col-span-5) -->
+            <div class="lg:col-span-5 flex flex-col border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#295e8f] text-white">
+                            <th class="py-3 px-4 font-bold text-sm tracking-wider uppercase border-r border-[#1e4d7c]/30">Indicador</th>
+                            <th class="py-3 px-4 font-bold text-sm tracking-wider uppercase text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-gray-700 border-r border-gray-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Total proveedores registrados
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-gray-900 text-base">
+                                {{ reportData.totalProveedores }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-gray-700 border-r border-gray-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Proveedores activos
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-emerald-600 text-base">
+                                {{ reportData.proveedoresActivos }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-gray-700 border-r border-gray-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                Proveedores condicionados
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-amber-600 text-base">
+                                {{ reportData.proveedoresCondicionados }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-gray-700 border-r border-gray-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                Proveedores suspendidos
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-rose-600 text-base">
+                                {{ reportData.proveedoresSuspendidos }}
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-gray-700 border-r border-gray-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                                Evaluaciones registradas
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-purple-600 text-base">
+                                {{ reportData.evaluacionesRegistradas }}
+                            </td>
+                        </tr>
+                        <tr class="bg-gray-50/80 font-bold border-t-2 border-gray-200">
+                            <td class="py-4 px-4 text-gray-800 border-r border-gray-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                                Promedio calificación
+                            </td>
+                            <td class="py-4 px-4 text-right font-black text-indigo-700 text-base">
+                                {{ reportData.promedioCalificacion | number:'1.2-2' }}%
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Right Table: Classifications (lg:col-span-7) -->
+            <div class="lg:col-span-7 flex flex-col border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#295e8f] text-white">
+                            <th class="py-3 px-4 font-bold text-xs tracking-wider uppercase border-r border-[#1e4d7c]/30">Clasificación</th>
+                            <th class="py-3 px-3 font-bold text-xs tracking-wider uppercase border-r border-[#1e4d7c]/30 text-center w-20">Rango</th>
+                            <th class="py-3 px-4 font-bold text-xs tracking-wider uppercase border-r border-[#1e4d7c]/30">Interpretación</th>
+                            <th class="py-3 px-4 font-bold text-xs tracking-wider uppercase border-r border-[#1e4d7c]/30">Acción sugerida</th>
+                            <th class="py-3 px-4 font-bold text-xs tracking-wider uppercase">Responsable</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-xs text-gray-700">
+                        <tr *ngFor="let item of clasificaciones" class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-4 font-bold border-r border-gray-100" [ngClass]="item.colorText">
+                                {{ item.nombre }}
+                            </td>
+                            <td class="py-4 px-3 border-r border-gray-100 text-center font-black">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold" [ngClass]="item.badgeBg">
+                                    {{ item.rango }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-4 border-r border-gray-100 font-medium">
+                                {{ item.interpretacion }}
+                            </td>
+                            <td class="py-4 px-4 border-r border-gray-100 font-medium">
+                                {{ item.accion }}
+                            </td>
+                            <td class="py-4 px-4 font-bold text-gray-600">
+                                {{ item.responsable }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- Authorization History Section -->
+        <div class="border-t border-gray-100 p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                    <mat-icon class="icon-size-5 text-[#1e4d7c]" [svgIcon]="'heroicons_outline:clock'"></mat-icon>
+                    Historial de Autorizaciones de Cuestionarios
+                </h3>
+                <span class="text-xs font-semibold text-secondary bg-gray-100 px-3 py-1 rounded-full">
+                    {{ historico.length }} registros
+                </span>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto border border-gray-200 rounded-2xl shadow-sm">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 font-bold">
+                            <th class="py-3 px-4 uppercase tracking-wider">Cuestionario</th>
+                            <th class="py-3 px-4 uppercase tracking-wider">Proveedor</th>
+                            <th class="py-3 px-4 uppercase tracking-wider text-center">Resultado</th>
+                            <th class="py-3 px-4 uppercase tracking-wider">Fecha Autorización</th>
+                            <th class="py-3 px-4 uppercase tracking-wider">Autorizado Por</th>
+                            <th class="py-3 px-4 uppercase tracking-wider">Comentarios</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                        <tr *ngFor="let item of historico" class="hover:bg-gray-50/30 transition-colors">
+                            <td class="py-3.5 px-4 font-bold text-[#1e4d7c]">
+                                <a [routerLink]="['/administration/proveedores/cuestionario']" 
+                                   [queryParams]="{id: item.idCuestionario}" 
+                                   class="hover:underline flex items-center gap-1">
+                                    <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_solid:link'"></mat-icon>
+                                    Cues. #{{ item.idCuestionario }}
+                                </a>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-800">{{ item.nombreProveedor }}</span>
+                                    <span class="text-[10px] text-secondary tracking-wider font-semibold uppercase mt-0.5">RFC: {{ item.rfcProveedor }}</span>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
+                                      [ngClass]="item.resultadoRevision === 'Aprobado' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'">
+                                    {{ item.resultadoRevision }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 font-medium text-gray-600">
+                                {{ item.fechaAprobacion ? (item.fechaAprobacion | date:'dd/MM/yyyy HH:mm') : 'N/A' }}
+                            </td>
+                            <td class="py-3.5 px-4 font-bold text-gray-700">
+                                {{ item.nombreAprobador }}
+                            </td>
+                            <td class="py-3.5 px-4 text-secondary max-w-xs truncate" [matTooltip]="item.comentariosFinales">
+                                {{ item.comentariosFinales || 'Sin comentarios adicionales' }}
+                            </td>
+                        </tr>
+                        <!-- Empty state -->
+                        <tr *ngIf="historico.length === 0">
+                            <td colspan="6" class="py-8 text-center text-secondary font-medium italic">
+                                No se encontraron registros de autorizaciones en el historial.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
