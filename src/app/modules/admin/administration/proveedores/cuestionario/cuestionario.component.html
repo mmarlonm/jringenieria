@@ -8,11 +8,14 @@
                     Cuestionarios de Proveedores
                 </div>
                 <div class="text-secondary ml-0.5 font-medium mt-1">
-                    {{ cuestionariosCount }} {{ cuestionariosCount === 1 ? 'cuestionario registrado' : 'cuestionarios registrados' }}
+                    {{ cuestionariosCount }} {{ cuestionariosCount === 1 ? 'cuestionario registrado' : 'cuestionarios
+                    registrados' }}
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button mat-flat-button color="primary" class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all" (click)="addCuestionario()">
+                <button mat-flat-button color="primary"
+                    class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all"
+                    (click)="addCuestionario()">
                     <mat-icon svgIcon="heroicons_outline:plus" class="mr-2 icon-size-5"></mat-icon>
                     <span class="text-sm font-bold uppercase tracking-wider">Nuevo Cuestionario</span>
                 </button>
@@ -22,9 +25,12 @@
         <!-- Barra de Búsqueda -->
         <div class="mt-4 flex flex-col sm:flex-row items-center sm:mt-6 gap-4">
             <div class="flex-auto w-full sm:max-w-md">
-                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                    <mat-icon class="icon-size-5 text-secondary" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'" placeholder="Buscar cuestionarios por proveedor, sucursal o correo..." />
+                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-full"
+                    subscriptSizing="dynamic">
+                    <mat-icon class="icon-size-5 text-secondary" matPrefix
+                        [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <input matInput (keyup)="applyFilter($event)" [autocomplete]="'off'"
+                        placeholder="Buscar cuestionarios por proveedor, sucursal o correo..." />
                 </mat-form-field>
             </div>
         </div>
@@ -32,52 +38,75 @@
 
     <!-- Main Content -->
     <div class="flex flex-col flex-auto overflow-hidden p-3 sm:p-5 bg-gray-50/50">
-        <div *ngIf="cuestionariosCount > 0" class="flex flex-col flex-auto mat-elevation-z8 bg-white rounded-2xl overflow-hidden border min-h-0">
+        <div *ngIf="cuestionariosCount > 0"
+            class="flex flex-col flex-auto mat-elevation-z8 bg-white rounded-2xl overflow-hidden border min-h-0">
             <div class="overflow-x-auto">
                 <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
-                    
+
                     <!-- ID Cuestionario -->
                     <ng-container matColumnDef="idCuestionario">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> ID </th>
-                        <td mat-cell *matCellDef="let c" class="font-semibold text-primary py-4"> #{{ c.idCuestionario }} </td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> ID
+                        </th>
+                        <td mat-cell *matCellDef="let c" class="font-semibold text-primary py-4"> #{{ c.idCuestionario
+                            }} </td>
                     </ng-container>
 
                     <!-- Nombre Proveedor -->
                     <ng-container matColumnDef="nombreProveedor">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> Proveedor / Razón Social </th>
-                        <td mat-cell *matCellDef="let c" class="font-bold text-gray-800 py-4"> {{ c.nombreProveedor || 'Captura Manual' }} </td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                            Proveedor / Razón Social </th>
+                        <td mat-cell *matCellDef="let c" class="font-bold text-gray-800 py-4"> {{ c.nombreProveedor ||
+                            'Captura Manual' }} </td>
                     </ng-container>
 
                     <!-- RFC Proveedor -->
                     <ng-container matColumnDef="rfcProveedor">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> RFC </th>
-                        <td mat-cell *matCellDef="let c" class="text-slate-600 uppercase font-mono py-4"> {{ c.rfcProveedor || '-' }} </td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> RFC
+                        </th>
+                        <td mat-cell *matCellDef="let c" class="text-slate-600 uppercase font-mono py-4"> {{
+                            c.rfcProveedor || '-' }} </td>
                     </ng-container>
 
                     <!-- Correo Administrativo -->
                     <ng-container matColumnDef="correoAdministrativo">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> Correo Administrativo </th>
-                        <td mat-cell *matCellDef="let c" class="text-slate-600 py-4"> {{ c.correoAdministrativo || '-' }} </td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                            Correo Administrativo </th>
+                        <td mat-cell *matCellDef="let c" class="text-slate-600 py-4"> {{ c.correoAdministrativo || '-'
+                            }} </td>
                     </ng-container>
 
                     <!-- Sucursal Solicitante -->
                     <ng-container matColumnDef="sucursalSolicitante">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> Sucursal / Área </th>
-                        <td mat-cell *matCellDef="let c" class="text-slate-700 font-medium py-4"> {{ c.sucursalSolicitante || '-' }} </td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                            Sucursal / Área </th>
+                        <td mat-cell *matCellDef="let c" class="text-slate-700 font-medium py-4"> {{
+                            c.sucursalSolicitante || '-' }} </td>
                     </ng-container>
 
                     <!-- Fecha de Registro -->
                     <ng-container matColumnDef="fechaRegistro">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4"> Fecha Registro </th>
-                        <td mat-cell *matCellDef="let c" class="text-slate-500 py-4"> {{ c.fechaRegistro | date:'dd/MM/yyyy HH:mm' }} </td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4">
+                            Fecha Registro </th>
+                        <td mat-cell *matCellDef="let c" class="text-slate-500 py-4"> {{ c.fechaRegistro |
+                            date:'dd/MM/yyyy HH:mm' }} </td>
                     </ng-container>
 
                     <!-- Estatus (Quick-change Dropdown) -->
                     <ng-container matColumnDef="estatus">
-                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 text-center w-44"> Estatus Autorización </th>
+                        <th mat-header-cell *matHeaderCellDef
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 text-center w-44">
+                            Estatus Autorización </th>
                         <td mat-cell *matCellDef="let c" class="py-2 text-center">
-                            <mat-form-field appearance="fill" class="fuse-mat-dense fuse-mat-no-subscript w-36 mx-auto" [subscriptSizing]="'dynamic'">
-                                <mat-select [value]="obtenerUltimoEstatus(c)" [disabled]="!puedeCambiarEstatus(c)" (selectionChange)="cambiarEstatusEnTabla(c, $event.value)">
+                            <mat-form-field appearance="fill" class="fuse-mat-dense fuse-mat-no-subscript w-36 mx-auto"
+                                [subscriptSizing]="'dynamic'">
+                                <mat-select [value]="obtenerUltimoEstatus(c)" [disabled]="!puedeCambiarEstatus(c)"
+                                    (selectionChange)="cambiarEstatusEnTabla(c, $event.value)">
                                     <mat-option value="Pendiente">
                                         <span class="flex items-center text-xs font-semibold">
                                             <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>
@@ -103,16 +132,23 @@
 
                     <!-- Acciones -->
                     <ng-container matColumnDef="acciones">
-                        <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 text-center w-28"> Acciones </th>
+                        <th mat-header-cell *matHeaderCellDef
+                            class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 text-center w-28">
+                            Acciones </th>
                         <td mat-cell *matCellDef="let c" class="text-center py-4">
                             <div class="flex items-center justify-center gap-1">
-                                <button mat-icon-button class="text-slate-500 hover:bg-slate-100 transition-colors" (click)="verHistoricoModal(c)" matTooltip="Ver Historial de Dictámenes">
+                                <button mat-icon-button class="text-slate-500 hover:bg-slate-100 transition-colors"
+                                    (click)="verHistoricoModal(c)" matTooltip="Ver Historial de Dictámenes">
                                     <mat-icon>history</mat-icon>
                                 </button>
-                                <button mat-icon-button color="accent" class="text-indigo-500 hover:bg-indigo-50 transition-colors" (click)="editCuestionario(c)" matTooltip="Editar Formulario">
+                                <button mat-icon-button color="accent"
+                                    class="text-indigo-500 hover:bg-indigo-50 transition-colors"
+                                    (click)="editCuestionario(c)" matTooltip="Editar Formulario">
                                     <mat-icon>edit</mat-icon>
                                 </button>
-                                <button mat-icon-button color="warn" class="text-rose-500 hover:bg-rose-50 transition-colors" (click)="eliminarCuestionario(c.idCuestionario)" matTooltip="Eliminar">
+                                <button mat-icon-button color="warn"
+                                    class="text-rose-500 hover:bg-rose-50 transition-colors"
+                                    (click)="eliminarCuestionario(c.idCuestionario)" matTooltip="Eliminar">
                                     <mat-icon>delete</mat-icon>
                                 </button>
                             </div>
@@ -127,8 +163,10 @@
             <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons class="border-t"></mat-paginator>
         </div>
 
-        <div *ngIf="cuestionariosCount === 0" class="flex flex-col items-center justify-center p-12 text-center bg-white border border-dashed border-gray-200 rounded-3xl">
-            <mat-icon class="icon-size-16 text-slate-300" svgIcon="heroicons_outline:clipboard-document-list"></mat-icon>
+        <div *ngIf="cuestionariosCount === 0"
+            class="flex flex-col items-center justify-center p-12 text-center bg-white border border-dashed border-gray-200 rounded-3xl">
+            <mat-icon class="icon-size-16 text-slate-300"
+                svgIcon="heroicons_outline:clipboard-document-list"></mat-icon>
             <h2 class="text-xl font-bold mt-4 text-slate-800">No hay cuestionarios registrados</h2>
             <p class="text-slate-500 mt-1">Comienza agregando un cuestionario haciendo clic en "Nuevo Cuestionario".</p>
         </div>
@@ -136,8 +174,9 @@
 </div>
 
 <!-- VISTA DEL FORMULARIO DE EDICIÓN/ALTA -->
-<div *ngIf="viewMode === 'form'" class="absolute inset-0 flex flex-col overflow-hidden p-0 md:p-6 bg-card animate-in fade-in duration-300">
-    
+<div *ngIf="viewMode === 'form'"
+    class="absolute inset-0 flex flex-col overflow-hidden p-0 md:p-6 bg-card animate-in fade-in duration-300">
+
     <!-- Header del Formulario -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 sm:pb-6 px-4 sm:px-0">
         <div>
@@ -149,10 +188,13 @@
             </p>
         </div>
         <div class="flex items-center gap-2 mt-4 sm:mt-0">
-            <button mat-stroked-button class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white" (click)="volverListado()">
+            <button mat-stroked-button class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white"
+                (click)="volverListado()">
                 Cancelar
             </button>
-            <button mat-flat-button color="primary" class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all" (click)="guardarCuestionario()">
+            <button mat-flat-button color="primary"
+                class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all"
+                (click)="guardarCuestionario()">
                 <mat-icon svgIcon="heroicons_outline:check" class="mr-2 icon-size-5"></mat-icon>
                 <span class="text-sm font-bold uppercase tracking-wider">Guardar Formulario</span>
             </button>
@@ -164,19 +206,22 @@
         <div class="flex flex-col gap-6">
 
             <!-- Folio del Cuestionario Card -->
-            <div class="flex items-center gap-4 p-3 sm:p-4 mx-2 sm:mx-0 mt-4 sm:mt-2 mb-2 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+            <div
+                class="flex items-center gap-4 p-3 sm:p-4 mx-2 sm:mx-0 mt-4 sm:mt-2 mb-2 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
                 <div class="flex items-center justify-center min-w-[3rem] h-12 rounded-xl bg-indigo-500 shadow-inner">
                     <mat-icon class="icon-size-6 text-white" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
                 </div>
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em] mb-1">Folio de Cuestionario</span>
+                    <span class="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em] mb-1">Folio de
+                        Cuestionario</span>
                     <div class="flex items-end gap-2 leading-none">
                         <span *ngIf="activeCuestionario.idCuestionario !== 0; else newCuestionario"
                             class="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                             {{ activeCuestionario.idCuestionario }}
                         </span>
                         <ng-template #newCuestionario>
-                            <span class="px-2 py-0.5 rounded text-sm font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-widest border border-indigo-200 dark:border-indigo-800/50">
+                            <span
+                                class="px-2 py-0.5 rounded text-sm font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-widest border border-indigo-200 dark:border-indigo-800/50">
                                 NUEVO
                             </span>
                         </ng-template>
@@ -188,8 +233,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
 
                 <!-- PANEL 1: Datos Generales (xl:col-span-2) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-2">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-2">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
                         Datos Generales del Proveedor
                     </h3>
@@ -197,13 +244,14 @@
                     <!-- Auto-completar desde CONTPAQi -->
                     <mat-form-field appearance="fill" class="w-full">
                         <mat-label>Buscar Razón Social en CONTPAQi (Auto-relleno)</mat-label>
-                        <input type="text" matInput placeholder="Escriba nombre o RFC del proveedor..." 
-                               [matAutocomplete]="auto"
-                               [(ngModel)]="activeCuestionario.nombreProveedor"
-                               (keyup)="onProveedorSearchKeyup($event)">
-                        <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+                        <input type="text" matInput placeholder="Escriba nombre o RFC del proveedor..."
+                            [matAutocomplete]="auto" [(ngModel)]="activeCuestionario.nombreProveedor"
+                            (keyup)="onProveedorSearchKeyup($event)">
+                        <mat-icon matPrefix class="icon-size-5 mr-2"
+                            [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
                         <mat-autocomplete #auto="matAutocomplete">
-                            <mat-option *ngFor="let p of filteredProveedores" [value]="p.nombre" (onSelectionChange)="selectProveedor(p)">
+                            <mat-option *ngFor="let p of filteredProveedores" [value]="p.nombre"
+                                (onSelectionChange)="selectProveedor(p)">
                                 {{ p.nombre }} ({{ p.rfc }})
                             </mat-option>
                         </mat-autocomplete>
@@ -213,12 +261,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>Nombre Comercial / Razón Social</mat-label>
-                            <input matInput placeholder="Ej: Materiales Eléctricos del Centro" [(ngModel)]="activeCuestionario.nombreProveedor" required>
+                            <input matInput placeholder="Ej: Materiales Eléctricos del Centro"
+                                [(ngModel)]="activeCuestionario.nombreProveedor" required>
                         </mat-form-field>
 
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>RFC del Proveedor</mat-label>
-                            <input matInput placeholder="Ej: MEC890521AA0" [(ngModel)]="activeCuestionario.rfcProveedor">
+                            <input matInput placeholder="Ej: MEC890521AA0"
+                                [(ngModel)]="activeCuestionario.rfcProveedor">
                         </mat-form-field>
 
                         <mat-form-field appearance="fill" class="w-full">
@@ -227,8 +277,10 @@
                                 <mat-option *ngFor="let cat of tipoProveedorCatalog" [value]="cat.valor">
                                     {{ cat.valor }}
                                 </mat-option>
-                                <mat-option *ngIf="tipoProveedorCatalog.length === 0" [value]="'Bienes'">Bienes</mat-option>
-                                <mat-option *ngIf="tipoProveedorCatalog.length === 0" [value]="'Servicios'">Servicios</mat-option>
+                                <mat-option *ngIf="tipoProveedorCatalog.length === 0"
+                                    [value]="'Bienes'">Bienes</mat-option>
+                                <mat-option *ngIf="tipoProveedorCatalog.length === 0"
+                                    [value]="'Servicios'">Servicios</mat-option>
                             </mat-select>
                         </mat-form-field>
 
@@ -238,8 +290,10 @@
                                 <mat-option *ngFor="let cat of categoriaCatalog" [value]="cat.valor">
                                     {{ cat.valor }}
                                 </mat-option>
-                                <mat-option *ngIf="categoriaCatalog.length === 0" [value]="'Material eléctrico'">Material eléctrico</mat-option>
-                                <mat-option *ngIf="categoriaCatalog.length === 0" [value]="'Servicios profesionales'">Servicios profesionales</mat-option>
+                                <mat-option *ngIf="categoriaCatalog.length === 0"
+                                    [value]="'Material eléctrico'">Material eléctrico</mat-option>
+                                <mat-option *ngIf="categoriaCatalog.length === 0"
+                                    [value]="'Servicios profesionales'">Servicios profesionales</mat-option>
                             </mat-select>
                         </mat-form-field>
                     </div>
@@ -247,26 +301,32 @@
                     <mat-form-field appearance="fill" class="w-full mt-2">
                         <mat-label>Página Web / Redes</mat-label>
                         <input matInput [(ngModel)]="activeCuestionario.paginaWeb" placeholder="Ej: www.proveedor.com">
-                        <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
+                        <mat-icon matPrefix class="icon-size-5 mr-2"
+                            [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
                     </mat-form-field>
 
                     <mat-form-field appearance="fill" class="w-full">
                         <mat-label>Detalle de Productos / Servicios que ofrece</mat-label>
-                        <textarea matInput [(ngModel)]="activeCuestionario.productosServicios" rows="3" placeholder="Ej: Suministro de cableado de alta tensión..."></textarea>
+                        <textarea matInput [(ngModel)]="activeCuestionario.productosServicios" rows="3"
+                            placeholder="Ej: Suministro de cableado de alta tensión..."></textarea>
                     </mat-form-field>
                 </div>
 
                 <!-- PANEL 2: Datos Fiscales y Administrativos (xl:col-span-1) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-1">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-1">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
                         Datos Fiscales y Administrativos
                     </h3>
 
                     <mat-form-field appearance="fill" class="w-full">
                         <mat-label>Correo Administrativo Principal</mat-label>
-                        <input matInput type="email" [(ngModel)]="activeCuestionario.correoAdministrativo" placeholder="Ej: administracion@proveedor.com">
-                        <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                        <input matInput type="email" [(ngModel)]="activeCuestionario.correoAdministrativo"
+                            placeholder="Ej: administracion@proveedor.com">
+                        <mat-icon matPrefix class="icon-size-5 mr-2"
+                            [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
                     </mat-form-field>
 
                     <mat-form-field appearance="fill" class="w-full">
@@ -289,18 +349,26 @@
 
                     <div class="grid grid-cols-1 gap-4 mt-2">
                         <!-- Constancia Actualizada Switch -->
-                        <div class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
-                            <label class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Constancia de situación fiscal actualizada?</label>
-                            <mat-radio-group [(ngModel)]="activeCuestionario.constanciaActualizada" class="flex gap-6 ml-1">
+                        <div
+                            class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                            <label
+                                class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Constancia
+                                de situación fiscal actualizada?</label>
+                            <mat-radio-group [(ngModel)]="activeCuestionario.constanciaActualizada"
+                                class="flex gap-6 ml-1">
                                 <mat-radio-button [value]="true" color="primary">Sí</mat-radio-button>
                                 <mat-radio-button [value]="false" color="primary">No</mat-radio-button>
                             </mat-radio-group>
                         </div>
 
                         <!-- Opinión SAT Positiva Switch -->
-                        <div class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
-                            <label class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Opinión de cumplimiento SAT positiva?</label>
-                            <mat-radio-group [(ngModel)]="activeCuestionario.opinionSATPositiva" class="flex gap-6 ml-1">
+                        <div
+                            class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                            <label
+                                class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Opinión
+                                de cumplimiento SAT positiva?</label>
+                            <mat-radio-group [(ngModel)]="activeCuestionario.opinionSATPositiva"
+                                class="flex gap-6 ml-1">
                                 <mat-radio-button [value]="true" color="primary">Sí</mat-radio-button>
                                 <mat-radio-button [value]="false" color="primary">No</mat-radio-button>
                             </mat-radio-group>
@@ -309,8 +377,10 @@
                 </div>
 
                 <!-- PANEL 3: Datos Bancarios y Condiciones Comerciales (xl:col-span-1) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-1">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-1">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:credit-card'"></mat-icon>
                         Datos Bancarios y Condiciones
                     </h3>
@@ -319,20 +389,24 @@
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>Banco</mat-label>
                             <input matInput [(ngModel)]="activeCuestionario.banco" placeholder="Ej: BBVA Bancomer">
-                            <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
+                            <mat-icon matPrefix class="icon-size-5 mr-2"
+                                [svgIcon]="'heroicons_outline:building-library'"></mat-icon>
                         </mat-form-field>
 
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>Cuenta Bancaria</mat-label>
-                            <input matInput [(ngModel)]="activeCuestionario.cuentaBancaria" placeholder="Ej: 0123456789">
+                            <input matInput [(ngModel)]="activeCuestionario.cuentaBancaria"
+                                placeholder="Ej: 0123456789">
                         </mat-form-field>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>CLABE</mat-label>
-                            <input matInput [(ngModel)]="activeCuestionario.clabe" maxlength="18" placeholder="18 dígitos">
-                            <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
+                            <input matInput [(ngModel)]="activeCuestionario.clabe" maxlength="18"
+                                placeholder="18 dígitos">
+                            <mat-icon matPrefix class="icon-size-5 mr-2"
+                                [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
                         </mat-form-field>
 
                         <mat-form-field appearance="fill" class="w-full">
@@ -349,14 +423,17 @@
 
                     <mat-form-field appearance="fill" class="w-full mt-2">
                         <mat-label>Condiciones de Pago</mat-label>
-                        <input matInput [(ngModel)]="activeCuestionario.condicionesPago" placeholder="Ej: Crédito 30 días, Pago de Contado...">
+                        <input matInput [(ngModel)]="activeCuestionario.condicionesPago"
+                            placeholder="Ej: Crédito 30 días, Pago de Contado...">
                         <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:clock'"></mat-icon>
                     </mat-form-field>
                 </div>
 
                 <!-- PANEL 4: Alcance, Capacidad y Operación (xl:col-span-2) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-2">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-2">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:briefcase'"></mat-icon>
                         Alcance, Capacidad y Operación
                     </h3>
@@ -364,56 +441,73 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>Sucursal / Área que solicita</mat-label>
-                            <input matInput [(ngModel)]="activeCuestionario.sucursalSolicitante" placeholder="Ej: Sucursal Pachuca">
+                            <input matInput [(ngModel)]="activeCuestionario.sucursalSolicitante"
+                                placeholder="Ej: Sucursal Pachuca">
                         </mat-form-field>
 
                         <mat-form-field appearance="fill" class="w-full">
                             <mat-label>Tiempo Promedio de Entrega</mat-label>
-                            <input matInput [(ngModel)]="activeCuestionario.tiempoPromedioEntrega" placeholder="Ej: 3 a 5 días hábiles">
+                            <input matInput [(ngModel)]="activeCuestionario.tiempoPromedioEntrega"
+                                placeholder="Ej: 3 a 5 días hábiles">
                         </mat-form-field>
                     </div>
 
                     <mat-form-field appearance="fill" class="w-full">
                         <mat-label>Cobertura Geográfica</mat-label>
-                        <input matInput placeholder="Ej: Nacional, Regional (Bajío)..." [(ngModel)]="activeCuestionario.coberturaGeografica">
+                        <input matInput placeholder="Ej: Nacional, Regional (Bajío)..."
+                            [(ngModel)]="activeCuestionario.coberturaGeografica">
                         <mat-icon matPrefix class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:map'"></mat-icon>
                     </mat-form-field>
 
                     <mat-form-field appearance="fill" class="w-full">
                         <mat-label>Uso Esperado del Proveedor / Material</mat-label>
-                        <textarea matInput [(ngModel)]="activeCuestionario.usoEsperado" rows="3" placeholder="Describa para qué proyecto o compras recurrentes se utilizará..."></textarea>
+                        <textarea matInput [(ngModel)]="activeCuestionario.usoEsperado" rows="3"
+                            placeholder="Describa para qué proyecto o compras recurrentes se utilizará..."></textarea>
                     </mat-form-field>
                 </div>
 
                 <!-- PANEL 5: Calidad, Seguridad y Cumplimiento (xl:col-span-3) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
                         Calidad, Seguridad y Cumplimiento
                     </h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <!-- Certificaciones Calidad Switch -->
-                        <div class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
-                            <label class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Cuenta con certificaciones de calidad?</label>
-                            <mat-radio-group [(ngModel)]="activeCuestionario.certificacionesCalidad" class="flex gap-6 ml-1">
+                        <div
+                            class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                            <label
+                                class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Cuenta
+                                con certificaciones de calidad?</label>
+                            <mat-radio-group [(ngModel)]="activeCuestionario.certificacionesCalidad"
+                                class="flex gap-6 ml-1">
                                 <mat-radio-button [value]="true" color="primary">Sí</mat-radio-button>
                                 <mat-radio-button [value]="false" color="primary">No</mat-radio-button>
                             </mat-radio-group>
                         </div>
 
                         <!-- Requiere Acceso Planta Switch -->
-                        <div class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
-                            <label class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Requiere acceso a nuestra planta?</label>
-                            <mat-radio-group [(ngModel)]="activeCuestionario.requiereAccesoPlanta" class="flex gap-6 ml-1">
+                        <div
+                            class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                            <label
+                                class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Requiere
+                                acceso a nuestra planta/obra?</label>
+                            <mat-radio-group [(ngModel)]="activeCuestionario.requiereAccesoPlanta"
+                                class="flex gap-6 ml-1">
                                 <mat-radio-button [value]="true" color="primary">Sí</mat-radio-button>
                                 <mat-radio-button [value]="false" color="primary">No</mat-radio-button>
                             </mat-radio-group>
                         </div>
 
                         <!-- Cumple EPP Switch -->
-                        <div class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
-                            <label class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Cumple requisitos de EPP y seguridad?</label>
+                        <div
+                            class="flex flex-col justify-center p-3 border border-gray-100 dark:border-gray-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                            <label
+                                class="text-[10px] font-extrabold uppercase tracking-widest text-secondary ml-1 mb-2">¿Cumple
+                                requisitos de EPP y seguridad?</label>
                             <mat-radio-group [(ngModel)]="activeCuestionario.cumpleEPP" class="flex gap-6 ml-1">
                                 <mat-radio-button [value]="true" color="primary">Sí</mat-radio-button>
                                 <mat-radio-button [value]="false" color="primary">No</mat-radio-button>
@@ -423,34 +517,41 @@
 
                     <mat-form-field appearance="fill" class="w-full mt-2">
                         <mat-label>Observaciones de Riesgos o Restricciones</mat-label>
-                        <textarea matInput [(ngModel)]="activeCuestionario.observacionesRiesgos" rows="2" placeholder="Indique riesgos detectados en entregas, maniobras, etc..."></textarea>
+                        <textarea matInput [(ngModel)]="activeCuestionario.observacionesRiesgos" rows="2"
+                            placeholder="Indique riesgos detectados en entregas, maniobras, etc..."></textarea>
                     </mat-form-field>
                 </div>
 
                 <!-- PANEL 6: Documentación Requerida (xl:col-span-3) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
                         Documentación Requerida
                     </h3>
 
-                    <div class="overflow-x-auto border border-gray-100 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900">
+                    <div
+                        class="overflow-x-auto border border-gray-100 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-gray-50 dark:bg-gray-800 text-[10px] font-black text-secondary uppercase tracking-wider">
+                                <tr
+                                    class="bg-gray-50 dark:bg-gray-800 text-[10px] font-black text-secondary uppercase tracking-wider">
                                     <th class="px-6 py-4">Documento Exigido</th>
                                     <th class="px-6 py-4 w-60">Estado de Entrega</th>
                                     <th class="px-6 py-4 w-40 text-center">Última Modificación</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let doc of activeCuestionario.documentos; let idx = index" 
+                                <tr *ngFor="let doc of activeCuestionario.documentos; let idx = index"
                                     class="border-b border-gray-100 dark:border-gray-800 text-sm hover:bg-slate-50/50 transition-colors">
                                     <td class="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300">
                                         {{ doc.nombreDocumento }}
                                     </td>
                                     <td class="px-6 py-2">
-                                        <mat-form-field appearance="fill" class="w-full fuse-mat-dense fuse-mat-no-subscript" [subscriptSizing]="'dynamic'">
+                                        <mat-form-field appearance="fill"
+                                            class="w-full fuse-mat-dense fuse-mat-no-subscript"
+                                            [subscriptSizing]="'dynamic'">
                                             <mat-select [(ngModel)]="doc.estado">
                                                 <mat-option [value]="'Pendiente'">
                                                     <span class="flex items-center">
@@ -483,8 +584,10 @@
                 </div>
 
                 <!-- PANEL 7: Evaluación Inicial y Autorización Final (xl:col-span-3) -->
-                <div class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:check-badge'"></mat-icon>
                         Evaluación Inicial y Autorización Final
                     </h3>
@@ -494,41 +597,47 @@
                         <div class="flex flex-col gap-4">
                             <!-- Aprobado Por -->
                             <div class="flex items-center gap-2 w-full">
-                                <mat-form-field appearance="fill" class="flex-auto fuse-mat-no-subscript" [subscriptSizing]="'dynamic'">
+                                <mat-form-field appearance="fill" class="flex-auto fuse-mat-no-subscript"
+                                    [subscriptSizing]="'dynamic'">
                                     <mat-label>Revisor / Aprobador Asignado (Usuario)</mat-label>
-                                    <mat-select [(ngModel)]="autorizacion.aprobadoPor" placeholder="Seleccione validador" [disabled]="autorizacion.resultadoRevision === 'Aprobado'">
+                                    <mat-select [(ngModel)]="autorizacion.aprobadoPor"
+                                        placeholder="Seleccione validador"
+                                        [disabled]="autorizacion.resultadoRevision === 'Aprobado'">
                                         <mat-option *ngFor="let user of usuariosList" [value]="user.usuarioId">
                                             {{ user.nombreUsuario }} ({{ user.email }})
                                         </mat-option>
                                     </mat-select>
                                 </mat-form-field>
                                 <button *ngIf="activeCuestionario.idCuestionario !== 0 && autorizacion.aprobadoPor"
-                                        mat-icon-button
-                                        type="button"
-                                        color="primary"
-                                        class="bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-xl transition-all h-12 w-12"
-                                        matTooltip="Reenviar Notificaciones a Revisor"
-                                        (click)="reenviarNotificacion()">
-                                    <mat-icon class="icon-size-5 text-indigo-600 dark:text-indigo-400" [svgIcon]="'heroicons_outline:paper-airplane'"></mat-icon>
+                                    mat-icon-button type="button" color="primary"
+                                    class="bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-xl transition-all h-12 w-12"
+                                    matTooltip="Reenviar Notificaciones a Revisor" (click)="reenviarNotificacion()">
+                                    <mat-icon class="icon-size-5 text-indigo-600 dark:text-indigo-400"
+                                        [svgIcon]="'heroicons_outline:paper-airplane'"></mat-icon>
                                 </button>
                             </div>
 
                             <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Comentarios Finales y Dictamen Técnico</mat-label>
-                                <textarea matInput [(ngModel)]="autorizacion.comentariosFinales" rows="3" placeholder="Registre consideraciones, limitantes de crédito o motivos del dictamen final..." [readonly]="autorizacion.resultadoRevision === 'Aprobado'"></textarea>
+                                <textarea matInput [(ngModel)]="autorizacion.comentariosFinales" rows="3"
+                                    placeholder="Registre consideraciones, limitantes de crédito o motivos del dictamen final..."
+                                    [readonly]="autorizacion.resultadoRevision === 'Aprobado'"></textarea>
                             </mat-form-field>
                         </div>
 
                         <!-- Right Side: Firma y Autorización Card -->
-                        <div class="relative overflow-hidden p-6 bg-slate-50/50 dark:bg-slate-900/10 rounded-2xl border border-gray-150 dark:border-gray-800 flex flex-col justify-between min-h-[160px] gap-4">
+                        <div
+                            class="relative overflow-hidden p-6 bg-slate-50/50 dark:bg-slate-900/10 rounded-2xl border border-gray-150 dark:border-gray-800 flex flex-col justify-between min-h-[160px] gap-4">
                             <!-- Decorative glow -->
                             <div class="absolute -right-12 -top-12 w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
-                            
+
                             <div>
-                                <span class="text-[9px] font-extrabold text-primary uppercase tracking-[0.2em] mb-1 block">
+                                <span
+                                    class="text-[9px] font-extrabold text-primary uppercase tracking-[0.2em] mb-1 block">
                                     Firma Digital de Dictamen
                                 </span>
-                                <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-200 tracking-tight leading-snug">
+                                <h3
+                                    class="text-sm font-extrabold text-slate-800 dark:text-slate-200 tracking-tight leading-snug">
                                     Autorización de Proveedor
                                 </h3>
                             </div>
@@ -537,7 +646,7 @@
                                 <div class="flex flex-col">
                                     <div class="flex items-center gap-1.5 mb-1">
                                         <span class="w-1.5 h-1.5 rounded-full"
-                                              [ngClass]="autorizacion.resultadoRevision === 'Aprobado' ? 'bg-emerald-500 animate-pulse' : (autorizacion.resultadoRevision === 'Rechazado' ? 'bg-rose-500' : 'bg-slate-400')">
+                                            [ngClass]="autorizacion.resultadoRevision === 'Aprobado' ? 'bg-emerald-500 animate-pulse' : (autorizacion.resultadoRevision === 'Rechazado' ? 'bg-rose-500' : 'bg-slate-400')">
                                         </span>
                                         <span class="text-[9px] font-black uppercase tracking-wider text-secondary">
                                             Estatus Operativo
@@ -545,11 +654,14 @@
                                     </div>
                                     <h4 class="text-lg font-black leading-none truncate"
                                         [ngClass]="autorizacion.resultadoRevision === 'Aprobado' ? 'text-emerald-600' : (autorizacion.resultadoRevision === 'Rechazado' ? 'text-rose-600' : 'text-slate-400')">
-                                        {{ autorizacion.resultadoRevision === 'Aprobado' ? 'PROVEEDOR APROBADO' : (autorizacion.resultadoRevision === 'Rechazado' ? 'DICTAMEN RECHAZADO' : 'ESPERANDO VALIDACIÓN') }}
+                                        {{ autorizacion.resultadoRevision === 'Aprobado' ? 'PROVEEDOR APROBADO' :
+                                        (autorizacion.resultadoRevision === 'Rechazado' ? 'DICTAMEN RECHAZADO' :
+                                        'ESPERANDO VALIDACIÓN') }}
                                     </h4>
                                     <div *ngIf="autorizacion.resultadoRevision === 'Aprobado' && autorizacion.fechaAprobacion"
-                                         class="mt-2 flex items-center gap-2">
-                                        <mat-icon class="icon-size-3.5 text-emerald-500" [svgIcon]="'heroicons_solid:calendar'"></mat-icon>
+                                        class="mt-2 flex items-center gap-2">
+                                        <mat-icon class="icon-size-3.5 text-emerald-500"
+                                            [svgIcon]="'heroicons_solid:calendar'"></mat-icon>
                                         <span class="text-[10px] text-emerald-600/70 font-bold tabular-nums">
                                             {{ autorizacion.fechaAprobacion | date:'dd/MM/yyyy • HH:mm' }}
                                         </span>
@@ -557,16 +669,17 @@
                                 </div>
 
                                 <button mat-flat-button
-                                        class="!rounded-2xl !h-14 !px-8 shadow-lg shadow-primary/20 transition-all duration-300 active:scale-95"
-                                        [color]="autorizacion.resultadoRevision === 'Aprobado' ? 'accent' : 'primary'"
-                                        [disabled]="autorizacion.resultadoRevision === 'Aprobado' || autorizacion.aprobadoPor !== currentUserId || activeCuestionario.idCuestionario === 0"
-                                        (click)="aprobarCuestionario()">
+                                    class="!rounded-2xl !h-14 !px-8 shadow-lg shadow-primary/20 transition-all duration-300 active:scale-95"
+                                    [color]="autorizacion.resultadoRevision === 'Aprobado' ? 'accent' : 'primary'"
+                                    [disabled]="autorizacion.resultadoRevision === 'Aprobado' || autorizacion.aprobadoPor !== currentUserId || activeCuestionario.idCuestionario === 0"
+                                    (click)="aprobarCuestionario()">
                                     <div class="flex flex-col items-center leading-none">
                                         <mat-icon class="icon-size-5 mb-1"
-                                                  [svgIcon]="autorizacion.resultadoRevision === 'Aprobado' ? 'heroicons_solid:check' : 'heroicons_solid:key'">
+                                            [svgIcon]="autorizacion.resultadoRevision === 'Aprobado' ? 'heroicons_solid:check' : 'heroicons_solid:key'">
                                         </mat-icon>
                                         <span class="text-[10px] font-black uppercase tracking-widest">
-                                            {{ autorizacion.resultadoRevision === 'Aprobado' ? 'APROBADO' : 'AUTORIZAR' }}
+                                            {{ autorizacion.resultadoRevision === 'Aprobado' ? 'APROBADO' : 'AUTORIZAR'
+                                            }}
                                         </span>
                                     </div>
                                 </button>
@@ -574,8 +687,9 @@
 
                             <!-- Footer warning if user is not the selected approver -->
                             <div *ngIf="autorizacion.resultadoRevision !== 'Aprobado' && autorizacion.aprobadoPor !== currentUserId"
-                                 class="mt-2 flex items-center gap-2 p-2.5 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-medium italic">
-                                <mat-icon class="icon-size-4 text-amber-500" [svgIcon]="'heroicons_solid:exclamation-triangle'"></mat-icon>
+                                class="mt-2 flex items-center gap-2 p-2.5 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-medium italic">
+                                <mat-icon class="icon-size-4 text-amber-500"
+                                    [svgIcon]="'heroicons_solid:exclamation-triangle'"></mat-icon>
                                 Sólo el revisor asignado puede realizar la firma digital de aprobación.
                             </div>
                         </div>
@@ -584,44 +698,54 @@
 
                 <!-- PANEL 8: Historial de Dictámenes y Cambios de Estatus (xl:col-span-3) -->
                 <div *ngIf="activeCuestionario && activeCuestionario.idCuestionario !== 0"
-                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
-                    <h3 class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                    class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
+                    <h3
+                        class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                         <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:clock'"></mat-icon>
                         Historial de Dictámenes y Cambios de Estatus
                     </h3>
 
-                    <div class="overflow-x-auto border border-gray-150 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900">
+                    <div
+                        class="overflow-x-auto border border-gray-150 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr class="bg-gray-50 dark:bg-gray-800 text-[10px] font-black text-secondary uppercase tracking-wider">
+                                <tr
+                                    class="bg-gray-50 dark:bg-gray-800 text-[10px] font-black text-secondary uppercase tracking-wider">
                                     <th class="px-6 py-3 border-b border-gray-200">Estatus / Resultado</th>
                                     <th class="px-6 py-3 border-b border-gray-200">Fecha Dictamen</th>
                                     <th class="px-6 py-3 border-b border-gray-200">Revisor / Aprobador</th>
                                     <th class="px-6 py-3 border-b border-gray-200">Comentarios Finales</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
-                                <tr *ngFor="let auth of activeCuestionario.autorizaciones" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors">
+                            <tbody
+                                class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
+                                <tr *ngFor="let auth of activeCuestionario.autorizaciones"
+                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors">
                                     <td class="px-6 py-3 font-semibold">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
-                                              [ngClass]="auth.resultadoRevision === 'Aprobado' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' : 
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
+                                            [ngClass]="auth.resultadoRevision === 'Aprobado' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' : 
                                                         (auth.resultadoRevision === 'Rechazado' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50' : 
                                                                                                   'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50')">
                                             {{ auth.resultadoRevision }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-3 font-medium text-gray-500 dark:text-gray-400 tabular-nums">
-                                        {{ auth.fechaAprobacion ? (auth.fechaAprobacion | date:'dd/MM/yyyy HH:mm') : 'N/A' }}
+                                        {{ auth.fechaAprobacion ? (auth.fechaAprobacion | date:'dd/MM/yyyy HH:mm') :
+                                        'N/A' }}
                                     </td>
                                     <td class="px-6 py-3 font-bold text-gray-800 dark:text-gray-200">
                                         {{ getNombreUsuario(auth.aprobadoPor) }}
                                     </td>
-                                    <td class="px-6 py-3 text-secondary dark:text-gray-400 max-w-sm truncate" [matTooltip]="auth.comentariosFinales">
+                                    <td class="px-6 py-3 text-secondary dark:text-gray-400 max-w-sm truncate"
+                                        [matTooltip]="auth.comentariosFinales">
                                         {{ auth.comentariosFinales || 'Sin comentarios' }}
                                     </td>
                                 </tr>
-                                <tr *ngIf="!activeCuestionario.autorizaciones || activeCuestionario.autorizaciones.length === 0">
-                                    <td colspan="4" class="px-6 py-6 text-center text-secondary dark:text-gray-400 font-medium italic">
+                                <tr
+                                    *ngIf="!activeCuestionario.autorizaciones || activeCuestionario.autorizaciones.length === 0">
+                                    <td colspan="4"
+                                        class="px-6 py-6 text-center text-secondary dark:text-gray-400 font-medium italic">
                                         No hay dictámenes previos registrados para este cuestionario.
                                     </td>
                                 </tr>
@@ -634,10 +758,14 @@
 
             <!-- Botones de Acción al final -->
             <div class="flex justify-end gap-2 mt-4 px-4 sm:px-0">
-                <button mat-stroked-button class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white" (click)="volverListado()">
+                <button mat-stroked-button
+                    class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white"
+                    (click)="volverListado()">
                     Cancelar
                 </button>
-                <button mat-flat-button color="primary" class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all" (click)="guardarCuestionario()">
+                <button mat-flat-button color="primary"
+                    class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all"
+                    (click)="guardarCuestionario()">
                     <mat-icon svgIcon="heroicons_outline:check" class="mr-2 icon-size-5"></mat-icon>
                     <span class="text-sm font-bold uppercase tracking-wider">Guardar Formulario</span>
                 </button>
