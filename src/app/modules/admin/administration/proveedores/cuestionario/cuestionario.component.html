@@ -538,35 +538,40 @@
                                 <tr
                                     class="bg-gray-50 dark:bg-gray-800 text-[10px] font-black text-secondary uppercase tracking-wider">
                                     <th class="px-6 py-4">Documento Exigido</th>
-                                    <th class="px-6 py-4 w-60">Estado de Entrega</th>
-                                    <th class="px-6 py-4 w-40 text-center">Última Modificación</th>
+                                    <th class="px-6 py-4 w-44">Estado de Entrega</th>
+                                    <th class="px-6 py-4 w-48">Archivo Adjunto</th>
+                                    <th class="px-6 py-4 w-36 text-center">Última Modificación</th>
+                                    <th class="px-6 py-4 w-36 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr *ngFor="let doc of activeCuestionario.documentos; let idx = index"
                                     class="border-b border-gray-100 dark:border-gray-800 text-sm hover:bg-slate-50/50 transition-colors">
+                                    <!-- Documento Exigido -->
                                     <td class="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300">
                                         {{ doc.nombreDocumento }}
                                     </td>
+                                    
+                                    <!-- Estado de Entrega -->
                                     <td class="px-6 py-2">
                                         <mat-form-field appearance="fill"
                                             class="w-full fuse-mat-dense fuse-mat-no-subscript"
                                             [subscriptSizing]="'dynamic'">
                                             <mat-select [(ngModel)]="doc.estado">
                                                 <mat-option [value]="'Pendiente'">
-                                                    <span class="flex items-center">
+                                                    <span class="flex items-center text-xs">
                                                         <span class="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
                                                         Pendiente
                                                     </span>
                                                 </mat-option>
                                                 <mat-option [value]="'Entregado'">
-                                                    <span class="flex items-center">
+                                                    <span class="flex items-center text-xs">
                                                         <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
                                                         Entregado
                                                     </span>
                                                 </mat-option>
                                                 <mat-option [value]="'No aplica'">
-                                                    <span class="flex items-center">
+                                                    <span class="flex items-center text-xs">
                                                         <span class="w-2 h-2 rounded-full bg-slate-400 mr-2"></span>
                                                         No aplica
                                                     </span>
@@ -574,8 +579,71 @@
                                             </mat-select>
                                         </mat-form-field>
                                     </td>
+
+                                    <!-- Archivo Adjunto -->
+                                    <td class="px-6 py-3 text-xs">
+                                        <div *ngIf="activeCuestionario.idCuestionario === 0" class="text-slate-400 italic text-[11px]">
+                                            Guarde para adjuntar
+                                        </div>
+                                        <div *ngIf="activeCuestionario.idCuestionario !== 0">
+                                            <!-- Loader -->
+                                            <div *ngIf="isUploadingDoc[doc.nombreDocumento]" class="flex items-center text-indigo-600 gap-1 animate-pulse font-semibold">
+                                                <mat-icon class="animate-spin icon-size-4" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
+                                                <span>Subiendo...</span>
+                                            </div>
+                                            <!-- File info -->
+                                            <div *ngIf="!isUploadingDoc[doc.nombreDocumento] && archivosCargados[doc.nombreDocumento]" class="flex items-center text-indigo-650 gap-1.5 font-bold max-w-[170px] truncate" [title]="archivosCargados[doc.nombreDocumento]">
+                                                <mat-icon class="icon-size-4 text-indigo-500 flex-shrink-0" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
+                                                <span class="truncate text-indigo-650 hover:underline cursor-pointer" (click)="previsualizarDoc(doc.nombreDocumento)">{{ archivosCargados[doc.nombreDocumento] }}</span>
+                                            </div>
+                                            <!-- Empty -->
+                                            <div *ngIf="!isUploadingDoc[doc.nombreDocumento] && !archivosCargados[doc.nombreDocumento]" class="text-slate-400 italic text-[11px] flex items-center gap-1">
+                                                <mat-icon class="icon-size-3.5 text-slate-300" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
+                                                <span>Sin archivo</span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Última Modificación -->
                                     <td class="px-6 py-3 text-center text-xs text-slate-400 tabular-nums">
                                         {{ doc.fechaActualizacion | date:'dd/MM/yyyy HH:mm' }}
+                                    </td>
+
+                                    <!-- Acciones -->
+                                    <td class="px-6 py-2 text-center">
+                                        <div class="flex items-center justify-center gap-0.5">
+                                            <!-- If New Questionnaire -->
+                                            <button *ngIf="activeCuestionario.idCuestionario === 0" mat-icon-button disabled class="opacity-40">
+                                                <mat-icon class="icon-size-4.5" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                                            </button>
+
+                                            <!-- If Saved Questionnaire -->
+                                            <ng-container *ngIf="activeCuestionario.idCuestionario !== 0">
+                                                <!-- Hidden File Input -->
+                                                <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, doc.nombreDocumento)">
+                                                
+                                                <!-- Upload trigger -->
+                                                <button mat-icon-button (click)="fileInput.click()" [disabled]="isUploadingDoc[doc.nombreDocumento]" matTooltip="Subir archivo" class="w-8 h-8 text-indigo-650 hover:bg-indigo-50 rounded-lg">
+                                                    <mat-icon class="icon-size-4.5" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                                                </button>
+
+                                                <!-- File exists actions -->
+                                                <ng-container *ngIf="archivosCargados[doc.nombreDocumento]">
+                                                    <!-- Preview -->
+                                                    <button mat-icon-button class="w-8 h-8 text-slate-400 hover:text-indigo-600 rounded-lg" (click)="previsualizarDoc(doc.nombreDocumento)" matTooltip="Ver">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                                    </button>
+                                                    <!-- Download -->
+                                                    <button mat-icon-button class="w-8 h-8 text-slate-400 hover:text-emerald-650 rounded-lg" (click)="descargarDoc(doc.nombreDocumento)" matTooltip="Descargar">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
+                                                    </button>
+                                                    <!-- Delete -->
+                                                    <button mat-icon-button class="w-8 h-8 text-slate-400 hover:text-red-600 rounded-lg" (click)="eliminarDoc(doc.nombreDocumento)" matTooltip="Eliminar">
+                                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                                                    </button>
+                                                </ng-container>
+                                            </ng-container>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>

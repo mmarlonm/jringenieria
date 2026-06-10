@@ -19,6 +19,8 @@ import { SolicitudCompraService } from '../../solicitudes-compra/solicitud-compr
 import { ProveedorDto } from '../../solicitudes-compra/models/solicitud-compra.types';
 import Swal from 'sweetalert2';
 import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 
 @Component({
     selector: 'app-cuestionario',
@@ -40,7 +42,8 @@ import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
         MatTableModule,
         MatPaginatorModule,
         MatSortModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatDialogModule
     ]
 })
 export class CuestionarioComponent implements OnInit, AfterViewInit {
@@ -70,6 +73,9 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
     // Cuestionario Activo / Formulario
     activeCuestionario: any = null;
 
+    archivosCargados: { [nombreDocumento: string]: string } = {};
+    isUploadingDoc: { [nombreDocumento: string]: boolean } = {};
+
     // Estado de la autorización activa
     autorizacion = {
         resultadoRevision: 'Aprobado',
@@ -82,7 +88,8 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
 
     constructor(
         private _proveedoresService: ProveedoresService,
-        private _solicitudesService: SolicitudCompraService
+        private _solicitudesService: SolicitudCompraService,
+        private _dialog: MatDialog
     ) { }
 
     ngOnInit(): void {
@@ -367,6 +374,12 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
             };
         }
         this.originalAutorizacion = JSON.parse(JSON.stringify(this.autorizacion));
+        this.archivosCargados = {};
+        this.isUploadingDoc = {};
+
+        if (this.activeCuestionario.idCuestionario !== 0) {
+            this.loadCuestionarioFiles(this.activeCuestionario.idCuestionario);
+        }
 
         // Tratar de recuperar el nombre del proveedor en base al IdProveedor y campos guardados
         if (this.activeCuestionario.idProveedor) {
@@ -520,6 +533,164 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
                     error: (err) => {
                         console.error(err);
                         Swal.fire('Error', 'Error al intentar eliminar el cuestionario.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    loadCuestionarioFiles(idCuestionario: number): void {
+        if (!idCuestionario) return;
+        this._proveedoresService.getArchivosCuestionario(idCuestionario).subscribe({
+            next: (res) => {
+                if (res && res.success) {
+                    const list = res.data || [];
+                    this.archivosCargados = {};
+                    list.forEach((f: any) => {
+                        this.archivosCargados[f.nombreDocumento] = f.nombreArchivo;
+                    });
+                }
+            },
+            error: (err) => console.error('Error al cargar archivos de cuestionario:', err)
+        });
+    }
+
+    onFileSelected(event: any, nombreDocumento: string): void {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const idCuestionario = this.activeCuestionario.idCuestionario;
+        if (!idCuestionario) return;
+
+        this.isUploadingDoc[nombreDocumento] = true;
+        this._proveedoresService.subirArchivoCuestionario(idCuestionario, file, nombreDocumento).subscribe({
+            next: (res) => {
+                this.isUploadingDoc[nombreDocumento] = false;
+                this.archivosCargados[nombreDocumento] = res.nombreArchivo;
+                
+                const doc = this.activeCuestionario.documentos.find((d: any) => d.nombreDocumento === nombreDocumento);
+                if (doc) {
+                    doc.estado = 'Entregado';
+                    doc.fechaActualizacion = new Date();
+                }
+
+                Swal.fire({
+                    title: '¡Subido!',
+                    text: 'Archivo cargado con éxito y estado actualizado a Entregado.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            },
+            error: (err) => {
+                this.isUploadingDoc[nombreDocumento] = false;
+                console.error(err);
+                Swal.fire('Error', 'No se pudo subir el archivo.', 'error');
+            }
+        });
+        event.target.value = '';
+    }
+
+    descargarDoc(nombreDocumento: string): void {
+        const idCuestionario = this.activeCuestionario.idCuestionario;
+        this._proveedoresService.descargarArchivoCuestionario(idCuestionario, nombreDocumento).subscribe({
+            next: (res) => {
+                if (res && res.data) {
+                    const byteCharacters = atob(res.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: res.contentType });
+
+                    const a = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    a.href = objectUrl;
+                    a.download = res.nombreArchivo || nombreDocumento;
+                    a.click();
+                    URL.revokeObjectURL(objectUrl);
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                Swal.fire('Error', 'No se pudo descargar el archivo.', 'error');
+            }
+        });
+    }
+
+    previsualizarDoc(nombreDocumento: string): void {
+        const idCuestionario = this.activeCuestionario.idCuestionario;
+        this._proveedoresService.descargarArchivoCuestionario(idCuestionario, nombreDocumento).subscribe({
+            next: (res) => {
+                if (res && res.data) {
+                    const byteCharacters = atob(res.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: res.contentType });
+                    const fileURL = URL.createObjectURL(blob);
+                    
+                    const nombreArchivo = res.nombreArchivo || '';
+                    const isPdf = nombreArchivo.toLowerCase().endsWith('.pdf');
+
+                    this._dialog.open(ImagePreviewDialogComponent, {
+                        data: {
+                            url: fileURL,
+                            name: nombreArchivo,
+                            isPdf: isPdf
+                        }
+                    });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                Swal.fire('Error', 'No se pudo previsualizar el archivo.', 'error');
+            }
+        });
+    }
+
+    eliminarDoc(nombreDocumento: string): void {
+        const idCuestionario = this.activeCuestionario.idCuestionario;
+        
+        Swal.fire({
+            title: '¿Eliminar archivo?',
+            text: `¿Estás seguro de eliminar el archivo adjunto para "${nombreDocumento}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'inline-flex items-center justify-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg transition-all mx-2',
+                cancelButton: 'inline-flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-lg transition-all mx-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._proveedoresService.eliminarArchivoCuestionario(idCuestionario, nombreDocumento).subscribe({
+                    next: () => {
+                        delete this.archivosCargados[nombreDocumento];
+                        
+                        const doc = this.activeCuestionario.documentos.find((d: any) => d.nombreDocumento === nombreDocumento);
+                        if (doc) {
+                            doc.estado = 'Pendiente';
+                            doc.fechaActualizacion = new Date();
+                        }
+
+                        Swal.fire({
+                            title: '¡Eliminado!',
+                            text: 'El archivo ha sido eliminado y el estado se actualizó a Pendiente.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    },
+                    error: (err) => {
+                        console.error(err);
+                        Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
                     }
                 });
             }

@@ -69,7 +69,6 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         'banco',
         'cuenta',
         'clabe',
-        'datosBancarios',
         'fechaRequerida',
         'lugarEntrega',
         'moneda',

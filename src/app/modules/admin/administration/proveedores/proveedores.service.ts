@@ -97,4 +97,27 @@ export class ProveedoresService {
     getReporteResumen(): Observable<any> {
         return this._http.get<any>(`${environment.apiUrl}/ProveedorMaestro/reporte-resumen`);
     }
+
+    // -----------------------------------------------------------------------------------------------------
+    // @ Gestión de Documentos
+    // -----------------------------------------------------------------------------------------------------
+
+    subirArchivoCuestionario(idCuestionario: number, archivo: File, nombreDocumento: string): Observable<any> {
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        formData.append('nombreDocumento', nombreDocumento);
+        return this._http.post<any>(`${this.apiCuestionario}/${idCuestionario}/documentos/subir`, formData);
+    }
+
+    getArchivosCuestionario(idCuestionario: number): Observable<any> {
+        return this._http.get<any>(`${this.apiCuestionario}/${idCuestionario}/documentos`);
+    }
+
+    descargarArchivoCuestionario(idCuestionario: number, nombreDocumento: string): Observable<any> {
+        return this._http.get<any>(`${this.apiCuestionario}/${idCuestionario}/documentos/descargar?nombreDocumento=${encodeURIComponent(nombreDocumento)}`);
+    }
+
+    eliminarArchivoCuestionario(idCuestionario: number, nombreDocumento: string): Observable<any> {
+        return this._http.delete<any>(`${this.apiCuestionario}/${idCuestionario}/documentos/eliminar?nombreDocumento=${encodeURIComponent(nombreDocumento)}`);
+    }
 }

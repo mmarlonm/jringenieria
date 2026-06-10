@@ -580,26 +580,6 @@
                             <td mat-cell *matCellDef="let s">{{ s.clabe }}</td>
                         </ng-container>
 
-                        <ng-container matColumnDef="datosBancarios">
-                            <th mat-header-cell *matHeaderCellDef>
-                                <div class="flex items-center gap-2">
-                                    <span mat-sort-header>Datos bancarios proveedor</span>
-                                    <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuBancos" (click)="$event.stopPropagation()">
-                                        <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.datosBancariosProveedor}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
-                                    </button>
-                                    <mat-menu #filterMenuBancos="matMenu" class="p-4 !min-w-64">
-                                        <div (click)="$event.stopPropagation()">
-                                            <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
-                                                <mat-label>Filtrar Datos Bancarios</mat-label>
-                                                <input matInput [(ngModel)]="filterValues.datosBancariosProveedor" (keyup)="onFilterChange()" placeholder="Filtrar...">
-                                            </mat-form-field>
-                                        </div>
-                                    </mat-menu>
-                                </div>
-                            </th>
-                            <td mat-cell *matCellDef="let s" class="max-w-[150px] truncate text-xs"
-                                [matTooltip]="s.datosBancariosProveedor">{{ s.datosBancariosProveedor }}</td>
-                        </ng-container>
 
                         <ng-container matColumnDef="fechaRequerida">
                             <th mat-header-cell *matHeaderCellDef>
