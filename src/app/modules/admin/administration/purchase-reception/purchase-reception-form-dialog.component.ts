@@ -83,18 +83,34 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
     }
 
     initForm(): void {
+        const rec = this.data?.reception;
         this.receptionForm = this._formBuilder.group({
-            idSolicitud: [null, Validators.required],
-            fechaRecepcion: [new Date(), Validators.required],
-            lugarEntrega: ['', Validators.required],
-            quienRecibioId: [null, Validators.required],
-            dondeRecibio: ['', Validators.required],
-            CondicionesComentarios: [''],
-            estatus: [0, Validators.required],
-            folioInternoFactura: [''],
-            puntajeCalidad: [100, Validators.required],
-            puntajeEntrega: [100, Validators.required]
+            idSolicitud: [rec?.idSolicitud || null, Validators.required],
+            fechaRecepcion: [rec?.fechaRecepcion ? new Date(rec.fechaRecepcion) : new Date(), Validators.required],
+            lugarEntrega: [rec?.lugarEntrega || '', Validators.required],
+            quienRecibioId: [rec?.quienRecibioId || rec?.quienRecibio || null, Validators.required],
+            dondeRecibio: [rec?.dondeRecibio || '', Validators.required],
+            CondicionesComentarios: [rec?.condicionesComentarios || ''],
+            estatus: [rec?.estatus !== undefined ? rec.estatus : 0, Validators.required],
+            folioInternoFactura: [rec?.folioInternoFactura || ''],
+            puntajeCalidad: [rec?.puntajeCalidad !== undefined ? rec.puntajeCalidad : 100, Validators.required],
+            puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required]
         });
+
+        if (rec) {
+            this.ocData = {
+                idSolicitud: rec.idSolicitud,
+                folioOC: rec.folioOC,
+                sucursal: rec.sucursal,
+                proyectoCliente: rec.proyectoCliente,
+                datosFiscales: {
+                    nombreProveedor: rec.proveedorSugerido || rec.nombreProveedor || rec.proveedor,
+                    totalFactura: rec.monto,
+                    moneda: rec.moneda || 'MXN',
+                    folioInternoFactura: rec.folioInternoFactura
+                }
+            };
+        }
     }
 
     onSearchOC(event: any): void {

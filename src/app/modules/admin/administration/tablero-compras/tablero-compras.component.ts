@@ -298,7 +298,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     quienRecibioId: idUsuario,
                     dondeRecibio: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
                     condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
-                    estatus: 1, // Completado
+                    estatus: 0, // Pendiente
                     puntajeCalidad: 100,
                     puntajeEntrega: 100,
                     folioOC: res?.folioOC || row.folioOC,
@@ -314,7 +314,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     next: (regRes: any) => {
                         Swal.fire({
                             title: '¡Recepción Registrada!',
-                            text: 'La recepción de compra se ha registrado correctamente y el estatus se actualizó a Recibido.',
+                            text: 'La recepción de compra se ha registrado correctamente con estatus Pendiente.',
                             icon: 'success',
                             showCancelButton: true,
                             confirmButtonText: 'Ir a Recepción de Compras',
@@ -352,7 +352,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     quienRecibioId: idUsuario,
                     dondeRecibio: row.lugarEntrega || 'Sucursal',
                     condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
-                    estatus: 1, // Completado
+                    estatus: 0, // Pendiente
                     puntajeCalidad: 100,
                     puntajeEntrega: 100,
                     folioOC: row.folioOC,
@@ -368,7 +368,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     next: (regRes: any) => {
                         Swal.fire({
                             title: '¡Recepción Registrada!',
-                            text: 'La recepción de compra se ha registrado correctamente y el estatus se actualizó a Recibido.',
+                            text: 'La recepción de compra se ha registrado correctamente con estatus Pendiente.',
                             icon: 'success',
                             showCancelButton: true,
                             confirmButtonText: 'Ir a Recepción de Compras',

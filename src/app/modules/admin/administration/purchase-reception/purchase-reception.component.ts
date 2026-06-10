@@ -192,6 +192,25 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
         });
     }
 
+    openEditReceptionDialog(reception: any): void {
+        const dialogRef = this._dialog.open(PurchaseReceptionFormDialogComponent, {
+            data: { 
+                usuarios: this.usuarios,
+                reception: reception 
+            },
+            width: '100%',
+            maxWidth: '1000px',
+            maxHeight: '90vh',
+            autoFocus: false
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.loadData();
+            }
+        });
+    }
+
     getUserLabel(idUsuario: number): string {
         const user = this.usuarios.find(u => u.id === idUsuario || u.usuarioId === idUsuario);
         return user ? (user.nombreUsuario || user.nombre) : `ID: ${idUsuario}`;

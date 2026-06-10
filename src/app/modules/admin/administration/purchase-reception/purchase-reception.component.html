@@ -278,6 +278,11 @@
                                              [svgIcon]="'heroicons_outline:eye'"></mat-icon>
                                          <span>Ver Detalles</span>
                                      </button>
+                                     <button mat-menu-item *ngIf="row.estatus === 0 || !row.estatus" (click)="openEditReceptionDialog(row)">
+                                         <mat-icon class="icon-size-5 text-amber-500"
+                                             [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                         <span>Editar Recepción</span>
+                                     </button>
                                      <mat-divider class="my-1"></mat-divider>
                                      <button mat-menu-item (click)="eliminarRecepcion(row)">
                                          <mat-icon class="icon-size-5 text-red-500"
@@ -333,13 +338,19 @@
                                     <span class="text-xs font-black uppercase tracking-wide text-gray-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                                         {{ row.sucursal }}
                                     </span>
-                                    <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
-                                        [ngClass]="{
-                                            'bg-amber-100 text-amber-700': row.estatus === 0 || !row.estatus,
-                                            'bg-emerald-100 text-emerald-700': row.estatus === 1
-                                        }">
-                                        {{ row.estatus === 1 ? 'Completado' : 'Pendiente' }}
-                                    </span>
+                                    <div class="flex items-center gap-1">
+                                        <button *ngIf="row.estatus === 0 || !row.estatus" mat-icon-button class="w-7 h-7 min-h-7 text-amber-500 hover:bg-amber-50 rounded-lg"
+                                            (click)="$event.stopPropagation(); openEditReceptionDialog(row)" matTooltip="Editar">
+                                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                        </button>
+                                        <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
+                                            [ngClass]="{
+                                                'bg-amber-100 text-amber-700': row.estatus === 0 || !row.estatus,
+                                                'bg-emerald-100 text-emerald-700': row.estatus === 1
+                                            }">
+                                            {{ row.estatus === 1 ? 'Completado' : 'Pendiente' }}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <!-- Proyecto -->

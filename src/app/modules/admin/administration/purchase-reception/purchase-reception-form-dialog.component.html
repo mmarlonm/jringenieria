@@ -3,8 +3,8 @@
     <div class="flex items-center justify-between p-6 border-b bg-white">
         <div class="flex items-center gap-2">
             <mat-icon class="icon-size-7 text-primary" [svgIcon]="'heroicons_outline:archive-box'"></mat-icon>
-            <h2 class="text-2xl font-bold tracking-tight text-gray-900 italic">
-                Nueva Recepción de Compra
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 italic">
+                {{ data?.reception ? 'Editar Recepción de Compra #' + (data.reception.idRecepcion || data.reception.id) : 'Nueva Recepción de Compra' }}
             </h2>
         </div>
         <button mat-icon-button (click)="close()">
@@ -25,9 +25,9 @@
                 <div class="md:col-span-1">
                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
                         <mat-label>Folio Solicitud</mat-label>
-                        <input matInput #folioInput (keyup.enter)="onSearchOC($event)" placeholder="Ej. 123">
+                        <input matInput #folioInput [disabled]="!!data?.reception" [value]="data?.reception ? data.reception.idSolicitud : ''" (keyup.enter)="onSearchOC($event)" placeholder="Ej. 123">
                         <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:hashtag'"></mat-icon>
-                        <button mat-icon-button matSuffix (click)="onSearchOC({target: folioInput})">
+                        <button mat-icon-button matSuffix [disabled]="!!data?.reception" (click)="onSearchOC({target: folioInput})">
                             <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
                         </button>
                     </mat-form-field>
@@ -246,7 +246,7 @@
                 <button mat-flat-button color="primary" class="px-8 rounded-lg font-bold shadow-md"
                     [disabled]="isLoading || receptionForm.invalid" (click)="submit()">
                     <mat-icon *ngIf="isLoading" class="animate-spin icon-size-5 mr-2" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
-                    {{ isLoading ? 'Registrando...' : 'Registrar Entrega' }}
+                    {{ isLoading ? 'Guardando...' : (data?.reception ? 'Guardar Cambios' : 'Registrar Entrega') }}
                 </button>
             </div>
         </form>
