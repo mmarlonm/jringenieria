@@ -15,6 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { PurchaseReceptionService } from './purchase-reception.service';
 import { UsersService } from '../../security/users/users.service';
@@ -84,19 +85,30 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
         private _receptionService: PurchaseReceptionService,
         private _usersService: UsersService,
         private _dialog: MatDialog,
-        private _notificationService: ChatNotificationService
+        private _notificationService: ChatNotificationService,
+        private _route: ActivatedRoute
     ) { }
 
     ngOnInit(): void {
         this.loadUsers();
         
-        // Default dates
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        this.fechaInicio = firstDay;
-        this.fechaFin = now;
-
-        this.loadData();
+        this._route.queryParams
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe(params => {
+                const idSolicitudParam = params['idSolicitud'];
+                if (idSolicitudParam) {
+                    this.fechaInicio = null;
+                    this.fechaFin = null;
+                    this.filtroSearch = idSolicitudParam.toString();
+                } else {
+                    const now = new Date();
+                    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                    this.fechaInicio = firstDay;
+                    this.fechaFin = now;
+                    this.filtroSearch = '';
+                }
+                this.loadData();
+            });
     }
 
     ngOnDestroy(): void {
@@ -124,6 +136,11 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
                 next: (res: any) => {
                     this.dataSource.data = res.data || res || [];
                     this.dataSource.sort = this.sort;
+                    if (this.filtroSearch) {
+                        this.dataSource.filter = this.filtroSearch.trim().toLowerCase();
+                    } else {
+                        this.dataSource.filter = '';
+                    }
                     this._calculateKPIs();
                     this.isLoading = false;
                 },
@@ -156,8 +173,7 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
     }
 
     applyFilter(event: Event): void {
-        const filterValue = (event.target as HTMLInputElement).value;
-        this.dataSource.filter = filterValue.trim().toLowerCase();
+        this.dataSource.filter = this.filtroSearch.trim().toLowerCase();
     }
 
     openNewReceptionDialog(): void {

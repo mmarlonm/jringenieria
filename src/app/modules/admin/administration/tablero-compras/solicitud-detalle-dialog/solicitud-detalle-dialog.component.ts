@@ -12,6 +12,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'solicitud-detalle-dialog',
@@ -294,7 +295,7 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                                 </div>
                                 <div class="flex flex-col flex-auto min-w-0">
                                     <span class="text-xs font-bold truncate pr-2 mb-1.5" [title]="file.nombreArchivo">{{ file.nombreArchivo }}</span>
-                                    <div class="flex items-center gap-4">
+                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                                         <button (click)="previsualizarArchivo(file.nombreArchivo)" 
                                               class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline uppercase flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer">
                                             <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
@@ -304,6 +305,11 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
                                               class="text-[10px] text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold hover:underline uppercase flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer transition-colors">
                                             <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
                                             Descargar
+                                        </button>
+                                        <button (click)="eliminarArchivo(file.nombreArchivo)" 
+                                              class="text-[10px] text-red-500 hover:text-red-700 font-bold hover:underline uppercase flex items-center gap-1 bg-transparent border-0 p-0 cursor-pointer transition-colors">
+                                            <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                                            Eliminar
                                         </button>
                                     </div>
                                 </div>
@@ -429,6 +435,43 @@ export class SolicitudDetalleDialogComponent implements OnInit {
                     isPdf: isPdf
                 }
             });
+        });
+    }
+
+    eliminarArchivo(nombreArchivo: string): void {
+        Swal.fire({
+            title: '¿Eliminar archivo?',
+            text: `¿Estás seguro de eliminar el archivo "${nombreArchivo}" de esta solicitud?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-red-200',
+                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._service.eliminarArchivo(this.data.idSolicitud, nombreArchivo).subscribe({
+                    next: () => {
+                        Swal.fire({
+                            title: '¡Eliminado!',
+                            text: 'El archivo ha sido eliminado de la solicitud.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        this.loadFiles();
+                    },
+                    error: (err) => {
+                        console.error('Error al eliminar archivo:', err);
+                        Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
+                    }
+                });
+            }
         });
     }
 

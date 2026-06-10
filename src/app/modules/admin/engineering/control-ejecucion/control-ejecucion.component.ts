@@ -208,7 +208,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     editarEjecucion(row: SeguimientoEjecucion): void {
         const dialogRef = this._dialog.open(ControlEjecucionDialogComponent, {
             width: '100%',
-            maxWidth: '650px',
+            maxWidth: '1000px',
             data: { ejecucion: row },
             autoFocus: false
         });

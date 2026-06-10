@@ -1,6 +1,6 @@
-<div class="flex flex-col max-h-screen -m-6 bg-slate-50">
+<div class="flex flex-col max-h-[90vh] -m-6 bg-slate-50">
     <!-- Header: Modern Gradient & Pattern -->
-    <div class="relative flex flex-col items-center justify-center pt-8 pb-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 overflow-hidden shadow-md">
+    <div class="relative flex flex-col items-center justify-center pt-8 pb-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 overflow-hidden shadow-md flex-none">
         <!-- Abstract Background Elements -->
         <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl"></div>
         <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl"></div>
@@ -13,119 +13,181 @@
         <div class="relative z-10 flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/20 ring-4 ring-indigo-500/30 mb-3 shadow-[0_0_15px_rgba(99,102,241,0.3)]">
             <mat-icon class="icon-size-8 text-indigo-200" [svgIcon]="'heroicons_outline:wrench-screwdriver'"></mat-icon>
         </div>
-        <div class="relative z-10 text-2xl font-black text-white tracking-tight">Editar Ejecución</div>
-        <div class="relative z-10 text-sm font-medium text-indigo-200/80 mt-1">Configuración y seguimiento del proyecto</div>
+        <div class="relative z-10 text-2xl font-black text-white tracking-tight">Control de Ejecución</div>
+        <div class="relative z-10 text-xs font-semibold text-indigo-200/80 mt-1 uppercase tracking-wider">Proyecto: {{ ejecucion.actividad }} ({{ ejecucion.nombreSolicitante }})</div>
     </div>
 
-    <!-- Form content -->
-    <div class="flex flex-col flex-auto p-6 sm:p-8 overflow-y-auto">
-        <form [formGroup]="form" class="flex flex-col w-full space-y-6">
+    <!-- Mat Tab Group for separation -->
+    <mat-tab-group class="flex-auto overflow-hidden custom-dialog-tabs" headerPosition="above" [animationDuration]="'300ms'">
+        <!-- TAB 1: INFORMACION GENERAL -->
+        <mat-tab label="Información General">
+            <div class="p-6 overflow-y-auto max-h-[55vh]">
+                <form [formGroup]="form" class="flex flex-col w-full space-y-6">
+                    <!-- Section 1: Financial & Resources -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                            <div class="p-2 bg-indigo-50 rounded-lg">
+                                <mat-icon class="text-indigo-500 icon-size-5" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                            </div>
+                            <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Recursos y Utilidad</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Utilidad Esperada</mat-label>
+                                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+                                <input matInput type="number" formControlName="utilidadEsperada" placeholder="0.00">
+                            </mat-form-field>
 
-            <!-- Section 1: Financial & Resources -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
-                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
-                    <div class="p-2 bg-indigo-50 rounded-lg">
-                        <mat-icon class="text-indigo-500 icon-size-5" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Disponibilidad de Recursos</mat-label>
+                                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:users'"></mat-icon>
+                                <mat-select formControlName="disponibilidadRecursos">
+                                    <mat-option *ngFor="let opt of recursosOptions" [value]="opt">{{ opt }}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
                     </div>
-                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Recursos y Utilidad</span>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Utilidad Esperada</mat-label>
-                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
-                        <input matInput type="number" formControlName="utilidadEsperada" placeholder="0.00">
-                    </mat-form-field>
 
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Disponibilidad de Recursos</mat-label>
-                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:users'"></mat-icon>
-                        <mat-select formControlName="disponibilidadRecursos">
-                            <mat-option *ngFor="let opt of recursosOptions" [value]="opt">{{ opt }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
+                    <!-- Section 2: Timeline -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                            <div class="p-2 bg-emerald-50 rounded-lg">
+                                <mat-icon class="text-emerald-500 icon-size-5" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+                            </div>
+                            <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cronograma del Proyecto</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Fecha de Inicio</mat-label>
+                                <input matInput [matDatepicker]="startPicker" formControlName="fechaInicioProyecto">
+                                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                                <mat-datepicker #startPicker></mat-datepicker>
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Fecha Fin Estimada</mat-label>
+                                <input matInput [matDatepicker]="endPicker" formControlName="fechaFinProyecto">
+                                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                                <mat-datepicker #endPicker></mat-datepicker>
+                            </mat-form-field>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Risk & Priority -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                            <div class="p-2 bg-rose-50 rounded-lg">
+                                <mat-icon class="text-rose-500 icon-size-5" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                            </div>
+                            <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Evaluación de Riesgos</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Riesgo Técnico</mat-label>
+                                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:shield-exclamation'"></mat-icon>
+                                <mat-select formControlName="riesgoTecnico">
+                                    <mat-option *ngFor="let opt of riesgoOptions" [value]="opt">{{ opt }}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Nivel de Prioridad</mat-label>
+                                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:flag'"></mat-icon>
+                                <mat-select formControlName="nivelPrioridad">
+                                    <mat-option *ngFor="let opt of prioridadOptions" [value]="opt">{{ opt }}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Documentation -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                            <div class="p-2 bg-amber-50 rounded-lg">
+                                <mat-icon class="text-amber-500 icon-size-5" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                            </div>
+                            <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Documentación Legal</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Contrato (Folio)</mat-label>
+                                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:clipboard-document-check'"></mat-icon>
+                                <input matInput formControlName="contratoFolio">
+                            </mat-form-field>
+
+                            <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
+                                <mat-label>Fianza (Folio)</mat-label>
+                                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:document-check'"></mat-icon>
+                                <input matInput formControlName="fianzaFolio">
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </mat-tab>
+
+        <!-- TAB 2: GESTION DE ARCHIVOS -->
+        <mat-tab label="Archivos y Evidencias">
+            <div class="p-6 overflow-y-auto max-h-[55vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div *ngFor="let cat of categories" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full min-h-[180px]">
+                        
+                        <!-- Category Header -->
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                    <mat-icon class="icon-size-5" [svgIcon]="cat.icon"></mat-icon>
+                                </div>
+                                <span class="text-xs font-black text-slate-800 uppercase tracking-wider">{{ cat.label }}</span>
+                            </div>
+                            <!-- Upload button -->
+                            <button mat-icon-button (click)="fileInput.click()" [disabled]="isUploading[cat.name]" matTooltip="Subir archivo" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                            </button>
+                            <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, cat.name)">
+                        </div>
+
+                        <!-- Category Files List -->
+                        <div class="flex-auto space-y-2 overflow-y-auto max-h-40 min-h-[80px] pr-1 custom-scrollbar">
+                            <!-- Loader -->
+                            <div *ngIf="isUploading[cat.name]" class="flex items-center justify-center p-4 text-xs text-indigo-600 gap-2">
+                                <mat-icon class="animate-spin icon-size-4" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
+                                <span>Subiendo archivo...</span>
+                            </div>
+
+                            <div *ngIf="getFilesByCategory(cat.name).length === 0 && !isUploading[cat.name]" class="flex flex-col items-center justify-center py-6 text-slate-400 italic">
+                                <mat-icon class="icon-size-6 text-slate-300 mb-1" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                                <span class="text-[10px] font-medium uppercase tracking-tighter">Sin archivos adjuntos</span>
+                            </div>
+
+                            <div *ngFor="let file of getFilesByCategory(cat.name)" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all group">
+                                <span class="text-xs font-bold text-slate-700 truncate pr-2" [title]="file.nombreArchivo">
+                                    {{ file.nombreArchivo }}
+                                </span>
+                                <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <!-- Preview -->
+                                    <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-slate-400 hover:text-indigo-600" (click)="previsualizarArchivo(file)" matTooltip="Ver">
+                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                    </button>
+                                    <!-- Download -->
+                                    <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-slate-400 hover:text-emerald-600" (click)="descargarArchivo(file)" matTooltip="Descargar">
+                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
+                                    </button>
+                                    <!-- Delete -->
+                                    <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-slate-400 hover:text-red-600" (click)="eliminarArchivo(file)" matTooltip="Eliminar">
+                                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Section 2: Timeline -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
-                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
-                    <div class="p-2 bg-emerald-50 rounded-lg">
-                        <mat-icon class="text-emerald-500 icon-size-5" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
-                    </div>
-                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cronograma del Proyecto</span>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Fecha de Inicio</mat-label>
-                        <input matInput [matDatepicker]="startPicker" formControlName="fechaInicioProyecto">
-                        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
-                        <mat-datepicker #startPicker></mat-datepicker>
-                    </mat-form-field>
-
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Fecha Fin Estimada</mat-label>
-                        <input matInput [matDatepicker]="endPicker" formControlName="fechaFinProyecto">
-                        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-                        <mat-datepicker #endPicker></mat-datepicker>
-                    </mat-form-field>
-                </div>
-            </div>
-
-            <!-- Section 3: Risk & Priority -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
-                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
-                    <div class="p-2 bg-rose-50 rounded-lg">
-                        <mat-icon class="text-rose-500 icon-size-5" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
-                    </div>
-                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Evaluación de Riesgos</span>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Riesgo Técnico</mat-label>
-                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:shield-exclamation'"></mat-icon>
-                        <mat-select formControlName="riesgoTecnico">
-                            <mat-option *ngFor="let opt of riesgoOptions" [value]="opt">{{ opt }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Nivel de Prioridad</mat-label>
-                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:flag'"></mat-icon>
-                        <mat-select formControlName="nivelPrioridad">
-                            <mat-option *ngFor="let opt of prioridadOptions" [value]="opt">{{ opt }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-            </div>
-
-            <!-- Section 4: Documentation -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
-                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
-                    <div class="p-2 bg-amber-50 rounded-lg">
-                        <mat-icon class="text-amber-500 icon-size-5" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
-                    </div>
-                    <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Documentación Legal</span>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Contrato (Folio)</mat-label>
-                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:clipboard-document-check'"></mat-icon>
-                        <input matInput formControlName="contratoFolio">
-                    </mat-form-field>
-
-                    <mat-form-field class="w-full fuse-mat-dense" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Fianza (Folio)</mat-label>
-                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2" [svgIcon]="'heroicons_outline:document-check'"></mat-icon>
-                        <input matInput formControlName="fianzaFolio">
-                    </mat-form-field>
-                </div>
-            </div>
-
-        </form>
-    </div>
+        </mat-tab>
+    </mat-tab-group>
 
     <!-- Actions -->
-    <div class="flex items-center justify-end px-6 py-5 border-t border-slate-200 bg-white shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-2xl z-10">
+    <div class="flex items-center justify-end px-6 py-5 border-t border-slate-200 bg-white shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-2xl z-10 flex-none">
         <button mat-button matDialogClose class="mr-3 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl px-5 font-bold transition-colors">
             Cancelar
         </button>

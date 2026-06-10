@@ -10,12 +10,13 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { SolicitudCompraService } from '../solicitudes-compra/solicitud-compra.service';
+import { PurchaseReceptionService } from '../purchase-reception/purchase-reception.service';
 import { SolicitudCompra, CatEstatusCompra } from '../solicitudes-compra/models/solicitud-compra.types';
 import { SolicitudDetalleDialogComponent } from './solicitud-detalle-dialog/solicitud-detalle-dialog.component';
 import { HistorialDialogComponent } from './historial-dialog/historial-dialog.component';
@@ -165,7 +166,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         private _solicitudCompraService: SolicitudCompraService,
         private _usersService: UsersService,
         public _exchangeRateService: ExchangeRateService,
-        private _dialog: MatDialog
+        private _dialog: MatDialog,
+        private _purchaseReceptionService: PurchaseReceptionService,
+        private _router: Router
     ) {
     }
 
@@ -262,6 +265,137 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             width: '100%',
             maxWidth: '600px',
             autoFocus: false
+        });
+    }
+
+    crearRecepcionAutomatica(row: any): void {
+        const userObjStr = localStorage.getItem('userInformation');
+        let idUsuario = 0;
+        if (userObjStr) {
+            try {
+                const userObj = JSON.parse(userObjStr);
+                idUsuario = userObj?.usuario?.id || 0;
+            } catch (e) {
+                console.error('Error parsing user object from localStorage', e);
+            }
+        }
+
+        Swal.fire({
+            title: 'Registrando Recepción...',
+            html: 'Buscando datos y facturas asociadas en CONTPAQi...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        this._purchaseReceptionService.getDetalleConsolidado(row.idSolicitud).subscribe({
+            next: (res) => {
+                const payload = {
+                    idSolicitud: row.idSolicitud,
+                    fechaRecepcion: new Date(),
+                    lugarEntrega: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
+                    quienRecibioId: idUsuario,
+                    dondeRecibio: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
+                    condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
+                    estatus: 1, // Completado
+                    puntajeCalidad: 100,
+                    puntajeEntrega: 100,
+                    folioOC: res?.folioOC || row.folioOC,
+                    sucursal: res?.sucursal || row.sucursal,
+                    proveedorSugerido: res?.datosFiscales?.nombreProveedor || row.proveedorSugerido,
+                    proyectoCliente: res?.proyectoCliente || row.proyectoCliente,
+                    monto: res?.datosFiscales?.totalFactura || row.monto,
+                    moneda: res?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (res?.datosFiscales?.moneda?.trim() || row.moneda || 'MXN'),
+                    folioInternoFactura: res?.datosFiscales?.folioInternoFactura || ''
+                };
+
+                this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
+                    next: (regRes: any) => {
+                        Swal.fire({
+                            title: '¡Recepción Registrada!',
+                            text: 'La recepción de compra se ha registrado correctamente y el estatus se actualizó a Recibido.',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ir a Recepción de Compras',
+                            cancelButtonText: 'Permanecer aquí',
+                            reverseButtons: true,
+                            buttonsStyling: false,
+                            customClass: {
+                                popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+                            }
+                        }).then((swalRes) => {
+                            this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
+
+                            if (swalRes.isConfirmed) {
+                                this._router.navigate(['/administration/recepcion-compras'], {
+                                    queryParams: { idSolicitud: row.idSolicitud }
+                                });
+                            }
+                        });
+                    },
+                    error: (err) => {
+                        console.error('Error al registrar recepción:', err);
+                        Swal.fire('Error', 'Hubo un error al registrar la recepción de compra.', 'error');
+                    }
+                });
+            },
+            error: (err) => {
+                console.warn('No se encontraron detalles consolidados en CONTPAQi, registrando con datos locales...', err);
+                
+                const payload = {
+                    idSolicitud: row.idSolicitud,
+                    fechaRecepcion: new Date(),
+                    lugarEntrega: row.lugarEntrega || 'Sucursal',
+                    quienRecibioId: idUsuario,
+                    dondeRecibio: row.lugarEntrega || 'Sucursal',
+                    condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
+                    estatus: 1, // Completado
+                    puntajeCalidad: 100,
+                    puntajeEntrega: 100,
+                    folioOC: row.folioOC,
+                    sucursal: row.sucursal,
+                    proveedorSugerido: row.proveedorSugerido,
+                    proyectoCliente: row.proyectoCliente,
+                    monto: row.monto,
+                    moneda: row.moneda || 'MXN',
+                    folioInternoFactura: ''
+                };
+
+                this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
+                    next: (regRes: any) => {
+                        Swal.fire({
+                            title: '¡Recepción Registrada!',
+                            text: 'La recepción de compra se ha registrado correctamente y el estatus se actualizó a Recibido.',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ir a Recepción de Compras',
+                            cancelButtonText: 'Permanecer aquí',
+                            reverseButtons: true,
+                            buttonsStyling: false,
+                            customClass: {
+                                popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+                            }
+                        }).then((swalRes) => {
+                            this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
+
+                            if (swalRes.isConfirmed) {
+                                this._router.navigate(['/administration/recepcion-compras'], {
+                                    queryParams: { idSolicitud: row.idSolicitud }
+                                });
+                            }
+                        });
+                    },
+                    error: (regErr) => {
+                        console.error('Error al registrar recepción con fallback:', regErr);
+                        Swal.fire('Error', 'Hubo un error al registrar la recepción de compra.', 'error');
+                    }
+                });
+            }
         });
     }
 

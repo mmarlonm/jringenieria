@@ -144,4 +144,28 @@ export class EngineeringService {
     updateEstatusEjecucionRapido(idSeguimiento: number, campo: string, estatus: number): Observable<any> {
         return this._http.put(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/estatus/${campo}`, estatus);
     }
+
+    // ==========================================
+    // 📁 ARCHIVOS DE CONTROL DE EJECUCIÓN
+    // ==========================================
+    getArchivosEjecucion(idSeguimiento: number): Observable<any[]> {
+        return this._http.get<any[]>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos`);
+    }
+
+    subirArchivoEjecucion(idSeguimiento: number, archivo: File, tipo: string): Observable<any> {
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        formData.append('tipo', tipo);
+        return this._http.post(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos`, formData);
+    }
+
+    descargarArchivoEjecucion(idSeguimiento: number, tipo: string, nombreArchivo: string): Observable<any> {
+        const encodedFile = encodeURIComponent(nombreArchivo);
+        return this._http.get<any>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos/${tipo}/${encodedFile}`);
+    }
+
+    eliminarArchivoEjecucion(idSeguimiento: number, tipo: string, nombreArchivo: string): Observable<any> {
+        const encodedFile = encodeURIComponent(nombreArchivo);
+        return this._http.delete(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos/${tipo}/${encodedFile}`);
+    }
 }

@@ -100,7 +100,7 @@
                         <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
                             <mat-icon matPrefix class="icon-size-5"
                                 [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                            <input matInput (keyup)="applyFilter($event)"
+                            <input matInput (keyup)="applyFilter($event)" [(ngModel)]="filtroSearch"
                                 placeholder="Buscar por folio, sucursal, proyecto..." #input>
                         </mat-form-field>
                     </div>

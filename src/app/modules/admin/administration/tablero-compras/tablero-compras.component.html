@@ -896,6 +896,11 @@
                                                 [svgIcon]="'heroicons_solid:clock'"></mat-icon>
                                             <span>Ver historial de estatus</span>
                                         </button>
+                                        <button mat-menu-item (click)="crearRecepcionAutomatica(s)">
+                                            <mat-icon class="icon-size-5 text-indigo-600"
+                                                [svgIcon]="'heroicons_solid:archive-box'"></mat-icon>
+                                            <span>Recepción de compra</span>
+                                        </button>
                                         <button mat-menu-item (click)="cambiarEstadoLiquidacion(s)">
                                             <ng-container *ngIf="s.estadoLiquidacion === 0 || s.estadoLiquidacion === 2">
                                                 <mat-icon class="icon-size-5 text-emerald-500"
@@ -987,6 +992,10 @@
                                         <button mat-menu-item (click)="verHistorial(s.idSolicitud)">
                                             <mat-icon class="icon-size-5 text-indigo-500" [svgIcon]="'heroicons_solid:clock'"></mat-icon>
                                             <span>Historial de Estatus</span>
+                                        </button>
+                                        <button mat-menu-item (click)="crearRecepcionAutomatica(s)">
+                                            <mat-icon class="icon-size-5 text-indigo-600" [svgIcon]="'heroicons_solid:archive-box'"></mat-icon>
+                                            <span>Recepción de compra</span>
                                         </button>
                                         <button mat-menu-item (click)="cambiarEstadoLiquidacion(s)">
                                             <mat-icon class="icon-size-5" [ngClass]="(s.estadoLiquidacion === 0 || s.estadoLiquidacion === 2) ? 'text-emerald-500' : 'text-amber-500'" 
