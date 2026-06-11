@@ -622,7 +622,10 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
     viewExpense(expense: Expense): void {
         this._matDialog.open(ExpenseDetailsComponent, {
-            data: { expense },
+            data: { 
+                expense,
+                proveedorNombre: this.getProveedorNombre(expense.proveedor)
+            },
             width: '600px',
             maxWidth: '100vw',
             panelClass: 'expense-details-dialog'

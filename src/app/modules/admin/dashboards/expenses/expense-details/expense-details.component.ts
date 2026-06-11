@@ -24,11 +24,13 @@ import { Expense } from '../models/expenses.types';
 })
 export class ExpenseDetailsComponent {
     expense: Expense;
+    proveedorNombre: string;
 
     constructor(
-        @Inject(MAT_DIALOG_DATA) public data: { expense: Expense },
+        @Inject(MAT_DIALOG_DATA) public data: { expense: Expense, proveedorNombre?: string },
         public _dialogRef: MatDialogRef<ExpenseDetailsComponent>
     ) {
         this.expense = data.expense;
+        this.proveedorNombre = data.proveedorNombre || data.expense.gastoProveedor?.nombre || (typeof data.expense.proveedor === 'string' ? data.expense.proveedor : 'N/A');
     }
 }
