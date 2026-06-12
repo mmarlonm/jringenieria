@@ -76,6 +76,7 @@ export interface AccesoTallerResultDto {
     nombreAsistente: string;
     tipoAsistente: string;
     organizacion: string;
+    cupoSobrepasado: boolean; // true cuando se permitió el acceso pese a cupo lleno
 }
 
 @Injectable({

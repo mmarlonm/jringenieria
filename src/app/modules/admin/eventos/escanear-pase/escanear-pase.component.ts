@@ -32,6 +32,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public scanResult: any = null;
     public tokenInput: string = '';
     public cameraError: string = '';
+    public cupoSobrepasado: boolean = false; // bandera de advertencia sin bloquear acceso
 
     private _html5QrCode: any = null;
 
@@ -319,12 +320,17 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                             tipo: res.tipoAsistente,
                             organizacion: res.organizacion,
                             fechaCheckIn: new Date().toISOString(),
-                            mensaje: res.mensaje // "¡Acceso Autorizado!" o "Re-ingreso Autorizado"
+                            mensaje: res.mensaje,
+                            cupoSobrepasado: res.cupoSobrepasado
                         };
+                        this.cupoSobrepasado = !!res.cupoSobrepasado;
                         
-                        if (res.mensaje.includes('Re-ingreso')) {
+                        if (res.mensaje && res.mensaje.includes('Re-ingreso')) {
                             this.scanState = 'duplicate';
                             this.playBeep('warning');
+                        } else if (res.cupoSobrepasado) {
+                            this.scanState = 'success'; // sigue siendo éxito (acceso registrado)
+                            this.playBeep('warning');   // pero con sonido de alerta
                         } else {
                             this.scanState = 'success';
                             this.playBeep('success');
@@ -364,6 +370,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         this.scanState = 'idle';
         this.scanResult = null;
         this.tokenInput = '';
+        this.cupoSobrepasado = false;
         this._cdr.markForCheck();
         
         // Wait 150ms for Angular DOM rendering to fully display the #reader container before starting camera

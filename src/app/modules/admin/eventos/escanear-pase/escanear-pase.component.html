@@ -184,6 +184,20 @@
                     Acceso Autorizado
                 </span>
 
+                <!-- ⚠️ CUPO SOBREPASADO WARNING BANNER -->
+                <div *ngIf="cupoSobrepasado"
+                     class="w-full mb-4 flex items-center gap-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/40 animate-pulse">
+                    <div class="flex-shrink-0 h-8 w-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                        <mat-icon class="text-amber-600 dark:text-amber-400 icon-size-5" svgIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+                    </div>
+                    <div class="text-left min-w-0">
+                        <p class="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider leading-none">⚠ Cupo Sobrepasado</p>
+                        <p class="text-[9px] text-amber-600 dark:text-amber-500 font-semibold mt-0.5 leading-snug">
+                            El taller superó su capacidad máxima.<br>Acceso registrado de todas formas.
+                        </p>
+                    </div>
+                </div>
+
                 <h2 class="text-2xl font-black text-slate-850 dark:text-white leading-tight mb-5">
                     {{ scanResult?.nombreCompleto }}
                 </h2>
