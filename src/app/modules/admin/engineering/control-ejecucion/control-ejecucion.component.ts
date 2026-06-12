@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -48,6 +49,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         'riesgoPrioridad',
         'ast',
         'gantt',
+        'avanceGantt',
         'imss',
         'adquisicion',
         'construccion',
@@ -118,7 +120,8 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
 
     constructor(
         private _engineeringService: EngineeringService,
-        private _dialog: MatDialog
+        private _dialog: MatDialog,
+        private _router: Router
     ) { }
 
     ngOnInit(): void {
@@ -206,33 +209,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     // ACTIONS
     // ==========================================
     editarEjecucion(row: SeguimientoEjecucion): void {
-        const dialogRef = this._dialog.open(ControlEjecucionDialogComponent, {
-            width: '100%',
-            maxWidth: '1000px',
-            data: { ejecucion: row },
-            autoFocus: false
-        });
-
-        dialogRef.afterClosed().subscribe((result) => {
-            if (result) {
-                this._engineeringService.saveSeguimientoEjecucion(result).subscribe({
-                    next: () => {
-                        this.getSeguimientos();
-                        Swal.fire({
-                            title: '¡Actualizado!',
-                            text: 'Información de ejecución guardada',
-                            icon: 'success',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    },
-                    error: (err) => {
-                        console.error(err);
-                        Swal.fire('Error', 'No se pudo guardar la información', 'error');
-                    }
-                });
-            }
-        });
+        this._router.navigate(['/engineering/control-ejecucion/editar', row.idSeguimiento]);
     }
 
     cambiarEstatus(id: number, campo: string, estatus: number): void {

@@ -12,5 +12,9 @@ export default [
     {
         path: 'control-ejecucion',
         loadComponent: () => import('./control-ejecucion/control-ejecucion.component').then(m => m.ControlEjecucionComponent)
+    },
+    {
+        path: 'control-ejecucion/editar/:id',
+        loadComponent: () => import('./control-ejecucion/control-ejecucion-form/control-ejecucion-form.component').then(m => m.ControlEjecucionFormComponent)
     }
 ] as Routes;

@@ -54,6 +54,41 @@ export interface SeguimientoEjecucion {
     actividad?: string;
     nombreSolicitante?: string;
     empresa?: string;
+    avanceGantt?: number;
+}
+
+export interface SeguimientoEjecucionActividadMaestra {
+    id?: number;
+    idSeguimiento: number;
+    nombre: string;
+    responsableId?: number;
+    nombreResponsable?: string;
+    area?: string;
+    progreso: number;
+    fechaInicio: string | Date;
+    fechaFin: string | Date;
+    predecesoraId?: number;
+    prioridad?: string;
+    estatus: number;
+    color?: string;
+    expanded?: boolean; // Frontend only
+    actividades?: SeguimientoEjecucionSubactividad[];
+}
+
+export interface SeguimientoEjecucionSubactividad {
+    id?: number;
+    actividadMaestraId: number;
+    nombre: string;
+    responsableId?: number;
+    nombreResponsable?: string;
+    area?: string;
+    progreso: number;
+    fechaInicio: string | Date;
+    fechaFin: string | Date;
+    predecesoraId?: number;
+    prioridad?: string;
+    estatus: number;
+    color?: string;
 }
 
 @Injectable({
@@ -167,5 +202,28 @@ export class EngineeringService {
     eliminarArchivoEjecucion(idSeguimiento: number, tipo: string, nombreArchivo: string): Observable<any> {
         const encodedFile = encodeURIComponent(nombreArchivo);
         return this._http.delete(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos/${tipo}/${encodedFile}`);
+    }
+
+    // ==========================================
+    // 📊 GESTION DE GANTT (ACTIVIDADES MAESTRAS Y SUBACTIVIDADES)
+    // ==========================================
+    getGanttTareas(idSeguimiento: number): Observable<SeguimientoEjecucionActividadMaestra[]> {
+        return this._http.get<SeguimientoEjecucionActividadMaestra[]>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/gantt/tareas`);
+    }
+
+    saveGanttMaestra(tarea: any): Observable<any> {
+        return this._http.post(`${this.apiSeguimientoEjecucion}/gantt/maestra`, tarea);
+    }
+
+    deleteGanttMaestra(id: number): Observable<any> {
+        return this._http.delete(`${this.apiSeguimientoEjecucion}/gantt/maestra/${id}`);
+    }
+
+    saveGanttSubactividad(actividad: any): Observable<any> {
+        return this._http.post(`${this.apiSeguimientoEjecucion}/gantt/subactividad`, actividad);
+    }
+
+    deleteGanttSubactividad(id: number): Observable<any> {
+        return this._http.delete(`${this.apiSeguimientoEjecucion}/gantt/subactividad/${id}`);
     }
 }

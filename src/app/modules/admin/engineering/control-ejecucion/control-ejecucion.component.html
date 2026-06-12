@@ -151,6 +151,19 @@
                         </td>
                     </ng-container>
 
+                    <!-- Avance Gantt -->
+                    <ng-container matColumnDef="avanceGantt">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">Avance Gantt</th>
+                        <td mat-cell *matCellDef="let s" class="text-center px-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="text-xs font-black text-slate-700 min-w-[32px]">{{ (s.avanceGantt || 0) | number:'1.0-0' }}%</span>
+                                <div class="w-16 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden shadow-inner hidden sm:block">
+                                    <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 rounded-full" [style.width.%]="s.avanceGantt || 0"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </ng-container>
+
                     <!-- IMSS -->
                     <ng-container matColumnDef="imss">
                         <th mat-header-cell *matHeaderCellDef class="text-center">IMSS/SUA</th>

@@ -1,0 +1,426 @@
+<div class="flex flex-col w-full h-full min-w-0 bg-slate-50 dark:bg-transparent overflow-hidden">
+  
+  <!-- Back Header / Breadcrumbs -->
+  <div class="flex-none flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 dark:border-slate-800 shadow-sm z-10">
+    <div class="flex items-center gap-4">
+      <a mat-stroked-button [routerLink]="['/engineering/control-ejecucion']" class="!rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
+        <mat-icon class="mr-1 icon-size-5">arrow_back</mat-icon>
+        Volver
+      </a>
+      <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
+      <div class="flex flex-col min-w-0">
+        <h1 class="text-xl font-extrabold text-slate-800 truncate" *ngIf="ejecucion">
+          {{ ejecucion.actividad }}
+        </h1>
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" *ngIf="ejecucion">
+          Proyecto #{{ idSeguimiento }} &bull; Solicitante: {{ ejecucion.nombreSolicitante }} ({{ ejecucion.empresa }})
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs Interface -->
+  <div class="flex-auto flex flex-col overflow-hidden">
+    <mat-tab-group class="flex-auto flex flex-col overflow-hidden custom-form-tabs" headerPosition="above" [animationDuration]="'200ms'">
+      
+      <!-- TAB 1: INFORMACIÓN GENERAL -->
+      <mat-tab label="Información General">
+        <div class="p-6 md:p-8 overflow-y-auto h-full max-h-[calc(100vh-140px)] custom-scrollbar">
+          <div class="max-w-7xl mx-auto w-full">
+            <form [formGroup]="form" (ngSubmit)="saveGeneralInfo()" class="space-y-6">
+              
+              <!-- Responsive Grid Layout -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              
+              <!-- Section 1: Financial & Resources -->
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                  <div class="p-2 bg-indigo-50 rounded-lg text-indigo-500">
+                    <mat-icon class="icon-size-5">monetization_on</mat-icon>
+                  </div>
+                  <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Recursos y Utilidad</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Utilidad Esperada (MXN)</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">attach_money</mat-icon>
+                    <input matInput type="number" formControlName="utilidadEsperada" placeholder="0.00">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Disponibilidad de Recursos</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">people</mat-icon>
+                    <mat-select formControlName="disponibilidadRecursos">
+                      <mat-option [value]="''">Sin especificar</mat-option>
+                      <mat-option *ngFor="let opt of recursosOptions" [value]="opt">{{ opt }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Section 2: Timeline -->
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                  <div class="p-2 bg-emerald-50 rounded-lg text-emerald-500">
+                    <mat-icon class="icon-size-5">calendar_month</mat-icon>
+                  </div>
+                  <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cronograma del Proyecto</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Fecha de Inicio</mat-label>
+                    <input matInput [matDatepicker]="startPicker" formControlName="fechaInicioProyecto">
+                    <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Fecha Fin Estimada</mat-label>
+                    <input matInput [matDatepicker]="endPicker" formControlName="fechaFinProyecto">
+                    <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Section 3: Risk & Priority -->
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                  <div class="p-2 bg-rose-50 rounded-lg text-rose-500">
+                    <mat-icon class="icon-size-5">warning</mat-icon>
+                  </div>
+                  <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Evaluación de Riesgos y Prioridad</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Riesgo Técnico</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">gavel</mat-icon>
+                    <mat-select formControlName="riesgoTecnico">
+                      <mat-option [value]="''">Sin especificar</mat-option>
+                      <mat-option *ngFor="let opt of riesgoOptions" [value]="opt">{{ opt }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Nivel de Prioridad</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">flag</mat-icon>
+                    <mat-select formControlName="nivelPrioridad">
+                      <mat-option [value]="''">Sin especificar</mat-option>
+                      <mat-option *ngFor="let opt of prioridadOptions" [value]="opt">{{ opt }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- Section 4: Documentation -->
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                  <div class="p-2 bg-amber-50 rounded-lg text-amber-500">
+                    <mat-icon class="icon-size-5">assignment</mat-icon>
+                  </div>
+                  <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Documentación Legal</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Contrato (Folio)</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">description</mat-icon>
+                    <input matInput formControlName="contratoFolio">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Fianza (Folio)</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">verified</mat-icon>
+                    <input matInput formControlName="fianzaFolio">
+                  </mat-form-field>
+                </div>
+              </div>
+              </div>
+
+
+
+            </form>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 2: CRONOGRAMA GANTT -->
+      <mat-tab label="Cronograma Gantt">
+        <div class="flex flex-col w-full h-full min-h-[500px] bg-white overflow-hidden max-h-[calc(100vh-140px)]">
+          
+          <!-- Gantt Header Controls -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex-none gap-4">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                <mat-icon class="icon-size-5">account_tree</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Cronograma del Proyecto</h3>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Actividades Maestras y Subactividades</p>
+              </div>
+            </div>
+
+            <button mat-flat-button color="primary" class="!rounded-xl shadow-md hover:shadow-lg transition-all" (click)="openActividadDialog('maestra')">
+              <mat-icon class="mr-2">add</mat-icon>
+              Nueva Actividad Maestra
+            </button>
+          </div>
+
+          <!-- Gantt Main Surface -->
+          <div class="flex-auto flex overflow-hidden">
+            
+            <!-- Left Panel: Columns Table -->
+            <div class="w-[60%] flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden">
+              <div class="h-12 flex items-center px-4 border-b bg-slate-100/30 text-[10px] font-black uppercase tracking-widest text-slate-500 sticky top-0 z-10">
+                <div class="flex w-full min-w-[1050px] items-center text-left">
+                  <div class="w-[220px] shrink-0">Actividad / Subactividad</div>
+                  <div class="w-[120px] shrink-0">Responsable</div>
+                  <div class="w-[100px] shrink-0">Área</div>
+                  <div class="w-[70px] shrink-0 text-center">Progreso</div>
+                  <div class="w-[85px] shrink-0 text-center">Inicio</div>
+                  <div class="w-[85px] shrink-0 text-center">Fin</div>
+                  <div class="w-[60px] shrink-0 text-center">Días</div>
+                  <div class="w-[110px] shrink-0">Predecesora</div>
+                  <div class="w-[70px] shrink-0 text-center">Prioridad</div>
+                  <div class="w-[90px] shrink-0 text-center">Estatus</div>
+                  <div class="w-[50px] shrink-0 text-center">Color</div>
+                  <div class="w-[90px] shrink-0 text-center">Acciones</div>
+                </div>
+              </div>
+              <div class="flex-auto overflow-y-auto overflow-x-auto custom-scrollbar" #sidebarScroll (scroll)="onScroll($event, timelineScroll)">
+                <div class="min-w-[1050px]">
+                  <div *ngFor="let row of visibleRows" class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors" [ngClass]="row.type === 'task' ? 'bg-indigo-50/20 font-bold text-slate-800' : 'pl-8 bg-white/40 text-slate-700'">
+                    <div class="flex w-full items-center text-left text-xs">
+                      
+                      <!-- Name -->
+                      <div class="w-[220px] shrink-0 truncate flex items-center gap-1">
+                        <button mat-icon-button *ngIf="row.type === 'task'" (click)="toggleTask(row.task); $event.stopPropagation()" class="w-6 h-6 min-h-6 p-0 text-slate-500">
+                          <mat-icon class="icon-size-4">{{ row.task.expanded !== false ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                        </button>
+                        <div *ngIf="row.type === 'activity'" class="w-6 shrink-0"></div>
+                        <span class="truncate pr-2" [title]="row.type === 'task' ? row.task.nombre : row.activity.nombre">
+                          {{ row.type === 'task' ? row.task.nombre : row.activity.nombre }}
+                        </span>
+                      </div>
+
+                      <!-- Responsable -->
+                      <div class="w-[120px] shrink-0 truncate flex items-center gap-2">
+                        <span class="truncate">{{ row.type === 'task' ? (row.task.nombreResponsable || '-') : (row.activity.nombreResponsable || '-') }}</span>
+                      </div>
+
+                      <!-- Area -->
+                      <div class="w-[100px] shrink-0 truncate">
+                        {{ row.type === 'task' ? (row.task.area || '-') : (row.activity.area || '-') }}
+                      </div>
+
+                      <!-- Progreso -->
+                      <div class="w-[70px] shrink-0 text-center font-bold text-slate-700">
+                        {{ row.type === 'task' ? row.task.progreso : row.activity.progreso }}%
+                      </div>
+
+                      <!-- Inicio -->
+                      <div class="w-[85px] shrink-0 text-center">
+                        {{ (row.type === 'task' ? row.task.fechaInicio : row.activity.fechaInicio) | date:'dd MMM yy':undefined:'es' }}
+                      </div>
+
+                      <!-- Fin -->
+                      <div class="w-[85px] shrink-0 text-center">
+                        {{ (row.type === 'task' ? row.task.fechaFin : row.activity.fechaFin) | date:'dd MMM yy':undefined:'es' }}
+                      </div>
+
+                      <!-- Dias -->
+                      <div class="w-[60px] shrink-0 text-center font-bold">
+                        {{ getDurationDays(row) }}
+                      </div>
+
+                      <!-- Predecesora -->
+                      <div class="w-[110px] shrink-0 truncate pr-2" [title]="getPredecesoraName(row)">
+                        {{ getPredecesoraName(row) }}
+                      </div>
+
+                      <!-- Prioridad -->
+                      <div class="w-[70px] shrink-0 text-center">
+                        <span [ngClass]="getPrioridadClass(row)" class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter shadow-sm border">
+                          {{ row.type === 'task' ? (row.task.prioridad || 'Media') : (row.activity.prioridad || 'Media') }}
+                        </span>
+                      </div>
+
+                      <!-- Estatus -->
+                      <div class="w-[90px] shrink-0 text-center">
+                        <span [ngClass]="getEstatusClass(row)" class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight shadow-inner">
+                          {{ getEstatusLabel(row) }}
+                        </span>
+                      </div>
+
+                      <!-- Color -->
+                      <div class="w-[50px] shrink-0 flex items-center justify-center">
+                        <div class="w-4 h-4 rounded-full border border-slate-200" [style.background-color]="getColorHex(row)"></div>
+                      </div>
+
+                      <!-- Acciones -->
+                      <div class="w-[90px] shrink-0 flex items-center justify-center gap-0.5">
+                        <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-indigo-600 hover:bg-indigo-50 rounded-lg" *ngIf="row.type === 'task'" matTooltip="Agregar Subactividad" (click)="openActividadDialog('subactividad', row.task)">
+                          <mat-icon class="icon-size-4">add</mat-icon>
+                        </button>
+                        <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-indigo-500 hover:bg-slate-100 rounded-lg" matTooltip="Editar" (click)="editRow(row)">
+                          <mat-icon class="icon-size-4">edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-red-500 hover:bg-red-50 rounded-lg" matTooltip="Eliminar" (click)="deleteRow(row)">
+                          <mat-icon class="icon-size-4">delete</mat-icon>
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+                <!-- Empty State -->
+                <div *ngIf="tasks.length === 0" class="flex flex-col items-center justify-center py-20 px-8 text-center">
+                  <mat-icon class="icon-size-12 text-slate-300 mb-2">event_busy</mat-icon>
+                  <p class="text-sm text-slate-400 font-medium italic">No hay actividades cargadas. Crea una Actividad Maestra para comenzar.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Canvas Timeline -->
+            <div class="w-[40%] flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 relative shadow-inner" #horizontalTimeline>
+              <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
+                
+                <!-- Timeline Header: Days -->
+                <div class="h-12 flex border-b bg-white/95 sticky top-0 z-10 shadow-sm">
+                  <div *ngFor="let day of days" class="flex-none w-11 border-r flex flex-col items-center justify-center transition-colors" [ngClass]="{'bg-primary/5': isToday(day), 'bg-slate-50/50': isWeekend(day)}">
+                    <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5" [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-400'">{{ formatDay(day) }}</span>
+                    <span class="text-xs font-black leading-none" [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-600'">{{ format(day, 'd') }}</span>
+                  </div>
+                </div>
+
+                <!-- Timeline Scroll Area -->
+                <div class="flex-auto relative overflow-y-auto overflow-x-hidden custom-scrollbar" #timelineScroll (scroll)="onScroll($event, sidebarScroll)">
+                  
+                  <!-- Background Grid Lines -->
+                  <div class="absolute inset-0 flex pointer-events-none">
+                    <div *ngFor="let day of days" class="flex-none w-11 border-r border-slate-100/40" [ngClass]="{'bg-primary/2': isToday(day)}"></div>
+                  </div>
+
+                  <!-- SVG Dependencies arrows -->
+                  <svg class="absolute inset-0 pointer-events-none overflow-visible z-10" [attr.width]="timelineWidth" [attr.height]="visibleRows.length * 56">
+                    <defs>
+                      <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                        <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+                      </marker>
+                    </defs>
+                    <ng-container *ngFor="let row of visibleRows; let idx = index">
+                      <path *ngIf="getDependencyPath(row, idx) as pathD" [attr.d]="pathD" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" marker-end="url(#arrowhead)" />
+                    </ng-container>
+                  </svg>
+
+                  <!-- Content Rows -->
+                  <div *ngFor="let row of visibleRows; let idx = index" class="h-14 flex items-center relative border-b border-slate-100/5 hover:bg-slate-50/30 transition-colors">
+                    
+                    <!-- Gantt colored bar -->
+                    <div class="absolute h-8 rounded-lg shadow-md flex items-center overflow-hidden cursor-pointer hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] transition-all duration-300 group" [ngStyle]="getBarStyles(row)" (click)="editRow(row)" [matTooltip]="getRowTooltip(row)">
+                      <!-- Glossy Progress Fill -->
+                      <div class="h-full opacity-20 absolute left-0 top-0 transition-all duration-700 ease-out" [style.width.%]="row.type === 'task' ? row.task.progreso : row.activity.progreso" [style.background-color]="getColorHex(row)"></div>
+                      <!-- Side accent line -->
+                      <div class="h-full w-1 absolute left-0 top-0" [style.background-color]="getColorHex(row)"></div>
+                      <!-- Text Overlay -->
+                      <div class="relative flex items-center w-full px-3 gap-2 overflow-hidden">
+                        <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase" [style.color]="getColorHex(row)">{{ row.type === 'task' ? row.task.nombre : row.activity.nombre }}</span>
+                        <span class="ml-auto text-[9px] font-black font-mono" [style.color]="getColorHex(row)">{{ row.type === 'task' ? row.task.progreso : row.activity.progreso }}%</span>
+                      </div>
+                      <!-- Stripe pattern for process state -->
+                      <div *ngIf="(row.type === 'task' ? row.task.estatus : row.activity.estatus) === 2" class="absolute inset-0 opacity-[0.10] pointer-events-none animate-stripes"></div>
+                    </div>
+
+                  </div>
+
+                  <!-- Today Line Marker -->
+                  <div *ngIf="showTodayMarker" class="absolute top-0 bottom-0 z-20 border-l-2 border-primary/40 flex flex-col items-center pointer-events-none" [style.left.px]="todayPosition">
+                    <div class="w-3 h-3 bg-primary rounded-full shadow-lg border border-white mt-1"></div>
+                    <div class="px-1.5 py-0.5 bg-primary text-white text-[7px] font-black rounded-sm mt-1 shadow-md">HOY</div>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 3: ARCHIVOS Y EVIDENCIAS -->
+      <mat-tab label="Archivos y Evidencias">
+        <div class="p-6 md:p-8 overflow-y-auto h-full max-h-[calc(100vh-140px)] custom-scrollbar">
+          <div class="max-w-7xl mx-auto w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              <div *ngFor="let cat of categories" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full min-h-[220px] hover:shadow-md transition-shadow">
+                <!-- Category Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 flex-none">
+                  <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                      <mat-icon class="icon-size-5" [svgIcon]="cat.icon"></mat-icon>
+                    </div>
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider">{{ cat.label }}</span>
+                  </div>
+                  <!-- Upload button -->
+                  <button mat-icon-button (click)="fileInput.click()" [disabled]="isUploading[cat.name]" matTooltip="Subir archivo" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                    <mat-icon class="icon-size-5">cloud_upload</mat-icon>
+                  </button>
+                  <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, cat.name)">
+                </div>
+
+                <!-- Category Files List -->
+                <div class="flex-auto space-y-2 overflow-y-auto max-h-48 min-h-[100px] pr-1 custom-scrollbar">
+                  <!-- Loader -->
+                  <div *ngIf="isUploading[cat.name]" class="flex items-center justify-center p-4 text-xs text-indigo-600 gap-2">
+                    <mat-icon class="animate-spin icon-size-4">sync</mat-icon>
+                    <span>Subiendo archivo...</span>
+                  </div>
+
+                  <div *ngIf="getFilesByCategory(cat.name).length === 0 && !isUploading[cat.name]" class="flex flex-col items-center justify-center py-8 text-slate-400 italic">
+                    <mat-icon class="icon-size-8 text-slate-200 mb-1">folder_open</mat-icon>
+                    <span class="text-[10px] font-medium uppercase tracking-tighter">Sin archivos adjuntos</span>
+                  </div>
+
+                  <div *ngFor="let file of getFilesByCategory(cat.name)" class="flex items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all group">
+                    <span class="text-xs font-bold text-slate-700 truncate pr-2 flex-auto" [title]="file.nombreArchivo">
+                      {{ file.nombreArchivo }}
+                    </span>
+                    <div class="flex items-center gap-0.5 shrink-0 opacity-85 group-hover:opacity-100 transition-opacity">
+                      <!-- Preview -->
+                      <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 rounded-lg" (click)="previsualizarArchivo(file)" matTooltip="Ver">
+                        <mat-icon class="icon-size-4">visibility</mat-icon>
+                      </button>
+                      <!-- Download -->
+                      <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg" (click)="descargarArchivo(file)" matTooltip="Descargar">
+                        <mat-icon class="icon-size-4">download</mat-icon>
+                      </button>
+                      <!-- Delete -->
+                      <button mat-icon-button class="w-7 h-7 min-h-7 p-0 text-slate-400 hover:text-red-600 hover:bg-slate-200/50 rounded-lg" (click)="eliminarArchivo(file)" matTooltip="Eliminar">
+                        <mat-icon class="icon-size-4">delete_forever</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+
+  <!-- Botones Flotantes (btn-float) -->
+  <div class="flex justify-end gap-2 btn-float z-[99]">
+      <a mat-raised-button color="warn" [routerLink]="['/engineering/control-ejecucion']">
+          Cancelar
+      </a>
+      <button mat-raised-button color="primary" [disabled]="form.invalid || isSaving" (click)="saveGeneralInfo()">
+          <mat-icon class="mr-2 animate-spin icon-size-4" *ngIf="isSaving">sync</mat-icon>
+          {{ isSaving ? 'Guardando...' : 'Guardar' }}
+      </button>
+  </div>
+
+</div>
