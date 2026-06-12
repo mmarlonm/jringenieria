@@ -115,6 +115,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
+            { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
@@ -348,7 +349,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
-            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' }
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
+            { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' }
         ]
     },
     {
@@ -417,7 +419,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
-            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' }
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
+            { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' }
         ] 
     },
     { id: 'comercializacion', title: 'COMERCIALIZACION', type: 'group', children: [] },
@@ -463,7 +466,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
-            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' }
+            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
+            { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' }
         ] 
     },
     { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },

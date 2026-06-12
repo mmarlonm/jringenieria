@@ -16,5 +16,9 @@ export default [
     {
         path: 'control-ejecucion/editar/:id',
         loadComponent: () => import('./control-ejecucion/control-ejecucion-form/control-ejecucion-form.component').then(m => m.ControlEjecucionFormComponent)
+    },
+    {
+        path: 'gantt-general',
+        loadComponent: () => import('./gantt-general/gantt-general.component').then(m => m.GanttGeneralComponent)
     }
 ] as Routes;

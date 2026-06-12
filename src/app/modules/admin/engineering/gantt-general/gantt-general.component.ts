@@ -1,0 +1,484 @@
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { EngineeringService } from '../engineering.service';
+import { 
+  addDays, 
+  differenceInDays, 
+  eachDayOfInterval, 
+  endOfMonth, 
+  format, 
+  isToday, 
+  startOfDay, 
+  startOfMonth, 
+  subDays 
+} from 'date-fns';
+import { es } from 'date-fns/locale';
+import { fromEvent, Subject, takeUntil } from 'rxjs';
+
+@Component({
+  selector: 'app-gantt-general',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule
+  ],
+  templateUrl: './gantt-general.component.html',
+  styles: [`
+    :host { display: block; width: 100%; height: 100%; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { 
+        background: rgba(203, 213, 225, 0.6); 
+        border-radius: 10px; 
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.6); }
+    
+    @keyframes stripes {
+      from { background-position: 0 0; }
+      to { background-position: 40px 0; }
+    }
+    .animate-stripes {
+      background-image: linear-gradient(45deg, rgba(255,255,255,.3) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.3) 50%, rgba(255,255,255,.3) 75%, transparent 75%, transparent);
+      background-size: 20px 20px;
+      animation: stripes 2s linear infinite;
+    }
+  `]
+})
+export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('horizontalTimeline') horizontalTimeline!: ElementRef;
+  @ViewChild('sidebarScroll') sidebarScroll!: ElementRef;
+  @ViewChild('timelineScroll') timelineScroll!: ElementRef;
+
+  private _unsubscribeAll: Subject<any> = new Subject<any>();
+  private _scrollAttemptCount: number = 0;
+
+  projects: any[] = [];
+  visibleRows: any[] = [];
+  
+  days: Date[] = [];
+  startDate: Date = startOfMonth(new Date());
+  endDate: Date = endOfMonth(addDays(new Date(), 15));
+  dayWidth: number = 44;
+  timelineWidth: number = 0;
+  todayPosition: number = 0;
+  showTodayMarker: boolean = false;
+  format = format;
+  isLoading: boolean = true;
+
+  constructor(
+    private _engineeringService: EngineeringService,
+    private _cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadData();
+
+    // Centrar al redimensionar
+    fromEvent(window, 'resize')
+      .pipe(takeUntil(this._unsubscribeAll))
+      .subscribe(() => {
+        this.scrollToTarget();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this._unsubscribeAll.next(null);
+    this._unsubscribeAll.complete();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.scrollToTarget(), 1000);
+  }
+
+  loadData(): void {
+    this.isLoading = true;
+    this._engineeringService.getGanttGeneral().subscribe({
+      next: (res) => {
+        this.projects = res || [];
+        
+        // Inicializar expansiones por defecto
+        this.projects.forEach((p) => {
+          p.expanded = p.expanded !== false;
+          if (p.actividadesMaestras) {
+            p.actividadesMaestras.forEach((m: any) => {
+              m.expanded = m.expanded !== false;
+            });
+          }
+        });
+
+        this.updateVisibleRows();
+        this.adjustTimelineRange();
+        this.isLoading = false;
+        
+        setTimeout(() => this.scrollToTarget(), 150);
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  updateVisibleRows(): void {
+    const rows: any[] = [];
+    this.projects.forEach((p) => {
+      rows.push({ type: 'project', project: p });
+      if (p.expanded !== false) {
+        if (p.actividadesMaestras) {
+          p.actividadesMaestras.forEach((m: any) => {
+            rows.push({ type: 'maestra', project: p, maestra: m });
+            if (m.expanded !== false) {
+              if (m.actividades) {
+                m.actividades.forEach((act: any) => {
+                  rows.push({ type: 'subactividad', project: p, maestra: m, subactividad: act });
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+    this.visibleRows = rows;
+    this._cdr.markForCheck();
+  }
+
+  toggleProject(p: any): void {
+    p.expanded = !p.expanded;
+    this.updateVisibleRows();
+  }
+
+  toggleMaestra(m: any): void {
+    m.expanded = !m.expanded;
+    this.updateVisibleRows();
+  }
+
+  initTimeline(customStart?: Date, customEnd?: Date): void {
+    if (customStart && customEnd) {
+      this.startDate = startOfDay(customStart);
+      this.endDate = startOfDay(customEnd);
+    } else {
+      this.startDate = startOfDay(subDays(new Date(), 15));
+      this.endDate = addDays(this.startDate, 60);
+    }
+
+    this.days = eachDayOfInterval({
+      start: this.startDate,
+      end: this.endDate
+    });
+
+    this.timelineWidth = this.days.length * this.dayWidth;
+    this.calculateTodayMarker();
+  }
+
+  adjustTimelineRange(): void {
+    let allDates: Date[] = [];
+
+    this.projects.forEach((p) => {
+      if (p.fechaInicioProyecto) allDates.push(new Date(p.fechaInicioProyecto));
+      if (p.fechaFinProyecto) allDates.push(new Date(p.fechaFinProyecto));
+
+      if (p.actividadesMaestras) {
+        p.actividadesMaestras.forEach((m: any) => {
+          if (m.fechaInicio) allDates.push(new Date(m.fechaInicio));
+          if (m.fechaFin) allDates.push(new Date(m.fechaFin));
+
+          if (m.actividades) {
+            m.actividades.forEach((s: any) => {
+              if (s.fechaInicio) allDates.push(new Date(s.fechaInicio));
+              if (s.fechaFin) allDates.push(new Date(s.fechaFin));
+            });
+          }
+        });
+      }
+    });
+
+    if (allDates.length === 0) {
+      this.initTimeline();
+      return;
+    }
+
+    let minDate = allDates[0];
+    let maxDate = allDates[0];
+
+    allDates.forEach((d) => {
+      if (d < minDate) minDate = d;
+      if (d > maxDate) maxDate = d;
+    });
+
+    const today = new Date();
+    if (today < minDate) minDate = today;
+    if (today > maxDate) maxDate = today;
+
+    const finalStart = subDays(minDate, 15);
+    const finalEnd = addDays(maxDate, 30);
+
+    this.initTimeline(finalStart, finalEnd);
+    this._cdr.detectChanges();
+  }
+
+  calculateTodayMarker(): void {
+    const today = startOfDay(new Date());
+    if (today >= this.startDate && today <= this.endDate) {
+      const diff = differenceInDays(today, this.startDate);
+      this.todayPosition = diff * this.dayWidth;
+      this.showTodayMarker = true;
+    } else {
+      this.showTodayMarker = false;
+    }
+  }
+
+  scrollToTarget(): void {
+    if (!this.horizontalTimeline) return;
+    const element = this.horizontalTimeline.nativeElement;
+
+    if (element.scrollWidth <= element.clientWidth && this._scrollAttemptCount < 15) {
+      this._scrollAttemptCount++;
+      setTimeout(() => this.scrollToTarget(), 200);
+      return;
+    }
+
+    this._scrollAttemptCount = 0;
+    let targetPos = 0;
+
+    if (this.showTodayMarker) {
+      targetPos = this.todayPosition;
+    }
+
+    element.scrollTo({
+      left: Math.max(0, targetPos - element.clientWidth / 3),
+      behavior: 'smooth'
+    });
+  }
+
+  onScroll(event: any, target: HTMLElement): void {
+    const source = event.target as HTMLElement;
+    window.requestAnimationFrame(() => {
+      if (target.scrollTop !== source.scrollTop) {
+        target.scrollTop = source.scrollTop;
+      }
+    });
+  }
+
+  // ==========================================
+  // HELPERS Y RENDERING DE BARRAS
+  // ==========================================
+  getDurationDays(row: any): number {
+    let start: Date;
+    let end: Date;
+
+    if (row.type === 'project') {
+      start = row.project.fechaInicioProyecto ? new Date(row.project.fechaInicioProyecto) : new Date();
+      end = row.project.fechaFinProyecto ? new Date(row.project.fechaFinProyecto) : new Date();
+    } else if (row.type === 'maestra') {
+      start = new Date(row.maestra.fechaInicio);
+      end = new Date(row.maestra.fechaFin);
+    } else {
+      start = new Date(row.subactividad.fechaInicio);
+      end = new Date(row.subactividad.fechaFin);
+    }
+
+    return differenceInDays(end, start) + 1;
+  }
+
+  getColorHex(row: any): string {
+    if (row.type === 'project') return '#475569'; // Slate 600
+    const colorName = row.type === 'maestra' ? row.maestra.color : row.subactividad.color;
+    switch (colorName) {
+      case 'Azul': return '#3b82f6';
+      case 'Verde': return '#10b981';
+      case 'Amarillo': return '#f59e0b';
+      case 'Morado': return '#8b5cf6';
+      case 'Naranja': return '#f97316';
+      case 'Rosa': return '#ec4899';
+      default: return row.type === 'maestra' ? '#3b82f6' : '#10b981';
+    }
+  }
+
+  getBarStyles(row: any): any {
+    let start: Date;
+    let end: Date;
+
+    if (row.type === 'project') {
+      if (!row.project.fechaInicioProyecto || !row.project.fechaFinProyecto) {
+        return { display: 'none' };
+      }
+      start = startOfDay(new Date(row.project.fechaInicioProyecto));
+      end = startOfDay(new Date(row.project.fechaFinProyecto));
+    } else if (row.type === 'maestra') {
+      start = startOfDay(new Date(row.maestra.fechaInicio));
+      end = startOfDay(new Date(row.maestra.fechaFin));
+    } else {
+      start = startOfDay(new Date(row.subactividad.fechaInicio));
+      end = startOfDay(new Date(row.subactividad.fechaFin));
+    }
+
+    let leftDays = differenceInDays(start, this.startDate);
+    let durationDays = differenceInDays(end, start) + 1;
+
+    if (leftDays < 0) {
+      durationDays += leftDays;
+      leftDays = 0;
+    }
+
+    if (durationDays < 0.5) return { display: 'none' };
+
+    const colorHex = this.getColorHex(row);
+
+    return {
+      'left': (leftDays * this.dayWidth) + 'px',
+      'width': (durationDays * this.dayWidth) + 'px',
+      'background-color': row.type === 'project' 
+        ? 'rgba(71, 85, 105, 0.05)' 
+        : row.type === 'maestra' ? 'rgba(15, 23, 42, 0.03)' : 'rgba(255, 255, 255, 0.95)',
+      'border': row.type === 'project' 
+        ? '2px dashed #94a3b8' 
+        : `1.5px solid ${colorHex}`,
+      'border-left-width': row.type === 'subactividad' ? '1.5px' : '4px',
+      'border-left-color': colorHex,
+      'border-radius': row.type === 'subactividad' ? '8px' : '4px'
+    };
+  }
+
+  getRowTooltip(row: any): string {
+    const name = row.type === 'project' ? row.project.actividad : (row.type === 'maestra' ? row.maestra.nombre : row.subactividad.nombre);
+    const prog = row.type === 'project' ? row.project.avanceGantt : (row.type === 'maestra' ? row.maestra.progreso : row.subactividad.progreso);
+    return `${name} (${Math.round(prog || 0)}%)`;
+  }
+
+  getPrioridadClass(row: any): string {
+    if (row.type === 'project') return '';
+    const prio = row.type === 'maestra' ? row.maestra.prioridad : row.subactividad.prioridad;
+    switch (prio) {
+      case 'Alta':
+      case 'Muy Alta':
+        return 'bg-red-100 text-red-700 border-red-200';
+      case 'Media':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'Baja':
+        return 'bg-slate-100 text-slate-700 border-slate-200';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  }
+
+  getEstatusLabel(row: any): string {
+    if (row.type === 'project') return '';
+    const est = row.type === 'maestra' ? row.maestra.estatus : row.subactividad.estatus;
+    switch (est) {
+      case 1: return 'Pendiente';
+      case 2: return 'En Proceso';
+      case 3: return 'Completado';
+      default: return 'No definido';
+    }
+  }
+
+  getEstatusClass(row: any): string {
+    if (row.type === 'project') return '';
+    const est = row.type === 'maestra' ? row.maestra.estatus : row.subactividad.estatus;
+    switch (est) {
+      case 1: return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-200';
+      case 2: return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200';
+      case 3: return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200';
+      default: return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10 border-slate-200';
+    }
+  }
+
+  getPredecesoraName(row: any): string {
+    if (row.type === 'project') return '-';
+    const pId = row.type === 'maestra' ? row.maestra.predecesoraId : row.subactividad.predecesoraId;
+    if (!pId) return '-';
+
+    if (row.type === 'maestra') {
+      if (row.project && row.project.actividadesMaestras) {
+        const pred = row.project.actividadesMaestras.find((m: any) => Number(m.id) === Number(pId));
+        return pred ? pred.nombre : `- (ID: ${pId})`;
+      }
+    } else if (row.type === 'subactividad') {
+      if (row.project && row.project.actividadesMaestras) {
+        let foundName = '';
+        row.project.actividadesMaestras.forEach((m: any) => {
+          if (m.actividades) {
+            const pred = m.actividades.find((a: any) => Number(a.id) === Number(pId));
+            if (pred) {
+              foundName = pred.nombre;
+            }
+          }
+        });
+        return foundName ? foundName : `- (ID: ${pId})`;
+      }
+    }
+    return '-';
+  }
+
+
+  formatDay(date: Date): string {
+    return format(date, 'eee', { locale: es });
+  }
+
+  isToday(date: Date): boolean {
+    return isToday(date);
+  }
+
+  isWeekend(date: Date): boolean {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  }
+
+  // ==========================================
+  // TRAZADO DE LÍNEAS DE DEPENDENCIAS (SVG)
+  // ==========================================
+  getDependencyPath(row: any, currentIndex: number): string | null {
+    // Dibujar dependencias solo para subactividades
+    if (row.type !== 'subactividad' || !row.subactividad.predecesoraId) return null;
+    const pId = Number(row.subactividad.predecesoraId);
+
+    // Buscar el predecesor en la lista visible (dentro del mismo proyecto, que sea subactividad)
+    const predIndex = this.visibleRows.findIndex(r => 
+      r.type === 'subactividad' && 
+      Number(r.subactividad.id) === pId && 
+      r.project.idSeguimiento === row.project.idSeguimiento
+    );
+    
+    if (predIndex === -1) return null;
+
+    const pred = this.visibleRows[predIndex];
+    const rowHeight = 56;
+    const predStyles = this.getBarStyles(pred);
+    const currStyles = this.getBarStyles(row);
+
+    if (!predStyles || !currStyles || predStyles.display === 'none' || currStyles.display === 'none') {
+      return null;
+    }
+
+    const sL = parseFloat(predStyles.left);
+    const sW = parseFloat(predStyles.width);
+    const eL = parseFloat(currStyles.left);
+    if (isNaN(sL) || isNaN(sW) || isNaN(eL)) return null;
+
+    const startX = sL + sW;
+    const startY = (predIndex * rowHeight) + 28;
+    const endX = eL;
+    const endY = (currentIndex * rowHeight) + 28;
+    
+    const gutterY = (currentIndex > predIndex) ? (predIndex + 1) * rowHeight : predIndex * rowHeight;
+    const r = 6;
+
+    if (endX >= startX + 25) {
+      const midX = startX + 12;
+      const dirY = (endY > startY) ? 1 : -1;
+      return `M ${startX} ${startY} L ${midX - r} ${startY} Q ${midX} ${startY} ${midX} ${startY + dirY * r} L ${midX} ${endY - dirY * r} Q ${midX} ${endY} ${midX + r} ${endY} L ${endX} ${endY}`;
+    } else {
+      const outX = startX + 15;
+      const inX = endX - 15;
+      const dirY = (endY > startY) ? 1 : -1;
+      return `M ${startX} ${startY} L ${outX - r} ${startY} Q ${outX} ${startY} ${outX} ${startY + dirY * r} L ${outX} ${gutterY - dirY * r} Q ${outX} ${gutterY} ${outX - r} ${gutterY} L ${inX + r} ${gutterY} Q ${inX} ${gutterY} ${inX} ${gutterY + dirY * r} L ${inX} ${endY - dirY * r} Q ${inX} ${endY} ${inX + r} ${endY} L ${endX} ${endY}`;
+    }
+  }
+}

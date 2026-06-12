@@ -226,4 +226,8 @@ export class EngineeringService {
     deleteGanttSubactividad(id: number): Observable<any> {
         return this._http.delete(`${this.apiSeguimientoEjecucion}/gantt/subactividad/${id}`);
     }
+
+    getGanttGeneral(): Observable<any[]> {
+        return this._http.get<any[]>(`${this.apiSeguimientoEjecucion}/gantt/general`);
+    }
 }
