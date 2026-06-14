@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import { APP_INITIALIZER, ApplicationConfig, inject, importProvidersFrom } from '@angular/core';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
@@ -32,7 +31,6 @@ Settings.defaultLocale = 'es'; // Luxon usará español globalmente
 export const appConfig: ApplicationConfig = {
     providers: [
         provideAnimations(),
-        provideHttpClient(),
         provideRouter(
             appRoutes,
             withPreloading(PreloadAllModules),
