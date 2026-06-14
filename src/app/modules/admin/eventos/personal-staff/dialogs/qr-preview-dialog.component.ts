@@ -27,7 +27,11 @@ export class QrPreviewDialogComponent implements OnInit {
 
     ngOnInit(): void {
         this.personal = this.data.personal;
-        this.publicUrl = window.location.origin + '/eventos/ficha-personal/' + this.personal.tokenQr;
+        let baseHref = document.getElementsByTagName('base')[0]?.getAttribute('href') || '/';
+        if (!baseHref.endsWith('/')) {
+            baseHref += '/';
+        }
+        this.publicUrl = window.location.origin + baseHref + '#/eventos/ficha-personal/' + this.personal.tokenQr;
         this.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(this.publicUrl)}`;
     }
 
