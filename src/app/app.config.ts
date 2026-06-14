@@ -1,4 +1,5 @@
 import { APP_INITIALIZER, ApplicationConfig, inject, importProvidersFrom } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -13,6 +14,9 @@ import { provideFuse } from '@fuse';
 import { TranslocoService, provideTransloco } from '@ngneat/transloco';
 import { appRoutes } from 'app/app.routes';
 import { provideAuth } from 'app/core/auth/auth.provider';
+import { authInterceptor } from 'app/core/auth/auth.interceptor';
+import { fuseLoadingInterceptor } from '@fuse/services/loading';
+import { mockApiInterceptor } from '@fuse/lib/mock-api';
 import { provideIcons } from 'app/core/icons/icons.provider';
 import { SignalRService } from 'app/signalr.service';
 import { mockApiServices } from 'app/mock-api';
@@ -123,5 +127,6 @@ export const appConfig: ApplicationConfig = {
                 ],
             },
         }),
+        provideHttpClient(withInterceptors([authInterceptor, fuseLoadingInterceptor, mockApiInterceptor])),
     ],
 };
