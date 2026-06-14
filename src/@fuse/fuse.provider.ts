@@ -73,8 +73,6 @@ export const provideFuse = (
             useValue: () => inject(FuseConfirmationService),
             multi: true,
         },
-
-        provideHttpClient(withInterceptors([fuseLoadingInterceptor])),
         {
             provide: ENVIRONMENT_INITIALIZER,
             useValue: () => inject(FuseLoadingService),
@@ -106,7 +104,6 @@ export const provideFuse = (
     // Mock Api services
     if (config?.mockApi?.services) {
         providers.push(
-            provideHttpClient(withInterceptors([mockApiInterceptor])),
             {
                 provide: APP_INITIALIZER,
                 deps: [...config.mockApi.services],
