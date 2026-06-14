@@ -1,0 +1,138 @@
+<div class="flex flex-col w-full h-full min-w-0 bg-slate-50 dark:bg-transparent overflow-hidden">
+    
+    <!-- Header -->
+    <div class="flex-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 bg-white border-b border-slate-200 dark:border-slate-800 shadow-sm z-10">
+        <div class="flex items-center gap-4">
+            <div class="p-2 bg-indigo-50 dark:bg-indigo-950 rounded-lg text-indigo-500">
+                <mat-icon class="icon-size-6">badge</mat-icon>
+            </div>
+            <div class="flex flex-col min-w-0">
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-slate-100 truncate">
+                    Personal y Expositores
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+                    Administración de staff, coordinadores y expositores del evento
+                </p>
+            </div>
+        </div>
+        <button mat-flat-button color="primary" class="!rounded-xl shadow-md hover:shadow-lg transition-all" (click)="openPersonalDialog()">
+            <mat-icon class="mr-2">add</mat-icon>
+            Registrar Personal
+        </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="flex-none flex flex-col md:flex-row items-center gap-4 px-6 py-4 bg-white border-b border-slate-200 dark:border-slate-800 z-10">
+        <!-- Search Input -->
+        <mat-form-field appearance="outline" class="w-full md:w-80 fuse-mat-dense" subscriptSizing="dynamic">
+            <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">search</mat-icon>
+            <input matInput [(ngModel)]="searchQuery" (input)="applyFilters()" placeholder="Buscar por nombre, cargo, empresa...">
+        </mat-form-field>
+
+        <!-- Dropdown Filter -->
+        <mat-form-field appearance="outline" class="w-full md:w-56 fuse-mat-dense" subscriptSizing="dynamic">
+            <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">filter_list</mat-icon>
+            <mat-select [(ngModel)]="selectedTipo" (selectionChange)="applyFilters()">
+                <mat-option *ngFor="let tipo of tiposPersonal" [value]="tipo">{{ tipo }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-auto overflow-y-auto p-6 relative">
+        
+        <!-- Loading Spinner -->
+        <div *ngIf="isLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/80 dark:bg-slate-900/80 z-50">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold mt-3 uppercase tracking-wider animate-pulse">Cargando Personal...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoading && filteredList.length === 0" class="flex flex-col items-center justify-center py-20 px-8 text-center bg-white rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <mat-icon class="icon-size-16 text-slate-300 dark:text-slate-700 mb-4">people</mat-icon>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">No se encontró personal</h3>
+            <p class="text-sm text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
+                No hay personal registrado que coincida con los criterios de búsqueda. Registra uno nuevo para comenzar.
+            </p>
+        </div>
+
+        <!-- Grid Cards List -->
+        <div *ngIf="!isLoading && filteredList.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            
+            <div *ngFor="let p of filteredList" class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+                
+                <!-- Card Body -->
+                <div class="flex-auto p-6 flex flex-col items-center text-center relative">
+                    
+                    <!-- Type Badge -->
+                    <span class="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm border"
+                          [ngClass]="{
+                              'bg-purple-100 text-purple-700 border-purple-200': p.tipoPersonal === 'Expositor',
+                              'bg-teal-100 text-teal-700 border-teal-200': p.tipoPersonal === 'Staff',
+                              'bg-blue-100 text-blue-700 border-blue-200': p.tipoPersonal === 'Organizador',
+                              'bg-amber-100 text-amber-700 border-amber-200': p.tipoPersonal === 'Soporte',
+                              'bg-slate-100 text-slate-700 border-slate-200': p.tipoPersonal === 'Otro'
+                          }">
+                        {{ p.tipoPersonal }}
+                    </span>
+
+                    <!-- Avatar -->
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 shadow-inner mb-4 flex items-center justify-center shrink-0">
+                        <img *ngIf="p.fotoPath" [src]="getPhotoUrl(p)" class="w-full h-full object-cover">
+                        <mat-icon *ngIf="!p.fotoPath" class="icon-size-12 text-slate-300 dark:text-slate-600">account_circle</mat-icon>
+                    </div>
+
+                    <!-- Details -->
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate w-full" [title]="p.nombreCompleto">
+                        {{ p.nombreCompleto }}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium truncate w-full" [title]="p.cargo">
+                        {{ p.cargo }}
+                    </p>
+                    <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold truncate w-full mb-4" [title]="p.empresa">
+                        {{ p.empresa }}
+                    </p>
+
+                    <!-- Contact Details Info -->
+                    <div class="w-full space-y-2 text-left pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">
+                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                            <mat-icon class="icon-size-4 shrink-0 text-slate-400">email</mat-icon>
+                            <span class="truncate" [title]="p.correoElectronico">{{ p.correoElectronico }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400" *ngIf="p.telefonoOficina">
+                            <mat-icon class="icon-size-4 shrink-0 text-slate-400">phone</mat-icon>
+                            <span class="truncate">{{ p.telefonoOficina }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400" *ngIf="p.telefonoWhatsapp">
+                            <mat-icon class="icon-size-4 shrink-0 text-slate-400">chat</mat-icon>
+                            <span class="truncate">{{ p.telefonoWhatsapp }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400" *ngIf="p.linkWeb">
+                            <mat-icon class="icon-size-4 shrink-0 text-slate-400">link</mat-icon>
+                            <a [href]="p.linkWeb" target="_blank" class="truncate text-indigo-600 hover:underline flex-auto">{{ p.linkWeb }}</a>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Card Actions (QR, Edit, Delete) -->
+                <div class="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex-none gap-2">
+                    <button mat-stroked-button color="primary" class="!rounded-xl !h-8 !px-3 text-xs flex-auto" (click)="openQrDialog(p)">
+                        <mat-icon class="icon-size-4 mr-1">qr_code</mat-icon>
+                        Imprimir QR
+                    </button>
+                    <button mat-icon-button class="w-8 h-8 p-0 text-slate-500 hover:bg-slate-200/50 rounded-lg shrink-0" matTooltip="Editar" (click)="openPersonalDialog(p)">
+                        <mat-icon class="icon-size-4">edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="w-8 h-8 p-0 text-red-500 hover:bg-red-50 rounded-lg shrink-0" matTooltip="Eliminar" (click)="deletePersonal(p)">
+                        <mat-icon class="icon-size-4">delete</mat-icon>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,104 @@
+<div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 md:p-6 select-none">
+    
+    <!-- Loader -->
+    <div *ngIf="isLoading" class="flex flex-col items-center justify-center text-white">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+        <p class="text-xs font-bold uppercase tracking-widest text-indigo-300 animate-pulse">Obteniendo ficha...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!isLoading && hasError" class="max-w-md w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl p-8 text-center text-white shadow-2xl">
+        <mat-icon class="icon-size-16 text-rose-500 mb-4">error_outline</mat-icon>
+        <h3 class="text-lg font-bold">Ficha no encontrada</h3>
+        <p class="text-xs text-slate-400 mt-2">
+            El enlace o código QR escaneado no coincide con ningún expositor registrado en el sistema, o ha sido removido.
+        </p>
+    </div>
+
+    <!-- Profile Card (Glassmorphism) -->
+    <div *ngIf="!isLoading && !hasError && personal" class="max-w-md w-full bg-white/10 dark:bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl text-white">
+        
+        <!-- Background Banner Accent -->
+        <div class="h-28 bg-gradient-to-r from-indigo-500 to-purple-600 relative flex justify-end p-4">
+            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/20 h-fit shadow-sm">
+                {{ personal.tipoPersonal }}
+            </span>
+        </div>
+
+        <!-- Avatar Container -->
+        <div class="flex flex-col items-center px-6 pb-6 -mt-14 relative">
+            <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-950 bg-slate-800 shadow-2xl flex items-center justify-center mb-4">
+                <img [src]="getPhotoUrl()" class="w-full h-full object-cover">
+            </div>
+
+            <!-- Profile Info -->
+            <h2 class="text-xl font-extrabold tracking-tight">{{ personal.nombreCompleto }}</h2>
+            <p class="text-xs text-indigo-300 font-semibold uppercase tracking-wider mt-1">{{ personal.cargo }}</p>
+            <p class="text-sm text-slate-300 font-medium mt-0.5">{{ personal.empresa }}</p>
+
+            <!-- Quick Communication Actions (Grid 2x2) -->
+            <div class="grid grid-cols-2 gap-4 w-full mt-6">
+                <!-- Phone Call -->
+                <a [href]="'tel:' + personal.telefonoOficina" *ngIf="personal.telefonoOficina" 
+                   class="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300 text-center gap-2 group">
+                    <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl group-hover:scale-110 transition-transform">
+                        <mat-icon class="icon-size-6">phone</mat-icon>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-300">Llamar</span>
+                </a>
+
+                <!-- WhatsApp Chat -->
+                <button (click)="openWhatsapp()" *ngIf="personal.telefonoWhatsapp"
+                        class="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300 text-center gap-2 group">
+                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl group-hover:scale-110 transition-transform">
+                        <mat-icon class="icon-size-6">chat</mat-icon>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-300">WhatsApp</span>
+                </button>
+
+                <!-- Email Send -->
+                <a [href]="'mailto:' + personal.correoElectronico"
+                   class="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300 text-center gap-2 group">
+                    <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl group-hover:scale-110 transition-transform">
+                        <mat-icon class="icon-size-6">email</mat-icon>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-300">Enviar Correo</span>
+                </a>
+
+                <!-- Visit Website -->
+                <button (click)="openWeb()" *ngIf="personal.linkWeb"
+                        class="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all duration-300 text-center gap-2 group">
+                    <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl group-hover:scale-110 transition-transform">
+                        <mat-icon class="icon-size-6">language</mat-icon>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-300">Sitio Web</span>
+                </button>
+            </div>
+
+            <!-- Detail List Info -->
+            <div class="w-full mt-6 space-y-4 pt-6 border-t border-white/10 text-xs">
+                <div class="flex flex-col gap-1 text-left w-full">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Correo Electrónico</span>
+                    <span class="text-sm font-semibold text-slate-200">{{ personal.correoElectronico }}</span>
+                </div>
+                <div class="flex flex-col gap-1 text-left w-full" *ngIf="personal.telefonoOficina">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Teléfono Oficina</span>
+                    <span class="text-sm font-semibold text-slate-200">{{ personal.telefonoOficina }}</span>
+                </div>
+                <div class="flex flex-col gap-1 text-left w-full" *ngIf="personal.telefonoWhatsapp">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Teléfono WhatsApp</span>
+                    <span class="text-sm font-semibold text-slate-200">{{ personal.telefonoWhatsapp }}</span>
+                </div>
+                <div class="flex flex-col gap-1 text-left w-full" *ngIf="personal.linkWeb">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Página Web</span>
+                    <a [href]="personal.linkWeb" target="_blank" class="text-sm font-semibold text-indigo-400 hover:underline">
+                        {{ personal.linkWeb }}
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

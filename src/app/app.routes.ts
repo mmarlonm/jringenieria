@@ -142,7 +142,8 @@ export const appRoutes: Route[] = [
                 path: 'eventos', children: [
                     { path: 'dashboard', loadComponent: () => import('app/modules/admin/eventos/dashboard/dashboard.component').then(m => m.EventosDashboardComponent) },
                     { path: 'control', loadComponent: () => import('app/modules/admin/eventos/control/control.component').then(m => m.EventosControlComponent) },
-                    { path: 'gestion-talleres', loadComponent: () => import('app/modules/admin/eventos/gestion-talleres/gestion-talleres.component').then(m => m.GestionTalleresComponent) }
+                    { path: 'gestion-talleres', loadComponent: () => import('app/modules/admin/eventos/gestion-talleres/gestion-talleres.component').then(m => m.GestionTalleresComponent) },
+                    { path: 'personal', loadComponent: () => import('app/modules/admin/eventos/personal-staff/personal-staff.component').then(m => m.EventosPersonalComponent) }
                 ]
             }
         ]
@@ -150,5 +151,9 @@ export const appRoutes: Route[] = [
     {
         path: 'eventos/escanear-pase',
         loadComponent: () => import('app/modules/admin/eventos/escanear-pase/escanear-pase.component').then(m => m.EscanearPaseComponent)
+    },
+    {
+        path: 'eventos/ficha-personal/:token',
+        loadComponent: () => import('app/modules/admin/eventos/ficha-personal/ficha-personal.component').then(m => m.FichaPersonalComponent)
     }
 ];

@@ -1,0 +1,47 @@
+<div class="flex flex-col max-w-sm w-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <span class="text-sm font-bold text-slate-800 dark:text-slate-100">Código QR del Personal</span>
+        <button mat-icon-button (click)="close()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <mat-icon class="icon-size-5">close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col items-center p-6 text-center">
+        
+        <!-- Badge -->
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 shadow-sm">
+            {{ personal.tipoPersonal }}
+        </span>
+
+        <h3 class="text-lg font-extrabold text-slate-800 dark:text-slate-100 mt-3">
+            {{ personal.nombreCompleto }}
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            {{ personal.cargo }} &bull; {{ personal.empresa }}
+        </p>
+
+        <!-- QR Code Image -->
+        <div class="my-6 p-4 bg-white dark:bg-white rounded-xl border border-slate-100 dark:border-slate-800 shadow-md flex items-center justify-center">
+            <img [src]="qrCodeUrl" alt="QR Code" class="w-48 h-48">
+        </div>
+
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium max-w-xs">
+            Este código QR contiene el enlace a la ficha de contacto pública del expositor. Puedes imprimirlo para colocarlo en su stand o gafete.
+        </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <button mat-button (click)="close()">
+            Cerrar
+        </button>
+        <button mat-flat-button color="primary" class="!rounded-xl" (click)="printQr()">
+            <mat-icon class="mr-2">print</mat-icon>
+            Imprimir QR
+        </button>
+    </div>
+
+</div>
