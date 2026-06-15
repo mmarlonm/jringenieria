@@ -23,6 +23,7 @@ export class FichaPersonalComponent implements OnInit {
     personal: PersonalStaff | null = null;
     isLoading: boolean = true;
     hasError: boolean = false;
+    copied: boolean = false;
 
     constructor(
         private _route: ActivatedRoute,
@@ -77,6 +78,25 @@ export class FichaPersonalComponent implements OnInit {
             const cleanPhone = this.personal.telefonoWhatsapp.replace(/[^\d]/g, '');
             const url = `https://wa.me/${cleanPhone}`;
             window.open(url, '_blank');
+        }
+    }
+
+    shareProfile(): void {
+        const shareData = {
+            title: `Ficha de Contacto - ${this.personal?.nombreCompleto}`,
+            text: `${this.personal?.cargo} en ${this.personal?.empresa}`,
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).catch(err => console.log('Error sharing:', err));
+        } else {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                this.copied = true;
+                setTimeout(() => {
+                    this.copied = false;
+                }, 2500);
+            }).catch(err => console.error('Could not copy link:', err));
         }
     }
 }
