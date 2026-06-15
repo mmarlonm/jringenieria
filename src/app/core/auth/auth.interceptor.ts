@@ -29,20 +29,16 @@ export const authInterceptor = (
     // Request
     //
     // If the access token didn't expire, add the Authorization header.
-    console.log('🛡️ [AuthInterceptor] Interceptando:', req.url);
     if (
         authService.accessToken &&
         !AuthUtils.isTokenExpired(authService.accessToken)
     ) {
-        console.log('🔑 [AuthInterceptor] Agregando Token:', authService.accessToken.substring(0, 15) + '...');
         newReq = req.clone({
             headers: req.headers.set(
                 'Authorization',
                 'Bearer ' + authService.accessToken
             ),
         });
-    } else {
-        console.warn('⚠️ [AuthInterceptor] No hay token o está expirado. Token:', authService.accessToken ? 'Expirado' : 'No existe');
     }
 
     // Response
