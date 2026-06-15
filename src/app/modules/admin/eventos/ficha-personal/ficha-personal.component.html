@@ -30,8 +30,8 @@
              class="w-full min-h-screen sm:min-h-0 sm:max-w-sm bg-white dark:bg-slate-950 border-0 sm:border border-slate-100 dark:border-slate-900/50 rounded-none sm:rounded-3xl overflow-hidden shadow-none sm:shadow-2xl text-slate-800 dark:text-slate-100 transition-all duration-300 relative flex flex-col">
             
             <!-- Profile Photo Header with SVG Waves -->
-            <div class="relative w-full h-80 overflow-hidden bg-slate-200 dark:bg-slate-800 flex-shrink-0">
-                <img [src]="getPhotoUrl()" class="w-full h-full object-cover block" alt="Foto de Perfil">
+            <div class="relative w-full overflow-visible bg-slate-200 dark:bg-slate-800 flex-shrink-0">
+                <img [src]="getPhotoUrl()" class="w-full h-auto block" alt="Foto de Perfil">
                 
                 <!-- Double Curve Wave Overlay (Brand Green + Brand Blue + White card background) -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 200" class="absolute bottom-0 left-0 w-full fill-current block select-none pointer-events-none z-10" style="margin-bottom: -1px;">
