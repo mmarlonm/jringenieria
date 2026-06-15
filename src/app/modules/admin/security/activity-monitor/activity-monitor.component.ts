@@ -75,14 +75,12 @@ export class ActivityMonitorComponent implements OnInit, OnDestroy {
                 // 🔍 RESOLVER IDENTIDAD ANTES DE AÑADIR
                 const resolvedMov = this.resolveUserInfo(movimiento);
                 this.activities.unshift(resolvedMov);
-                
-                if (this.activities.length > 100) this.activities.pop();
                 this.updateStats(resolvedMov);
             });
     }
 
     private loadInitialHistory(): void {
-        this._activityService.getRecentLogs().subscribe(response => {
+        this._activityService.getRecentLogs(10000).subscribe(response => {
             if (response.success && response.data) {
                 this.activities = response.data.map(log => this.resolveUserInfo(log));
                 this.stats = { total: 0, clicks: 0, navigation: 0, security: 0, errors: 0 };
