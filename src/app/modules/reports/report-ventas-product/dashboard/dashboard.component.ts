@@ -185,7 +185,7 @@ export class ReportVentasProductDashboardComponent implements OnInit {
         if (userStr) {
             const userData = JSON.parse(userStr);
             const roles = userData.roles || [];
-            const esAdmin = roles.some((r: string) => ['Admin', 'pruebas', 'AdministracionQueretaro', 'Admin'].includes(r));
+            const esAdmin = roles.some((r: string) => r && (['admin', 'pruebas'].includes(r.toLowerCase()) || r.toLowerCase().includes('queretaro')));
 
             if (esAdmin) {
                 this.sucursalesDisponibles = [...this.sucursales];
