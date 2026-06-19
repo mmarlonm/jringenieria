@@ -156,6 +156,23 @@ export class NotificationsService {
      * Marca todas como leídas y actualiza localStorage (sin llamar a la API)
      */
     markAllAsRead(): Observable<boolean> {
+        const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
+        const userId = storedData?.usuario?.id;
+
+        if (userId) {
+            return this._httpClient.put(`${environment.apiUrl}/Tareas/marcar-todas-leidas/${userId}`, {}).pipe(
+                switchMap(() => this.notifications$.pipe(
+                    take(1),
+                    map((notifications) => {
+                        const updated = notifications.map(n => ({ ...n, read: true }));
+                        this._notifications.next(updated);
+                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+                        return true;
+                    })
+                ))
+            );
+        }
+
         return this.notifications$.pipe(
             take(1),
             map((notifications) => {

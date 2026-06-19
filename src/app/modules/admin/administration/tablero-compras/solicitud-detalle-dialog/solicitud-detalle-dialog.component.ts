@@ -327,7 +327,11 @@ import Swal from 'sweetalert2';
             </ng-template>
 
             <!-- Footer Actions -->
-            <div class="flex items-center justify-end p-6 border-t bg-gray-50 dark:bg-transparent">
+            <div class="flex items-center justify-end gap-3 p-6 border-t bg-gray-50 dark:bg-transparent">
+                <button mat-flat-button color="accent" class="rounded-lg px-8 py-2 font-bold uppercase tracking-wider" 
+                        *ngIf="solicitud" (click)="convertirRecepcion()">
+                    Convertir en Recepción
+                </button>
                 <button mat-flat-button color="primary" class="rounded-lg px-8 py-2 font-bold uppercase tracking-wider" (click)="close()">
                     Cerrar Detalle
                 </button>
@@ -507,6 +511,10 @@ export class SolicitudDetalleDialogComponent implements OnInit {
             case 4: return '#38bdf8'; // bg-sky-400
             default: return '#94a3b8'; // gray-400
         }
+    }
+
+    convertirRecepcion(): void {
+        this.dialogRef.close({ convertirRecepcion: true });
     }
 
     close(): void {

@@ -242,13 +242,19 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
-    verDetalle(idSolicitud: number): void {
-        this._dialog.open(SolicitudDetalleDialogComponent, {
-            data: { idSolicitud },
+    verDetalle(row: any): void {
+        const dialogRef = this._dialog.open(SolicitudDetalleDialogComponent, {
+            data: { idSolicitud: row.idSolicitud, row: row },
             width: '100%',
             maxWidth: '1000px',
             maxHeight: '90vh',
             autoFocus: false
+        });
+
+        dialogRef.afterClosed().subscribe((res) => {
+            if (res?.convertirRecepcion) {
+                this.crearRecepcionAutomatica(row);
+            }
         });
     }
 
@@ -281,28 +287,24 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
         Swal.fire({
             title: 'Convertir OC a Recepción',
-            text: 'Convertirás esta OC en recepción. ¿Deseas continuar?',
+            text: 'Convertirás esta OC en recepción. ¿Cómo deseas continuar?',
             icon: 'question',
-            input: 'select',
-            inputOptions: {
-                '0': 'Pendiente',
-                '1': 'Completado'
-            },
-            inputValue: '0',
+            showDenyButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Continuar',
+            confirmButtonText: 'Completado',
+            denyButtonText: 'Pendiente',
             cancelButtonText: 'Cancelar',
-            reverseButtons: true,
+            reverseButtons: false,
             buttonsStyling: false,
             customClass: {
                 popup: 'rounded-3xl p-6 shadow-2xl border-0',
-                input: 'block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 mt-4',
                 confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                denyButton: 'inline-flex items-center justify-center px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-amber-200',
                 cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
             }
         }).then((result) => {
-            if (result.isConfirmed) {
-                const selectedStatus = parseInt(result.value, 10);
+            if (result.isConfirmed || result.isDenied) {
+                const selectedStatus = result.isConfirmed ? 1 : 0;
 
                 Swal.fire({
                     title: 'Registrando Recepción...',
