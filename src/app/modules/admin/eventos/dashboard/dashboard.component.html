@@ -196,16 +196,16 @@
                         class="flex items-center justify-between p-2 px-3 rounded-xl border border-gray-200/60 dark:border-slate-850 transition-all duration-300 hover:bg-slate-100/50 dark:hover:bg-slate-950/50"
                     >
                         <div class="flex items-center gap-2 min-w-0">
-                            <!-- Circular Badge with Initials (Compact) -->
                             <div [ngClass]="{
                                 'bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-md shadow-emerald-500/10': checkin.tipo === 'General',
-                                'bg-gradient-to-tr from-pink-600 to-rose-400 text-white shadow-md shadow-pink-500/10': checkin.tipo === 'Estudiante'
+                                'bg-gradient-to-tr from-pink-600 to-rose-400 text-white shadow-md shadow-pink-500/10': checkin.tipo === 'Estudiante',
+                                'bg-gradient-to-tr from-indigo-600 to-violet-400 text-white shadow-md shadow-indigo-500/10': checkin.tipo !== 'General' && checkin.tipo !== 'Estudiante'
                             }" class="h-7 w-7 rounded-lg flex items-center justify-center font-bold text-[10px] select-none flex-shrink-0">
-                                {{ checkin.nombre.substring(0,1) }}{{ checkin.apellidos.substring(0,1) }}
+                                {{ checkin.nombre ? checkin.nombre.substring(0,1) : '' }}{{ checkin.apellidos ? checkin.apellidos.substring(0,1) : '' }}
                             </div>
                             <div class="min-w-0">
                                 <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                    {{ checkin.nombre }} {{ checkin.apellidos }}
+                                    {{ checkin.nombre }} {{ checkin.apellidos || '' }}
                                 </h4>
                                 <p class="text-[9px] font-semibold text-slate-400 dark:text-slate-500 truncate mt-0.5">
                                     {{ checkin.empresa || checkin.universidad || 'General' }}

@@ -280,118 +280,145 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         }
 
         Swal.fire({
-            title: 'Registrando Recepción...',
-            html: 'Buscando datos y facturas asociadas en CONTPAQi...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
+            title: 'Convertir OC a Recepción',
+            text: 'Convertirás esta OC en recepción. ¿Deseas continuar?',
+            icon: 'question',
+            input: 'select',
+            inputOptions: {
+                '0': 'Pendiente',
+                '1': 'Completado'
+            },
+            inputValue: '0',
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                input: 'block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 mt-4',
+                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
             }
-        });
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const selectedStatus = parseInt(result.value, 10);
 
-        this._purchaseReceptionService.getDetalleConsolidado(row.idSolicitud).subscribe({
-            next: (res) => {
-                const payload = {
-                    idSolicitud: row.idSolicitud,
-                    fechaRecepcion: new Date(),
-                    lugarEntrega: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
-                    quienRecibioId: idUsuario,
-                    dondeRecibio: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
-                    condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
-                    estatus: 0, // Pendiente
-                    puntajeCalidad: 100,
-                    puntajeEntrega: 100,
-                    folioOC: res?.folioOC || row.folioOC,
-                    sucursal: res?.sucursal || row.sucursal,
-                    proveedorSugerido: res?.datosFiscales?.nombreProveedor || row.proveedorSugerido,
-                    proyectoCliente: res?.proyectoCliente || row.proyectoCliente,
-                    monto: res?.datosFiscales?.totalFactura || row.monto,
-                    moneda: res?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (res?.datosFiscales?.moneda?.trim() || row.moneda || 'MXN'),
-                    folioInternoFactura: res?.datosFiscales?.folioInternoFactura || ''
-                };
+                Swal.fire({
+                    title: 'Registrando Recepción...',
+                    html: 'Buscando datos y facturas asociadas en CONTPAQi...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
-                this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
-                    next: (regRes: any) => {
-                        Swal.fire({
-                            title: '¡Recepción Registrada!',
-                            text: 'La recepción de compra se ha registrado correctamente con estatus Pendiente.',
-                            icon: 'success',
-                            showCancelButton: true,
-                            confirmButtonText: 'Ir a Recepción de Compras',
-                            cancelButtonText: 'Permanecer aquí',
-                            reverseButtons: true,
-                            buttonsStyling: false,
-                            customClass: {
-                                popup: 'rounded-3xl p-6 shadow-2xl border-0',
-                                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
-                                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
-                            }
-                        }).then((swalRes) => {
-                            this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
+                this._purchaseReceptionService.getDetalleConsolidado(row.idSolicitud).subscribe({
+                    next: (res) => {
+                        const payload = {
+                            idSolicitud: row.idSolicitud,
+                            fechaRecepcion: new Date(),
+                            lugarEntrega: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
+                            quienRecibioId: idUsuario,
+                            dondeRecibio: res?.lugarEntrega || row.lugarEntrega || 'Sucursal',
+                            condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
+                            estatus: selectedStatus,
+                            puntajeCalidad: 100,
+                            puntajeEntrega: 100,
+                            folioOC: res?.folioOC || row.folioOC,
+                            sucursal: res?.sucursal || row.sucursal,
+                            proveedorSugerido: res?.datosFiscales?.nombreProveedor || row.proveedorSugerido,
+                            proyectoCliente: res?.proyectoCliente || row.proyectoCliente,
+                            monto: res?.datosFiscales?.totalFactura || row.monto,
+                            moneda: res?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (res?.datosFiscales?.moneda?.trim() || row.moneda || 'MXN'),
+                            folioInternoFactura: res?.datosFiscales?.folioInternoFactura || ''
+                        };
 
-                            if (swalRes.isConfirmed) {
-                                this._router.navigate(['/administration/recepcion-compras'], {
-                                    queryParams: { idSolicitud: row.idSolicitud }
+                        this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
+                            next: (regRes: any) => {
+                                Swal.fire({
+                                    title: '¡Recepción Registrada!',
+                                    text: `La recepción de compra se ha registrado correctamente con estatus ${selectedStatus === 1 ? 'Completado' : 'Pendiente'}.`,
+                                    icon: 'success',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Ir a Recepción de Compras',
+                                    cancelButtonText: 'Permanecer aquí',
+                                    reverseButtons: true,
+                                    buttonsStyling: false,
+                                    customClass: {
+                                        popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                                        confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                                        cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+                                    }
+                                }).then((swalRes) => {
+                                    this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
+
+                                    if (swalRes.isConfirmed) {
+                                        this._router.navigate(['/administration/recepcion-compras'], {
+                                            queryParams: { idSolicitud: row.idSolicitud }
+                                        });
+                                    }
                                 });
+                            },
+                            error: (err) => {
+                                console.error('Error al registrar recepción:', err);
+                                Swal.fire('Error', 'Hubo un error al registrar la recepción de compra.', 'error');
                             }
                         });
                     },
                     error: (err) => {
-                        console.error('Error al registrar recepción:', err);
-                        Swal.fire('Error', 'Hubo un error al registrar la recepción de compra.', 'error');
-                    }
-                });
-            },
-            error: (err) => {
-                console.warn('No se encontraron detalles consolidados en CONTPAQi, registrando con datos locales...', err);
-                
-                const payload = {
-                    idSolicitud: row.idSolicitud,
-                    fechaRecepcion: new Date(),
-                    lugarEntrega: row.lugarEntrega || 'Sucursal',
-                    quienRecibioId: idUsuario,
-                    dondeRecibio: row.lugarEntrega || 'Sucursal',
-                    condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
-                    estatus: 0, // Pendiente
-                    puntajeCalidad: 100,
-                    puntajeEntrega: 100,
-                    folioOC: row.folioOC,
-                    sucursal: row.sucursal,
-                    proveedorSugerido: row.proveedorSugerido,
-                    proyectoCliente: row.proyectoCliente,
-                    monto: row.monto,
-                    moneda: row.moneda || 'MXN',
-                    folioInternoFactura: ''
-                };
+                        console.warn('No se encontraron detalles consolidados en CONTPAQi, registrando con datos locales...', err);
+                        
+                        const payload = {
+                            idSolicitud: row.idSolicitud,
+                            fechaRecepcion: new Date(),
+                            lugarEntrega: row.lugarEntrega || 'Sucursal',
+                            quienRecibioId: idUsuario,
+                            dondeRecibio: row.lugarEntrega || 'Sucursal',
+                            condicionesComentarios: 'Recepción automática creada desde el Tablero de Compras.',
+                            estatus: selectedStatus,
+                            puntajeCalidad: 100,
+                            puntajeEntrega: 100,
+                            folioOC: row.folioOC,
+                            sucursal: row.sucursal,
+                            proveedorSugerido: row.proveedorSugerido,
+                            proyectoCliente: row.proyectoCliente,
+                            monto: row.monto,
+                            moneda: row.moneda || 'MXN',
+                            folioInternoFactura: ''
+                        };
 
-                this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
-                    next: (regRes: any) => {
-                        Swal.fire({
-                            title: '¡Recepción Registrada!',
-                            text: 'La recepción de compra se ha registrado correctamente con estatus Pendiente.',
-                            icon: 'success',
-                            showCancelButton: true,
-                            confirmButtonText: 'Ir a Recepción de Compras',
-                            cancelButtonText: 'Permanecer aquí',
-                            reverseButtons: true,
-                            buttonsStyling: false,
-                            customClass: {
-                                popup: 'rounded-3xl p-6 shadow-2xl border-0',
-                                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
-                                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
-                            }
-                        }).then((swalRes) => {
-                            this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
+                        this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
+                            next: (regRes: any) => {
+                                Swal.fire({
+                                    title: '¡Recepción Registrada!',
+                                    text: `La recepción de compra se ha registrado correctamente con estatus ${selectedStatus === 1 ? 'Completado' : 'Pendiente'}.`,
+                                    icon: 'success',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Ir a Recepción de Compras',
+                                    cancelButtonText: 'Permanecer aquí',
+                                    reverseButtons: true,
+                                    buttonsStyling: false,
+                                    customClass: {
+                                        popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                                        confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                                        cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+                                    }
+                                }).then((swalRes) => {
+                                    this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
 
-                            if (swalRes.isConfirmed) {
-                                this._router.navigate(['/administration/recepcion-compras'], {
-                                    queryParams: { idSolicitud: row.idSolicitud }
+                                    if (swalRes.isConfirmed) {
+                                        this._router.navigate(['/administration/recepcion-compras'], {
+                                            queryParams: { idSolicitud: row.idSolicitud }
+                                        });
+                                    }
                                 });
+                            },
+                            error: (regErr) => {
+                                console.error('Error al registrar recepción con fallback:', regErr);
+                                Swal.fire('Error', 'Hubo un error al registrar la recepción de compra.', 'error');
                             }
                         });
-                    },
-                    error: (regErr) => {
-                        console.error('Error al registrar recepción con fallback:', regErr);
-                        Swal.fire('Error', 'Hubo un error al registrar la recepción de compra.', 'error');
                     }
                 });
             }

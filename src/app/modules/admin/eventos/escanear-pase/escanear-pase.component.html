@@ -23,6 +23,20 @@
             </div>
         </div>
 
+        <!-- EVENT SELECTOR DROPDOWN -->
+        <div class="w-full mt-1">
+            <label class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Evento Activo</label>
+            <select 
+                [ngModel]="selectedEventoId"
+                (ngModelChange)="onEventoChanged($event)"
+                class="w-full px-3.5 py-3 rounded-2xl border border-gray-250 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold focus:border-indigo-500 focus:outline-none transition-all dark:text-white focus:ring-1 focus:ring-indigo-500"
+            >
+                <option *ngFor="let ed of ediciones" [value]="ed.id">
+                    {{ ed.nombre }}
+                </option>
+            </select>
+        </div>
+
         <!-- MODE SELECTOR DROPDOWN -->
         <div class="w-full mt-1">
             <label class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Configurar qué escanear</label>

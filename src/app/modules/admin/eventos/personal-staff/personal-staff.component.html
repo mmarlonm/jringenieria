@@ -89,9 +89,16 @@
                     <p class="text-xs text-slate-500 dark:text-slate-400 font-medium truncate w-full" [title]="p.cargo">
                         {{ p.cargo }}
                     </p>
-                    <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold truncate w-full mb-4" [title]="p.empresa">
+                    <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold truncate w-full mb-2" [title]="p.empresa">
                         {{ p.empresa }}
                     </p>
+
+                    <!-- Event Badges -->
+                    <div class="flex flex-wrap gap-1 mt-1 mb-4 justify-center w-full" *ngIf="p.eventoIds && p.eventoIds.length > 0">
+                        <span *ngFor="let evId of p.eventoIds" class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {{ getEventName(evId) }}
+                        </span>
+                    </div>
 
                     <!-- Contact Details Info -->
                     <div class="w-full space-y-2 text-left pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">

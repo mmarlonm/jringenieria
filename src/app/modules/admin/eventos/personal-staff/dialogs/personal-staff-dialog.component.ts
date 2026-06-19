@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { PersonalStaffService } from '../personal-staff.service';
+import { EventosService } from '../../eventos.service';
 
 @Component({
     selector: 'app-personal-staff-dialog',
@@ -31,6 +32,7 @@ export class PersonalStaffDialogComponent implements OnInit {
     imagePreview: string | ArrayBuffer | null = null;
     isSaving: boolean = false;
     personalId: number = 0;
+    eventosList: any[] = [];
 
     tiposPersonal = ['Expositor', 'Staff', 'Organizador', 'Soporte', 'Otro'];
 
@@ -38,12 +40,17 @@ export class PersonalStaffDialogComponent implements OnInit {
         private _fb: FormBuilder,
         private _dialogRef: MatDialogRef<PersonalStaffDialogComponent>,
         private _personalStaffService: PersonalStaffService,
+        private _eventosService: EventosService,
         @Inject(MAT_DIALOG_DATA) public data: any
     ) { }
 
     ngOnInit(): void {
         this.isEdit = !!this.data?.personal;
         this.personalId = this.data?.personal?.id || 0;
+        
+        this._eventosService.ediciones$.subscribe(list => {
+            this.eventosList = list || [];
+        });
 
         this.form = this._fb.group({
             id: [this.personalId],
@@ -54,7 +61,8 @@ export class PersonalStaffDialogComponent implements OnInit {
             telefonoOficina: [this.data?.personal?.telefonoOficina || ''],
             telefonoWhatsapp: [this.data?.personal?.telefonoWhatsapp || ''],
             linkWeb: [this.data?.personal?.linkWeb || ''],
-            tipoPersonal: [this.data?.personal?.tipoPersonal || 'Expositor', [Validators.required]]
+            tipoPersonal: [this.data?.personal?.tipoPersonal || 'Expositor', [Validators.required]],
+            eventoIds: [this.data?.personal?.eventoIds || []]
         });
 
         if (this.isEdit && this.data.personal.fotoPath) {

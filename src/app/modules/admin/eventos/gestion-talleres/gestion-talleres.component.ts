@@ -152,10 +152,11 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     // --- Tab B: Pre-assignment Matrix Helpers ---
     public filterAsistentes(): void {
         const query = (this.searchTerm || '').trim().toLowerCase();
+        const baseList = this.asistentes.filter(a => a.tipo === 'General' || a.tipo === 'Estudiante');
         if (!query) {
-            this.filteredAsistentes = this.asistentes;
+            this.filteredAsistentes = baseList;
         } else {
-            this.filteredAsistentes = this.asistentes.filter(a => 
+            this.filteredAsistentes = baseList.filter(a => 
                 (a.nombre + ' ' + a.apellidos).toLowerCase().includes(query) ||
                 (a.correo || '').toLowerCase().includes(query)
             );

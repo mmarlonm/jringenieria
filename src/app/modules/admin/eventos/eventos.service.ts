@@ -19,6 +19,7 @@ export interface Asistente {
     estatusQR: 'Enviado' | 'Pendiente';
     asistencia: 'Presente' | 'Faltante';
     fechaCheckIn?: string;
+    fechaCheckInRaw?: string;
     medioSeguimiento: 'Correo' | 'WhatsApp' | 'Ninguno';
     direccion?: string;
     ocupacion?: string;
@@ -89,12 +90,12 @@ export class EventosService implements OnDestroy {
     private readonly apiBase = environment.apiUrl;
     private readonly signalRBase = environment.apiUrlSignal;
 
-    // Available Editions
-    public readonly ediciones: EventoEdicion[] = [
-        { id: 2026, nombre: 'Foro Energiza 2026', anio: 2026 },
-        { id: 2027, nombre: 'Edición 2027', anio: 2027 },
-        { id: 2028, nombre: 'Edición 2028', anio: 2028 }
-    ];
+    // Available Editions (dynamic state)
+    private _ediciones = new BehaviorSubject<EventoEdicion[]>([]);
+    public ediciones$ = this._ediciones.asObservable();
+    public get ediciones(): EventoEdicion[] {
+        return this._ediciones.value;
+    }
 
     // State Subjects
     private _selectedEventoId = new BehaviorSubject<number>(2026);
@@ -130,6 +131,8 @@ export class EventosService implements OnDestroy {
     private destroy$ = new Subject<void>();
 
     constructor() {
+        this.loadEventos();
+
         // Listen to active edition change to reload real lists and restart SignalR
         this._selectedEventoId
             .pipe(takeUntil(this.destroy$))
@@ -212,6 +215,13 @@ export class EventosService implements OnDestroy {
             console.log('📡 [SignalR] Received live workshop metrics update:', res);
             if (res) {
                 this._talleresMetrics.next(res);
+            }
+        });
+
+        this.hubConnection.on('ReceiveCheckInEvent', (res: any) => {
+            console.log('📡 [SignalR] Check-in event received, reloading assistants:', res);
+            if (res && res.eventoId) {
+                this.loadAsistentesPorEvento(res.eventoId);
             }
         });
 
@@ -392,14 +402,15 @@ export class EventosService implements OnDestroy {
     }
 
     // POST api/Asistentes/check-in-publico with header X-Staff-Event-Key: ForoEnergizaPachuca_Key_2026
-    public checkInPublico(tokenQR: string): Observable<any> {
+    public checkInPublico(tokenQR: string, eventoId?: number): Observable<any> {
         return new Observable<any>(observer => {
             const headers = new HttpHeaders({
                 'Content-Type': 'application/json',
                 'X-Staff-Event-Key': 'ForoEnergizaPachuca_Key_2026'
             });
 
-            this._http.post<any>(`${this.apiBase}/Asistentes/check-in-publico`, JSON.stringify(tokenQR), { headers })
+            const queryParams = eventoId ? `?eventoId=${eventoId}` : '';
+            this._http.post<any>(`${this.apiBase}/Asistentes/check-in-publico${queryParams}`, JSON.stringify(tokenQR), { headers })
                 .subscribe({
                     next: (res) => {
                         if (res && res.exito) {
@@ -410,13 +421,13 @@ export class EventosService implements OnDestroy {
                             observer.next({
                                 status: 'SUCCESS',
                                 message: res.mensaje || '¡Acceso Autorizado!',
-                                asistente: asistente ? {
-                                    id: asistente.id,
-                                    nombreCompleto: `${asistente.nombre} ${asistente.apellidos}`,
-                                    tipo: asistente.tipo,
-                                    organizacion: asistente.tipo === 'General' ? (asistente.empresa || 'Ninguna') : (asistente.universidad || 'Ninguna'),
+                                asistente: {
+                                    id: asistente ? asistente.id : 0,
+                                    nombreCompleto: res.nombreCompleto || (asistente ? `${asistente.nombre} ${asistente.apellidos}` : 'Visitante'),
+                                    tipo: res.tipoAsistente || (asistente ? asistente.tipo : 'Personal/Staff'),
+                                    organizacion: res.organizacion || (asistente ? (asistente.tipo === 'General' ? (asistente.empresa || 'Ninguna') : (asistente.universidad || 'Ninguna')) : 'Ninguna'),
                                     fechaCheckIn: new Date().toISOString()
-                                } : { nombreCompleto: 'Visitante' }
+                                }
                             });
                         } else {
                             observer.next({
@@ -434,9 +445,9 @@ export class EventosService implements OnDestroy {
 
                         if (err.error && typeof err.error === 'object') {
                             errorMessage = err.error.mensaje || errorMessage;
-                            if (err.error.exito === false) {
+                            if (err.error.exito === false || err.error.estatus === 'DUPLICADO') {
                                 const msg = String(err.error.mensaje).toLowerCase();
-                                if (msg.includes('ya se registró') || msg.includes('asistio') || msg.includes('duplicado')) {
+                                if (msg.includes('ya se registró') || msg.includes('asistio') || msg.includes('duplicado') || err.error.estatus === 'DUPLICADO') {
                                     isDuplicate = true;
                                 }
                             }
@@ -449,11 +460,11 @@ export class EventosService implements OnDestroy {
                             observer.next({
                                 status: 'DUPLICADO',
                                 message: errorMessage,
-                                asistente: asistente ? {
-                                    id: asistente.id,
-                                    nombreCompleto: `${asistente.nombre} ${asistente.apellidos}`,
-                                    fechaCheckIn: asistente.fechaCheckIn || new Date().toLocaleString()
-                                } : { nombreCompleto: 'Visitante' }
+                                asistente: {
+                                    id: asistente ? asistente.id : 0,
+                                    nombreCompleto: err.error?.nombreCompleto || (asistente ? `${asistente.nombre} ${asistente.apellidos}` : 'Visitante'),
+                                    fechaCheckIn: err.error?.fechaCheckIn ? new Date(err.error.fechaCheckIn).toLocaleString() : (asistente?.fechaCheckIn || new Date().toLocaleString())
+                                }
                             });
                         } else {
                             observer.next({
@@ -501,6 +512,7 @@ export class EventosService implements OnDestroy {
                                     minute: '2-digit',
                                     second: '2-digit'
                                 }) : undefined,
+                                fechaCheckInRaw: item.fechaCheckIn || undefined,
                                 medioSeguimiento: item.medioSeguimientoDeseado as 'Correo' | 'WhatsApp' | 'Ninguno',
                                 direccion: item.direccionCiudadEstado,
                                 ocupacion: item.ocupacionCargo,
@@ -575,5 +587,44 @@ export class EventosService implements OnDestroy {
         });
         const body = { tokenQr: tokenQR, actividadId: actividadId };
         return this._http.post<any>(`${this.apiBase}/Asistentes/check-in-taller`, body, { headers });
+    }
+
+    // --- Dynamic Events Catalog API ---
+    public loadEventos(): void {
+        this._http.get<any[]>(`${this.apiBase}/Eventos`)
+            .subscribe({
+                next: (list) => {
+                    if (list) {
+                        const mapped: EventoEdicion[] = list.map(e => ({
+                            id: e.id,
+                            nombre: e.nombreNovedad,
+                            anio: e.anio
+                        }));
+                        this._ediciones.next(mapped);
+
+                        // If selectedEventoId is not in the list, default to first one
+                        if (mapped.length > 0 && !mapped.some(m => m.id === this._selectedEventoId.value)) {
+                            // Find active one first
+                            const active = list.find(e => e.activo);
+                            this._selectedEventoId.next(active ? active.id : mapped[0].id);
+                        }
+                    }
+                },
+                error: (err) => {
+                    console.error('⚠️ [API Error] Failed to load dynamic events:', err);
+                }
+            });
+    }
+
+    public getEventosCompletos(): Observable<any[]> {
+        return this._http.get<any[]>(`${this.apiBase}/Eventos`);
+    }
+
+    public saveEvento(evento: any): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/Eventos`, evento);
+    }
+
+    public deleteEvento(id: number): Observable<any> {
+        return this._http.delete<any>(`${this.apiBase}/Eventos/${id}`);
     }
 }

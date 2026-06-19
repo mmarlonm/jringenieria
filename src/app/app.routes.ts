@@ -143,7 +143,8 @@ export const appRoutes: Route[] = [
                     { path: 'dashboard', loadComponent: () => import('app/modules/admin/eventos/dashboard/dashboard.component').then(m => m.EventosDashboardComponent) },
                     { path: 'control', loadComponent: () => import('app/modules/admin/eventos/control/control.component').then(m => m.EventosControlComponent) },
                     { path: 'gestion-talleres', loadComponent: () => import('app/modules/admin/eventos/gestion-talleres/gestion-talleres.component').then(m => m.GestionTalleresComponent) },
-                    { path: 'personal', loadComponent: () => import('app/modules/admin/eventos/personal-staff/personal-staff.component').then(m => m.EventosPersonalComponent) }
+                    { path: 'personal', loadComponent: () => import('app/modules/admin/eventos/personal-staff/personal-staff.component').then(m => m.EventosPersonalComponent) },
+                    { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) }
                 ]
             }
         ]

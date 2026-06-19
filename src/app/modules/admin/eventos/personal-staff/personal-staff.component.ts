@@ -12,6 +12,7 @@ import { RouterModule } from '@angular/router';
 import { PersonalStaff, PersonalStaffService } from './personal-staff.service';
 import { PersonalStaffDialogComponent } from './dialogs/personal-staff-dialog.component';
 import { QrPreviewDialogComponent } from './dialogs/qr-preview-dialog.component';
+import { EventosService } from '../eventos.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -35,6 +36,7 @@ export class EventosPersonalComponent implements OnInit {
     personalList: PersonalStaff[] = [];
     filteredList: PersonalStaff[] = [];
     isLoading: boolean = true;
+    eventosList: any[] = [];
 
     // Filters
     searchQuery: string = '';
@@ -43,11 +45,20 @@ export class EventosPersonalComponent implements OnInit {
 
     constructor(
         private _personalStaffService: PersonalStaffService,
+        private _eventosService: EventosService,
         private _dialog: MatDialog
     ) { }
 
     ngOnInit(): void {
+        this._eventosService.ediciones$.subscribe(list => {
+            this.eventosList = list || [];
+        });
         this.loadData();
+    }
+
+    getEventName(id: number): string {
+        const ev = this.eventosList.find(e => e.id === id);
+        return ev ? ev.nombre : `Evento ${id}`;
     }
 
     loadData(): void {

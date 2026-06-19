@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { EventosService, ActividadMetricsDto, Actividad } from '../eventos.service';
+import { EventosService, ActividadMetricsDto, Actividad, EventoEdicion } from '../eventos.service';
 
 @Component({
     selector: 'escanear-pase',
@@ -26,6 +26,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public availableTalleres: Actividad[] = [];
     public selectedTallerMetrics: ActividadMetricsDto | null = null;
     public selectedEventoId: number = 2026;
+    public ediciones: EventoEdicion[] = [];
 
     // State Variables
     public scanState: 'idle' | 'scanning' | 'success' | 'duplicate' | 'error' = 'idle';
@@ -40,6 +41,12 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public availableTickets: { label: string; token: string; status: 'present' | 'absent' }[] = [];
 
     ngOnInit(): void {
+        // Subscribe to Editions list
+        this._eventosService.ediciones$.subscribe(list => {
+            this.ediciones = list || [];
+            this._cdr.markForCheck();
+        });
+
         // Subscribe to Selected Event ID
         this._eventosService.selectedEventoId$.subscribe(id => {
             this.selectedEventoId = id;
@@ -95,6 +102,10 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                 console.error('Error loading talleres for scanner dropdown:', err);
             }
         });
+    }
+
+    public onEventoChanged(eventoId: any): void {
+        this._eventosService.setSeleccionEdicion(Number(eventoId));
     }
 
     public onModeChange(): void {
@@ -283,9 +294,20 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             this.scanResult = null;
             this._cdr.markForCheck();
 
+            // Extract GUID from token if it's a public URL link
+            let finalToken = token.trim();
+            if (finalToken.includes('/')) {
+                const parts = finalToken.split('/');
+                const lastPart = parts[parts.length - 1];
+                const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+                if (guidRegex.test(lastPart)) {
+                    finalToken = lastPart;
+                }
+            }
+
             if (this.scanMode === 'general') {
-                // Perform backend check-in directly
-                this._eventosService.checkInPublico(token).subscribe({
+                // Perform backend check-in directly, passing active event ID
+                this._eventosService.checkInPublico(finalToken, this.selectedEventoId).subscribe({
                     next: (res) => {
                         if (res.status === 'SUCCESS') {
                             this.scanState = 'success';
@@ -312,7 +334,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             } else {
                 // Taller o Conferencia específico
                 const tallerId = Number(this.scanMode);
-                this._eventosService.checkInTaller(token, tallerId).subscribe({
+                this._eventosService.checkInTaller(finalToken, tallerId).subscribe({
                     next: (res) => {
                         // Map the response format to match what escanear-pase.component.html expects!
                         this.scanResult = {

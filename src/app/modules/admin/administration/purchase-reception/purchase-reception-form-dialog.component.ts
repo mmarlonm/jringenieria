@@ -84,6 +84,7 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
 
     initForm(): void {
         const rec = this.data?.reception;
+        const statusValue = rec?.estatus !== undefined ? rec.estatus : 0;
         this.receptionForm = this._formBuilder.group({
             idSolicitud: [rec?.idSolicitud || null, Validators.required],
             fechaRecepcion: [rec?.fechaRecepcion ? new Date(rec.fechaRecepcion) : new Date(), Validators.required],
@@ -91,11 +92,23 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             quienRecibioId: [rec?.quienRecibioId || rec?.quienRecibio || null, Validators.required],
             dondeRecibio: [rec?.dondeRecibio || '', Validators.required],
             CondicionesComentarios: [rec?.condicionesComentarios || ''],
-            estatus: [rec?.estatus !== undefined ? rec.estatus : 0, Validators.required],
-            folioInternoFactura: [rec?.folioInternoFactura || ''],
+            estatus: [statusValue, Validators.required],
+            folioInternoFactura: [{ value: rec?.folioInternoFactura || '', disabled: statusValue === 1 }],
             puntajeCalidad: [rec?.puntajeCalidad !== undefined ? rec.puntajeCalidad : 100, Validators.required],
             puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required]
         });
+
+        // Toggle disabled state of folioInternoFactura based on estatus
+        this.receptionForm.get('estatus').valueChanges
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((val) => {
+                const control = this.receptionForm.get('folioInternoFactura');
+                if (val === 1) {
+                    control.disable();
+                } else {
+                    control.enable();
+                }
+            });
 
         if (rec) {
             this.ocData = {
@@ -166,9 +179,11 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
 
         this.isLoading = true;
 
+        const formValues = this.receptionForm.getRawValue();
+
         // Ensure we send the data in the format the API expects
         const payload = {
-            ...this.receptionForm.value,
+            ...formValues,
             idSolicitud: this.ocData?.idSolicitud,
             folioOC: this.ocData?.folioOC,
             sucursal: this.ocData?.sucursal,
@@ -176,8 +191,8 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             proyectoCliente: this.ocData?.proyectoCliente,
             monto: this.ocData?.datosFiscales?.totalFactura,
             moneda: this.ocData?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (this.ocData?.datosFiscales?.moneda?.trim() || 'MXN'),
-            estatus: this.receptionForm.value.estatus,
-            folioInternoFactura: this.receptionForm.value.folioInternoFactura
+            estatus: formValues.estatus,
+            folioInternoFactura: formValues.folioInternoFactura
         };
 
         this._receptionService.registrarRecepcion(payload).subscribe({

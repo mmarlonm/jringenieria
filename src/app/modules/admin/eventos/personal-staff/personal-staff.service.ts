@@ -16,6 +16,7 @@ export interface PersonalStaff {
     fotoPath?: string;
     tokenQr: string;
     fechaRegistro: string;
+    eventoIds?: number[];
 }
 
 @Injectable({
@@ -50,6 +51,11 @@ export class PersonalStaffService {
         formData.append('tipoPersonal', personal.tipoPersonal || 'Expositor');
         if (foto) {
             formData.append('foto', foto, foto.name);
+        }
+        if (personal.eventoIds && personal.eventoIds.length > 0) {
+            personal.eventoIds.forEach((id: number) => {
+                formData.append('eventoIds', String(id));
+            });
         }
         return this._http.post<PersonalStaff>(`${this.apiBase}/PersonalStaff`, formData);
     }

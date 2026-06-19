@@ -48,7 +48,12 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
 
     ngOnInit(): void {
-        this.ediciones = this._eventosService.ediciones;
+        this._eventosService.ediciones$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(list => {
+                this.ediciones = list || [];
+                this._cdr.markForCheck();
+            });
 
         // Initialize empty chart configs
         this.initChartsConfig();
@@ -76,8 +81,8 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .subscribe(list => {
                 if (list) {
                     this.ultimosIngresos = list
-                        .filter(a => a.asistencia === 'Presente' && a.fechaCheckIn)
-                        .sort((a, b) => b.id - a.id) // Sort by descending database ID (newest first)
+                        .filter(a => a.asistencia === 'Presente' && a.fechaCheckInRaw)
+                        .sort((a, b) => (b.fechaCheckInRaw || '').localeCompare(a.fechaCheckInRaw || '')) // Chronological sort (newest first)
                         .slice(0, 5); // Take the top 5
                     this._cdr.markForCheck();
                 }

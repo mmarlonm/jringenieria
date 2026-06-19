@@ -1,0 +1,100 @@
+<div class="flex flex-col max-h-screen">
+    <!-- Header -->
+    <div class="flex flex-row items-center justify-between pl-6 pr-4 py-4 bg-gray-55/30 border-b border-gray-200 dark:border-slate-800">
+        <h2 class="text-lg font-extrabold text-slate-900 dark:text-white leading-none">
+            {{ isEdit ? 'Editar Evento' : 'Agregar Evento' }}
+        </h2>
+        <button mat-icon-button (click)="close()" class="text-slate-400 hover:text-slate-655 dark:hover:text-slate-200">
+            <mat-icon class="icon-size-5" svgIcon="heroicons_outline:x-mark"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Form body -->
+    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col flex-auto p-6 overflow-y-auto space-y-4">
+        <!-- Error Alert Banner -->
+        <div *ngIf="errorMsg" class="flex items-start gap-3 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-650 dark:text-rose-400 text-xs font-semibold leading-relaxed">
+            <mat-icon class="icon-size-4 flex-shrink-0 mt-0.5" svgIcon="heroicons_outline:exclamation-circle"></mat-icon>
+            <div>{{ errorMsg }}</div>
+        </div>
+
+        <!-- Nombre del Evento (NombreNovedad) -->
+        <div class="flex flex-col">
+            <label class="text-xs font-black text-slate-405 dark:text-slate-400 uppercase tracking-wider mb-1.5">Nombre del Evento</label>
+            <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
+                <input 
+                    matInput 
+                    formControlName="nombreNovedad" 
+                    placeholder="Ej: Foro Energiza Pachuca 2026"
+                    maxLength="150"
+                    required
+                />
+            </mat-form-field>
+            <mat-error *ngIf="form.get('nombreNovedad')?.touched && form.get('nombreNovedad')?.hasError('required')" class="text-[10px] font-bold text-rose-600 mt-1">
+                El nombre del evento es requerido.
+            </mat-error>
+        </div>
+
+        <!-- Año (Anio) -->
+        <div class="flex flex-col">
+            <label class="text-xs font-black text-slate-405 dark:text-slate-400 uppercase tracking-wider mb-1.5">Año Edición</label>
+            <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
+                <input 
+                    matInput 
+                    type="number"
+                    formControlName="anio" 
+                    placeholder="Ej: 2026"
+                    min="1900"
+                    max="2100"
+                    required
+                />
+            </mat-form-field>
+            <mat-error *ngIf="form.get('anio')?.touched && (form.get('anio')?.hasError('required') || form.get('anio')?.hasError('min') || form.get('anio')?.hasError('max'))" class="text-[10px] font-bold text-rose-600 mt-1">
+                Ingrese un año válido (entre 1900 y 2100).
+            </mat-error>
+        </div>
+
+        <!-- Sede -->
+        <div class="flex flex-col">
+            <label class="text-xs font-black text-slate-405 dark:text-slate-400 uppercase tracking-wider mb-1.5">Sede / Ubicación</label>
+            <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
+                <input 
+                    matInput 
+                    formControlName="sede" 
+                    placeholder="Ej: Tuzoforum Pachuca"
+                    maxLength="100"
+                    required
+                />
+            </mat-form-field>
+            <mat-error *ngIf="form.get('sede')?.touched && form.get('sede')?.hasError('required')" class="text-[10px] font-bold text-rose-600 mt-1">
+                La sede es requerida.
+            </mat-error>
+        </div>
+
+        <!-- Activo Checkbox -->
+        <div class="flex items-center pt-2">
+            <mat-checkbox formControlName="activo" color="primary" class="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Evento Activo / Visible
+            </mat-checkbox>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-2.5 pt-6 border-t border-gray-150 dark:border-slate-800/80">
+            <button 
+                type="button" 
+                (click)="close()" 
+                [disabled]="isSaving"
+                class="px-5 py-2.5 rounded-xl border border-gray-250 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold text-xs uppercase tracking-wider transition-colors duration-200"
+            >
+                Cancelar
+            </button>
+            <button 
+                type="submit" 
+                [disabled]="form.invalid || isSaving"
+                class="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-md shadow-indigo-650/20 disabled:opacity-50"
+            >
+                <mat-icon *ngIf="isSaving" class="icon-size-4 animate-spin" svgIcon="heroicons_outline:arrow-path"></mat-icon>
+                {{ isSaving ? 'Guardando...' : 'Guardar' }}
+            </button>
+        </div>
+    </form>
+</div>

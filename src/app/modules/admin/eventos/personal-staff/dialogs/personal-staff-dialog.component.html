@@ -96,6 +96,14 @@
                 <input matInput formControlName="linkWeb" placeholder="Ej: https://ciat.com">
             </mat-form-field>
 
+            <mat-form-field appearance="outline" class="w-full fuse-mat-dense sm:col-span-2" subscriptSizing="dynamic">
+                <mat-label>Eventos Asociados (Pre-registro / Acceso)</mat-label>
+                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">event</mat-icon>
+                <mat-select formControlName="eventoIds" multiple>
+                    <mat-option *ngFor="let ed of eventosList" [value]="ed.id">{{ ed.nombre }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
         </div>
 
         <!-- Modal Footer Actions -->

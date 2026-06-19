@@ -318,6 +318,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
+            { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
@@ -389,6 +390,7 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
+            { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
@@ -438,6 +440,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
+            { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
@@ -486,6 +489,7 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
+            { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' }
         ]
     },
