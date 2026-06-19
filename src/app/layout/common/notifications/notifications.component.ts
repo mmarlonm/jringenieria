@@ -122,6 +122,10 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         this._notificationsService.delete(notification.id).subscribe();
     }
 
+    deleteAll(): void {
+        this._notificationsService.deleteAll().subscribe();
+    }
+
     trackByFn(index: number, item: any): any {
         return item.id || index;
     }

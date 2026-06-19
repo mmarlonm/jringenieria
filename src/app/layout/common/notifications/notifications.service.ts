@@ -185,6 +185,21 @@ export class NotificationsService {
     }
 
     /**
+     * Elimina visualmente todas las notificaciones (view = false) y actualiza localStorage
+     */
+    deleteAll(): Observable<boolean> {
+        return this.notifications$.pipe(
+            take(1),
+            map((notifications) => {
+                const updated = notifications.map(n => ({ ...n, view: false }));
+                this._notifications.next([]);
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+                return true;
+            })
+        );
+    }
+
+    /**
      * Carga notificaciones desde localStorage al iniciar
      */
     private _loadFromLocalStorage(): void {
