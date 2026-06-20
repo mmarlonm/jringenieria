@@ -67,4 +67,13 @@ export class PersonalStaffService {
     getPhotoUrl(id: number): string {
         return `${this.apiBase}/PersonalStaff/photo/${id}`;
     }
+
+    enviarQrIndividual(id: number, eventoId?: number): Observable<any> {
+        const queryParams = eventoId ? `?eventoId=${eventoId}` : '';
+        return this._http.post(`${this.apiBase}/PersonalStaff/${id}/enviar-qr${queryParams}`, {});
+    }
+
+    enviarQrMasivo(eventoId: number): Observable<any> {
+        return this._http.post(`${this.apiBase}/PersonalStaff/masivo-manual/${eventoId}`, {});
+    }
 }

@@ -42,6 +42,7 @@ export class EventosPersonalComponent implements OnInit {
     searchQuery: string = '';
     selectedTipo: string = 'Todos';
     tiposPersonal = ['Todos', 'Expositor', 'Staff', 'Organizador', 'Soporte', 'Otro'];
+    selectedEventoId: number = 2026;
 
     constructor(
         private _personalStaffService: PersonalStaffService,
@@ -52,6 +53,9 @@ export class EventosPersonalComponent implements OnInit {
     ngOnInit(): void {
         this._eventosService.ediciones$.subscribe(list => {
             this.eventosList = list || [];
+        });
+        this._eventosService.selectedEventoId$.subscribe(id => {
+            this.selectedEventoId = id;
         });
         this.loadData();
     }
@@ -168,5 +172,99 @@ export class EventosPersonalComponent implements OnInit {
     getPhotoUrl(personal: PersonalStaff): string {
         if (!personal.fotoPath) return 'assets/images/avatars/profile.jpg';
         return this._personalStaffService.getPhotoUrl(personal.id);
+    }
+
+    enviarQrIndividual(p: PersonalStaff): void {
+        Swal.fire({
+            title: '¿Enviar QR por correo?',
+            text: `Se enviará el código QR de acceso y tarjeta digital a ${p.correoElectronico}. ¿Deseas continuar?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, enviar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Enviando...',
+                    text: 'Generando y enviando código QR por correo electrónico.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                this._personalStaffService.enviarQrIndividual(p.id, this.selectedEventoId).subscribe({
+                    next: (res) => {
+                        Swal.fire({
+                            title: '¡Enviado!',
+                            text: res?.mensaje || 'El código QR ha sido enviado con éxito.',
+                            icon: 'success',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    },
+                    error: (err) => {
+                        console.error(err);
+                        Swal.fire('Error', err?.error?.mensaje || 'No se pudo enviar el correo.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    enviarQrMasivo(): void {
+        const eventName = this.getEventName(this.selectedEventoId);
+        Swal.fire({
+            title: '¿Enviar QR masivo a Staff?',
+            text: `Se enviará el código QR por correo a TODO el personal y expositores asociados al evento "${eventName}". ¿Estás seguro?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, enviar a todos',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'rounded-3xl p-6 shadow-2xl border-0',
+                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
+                cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Enviando correos...',
+                    text: 'Este proceso puede tardar unos momentos. Por favor, no cierres esta ventana.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                this._personalStaffService.enviarQrMasivo(this.selectedEventoId).subscribe({
+                    next: (res) => {
+                        Swal.fire({
+                            title: '¡Proceso completado!',
+                            text: res?.mensaje || 'Se han enviado los correos masivos con éxito.',
+                            icon: 'success',
+                            confirmButtonText: 'Aceptar',
+                            buttonsStyling: false,
+                            customClass: {
+                                confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-200'
+                            }
+                        });
+                    },
+                    error: (err) => {
+                        console.error(err);
+                        Swal.fire('Error', err?.error?.mensaje || 'Ocurrió un error al procesar el envío masivo.', 'error');
+                    }
+                });
+            }
+        });
     }
 }
