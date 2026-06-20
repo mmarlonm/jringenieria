@@ -26,7 +26,7 @@
         </div>
 
         <!-- Profile Card -->
-        <div *ngIf="!isLoading && !hasError && personal" 
+        <div *ngIf="!isLoading && !hasError && personal && personal.compartirDatos" 
              class="w-full min-h-screen sm:min-h-0 sm:max-w-sm bg-white dark:bg-slate-950 border-0 sm:border border-slate-100 dark:border-slate-900/50 rounded-none sm:rounded-3xl overflow-hidden shadow-none sm:shadow-2xl text-slate-800 dark:text-slate-100 transition-all duration-300 relative flex flex-col">
             
             <!-- Profile Photo Header with SVG Waves -->
@@ -138,6 +138,16 @@
 
             </div>
 
+        </div>
+
+        <!-- Private Profile State -->
+        <div *ngIf="!isLoading && !hasError && personal && !personal.compartirDatos" 
+             class="w-full min-h-screen sm:min-h-0 sm:max-w-sm bg-white dark:bg-slate-950 border-0 sm:border border-slate-100 dark:border-slate-900 rounded-none sm:rounded-3xl p-8 flex flex-col items-center justify-center text-center text-slate-800 dark:text-slate-100 shadow-none sm:shadow-2xl space-y-4">
+            <mat-icon class="icon-size-16 text-amber-500 mb-2">visibility_off</mat-icon>
+            <h3 class="text-lg font-bold">Información No Disponible</h3>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-2 max-w-xs leading-relaxed">
+                El usuario ha decidido mantener su perfil y datos de contacto de forma privada para este evento.
+            </p>
         </div>
 
     </div>

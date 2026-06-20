@@ -19,96 +19,108 @@
             <mat-icon class="icon-size-5">close</mat-icon>
         </button>
     </div>
-
     <!-- Modal Content -->
-    <form [formGroup]="form" (ngSubmit)="save()" class="flex-auto p-6 md:p-8 space-y-6">
+    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col flex-auto overflow-hidden">
         
-        <!-- Photo Upload Row -->
-        <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="relative w-28 h-28 shrink-0 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-inner group">
-                <img *ngIf="imagePreview" [src]="imagePreview" class="w-full h-full object-cover">
-                <mat-icon *ngIf="!imagePreview" class="icon-size-10 text-slate-300 dark:text-slate-600">account_circle</mat-icon>
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" (click)="fileInput.click()">
-                    <mat-icon class="text-white icon-size-6">photo_camera</mat-icon>
+        <!-- Scrollable Content Area -->
+        <div class="flex-auto p-6 md:p-8 space-y-6 overflow-y-auto max-h-[65vh]">
+            
+            <!-- Photo Upload Row -->
+            <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                <div class="relative w-28 h-28 shrink-0 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-inner group">
+                    <img *ngIf="imagePreview" [src]="imagePreview" class="w-full h-full object-cover">
+                    <mat-icon *ngIf="!imagePreview" class="icon-size-10 text-slate-300 dark:text-slate-600">account_circle</mat-icon>
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" (click)="fileInput.click()">
+                        <mat-icon class="text-white icon-size-6">photo_camera</mat-icon>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center sm:items-start text-center sm:text-left">
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-205">Fotografía del Personal</span>
+                    <span class="text-xs text-slate-450 mt-1 mb-3">Formatos recomendados: JPG, PNG. Tamaño máximo: 5MB.</span>
+                    <button type="button" mat-stroked-button color="primary" class="!rounded-xl" (click)="fileInput.click()">
+                        <mat-icon class="mr-2">upload</mat-icon>
+                        Seleccionar Foto
+                    </button>
+                    <input type="file" #fileInput class="hidden" accept="image/*" (change)="onFileSelected($event)">
                 </div>
             </div>
-            <div class="flex flex-col items-center sm:items-start text-center sm:text-left">
-                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Fotografía del Personal</span>
-                <span class="text-xs text-slate-400 mt-1 mb-3">Formatos recomendados: JPG, PNG. Tamaño máximo: 5MB.</span>
-                <button type="button" mat-stroked-button color="primary" class="!rounded-xl" (click)="fileInput.click()">
-                    <mat-icon class="mr-2">upload</mat-icon>
-                    Seleccionar Foto
-                </button>
-                <input type="file" #fileInput class="hidden" accept="image/*" (change)="onFileSelected($event)">
+
+            <!-- Inputs Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Nombre Completo</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">person</mat-icon>
+                    <input matInput formControlName="nombreCompleto" placeholder="Ej: Juan Pérez">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Empresa / Organización</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">business</mat-icon>
+                    <input matInput formControlName="empresa" placeholder="Ej: Ciat Ingeniería">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Cargo / Puesto</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">work</mat-icon>
+                    <input matInput formControlName="cargo" placeholder="Ej: Director Técnico">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Tipo de Personal</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">manage_accounts</mat-icon>
+                    <mat-select formControlName="tipoPersonal">
+                        <mat-option *ngFor="let tipo of tiposPersonal" [value]="tipo">{{ tipo }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Correo Electrónico</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">email</mat-icon>
+                    <input matInput type="email" formControlName="correoElectronico" placeholder="Ej: correo@ejemplo.com">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Teléfono Oficina</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">phone</mat-icon>
+                    <input matInput formControlName="telefonoOficina" placeholder="Ej: 555-1234">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Teléfono WhatsApp</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">chat</mat-icon>
+                    <input matInput formControlName="telefonoWhatsapp" placeholder="Ej: 5215551234567">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Página Web Link</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">link</mat-icon>
+                    <input matInput formControlName="linkWeb" placeholder="Ej: https://ciat.com">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full fuse-mat-dense sm:col-span-2" subscriptSizing="dynamic">
+                    <mat-label>Eventos Asociados (Pre-registro / Acceso)</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">event</mat-icon>
+                    <mat-select formControlName="eventoIds" multiple>
+                        <mat-option *ngFor="let ed of eventosList" [value]="ed.id">{{ ed.nombre }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <div class="sm:col-span-2 flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-slate-800 dark:text-slate-205">Compartir Información de Contacto</span>
+                        <span class="text-xs text-slate-450 mt-0.5">Permitir que los asistentes vean los datos de contacto al escanear el QR</span>
+                    </div>
+                    <mat-slide-toggle formControlName="compartirDatos" color="primary"></mat-slide-toggle>
+                </div>
+
             </div>
-        </div>
-
-        <!-- Inputs Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Nombre Completo</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">person</mat-icon>
-                <input matInput formControlName="nombreCompleto" placeholder="Ej: Juan Pérez">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Empresa / Organización</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">business</mat-icon>
-                <input matInput formControlName="empresa" placeholder="Ej: Ciat Ingeniería">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Cargo / Puesto</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">work</mat-icon>
-                <input matInput formControlName="cargo" placeholder="Ej: Director Técnico">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Tipo de Personal</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">manage_accounts</mat-icon>
-                <mat-select formControlName="tipoPersonal">
-                    <mat-option *ngFor="let tipo of tiposPersonal" [value]="tipo">{{ tipo }}</mat-option>
-                </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Correo Electrónico</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">email</mat-icon>
-                <input matInput type="email" formControlName="correoElectronico" placeholder="Ej: correo@ejemplo.com">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Teléfono Oficina</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">phone</mat-icon>
-                <input matInput formControlName="telefonoOficina" placeholder="Ej: 555-1234">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Teléfono WhatsApp</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">chat</mat-icon>
-                <input matInput formControlName="telefonoWhatsapp" placeholder="Ej: 5215551234567">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                <mat-label>Página Web Link</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">link</mat-icon>
-                <input matInput formControlName="linkWeb" placeholder="Ej: https://ciat.com">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full fuse-mat-dense sm:col-span-2" subscriptSizing="dynamic">
-                <mat-label>Eventos Asociados (Pre-registro / Acceso)</mat-label>
-                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">event</mat-icon>
-                <mat-select formControlName="eventoIds" multiple>
-                    <mat-option *ngFor="let ed of eventosList" [value]="ed.id">{{ ed.nombre }}</mat-option>
-                </mat-select>
-            </mat-form-field>
 
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <button type="button" mat-button (click)="close()" [disabled]="isSaving">
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex-none rounded-b-2xl">
+            <button type="button" mat-button (click)="close()" [disabled]="isSaving" class="hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl px-4 py-2">
                 Cancelar
             </button>
             <button type="submit" mat-flat-button color="primary" class="!rounded-xl px-6" [disabled]="form.invalid || isSaving">

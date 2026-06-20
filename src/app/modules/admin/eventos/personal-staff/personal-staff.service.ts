@@ -13,6 +13,7 @@ export interface PersonalStaff {
     telefonoWhatsapp?: string;
     linkWeb?: string;
     tipoPersonal: string; // "Expositor" | "Staff" | "Otro"
+    compartirDatos: boolean;
     fotoPath?: string;
     tokenQr: string;
     fechaRegistro: string;
@@ -49,6 +50,7 @@ export class PersonalStaffService {
         formData.append('telefonoWhatsapp', personal.telefonoWhatsapp || '');
         formData.append('linkWeb', personal.linkWeb || '');
         formData.append('tipoPersonal', personal.tipoPersonal || 'Expositor');
+        formData.append('compartirDatos', String(personal.compartirDatos !== false));
         if (foto) {
             formData.append('foto', foto, foto.name);
         }

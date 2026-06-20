@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { PersonalStaffService } from '../personal-staff.service';
 import { EventosService } from '../../eventos.service';
 
@@ -22,7 +23,8 @@ import { EventosService } from '../../eventos.service';
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
-        MatSelectModule
+        MatSelectModule,
+        MatSlideToggleModule
     ]
 })
 export class PersonalStaffDialogComponent implements OnInit {
@@ -62,7 +64,8 @@ export class PersonalStaffDialogComponent implements OnInit {
             telefonoWhatsapp: [this.data?.personal?.telefonoWhatsapp || ''],
             linkWeb: [this.data?.personal?.linkWeb || ''],
             tipoPersonal: [this.data?.personal?.tipoPersonal || 'Expositor', [Validators.required]],
-            eventoIds: [this.data?.personal?.eventoIds || []]
+            eventoIds: [this.data?.personal?.eventoIds || []],
+            compartirDatos: [this.data?.personal?.compartirDatos !== false]
         });
 
         if (this.isEdit && this.data.personal.fotoPath) {
