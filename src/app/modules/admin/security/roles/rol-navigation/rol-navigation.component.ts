@@ -95,6 +95,17 @@ export class RoleNavigationComponent implements OnInit {
     this._changeDetectorRef.detectChanges();
   }
 
+  isPermisoVisibleForNode(nodeId: string, permiso: any): boolean {
+    const permisoId = Number(permiso.permisoId || permiso.idPermiso || permiso.id);
+    const isSectionPermiso = permisoId >= 101 && permisoId <= 108;
+
+    if (nodeId === 'administracion.proveedores.cuestionario') {
+      return true;
+    } else {
+      return !isSectionPermiso;
+    }
+  }
+
   /**
    * Checkbox Principal de la Vista (Marca o desmarca todos los sub-permisos)
    */
@@ -102,8 +113,10 @@ export class RoleNavigationComponent implements OnInit {
     if (!this.selectedPermissions) this.selectedPermissions = {};
 
     if (isChecked) {
-      // Si marca la vista, le asignamos TODOS los permisos disponibles
-      this.selectedPermissions[itemId] = this.permisos.map(p => Number(p.permisoId || p.idPermiso || p.id));
+      // Si marca la vista, le asignamos solo los permisos visibles para este nodo
+      this.selectedPermissions[itemId] = this.permisos
+        .filter(p => this.isPermisoVisibleForNode(itemId, p))
+        .map(p => Number(p.permisoId || p.idPermiso || p.id));
     } else {
       // Si la desmarca, vaciamos el arreglo
       this.selectedPermissions[itemId] = [];

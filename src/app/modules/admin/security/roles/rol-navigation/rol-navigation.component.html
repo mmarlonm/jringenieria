@@ -59,12 +59,14 @@
         </div>
 
         <div class="ml-10 mt-1 mb-2 grid grid-cols-2 sm:grid-cols-4 gap-2" *ngIf="permisos && permisos.length > 0">
-          <mat-checkbox *ngFor="let permiso of permisos" [color]="'accent'"
-            class="text-xs text-gray-500 scale-90 origin-left"
-            [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
-            (change)="togglePermission(node.id, permiso.permisoId)">
-            {{ permiso.descripcionPermiso }}
-          </mat-checkbox>
+          <ng-container *ngFor="let permiso of permisos">
+            <mat-checkbox *ngIf="isPermisoVisibleForNode(node.id, permiso)" [color]="'accent'"
+              class="text-xs text-gray-500 scale-90 origin-left"
+              [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
+              (change)="togglePermission(node.id, permiso.permisoId)">
+              {{ permiso.descripcionPermiso }}
+            </mat-checkbox>
+          </ng-container>
         </div>
 
       </div>

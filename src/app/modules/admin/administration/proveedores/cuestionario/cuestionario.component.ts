@@ -886,4 +886,74 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
             }
         });
     }
+
+    isSectionVisible(sectionId: number): boolean {
+        try {
+            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const permissions = userInformation.permisos || [];
+            
+            const viewPermissions = permissions.filter((p: any) => 
+                p.vista && p.vista.nombreVista === 'administracion.proveedores.cuestionario'
+            );
+            
+            const activePermissionIds = viewPermissions.map((p: any) => 
+                Number(p.permisoId || p.idPermiso || p.id)
+            );
+            
+            return activePermissionIds.includes(sectionId);
+        } catch (e) {
+            console.error('Error al validar visibilidad de sección:', e);
+            return false;
+        }
+    }
+
+    enviarInvitacion(): void {
+        if (!this.activeCuestionario || this.activeCuestionario.idCuestionario === 0) {
+            return;
+        }
+
+        const emailDestino = this.activeCuestionario.correoAdministrativo || '';
+
+        Swal.fire({
+            title: 'Enviar invitación por correo',
+            text: `¿Desea enviar la invitación al correo ${emailDestino || 'del proveedor'}?`,
+            icon: 'question',
+            input: 'email',
+            inputValue: emailDestino,
+            inputPlaceholder: 'Ingrese el correo electrónico',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debe ingresar un correo electrónico válido.';
+                }
+                return null;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                Swal.fire({
+                    title: 'Enviando invitación...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                this._proveedoresService.enviarInvitacionProveedor(this.activeCuestionario.idCuestionario, result.value).subscribe({
+                    next: (res) => {
+                        if (res && res.success) {
+                            Swal.fire('Enviado', res.message || 'La invitación se envió con éxito.', 'success');
+                        } else {
+                            Swal.fire('Error', res.message || 'No se pudo enviar la invitación.', 'error');
+                        }
+                    },
+                    error: (err) => {
+                        console.error('Error al enviar la invitación:', err);
+                        Swal.fire('Error', err.error?.message || 'Error al enviar la invitación.', 'error');
+                    }
+                });
+            }
+        });
+    }
 }

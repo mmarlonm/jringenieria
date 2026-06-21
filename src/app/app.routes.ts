@@ -36,6 +36,7 @@ export const appRoutes: Route[] = [
             { path: 'sign-up', loadChildren: () => import('app/modules/auth/sign-up/sign-up.routes') },
             { path: 'survey', loadChildren: () => import('app/modules/survey/survey.routes') }, // Survey module route
             { path: 'survey-productos', loadChildren: () => import('app/modules/survey_productos/survey_productos.routes') }, // Survey module route
+            { path: 'public/cuestionario-proveedor/:id', loadComponent: () => import('app/modules/public/cuestionario-proveedor/cuestionario-proveedor.component').then(m => m.PublicCuestionarioProveedorComponent) },
         ]
     },
 

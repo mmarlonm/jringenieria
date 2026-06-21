@@ -50,6 +50,19 @@ export class ProveedoresService {
         return this._http.post<any>(`${this.apiCuestionario}/aprobar-check?idCuestionario=${idCuestionario}&idUsuario=${idUsuario}`, {});
     }
 
+    getCuestionarioPublico(id: number): Observable<any> {
+        return this._http.get<any>(`${this.apiCuestionario}/public/${id}`);
+    }
+
+    saveCuestionarioPublico(cuestionario: any): Observable<any> {
+        return this._http.post<any>(`${this.apiCuestionario}/public/save`, cuestionario);
+    }
+
+    enviarInvitacionProveedor(id: number, correoOverride?: string): Observable<any> {
+        const queryParam = correoOverride ? `?correo=${encodeURIComponent(correoOverride)}` : '';
+        return this._http.post<any>(`${this.apiCuestionario}/${id}/enviar-invitacion${queryParam}`, {});
+    }
+
     // -----------------------------------------------------------------------------------------------------
     // @ catálogos y usuarios
     // -----------------------------------------------------------------------------------------------------

@@ -194,7 +194,13 @@
             </p>
         </div>
         <div class="flex items-center gap-2 mt-4 sm:mt-0">
-            <button mat-stroked-button class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white"
+            <button *ngIf="activeCuestionario && activeCuestionario.idCuestionario !== 0" mat-stroked-button color="primary"
+                class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white text-primary border-primary hover:bg-indigo-50/50"
+                (click)="enviarInvitacion()">
+                <mat-icon svgIcon="heroicons_outline:envelope" class="mr-2 icon-size-5"></mat-icon>
+                <span class="text-sm font-bold uppercase tracking-wider">Enviar Invitación</span>
+            </button>
+            <button mat-stroked-button class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white hover:bg-slate-50"
                 (click)="volverListado()">
                 Cancelar
             </button>
@@ -239,7 +245,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
 
                 <!-- PANEL 1: Datos Generales (xl:col-span-2) -->
-                <div
+                <div *ngIf="isSectionVisible(101)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-2">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -319,7 +325,7 @@
                 </div>
 
                 <!-- PANEL 2: Datos Fiscales y Administrativos (xl:col-span-1) -->
-                <div
+                <div *ngIf="isSectionVisible(102)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-1">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -383,7 +389,7 @@
                 </div>
 
                 <!-- PANEL 3: Datos Bancarios y Condiciones Comerciales (xl:col-span-1) -->
-                <div
+                <div *ngIf="isSectionVisible(103)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-1">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -436,7 +442,7 @@
                 </div>
 
                 <!-- PANEL 4: Alcance, Capacidad y Operación (xl:col-span-2) -->
-                <div
+                <div *ngIf="isSectionVisible(104)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-2">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -473,7 +479,7 @@
                 </div>
 
                 <!-- PANEL 5: Calidad, Seguridad y Cumplimiento (xl:col-span-3) -->
-                <div
+                <div *ngIf="isSectionVisible(105)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -529,7 +535,7 @@
                 </div>
 
                 <!-- PANEL 6: Documentación Requerida (xl:col-span-3) -->
-                <div
+                <div *ngIf="isSectionVisible(106)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -658,7 +664,7 @@
                 </div>
 
                 <!-- PANEL 7: Evaluación Inicial y Autorización Final (xl:col-span-3) -->
-                <div
+                <div *ngIf="isSectionVisible(107)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -771,7 +777,7 @@
                 </div>
 
                 <!-- PANEL 8: Historial de Dictámenes y Cambios de Estatus (xl:col-span-3) -->
-                <div *ngIf="activeCuestionario && activeCuestionario.idCuestionario !== 0"
+                <div *ngIf="activeCuestionario && activeCuestionario.idCuestionario !== 0 && isSectionVisible(108)"
                     class="flex flex-col p-3 md:p-6 mx-2 sm:mx-0 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-2 xl:col-span-3">
                     <h3
                         class="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
