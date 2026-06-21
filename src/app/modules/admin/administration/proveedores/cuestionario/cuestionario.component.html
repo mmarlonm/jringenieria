@@ -13,6 +13,12 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
+                <button mat-stroked-button color="primary"
+                    class="h-10 rounded-lg px-4 sm:px-6 flex items-center transition-all bg-white"
+                    (click)="sincronizarContpaqi()" [disabled]="isSyncing">
+                    <mat-icon svgIcon="heroicons_outline:arrow-path" class="mr-2 icon-size-5" [ngClass]="{'animate-spin': isSyncing}"></mat-icon>
+                    <span class="text-sm font-bold uppercase tracking-wider">{{ isSyncing ? 'Sincronizando...' : 'Sincronizar CONTPAQi' }}</span>
+                </button>
                 <button mat-flat-button color="primary"
                     class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center transition-all"
                     (click)="addCuestionario()">

@@ -57,7 +57,6 @@ export class MaestroComponent implements OnInit {
     proveedores: any[] = [];
     selectedProveedor: any = null;
     isLoading: boolean = false;
-    isSyncing: boolean = false;
 
     // Filters
     searchQuery: string = '';
@@ -215,42 +214,6 @@ export class MaestroComponent implements OnInit {
                     },
                     error: () => {
                         Swal.fire('Error', 'No se pudo actualizar el estatus.', 'error');
-                    }
-                });
-            }
-        });
-    }
-
-    sincronizarContpaqi(): void {
-        Swal.fire({
-            title: '¿Sincronizar proveedores?',
-            text: 'Se importarán los proveedores de CONTPAQi. Aquellos que ya existan se actualizarán sin perder los datos editados en el CRM.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, sincronizar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.isSyncing = true;
-                Swal.fire({
-                    title: 'Sincronizando...',
-                    text: 'Obteniendo datos de CONTPAQi y procesando en el CRM.',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                this._proveedoresService.sincronizarProveedores().subscribe({
-                    next: (res) => {
-                        this.isSyncing = false;
-                        Swal.fire('Éxito', res.message || 'Sincronización completada con éxito.', 'success');
-                        this.cargarProveedores();
-                    },
-                    error: (err) => {
-                        this.isSyncing = false;
-                        const errorMsg = err.error?.message || 'Ocurrió un error al sincronizar con CONTPAQi.';
-                        Swal.fire('Error', errorMsg, 'error');
                     }
                 });
             }

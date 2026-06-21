@@ -75,6 +75,7 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
 
     archivosCargados: { [nombreDocumento: string]: string } = {};
     isUploadingDoc: { [nombreDocumento: string]: boolean } = {};
+    isSyncing: boolean = false;
 
     // Estado de la autorización activa
     autorizacion = {
@@ -844,6 +845,42 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
                         console.error('Error al aprobar cuestionario:', err);
                         const msg = err.error?.message || err.message || 'Ocurrió un error al intentar aprobar.';
                         Swal.fire('Error', msg, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    sincronizarContpaqi(): void {
+        Swal.fire({
+            title: '¿Sincronizar proveedores?',
+            text: 'Se importarán los proveedores de CONTPAQi. Aquellos que ya existan se actualizarán sin perder los datos editados en el CRM.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, sincronizar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.isSyncing = true;
+                Swal.fire({
+                    title: 'Sincronizando...',
+                    text: 'Obteniendo datos de CONTPAQi y procesando en el CRM.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                this._proveedoresService.sincronizarProveedores().subscribe({
+                    next: (res) => {
+                        this.isSyncing = false;
+                        Swal.fire('Éxito', res.message || 'Sincronización completada con éxito.', 'success');
+                        this.loadCuestionarios();
+                    },
+                    error: (err) => {
+                        this.isSyncing = false;
+                        const errorMsg = err.error?.message || 'Ocurrió un error al sincronizar con CONTPAQi.';
+                        Swal.fire('Error', errorMsg, 'error');
                     }
                 });
             }
