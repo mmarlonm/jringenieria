@@ -98,6 +98,10 @@ export class ProveedoresService {
         return this._http.get<any>(`${environment.apiUrl}/ProveedorMaestro/reporte-resumen`);
     }
 
+    sincronizarProveedores(): Observable<any> {
+        return this._http.post<any>(`${environment.apiUrl}/ProveedorMaestro/sync-contpaqi`, {});
+    }
+
     // -----------------------------------------------------------------------------------------------------
     // @ Gestión de Documentos
     // -----------------------------------------------------------------------------------------------------
