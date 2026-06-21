@@ -99,7 +99,7 @@ export class ProveedoresService {
     }
 
     sincronizarProveedores(): Observable<any> {
-        return this._http.post<any>(`${environment.apiUrl}/ProveedorMaestro/sync-contpaqi`, {});
+        return this._http.post<any>(`${this.apiCuestionario}/sync-contpaqi`, {});
     }
 
     // -----------------------------------------------------------------------------------------------------
