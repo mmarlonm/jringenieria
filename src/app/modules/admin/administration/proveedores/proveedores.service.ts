@@ -59,8 +59,13 @@ export class ProveedoresService {
     }
 
     enviarInvitacionProveedor(id: number, correoOverride?: string): Observable<any> {
-        const queryParam = correoOverride ? `?correo=${encodeURIComponent(correoOverride)}` : '';
-        return this._http.post<any>(`${this.apiCuestionario}/${id}/enviar-invitacion${queryParam}`, {});
+        const params = [];
+        if (correoOverride) {
+            params.push(`correo=${encodeURIComponent(correoOverride)}`);
+        }
+        params.push(`clientUrl=${encodeURIComponent(window.location.href)}`);
+        const queryString = params.length > 0 ? `?${params.join('&')}` : '';
+        return this._http.post<any>(`${this.apiCuestionario}/${id}/enviar-invitacion${queryString}`, {});
     }
 
     // -----------------------------------------------------------------------------------------------------
