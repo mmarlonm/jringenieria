@@ -106,6 +106,8 @@
                             <mat-option *ngFor="let cat of tipoProveedorCatalog" [value]="cat.valor">
                                 {{ cat.valor }}
                             </mat-option>
+                            <mat-option *ngIf="tipoProveedorCatalog.length === 0" [value]="'Bienes'">Bienes</mat-option>
+                            <mat-option *ngIf="tipoProveedorCatalog.length === 0" [value]="'Servicios'">Servicios</mat-option>
                         </mat-select>
                     </mat-form-field>
 
@@ -115,6 +117,8 @@
                             <mat-option *ngFor="let cat of categoriaCatalog" [value]="cat.valor">
                                 {{ cat.valor }}
                             </mat-option>
+                            <mat-option *ngIf="categoriaCatalog.length === 0" [value]="'Material eléctrico'">Material eléctrico</mat-option>
+                            <mat-option *ngIf="categoriaCatalog.length === 0" [value]="'Servicios profesionales'">Servicios profesionales</mat-option>
                         </mat-select>
                     </mat-form-field>
                 </div>
@@ -203,6 +207,8 @@
                             <mat-option *ngFor="let cat of monedaCatalog" [value]="cat.valor">
                                 {{ cat.valor }}
                             </mat-option>
+                            <mat-option *ngIf="monedaCatalog.length === 0" [value]="'MXN'">MXN</mat-option>
+                            <mat-option *ngIf="monedaCatalog.length === 0" [value]="'USD'">USD</mat-option>
                         </mat-select>
                     </mat-form-field>
                 </div>

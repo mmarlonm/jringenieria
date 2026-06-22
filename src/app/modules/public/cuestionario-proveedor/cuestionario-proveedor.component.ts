@@ -35,9 +35,9 @@ export class PublicCuestionarioProveedorComponent implements OnInit {
     loading: boolean = true;
     error: string | null = null;
 
-    monedaCatalog = [{ valor: 'MXN' }, { valor: 'USD' }];
-    tipoProveedorCatalog = [{ valor: 'Bienes' }, { valor: 'Servicios' }];
-    categoriaCatalog = [{ valor: 'Material eléctrico' }, { valor: 'Servicios profesionales' }];
+    tipoProveedorCatalog: any[] = [];
+    categoriaCatalog: any[] = [];
+    monedaCatalog: any[] = [];
 
     archivosCargados: { [nombreDocumento: string]: string } = {};
     isUploadingDoc: { [nombreDocumento: string]: boolean } = {};
@@ -55,6 +55,36 @@ export class PublicCuestionarioProveedorComponent implements OnInit {
             return;
         }
         this.loadCuestionario();
+        this.loadCatalogs();
+    }
+
+    loadCatalogs(): void {
+        this._proveedoresService.getCatalogosPorTipo('TIPO_PROVEEDOR').subscribe({
+            next: (res) => {
+                if (res && res.success) {
+                    this.tipoProveedorCatalog = res.data || [];
+                }
+            },
+            error: (err) => console.error('Error al cargar catálogo de tipo proveedor:', err)
+        });
+
+        this._proveedoresService.getCatalogosPorTipo('CATEGORIA').subscribe({
+            next: (res) => {
+                if (res && res.success) {
+                    this.categoriaCatalog = res.data || [];
+                }
+            },
+            error: (err) => console.error('Error al cargar catálogo de categorías:', err)
+        });
+
+        this._proveedoresService.getCatalogosPorTipo('MONEDA').subscribe({
+            next: (res) => {
+                if (res && res.success) {
+                    this.monedaCatalog = res.data || [];
+                }
+            },
+            error: (err) => console.error('Error al cargar catálogo de monedas:', err)
+        });
     }
 
     loadCuestionario(): void {
