@@ -310,4 +310,72 @@ export class SolicitudCompraListComponent implements OnInit {
     getFillColorByPrioridad(nombre: string): string {
         return this.getColorByPrioridad(nombre) + '15';
     }
+
+    exportarCSV(): void {
+        this.filteredSolicitudes$.pipe(take(1)).subscribe(solicitudes => {
+            if (!solicitudes || solicitudes.length === 0) {
+                this._chatNotificationService.showWarning('Sin datos', 'No hay solicitudes para exportar.');
+                return;
+            }
+
+            const headers = [
+                'Folio',
+                'Creado Por',
+                'Fecha Creación',
+                'Validación',
+                'Forma de Pago',
+                'Crédito',
+                'Aprobador Crédito',
+                'Fecha Solicitud',
+                'Sucursal',
+                'Área',
+                'Prioridad',
+                'Matriz Eisenhower',
+                'Proveedor Seleccionado'
+            ];
+
+            const rows = solicitudes.map(s => [
+                s.idSolicitud,
+                this.getUserName(s.idUsuarioLogueado),
+                s.createdDate ? new Date(s.createdDate).toLocaleString('es-MX') : '',
+                s.esAprobada ? 'Aprobada' : 'Pendiente',
+                s.formaPago || '',
+                s.formaPago === 'CREDITO (PPD)' ? (s.esAprobadaCredito ? 'Aprobado' : 'Pendiente') : 'N/A',
+                (s.nombreAprobadorCredito && s.nombreAprobadorCredito !== 'Sin asignar' ? s.nombreAprobadorCredito : this.getUserName(s.idAprobadorCredito)) || 'Sin asignar',
+                s.fechaSolicitud ? new Date(s.fechaSolicitud).toLocaleDateString('es-MX') : '',
+                s.sucursal || '',
+                s.areaSolicitante || '',
+                s.prioridad || '',
+                this.getCuadranteName(s.cuadranteId),
+                this.getSelectedProvider(s)
+            ]);
+
+            this._downloadCSVFile('solicitudes_compra', headers, rows);
+        });
+    }
+
+    private _downloadCSVFile(filename: string, headers: string[], rows: any[][]): void {
+        const escapeCSVValue = (val: any) => {
+            if (val === null || val === undefined) return '';
+            let stringVal = val.toString();
+            stringVal = stringVal.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
+            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+                stringVal = `"${stringVal}"`;
+            }
+            return stringVal;
+        };
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(escapeCSVValue).join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
 }

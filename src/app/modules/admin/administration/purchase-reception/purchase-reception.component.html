@@ -121,6 +121,13 @@
                             <mat-datepicker #endPicker></mat-datepicker>
                         </mat-form-field>
 
+                        <!-- Export CSV Button -->
+                        <button mat-flat-button color="primary" class="!bg-emerald-600 hover:!bg-emerald-700 !text-white rounded-xl h-10 px-4 font-black uppercase tracking-widest shadow-sm flex items-center"
+                            (click)="exportarCSV()">
+                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                            <span class="ml-2 hidden sm:inline">Exportar CSV</span>
+                        </button>
+
                         <!-- Refresh Button -->
                         <button mat-icon-button class="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors"
                             (click)="loadData()" matTooltip="Recargar datos">

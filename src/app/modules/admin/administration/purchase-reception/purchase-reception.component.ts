@@ -283,4 +283,59 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    exportarCSV(): void {
+        const data = this.dataSource.filteredData;
+        if (!data || data.length === 0) {
+            this._notificationService.showWarning('Sin datos', 'No hay registros de recepción para exportar.');
+            return;
+        }
+
+        const headers = [
+            'ID Recepción',
+            'ID Solicitud',
+            'Folio Solicitud / OC',
+            'Fecha Recepción',
+            'Sucursal',
+            'Proyecto / Cliente',
+            'Recibe',
+            'Lugar Entrega',
+            'Estatus'
+        ];
+
+        const escapeCSVValue = (val: any) => {
+            if (val === null || val === undefined) return '';
+            let stringVal = val.toString();
+            stringVal = stringVal.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
+            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+                stringVal = `"${stringVal}"`;
+            }
+            return stringVal;
+        };
+
+        const rows = data.map(r => [
+            r.idRecepcion || r.id || '',
+            r.idSolicitud || '',
+            r.folioOC || '',
+            r.fechaRecepcion ? new Date(r.fechaRecepcion).toLocaleDateString('es-MX') : '',
+            r.sucursal || '',
+            r.proyectoCliente || '',
+            r.nombreQuienRecibio || 'Desconocido',
+            r.lugarEntrega || '',
+            r.estatus === 1 ? 'Completado' : 'Pendiente'
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(escapeCSVValue).join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recepcion_compras_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
 }
