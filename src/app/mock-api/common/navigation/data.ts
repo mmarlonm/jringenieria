@@ -113,8 +113,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             // Elementos directos
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
-            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
-            { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
+            { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Cotizaciones', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
+            { id: 'ingenieria.control-ejecucion', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
@@ -416,16 +416,16 @@ export const compactNavigation: FuseNavigationItem[] = [
 ];
 
 export const futuristicNavigation: FuseNavigationItem[] = [
-    { 
-        id: 'ingenieria', 
-        title: 'INGENIERIA', 
-        type: 'group', 
+    {
+        id: 'ingenieria',
+        title: 'INGENIERIA',
+        type: 'group',
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' }
-        ] 
+        ]
     },
     { id: 'comercializacion', title: 'COMERCIALIZACION', type: 'group', children: [] },
     { id: 'marketing', title: 'MARKETING', type: 'group', children: [] },
@@ -464,17 +464,17 @@ export const futuristicNavigation: FuseNavigationItem[] = [
 ];
 
 export const horizontalNavigation: FuseNavigationItem[] = [
-    { 
-        id: 'ingenieria', 
-        title: 'Ingeniería', 
-        type: 'group', 
-        icon: 'heroicons_outline:cog', 
+    {
+        id: 'ingenieria',
+        title: 'Ingeniería',
+        type: 'group',
+        icon: 'heroicons_outline:cog',
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' }
-        ] 
+        ]
     },
     { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },

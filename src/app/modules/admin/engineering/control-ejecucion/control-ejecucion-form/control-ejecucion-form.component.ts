@@ -31,6 +31,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
+import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-control-ejecucion-form',
@@ -47,7 +48,8 @@ import { fromEvent, Subject, takeUntil } from 'rxjs';
     MatInputModule,
     MatSelectModule,
     MatTabsModule,
-    MatTooltipModule
+    MatTooltipModule,
+    DragDropModule
   ],
   templateUrl: './control-ejecucion-form.component.html',
   styles: [`
@@ -73,6 +75,27 @@ import { fromEvent, Subject, takeUntil } from 'rxjs';
         position: absolute !important;
         bottom: 24px !important;
         right: 24px;
+    }
+
+    /* CDK Drag & Drop premium styles */
+    .cdk-drag-preview {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      opacity: 0.95;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .cdk-drag-placeholder {
+      opacity: 0.45;
+      border: 2px dashed #6366f1 !important;
+      background: rgba(99, 102, 241, 0.04) !important;
+    }
+    .cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .cdk-drop-list-dragging .cdk-drag {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
     }
   `]
 })
@@ -108,12 +131,15 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     { name: 'Gantt', label: 'Prog. Gantt', icon: 'heroicons_outline:calendar-days' },
     { name: 'IMSS', label: 'IMSS/SUA', icon: 'heroicons_outline:identification' },
     { name: 'Materiales', label: 'Materiales', icon: 'heroicons_outline:square-3-stack-3d' },
-    { name: 'Construccion', label: 'Construcción', icon: 'heroicons_outline:home-modern' }
+    { name: 'Construccion', label: 'Construcción', icon: 'heroicons_outline:home-modern' },
+    { name: 'OC', label: 'Orden de Compra', icon: 'heroicons_outline:document-text' }
   ];
 
   // Files
   archivos: { nombreArchivo: string, tipo: string }[] = [];
   isUploading: { [key: string]: boolean } = {};
+  isUploadingOC: boolean = false;
+  ocFileName: string = '';
 
   // Gantt State
   tasks: SeguimientoEjecucionActividadMaestra[] = [];
@@ -170,7 +196,9 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       riesgoTecnico: [''],
       nivelPrioridad: [''],
       contratoFolio: [''],
-      fianzaFolio: ['']
+      fianzaFolio: [''],
+      ordenCompraFolio: [''],
+      ordenCompraArchivo: ['']
     });
   }
 
@@ -191,8 +219,11 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             riesgoTecnico: found.riesgoTecnico || '',
             nivelPrioridad: found.nivelPrioridad || '',
             contratoFolio: found.contratoFolio || '',
-            fianzaFolio: found.fianzaFolio || ''
+            fianzaFolio: found.fianzaFolio || '',
+            ordenCompraFolio: found.ordenCompraFolio || '',
+            ordenCompraArchivo: found.ordenCompraArchivo || ''
           });
+          this.ocFileName = found.ordenCompraArchivo || '';
         } else {
           // Si no existe, creamos un registro ficticio en memoria con idSeguimiento
           this.ejecucion = {
@@ -231,6 +262,101 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   // ==========================================
   // 📁 FILES LOGIC
   // ==========================================
+  onOCFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.isUploadingOC = true;
+    this._engineeringService.subirArchivoOC(this.idSeguimiento, file).subscribe({
+      next: (res) => {
+        this.isUploadingOC = false;
+        this.ocFileName = res.nombreArchivo;
+        this.form.patchValue({ ordenCompraArchivo: res.nombreArchivo });
+        Swal.fire({
+          title: '¡Subido!',
+          text: 'Archivo de Orden de Compra cargado con éxito.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        this.loadData();
+      },
+      error: (err) => {
+        this.isUploadingOC = false;
+        console.error(err);
+        Swal.fire('Error', 'No se pudo subir el archivo de Orden de Compra.', 'error');
+      }
+    });
+    event.target.value = '';
+  }
+
+  descargarArchivoOC(): void {
+    if (!this.ocFileName) return;
+    this._engineeringService.descargarArchivoOC(this.idSeguimiento).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          const byteCharacters = atob(res.data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: res.contentType });
+
+          const a = document.createElement('a');
+          const objectUrl = URL.createObjectURL(blob);
+          a.href = objectUrl;
+          a.download = this.ocFileName;
+          a.click();
+          URL.revokeObjectURL(objectUrl);
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        Swal.fire('Error', 'No se pudo descargar el archivo de Orden de Compra.', 'error');
+      }
+    });
+  }
+
+  eliminarArchivoOC(): void {
+    Swal.fire({
+      title: '¿Eliminar archivo de OC?',
+      text: `¿Estás seguro de eliminar el archivo "${this.ocFileName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl p-6 shadow-2xl border-0',
+        confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-red-200',
+        cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._engineeringService.eliminarArchivoOC(this.idSeguimiento).subscribe({
+          next: () => {
+            Swal.fire({
+              title: '¡Eliminado!',
+              text: 'El archivo de Orden de Compra ha sido eliminado.',
+              icon: 'success',
+              timer: 1500,
+              showConfirmButton: false
+            });
+            this.ocFileName = '';
+            this.form.patchValue({ ordenCompraArchivo: '' });
+            this.loadData();
+          },
+          error: (err) => {
+            console.error(err);
+            Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
+          }
+        });
+      }
+    });
+  }
+
   loadFiles(): void {
     this._engineeringService.getArchivosEjecucion(this.idSeguimiento).subscribe({
       next: (res) => {
@@ -404,10 +530,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       rows.push({ type: 'task', task: t });
       if (t.expanded !== false) {
         t.expanded = true;
-        if (t.actividades) {
+        if (t.actividades && t.actividades.length > 0) {
           t.actividades.forEach((act) => {
             rows.push({ type: 'activity', task: t, activity: act });
           });
+        } else {
+          rows.push({ type: 'placeholder', task: t });
         }
       }
     });
@@ -822,6 +950,75 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       const dirY = (endY > startY) ? 1 : -1;
       return `M ${startX} ${startY} L ${outX - r} ${startY} Q ${outX} ${startY} ${outX} ${startY + dirY * r} L ${outX} ${gutterY - dirY * r} Q ${outX} ${gutterY} ${outX - r} ${gutterY} L ${inX + r} ${gutterY} Q ${inX} ${gutterY} ${inX} ${gutterY + dirY * r} L ${inX} ${endY - dirY * r} Q ${inX} ${endY} ${inX + r} ${endY} L ${endX} ${endY}`;
     }
+  }
+
+  // ==========================================
+  // 🔀 GANTT DRAG & DROP METHODS
+  // ==========================================
+  masterPredicate = (drag: CdkDrag): boolean => {
+    return drag.data && drag.data.actividades !== undefined;
+  };
+
+  subPredicate = (drag: CdkDrag): boolean => {
+    return drag.data && drag.data.actividadMaestraId !== undefined;
+  };
+
+  onMasterDropped(event: CdkDragDrop<SeguimientoEjecucionActividadMaestra[]>): void {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(this.tasks, event.previousIndex, event.currentIndex);
+      this.saveGanttPositions();
+    }
+  }
+
+  onSubactivityDropped(event: CdkDragDrop<SeguimientoEjecucionSubactividad[]>, parentTask: SeguimientoEjecucionActividadMaestra): void {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(parentTask.actividades || [], event.previousIndex, event.currentIndex);
+      this.saveGanttPositions();
+    } else {
+      const sub = event.item.data as SeguimientoEjecucionSubactividad;
+      sub.actividadMaestraId = parentTask.id!;
+      
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex
+      );
+      this.saveGanttPositions();
+    }
+  }
+
+  saveGanttPositions(): void {
+    const updatePayload: any[] = [];
+
+    this.tasks.forEach((task, tIdx) => {
+      updatePayload.push({
+        id: task.id,
+        type: 'maestra',
+        orden: tIdx
+      });
+
+      if (task.actividades) {
+        task.actividades.forEach((sub, sIdx) => {
+          updatePayload.push({
+            id: sub.id,
+            type: 'subactividad',
+            orden: sIdx,
+            actividadMaestraId: task.id
+          });
+        });
+      }
+    });
+
+    this._engineeringService.reordenarGantt(updatePayload).subscribe({
+      next: () => {
+        this.loadGantt();
+      },
+      error: (err) => {
+        console.error('Error al guardar posiciones del Gantt:', err);
+        Swal.fire('Error', 'No se pudieron guardar las posiciones en el servidor.', 'error');
+      }
+    });
   }
 
   // ==========================================

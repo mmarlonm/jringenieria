@@ -129,8 +129,8 @@
                     <!-- Actividad -->
                     <ng-container matColumnDef="actividad">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Actividad</th>
-                        <td mat-cell *matCellDef="let s" class="min-w-60 text-slate-700 leading-normal py-3 pr-4">
-                            {{ s.actividad }}
+                        <td mat-cell *matCellDef="let s" class="text-slate-700 leading-normal py-3 pr-4" [matTooltip]="s.actividad || ''">
+                            {{ s.actividad && s.actividad.length > 10 ? (s.actividad | slice:0:10) + '...' : (s.actividad || '') }}
                         </td>
                     </ng-container>
 

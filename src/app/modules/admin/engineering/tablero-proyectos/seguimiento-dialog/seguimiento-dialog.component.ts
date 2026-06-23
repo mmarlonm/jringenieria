@@ -36,14 +36,14 @@ export class SeguimientoDialogComponent implements OnInit {
     levantamientoOptions = [
         { id: 1, label: 'Pendiente' },
         { id: 2, label: 'En Proceso' },
-        { id: 3, label: 'OK' },
+        { id: 3, label: 'Concluida' },
         { id: 4, label: 'Detenida' }
     ];
 
     cotizacionOptions = [
         { id: 1, label: 'Pendiente' },
         { id: 2, label: 'En Proceso' },
-        { id: 3, label: 'OK' },
+        { id: 3, label: 'Concluida' },
         { id: 4, label: 'Detenida' }
     ];
 
@@ -80,7 +80,7 @@ export class SeguimientoDialogComponent implements OnInit {
                                 this.form.get('idSolicitante').setValue(res.idSolicitante);
                             }
                         });
-                        
+
                         Swal.fire({
                             title: '¡Creado!',
                             text: 'El solicitante fue creado y seleccionado',
@@ -104,7 +104,7 @@ export class SeguimientoDialogComponent implements OnInit {
         // Cargar solicitantes activos
         this._engineeringService.getSolicitantes().subscribe((solicitantes) => {
             this.solicitantes = solicitantes;
-            
+
             // Si el solicitante actual está inactivo o no está en la lista (por si acaso), lo agregamos para visualización
             if (this.isEdit && this.data.seguimiento) {
                 const currentId = this.data.seguimiento.idSolicitante;

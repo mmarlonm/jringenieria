@@ -155,9 +155,12 @@
                                 <span>Subiendo archivo...</span>
                             </div>
 
-                            <div *ngIf="getFilesByCategory(cat.name).length === 0 && !isUploading[cat.name]" class="flex flex-col items-center justify-center py-6 text-slate-400 italic">
-                                <mat-icon class="icon-size-6 text-slate-300 mb-1" [svgIcon]="'heroicons_outline:document'"></mat-icon>
-                                <span class="text-[10px] font-medium uppercase tracking-tighter">Sin archivos adjuntos</span>
+                            <div *ngIf="getFilesByCategory(cat.name).length === 0 && !isUploading[cat.name]" 
+                                 (click)="fileInput.click()"
+                                 class="flex flex-col items-center justify-center py-6 text-slate-400 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:text-indigo-600 rounded-xl cursor-pointer transition-all bg-slate-50/50 hover:bg-indigo-50/20 group select-none w-full">
+                                <mat-icon class="icon-size-6 text-slate-300 group-hover:text-indigo-500 mb-1.5 transition-colors" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                                <span class="text-[10px] font-bold uppercase tracking-wider group-hover:text-indigo-600 transition-colors">Subir Archivo</span>
+                                <span class="text-[8px] text-slate-400 mt-0.5">Haz clic para seleccionar</span>
                             </div>
 
                             <div *ngFor="let file of getFilesByCategory(cat.name)" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all group">

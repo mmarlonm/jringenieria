@@ -44,6 +44,8 @@ export interface SeguimientoEjecucion {
     nivelPrioridad?: string;
     contratoFolio?: string;
     fianzaFolio?: string;
+    ordenCompraFolio?: string;
+    ordenCompraArchivo?: string;
     estatusAst: number;
     estatusProgramaGantt: number;
     estatusImssSua: number;
@@ -71,6 +73,7 @@ export interface SeguimientoEjecucionActividadMaestra {
     prioridad?: string;
     estatus: number;
     color?: string;
+    orden?: number;
     expanded?: boolean; // Frontend only
     actividades?: SeguimientoEjecucionSubactividad[];
 }
@@ -89,6 +92,7 @@ export interface SeguimientoEjecucionSubactividad {
     prioridad?: string;
     estatus: number;
     color?: string;
+    orden?: number;
 }
 
 @Injectable({
@@ -205,6 +209,23 @@ export class EngineeringService {
     }
 
     // ==========================================
+    // 📁 ARCHIVO DE ORDEN DE COMPRA (OC)
+    // ==========================================
+    subirArchivoOC(idSeguimiento: number, archivo: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        return this._http.post(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivo-oc`, formData);
+    }
+
+    descargarArchivoOC(idSeguimiento: number): Observable<any> {
+        return this._http.get<any>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivo-oc`);
+    }
+
+    eliminarArchivoOC(idSeguimiento: number): Observable<any> {
+        return this._http.delete(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivo-oc`);
+    }
+
+    // ==========================================
     // 📊 GESTION DE GANTT (ACTIVIDADES MAESTRAS Y SUBACTIVIDADES)
     // ==========================================
     getGanttTareas(idSeguimiento: number): Observable<SeguimientoEjecucionActividadMaestra[]> {
@@ -229,5 +250,9 @@ export class EngineeringService {
 
     getGanttGeneral(): Observable<any[]> {
         return this._http.get<any[]>(`${this.apiSeguimientoEjecucion}/gantt/general`);
+    }
+
+    reordenarGantt(items: any[]): Observable<any> {
+        return this._http.post(`${this.apiSeguimientoEjecucion}/gantt/reordenar`, items);
     }
 }

@@ -78,6 +78,19 @@
                             <div class="text-[10px] text-indigo-500 font-medium">Solicita: {{ s.nombreSolicitante }}</div>
                         </td>
                     </ng-container>
+ 
+                    <!-- OC -->
+                    <ng-container matColumnDef="oc">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>OC</th>
+                        <td mat-cell *matCellDef="let s" class="py-3 pr-4">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-amber-600 tabular-nums">{{ s.ordenCompraFolio || '-' }}</span>
+                                <button *ngIf="s.ordenCompraArchivo" mat-icon-button class="w-6 h-6 min-h-6 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition-all duration-200 animate-pulse" (click)="descargarArchivoOC(s); $event.stopPropagation()" matTooltip="Descargar Archivo OC ({{ s.ordenCompraArchivo }})">
+                                    <mat-icon class="icon-size-4">attachment</mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
 
                     <!-- Utilidad -->
                     <ng-container matColumnDef="utilidadEsperada">

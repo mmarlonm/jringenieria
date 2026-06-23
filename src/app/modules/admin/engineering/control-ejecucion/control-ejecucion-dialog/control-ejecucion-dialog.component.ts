@@ -62,7 +62,8 @@ export class ControlEjecucionDialogComponent implements OnInit {
         { name: 'Gantt', label: 'Prog. Gantt', icon: 'heroicons_outline:calendar-days' },
         { name: 'IMSS', label: 'IMSS/SUA', icon: 'heroicons_outline:identification' },
         { name: 'Materiales', label: 'Materiales', icon: 'heroicons_outline:square-3-stack-3d' },
-        { name: 'Construccion', label: 'Construcción', icon: 'heroicons_outline:home-modern' }
+        { name: 'Construccion', label: 'Construcción', icon: 'heroicons_outline:home-modern' },
+        { name: 'OC', label: 'Orden de Compra', icon: 'heroicons_outline:document-text' }
     ];
 
     archivos: { nombreArchivo: string, tipo: string }[] = [];

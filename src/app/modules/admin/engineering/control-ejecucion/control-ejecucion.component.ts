@@ -43,6 +43,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     displayedColumns: string[] = [
         'idSeguimiento',
         'proyecto',
+        'oc',
         'utilidadEsperada',
         'fechas',
         'recursos',
@@ -210,6 +211,34 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     // ==========================================
     editarEjecucion(row: SeguimientoEjecucion): void {
         this._router.navigate(['/engineering/control-ejecucion/editar', row.idSeguimiento]);
+    }
+
+    descargarArchivoOC(row: SeguimientoEjecucion): void {
+        if (!row.ordenCompraArchivo) return;
+        this._engineeringService.descargarArchivoOC(row.idSeguimiento).subscribe({
+            next: (res) => {
+                if (res && res.data) {
+                    const byteCharacters = atob(res.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: res.contentType });
+
+                    const a = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    a.href = objectUrl;
+                    a.download = row.ordenCompraArchivo;
+                    a.click();
+                    URL.revokeObjectURL(objectUrl);
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                Swal.fire('Error', 'No se pudo descargar el archivo de Orden de Compra.', 'error');
+            }
+        });
     }
 
     cambiarEstatus(id: number, campo: string, estatus: number): void {
