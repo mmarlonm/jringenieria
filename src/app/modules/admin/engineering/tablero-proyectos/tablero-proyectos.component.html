@@ -164,6 +164,14 @@
                         </td>
                     </ng-container>
 
+                    <!-- Realizó Levantamiento -->
+                    <ng-container matColumnDef="quienRealizoLevantamiento">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Realizó Levantamiento</th>
+                        <td mat-cell *matCellDef="let s" class="text-slate-600 whitespace-nowrap py-3 pr-4" [matTooltip]="s.quienRealizoLevantamiento || ''">
+                            {{ s.quienRealizoLevantamiento && s.quienRealizoLevantamiento.length > 20 ? (s.quienRealizoLevantamiento | slice:0:20) + '...' : (s.quienRealizoLevantamiento || '-') }}
+                        </td>
+                    </ng-container>
+
                     <!-- Cotizacion -->
                     <ng-container matColumnDef="cotizacion">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Cotización</th>
@@ -180,6 +188,14 @@
                                     </div>
                                 </button>
                             </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <!-- Quién Cotizó -->
+                    <ng-container matColumnDef="quienCotizo">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Quién Cotizó</th>
+                        <td mat-cell *matCellDef="let s" class="text-slate-600 whitespace-nowrap py-3 pr-4" [matTooltip]="s.quienCotizo || ''">
+                            {{ s.quienCotizo && s.quienCotizo.length > 20 ? (s.quienCotizo | slice:0:20) + '...' : (s.quienCotizo || '-') }}
                         </td>
                     </ng-container>
 

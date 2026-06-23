@@ -27,6 +27,8 @@ export interface SeguimientoProyecto {
     estatusAprobacion: number;
     ordenCompraFolio?: string;
     montoTotalEstimado?: number;
+    quienRealizoLevantamiento?: string;
+    quienCotizo?: string;
     idUsuarioRegistro: number;
     nombreUsuarioRegistro?: string;
     fechaRegistro?: string;

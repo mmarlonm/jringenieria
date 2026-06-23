@@ -128,7 +128,9 @@ export class SeguimientoDialogComponent implements OnInit {
             estatusCotizacion: [this.data?.seguimiento?.estatusCotizacion || 1, Validators.required],
             estatusAprobacion: [this.data?.seguimiento?.estatusAprobacion || 1, Validators.required],
             ordenCompraFolio: [this.data?.seguimiento?.ordenCompraFolio || '', Validators.maxLength(50)],
-            montoTotalEstimado: [this.data?.seguimiento?.montoTotalEstimado || null]
+            montoTotalEstimado: [this.data?.seguimiento?.montoTotalEstimado || null],
+            quienRealizoLevantamiento: [this.data?.seguimiento?.quienRealizoLevantamiento || '', Validators.maxLength(500)],
+            quienCotizo: [this.data?.seguimiento?.quienCotizo || '', Validators.maxLength(255)]
         });
     }
 

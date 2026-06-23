@@ -51,7 +51,9 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         'actividad',
         'tipo',
         'levantamiento',
+        'quienRealizoLevantamiento',
         'cotizacion',
+        'quienCotizo',
         'aprobado',
         'oc',
         'monto',
@@ -153,6 +155,8 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
             const actividad = (data.actividad || '').toLowerCase();
             const tipo = (data.tipo || '').toLowerCase();
             const oc = (data.ordenCompraFolio || '').toLowerCase();
+            const realizoLevantamiento = (data.quienRealizoLevantamiento || '').toLowerCase();
+            const quienCotizo = (data.quienCotizo || '').toLowerCase();
             const id = String(data.idSeguimiento);
 
             return solicitante.includes(search) ||
@@ -161,6 +165,8 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
                    actividad.includes(search) ||
                    tipo.includes(search) ||
                    oc.includes(search) ||
+                   realizoLevantamiento.includes(search) ||
+                   quienCotizo.includes(search) ||
                    id.includes(search);
         };
     }
