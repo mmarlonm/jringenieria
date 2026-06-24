@@ -906,6 +906,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   getDependencyPath(row: any, currentIndex: number): string | null {
+    if (row.type === 'placeholder') return null;
     const pId = row.type === 'task' ? Number(row.task.predecesoraId) : Number(row.activity.predecesoraId);
     if (!pId) return null;
 
