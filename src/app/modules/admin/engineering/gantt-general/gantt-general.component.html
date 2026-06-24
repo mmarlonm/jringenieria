@@ -98,7 +98,7 @@
                 </div>
 
                 <!-- Responsable -->
-                <div class="w-[120px] shrink-0 truncate text-slate-600 dark:text-slate-400">
+                <div class="w-[120px] shrink-0 truncate text-slate-600 dark:text-slate-400" [matTooltip]="(row.type === 'project' ? row.project.nombreSolicitante : (row.type === 'maestra' ? row.maestra.nombreResponsable : row.subactividad.nombreResponsable)) || ''">
                   {{ row.type === 'project' ? (row.project.nombreSolicitante || '-') : (row.type === 'maestra' ? (row.maestra.nombreResponsable || '-') : (row.subactividad.nombreResponsable || '-')) }}
                 </div>
 

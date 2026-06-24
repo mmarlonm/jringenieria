@@ -220,7 +220,7 @@
                         </div>
 
                         <!-- Responsable -->
-                        <div class="w-[120px] shrink-0 truncate flex items-center gap-2">
+                        <div class="w-[120px] shrink-0 truncate flex items-center gap-2" [matTooltip]="task.nombreResponsable || ''">
                           <span class="truncate">{{ task.nombreResponsable || '-' }}</span>
                         </div>
 
@@ -314,7 +314,7 @@
                           </div>
 
                           <!-- Responsable -->
-                          <div class="w-[120px] shrink-0 truncate flex items-center gap-2">
+                          <div class="w-[120px] shrink-0 truncate flex items-center gap-2" [matTooltip]="sub.nombreResponsable || ''">
                             <span class="truncate">{{ sub.nombreResponsable || '-' }}</span>
                           </div>
 

@@ -66,6 +66,7 @@ export interface SeguimientoEjecucionActividadMaestra {
     idSeguimiento: number;
     nombre: string;
     responsableId?: number;
+    responsablesIds?: string;
     nombreResponsable?: string;
     area?: string;
     progreso: number;
@@ -85,6 +86,7 @@ export interface SeguimientoEjecucionSubactividad {
     actividadMaestraId: number;
     nombre: string;
     responsableId?: number;
+    responsablesIds?: string;
     nombreResponsable?: string;
     area?: string;
     progreso: number;

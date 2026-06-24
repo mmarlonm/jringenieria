@@ -50,9 +50,8 @@ import { TextFieldModule } from '@angular/cdk/text-field';
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Responsable (Opcional para Maestra, sugerido para subactividad) -->
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Responsable</mat-label>
-            <mat-select formControlName="responsableId">
-              <mat-option [value]="null">Sin asignar</mat-option>
+            <mat-label>Responsables</mat-label>
+            <mat-select formControlName="responsablesIds" multiple>
               <mat-option *ngFor="let user of data.userList" [value]="user.usuarioId">
                 <div class="flex items-center gap-3 py-1">
                   <div class="flex-none w-7 h-7 rounded-full overflow-hidden border shadow-sm bg-slate-200">
@@ -67,7 +66,7 @@ import { TextFieldModule } from '@angular/cdk/text-field';
                 </div>
               </mat-option>
             </mat-select>
-            <mat-icon matSuffix class="text-secondary">person</mat-icon>
+            <mat-icon matSuffix class="text-secondary">people</mat-icon>
           </mat-form-field>
 
           <!-- Área -->
@@ -200,7 +199,7 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
   ) {
     this.form = this._fb.group({
       nombre: ['', [Validators.required]],
-      responsableId: [null],
+      responsablesIds: [[]],
       area: [''],
       fechaInicio: [new Date(), [Validators.required]],
       fechaFin: [new Date(), [Validators.required]],
@@ -214,11 +213,21 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.data.actividad) {
+      let selectedIds: number[] = [];
+      if (this.data.actividad.responsablesIds) {
+        selectedIds = this.data.actividad.responsablesIds.split(',')
+          .map((x: string) => Number(x.trim()))
+          .filter((x: number) => !isNaN(x) && x > 0);
+      } else if (this.data.actividad.responsableId) {
+        selectedIds = [this.data.actividad.responsableId];
+      }
+
       this.form.patchValue({
         ...this.data.actividad,
         fechaInicio: this.data.actividad.fechaInicio ? new Date(this.data.actividad.fechaInicio) : new Date(),
         fechaFin: this.data.actividad.fechaFin ? new Date(this.data.actividad.fechaFin) : new Date(),
-        predecesoraId: this.data.actividad.predecesoraId || null
+        predecesoraId: this.data.actividad.predecesoraId || null,
+        responsablesIds: selectedIds
       });
     }
 
@@ -237,12 +246,18 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
     if (this.form.invalid) return;
 
     const val = this.form.value;
-    const resp = this.data.userList.find(u => u.usuarioId === val.responsableId);
+    const selectedIds: number[] = val.responsablesIds || [];
+    const names = selectedIds.map(id => {
+      const u = this.data.userList.find(user => user.usuarioId === id);
+      return u ? u.nombreUsuario : '';
+    }).filter(n => !!n);
 
     const result = {
       ...this.data.actividad,
       ...val,
-      nombreResponsable: resp ? resp.nombreUsuario : ''
+      nombreResponsable: names.join(', '),
+      responsableId: selectedIds.length > 0 ? selectedIds[0] : null,
+      responsablesIds: selectedIds.join(',')
     };
 
     this._dialogRef.close(result);
