@@ -18,6 +18,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Subject, takeUntil, map, startWith, forkJoin, debounceTime, switchMap, catchError, of } from 'rxjs';
 import { ExpensesService } from '../expenses.service';
 import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types';
+import { ExpensesExcelService } from '../expenses-excel.service';
 import Swal from 'sweetalert2';
 import moment from 'moment';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
@@ -91,12 +92,52 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     currentUserId: number | null = null;
     canSeeAll: boolean = false;
     private readonly _SUPER_USER_IDS = [5, 13, 14, 16, 38];
+    isDownloadingExcel: boolean = false;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     showFilters: boolean = false;
 
     toggleFilters(): void {
         this.showFilters = !this.showFilters;
+    }
+
+    /** Descarga el reporte de gastos en el formato oficial XLSX */
+    async downloadExcelReporte(): Promise<void> {
+        if (this.isDownloadingExcel) return;
+        this.isDownloadingExcel = true;
+        this._changeDetectorRef.markForCheck();
+        try {
+            // Usar los datos actualmente visibles en la tabla (filtrageados)
+            const dataToExport: Expense[] = this.dataSource.filteredData?.length > 0
+                ? this.dataSource.filteredData.filter(e => e.gastoId !== 0)
+                : this.dataSource.data.filter(e => e.gastoId !== 0);
+
+            await this._excelService.downloadReporteGastos(
+                dataToExport,
+                this.catalogs,
+                this.unidadesNegocio,
+                {
+                    mes: this.filterValues.mes,
+                    anio: this.filterValues.anio,
+                    unidad: this.filterValues.unidad
+                }
+            );
+            this._chatNotificationService.showSuccess(
+                '¡Reporte generado!',
+                `Se descargaron ${dataToExport.length} registros en formato XLSX`,
+                4000
+            );
+        } catch (err) {
+            console.error('Error al generar el reporte Excel:', err);
+            this._chatNotificationService.showError(
+                'Error al exportar',
+                'No se pudo generar el archivo Excel. Verifique la consola.',
+                6000
+            );
+        } finally {
+            this.isDownloadingExcel = false;
+            this._changeDetectorRef.markForCheck();
+        }
     }
 
     filterValues = {
@@ -126,6 +167,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
         private _expensesService: ExpensesService,
+        private _excelService: ExpensesExcelService,
         private _fb: FormBuilder,
         private _chatNotificationService: ChatNotificationService,
         private _matDialog: MatDialog

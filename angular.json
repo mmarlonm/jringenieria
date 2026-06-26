@@ -31,7 +31,12 @@
                             "crypto-js/enc-utf8",
                             "crypto-js/hmac-sha256",
                             "crypto-js/enc-base64",
-                            "quill-delta"
+                            "quill-delta",
+                            "exceljs",
+                            "file-saver",
+                            "jszip",
+                            "archiver",
+                            "archiver-utils"
                         ],
                         "assets": [
                             {
@@ -42,6 +47,11 @@
                                 "glob": "_redirects",
                                 "input": "src",
                                 "output": "/"
+                            },
+                            {
+                                "glob": "**/*",
+                                "input": "src/assets",
+                                "output": "/assets"
                             },
                             {
                                 "glob": "**/*",

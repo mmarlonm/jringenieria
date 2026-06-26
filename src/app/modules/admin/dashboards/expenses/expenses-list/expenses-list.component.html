@@ -19,6 +19,23 @@
                     <span class="text-secondary font-medium">Gestión y control de egresos e ingresos</span>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <!-- Botón Descargar Reporte Excel -->
+                    <button mat-stroked-button
+                        id="btn-descargar-reporte-gastos"
+                        class="rounded-xl px-5 h-11 border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 transition-all duration-200 font-bold flex items-center gap-2"
+                        [disabled]="isDownloadingExcel"
+                        (click)="downloadExcelReporte()"
+                        matTooltip="Descargar el reporte de gastos en el formato oficial XLSX">
+                        <ng-container *ngIf="!isDownloadingExcel">
+                            <mat-icon class="icon-size-5 text-emerald-600">download</mat-icon>
+                            <span>Descargar Reporte</span>
+                        </ng-container>
+                        <ng-container *ngIf="isDownloadingExcel">
+                            <mat-icon class="icon-size-5 text-emerald-400 animate-spin">autorenew</mat-icon>
+                            <span class="text-emerald-400">Generando...</span>
+                        </ng-container>
+                    </button>
+
                     <button mat-flat-button [color]="'primary'" class="rounded-xl px-6 h-11" (click)="addNew()">
                         <mat-icon [svgIcon]="'heroicons_solid:plus'" class="mr-2 icon-size-5"></mat-icon>
                         <span class="font-bold">Nuevo Gasto</span>
