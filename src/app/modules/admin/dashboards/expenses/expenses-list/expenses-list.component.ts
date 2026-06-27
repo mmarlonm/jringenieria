@@ -107,10 +107,20 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.isDownloadingExcel = true;
         this._changeDetectorRef.markForCheck();
         try {
-            // Usar los datos actualmente visibles en la tabla (filtrageados)
             const dataToExport: Expense[] = this.dataSource.filteredData?.length > 0
                 ? this.dataSource.filteredData.filter(e => e.gastoId !== 0)
                 : this.dataSource.data.filter(e => e.gastoId !== 0);
+
+            // Obtener nombre del usuario desde localStorage con múltiples fallbacks
+            let nombreUsuario = 'N/A';
+            try {
+                const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
+                const user = info.usuario || info || {};
+                const partes = [user.nombre, user.apellidoPaterno, user.apellidoMaterno].filter(Boolean);
+                nombreUsuario = partes.length > 0 ? partes.join(' ')
+                    : user.nombreCompleto || user.fullName || user.displayName
+                    || user.nombreUsuario || user.email || 'N/A';
+            } catch (_) {}
 
             await this._excelService.downloadReporteGastos(
                 dataToExport,
@@ -119,8 +129,9 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
                 {
                     mes: this.filterValues.mes,
                     anio: this.filterValues.anio,
-                    unidad: this.filterValues.unidad
-                }
+                    unidad: this.filterValues.unidad || this.currentUserUnidadName
+                },
+                nombreUsuario
             );
             this._chatNotificationService.showSuccess(
                 '¡Reporte generado!',

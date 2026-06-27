@@ -15,21 +15,27 @@ export class ExpensesExcelService {
      *
      * Estructura del template (sheet "Reporte de Gastos"):
      *   - Tabla: B6:O68  (14 columnas, datos desde fila 7)
-     *   - Columnas: B=Fecha, C=Tipo Flujo, D=Concepto, E=Lugar/Proveedor,
+     *   - Columnas de datos: B=Fecha, C=Tipo Flujo, D=Concepto, E=Lugar/Proveedor,
      *     F=No.Integrantes, G=Nombre Participantes, H=Proyecto/Sucursal,
-     *     I=FormaPago, J=Facturado?, K=Folio/UUID, L=MontoIndividual(fórmula),
-     *     M=Ingreso(+), N=Gasto(-), O=SaldoLíquido(fórmula)
+     *     I=FormaPago, J=Facturado?, K=Folio/UUID,
+     *     L=MontoIndividual (fórmula — OMITIDA), M=Ingreso(+), N=Gasto(-),
+     *     O=SaldoLíquido (fórmula — conservada)
      */
     async downloadReporteGastos(
         expenses: Expense[],
         catalogs: ExpenseCatalogs,
         unidadesNegocio: any[],
-        filtro?: { mes?: string; anio?: string; unidad?: string }
+        filtro?: { mes?: string; anio?: string; unidad?: string },
+        nombreUsuario?: string   // Nombre ya resuelto desde el componente
     ): Promise<void> {
 
-        const userInfo = this._getUserInfo();
         const periodoLabel = this._buildPeriodoLabel(expenses, filtro);
-        const unidadLabel = this._buildUnidadLabel(unidadesNegocio, userInfo.unidadId, filtro?.unidad);
+        // Usar la sucursal que viene del filtro o del componente directamente
+        const unidadLabel = filtro?.unidad && filtro.unidad.trim() ? filtro.unidad.trim() : 'General';
+        // Usar el nombre pasado desde el componente; si no, intentar localStorage
+        const nombre = nombreUsuario && nombreUsuario !== 'N/A'
+            ? nombreUsuario
+            : this._resolveNombreFromStorage();
 
         // Construir URL del template relativa al baseHref de la app
         const baseHref = document.querySelector('base')?.getAttribute('href') || '/';
@@ -51,79 +57,85 @@ export class ExpensesExcelService {
         const sheet = workbook.getWorksheet('Reporte de Gastos');
         if (!sheet) {
             console.error('No se encontró la hoja "Reporte de Gastos"');
-            alert('Error: no se encontró la hoja en el template. Verifique el archivo.');
+            alert('Error: no se encontró la hoja en el template.');
             return;
         }
 
-        // ─── Encabezado del reporte (fuera de la tabla) ──────────────────────────
-        // J3 = Nombre del empleado
-        this._setCellValue(sheet, 'J3', userInfo.nombre);
-        // H4 = Puesto
-        this._setCellValue(sheet, 'H4', userInfo.puesto || 'N/A');
-        // J4 = Sucursal/Unidad
-        this._setCellValue(sheet, 'J4', unidadLabel);
-        // P3 = Periodo
-        this._setCellValue(sheet, 'P3', periodoLabel);
-        // P4 = No. de reporte
-        const reporteNum = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        this._setCellValue(sheet, 'P4', reporteNum);
+        // ─── Encabezado del reporte (fuera de la tabla, filas 1-5) ──────────────
+        const puesto = this._resolvePuestoFromStorage();
+        this._setCellValue(sheet, 'C2', nombre);           // Nombre del Colaborador (C2)
+        this._setCellValue(sheet, 'H2', puesto);           // Puesto (H2)
+        this._setCellValue(sheet, 'J2', unidadLabel);      // Área / Sucursal (J2)
+        
+        this._setCellValue(sheet, 'H3', periodoLabel);     // Periodo del Reporte (H3)
+        
+        // Fecha de Envío (J3) = Fecha en que se genera el reporte
+        const cellFechaEnvio = sheet.getCell('J3');
+        cellFechaEnvio.value = new Date();
+        cellFechaEnvio.numFmt = 'DD/MM/YYYY';
 
-        // ─── Limpiar filas de muestra del template (filas 7 y 8 tienen datos de ejemplo) ──
+        const reporteNum = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        this._setCellValue(sheet, 'H4', reporteNum);       // No. de reporte (H4)
+
+        // ─── Limpiar filas de muestra del template (filas 7 y 8) ────────────────
         const DATA_START_ROW = 7;
         const DATA_END_ROW = 68;
 
         for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
-            ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'M', 'N'].forEach(col => {
-                const cell = sheet.getCell(`${col}${r}`);
-                cell.value = null;
+            // Limpiamos todas las columnas editables incluida L (Monto individual)
+            ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'].forEach(col => {
+                try { sheet.getCell(`${col}${r}`).value = null; } catch (_) {}
             });
         }
 
-        // ─── Insertar datos de gastos (máx. 62 registros) ───────────────────────
+        // ─── Insertar datos de gastos ────────────────────────────────────────────
         const MAX_REGISTROS = DATA_END_ROW - DATA_START_ROW + 1;
         expenses.slice(0, MAX_REGISTROS).forEach((expense, idx) => {
             const row = DATA_START_ROW + idx;
 
-            // --- Resolución de campos ---
             const proveedorNombre = this._getProveedorNombre(expense, catalogs);
             const formaPagoNombre = catalogs?.formasPago?.find(f => f.formaPagoId === expense.formaPagoId)?.nombre || '';
-            const conceptoNombre = catalogs?.conceptos?.find(c => c.conceptoId === expense.conceptoId)?.nombre || '';
-            const descripcion = [conceptoNombre, expense.nombreGasto].filter(x => x && x.trim()).join(' - ');
-            const unidadNombre = unidadesNegocio?.find(u => u.id === expense.unidadId)?.nombre || '';
+            const conceptoNombre  = catalogs?.conceptos?.find(c => c.conceptoId === expense.conceptoId)?.nombre || '';
+            const descripcion     = [conceptoNombre, expense.nombreGasto].filter(x => x?.trim()).join(' - ');
+
+            // Sucursal: resolver por unidadId con múltiples fallbacks
+            const unidadNombre = this._resolveUnidad(expense.unidadId, unidadesNegocio);
+
             const esFecha = expense.fecha && moment(expense.fecha).isValid();
             const fechaDate = esFecha ? moment(expense.fecha).toDate() : null;
+
             const tipoFlujo = expense.tipoMovimiento === 1 ? 'Ingreso'
                             : expense.tipoMovimiento === 2 ? 'Gasto'
-                            : expense.esIngreso ? 'Ingreso' : 'Gasto';
+                            : expense.esIngreso           ? 'Ingreso' : 'Gasto';
+
             const facturado = (expense.factura && expense.factura.trim()) ? 'Sí' : 'No';
             const esIngreso = tipoFlujo === 'Ingreso';
             const monto = expense.cantidad || 0;
 
-            // --- Escritura de celdas ---
+            // B: Fecha
             if (fechaDate) {
                 const cell = sheet.getCell(`B${row}`);
                 cell.value = fechaDate;
                 cell.numFmt = 'DD/MM/YYYY';
             }
-            this._setCellValue(sheet, `C${row}`, tipoFlujo);
-            this._setCellValue(sheet, `D${row}`, descripcion);
-            this._setCellValue(sheet, `E${row}`, proveedorNombre);
-            // F = No. integrantes → no aplica, omitir
-            // G = Nombre participantes → no aplica, omitir
-            this._setCellValue(sheet, `H${row}`, unidadNombre);
-            this._setCellValue(sheet, `I${row}`, formaPagoNombre);
-            this._setCellValue(sheet, `J${row}`, facturado);
-            this._setCellValue(sheet, `K${row}`, expense.folioFiscal || expense.factura || '');
-            // L = Monto individual (fórmula del template, no tocar)
+            this._setCellValue(sheet, `C${row}`, tipoFlujo);       // Tipo Flujo
+            this._setCellValue(sheet, `D${row}`, descripcion);      // Concepto
+            this._setCellValue(sheet, `E${row}`, proveedorNombre);  // Lugar/Proveedor
+            // F (No. integrantes) y G (Nombre participantes) → no aplica
+            this._setCellValue(sheet, `H${row}`, unidadNombre);     // Proyecto/Sucursal
+            this._setCellValue(sheet, `I${row}`, formaPagoNombre);  // Forma de Pago
+            this._setCellValue(sheet, `J${row}`, facturado);        // ¿Facturado?
+            this._setCellValue(sheet, `K${row}`, expense.folioFiscal || expense.factura || ''); // Folio/UUID
+            // L (Monto individual) → se dejó en null arriba, NO se rellena con fórmula
             if (esIngreso) {
-                this._setCellValue(sheet, `M${row}`, monto);
+                this._setCellValue(sheet, `M${row}`, monto);        // Ingreso (+)
             } else {
-                this._setCellValue(sheet, `N${row}`, monto);
+                this._setCellValue(sheet, `N${row}`, monto);        // Gasto (-)
             }
-            // O = Saldo Líquido (fórmula del template, no tocar)
+            // O (Saldo Líquido) → fórmula del template, no se modifica
         });
 
-        // ─── Limpieza de saldos de muestra en columna R (datos de ejemplo) ──────
+        // ─── Limpiar datos de muestra en columnas fuera de la tabla ─────────────
         ['R3', 'R4', 'R5', 'R6', 'R7', 'R8'].forEach(addr => {
             try { sheet.getCell(addr).value = null; } catch (_) {}
         });
@@ -142,26 +154,58 @@ export class ExpensesExcelService {
     // ─── Helpers privados ────────────────────────────────────────────────────────
 
     private _setCellValue(sheet: any, address: string, value: any): void {
-        try {
-            sheet.getCell(address).value = value;
-        } catch (_) { /* Celda fuera de rango, ignorar */ }
+        try { sheet.getCell(address).value = value; } catch (_) {}
     }
 
-    private _getUserInfo(): { nombre: string; puesto: string; unidadId: number } {
+    /**
+     * Intenta resolver el nombre del usuario desde localStorage con múltiples
+     * variantes de propiedad (compatible con distintos backends).
+     */
+    private _resolveNombreFromStorage(): string {
         try {
             const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const user = info.usuario || {};
-            const unidad = user.unidadNegocio || info.unidadNegocio || {};
+            const user = info.usuario || info || {};
             const partes = [user.nombre, user.apellidoPaterno, user.apellidoMaterno].filter(Boolean);
-            const nombre = partes.length > 0 ? partes.join(' ') : (user.email || 'N/A');
-            return {
-                nombre,
-                puesto: user.puesto || user.cargo || 'N/A',
-                unidadId: unidad.id || unidad.unidadId || 0
-            };
+            if (partes.length > 0) return partes.join(' ');
+            return user.nombreCompleto || user.fullName || user.displayName
+                || user.nombreUsuario || user.email || 'N/A';
         } catch {
-            return { nombre: 'N/A', puesto: 'N/A', unidadId: 0 };
+            return 'N/A';
         }
+    }
+
+    /**
+     * Intenta obtener el puesto o cargo del usuario logueado en la sesión
+     */
+    private _resolvePuestoFromStorage(): string {
+        try {
+            const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const user = info.usuario || info || {};
+            return user.puesto || user.cargo || 'Supervisor de obra';
+        } catch {
+            return 'Supervisor de obra';
+        }
+    }
+
+    /**
+     * Resuelve el nombre de la unidad/sucursal con múltiples estrategias:
+     * 1. Busca por `id` (campo que usa el componente de gastos)
+     * 2. Busca por `unidadId` (campo alternativo)
+     * 3. Fallbacks estáticos para las unidades conocidas
+     */
+    private _resolveUnidad(unidadId: number, unidades: any[]): string {
+        if (!unidadId) return '';
+        if (unidades?.length > 0) {
+            const found = unidades.find(u =>
+                u.id === unidadId || u.unidadId === unidadId
+            );
+            if (found?.nombre) return found.nombre;
+        }
+        // Fallbacks estáticos (mismos que el componente)
+        if (unidadId === 1) return 'Querétaro';
+        if (unidadId === 2) return 'Puebla';
+        if (unidadId === 3) return 'Hidalgo';
+        return '';
     }
 
     private _buildPeriodoLabel(expenses: Expense[], filtro?: any): string {
@@ -175,18 +219,10 @@ export class ExpensesExcelService {
             const momentos = fechasValidas.map(e => moment(e.fecha));
             const min = moment.min(momentos);
             const max = moment.max(momentos);
-            if (min.isSame(max, 'month')) {
-                return min.format('MMMM YYYY');
-            }
+            if (min.isSame(max, 'month')) return min.format('MMMM YYYY');
             return `${min.format('DD-MM-YYYY')} al ${max.format('DD-MM-YYYY')}`;
         }
         return moment().format('MMMM YYYY');
-    }
-
-    private _buildUnidadLabel(unidades: any[], unidadId: number, filtroUnidad?: string): string {
-        if (filtroUnidad) return filtroUnidad;
-        const found = unidades?.find(u => u.id === unidadId);
-        return found?.nombre || 'General';
     }
 
     private _getProveedorNombre(expense: Expense, catalogs: ExpenseCatalogs): string {

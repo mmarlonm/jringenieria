@@ -171,6 +171,99 @@ import Swal from 'sweetalert2';
                     </div>
                 </ng-template>
 
+                <!-- ────────────── TERNA DE PROVEEDORES ────────────── -->
+                <div *ngIf="solicitud.proveedores && solicitud.proveedores.length > 0">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/30">
+                            <mat-icon class="icon-size-5 text-violet-600 dark:text-violet-400" [svgIcon]="'heroicons_solid:building-storefront'"></mat-icon>
+                        </div>
+                        <div>
+                            <span class="text-base font-bold text-gray-800 dark:text-gray-100 leading-none">Terna de Proveedores</span>
+                            <span class="block text-[11px] text-secondary font-medium mt-0.5">{{ solicitud.proveedores.length }} proveedor(es) registrados</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div *ngFor="let prov of solicitud.proveedores; let i = index"
+                             class="relative flex flex-col rounded-2xl border-2 p-5 transition-all duration-200 shadow-sm"
+                             [ngClass]="prov.esSeleccionado
+                                ? 'border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/15 dark:border-emerald-500 shadow-emerald-100 dark:shadow-emerald-900/20'
+                                : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700'">
+
+                            <!-- Badge ganador / terna -->
+                            <div class="absolute -top-3 left-4">
+                                <span *ngIf="prov.esSeleccionado"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-md shadow-emerald-200">
+                                    <mat-icon class="icon-size-3 text-white" [svgIcon]="'heroicons_solid:check-badge'"></mat-icon>
+                                    Proveedor Seleccionado
+                                </span>
+                                <span *ngIf="!prov.esSeleccionado"
+                                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                                    Opción {{ i + 1 }}
+                                </span>
+                            </div>
+
+                            <!-- Nombre / Razón Social -->
+                            <div class="mt-3 mb-4">
+                                <span class="text-[10px] font-bold uppercase text-secondary tracking-wider">Razón Social</span>
+                                <p class="text-sm font-extrabold mt-0.5 leading-tight"
+                                   [ngClass]="prov.esSeleccionado ? 'text-emerald-800 dark:text-emerald-300' : 'text-gray-800 dark:text-gray-100'">
+                                    {{ prov.razonSocial || '—' }}
+                                </p>
+                            </div>
+
+                            <!-- Datos clave en grid -->
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                                <!-- RFC -->
+                                <div class="flex flex-col" *ngIf="prov.rfc">
+                                    <span class="text-[9px] font-bold uppercase text-secondary tracking-wider mb-0.5">RFC</span>
+                                    <span class="font-mono font-bold text-xs"
+                                          [ngClass]="prov.esSeleccionado ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'">
+                                        {{ prov.rfc }}
+                                    </span>
+                                </div>
+                                <!-- Banco -->
+                                <div class="flex flex-col" *ngIf="prov.banco">
+                                    <span class="text-[9px] font-bold uppercase text-secondary tracking-wider mb-0.5">Banco</span>
+                                    <span class="font-semibold text-xs text-gray-700 dark:text-gray-300">{{ prov.banco }}</span>
+                                </div>
+                                <!-- Cuenta -->
+                                <div class="flex flex-col" *ngIf="prov.cuenta">
+                                    <span class="text-[9px] font-bold uppercase text-secondary tracking-wider mb-0.5">Cuenta</span>
+                                    <span class="font-mono text-xs text-gray-600 dark:text-gray-400">{{ prov.cuenta }}</span>
+                                </div>
+                                <!-- CLABE -->
+                                <div class="flex flex-col col-span-2" *ngIf="prov.clabe">
+                                    <span class="text-[9px] font-bold uppercase text-secondary tracking-wider mb-0.5">CLABE Interbancaria</span>
+                                    <span class="font-mono text-xs tracking-wider text-gray-600 dark:text-gray-400 break-all">{{ prov.clabe }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Comentarios -->
+                            <div *ngIf="prov.comentarios" class="mt-4 pt-3 border-t border-dashed"
+                                 [ngClass]="prov.esSeleccionado ? 'border-emerald-200 dark:border-emerald-800' : 'border-gray-200 dark:border-gray-700'">
+                                <span class="text-[9px] font-bold uppercase text-secondary tracking-wider">Comentarios</span>
+                                <p class="text-xs italic text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">{{ prov.comentarios }}</p>
+                            </div>
+
+                            <!-- Indicador lateral de selección -->
+                            <div *ngIf="prov.esSeleccionado"
+                                 class="absolute left-0 top-8 bottom-8 w-1 rounded-r-full bg-emerald-400">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proveedor Sugerido (si no hay terna formal) -->
+                <div *ngIf="solicitud.proveedorSugerido && (!solicitud.proveedores || solicitud.proveedores.length === 0)"
+                     class="p-5 bg-violet-50/50 dark:bg-violet-900/10 rounded-2xl border border-violet-200 dark:border-violet-800 flex items-start gap-4">
+                    <mat-icon class="icon-size-6 text-violet-500 mt-0.5 flex-none" [svgIcon]="'heroicons_solid:building-storefront'"></mat-icon>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase text-violet-600 tracking-wider">Proveedor Sugerido</span>
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 mt-0.5">{{ solicitud.proveedorSugerido }}</p>
+                    </div>
+                </div>
+
                 <!-- Fiscal Data (CONTPAQi) -->
                 <div class="p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/20" 
                      *ngIf="(solicitud.datosFacturaContpaqi || solicitud.datosFiscales) as df">
@@ -202,33 +295,6 @@ import Swal from 'sweetalert2';
                             <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">
                                 {{ df.folioFiscal_UUID || 'No disponible' }}
                             </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Selected Provider Bank Info -->
-                <div class="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20" 
-                     *ngIf="solicitud.banco || solicitud.cuenta || solicitud.clabe || solicitud.datosBancariosProveedor">
-                    <div class="flex items-center mb-4 text-blue-700 dark:text-blue-400">
-                        <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_solid:building-library'"></mat-icon>
-                        <span class="text-base font-bold uppercase tracking-tight">Información Bancaria del Proveedor Seleccionado</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="flex flex-col" *ngIf="solicitud.banco">
-                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Banco</span>
-                            <span class="text-sm font-bold text-gray-700">{{ solicitud.banco }}</span>
-                        </div>
-                        <div class="flex flex-col" *ngIf="solicitud.cuenta">
-                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Cuenta</span>
-                            <span class="text-sm font-bold text-gray-700">{{ solicitud.cuenta }}</span>
-                        </div>
-                        <div class="flex flex-col" *ngIf="solicitud.clabe">
-                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">CLABE</span>
-                            <span class="text-sm font-bold text-gray-700">{{ solicitud.clabe }}</span>
-                        </div>
-                        <div class="flex flex-col col-span-full" *ngIf="solicitud.datosBancariosProveedor">
-                            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Otros Datos Bancarios</span>
-                            <span class="text-sm font-medium text-gray-600 italic">{{ solicitud.datosBancariosProveedor }}</span>
                         </div>
                     </div>
                 </div>
