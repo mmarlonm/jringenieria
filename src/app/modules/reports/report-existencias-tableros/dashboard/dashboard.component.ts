@@ -21,6 +21,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReportProductExistenceService } from 'app/modules/reports/report-product-existence/report-product-existence.service';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 @Component({
     selector: 'app-reporte-existencias-tableros-dashboard',
     standalone: true,
@@ -78,7 +79,8 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
 
     constructor(
         private reportExistenciasTablerosService: ReportExistenciasTablerosService,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private _excelService: CommonExcelExportService
     ) { }
 
     ngOnInit(): void {
@@ -224,42 +226,23 @@ export class ReportExistenciasTablerosDashboardComponent implements OnInit {
             'Total'
         ];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ");
-            str = str.replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = this.dataSource.data.map(r => [
-            `="${cleanText(r.codigoProducto).replace(/"/g, '')}"`,
-            cleanText(r.marca),
-            cleanText(r.linea),
-            cleanText(r.nombreProducto),
-            r.tablerO_QRO,
-            r.tablerO_PACH,
-            r.tablerO_PUE,
-            r.ciat,
-            r.totaL_TABLEROS
+            r.codigoProducto || '',
+            r.marca || '',
+            r.linea || '',
+            r.nombreProducto || '',
+            r.tablerO_QRO || 0,
+            r.tablerO_PACH || 0,
+            r.tablerO_PUE || 0,
+            r.ciat || 0,
+            r.totaL_TABLEROS || 0
         ]);
 
-        const csvContent = '\ufeff' + 'sep=;\n' + [
-            headers.join(';'),
-            ...rows.map(e => e.join(';'))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-
-        const fileName = `Existencias_Tableros_${Date.now()}.csv`;
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Existencias_Tableros', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 
     exportarPDF(): void {

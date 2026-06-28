@@ -56,6 +56,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { ReportVentasService } from '../report-ventas.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 // 🔹 Componentes Modal
 import { DetalleEmpresaModalComponent } from './detalle-empresa-modal.component';
@@ -146,7 +147,8 @@ export class ReportVentasDashboardComponent implements OnInit {
         private reportVentasService: ReportVentasService,
         private router: Router,
         private dialog: MatDialog,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private _excelService: CommonExcelExportService
     ) { }
 
 
@@ -904,29 +906,28 @@ export class ReportVentasDashboardComponent implements OnInit {
     exportarCsvDetalle(): void {
         if (!this.detalleVentas || this.detalleVentas.length === 0) return;
 
-        let csvContent = 'Fecha,Sucursal,Folio,Cliente,Vendedor,Total\n';
+        const headers = ['Fecha', 'Sucursal', 'Folio', 'Cliente', 'Vendedor', 'Total'];
 
-        this.detalleVentas.forEach(row => {
+        const rows = this.detalleVentas.map(row => {
             const fechaParseada = new Date(row.fecha);
-            const fechaStr = isNaN(fechaParseada.getTime()) ? row.fecha : fechaParseada.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            
-            const sucursal = `"${(row.sucursal || '').replace(/"/g, '""')}"`;
-            const folio = `"${(row.folio || '').replace(/"/g, '""')}"`;
-            const cliente = `"${(row.cliente || '').replace(/"/g, '""')}"`;
-            const vendedor = `"${(row.vendedor || '').replace(/"/g, '""')}"`;
+            const fechaVal = isNaN(fechaParseada.getTime()) ? row.fecha : fechaParseada;
             const total = row.totalDocumento !== undefined && row.totalDocumento !== null ? row.totalDocumento : 0;
 
-            csvContent += `${fechaStr},${sucursal},${folio},${cliente},${vendedor},${total}\n`;
+            return [
+                fechaVal,
+                row.sucursal || '',
+                row.folio || '',
+                row.cliente || '',
+                row.vendedor || '',
+                total
+            ];
         });
 
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `detalle-ventas-${new Date().getTime()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Detalle_Ventas', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 
     private generarGraficaMarcas(): void {

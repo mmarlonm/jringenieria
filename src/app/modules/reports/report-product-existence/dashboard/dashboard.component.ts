@@ -21,6 +21,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatSortModule } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'app-reporte-product-existence-dashboard',
@@ -80,8 +81,11 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
 
     public productosFiltrados: any[] = [];
 
-    constructor(private reportProductExistenceService: ReportProductExistenceService,
-        private dialog: MatDialog) { }
+    constructor(
+        private reportProductExistenceService: ReportProductExistenceService,
+        private dialog: MatDialog,
+        private _excelService: CommonExcelExportService
+    ) { }
 
     ngOnInit(): void {
         this.consultar();
@@ -208,7 +212,6 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
     }
 
     exportarExcel(): void {
-        // Validamos usando dataSource.data que es lo que tiene la tabla actualmente
         if (!this.dataSource.data || this.dataSource.data.length === 0) return;
 
         const headers = [
@@ -223,47 +226,23 @@ export class ReportProductExistenceDashboardComponent implements OnInit {
             'Total'
         ];
 
-        // Tu función de limpieza para evitar saltos de columna
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ");
-            str = str.replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
-        // Mapeamos los datos de la tabla de existencias
         const rows = this.dataSource.data.map(r => [
-            `="${cleanText(r.codigoProducto).replace(/"/g, '')}"`,
-            cleanText(r.marca),
-            cleanText(r.linea),
-            cleanText(r.nombreProducto),
-            r.qro,
-            r.pach,
-            r.pue,
-            r.ciat,
-            r.total
+            r.codigoProducto || '',
+            r.marca || '',
+            r.linea || '',
+            r.nombreProducto || '',
+            r.qro || 0,
+            r.pach || 0,
+            r.pue || 0,
+            r.ciat || 0,
+            r.total || 0
         ]);
 
-        // Construcción del contenido CSV con el separador para Excel
-        const csvContent = '\ufeff' + 'sep=;\n' + [
-            headers.join(';'),
-            ...rows.map(e => e.join(';'))
-        ].join('\n');
-
-        // Proceso de descarga
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-
-        // Nombre del archivo con la fecha actual
-        const fileName = `Existencias_Sucursales_${Date.now()}.csv`;
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Existencias_Sucursales', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 
     exportarPDF(): void {

@@ -19,6 +19,7 @@ import { ReportCustomersSegmentationService } from '../report-customers-segmenta
 
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 import * as Highcharts from 'highcharts/highmaps';
 import ExportingModule from 'highcharts/modules/exporting';
@@ -132,7 +133,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
         private _reportService: ReportCustomersSegmentationService,
         private http: HttpClient,
         private cdr: ChangeDetectorRef,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private _excelService: CommonExcelExportService
     ) { }
 
     ngOnInit(): void {
@@ -1141,37 +1143,21 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
         const headers = ['Cliente', 'RFC', 'Folio', 'Importe', 'Estatus', 'Fecha Emisión', 'Fecha Vencimiento'];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, ' ');
-            str = str.replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = data.map(r => [
-            cleanText(r.nombreCliente),
-            cleanText(r.rfc),
-            cleanText(r.folioCompleto),
+            r.nombreCliente || '',
+            r.rfc || '',
+            r.folioCompleto || '',
             r.montoDocumento || 0,
-            cleanText(r.estatusPago),
-            cleanText(r.fechaDocumento),
-            cleanText(r.fechaVencimiento)
+            r.estatusPago || '',
+            r.fechaDocumento || '',
+            r.fechaVencimiento || ''
         ]);
 
-        const csvContent = 'sep=,\n' + [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
-        ].join('\n');
-
-        const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `Cuentas_Clave_${this.sucursal}_${Date.now()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Cuentas_Clave', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 
     /* * Nombre: exportarPDFTabla

@@ -55,6 +55,7 @@ import { Expense, ExpenseCatalogs } from 'app/modules/admin/dashboards/expenses/
 import moment from 'moment';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'app-reporte-expenses-dashboard',
@@ -142,7 +143,8 @@ export class ReportExpensesDashboardComponent implements OnInit {
     constructor(
         private reportExpensesService: ReportExpensesService,
         private _expensesService: ExpensesService,
-        private _changeDetectorRef: ChangeDetectorRef
+        private _changeDetectorRef: ChangeDetectorRef,
+        private _excelService: CommonExcelExportService
     ) { }
 
     ngOnInit(): void {
@@ -596,46 +598,31 @@ export class ReportExpensesDashboardComponent implements OnInit {
             'Unidad'
         ];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = this.filteredExpenses.map(exp => [
-            moment(exp.fecha).format('DD/MM/YYYY'),
-            cleanText(exp.nombreGasto),
-            cleanText(this.getNombreTipo(exp.tipoId, exp)),
-            cleanText(this.getNombreConcepto(exp.conceptoId, exp)),
-            cleanText(this.getNombreSubtipo(exp.subtipoId, exp)),
-            cleanText(this.getNombreArea(exp.areaId, exp)),
-            cleanText(this.getNombreProveedor(exp.proveedor, exp)),
-            cleanText(this.getNombreCuenta(exp.cuentaId, exp)),
-            cleanText(exp.numeroCuenta),
-            cleanText(this.getNombreFormaPago(exp.formaPagoId, exp)),
-            cleanText(exp.factura),
-            cleanText(exp.folioFiscal),
-            cleanText(exp.tipoComprobante),
+            exp.fecha ? new Date(exp.fecha) : '',
+            exp.nombreGasto || '',
+            this.getNombreTipo(exp.tipoId, exp) || '',
+            this.getNombreConcepto(exp.conceptoId, exp) || '',
+            this.getNombreSubtipo(exp.subtipoId, exp) || '',
+            this.getNombreArea(exp.areaId, exp) || '',
+            this.getNombreProveedor(exp.proveedor, exp) || '',
+            this.getNombreCuenta(exp.cuentaId, exp) || '',
+            exp.numeroCuenta || '',
+            this.getNombreFormaPago(exp.formaPagoId, exp) || '',
+            exp.factura || '',
+            exp.folioFiscal || '',
+            exp.tipoComprobante || '',
             (exp.tipoMovimiento?.toString() === '1' || exp.esIngreso) ? 'Ingreso' : 'Egreso',
-            cleanText(exp.moneda),
-            exp.cantidad,
+            exp.moneda || '',
+            exp.cantidad || 0,
             exp.impuestos || 0,
-            cleanText(this.getNombreUnidad(exp.unidadId, exp))
+            this.getNombreUnidad(exp.unidadId, exp) || ''
         ]);
 
-        const csvContent = '\ufeff' + [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `Detalle_Gastos_${Date.now()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Detalle_Gastos', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 }

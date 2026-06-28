@@ -50,6 +50,7 @@ import { ReportVentasProductService } from '../report-ventas-product.service';
 
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 interface ProductoNode {
     producto: string;
@@ -158,7 +159,8 @@ export class ReportVentasProductDashboardComponent implements OnInit {
 
     constructor(
         private reportVentasProductService: ReportVentasProductService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private _excelService: CommonExcelExportService
     ) { }
 
     ngOnInit(): void {
@@ -547,39 +549,23 @@ export class ReportVentasProductDashboardComponent implements OnInit {
             'Stock Global'
         ];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = this.detalle.map(r => [
-            cleanText(r.clasificacionPadre),
-            cleanText(r.clasificacion),
-            cleanText(r.codigoProducto),
-            cleanText(r.nombreProducto),
-            r.cantidadVendida,
-            r.totalVendido,
+            r.clasificacionPadre || '',
+            r.clasificacion || '',
+            r.codigoProducto || '',
+            r.nombreProducto || '',
+            r.cantidadVendida || 0,
+            r.totalVendido || 0,
             r.qro || 0,
             r.pach || 0,
             r.pue || 0,
             r.total || 0
         ]);
 
-        const csvContent = 'sep=,\n' + '\ufeff' + [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
-        ].join('\n');
-
-        // ... resto del código del link para descargar ...
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `Ventas_Existencias_${Date.now()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Ventas_Existencias', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 }

@@ -24,6 +24,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
 import { AnticipoDialogComponent } from './anticipo-dialog/anticipo-dialog.component';
 import Swal from 'sweetalert2';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'tablero-compras',
@@ -167,7 +168,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         public _exchangeRateService: ExchangeRateService,
         private _dialog: MatDialog,
         private _purchaseReceptionService: PurchaseReceptionService,
-        private _router: Router
+        private _router: Router,
+        private _excelService: CommonExcelExportService
     ) {
     }
 
@@ -1116,51 +1118,36 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             'Pago'
         ];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = solicitudes.map(s => [
             s.idSolicitud,
-            cleanText(s.folioOC),
-            s.fechaSolicitud ? new Date(s.fechaSolicitud).toLocaleDateString() : '',
-            cleanText(s.sucursal),
-            cleanText(s.areaSolicitante),
-            cleanText(this.getUserLabel(s.idPersonaSolicitante)),
-            cleanText(s.proyectoCliente),
-            cleanText(s.folioProyecto),
-            cleanText(s.prioridad),
-            cleanText(s.proveedorSugerido),
-            cleanText(s.banco),
-            cleanText(s.cuenta),
-            cleanText(s.clabe),
-            s.fechaRequerida ? new Date(s.fechaRequerida).toLocaleDateString() : '',
-            cleanText(s.lugarEntrega),
-            cleanText(s.moneda),
+            s.folioOC || '',
+            s.fechaSolicitud ? new Date(s.fechaSolicitud) : '',
+            s.sucursal || '',
+            s.areaSolicitante || '',
+            this.getUserLabel(s.idPersonaSolicitante),
+            s.proyectoCliente || '',
+            s.folioProyecto || '',
+            s.prioridad || '',
+            s.proveedorSugerido || '',
+            s.banco || '',
+            s.cuenta || '',
+            s.clabe || '',
+            s.fechaRequerida ? new Date(s.fechaRequerida) : '',
+            s.lugarEntrega || '',
+            s.moneda || '',
             s.monto || 0,
             this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
-            cleanText(s.tipoCompra),
-            cleanText(s.centroCosto),
-            cleanText(s.nombreEstatus),
+            s.tipoCompra || '',
+            s.centroCosto || '',
+            s.nombreEstatus || '',
             this.getEstadoLiquidacionLabel(s.estadoLiquidacion)
         ]);
 
-        const csvContent = '\ufeff' + [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `Tablero_Compras_${new Date().getTime()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Tablero_Compras', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 
     isColumnFiltered(column: string): boolean {

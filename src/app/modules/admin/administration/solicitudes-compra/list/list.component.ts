@@ -20,6 +20,7 @@ import Swal from 'sweetalert2';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'solicitud-compra-list',
@@ -44,6 +45,7 @@ export class SolicitudCompraListComponent implements OnInit {
         private _projectService: ProjectService,
         private _usersService: UsersService,
         private _chatNotificationService: ChatNotificationService,
+        private _excelService: CommonExcelExportService,
         private _dialog: MatDialog
     ) { }
 
@@ -312,7 +314,7 @@ export class SolicitudCompraListComponent implements OnInit {
     }
 
     exportarCSV(): void {
-        this.filteredSolicitudes$.pipe(take(1)).subscribe(solicitudes => {
+        this.filteredSolicitudes$.pipe(take(1)).subscribe(async solicitudes => {
             if (!solicitudes || solicitudes.length === 0) {
                 this._chatNotificationService.showWarning('Sin datos', 'No hay solicitudes para exportar.');
                 return;
@@ -337,12 +339,12 @@ export class SolicitudCompraListComponent implements OnInit {
             const rows = solicitudes.map(s => [
                 s.idSolicitud,
                 this.getUserName(s.idUsuarioLogueado),
-                s.createdDate ? new Date(s.createdDate).toLocaleString('es-MX') : '',
+                s.createdDate ? new Date(s.createdDate) : '',
                 s.esAprobada ? 'Aprobada' : 'Pendiente',
                 s.formaPago || '',
                 s.formaPago === 'CREDITO (PPD)' ? (s.esAprobadaCredito ? 'Aprobado' : 'Pendiente') : 'N/A',
                 (s.nombreAprobadorCredito && s.nombreAprobadorCredito !== 'Sin asignar' ? s.nombreAprobadorCredito : this.getUserName(s.idAprobadorCredito)) || 'Sin asignar',
-                s.fechaSolicitud ? new Date(s.fechaSolicitud).toLocaleDateString('es-MX') : '',
+                s.fechaSolicitud ? new Date(s.fechaSolicitud) : '',
                 s.sucursal || '',
                 s.areaSolicitante || '',
                 s.prioridad || '',
@@ -350,32 +352,13 @@ export class SolicitudCompraListComponent implements OnInit {
                 this.getSelectedProvider(s)
             ]);
 
-            this._downloadCSVFile('solicitudes_compra', headers, rows);
-        });
-    }
-
-    private _downloadCSVFile(filename: string, headers: string[], rows: any[][]): void {
-        const escapeCSVValue = (val: any) => {
-            if (val === null || val === undefined) return '';
-            let stringVal = val.toString();
-            stringVal = stringVal.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
-            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
-                stringVal = `"${stringVal}"`;
+            try {
+                this._chatNotificationService.showSuccess('Exportando...', 'Generando archivo Excel...', 2000);
+                await this._excelService.exportTableToExcel('solicitudes_compra', headers, rows);
+            } catch (err) {
+                console.error(err);
+                this._chatNotificationService.showError('Error', 'No se pudo generar el archivo Excel.');
             }
-            return stringVal;
-        };
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(escapeCSVValue).join(','))
-        ].join('\n');
-
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        });
     }
 }

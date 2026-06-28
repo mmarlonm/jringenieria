@@ -21,6 +21,7 @@ import { SolicitudDetalleDialogComponent } from '../tablero-compras/solicitud-de
 import { HistorialDialogComponent } from '../tablero-compras/historial-dialog/historial-dialog.component';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'historico-compras',
@@ -124,7 +125,8 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
         private _usersService: UsersService,
         public _exchangeRateService: ExchangeRateService,
         private _dialog: MatDialog,
-        private _changeDetectorRef: ChangeDetectorRef
+        private _changeDetectorRef: ChangeDetectorRef,
+        private _excelService: CommonExcelExportService
     ) {}
 
     ngOnInit(): void
@@ -341,36 +343,33 @@ export class HistoricoComprasComponent implements OnInit, OnDestroy
             'Centro Costo', 
             'Estatus'
         ];
-        const cleanText = (text: any) => `"${String(text || '').replace(/"/g, '""')}"`;
 
         const rows = solicitudes.map(s => [
             s.idSolicitud,
-            cleanText(s.folioOC),
-            s.fechaSolicitud ? new Date(s.fechaSolicitud).toLocaleDateString() : '',
-            cleanText(s.sucursal),
-            cleanText(s.areaSolicitante),
-            cleanText(this.getUserLabel(s.idPersonaSolicitante)),
-            cleanText(s.proyectoCliente),
-            cleanText(s.prioridad),
-            cleanText(s.proveedorSugerido),
-            cleanText(s.banco),
-            cleanText(s.cuenta),
-            cleanText(s.clabe),
-            cleanText(s.moneda),
+            s.folioOC || '',
+            s.fechaSolicitud ? new Date(s.fechaSolicitud) : '',
+            s.sucursal || '',
+            s.areaSolicitante || '',
+            this.getUserLabel(s.idPersonaSolicitante),
+            s.proyectoCliente || '',
+            s.prioridad || '',
+            s.proveedorSugerido || '',
+            s.banco || '',
+            s.cuenta || '',
+            s.clabe || '',
+            s.moneda || '',
             s.monto || 0,
             this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
-            cleanText(s.tipoCompra),
-            cleanText(s.centroCosto),
-            cleanText(this.getStatusName(s.idEstatus))
+            s.tipoCompra || '',
+            s.centroCosto || '',
+            this.getStatusName(s.idEstatus)
         ]);
 
-        const csvContent = '\ufeff' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Historico_Compras_${new Date().getTime()}.csv`;
-        link.click();
+        try {
+            this._excelService.exportTableToExcel('Historico_Compras', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 
     private _extractUniqueValues(data: SolicitudCompra[]): void {

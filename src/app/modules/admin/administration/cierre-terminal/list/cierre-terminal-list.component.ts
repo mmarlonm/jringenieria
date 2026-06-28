@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CierreTerminalService } from '../cierre-terminal.service';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 import { CierreTerminal } from '../cierre-terminal.types';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { CierreTerminalFormDialogComponent } from '../form/cierre-terminal-form.component';
@@ -53,6 +54,7 @@ export class CierreTerminalListComponent implements OnInit, OnDestroy {
         private _cierreService: CierreTerminalService,
         private _dialog: MatDialog,
         private _notificationService: ChatNotificationService,
+        private _excelService: CommonExcelExportService,
         private _router: Router
     ) { }
 
@@ -156,37 +158,19 @@ export class CierreTerminalListComponent implements OnInit, OnDestroy {
             'Observaciones'
         ];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) return '';
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ");
-            str = str.replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = this.dataSource.data.map(r => [
-            cleanText(r.sucursal),
-            new Date(r.fechaCierre).toLocaleDateString(),
-            cleanText(r.afiliacion),
-            r.montoTotal,
-            `="${cleanText(r.foliosFacturas).replace(/"/g, '')}"`,
-            cleanText(r.observaciones)
+            r.sucursal || '',
+            r.fechaCierre ? new Date(r.fechaCierre) : '',
+            r.afiliacion || '',
+            r.montoTotal || 0,
+            r.foliosFacturas || '',
+            r.observaciones || ''
         ]);
 
-        const csvContent = '\ufeff' + 'sep=;\n' + [
-            headers.join(';'),
-            ...rows.map(e => e.join(';'))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const fileName = `Cierre_Terminal_${Date.now()}.csv`;
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            this._excelService.exportTableToExcel('Cierre_Terminal', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 }

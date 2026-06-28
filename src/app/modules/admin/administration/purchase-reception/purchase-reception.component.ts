@@ -23,6 +23,7 @@ import { ChatNotificationService } from 'app/shared/components/chat-notification
 import { PurchaseReceptionFormDialogComponent } from './purchase-reception-form-dialog.component';
 import { PurchaseReceptionDetailsDialogComponent } from './purchase-reception-details-dialog.component';
 import Swal from 'sweetalert2';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'purchase-reception',
@@ -86,7 +87,8 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
         private _usersService: UsersService,
         private _dialog: MatDialog,
         private _notificationService: ChatNotificationService,
-        private _route: ActivatedRoute
+        private _route: ActivatedRoute,
+        private _excelService: CommonExcelExportService
     ) { }
 
     ngOnInit(): void {
@@ -303,21 +305,11 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
             'Estatus'
         ];
 
-        const escapeCSVValue = (val: any) => {
-            if (val === null || val === undefined) return '';
-            let stringVal = val.toString();
-            stringVal = stringVal.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
-            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
-                stringVal = `"${stringVal}"`;
-            }
-            return stringVal;
-        };
-
         const rows = data.map(r => [
             r.idRecepcion || r.id || '',
             r.idSolicitud || '',
             r.folioOC || '',
-            r.fechaRecepcion ? new Date(r.fechaRecepcion).toLocaleDateString('es-MX') : '',
+            r.fechaRecepcion ? new Date(r.fechaRecepcion) : '',
             r.sucursal || '',
             r.proyectoCliente || '',
             r.nombreQuienRecibio || 'Desconocido',
@@ -325,17 +317,10 @@ export class PurchaseReceptionComponent implements OnInit, OnDestroy {
             r.estatus === 1 ? 'Completado' : 'Pendiente'
         ]);
 
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(escapeCSVValue).join(','))
-        ].join('\n');
-
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `recepcion_compras_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        try {
+            this._excelService.exportTableToExcel('recepcion_compras', headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 }

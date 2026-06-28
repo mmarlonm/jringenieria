@@ -9,17 +9,16 @@ export class ExpensesExcelService {
 
     constructor(private _http: HttpClient) {}
 
-    /**
+     /**
      * Genera y descarga el reporte de gastos en formato XLSX
-     * basado en el template oficial "FORMATO OFICAL REPORTE DE GASTOS.xlsx"
+     * basado en el template oficial "Reporte_Gastos.xlsx"
      *
      * Estructura del template (sheet "Reporte de Gastos"):
-     *   - Tabla: B6:O68  (14 columnas, datos desde fila 7)
+     *   - Tabla: B6:N68  (13 columnas, datos desde fila 7)
      *   - Columnas de datos: B=Fecha, C=Tipo Flujo, D=Concepto, E=Lugar/Proveedor,
      *     F=No.Integrantes, G=Nombre Participantes, H=Proyecto/Sucursal,
      *     I=FormaPago, J=Facturado?, K=Folio/UUID,
-     *     L=MontoIndividual (fórmula — OMITIDA), M=Ingreso(+), N=Gasto(-),
-     *     O=SaldoLíquido (fórmula — conservada)
+     *     L=Ingreso(+), M=Gasto(-), N=SaldoLíquido(fórmula)
      */
     async downloadReporteGastos(
         expenses: Expense[],
@@ -82,8 +81,8 @@ export class ExpensesExcelService {
         const DATA_END_ROW = 68;
 
         for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
-            // Limpiamos todas las columnas editables incluida L (Monto individual)
-            ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'].forEach(col => {
+            // Limpiamos de la B a la M. Omitimos la N porque contiene la fórmula del Saldo Líquido
+            ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].forEach(col => {
                 try { sheet.getCell(`${col}${r}`).value = null; } catch (_) {}
             });
         }
@@ -126,13 +125,14 @@ export class ExpensesExcelService {
             this._setCellValue(sheet, `I${row}`, formaPagoNombre);  // Forma de Pago
             this._setCellValue(sheet, `J${row}`, facturado);        // ¿Facturado?
             this._setCellValue(sheet, `K${row}`, expense.folioFiscal || expense.factura || ''); // Folio/UUID
-            // L (Monto individual) → se dejó en null arriba, NO se rellena con fórmula
+            
+            // En el nuevo formato: L = Ingreso (+), M = Gasto (-)
             if (esIngreso) {
-                this._setCellValue(sheet, `M${row}`, monto);        // Ingreso (+)
+                this._setCellValue(sheet, `L${row}`, monto);        // Ingreso (+)
             } else {
-                this._setCellValue(sheet, `N${row}`, monto);        // Gasto (-)
+                this._setCellValue(sheet, `M${row}`, monto);        // Gasto (-)
             }
-            // O (Saldo Líquido) → fórmula del template, no se modifica
+            // N (Saldo Líquido) → fórmula del template, no se modifica
         });
 
         // ─── Limpiar datos de muestra en columnas fuera de la tabla ─────────────

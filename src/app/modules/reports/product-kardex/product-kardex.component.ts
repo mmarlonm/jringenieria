@@ -13,6 +13,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { ProductKardexService, KardexProducto } from './product-kardex.service';
 import { DateTime } from 'luxon';
 import { finalize } from 'rxjs/operators';
+import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
 @Component({
     selector: 'product-kardex',
@@ -57,7 +58,8 @@ export class ProductKardexComponent implements OnInit {
     constructor(
         private _formBuilder: FormBuilder,
         private _productKardexService: ProductKardexService,
-        private _changeDetectorRef: ChangeDetectorRef
+        private _changeDetectorRef: ChangeDetectorRef,
+        private _excelService: CommonExcelExportService
     ) {}
 
     ngOnInit(): void {
@@ -146,49 +148,27 @@ export class ProductKardexComponent implements OnInit {
             'Observaciones'
         ];
 
-        const cleanText = (text: any) => {
-            if (text === null || text === undefined) {
-                return '';
-            }
-            let str = String(text);
-            str = str.replace(/\r?\n|\r/g, " ").replace(/"/g, '""');
-            return `"${str}"`;
-        };
-
         const rows = this.data.map(item => [
-            cleanText(item.codigo),
-            cleanText(item.producto),
-            cleanText(DateTime.fromISO(item.fecha as any).toFormat('dd/MM/yyyy')),
-            cleanText(item.concepto),
-            cleanText(item.folio),
-            cleanText(item.tipo_Mov),
-            item.cantidad,
-            item.precio,
-            item.subtotal,
-            cleanText(item.almacen_Sucursal),
-            cleanText(item.referencia_Documento),
-            cleanText(item.id_Usuario),
-            cleanText(item.observaciones_Movimiento)
+            item.codigo || '',
+            item.producto || '',
+            item.fecha ? new Date(item.fecha) : '',
+            item.concepto || '',
+            item.folio || '',
+            item.tipo_Mov || '',
+            item.cantidad || 0,
+            item.precio || 0,
+            item.subtotal || 0,
+            item.almacen_Sucursal || '',
+            item.referencia_Documento || '',
+            item.id_Usuario || '',
+            item.observaciones_Movimiento || ''
         ]);
 
-        // Usamos \r\n para compatibilidad total con Excel en Windows
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(e => e.join(','))
-        ].join('\r\n');
-
-        // El BOM (\ufeff) debe ir al puro inicio para que Excel detecte UTF-8
-        const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        
-        const fileName = `Kardex_${this.filterForm.get('codigo').value || 'Todos'}_${DateTime.now().toFormat('yyyyMMdd_HHmm')}.csv`;
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        try {
+            const codeVal = this.filterForm.get('codigo').value || 'Todos';
+            this._excelService.exportTableToExcel(`Kardex_${codeVal}`, headers, rows);
+        } catch (err) {
+            console.error('Error al exportar a Excel:', err);
+        }
     }
 }
