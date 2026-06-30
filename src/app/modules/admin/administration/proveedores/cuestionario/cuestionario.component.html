@@ -219,7 +219,7 @@
 
             <!-- Folio del Cuestionario Card -->
             <div
-                class="flex items-center gap-4 p-3 sm:p-4 mx-2 sm:mx-0 mt-4 sm:mt-2 mb-2 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+                class="flex flex-wrap items-center gap-4 p-3 sm:p-4 mx-2 sm:mx-0 mt-4 sm:mt-2 mb-2 rounded-2xl bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/30 dark:to-transparent border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
                 <div class="flex items-center justify-center min-w-[3rem] h-12 rounded-xl bg-indigo-500 shadow-inner">
                     <mat-icon class="icon-size-6 text-white" [svgIcon]="'heroicons_outline:hashtag'"></mat-icon>
                 </div>
@@ -239,6 +239,33 @@
                         </ng-template>
                     </div>
                 </div>
+
+                <div *ngIf="activeCuestionario.idCuestionario !== 0" class="flex flex-wrap gap-2 items-center ml-4">
+                    <!-- Estado de Respuesta del Cuestionario -->
+                    <span *ngIf="activeCuestionario.bloqueado" class="px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                        Cuestionario Respondido
+                    </span>
+                    <span *ngIf="!activeCuestionario.bloqueado" class="px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                        Pendiente de Responder
+                    </span>
+
+                    <!-- Estado de Invitación por Email -->
+                    <span *ngIf="activeCuestionario.invitacionEnviada" class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                        Invitación Enviada
+                    </span>
+                    <span *ngIf="!activeCuestionario.invitacionEnviada" class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300 border border-gray-200 dark:border-gray-750/50">
+                        Sin Enviar Invitación
+                    </span>
+                </div>
+
+                <!-- Resetear/Desbloquear Cuestionario -->
+                <button *ngIf="activeCuestionario.idCuestionario !== 0 && activeCuestionario.bloqueado"
+                    mat-flat-button color="warn"
+                    class="sm:ml-auto h-9 rounded-xl px-4 flex items-center transition-all text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
+                    (click)="resetCuestionarioRespondido()">
+                    <mat-icon svgIcon="heroicons_outline:arrow-path" class="mr-1.5 icon-size-4"></mat-icon>
+                    Desbloquear Cuestionario
+                </button>
             </div>
 
             <!-- Grid de Paneles Principales -->
@@ -683,7 +710,7 @@
                                     <mat-select [(ngModel)]="autorizacion.aprobadoPor"
                                         placeholder="Seleccione validador"
                                         [disabled]="autorizacion.resultadoRevision === 'Aprobado'">
-                                        <mat-option *ngFor="let user of usuariosList" [value]="user.usuarioId">
+                                        <mat-option *ngFor="let user of filteredAprobadores" [value]="user.usuarioId">
                                             {{ user.nombreUsuario }} ({{ user.email }})
                                         </mat-option>
                                     </mat-select>

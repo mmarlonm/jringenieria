@@ -95,7 +95,12 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             estatus: [statusValue, Validators.required],
             folioInternoFactura: [{ value: rec?.folioInternoFactura || '', disabled: statusValue === 1 }],
             puntajeCalidad: [rec?.puntajeCalidad !== undefined ? rec.puntajeCalidad : 100, Validators.required],
-            puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required]
+            puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required],
+            puntajePrecio: [rec?.puntajePrecio !== undefined ? rec.puntajePrecio : 100, Validators.required],
+            puntajeAtencion: [rec?.puntajeAtencion !== undefined ? rec.puntajeAtencion : 100, Validators.required],
+            puntajeDocumentacion: [rec?.puntajeDocumentacion !== undefined ? rec.puntajeDocumentacion : 100, Validators.required],
+            puntajeSeguridad: [rec?.puntajeSeguridad !== undefined ? rec.puntajeSeguridad : 100, Validators.required],
+            puntajeGarantias: [rec?.puntajeGarantias !== undefined ? rec.puntajeGarantias : 100, Validators.required]
         });
 
         // Toggle disabled state of folioInternoFactura based on estatus

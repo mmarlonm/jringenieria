@@ -710,6 +710,14 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
         return userId;
     }
 
+    get filteredAprobadores(): any[] {
+        const allowedIds = [13, 14, 16, 38];
+        return this.usuariosList.filter(u => 
+            allowedIds.includes(u.usuarioId || u.id) || 
+            (this.autorizacion.aprobadoPor && (u.usuarioId === this.autorizacion.aprobadoPor || u.id === this.autorizacion.aprobadoPor))
+        );
+    }
+
     getNombreUsuario(id: number | null | undefined): string {
         if (!id) return 'Sistema';
         const user = this.usuariosList.find(u => u.usuarioId === id);
@@ -943,6 +951,7 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
                 this._proveedoresService.enviarInvitacionProveedor(this.activeCuestionario.idCuestionario, result.value).subscribe({
                     next: (res) => {
                         if (res && res.success) {
+                            this.activeCuestionario.invitacionEnviada = true;
                             Swal.fire('Enviado', res.message || 'La invitación se envió con éxito.', 'success');
                         } else {
                             Swal.fire('Error', res.message || 'No se pudo enviar la invitación.', 'error');
@@ -951,6 +960,48 @@ export class CuestionarioComponent implements OnInit, AfterViewInit {
                     error: (err) => {
                         console.error('Error al enviar la invitación:', err);
                         Swal.fire('Error', err.error?.message || 'Error al enviar la invitación.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    resetCuestionarioRespondido(): void {
+        if (!this.activeCuestionario || this.activeCuestionario.idCuestionario === 0) {
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Resetear estatus de respondido?',
+            text: 'Esta acción desbloqueará el cuestionario para que el proveedor pueda modificar y volver a enviar su información.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, resetear',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Reseteando...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                this._proveedoresService.resetBloqueoCuestionario(this.activeCuestionario.idCuestionario).subscribe({
+                    next: (res) => {
+                        if (res && res.success) {
+                            this.activeCuestionario.bloqueado = false;
+                            Swal.fire('Reseteado', 'El proveedor ya puede editar el cuestionario nuevamente.', 'success');
+                        } else {
+                            Swal.fire('Error', res.message || 'No se pudo resetear el estatus.', 'error');
+                        }
+                    },
+                    error: (err) => {
+                        console.error('Error al resetear estatus:', err);
+                        Swal.fire('Error', 'Hubo un error al comunicarse con el servidor.', 'error');
                     }
                 });
             }

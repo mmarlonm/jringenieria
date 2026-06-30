@@ -68,6 +68,10 @@ export class ProveedoresService {
         return this._http.post<any>(`${this.apiCuestionario}/${id}/enviar-invitacion${queryString}`, {});
     }
 
+    resetBloqueoCuestionario(id: number): Observable<any> {
+        return this._http.post<any>(`${this.apiCuestionario}/${id}/reset-bloqueo`, {});
+    }
+
     // -----------------------------------------------------------------------------------------------------
     // @ catálogos y usuarios
     // -----------------------------------------------------------------------------------------------------

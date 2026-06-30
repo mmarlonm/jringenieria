@@ -92,20 +92,65 @@
                         </mat-form-field>
 
                         <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
-                            <mat-label>Calidad del Producto/Servicio</mat-label>
+                            <mat-label>Calidad del Producto/Servicio (25%)</mat-label>
                             <mat-select formControlName="puntajeCalidad">
-                                <mat-option [value]="100">100 - Excelente / Sin retrabajos</mat-option>
-                                <mat-option [value]="80">80 - Regular / Observaciones menores</mat-option>
-                                <mat-option [value]="60">60 - Deficiente / Fallas o Devoluciones</mat-option>
+                                <mat-option [value]="100">100 - Cumple totalmente y sin retrabajos</mat-option>
+                                <mat-option [value]="80">80 - Cumple con observaciones menores</mat-option>
+                                <mat-option [value]="60">60 o menor - Incumplimientos, fallas, devoluciones o retrabajos</mat-option>
                             </mat-select>
                         </mat-form-field>
 
                         <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
-                            <mat-label>Entrega a Tiempo</mat-label>
+                            <mat-label>Entrega a Tiempo (20%)</mat-label>
                             <mat-select formControlName="puntajeEntrega">
-                                <mat-option [value]="100">100 - En tiempo o antes</mat-option>
-                                <mat-option [value]="80">80 - Retraso menor justificado</mat-option>
-                                <mat-option [value]="60">60 - Retraso frecuente o sin aviso</mat-option>
+                                <mat-option [value]="100">100 - Entrega en tiempo o antes</mat-option>
+                                <mat-option [value]="80">80 - Retrasos menores justificados</mat-option>
+                                <mat-option [value]="60">60 o menor - Retrasos frecuentes o sin aviso</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Precio/Competitividad (15%)</mat-label>
+                            <mat-select formControlName="puntajePrecio">
+                                <mat-option [value]="100">100 - Precio competitivo y buen valor</mat-option>
+                                <mat-option [value]="80">80 - Precio aceptable con oportunidades de mejora</mat-option>
+                                <mat-option [value]="60">60 o menor - Precio alto sin justificación o condiciones poco favorables</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Atención/Servicio (15%)</mat-label>
+                            <mat-select formControlName="puntajeAtencion">
+                                <mat-option [value]="100">100 - Atención rápida y efectiva</mat-option>
+                                <mat-option [value]="80">80 - Atención aceptable con seguimiento requerido</mat-option>
+                                <mat-option [value]="60">60 o menor - Falta de respuesta o seguimiento deficiente</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Documentación/Facturación (10%)</mat-label>
+                            <mat-select formControlName="puntajeDocumentacion">
+                                <mat-option [value]="100">100 - Entrega correcta y oportuna</mat-option>
+                                <mat-option [value]="80">80 - Errores menores corregibles</mat-option>
+                                <mat-option [value]="60">60 o menor - Errores recurrentes o documentación incompleta</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Cumplimiento Seguridad (10%)</mat-label>
+                            <mat-select formControlName="puntajeSeguridad">
+                                <mat-option [value]="100">100 - Cumple todos los requisitos</mat-option>
+                                <mat-option [value]="80">80 - Cumple con observaciones menores</mat-option>
+                                <mat-option [value]="60">60 o menor - Incumplimientos que generan riesgo o rechazo de acceso</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" appearance="fill">
+                            <mat-label>Garantías/Soporte (5%)</mat-label>
+                            <mat-select formControlName="puntajeGarantias">
+                                <mat-option [value]="100">100 - Responde y resuelve oportunamente</mat-option>
+                                <mat-option [value]="80">80 - Resuelve con seguimiento</mat-option>
+                                <mat-option [value]="60">60 o menor - No responde o no respeta garantías</mat-option>
                             </mat-select>
                         </mat-form-field>
                     </div>
