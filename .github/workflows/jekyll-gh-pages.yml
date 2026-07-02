@@ -6,6 +6,9 @@ on:
     branches: ["main"]  # Ejecuta el workflow cuando haya cambios en la rama 'main'
   workflow_dispatch:  # Permite ejecutar manualmente el workflow desde GitHub Actions
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+
 permissions:
   contents: read
   pages: write
@@ -27,7 +30,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Instalar Angular CLI
         run: npm install -g @angular/cli
