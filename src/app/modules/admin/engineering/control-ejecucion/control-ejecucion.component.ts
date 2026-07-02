@@ -131,13 +131,13 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         const savedEnd = localStorage.getItem('controlEjecucion_fechaFin');
 
         if (savedStart && savedEnd) {
-            this.fechaInicio = savedStart;
-            this.fechaFin = savedEnd;
+            this.fechaInicio = new Date(savedStart + 'T00:00:00');
+            this.fechaFin = new Date(savedEnd + 'T00:00:00');
         } else {
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            this.fechaInicio = firstDay.toISOString().split('T')[0];
-            this.fechaFin = now.toISOString().split('T')[0];
+            this.fechaInicio = firstDay;
+            this.fechaFin = now;
         }
 
         this.getSeguimientos();
