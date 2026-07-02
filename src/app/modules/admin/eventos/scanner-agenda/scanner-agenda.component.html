@@ -9,41 +9,55 @@
         <p class="text-slate-400 text-sm text-center mt-1 max-w-xs">Escanea el código QR de tu pase de staff para ver tus actividades asignadas.</p>
     </div>
 
-    <!-- Success overlay (full screen) -->
-    <div *ngIf="status === 'success'" class="w-full max-w-sm aspect-square rounded-3xl flex flex-col items-center justify-center bg-emerald-950 border border-emerald-800 shadow-2xl mb-6">
-        <div class="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center mb-4 animate-bounce">
-            <mat-icon class="icon-size-12 text-white">check_circle</mat-icon>
+    <!-- Camera frame container -->
+    <div class="relative w-full max-w-sm rounded-[2.5rem] overflow-hidden border-4 border-slate-800 shadow-2xl shadow-indigo-900/20 bg-slate-900 mb-6" style="height: 320px;">
+
+        <!-- Corner reticles -->
+        <div class="absolute top-5 left-5 w-8 h-8 border-t-4 border-l-4 border-indigo-400 rounded-tl-lg z-20 pointer-events-none"></div>
+        <div class="absolute top-5 right-5 w-8 h-8 border-t-4 border-r-4 border-indigo-400 rounded-tr-lg z-20 pointer-events-none"></div>
+        <div class="absolute bottom-5 left-5 w-8 h-8 border-b-4 border-l-4 border-indigo-400 rounded-bl-lg z-20 pointer-events-none"></div>
+        <div class="absolute bottom-5 right-5 w-8 h-8 border-b-4 border-r-4 border-indigo-400 rounded-br-lg z-20 pointer-events-none"></div>
+
+        <!-- Laser line animation -->
+        <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-400 to-transparent z-20 pointer-events-none" style="animation: laserSweep 2.2s infinite linear;"></div>
+
+        <!-- html5-qrcode mounts HERE — always in DOM, hidden when not scanning -->
+        <div id="reader-agenda"
+             class="absolute inset-0 w-full h-full z-10"
+             [class.hidden]="status === 'success' || status === 'error' || cameraError">
         </div>
-        <p class="text-emerald-300 font-black text-base px-6 text-center">{{ statusMessage }}</p>
+
+        <!-- Success overlay -->
+        <div *ngIf="status === 'success'"
+             class="absolute inset-0 flex flex-col items-center justify-center bg-emerald-950/95 z-30">
+            <div class="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-3 animate-bounce">
+                <mat-icon class="icon-size-10 text-white">check_circle</mat-icon>
+            </div>
+            <p class="text-emerald-300 font-black text-sm text-center px-6">{{ statusMessage }}</p>
+        </div>
+
+        <!-- Error overlay -->
+        <div *ngIf="status === 'error'"
+             class="absolute inset-0 flex flex-col items-center justify-center bg-red-950/95 z-30">
+            <mat-icon class="icon-size-14 text-red-400 mb-3">qr_code_2</mat-icon>
+            <p class="text-red-300 font-bold text-sm text-center px-8">{{ statusMessage }}</p>
+            <p class="text-red-400/60 text-xs mt-2">Reintentando...</p>
+        </div>
+
+        <!-- Camera error overlay -->
+        <div *ngIf="cameraError"
+             class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/98 z-30 p-6 text-center">
+            <mat-icon class="icon-size-12 text-amber-400 mb-3">videocam_off</mat-icon>
+            <p class="text-amber-200 font-bold text-sm">{{ cameraError }}</p>
+            <button mat-flat-button class="mt-4 !rounded-2xl !bg-indigo-600 !text-white font-bold" (click)="startCamera()">
+                <mat-icon class="mr-1">refresh</mat-icon> Reintentar
+            </button>
+        </div>
     </div>
 
-    <!-- Error overlay -->
-    <div *ngIf="status === 'error'" class="w-full max-w-sm aspect-square rounded-3xl flex flex-col items-center justify-center bg-red-950 border border-red-800 shadow-2xl mb-6">
-        <mat-icon class="icon-size-16 text-red-400 mb-3">qr_code_2</mat-icon>
-        <p class="text-red-300 font-bold text-sm text-center px-8">{{ statusMessage }}</p>
-        <p class="text-red-400/60 text-xs mt-2">Reintentando en un momento...</p>
-    </div>
-
-    <!-- Camera error (permission/load error) -->
-    <div *ngIf="cameraError" class="w-full max-w-sm rounded-3xl flex flex-col items-center justify-center bg-amber-950 border border-amber-700 shadow-2xl mb-6 p-8 text-center">
-        <mat-icon class="icon-size-12 text-amber-400 mb-3">videocam_off</mat-icon>
-        <p class="text-amber-200 font-bold text-sm">Error de cámara</p>
-        <p class="text-amber-300/70 text-xs mt-2 leading-relaxed">{{ cameraError }}</p>
-        <button mat-flat-button class="mt-4 !rounded-2xl !bg-indigo-600 !text-white !px-6 font-bold" (click)="startCamera()">
-            <mat-icon class="mr-1">refresh</mat-icon>
-            Reintentar
-        </button>
-    </div>
-
-    <!-- Camera viewfinder (html5-qrcode mounts here) -->
-    <div *ngIf="status === 'idle' || status === 'scanning'" class="w-full max-w-sm mb-6">
-        <div id="reader-agenda" class="rounded-3xl overflow-hidden shadow-2xl border border-slate-700"></div>
-    </div>
-
-    <!-- Status message -->
-    <div *ngIf="(status === 'idle' || status === 'scanning') && !cameraError" class="flex items-center gap-2 text-slate-300 text-sm font-medium text-center max-w-xs mt-2">
-        <span *ngIf="status === 'idle'">⏳</span>
-        <span *ngIf="status === 'scanning'">📸</span>
+    <!-- Status text -->
+    <div class="flex items-center gap-2 text-slate-300 text-sm font-medium text-center max-w-xs">
+        <span *ngIf="status === 'idle' || status === 'scanning'">📸</span>
         <span>{{ statusMessage }}</span>
     </div>
 
@@ -54,5 +68,22 @@
         <p>2. Regresa aquí y apunta la cámara a tu código QR.</p>
         <p>3. Automáticamente verás tus actividades asignadas.</p>
     </div>
-
 </div>
+
+<style>
+@keyframes laserSweep {
+    0%   { top: 0; }
+    50%  { top: calc(100% - 4px); }
+    100% { top: 0; }
+}
+#reader-agenda {
+    border: none !important;
+    overflow: hidden !important;
+}
+#reader-agenda video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+</style>
