@@ -1,0 +1,114 @@
+<div class="flex flex-col max-h-[90vh] overflow-hidden bg-card rounded-2xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-b">
+        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <mat-icon class="text-indigo-600">assignment</mat-icon>
+            {{ isEdit ? 'Editar Actividad' : 'Asignar Nueva Actividad' }}
+        </h2>
+        <button mat-icon-button (click)="close()">
+            <mat-icon class="icon-size-5">close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Body -->
+    <form [formGroup]="form" class="flex-auto p-6 overflow-y-auto space-y-4">
+
+        <!-- Evento Selector -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Evento</mat-label>
+            <mat-select formControlName="eventoId">
+                <mat-option *ngFor="let ev of eventosList" [value]="ev.id">
+                    {{ ev.nombre || ev.nombreNovedad }}
+                </mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('eventoId').hasError('required')">El evento es requerido</mat-error>
+        </mat-form-field>
+
+        <!-- Colaborador Selector (Staff) -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Asignar a Colaborador (Staff / Expositor)</mat-label>
+            <mat-select formControlName="personalStaffId">
+                <mat-option *ngFor="let p of personalList" [value]="p.id">
+                    {{ p.nombreCompleto }} ({{ p.tipoPersonal }})
+                </mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('personalStaffId').hasError('required')">El colaborador es requerido</mat-error>
+        </mat-form-field>
+
+        <!-- Titulo -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Título de la Actividad / Tarea</mat-label>
+            <input matInput formControlName="titulo" placeholder="Ej. Registro de Asistentes, Conferencia Magistral, etc.">
+            <mat-error *ngIf="form.get('titulo').hasError('required')">El título es requerido</mat-error>
+            <mat-error *ngIf="form.get('titulo').hasError('maxlength')">Máximo 150 caracteres</mat-error>
+        </mat-form-field>
+
+        <!-- Descripcion -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Descripción / Detalles adicionales</mat-label>
+            <textarea matInput formControlName="descripcion" rows="3" placeholder="Detalla las instrucciones de la actividad..."></textarea>
+            <mat-error *ngIf="form.get('descripcion').hasError('maxlength')">Máximo 500 caracteres</mat-error>
+        </mat-form-field>
+
+        <!-- ===== FECHA Y HORA INICIO ===== -->
+        <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                📅 Inicio
+            </label>
+            <div class="flex gap-3 items-start">
+                <!-- Date Picker -->
+                <mat-form-field appearance="outline" class="flex-auto">
+                    <mat-label>Fecha</mat-label>
+                    <input matInput [matDatepicker]="startPicker" formControlName="fechaInicioDate" placeholder="Seleccionar">
+                    <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                    <mat-error *ngIf="form.get('fechaInicioDate').hasError('required')">Requerido</mat-error>
+                </mat-form-field>
+
+                <!-- iOS Time Picker -->
+                <div class="flex-none w-36 pt-1">
+                    <app-time-picker
+                        formControlName="fechaInicioTime"
+                        label="Inicio">
+                    </app-time-picker>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== FECHA Y HORA FIN ===== -->
+        <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                🏁 Fin
+            </label>
+            <div class="flex gap-3 items-start">
+                <!-- Date Picker -->
+                <mat-form-field appearance="outline" class="flex-auto">
+                    <mat-label>Fecha</mat-label>
+                    <input matInput [matDatepicker]="endPicker" formControlName="fechaFinDate" placeholder="Seleccionar">
+                    <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                    <mat-error *ngIf="form.get('fechaFinDate').hasError('required')">Requerido</mat-error>
+                </mat-form-field>
+
+                <!-- iOS Time Picker -->
+                <div class="flex-none w-36 pt-1">
+                    <app-time-picker
+                        formControlName="fechaFinTime"
+                        label="Fin">
+                    </app-time-picker>
+                </div>
+            </div>
+        </div>
+
+    </form>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t gap-3">
+        <button mat-button (click)="close()" [disabled]="isSaving">
+            Cancelar
+        </button>
+        <button mat-flat-button color="primary" [disabled]="form.invalid || isSaving" (click)="save()" class="!rounded-xl shadow-md">
+            {{ isSaving ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Asignar') }}
+        </button>
+    </div>
+</div>

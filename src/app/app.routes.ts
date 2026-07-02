@@ -145,6 +145,7 @@ export const appRoutes: Route[] = [
                     { path: 'control', loadComponent: () => import('app/modules/admin/eventos/control/control.component').then(m => m.EventosControlComponent) },
                     { path: 'gestion-talleres', loadComponent: () => import('app/modules/admin/eventos/gestion-talleres/gestion-talleres.component').then(m => m.GestionTalleresComponent) },
                     { path: 'personal', loadComponent: () => import('app/modules/admin/eventos/personal-staff/personal-staff.component').then(m => m.EventosPersonalComponent) },
+                    { path: 'actividades', loadComponent: () => import('app/modules/admin/eventos/actividades/actividades.component').then(m => m.ActividadesComponent) },
                     { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) }
                 ]
             }
@@ -157,5 +158,13 @@ export const appRoutes: Route[] = [
     {
         path: 'eventos/ficha-personal/:token',
         loadComponent: () => import('app/modules/admin/eventos/ficha-personal/ficha-personal.component').then(m => m.FichaPersonalComponent)
+    },
+    {
+        path: 'eventos/agenda-personal',
+        loadComponent: () => import('app/modules/admin/eventos/scanner-agenda/scanner-agenda.component').then(m => m.ScannerAgendaComponent)
+    },
+    {
+        path: 'eventos/agenda-personal/:token',
+        loadComponent: () => import('app/modules/admin/eventos/agenda-personal/agenda-personal.component').then(m => m.AgendaPersonalComponent)
     }
 ];

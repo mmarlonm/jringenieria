@@ -1,0 +1,94 @@
+<div class="flex flex-col flex-auto items-center justify-center min-h-screen bg-slate-950 text-white px-4 py-10">
+
+    <!-- Logo / Brand -->
+    <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-900 mb-4">
+            <mat-icon class="icon-size-9 text-white">qr_code_scanner</mat-icon>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white text-center">Mi Agenda de Actividades</h1>
+        <p class="text-slate-400 text-sm text-center mt-1 max-w-xs">Escanea el código QR de tu pase de staff para ver tus actividades asignadas.</p>
+    </div>
+
+    <!-- Camera Viewfinder -->
+    <div class="relative w-full max-w-sm aspect-square rounded-3xl overflow-hidden shadow-2xl border border-slate-800 bg-black mb-6">
+
+        <!-- Video element -->
+        <video
+            #video
+            class="absolute inset-0 w-full h-full object-cover"
+            [class.opacity-0]="status !== 'scanning'"
+            autoplay
+            playsinline
+            muted>
+        </video>
+
+        <!-- QR Corners + laser (scanning) -->
+        <div *ngIf="status === 'scanning'" class="absolute inset-0 pointer-events-none">
+            <div class="absolute top-4 left-4 w-10 h-10 border-t-4 border-l-4 border-indigo-400 rounded-tl-xl"></div>
+            <div class="absolute top-4 right-4 w-10 h-10 border-t-4 border-r-4 border-indigo-400 rounded-tr-xl"></div>
+            <div class="absolute bottom-4 left-4 w-10 h-10 border-b-4 border-l-4 border-indigo-400 rounded-bl-xl"></div>
+            <div class="absolute bottom-4 right-4 w-10 h-10 border-b-4 border-r-4 border-indigo-400 rounded-br-xl"></div>
+            <div class="absolute left-8 right-8 h-0.5 bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" style="animation: scanLine 2s ease-in-out infinite; top: 50%;"></div>
+        </div>
+
+        <!-- Success overlay -->
+        <div *ngIf="status === 'success'" class="absolute inset-0 flex flex-col items-center justify-center bg-emerald-950/95">
+            <div class="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-3 animate-bounce">
+                <mat-icon class="icon-size-10 text-white">check_circle</mat-icon>
+            </div>
+            <p class="text-emerald-300 font-bold text-sm px-4 text-center">{{ statusMessage }}</p>
+        </div>
+
+        <!-- Error overlay -->
+        <div *ngIf="status === 'error'" class="absolute inset-0 flex flex-col items-center justify-center bg-red-950/95">
+            <mat-icon class="icon-size-14 text-red-400 mb-3">qr_code_2</mat-icon>
+            <p class="text-red-300 font-bold text-sm text-center px-6">{{ statusMessage }}</p>
+            <p class="text-red-400/60 text-xs mt-1">Reintentando en un momento...</p>
+        </div>
+
+        <!-- Unsupported overlay -->
+        <div *ngIf="status === 'unsupported'" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/98 px-6 text-center">
+            <mat-icon class="icon-size-14 text-amber-400 mb-3">no_photography</mat-icon>
+            <p class="text-amber-200 font-bold text-sm">Escáner no disponible</p>
+            <p class="text-slate-400 text-xs mt-2 leading-relaxed">{{ statusMessage }}</p>
+        </div>
+
+        <!-- Idle / loading overlay -->
+        <div *ngIf="status === 'idle'" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80">
+            <mat-spinner diameter="40" strokeWidth="3"></mat-spinner>
+            <p class="text-slate-400 text-sm mt-3">Iniciando cámara...</p>
+        </div>
+    </div>
+
+    <!-- Status message -->
+    <div *ngIf="status === 'scanning'" class="flex items-center gap-2 text-slate-300 text-sm font-medium text-center max-w-xs">
+        <mat-spinner diameter="16" strokeWidth="2"></mat-spinner>
+        <span>{{ statusMessage }}</span>
+    </div>
+
+    <!-- Retry button for camera errors -->
+    <button *ngIf="status === 'error' || status === 'unsupported'" mat-flat-button
+        class="mt-4 !rounded-2xl !bg-indigo-600 !text-white !px-6 !py-3 font-bold"
+        (click)="retryCamera()">
+        <mat-icon class="mr-2">refresh</mat-icon>
+        Reintentar
+    </button>
+
+    <!-- Help text -->
+    <div class="mt-8 px-6 py-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs text-slate-400 max-w-xs text-center space-y-2">
+        <p class="font-semibold text-slate-300">¿Cómo funciona?</p>
+        <p>1. Abre el correo que recibiste con tu pase QR.</p>
+        <p>2. Regresa aquí y apunta la cámara a tu código QR.</p>
+        <p>3. Automáticamente verás tus actividades asignadas.</p>
+        <p class="text-slate-500 pt-1 border-t border-slate-800">Requiere Google Chrome o Microsoft Edge.</p>
+    </div>
+
+</div>
+
+<style>
+@keyframes scanLine {
+    0%   { transform: translateY(-80px); }
+    50%  { transform: translateY(80px);  }
+    100% { transform: translateY(-80px); }
+}
+</style>

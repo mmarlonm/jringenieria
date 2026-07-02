@@ -178,6 +178,9 @@
                         <mat-icon class="icon-size-4 mr-1">qr_code</mat-icon>
                         Imprimir QR
                     </button>
+                    <button mat-icon-button class="w-8 h-8 p-0 text-amber-600 hover:bg-amber-50 rounded-lg shrink-0" matTooltip="Ver Agenda de Actividades" [routerLink]="['/eventos/agenda-personal', p.tokenQr]" target="_blank">
+                        <mat-icon class="icon-size-4">assignment</mat-icon>
+                    </button>
                     <button mat-icon-button class="w-8 h-8 p-0 text-indigo-600 hover:bg-indigo-50 rounded-lg shrink-0" matTooltip="Enviar QR por Correo" (click)="enviarQrIndividual(p)">
                         <mat-icon class="icon-size-4">mail</mat-icon>
                     </button>

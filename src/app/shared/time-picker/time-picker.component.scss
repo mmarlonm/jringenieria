@@ -1,0 +1,38 @@
+:host {
+    display: block;
+    position: relative;
+}
+
+/* Hide scrollbars across all browsers */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Slide-up animation for mobile */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@media (min-width: 640px) {
+    @keyframes slideUp {
+        from {
+            transform: scale(0.9) translateY(10px);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    }
+}
