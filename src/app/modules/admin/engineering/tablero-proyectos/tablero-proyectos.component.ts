@@ -104,11 +104,19 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
     ) { }
 
     ngOnInit(): void {
-        // Cargar rango de fecha por defecto: primer día del mes corriente hasta hoy
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        this.fechaInicio = firstDay.toISOString().split('T')[0];
-        this.fechaFin = now.toISOString().split('T')[0];
+        // Cargar rango de fecha por defecto de localStorage, sino calcular el del mes corriente
+        const savedStart = localStorage.getItem('tableroProyectos_fechaInicio');
+        const savedEnd = localStorage.getItem('tableroProyectos_fechaFin');
+
+        if (savedStart && savedEnd) {
+            this.fechaInicio = savedStart;
+            this.fechaFin = savedEnd;
+        } else {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            this.fechaInicio = firstDay.toISOString().split('T')[0];
+            this.fechaFin = now.toISOString().split('T')[0];
+        }
 
         this.getSeguimientos();
     }
@@ -123,6 +131,10 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         // Formatear fechas a YYYY-MM-DD
         const start = this.fechaInicio ? (this.fechaInicio instanceof Date ? this.fechaInicio.toISOString().split('T')[0] : this.fechaInicio) : undefined;
         const end = this.fechaFin ? (this.fechaFin instanceof Date ? this.fechaFin.toISOString().split('T')[0] : this.fechaFin) : undefined;
+
+        // Guardar filtros en local storage para no resetearlos
+        if (start) localStorage.setItem('tableroProyectos_fechaInicio', start);
+        if (end) localStorage.setItem('tableroProyectos_fechaFin', end);
 
         this._engineeringService.getSeguimientos(start, end).subscribe({
             next: (data) => {

@@ -126,10 +126,19 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     ) { }
 
     ngOnInit(): void {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        this.fechaInicio = firstDay.toISOString().split('T')[0];
-        this.fechaFin = now.toISOString().split('T')[0];
+        // Cargar rango de fecha por defecto de localStorage, sino calcular el del mes corriente
+        const savedStart = localStorage.getItem('controlEjecucion_fechaInicio');
+        const savedEnd = localStorage.getItem('controlEjecucion_fechaFin');
+
+        if (savedStart && savedEnd) {
+            this.fechaInicio = savedStart;
+            this.fechaFin = savedEnd;
+        } else {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            this.fechaInicio = firstDay.toISOString().split('T')[0];
+            this.fechaFin = now.toISOString().split('T')[0];
+        }
 
         this.getSeguimientos();
     }
@@ -137,12 +146,17 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     ngAfterViewInit(): void {
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
+        this.dataSource.sort = this.sort;
         this._setupFilterPredicate();
     }
 
     getSeguimientos(): void {
         const start = this.fechaInicio ? (this.fechaInicio instanceof Date ? this.fechaInicio.toISOString().split('T')[0] : this.fechaInicio) : undefined;
         const end = this.fechaFin ? (this.fechaFin instanceof Date ? this.fechaFin.toISOString().split('T')[0] : this.fechaFin) : undefined;
+
+        // Guardar filtros en local storage
+        if (start) localStorage.setItem('controlEjecucion_fechaInicio', start);
+        if (end) localStorage.setItem('controlEjecucion_fechaFin', end);
 
         this._engineeringService.getSeguimientosEjecucion(start, end).subscribe({
             next: (data) => {
