@@ -16,8 +16,10 @@ export interface PersonalStaff {
     compartirDatos: boolean;
     fotoPath?: string;
     tokenQr: string;
+    emailEnviado: boolean;
     fechaRegistro: string;
     eventoIds?: number[];
+    eventosEmailStatus?: { eventoId: number, emailEnviado: boolean }[];
 }
 
 @Injectable({
@@ -51,6 +53,7 @@ export class PersonalStaffService {
         formData.append('linkWeb', personal.linkWeb || '');
         formData.append('tipoPersonal', personal.tipoPersonal || 'Expositor');
         formData.append('compartirDatos', String(personal.compartirDatos !== false));
+        formData.append('emailEnviado', String(personal.emailEnviado === true));
         if (foto) {
             formData.append('foto', foto, foto.name);
         }
@@ -75,7 +78,7 @@ export class PersonalStaffService {
         return this._http.post(`${this.apiBase}/PersonalStaff/${id}/enviar-qr${queryParams}`, {});
     }
 
-    enviarQrMasivo(eventoId: number): Observable<any> {
-        return this._http.post(`${this.apiBase}/PersonalStaff/masivo-manual/${eventoId}`, {});
+    enviarQrMasivo(eventoId: number, personalIds?: number[]): Observable<any> {
+        return this._http.post(`${this.apiBase}/PersonalStaff/masivo-manual/${eventoId}`, personalIds || null);
     }
 }

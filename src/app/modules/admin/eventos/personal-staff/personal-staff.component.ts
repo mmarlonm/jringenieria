@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { RouterModule } from '@angular/router';
 import { PersonalStaff, PersonalStaffService } from './personal-staff.service';
 import { PersonalStaffDialogComponent } from './dialogs/personal-staff-dialog.component';
@@ -29,20 +30,22 @@ import Swal from 'sweetalert2';
         MatIconModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatCheckboxModule
     ]
 })
 export class EventosPersonalComponent implements OnInit {
-    personalList: PersonalStaff[] = [];
-    filteredList: PersonalStaff[] = [];
+    personalList: (PersonalStaff & { selectedForEmail?: boolean })[] = [];
+    filteredList: (PersonalStaff & { selectedForEmail?: boolean })[] = [];
     isLoading: boolean = true;
     eventosList: any[] = [];
+    allSelected: boolean = false;
 
     // Filters
     searchQuery: string = '';
     selectedTipo: string = 'Todos';
     tiposPersonal = ['Todos', 'Expositor', 'Staff', 'Organizador', 'Soporte', 'Otro'];
-    selectedEventoId: number = 2026;
+    selectedEventoId: number = 0;
 
     constructor(
         private _personalStaffService: PersonalStaffService,
@@ -55,14 +58,17 @@ export class EventosPersonalComponent implements OnInit {
             this.eventosList = list || [];
         });
         this._eventosService.selectedEventoId$.subscribe(id => {
-            this.selectedEventoId = id;
+            if (id && this.selectedEventoId === 0) {
+                this.selectedEventoId = id;
+                this.applyFilters();
+            }
         });
         this.loadData();
     }
 
     getEventName(id: number): string {
         const ev = this.eventosList.find(e => e.id === id);
-        return ev ? ev.nombre : `Evento ${id}`;
+        return ev ? ev.nombre || ev.nombreNovedad : `Evento ${id}`;
     }
 
     loadData(): void {
@@ -92,8 +98,46 @@ export class EventosPersonalComponent implements OnInit {
 
             const matchesTipo = this.selectedTipo === 'Todos' || p.tipoPersonal === this.selectedTipo;
 
-            return matchesSearch && matchesTipo;
+            const matchesEvento = !this.selectedEventoId || 
+                (p.eventoIds && p.eventoIds.includes(Number(this.selectedEventoId)));
+
+            return matchesSearch && matchesTipo && matchesEvento;
         });
+
+        // Update selectedForEmail state dynamically based on selected event's email status
+        this.filteredList.forEach(p => {
+            p.selectedForEmail = !this.isEmailEnviadoForSelectedEvent(p);
+        });
+
+        this.updateAllSelectedState();
+    }
+
+    isEmailEnviadoForSelectedEvent(p: any): boolean {
+        if (!this.selectedEventoId || this.selectedEventoId === 0) {
+            return p.emailEnviado;
+        }
+        const status = p.eventosEmailStatus?.find((es: any) => es.eventoId === Number(this.selectedEventoId));
+        return status ? status.emailEnviado : false;
+    }
+
+    isEmailEnviadoForEvent(p: any, eventId: number): boolean {
+        const status = p.eventosEmailStatus?.find((es: any) => es.eventoId === Number(eventId));
+        return status ? status.emailEnviado : false;
+    }
+
+    toggleSelectAll(checked: boolean): void {
+        this.allSelected = checked;
+        this.filteredList.forEach(p => {
+            p.selectedForEmail = checked;
+        });
+    }
+
+    updateAllSelectedState(): void {
+        if (this.filteredList.length === 0) {
+            this.allSelected = false;
+            return;
+        }
+        this.allSelected = this.filteredList.every(p => p.selectedForEmail);
     }
 
     openPersonalDialog(personal?: PersonalStaff): void {
@@ -174,23 +218,48 @@ export class EventosPersonalComponent implements OnInit {
         return this._personalStaffService.getPhotoUrl(personal.id);
     }
 
-    enviarQrIndividual(p: PersonalStaff): void {
+    enviarQrIndividual(p: any): void {
+        const personEvents = p.eventoIds && p.eventoIds.length > 0 ? p.eventoIds : this.eventosList.map(e => e.id);
+        if (personEvents.length === 0) {
+            Swal.fire('Atención', 'No hay eventos disponibles para asociar a esta invitación.', 'warning');
+            return;
+        }
+
+        const selectOptions: { [key: string]: string } = {};
+        personEvents.forEach((id: number) => {
+            selectOptions[String(id)] = this.getEventName(id);
+        });
+
+        const defaultEventValue = this.selectedEventoId && personEvents.includes(Number(this.selectedEventoId)) 
+            ? String(this.selectedEventoId) 
+            : String(personEvents[0]);
+
         Swal.fire({
-            title: '¿Enviar QR por correo?',
-            text: `Se enviará el código QR de acceso y tarjeta digital a ${p.correoElectronico}. ¿Deseas continuar?`,
-            icon: 'question',
+            title: 'Seleccionar Evento',
+            text: `Selecciona el evento para el cual enviarás la invitación con código QR a ${p.nombreCompleto}:`,
+            input: 'select',
+            inputOptions: selectOptions,
+            inputValue: defaultEventValue,
             showCancelButton: true,
-            confirmButtonText: 'Sí, enviar',
+            confirmButtonText: 'Enviar invitación',
             cancelButtonText: 'Cancelar',
             reverseButtons: true,
-            buttonsStyling: false,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debes seleccionar un evento.';
+                }
+                return null;
+            },
             customClass: {
                 popup: 'rounded-3xl p-6 shadow-2xl border-0',
                 confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
                 cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
-            }
+            },
+            buttonsStyling: false
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isConfirmed && result.value) {
+                const targetEventoId = Number(result.value);
+
                 Swal.fire({
                     title: 'Enviando...',
                     text: 'Generando y enviando código QR por correo electrónico.',
@@ -200,8 +269,10 @@ export class EventosPersonalComponent implements OnInit {
                     }
                 });
 
-                this._personalStaffService.enviarQrIndividual(p.id, this.selectedEventoId).subscribe({
+                this._personalStaffService.enviarQrIndividual(p.id, targetEventoId).subscribe({
                     next: (res) => {
+                        p.emailEnviado = true;
+                        p.selectedForEmail = false;
                         Swal.fire({
                             title: '¡Enviado!',
                             text: res?.mensaje || 'El código QR ha sido enviado con éxito.',
@@ -220,23 +291,52 @@ export class EventosPersonalComponent implements OnInit {
     }
 
     enviarQrMasivo(): void {
-        const eventName = this.getEventName(this.selectedEventoId);
+        const selectedStaff = this.filteredList.filter(p => p.selectedForEmail);
+        if (selectedStaff.length === 0) {
+            Swal.fire('Atención', 'Por favor selecciona al menos una persona para el envío masivo.', 'warning');
+            return;
+        }
+
+        if (this.eventosList.length === 0) {
+            Swal.fire('Atención', 'No hay eventos disponibles para realizar el envío.', 'warning');
+            return;
+        }
+
+        const selectOptions: { [key: string]: string } = {};
+        this.eventosList.forEach((ev: any) => {
+            selectOptions[String(ev.id)] = ev.nombre || ev.nombreNovedad;
+        });
+
+        const defaultEventValue = this.selectedEventoId && this.selectedEventoId !== 0 
+            ? String(this.selectedEventoId) 
+            : String(this.eventosList[0].id);
+
         Swal.fire({
-            title: '¿Enviar QR masivo a Staff?',
-            text: `Se enviará el código QR por correo a TODO el personal y expositores asociados al evento "${eventName}". ¿Estás seguro?`,
-            icon: 'warning',
+            title: 'Seleccionar Evento para Envío Masivo',
+            text: `Selecciona el evento para el cual enviarás la invitación masiva a las ${selectedStaff.length} personas seleccionadas:`,
+            input: 'select',
+            inputOptions: selectOptions,
+            inputValue: defaultEventValue,
             showCancelButton: true,
-            confirmButtonText: 'Sí, enviar a todos',
+            confirmButtonText: 'Iniciar envío masivo',
             cancelButtonText: 'Cancelar',
             reverseButtons: true,
-            buttonsStyling: false,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debes seleccionar un evento.';
+                }
+                return null;
+            },
             customClass: {
                 popup: 'rounded-3xl p-6 shadow-2xl border-0',
                 confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-indigo-200',
                 cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
-            }
+            },
+            buttonsStyling: false
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isConfirmed && result.value) {
+                const targetEventoId = Number(result.value);
+
                 Swal.fire({
                     title: 'Enviando correos...',
                     text: 'Este proceso puede tardar unos momentos. Por favor, no cierres esta ventana.',
@@ -246,7 +346,9 @@ export class EventosPersonalComponent implements OnInit {
                     }
                 });
 
-                this._personalStaffService.enviarQrMasivo(this.selectedEventoId).subscribe({
+                const selectedIds = selectedStaff.map(p => p.id);
+
+                this._personalStaffService.enviarQrMasivo(targetEventoId, selectedIds).subscribe({
                     next: (res) => {
                         Swal.fire({
                             title: '¡Proceso completado!',
@@ -258,6 +360,7 @@ export class EventosPersonalComponent implements OnInit {
                                 confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-200'
                             }
                         });
+                        this.loadData();
                     },
                     error: (err) => {
                         console.error(err);
@@ -266,5 +369,84 @@ export class EventosPersonalComponent implements OnInit {
                 });
             }
         });
+    }
+
+    async importarExcel(event: any): Promise<void> {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        event.target.value = '';
+
+        Swal.fire({
+            title: 'Procesando archivo...',
+            text: 'Por favor espera mientras importamos el personal.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const excelJsModule = await import('exceljs');
+            const ExcelJS = (excelJsModule as any).default ?? excelJsModule;
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(arrayBuffer);
+            
+            const sheet = workbook.worksheets[0];
+            if (!sheet) {
+                throw new Error('No se encontró ninguna hoja en el archivo de Excel.');
+            }
+
+            const rowsToImport: any[] = [];
+            sheet.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return; // Skip headers
+
+                const nombre = row.getCell(2).value?.toString() || '';
+                const apellido = row.getCell(3).value?.toString() || '';
+                const empresa = row.getCell(4).value?.toString() || '';
+                const telefono = row.getCell(5).value?.toString() || '';
+                const correo = row.getCell(6).value?.toString() || '';
+
+                if (nombre && correo) {
+                    rowsToImport.push({
+                        nombreCompleto: `${nombre} ${apellido}`.trim(),
+                        empresa: empresa || 'JR',
+                        cargo: 'Expositor',
+                        correoElectronico: correo,
+                        telefonoWhatsapp: telefono,
+                        tipoPersonal: 'Expositor',
+                        compartirDatos: true,
+                        eventoIds: this.selectedEventoId && this.selectedEventoId !== 0 ? [Number(this.selectedEventoId)] : []
+                    });
+                }
+            });
+
+            if (rowsToImport.length === 0) {
+                Swal.fire('Atención', 'No se encontraron registros válidos para importar. Asegúrate de tener al menos Nombre y Correo electrónico.', 'warning');
+                return;
+            }
+
+            let importedCount = 0;
+            for (const item of rowsToImport) {
+                try {
+                    await this._personalStaffService.save(item).toPromise();
+                    importedCount++;
+                } catch (saveErr) {
+                    console.error('Error al guardar fila:', item, saveErr);
+                }
+            }
+
+            Swal.fire({
+                title: '¡Importación completada!',
+                text: `Se importaron con éxito ${importedCount} de ${rowsToImport.length} registros.`,
+                icon: 'success'
+            });
+
+            this.loadData();
+        } catch (err: any) {
+            console.error(err);
+            Swal.fire('Error', `Ocurrió un error al importar el archivo: ${err.message || err}`, 'error');
+        }
     }
 }

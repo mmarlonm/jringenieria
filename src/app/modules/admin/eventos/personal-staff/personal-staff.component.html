@@ -16,6 +16,11 @@
             </h1>
         </div>
         <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto mt-2 sm:mt-0 z-10">
+            <input type="file" #excelFileInput class="hidden" accept=".xlsx, .xls" (change)="importarExcel($event)">
+            <button mat-stroked-button class="!rounded-xl shadow-sm hover:shadow transition-all bg-white border-emerald-250 text-emerald-600 hover:bg-emerald-50" (click)="excelFileInput.click()">
+                <mat-icon class="mr-2 text-emerald-555">upload_file</mat-icon>
+                Importar Excel
+            </button>
             <button mat-stroked-button class="!rounded-xl shadow-sm hover:shadow transition-all bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50" (click)="enviarQrMasivo()">
                 <mat-icon class="mr-2 text-indigo-500">mail</mat-icon>
                 Enviar QR Masivo
@@ -35,13 +40,29 @@
             <input matInput [(ngModel)]="searchQuery" (input)="applyFilters()" placeholder="Buscar por nombre, cargo, empresa...">
         </mat-form-field>
 
-        <!-- Dropdown Filter -->
+        <!-- Dropdown Filter: Tipo -->
         <mat-form-field appearance="outline" class="w-full sm:w-56 fuse-mat-dense bg-white dark:bg-slate-900 rounded-2xl" subscriptSizing="dynamic">
             <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">filter_list</mat-icon>
             <mat-select [(ngModel)]="selectedTipo" (selectionChange)="applyFilters()">
                 <mat-option *ngFor="let tipo of tiposPersonal" [value]="tipo">{{ tipo }}</mat-option>
             </mat-select>
         </mat-form-field>
+
+        <!-- Dropdown Filter: Evento -->
+        <mat-form-field appearance="outline" class="w-full sm:w-64 fuse-mat-dense bg-white dark:bg-slate-900 rounded-2xl" subscriptSizing="dynamic">
+            <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">event</mat-icon>
+            <mat-select [(ngModel)]="selectedEventoId" (selectionChange)="applyFilters()">
+                <mat-option [value]="0">Todos los Eventos</mat-option>
+                <mat-option *ngFor="let ev of eventosList" [value]="ev.id">{{ ev.nombre || ev.nombreNovedad }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <!-- Seleccionar Todos Checkbox -->
+        <div class="flex items-center gap-2 ml-auto" *ngIf="filteredList.length > 0">
+            <mat-checkbox [(ngModel)]="allSelected" (change)="toggleSelectAll($event.checked)" [color]="'primary'">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Seleccionar Todos</span>
+            </mat-checkbox>
+        </div>
     </div>
 
     <!-- Content Area -->
@@ -70,6 +91,10 @@
                 <!-- Card Body -->
                 <div class="flex-auto p-6 flex flex-col items-center text-center relative">
                     
+                    <!-- Selection Checkbox -->
+                    <mat-checkbox class="absolute top-3 left-3 z-10" [(ngModel)]="p.selectedForEmail" (change)="updateAllSelectedState()" [color]="'primary'">
+                    </mat-checkbox>
+
                     <!-- Type Badge -->
                     <span class="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm border"
                           [ngClass]="{
@@ -80,6 +105,16 @@
                               'bg-slate-100 text-slate-700 border-slate-200': p.tipoPersonal === 'Otro'
                           }">
                         {{ p.tipoPersonal }}
+                    </span>
+
+                    <!-- Email Sent Badge -->
+                    <span class="absolute top-11 right-4 px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider flex items-center gap-0.5 border"
+                          [ngClass]="{
+                              'bg-emerald-100 text-emerald-700 border-emerald-250': isEmailEnviadoForSelectedEvent(p),
+                              'bg-slate-100 text-slate-500 border-slate-200': !isEmailEnviadoForSelectedEvent(p)
+                          }">
+                        <mat-icon class="icon-size-3" [ngClass]="isEmailEnviadoForSelectedEvent(p) ? 'text-emerald-555' : 'text-slate-400'">{{ isEmailEnviadoForSelectedEvent(p) ? 'check_circle' : 'mail' }}</mat-icon>
+                        {{ isEmailEnviadoForSelectedEvent(p) ? 'Enviado' : 'Sin enviar' }}
                     </span>
 
                     <!-- Avatar -->
@@ -100,8 +135,17 @@
                     </p>
 
                     <!-- Event Badges -->
-                    <div class="flex flex-wrap gap-1 mt-1 mb-4 justify-center w-full" *ngIf="p.eventoIds && p.eventoIds.length > 0">
-                        <span *ngFor="let evId of p.eventoIds" class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <div class="flex flex-wrap gap-1.5 mt-1.5 mb-4 justify-center w-full" *ngIf="p.eventoIds && p.eventoIds.length > 0">
+                        <span *ngFor="let evId of p.eventoIds" 
+                              class="px-2 py-0.5 rounded text-[8px] font-bold border flex items-center gap-1"
+                              [ngClass]="{
+                                  'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/50': isEmailEnviadoForEvent(p, evId),
+                                  'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700': !isEmailEnviadoForEvent(p, evId)
+                              }"
+                              [matTooltip]="isEmailEnviadoForEvent(p, evId) ? 'Invitación enviada para ' + getEventName(evId) : 'Sin enviar invitación para ' + getEventName(evId)">
+                            <mat-icon class="icon-size-3" [ngClass]="isEmailEnviadoForEvent(p, evId) ? 'text-emerald-555' : 'text-slate-400'">
+                                {{ isEmailEnviadoForEvent(p, evId) ? 'check_circle' : 'mail' }}
+                            </mat-icon>
                             {{ getEventName(evId) }}
                         </span>
                     </div>
