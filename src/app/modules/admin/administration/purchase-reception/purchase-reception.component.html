@@ -285,7 +285,7 @@
                                              [svgIcon]="'heroicons_outline:eye'"></mat-icon>
                                          <span>Ver Detalles</span>
                                      </button>
-                                     <button mat-menu-item *ngIf="row.estatus === 0 || !row.estatus" (click)="openEditReceptionDialog(row)">
+                                     <button mat-menu-item (click)="openEditReceptionDialog(row)">
                                          <mat-icon class="icon-size-5 text-amber-500"
                                              [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
                                          <span>Editar Recepción</span>
@@ -346,7 +346,7 @@
                                         {{ row.sucursal }}
                                     </span>
                                     <div class="flex items-center gap-1">
-                                        <button *ngIf="row.estatus === 0 || !row.estatus" mat-icon-button class="w-7 h-7 min-h-7 text-amber-500 hover:bg-amber-50 rounded-lg"
+                                        <button mat-icon-button class="w-7 h-7 min-h-7 text-amber-500 hover:bg-amber-50 rounded-lg"
                                             (click)="$event.stopPropagation(); openEditReceptionDialog(row)" matTooltip="Editar">
                                             <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
                                         </button>
