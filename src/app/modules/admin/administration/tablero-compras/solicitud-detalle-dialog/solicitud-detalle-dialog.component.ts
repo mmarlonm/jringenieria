@@ -393,7 +393,21 @@ import Swal from 'sweetalert2';
             </ng-template>
 
             <!-- Footer Actions -->
-            <div class="flex items-center justify-end gap-3 p-6 border-t bg-gray-50 dark:bg-transparent">
+            <div class="flex items-center justify-end flex-wrap gap-3 p-6 border-t bg-gray-50 dark:bg-transparent">
+                <!-- Aprobación de Revisión (esAprobada = false) -->
+                <button mat-flat-button color="success" class="!rounded-lg px-6 py-2 font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 hover:bg-emerald-200" 
+                        *ngIf="solicitud && !solicitud.esAprobada" (click)="aprobarSolicitud()">
+                    <mat-icon class="mr-1 text-emerald-700">check_circle</mat-icon>
+                    Aprobar Revisión
+                </button>
+                
+                <!-- Aprobación de Crédito (formaPago = 'CREDITO (PPD)' && esAprobadaCredito = false) -->
+                <button mat-flat-button color="accent" class="!rounded-lg px-6 py-2 font-bold uppercase tracking-wider text-amber-800 bg-amber-100 hover:bg-amber-200" 
+                        *ngIf="solicitud && solicitud.formaPago === 'CREDITO (PPD)' && !solicitud.esAprobadaCredito" (click)="aprobarCredito()">
+                    <mat-icon class="mr-1 text-amber-700">credit_score</mat-icon>
+                    Aprobar Crédito
+                </button>
+
                 <button mat-flat-button color="accent" class="rounded-lg px-8 py-2 font-bold uppercase tracking-wider" 
                         *ngIf="solicitud" (click)="convertirRecepcion()">
                     Convertir en Recepción
@@ -436,6 +450,7 @@ export class SolicitudDetalleDialogComponent implements OnInit {
     solicitud: SolicitudCompra | null = null;
     archivos: any[] = [];
     usuarios: any[] = [];
+    currentUserId: number = 0;
 
     constructor(
         public dialogRef: MatDialogRef<SolicitudDetalleDialogComponent>,
@@ -446,7 +461,90 @@ export class SolicitudDetalleDialogComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.currentUserId = this._getCurrentUserId();
         this.loadDetail();
+    }
+
+    private _getCurrentUserId(): number {
+        let userId = 1;
+        try {
+            const userInformation = JSON.parse(localStorage.getItem('userInformation') || '{}');
+            const user = userInformation.usuario || {};
+            userId = user.id || user.usuarioId || 1;
+        } catch (e) {
+            console.error('Error reading user from localStorage', e);
+        }
+        return userId;
+    }
+
+    aprobarSolicitud(): void {
+        if (!this.solicitud) return;
+
+        Swal.fire({
+            title: '¿Aprobar revisión?',
+            text: 'Esta acción notificará al solicitante y bloqueará cambios adicionales de aprobación.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, aprobar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._service.aprobarCheck(this.solicitud.idSolicitud, this.currentUserId).subscribe({
+                    next: () => {
+                        Swal.fire({
+                            title: '¡Aprobada!',
+                            text: 'La revisión de la solicitud fue aprobada exitosamente.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this.loadDetail();
+                    },
+                    error: (err) => {
+                        console.error('Error aprobando solicitud:', err);
+                        const msg = err.error?.message || err.message || 'Error al aprobar la revisión';
+                        Swal.fire('Error', msg, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    aprobarCredito(): void {
+        if (!this.solicitud) return;
+
+        Swal.fire({
+            title: '¿Aprobar crédito?',
+            text: 'Esta acción validará el crédito para esta solicitud.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, aprobar crédito',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._service.aprobarCredito(this.solicitud.idSolicitud, this.currentUserId).subscribe({
+                    next: () => {
+                        Swal.fire({
+                            title: '¡Crédito Aprobado!',
+                            text: 'El crédito ha sido aprobado correctamente.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        this.loadDetail();
+                    },
+                    error: (err) => {
+                        console.error('Error aprobando crédito:', err);
+                        const msg = err.error?.message || err.message || 'Error al aprobar el crédito';
+                        Swal.fire('Error', msg, 'error');
+                    }
+                });
+            }
+        });
     }
 
     loadDetail(): void {
