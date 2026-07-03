@@ -44,6 +44,98 @@ import Swal from 'sweetalert2';
             <!-- Content -->
             <div class="flex-auto overflow-y-auto p-6 space-y-8" *ngIf="solicitud; else loading">
                 
+                <!-- Cards de Aprobación Estilo Edit/Detalle (Al inicio del modal) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Tarjeta 1: Aprobación de Revisión -->
+                    <div class="relative overflow-hidden p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="relative flex flex-col gap-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="p-2 bg-primary/10 rounded-xl text-primary flex items-center justify-center">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-black uppercase text-slate-800 dark:text-slate-100 tracking-tight">Revisión Operativa</span>
+                                        <span class="text-[9px] text-secondary font-bold uppercase tracking-wider">Aprobador: {{ getSolicitanteName(solicitud.idAprobador) }}</span>
+                                    </div>
+                                </div>
+                                <div *ngIf="solicitud.esAprobada" class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-500/20 text-[9px] font-black uppercase">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:check-badge'"></mat-icon> Certificado
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl border border-dashed transition-all duration-300"
+                                 [ngClass]="solicitud.esAprobada ? 'bg-emerald-50/50 border-emerald-200 text-emerald-700' : 'bg-white border-slate-200'">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] font-bold uppercase text-slate-400">Estado</span>
+                                        <span class="text-sm font-black leading-tight">{{ solicitud.esAprobada ? 'APROBADA' : 'ESPERANDO VALIDACIÓN' }}</span>
+                                        <span *ngIf="solicitud.esAprobada && solicitud.fechaAprobacion" class="text-[9px] text-emerald-600/70 font-semibold mt-1">
+                                            {{ solicitud.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}
+                                        </span>
+                                    </div>
+                                    <button mat-flat-button color="primary" class="!rounded-xl shadow-md"
+                                            [disabled]="solicitud.esAprobada || solicitud.idAprobador !== currentUserId"
+                                            (click)="aprobarSolicitud()">
+                                        {{ solicitud.esAprobada ? 'APROBADA' : 'AUTORIZAR' }}
+                                    </button>
+                                </div>
+                                <div *ngIf="!solicitud.esAprobada && solicitud.idAprobador !== currentUserId" 
+                                     class="mt-3 flex items-center gap-1.5 text-[9px] text-slate-500 italic">
+                                    <mat-icon class="icon-size-3.5 text-amber-500" [svgIcon]="'heroicons_solid:exclamation-triangle'"></mat-icon>
+                                    Sólo el aprobador asignado puede autorizar.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta 2: Aprobación de Crédito (Sólo si aplica PPD) -->
+                    <div *ngIf="solicitud.formaPago === 'CREDITO (PPD)'"
+                         class="relative overflow-hidden p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="relative flex flex-col gap-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="p-2 bg-amber-500/10 rounded-xl text-amber-600 flex items-center justify-center">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:credit-card'"></mat-icon>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-black uppercase text-slate-800 dark:text-slate-100 tracking-tight">Liberación de Crédito</span>
+                                        <span class="text-[9px] text-secondary font-bold uppercase tracking-wider">Aprobador: {{ getSolicitanteName(solicitud.idAprobadorCredito) }}</span>
+                                    </div>
+                                </div>
+                                <div *ngIf="solicitud.esAprobadaCredito" class="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 text-amber-600 rounded-full border border-amber-500/20 text-[9px] font-black uppercase">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:check-circle'"></mat-icon> Liberado
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl border border-dashed transition-all duration-300"
+                                 [ngClass]="solicitud.esAprobadaCredito ? 'bg-amber-50/50 border-amber-200 text-amber-700' : 'bg-white border-slate-200'">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] font-bold uppercase text-slate-400">Estado</span>
+                                        <span class="text-sm font-black leading-tight">{{ solicitud.esAprobadaCredito ? 'CRÉDITO APROBADO' : 'PENDIENTE CRÉDITO' }}</span>
+                                        <span *ngIf="solicitud.esAprobadaCredito && solicitud.fechaAprobacionCredito" class="text-[9px] text-amber-600/70 font-semibold mt-1">
+                                            {{ solicitud.fechaAprobacionCredito | date:'dd/MM/yyyy HH:mm' }}
+                                        </span>
+                                    </div>
+                                    <button mat-flat-button color="accent" class="!rounded-xl shadow-md"
+                                            [disabled]="solicitud.esAprobadaCredito || solicitud.idAprobadorCredito !== currentUserId"
+                                            (click)="aprobarCredito()">
+                                        {{ solicitud.esAprobadaCredito ? 'LIBERADO' : 'APROBAR' }}
+                                    </button>
+                                </div>
+                                <div *ngIf="!solicitud.esAprobadaCredito && solicitud.idAprobadorCredito !== currentUserId" 
+                                     class="mt-3 flex items-center gap-1.5 text-[9px] text-slate-500 italic">
+                                    <mat-icon class="icon-size-3.5 text-amber-500" [svgIcon]="'heroicons_solid:exclamation-triangle'"></mat-icon>
+                                    Sólo el aprobador de crédito puede autorizar.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <mat-divider></mat-divider>
+
                 <!-- General Info Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="flex flex-col">
@@ -394,20 +486,6 @@ import Swal from 'sweetalert2';
 
             <!-- Footer Actions -->
             <div class="flex items-center justify-end flex-wrap gap-3 p-6 border-t bg-gray-50 dark:bg-transparent">
-                <!-- Aprobación de Revisión (esAprobada = false) -->
-                <button mat-flat-button color="success" class="!rounded-lg px-6 py-2 font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 hover:bg-emerald-200" 
-                        *ngIf="solicitud && !solicitud.esAprobada" (click)="aprobarSolicitud()">
-                    <mat-icon class="mr-1 text-emerald-700">check_circle</mat-icon>
-                    Aprobar Revisión
-                </button>
-                
-                <!-- Aprobación de Crédito (formaPago = 'CREDITO (PPD)' && esAprobadaCredito = false) -->
-                <button mat-flat-button color="accent" class="!rounded-lg px-6 py-2 font-bold uppercase tracking-wider text-amber-800 bg-amber-100 hover:bg-amber-200" 
-                        *ngIf="solicitud && solicitud.formaPago === 'CREDITO (PPD)' && !solicitud.esAprobadaCredito" (click)="aprobarCredito()">
-                    <mat-icon class="mr-1 text-amber-700">credit_score</mat-icon>
-                    Aprobar Crédito
-                </button>
-
                 <button mat-flat-button color="accent" class="rounded-lg px-8 py-2 font-bold uppercase tracking-wider" 
                         *ngIf="solicitud" (click)="convertirRecepcion()">
                     Convertir en Recepción
