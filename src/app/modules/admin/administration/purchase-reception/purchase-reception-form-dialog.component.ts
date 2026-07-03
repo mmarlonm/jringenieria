@@ -93,7 +93,7 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             dondeRecibio: [rec?.dondeRecibio || '', Validators.required],
             CondicionesComentarios: [rec?.condicionesComentarios || ''],
             estatus: [statusValue, Validators.required],
-            folioInternoFactura: [{ value: rec?.folioInternoFactura || '', disabled: statusValue === 1 }],
+            folioInternoFactura: [rec?.folioInternoFactura || ''],
             puntajeCalidad: [rec?.puntajeCalidad !== undefined ? rec.puntajeCalidad : 100, Validators.required],
             puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required],
             puntajePrecio: [rec?.puntajePrecio !== undefined ? rec.puntajePrecio : 100, Validators.required],
@@ -103,16 +103,11 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             puntajeGarantias: [rec?.puntajeGarantias !== undefined ? rec.puntajeGarantias : 100, Validators.required]
         });
 
-        // Toggle disabled state of folioInternoFactura based on estatus
+        // Always keep folioInternoFactura enabled to allow editing regardless of status
         this.receptionForm.get('estatus').valueChanges
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((val) => {
-                const control = this.receptionForm.get('folioInternoFactura');
-                if (val === 1) {
-                    control.disable();
-                } else {
-                    control.enable();
-                }
+            .subscribe(() => {
+                this.receptionForm.get('folioInternoFactura').enable({ emitEvent: false });
             });
 
         if (rec) {
