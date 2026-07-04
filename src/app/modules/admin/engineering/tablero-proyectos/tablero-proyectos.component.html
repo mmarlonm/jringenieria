@@ -218,13 +218,7 @@
                         </td>
                     </ng-container>
 
-                    <!-- OC -->
-                    <ng-container matColumnDef="oc">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>OC</th>
-                        <td mat-cell *matCellDef="let s" class="font-bold text-amber-600 tabular-nums">
-                            {{ s.ordenCompraFolio || '-' }}
-                        </td>
-                    </ng-container>
+
 
                     <!-- Monto -->
                     <ng-container matColumnDef="monto">
@@ -239,6 +233,9 @@
                         <th mat-header-cell *matHeaderCellDef class="text-center w-20">Acciones</th>
                         <td mat-cell *matCellDef="let s" class="text-center">
                             <div class="flex items-center justify-center gap-1">
+                                <button mat-icon-button class="text-amber-500 hover:bg-amber-50 transition-colors" (click)="verArchivos(s)" matTooltip="Ver/Subir Archivos (Levantamiento y Cotización)">
+                                    <mat-icon class="icon-size-5">folder</mat-icon>
+                                </button>
                                 <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors" (click)="editarSeguimiento(s)" matTooltip="Editar">
                                     <mat-icon class="icon-size-5">edit</mat-icon>
                                 </button>

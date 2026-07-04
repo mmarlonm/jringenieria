@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
 import { EngineeringService, Solicitante, SeguimientoProyecto } from '../../engineering.service';
 import { SolicitanteDialogComponent } from '../../solicitantes/solicitante-dialog/solicitante-dialog.component';
 import Swal from 'sweetalert2';
@@ -24,7 +25,8 @@ import Swal from 'sweetalert2';
         MatInputModule,
         MatSelectModule,
         MatButtonModule,
-        MatIconModule
+        MatIconModule,
+        MatCardModule
     ]
 })
 export class SeguimientoDialogComponent implements OnInit {
@@ -127,11 +129,29 @@ export class SeguimientoDialogComponent implements OnInit {
             estatusLevantamiento: [this.data?.seguimiento?.estatusLevantamiento || 1, Validators.required],
             estatusCotizacion: [this.data?.seguimiento?.estatusCotizacion || 1, Validators.required],
             estatusAprobacion: [this.data?.seguimiento?.estatusAprobacion || 1, Validators.required],
-            ordenCompraFolio: [this.data?.seguimiento?.ordenCompraFolio || '', Validators.maxLength(50)],
-            montoTotalEstimado: [this.data?.seguimiento?.montoTotalEstimado || null],
+            montoTotalEstimado: [this.formatMonto(this.data?.seguimiento?.montoTotalEstimado) || ''],
             quienRealizoLevantamiento: [this.data?.seguimiento?.quienRealizoLevantamiento || '', Validators.maxLength(500)],
             quienCotizo: [this.data?.seguimiento?.quienCotizo || '', Validators.maxLength(255)]
         });
+    }
+
+    formatMonto(value: any): string {
+        if (value === null || value === undefined || value === '') return '';
+        const clean = value.toString().replace(/[^0-9.]/g, '');
+        const number = parseFloat(clean);
+        return isNaN(number) ? '' : number.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    parseMonto(value: string): number | null {
+        if (!value) return null;
+        const clean = value.toString().replace(/[^0-9.]/g, '');
+        const number = parseFloat(clean);
+        return isNaN(number) ? null : number;
+    }
+
+    onMontoBlur(): void {
+        const val = this.form.get('montoTotalEstimado').value;
+        this.form.get('montoTotalEstimado').setValue(this.formatMonto(val), { emitEvent: false });
     }
 
     onSave(): void {
@@ -151,8 +171,10 @@ export class SeguimientoDialogComponent implements OnInit {
             }
         }
 
+        const val = this.form.value;
         const payload = {
-            ...this.form.value,
+            ...val,
+            montoTotalEstimado: this.parseMonto(val.montoTotalEstimado),
             idUsuarioRegistro: idUsuario
         };
 

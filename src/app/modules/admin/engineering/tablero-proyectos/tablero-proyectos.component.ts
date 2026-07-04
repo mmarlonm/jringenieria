@@ -16,6 +16,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { EngineeringService, SeguimientoProyecto } from '../engineering.service';
 import { SeguimientoDialogComponent } from './seguimiento-dialog/seguimiento-dialog.component';
+import { SeguimientoArchivosDialogComponent } from './seguimiento-archivos-dialog/seguimiento-archivos-dialog.component';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -38,7 +39,8 @@ import Swal from 'sweetalert2';
         MatDatepickerModule,
         MatNativeDateModule,
         MatSelectModule,
-        MatPaginatorModule
+        MatPaginatorModule,
+        SeguimientoArchivosDialogComponent
     ]
 })
 export class TableroProyectosComponent implements OnInit, AfterViewInit {
@@ -55,7 +57,6 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         'cotizacion',
         'quienCotizo',
         'aprobado',
-        'oc',
         'monto',
         'acciones'
     ];
@@ -138,8 +139,8 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
 
         this._engineeringService.getSeguimientos(start, end).subscribe({
             next: (data) => {
-                this.dataSource.data = data;
-                this._calculateKPIs(data);
+                this._calculateKPIs(data || []);
+                this.dataSource.data = (data || []).filter(x => x.estatusAprobacion !== 2);
             },
             error: (err) => {
                 console.error(err);
@@ -265,6 +266,18 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
                     }
                 });
             }
+        });
+    }
+
+    verArchivos(row: SeguimientoProyecto): void {
+        this._dialog.open(SeguimientoArchivosDialogComponent, {
+            width: '100%',
+            maxWidth: '600px',
+            data: { 
+                idSeguimiento: row.idSeguimiento, 
+                actividad: row.actividad 
+            },
+            autoFocus: false
         });
     }
 

@@ -1,52 +1,65 @@
-<div class="flex flex-col max-w-160 min-w-80 md:min-w-120 overflow-hidden">
+<div class="flex flex-col max-w-xl w-full max-h-screen overflow-y-auto bg-gray-50/30">
     <!-- Header -->
-    <div class="flex flex-row items-center justify-between pl-6 pr-4 py-4 bg-primary text-on-primary">
-        <h2 class="text-xl font-bold uppercase tracking-tight">
-            {{ isEdit ? 'Editar Solicitante' : 'Nuevo Solicitante' }}
-        </h2>
-        <button mat-icon-button class="text-white" (click)="onCancel()" tabindex="-1">
+    <div class="flex items-center justify-between p-6 border-b bg-white">
+        <div class="flex items-center gap-2">
+            <mat-icon class="text-primary text-3xl">person</mat-icon>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 italic">
+                {{ isEdit ? 'Editar Solicitante' : 'Nuevo Solicitante' }}
+            </h2>
+        </div>
+        <button mat-icon-button (click)="onCancel()" type="button">
             <mat-icon>close</mat-icon>
         </button>
     </div>
 
     <!-- Form content -->
-    <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col p-6 space-y-4 overflow-y-auto">
-        <!-- Nombre Completo -->
-        <mat-form-field class="w-full" appearance="fill">
-            <mat-label>Nombre Completo</mat-label>
-            <input matInput formControlName="nombreCompleto" placeholder="Ej. Juan Pérez" [autocomplete]="'off'" required />
-            <mat-icon matSuffix class="text-secondary">person</mat-icon>
-            <mat-error *ngIf="form.get('nombreCompleto').hasError('required')">El nombre completo es requerido</mat-error>
-            <mat-error *ngIf="form.get('nombreCompleto').hasError('maxlength')">Límite de 150 caracteres superado</mat-error>
-        </mat-form-field>
+    <form [formGroup]="form" (ngSubmit)="onSave()" class="p-4 space-y-4">
+        <mat-card class="p-4 shadow-sm border-none overflow-hidden relative bg-white rounded-2xl">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+            <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <mat-icon class="text-primary opacity-70">assignment_ind</mat-icon>
+                Datos del Solicitante
+            </h3>
 
-        <!-- Celular -->
-        <mat-form-field class="w-full" appearance="fill">
-            <mat-label>Celular</mat-label>
-            <input matInput formControlName="celular" placeholder="Ej. 5512345678" [autocomplete]="'off'" />
-            <mat-icon matSuffix class="text-secondary">phone</mat-icon>
-            <mat-error *ngIf="form.get('celular').hasError('maxlength')">Límite de 20 caracteres superado</mat-error>
-        </mat-form-field>
+            <div class="space-y-4">
+                <!-- Nombre Completo -->
+                <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Nombre Completo</mat-label>
+                    <input matInput formControlName="nombreCompleto" placeholder="Ej. Juan Pérez" [autocomplete]="'off'" required />
+                    <mat-icon matSuffix class="text-secondary">person</mat-icon>
+                    <mat-error *ngIf="form.get('nombreCompleto').hasError('required')">El nombre completo es requerido</mat-error>
+                    <mat-error *ngIf="form.get('nombreCompleto').hasError('maxlength')">Límite de 150 caracteres superado</mat-error>
+                </mat-form-field>
 
-        <!-- Empresa -->
-        <mat-form-field class="w-full" appearance="fill">
-            <mat-label>Empresa</mat-label>
-            <input matInput formControlName="empresa" placeholder="Ej. JR Ingeniería" [autocomplete]="'off'" required />
-            <mat-icon matSuffix class="text-secondary">business</mat-icon>
-            <mat-error *ngIf="form.get('empresa').hasError('required')">La empresa es requerida</mat-error>
-            <mat-error *ngIf="form.get('empresa').hasError('maxlength')">Límite de 150 caracteres superado</mat-error>
-        </mat-form-field>
+                <!-- Celular -->
+                <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Celular</mat-label>
+                    <input matInput formControlName="celular" placeholder="Ej. 5512345678" [autocomplete]="'off'" />
+                    <mat-icon matSuffix class="text-secondary">phone</mat-icon>
+                    <mat-error *ngIf="form.get('celular').hasError('maxlength')">Límite de 20 caracteres superado</mat-error>
+                </mat-form-field>
 
-        <!-- Area -->
-        <mat-form-field class="w-full" appearance="fill">
-            <mat-label>Área</mat-label>
-            <input matInput formControlName="area" placeholder="Ej. Planta / Operaciones" [autocomplete]="'off'" />
-            <mat-icon matSuffix class="text-secondary">assignment_ind</mat-icon>
-            <mat-error *ngIf="form.get('area').hasError('maxlength')">Límite de 100 caracteres superado</mat-error>
-        </mat-form-field>
+                <!-- Empresa -->
+                <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Empresa</mat-label>
+                    <input matInput formControlName="empresa" placeholder="Ej. JR Ingeniería" [autocomplete]="'off'" required />
+                    <mat-icon matSuffix class="text-secondary">business</mat-icon>
+                    <mat-error *ngIf="form.get('empresa').hasError('required')">La empresa es requerida</mat-error>
+                    <mat-error *ngIf="form.get('empresa').hasError('maxlength')">Límite de 150 caracteres superado</mat-error>
+                </mat-form-field>
+
+                <!-- Area -->
+                <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Área</mat-label>
+                    <input matInput formControlName="area" placeholder="Ej. Planta / Operaciones" [autocomplete]="'off'" />
+                    <mat-icon matSuffix class="text-secondary">assignment_ind</mat-icon>
+                    <mat-error *ngIf="form.get('area').hasError('maxlength')">Límite de 100 caracteres superado</mat-error>
+                </mat-form-field>
+            </div>
+        </mat-card>
 
         <!-- Actions -->
-        <div class="flex items-center justify-end gap-2 pt-4 border-t">
+        <div class="flex items-center justify-end gap-3 pt-4 border-t">
             <button mat-button type="button" (click)="onCancel()">
                 Cancelar
             </button>

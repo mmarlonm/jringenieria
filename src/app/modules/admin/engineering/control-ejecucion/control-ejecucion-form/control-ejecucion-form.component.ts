@@ -131,8 +131,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     { name: 'Gantt', label: 'Prog. Gantt', icon: 'heroicons_outline:calendar-days' },
     { name: 'IMSS', label: 'IMSS/SUA', icon: 'heroicons_outline:identification' },
     { name: 'Materiales', label: 'Materiales', icon: 'heroicons_outline:square-3-stack-3d' },
-    { name: 'Construccion', label: 'Construcción', icon: 'heroicons_outline:home-modern' },
-    { name: 'OC', label: 'Orden de Compra', icon: 'heroicons_outline:document-text' }
+    { name: 'Reportes', label: 'Reportes', icon: 'heroicons_outline:document-chart-bar' },
+    { name: 'Contrato', label: 'Contrato', icon: 'heroicons_outline:document-text' },
+    { name: 'Fianza', label: 'Fianza', icon: 'heroicons_outline:shield-check' },
+    { name: 'Dossier', label: 'Dossier', icon: 'heroicons_outline:folder-open' },
+    { name: 'ActaEntrega', label: 'Acta Entrega Final', icon: 'heroicons_outline:clipboard-document-check' },
+    { name: 'Planos', label: 'Planos', icon: 'heroicons_outline:map' }
   ];
 
   // Files
@@ -791,7 +795,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   getRowTooltip(row: any): string {
     const name = row.type === 'task' ? row.task.nombre : row.activity.nombre;
     const prog = row.type === 'task' ? row.task.progreso : row.activity.progreso;
-    return `${name} (${prog}%)`;
+    const eq = row.type === 'task' ? row.task.equipoEspecial : row.activity.equipoEspecial;
+    return `${name} (${prog}%)${eq ? ' - Equipo Especial: ' + eq : ''}`;
   }
 
   formatDay(date: Date): string {

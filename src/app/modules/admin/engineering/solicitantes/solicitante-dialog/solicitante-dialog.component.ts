@@ -6,6 +6,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatCardModule } from '@angular/material/card';
 import { Solicitante } from '../../engineering.service';
 
 @Component({
@@ -20,7 +21,8 @@ import { Solicitante } from '../../engineering.service';
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
-        MatIconModule
+        MatIconModule,
+        MatCardModule
     ]
 })
 export class SolicitanteDialogComponent implements OnInit {

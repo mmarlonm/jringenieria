@@ -139,18 +139,27 @@ import { TextFieldModule } from '@angular/cdk/text-field';
         </div>
 
         <!-- Color Selection -->
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Color de la barra</mat-label>
-          <mat-select formControlName="color">
-            <mat-option *ngFor="let c of colors" [value]="c.value">
-              <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-full border border-slate-300" [style.background-color]="c.hex"></div>
-                <span>{{ c.label }}</span>
-              </div>
-            </mat-option>
-          </mat-select>
-          <mat-icon matSuffix class="text-secondary">palette</mat-icon>
-        </mat-form-field>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Color de la barra</mat-label>
+            <mat-select formControlName="color">
+              <mat-option *ngFor="let c of colors" [value]="c.value">
+                <div class="flex items-center gap-2">
+                  <div class="w-4 h-4 rounded-full border border-slate-300" [style.background-color]="c.hex"></div>
+                  <span>{{ c.label }}</span>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix class="text-secondary">palette</mat-icon>
+          </mat-form-field>
+
+          <!-- Herramienta o Equipo Especial -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Herramienta o Equipo Especial</mat-label>
+            <input matInput formControlName="equipoEspecial" placeholder="Ej. Plataforma de elevación, grúa, montacargas" />
+            <mat-icon matSuffix class="text-secondary">build</mat-icon>
+          </mat-form-field>
+        </div>
       </form>
 
       <div class="flex items-center justify-between px-6 py-4 border-t bg-gray-50 dark:bg-transparent">
@@ -207,7 +216,8 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
       progreso: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
       predecesoraId: [null],
       prioridad: ['Media'],
-      color: ['Azul']
+      color: ['Azul'],
+      equipoEspecial: ['']
     });
   }
 

@@ -1,125 +1,142 @@
-<div class="flex flex-col max-w-200 min-w-80 md:min-w-160 overflow-hidden">
+<div class="flex flex-col max-w-4xl w-full max-h-screen overflow-y-auto bg-gray-50/30">
     <!-- Header -->
-    <div class="flex flex-row items-center justify-between pl-6 pr-4 py-4 bg-primary text-on-primary">
-        <h2 class="text-xl font-bold uppercase tracking-tight">
-            {{ isEdit ? 'Editar Seguimiento de Proyecto' : 'Nuevo Seguimiento de Proyecto' }}
-        </h2>
-        <button mat-icon-button class="text-white" (click)="onCancel()" tabindex="-1">
+    <div class="flex items-center justify-between p-6 border-b bg-white">
+        <div class="flex items-center gap-2">
+            <mat-icon class="text-primary text-3xl">engineering</mat-icon>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 italic">
+                {{ isEdit ? 'Editar Seguimiento de Cotización' : 'Nuevo Seguimiento de Cotización' }}
+            </h2>
+        </div>
+        <button mat-icon-button (click)="onCancel()" type="button">
             <mat-icon>close</mat-icon>
         </button>
     </div>
 
     <!-- Form content -->
-    <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col p-6 space-y-4 overflow-y-auto max-h-[80vh]">
+    <form [formGroup]="form" (ngSubmit)="onSave()" class="p-4 space-y-4">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Solicitante -->
-            <div class="flex items-center gap-2 w-full">
-                <mat-form-field class="flex-auto" appearance="fill">
-                    <mat-label>Solicitante (Proyecto)</mat-label>
-                    <mat-select formControlName="idSolicitante" placeholder="Seleccione un solicitante" required>
-                        <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
-                            {{ s.nombreCompleto }} ({{ s.empresa }})
-                        </mat-option>
-                    </mat-select>
-                    <mat-error *ngIf="form.get('idSolicitante').hasError('required')">El solicitante es requerido</mat-error>
+        <!-- Section A: Proyecto y Solicitante -->
+        <mat-card class="p-4 shadow-sm border-none overflow-hidden relative bg-white rounded-2xl">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+            <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <mat-icon class="text-primary opacity-70">assignment</mat-icon>
+                A. Datos del Proyecto y Solicitante
+            </h3>
+
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Solicitante -->
+                    <div class="flex items-center gap-2 w-full">
+                        <mat-form-field class="flex-auto fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                            <mat-label>Solicitante (Proyecto)</mat-label>
+                            <mat-select formControlName="idSolicitante" placeholder="Seleccione un solicitante" required>
+                                <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
+                                    {{ s.nombreCompleto }} ({{ s.empresa }})
+                                </mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="form.get('idSolicitante').hasError('required')">El solicitante es requerido</mat-error>
+                        </mat-form-field>
+                        <button mat-icon-button type="button" color="primary" class="flex-shrink-0" (click)="agregarSolicitante()" matTooltip="Agregar nuevo solicitante">
+                            <mat-icon>person_add</mat-icon>
+                        </button>
+                    </div>
+
+                    <!-- Tipo de Proyecto -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Tipo de Proyecto</mat-label>
+                        <mat-select formControlName="tipo" placeholder="Seleccione un tipo">
+                            <mat-option [value]="''">Ninguno</mat-option>
+                            <mat-option *ngFor="let type of tiposProyecto" [value]="type">
+                                {{ type }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- Actividad (Descripción Completa) -->
+                <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Actividad / Descripción del Proyecto</mat-label>
+                    <textarea matInput formControlName="actividad" placeholder="Escriba la descripción o la actividad del proyecto..." rows="3" required></textarea>
+                    <mat-error *ngIf="form.get('actividad').hasError('required')">La actividad es requerida</mat-error>
+                    <mat-error *ngIf="form.get('actividad').hasError('maxlength')">Límite de 500 caracteres superado</mat-error>
                 </mat-form-field>
-                <button mat-icon-button type="button" color="primary" class="mb-5 flex-shrink-0" (click)="agregarSolicitante()" matTooltip="Agregar nuevo solicitante">
-                    <mat-icon>person_add</mat-icon>
-                </button>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Monto Total Estimado -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Monto Total Proyecto ($)</mat-label>
+                        <input matInput type="text" formControlName="montoTotalEstimado" placeholder="Ej. 1,000.00" (blur)="onMontoBlur()" />
+                        <span matPrefix class="text-secondary mr-1">$</span>
+                        <mat-icon matSuffix class="text-secondary">attach_money</mat-icon>
+                    </mat-form-field>
+                </div>
             </div>
+        </mat-card>
 
-            <!-- Tipo de Proyecto -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Tipo de Proyecto</mat-label>
-                <mat-select formControlName="tipo" placeholder="Seleccione un tipo">
-                    <mat-option [value]="''">Ninguno</mat-option>
-                    <mat-option *ngFor="let type of tiposProyecto" [value]="type">
-                        {{ type }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-        </div>
+        <!-- Section B: Estatus y Seguimiento -->
+        <mat-card class="p-4 shadow-sm border-none overflow-hidden relative bg-white rounded-2xl">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+            <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <mat-icon class="text-amber-500 opacity-70">assessment</mat-icon>
+                B. Estatus y Seguimiento
+            </h3>
 
-        <!-- Actividad (Descripción Completa) -->
-        <mat-form-field class="w-full" appearance="fill">
-            <mat-label>Actividad / Descripción del Proyecto</mat-label>
-            <textarea matInput formControlName="actividad" placeholder="Escriba la descripción o la actividad del proyecto..." rows="3" required></textarea>
-            <mat-error *ngIf="form.get('actividad').hasError('required')">La actividad es requerida</mat-error>
-            <mat-error *ngIf="form.get('actividad').hasError('maxlength')">Límite de 500 caracteres superado</mat-error>
-        </mat-form-field>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Estatus Levantamiento -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Levantamiento</mat-label>
+                        <mat-select formControlName="estatusLevantamiento" required>
+                            <mat-option *ngFor="let opt of levantamientoOptions" [value]="opt.id">
+                                {{ opt.label }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Estatus Levantamiento -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Levantamiento</mat-label>
-                <mat-select formControlName="estatusLevantamiento" required>
-                    <mat-option *ngFor="let opt of levantamientoOptions" [value]="opt.id">
-                        {{ opt.label }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+                    <!-- Estatus Cotización -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Cotización</mat-label>
+                        <mat-select formControlName="estatusCotizacion" required>
+                            <mat-option *ngFor="let opt of cotizacionOptions" [value]="opt.id">
+                                {{ opt.label }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
 
-            <!-- Estatus Cotización -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Cotización</mat-label>
-                <mat-select formControlName="estatusCotizacion" required>
-                    <mat-option *ngFor="let opt of cotizacionOptions" [value]="opt.id">
-                        {{ opt.label }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+                    <!-- Estatus Aprobación -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Aprobación</mat-label>
+                        <mat-select formControlName="estatusAprobacion" required>
+                            <mat-option *ngFor="let opt of aprobacionOptions" [value]="opt.id">
+                                {{ opt.label }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
 
-            <!-- Estatus Aprobación -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Aprobación</mat-label>
-                <mat-select formControlName="estatusAprobacion" required>
-                    <mat-option *ngFor="let opt of aprobacionOptions" [value]="opt.id">
-                        {{ opt.label }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-        </div>
+                <!-- Realizó Levantamiento y Quién Cotizó -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Quien Realizó Levantamiento -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Realizó Levantamiento</mat-label>
+                        <input matInput formControlName="quienRealizoLevantamiento" placeholder="Nombre(s) de quien realizó el levantamiento" [autocomplete]="'off'" />
+                        <mat-icon matSuffix class="text-secondary">engineering</mat-icon>
+                        <mat-error *ngIf="form.get('quienRealizoLevantamiento').hasError('maxlength')">Límite de 500 caracteres superado</mat-error>
+                    </mat-form-field>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Folio OC -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Folio OC (Orden de Compra)</mat-label>
-                <input matInput formControlName="ordenCompraFolio" placeholder="Ej. 4800008354" [autocomplete]="'off'" />
-                <mat-icon matSuffix class="text-secondary">receipt</mat-icon>
-                <mat-error *ngIf="form.get('ordenCompraFolio').hasError('maxlength')">Límite de 50 caracteres superado</mat-error>
-            </mat-form-field>
-
-            <!-- Monto Total Estimado -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Monto Total Proyecto ($)</mat-label>
-                <input matInput type="number" formControlName="montoTotalEstimado" placeholder="Ej. 1000.00" min="0" step="0.01" />
-                <span matPrefix class="text-secondary mr-1">$</span>
-                <mat-icon matSuffix class="text-secondary">attach_money</mat-icon>
-            </mat-form-field>
-        </div>
-
-        <!-- Realizó Levantamiento y Quién Cotizó -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Quien Realizó Levantamiento -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Realizó Levantamiento</mat-label>
-                <input matInput formControlName="quienRealizoLevantamiento" placeholder="Nombre(s) de quien realizó el levantamiento" [autocomplete]="'off'" />
-                <mat-icon matSuffix class="text-secondary">engineering</mat-icon>
-                <mat-error *ngIf="form.get('quienRealizoLevantamiento').hasError('maxlength')">Límite de 500 caracteres superado</mat-error>
-            </mat-form-field>
-
-            <!-- Quien Cotizó -->
-            <mat-form-field class="w-full" appearance="fill">
-                <mat-label>Quién Cotizó</mat-label>
-                <input matInput formControlName="quienCotizo" placeholder="Nombre de quien cotizó" [autocomplete]="'off'" />
-                <mat-icon matSuffix class="text-secondary">assignment_ind</mat-icon>
-                <mat-error *ngIf="form.get('quienCotizo').hasError('maxlength')">Límite de 255 caracteres superado</mat-error>
-            </mat-form-field>
-        </div>
+                    <!-- Quien Cotizó -->
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Quién Cotizó</mat-label>
+                        <input matInput formControlName="quienCotizo" placeholder="Nombre de quien cotizó" [autocomplete]="'off'" />
+                        <mat-icon matSuffix class="text-secondary">assignment_ind</mat-icon>
+                        <mat-error *ngIf="form.get('quienCotizo').hasError('maxlength')">Límite de 255 caracteres superado</mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+        </mat-card>
 
         <!-- Actions -->
-        <div class="flex items-center justify-end gap-2 pt-4 border-t">
+        <div class="flex items-center justify-end gap-3 pt-4 border-t bg-gray-50 dark:bg-transparent">
             <button mat-button type="button" (click)="onCancel()">
                 Cancelar
             </button>
