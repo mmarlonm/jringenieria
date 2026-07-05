@@ -11,6 +11,7 @@ import { TaskService } from './../tasks.service';
 import { UsersService } from '../../../security/users/users.service';
 import { UserService } from "app/core/user/user.service";
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { EngineeringService, SeguimientoProyecto } from 'app/modules/admin/engineering/engineering.service';
 import {
     MatDatepickerModule
 } from '@angular/material/datepicker';
@@ -49,6 +50,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DomSanitizer } from '@angular/platform-browser';
 import { QuillModule } from 'ngx-quill';
 
@@ -77,6 +79,7 @@ import { differenceInDays as diffInDays } from 'date-fns';
         MatDialogModule,
         MatTabsModule,
         MatMenuModule,
+        MatCheckboxModule,
         TaskChatComponent,
         TareaActividadesGanttComponent,
         QuillModule
@@ -85,6 +88,7 @@ import { differenceInDays as diffInDays } from 'date-fns';
 export class TaskFormDialogComponent implements OnInit, AfterViewInit {
     form: FormGroup;
     userList: any[] = [];
+    projectsList: SeguimientoProyecto[] = [];
     loading: boolean = false;
     isChatCollapsed: boolean = true;
     isScreenSmall: boolean = false;
@@ -131,6 +135,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         private _notificationService: ChatNotificationService,
         private _sanitizer: DomSanitizer,
         private dialog: MatDialog,
+        private _engineeringService: EngineeringService,
         @Inject(MAT_DIALOG_DATA) public data: { id?: number, readOnly?: boolean } | null
     ) {
         this.form = this.fb.group({
@@ -148,7 +153,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             apiUrl: 'https://api.mgm-technologies-group.org/api',  // API Principal (Producción)
             apiUrlSignal: 'https://api.mgm-technologies-group.org', // SignalR
             estatus: [2, Validators.required], // Nuevo campo de estatus con valor por defecto 1
-            cuadranteId: [null]
+            cuadranteId: [null],
+            proyectoId: [null],
+            fase: [''],
+            prioridad: ['Media'],
+            progreso: [0],
+            importante: [false],
+            urgente: [false],
+            rolArea: [''],
+            notas: ['']
         });
         this.tareaId = data?.id;
     }
@@ -164,6 +177,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 }
             });
         this.getUsers();
+        this.getProjects();
 
         if (this.data?.id) {
             this.loadTask(this.data.id);
@@ -174,6 +188,12 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             this.form.disable(); // Desactiva todo el formulario
         }
 
+    }
+
+    getProjects(): void {
+        this._engineeringService.getSeguimientos().subscribe(projects => {
+            this.projectsList = projects;
+        });
     }
 
     ngAfterViewInit(): void {
@@ -221,7 +241,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 ubicacion: task.ubicacion,
                 CreadorId: this.user?.id || null, // Asigna el ID del usuario logueado de forma segura
                 estatus: task.estatus,
-                cuadranteId: task.cuadranteId ?? null
+                cuadranteId: task.cuadranteId ?? null,
+                proyectoId: task.proyectoId ?? null,
+                fase: task.fase ?? '',
+                prioridad: task.prioridad ?? 'Media',
+                progreso: task.progreso ?? 0,
+                importante: task.importante ?? false,
+                urgente: task.urgente ?? false,
+                rolArea: task.rolArea ?? '',
+                notas: task.notas ?? ''
             });
 
             // Actualiza manualmente flatpickr con las fechas ya parseadas
@@ -300,7 +328,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             fechaFinReal: toLocalISOString(parseDate(formValue.fechaFinReal)),
             empresa: formValue.empresa,
             ubicacion: formValue.ubicacion,
-            cuadranteId: formValue.cuadranteId
+            cuadranteId: formValue.cuadranteId,
+            proyectoId: formValue.proyectoId,
+            fase: formValue.fase,
+            prioridad: formValue.prioridad,
+            progreso: formValue.progreso,
+            importante: formValue.importante,
+            urgente: formValue.urgente,
+            rolArea: formValue.rolArea,
+            notas: formValue.notas
         };
 
         if (this.data?.id) {

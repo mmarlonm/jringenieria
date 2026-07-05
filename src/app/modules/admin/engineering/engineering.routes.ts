@@ -20,5 +20,9 @@ export default [
     {
         path: 'gantt-general',
         loadComponent: () => import('./gantt-general/gantt-general.component').then(m => m.GanttGeneralComponent)
+    },
+    {
+        path: 'seguimiento-tareas',
+        loadComponent: () => import('./seguimiento-tareas/task-segmentation.component').then(m => m.EngineeringSeguimientoTareasComponent)
     }
 ] as Routes;

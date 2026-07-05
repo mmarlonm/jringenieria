@@ -39,13 +39,31 @@
                             <mat-icon class="icon-size-5 mr-2 text-primary">description</mat-icon>
                             <span class="font-bold">Detalles</span>
                         </ng-template>
-                        
-                        <div class="flex flex-col flex-auto h-full p-4 md:p-6 overflow-y-auto custom-scrollbar">
+                                               <div class="flex flex-col flex-auto h-full p-4 md:p-6 overflow-y-auto custom-scrollbar">
                             <!-- Fila 1: Nombre -->
                             <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-2">
                                 <mat-label>Nombre de la tarea</mat-label>
                                 <input matInput formControlName="nombre" placeholder="¿Qué hay que hacer?" />
                             </mat-form-field>
+
+                            <!-- Fila: Proyecto Opcional y Fase -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Proyecto (Opcional)</mat-label>
+                                    <mat-select formControlName="proyectoId">
+                                        <mat-option [value]="null">Ninguno</mat-option>
+                                        <mat-option *ngFor="let p of projectsList" [value]="p.idSeguimiento">
+                                            {{ p.actividad }} ({{ p.empresa }})
+                                        </mat-option>
+                                    </mat-select>
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">folder</mat-icon>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Fase / Etapa</mat-label>
+                                    <input matInput formControlName="fase" placeholder="Ej. Fase 1, Levantamiento, etc." />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">layers</mat-icon>
+                                </mat-form-field>
+                            </div>
 
                             <!-- Fila 2: Empresa y Ubicación -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
@@ -115,7 +133,41 @@
                                 </mat-select>
                             </mat-form-field>
 
-                            <!-- Fila 6: Comentarios -->
+                            <!-- Fila: Prioridad, Progreso, Rol Área -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Prioridad</mat-label>
+                                    <mat-select formControlName="prioridad">
+                                        <mat-option value="Muy Alta">Muy Alta</mat-option>
+                                        <mat-option value="Alta">Alta</mat-option>
+                                        <mat-option value="Media">Media</mat-option>
+                                        <mat-option value="Baja">Baja</mat-option>
+                                        <mat-option value="Muy Baja">Muy Baja</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Progreso (%)</mat-label>
+                                    <input matInput type="number" min="0" max="100" formControlName="progreso" />
+                                    <span matSuffix class="text-secondary mr-2">%</span>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Rol / Área Responsable</mat-label>
+                                    <input matInput formControlName="rolArea" placeholder="Ej. COORDINACION INGENIERIA" />
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Fila Checkbox: Importante / Urgente -->
+                            <div class="flex items-center gap-6 mb-4">
+                                <mat-checkbox formControlName="importante" color="primary">¿Es Importante?</mat-checkbox>
+                                <mat-checkbox formControlName="urgente" color="warn">¿Es Urgente?</mat-checkbox>
+                            </div>
+
+                            <!-- Fila: Notas -->
+                            <mat-form-field appearance="outline" class="w-full fuse-mat-dense mb-2">
+                                <mat-label>Notas de Seguimiento</mat-label>
+                                <textarea matInput formControlName="notas" rows="2" placeholder="Escriba notas adicionales de seguimiento de la tarea..."></textarea>
+                            </mat-form-field>
+
                             <!-- Fila 6: Comentarios con Rich Text -->
                             <div class="flex flex-col mb-4">
                                 <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">Comentarios</span>

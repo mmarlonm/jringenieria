@@ -19,6 +19,15 @@ export interface Task {
   cuadranteId?: number | null;
   usuariosLeidos?: number[];    // IDs de usuarios que han leído la tarea
   usuariosNoLeidos?: number[];  // IDs de usuarios que NO han leído la tarea
+  proyectoId?: number | null;
+  fase?: string;
+  prioridad?: string;
+  progreso?: number;
+  importante?: boolean;
+  urgente?: boolean;
+  rolArea?: string;
+  notas?: string;
+  proyectoActividad?: string;
 }
 
 export interface TareaComentario {

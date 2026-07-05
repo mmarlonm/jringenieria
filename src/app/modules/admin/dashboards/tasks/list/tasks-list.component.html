@@ -93,6 +93,11 @@
             </button>
           </mat-menu>
 
+          <button mat-flat-button color="accent" [routerLink]="['/dashboards/tasks/seguimiento']" class="shrink-0">
+            <mat-icon svgIcon="heroicons_outline:presentation-chart-line"></mat-icon>
+            <span class="ml-2">Seguimiento de Tareas</span>
+          </button>
+
           <button mat-flat-button color="primary" (click)="openTaskDialog()" class="shrink-0">
             <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
             <span class="ml-2">Nueva Tarea</span>

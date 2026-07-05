@@ -3,6 +3,7 @@ import { MatTableDataSource } from "@angular/material/table";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatSort } from "@angular/material/sort";
 import { MatDialog } from "@angular/material/dialog";
+import { RouterLink } from "@angular/router";
 import { ChatNotificationService } from "app/shared/components/chat-notification/chat-notification.service";
 import { TaskService } from "../tasks.service";
 import { Task } from "./../models/tasks.model";
@@ -84,7 +85,8 @@ interface GroupedTasks {
         ResizableDirective,
         ResizeHandleDirective,
         HighchartsChartModule,
-        TaskChatComponent
+        TaskChatComponent,
+        RouterLink
     ],
 })
 export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
