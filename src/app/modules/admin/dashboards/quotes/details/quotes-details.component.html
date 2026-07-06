@@ -84,34 +84,36 @@
 
           <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
             <mat-label>Cotización Archivo:</mat-label>
-            <input matInput [value]="getArchivoNombre('cotizacionArchivo')" readonly />
+            <input matInput [value]="getArchivoNombre('cotizacion')" readonly />
 
-            <button mat-icon-button type="button"
-              (click)="hasArchivoGuardado('cotizacionArchivo') ? descargarArchivoGuardado('cotizacionArchivo') : cotizacionInput.click()">
-              <mat-icon>{{ hasArchivoGuardado('cotizacionArchivo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            <button mat-icon-button type="button" [disabled]="!quotesId"
+              (click)="hasArchivoGuardado('cotizacion') ? descargarArchivoGuardado('cotizacion') : cotizacionInput.click()"
+              [matTooltip]="!quotesId ? 'Guarde la cotización primero para poder subir archivos' : (hasArchivoGuardado('cotizacion') ? 'Descargar cotización' : 'Subir cotización')">
+              <mat-icon>{{ hasArchivoGuardado('cotizacion') ? 'cloud_download' : 'attach_file' }}</mat-icon>
             </button>
-            <button *ngIf="hasArchivoGuardado('cotizacionArchivo')" mat-icon-button color="warn" type="button"
-              (click)="eliminarArchivo('cotizacionArchivo')">
+            <button *ngIf="hasArchivoGuardado('cotizacion')" mat-icon-button color="warn" type="button"
+              (click)="eliminarArchivo('cotizacion')">
               <mat-icon>delete</mat-icon>
             </button>
 
-            <input type="file" #cotizacionInput (change)="onFileSelected($event, 'cotizacionArchivo')" hidden />
+            <input type="file" #cotizacionInput (change)="onFileSelected($event, 'cotizacion')" hidden />
           </mat-form-field>
 
           <mat-form-field appearance="fill" class="w-full flex items-center gap-2">
             <mat-label>Levantamiento:</mat-label>
-            <input matInput [value]="getArchivoNombre('levantamientoArchivo')" readonly />
+            <input matInput [value]="getArchivoNombre('levantamiento')" readonly />
 
-            <button mat-icon-button type="button"
-              (click)="hasArchivoGuardado('levantamientoArchivo') ? descargarArchivoGuardado('levantamientoArchivo') : levantamientoInput.click()">
-              <mat-icon>{{ hasArchivoGuardado('levantamientoArchivo') ? 'cloud_download' : 'attach_file' }}</mat-icon>
+            <button mat-icon-button type="button" [disabled]="!quotesId"
+              (click)="hasArchivoGuardado('levantamiento') ? descargarArchivoGuardado('levantamiento') : levantamientoInput.click()"
+              [matTooltip]="!quotesId ? 'Guarde la cotización primero para poder subir archivos' : (hasArchivoGuardado('levantamiento') ? 'Descargar levantamiento' : 'Subir levantamiento')">
+              <mat-icon>{{ hasArchivoGuardado('levantamiento') ? 'cloud_download' : 'attach_file' }}</mat-icon>
             </button>
-            <button *ngIf="hasArchivoGuardado('levantamientoArchivo')" mat-icon-button color="warn" type="button"
-              (click)="eliminarArchivo('levantamientoArchivo')">
+            <button *ngIf="hasArchivoGuardado('levantamiento')" mat-icon-button color="warn" type="button"
+              (click)="eliminarArchivo('levantamiento')">
               <mat-icon>delete</mat-icon>
             </button>
 
-            <input type="file" #levantamientoInput (change)="onFileSelected($event, 'levantamientoArchivo')" hidden />
+            <input type="file" #levantamientoInput (change)="onFileSelected($event, 'levantamiento')" hidden />
           </mat-form-field>
 
           

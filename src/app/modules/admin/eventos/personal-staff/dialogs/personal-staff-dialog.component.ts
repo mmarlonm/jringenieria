@@ -65,7 +65,8 @@ export class PersonalStaffDialogComponent implements OnInit {
             linkWeb: [this.data?.personal?.linkWeb || ''],
             tipoPersonal: [this.data?.personal?.tipoPersonal || 'Expositor', [Validators.required]],
             eventoIds: [this.data?.personal?.eventoIds || []],
-            compartirDatos: [this.data?.personal?.compartirDatos !== false]
+            compartirDatos: [this.data?.personal?.compartirDatos !== false],
+            verTareas: [this.data?.personal?.verTareas === true]
         });
 
         if (this.isEdit && this.data.personal.fotoPath) {

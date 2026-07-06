@@ -31,6 +31,7 @@ import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { ChangeDetectorRef } from '@angular/core';
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import Swal from 'sweetalert2';
 import { ProjectService } from "../../project/project.service";
 
@@ -52,7 +53,8 @@ import { ProjectService } from "../../project/project.service";
     CurrencyMaskPipe,
     NgxMatSelectSearchModule,
     MatTabsModule,
-    MatIconModule
+    MatIconModule,
+    MatTooltipModule
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -73,6 +75,7 @@ export class QuoteDetailsComponent implements OnInit {
   filteredProspects: any[] = [];
   prospects: any[] = [];
   cotizacionFile: File | null = null;
+  levantamientoFile: File | null = null;
   files: any[] = [];
 
   constructor(

@@ -59,61 +59,74 @@
 
         <!-- Timeline Section -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm">
-            <h3 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2">
-                <mat-icon class="text-indigo-500">list_alt</mat-icon>
-                Mis Actividades Asignadas ({{ actividades.length }})
-            </h3>
-
-            <!-- No activities state -->
-            <div *ngIf="actividades.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-                <mat-icon class="icon-size-12 text-slate-350 dark:text-slate-700 mb-3">calendar_today</mat-icon>
-                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">¡Todo despejado!</h4>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                    No tienes actividades o tareas asignadas registradas en el sistema para este evento.
+            
+            <!-- Private State -->
+            <div *ngIf="!personal.verTareas" class="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto space-y-4">
+                <mat-icon class="icon-size-16 text-amber-500 mb-2">visibility_off</mat-icon>
+                <h3 class="text-lg font-bold text-slate-850 dark:text-slate-100">Actividades Privadas</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    El cronograma de actividades de este perfil ha sido configurado como privado por el personal del evento.
                 </p>
             </div>
 
-            <!-- Timeline List -->
-            <div *ngIf="actividades.length > 0" class="relative pl-6 sm:pl-8 border-l border-slate-200 dark:border-slate-800 space-y-6">
-                
-                <div *ngFor="let act of actividades" class="relative flex flex-col group">
-                    <!-- Timeline Node bullet -->
-                    <div class="absolute -left-9 sm:-left-11 top-1 w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-950 border-2 border-indigo-600 flex items-center justify-center shadow-inner z-10 transition-transform group-hover:scale-110">
-                        <div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
-                    </div>
+            <!-- Public State (Visible) -->
+            <ng-container *ngIf="personal.verTareas">
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2">
+                    <mat-icon class="text-indigo-500">list_alt</mat-icon>
+                    Mis Actividades Asignadas ({{ actividades.length }})
+                </h3>
 
-                    <!-- Activity Details Box -->
-                    <div class="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 border border-slate-150 dark:border-slate-850 rounded-2xl p-5 transition-colors relative">
-                        <!-- Date range header badge -->
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                            <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-1 w-fit">
-                                <mat-icon class="icon-size-3.5">event</mat-icon>
-                                {{ act.eventoNombre }}
-                            </span>
-                            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                                <mat-icon class="icon-size-4 text-slate-400">schedule</mat-icon>
-                                {{ act.fechaInicio | date:'dd MMM yyyy, h:mm a' }} - {{ act.fechaFin | date:'dd MMM, h:mm a' }}
-                            </span>
+                <!-- No activities state -->
+                <div *ngIf="actividades.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                    <mat-icon class="icon-size-12 text-slate-350 dark:text-slate-700 mb-3">calendar_today</mat-icon>
+                    <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">¡Todo despejado!</h4>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                        No tienes actividades o tareas asignadas registradas en el sistema para este evento.
+                    </p>
+                </div>
+
+                <!-- Timeline List -->
+                <div *ngIf="actividades.length > 0" class="relative pl-6 sm:pl-8 border-l border-slate-200 dark:border-slate-800 space-y-6">
+                    
+                    <div *ngFor="let act of actividades" class="relative flex flex-col group">
+                        <!-- Timeline Node bullet -->
+                        <div class="absolute -left-9 sm:-left-11 top-1 w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-950 border-2 border-indigo-600 flex items-center justify-center shadow-inner z-10 transition-transform group-hover:scale-110">
+                            <div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
                         </div>
 
-                        <!-- Title -->
-                        <h4 class="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">
-                            {{ act.titulo }}
-                        </h4>
+                        <!-- Activity Details Box -->
+                        <div class="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 border border-slate-150 dark:border-slate-850 rounded-2xl p-5 transition-colors relative">
+                            <!-- Date range header badge -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-1 w-fit">
+                                    <mat-icon class="icon-size-3.5">event</mat-icon>
+                                    {{ act.eventoNombre }}
+                                </span>
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                    <mat-icon class="icon-size-4 text-slate-400">schedule</mat-icon>
+                                    {{ act.fechaInicio | date:'dd MMM yyyy, h:mm a' }} - {{ act.fechaFin | date:'dd MMM, h:mm a' }}
+                                </span>
+                            </div>
 
-                        <!-- Description -->
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
-                            {{ act.descripcion || 'Sin descripción adicional.' }}
-                        </p>
+                            <!-- Title -->
+                            <h4 class="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                                {{ act.titulo }}
+                            </h4>
 
-                        <!-- Sede / Lugar (if Event Sede exists) -->
-                        <div class="flex items-center text-[11px] font-semibold text-slate-400 mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/50" *ngIf="act.sede">
-                            <mat-icon class="icon-size-4 mr-1 text-slate-400">place</mat-icon>
-                            <span>Lugar: {{ act.sede }}</span>
+                            <!-- Description -->
+                            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+                                {{ act.descripcion || 'Sin descripción adicional.' }}
+                            </p>
+
+                            <!-- Sede / Lugar (if Event Sede exists) -->
+                            <div class="flex items-center text-[11px] font-semibold text-slate-400 mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/50" *ngIf="act.sede">
+                                <mat-icon class="icon-size-4 mr-1 text-slate-400">place</mat-icon>
+                                <span>Lugar: {{ act.sede }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </ng-container>
         </div>
     </div>
 </div>

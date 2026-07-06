@@ -14,6 +14,7 @@ export interface PersonalStaff {
     linkWeb?: string;
     tipoPersonal: string; // "Expositor" | "Staff" | "Otro"
     compartirDatos: boolean;
+    verTareas: boolean;
     fotoPath?: string;
     tokenQr: string;
     emailEnviado: boolean;
@@ -53,6 +54,7 @@ export class PersonalStaffService {
         formData.append('linkWeb', personal.linkWeb || '');
         formData.append('tipoPersonal', personal.tipoPersonal || 'Expositor');
         formData.append('compartirDatos', String(personal.compartirDatos !== false));
+        formData.append('verTareas', String(personal.verTareas === true));
         formData.append('emailEnviado', String(personal.emailEnviado === true));
         if (foto) {
             formData.append('foto', foto, foto.name);
