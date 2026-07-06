@@ -415,14 +415,13 @@ export class EventosService implements OnDestroy {
                     next: (res) => {
                         if (res && res.exito) {
                             const evId = this._selectedEventoId.value;
-                            this.loadAsistentesPorEvento(evId);
-
-                            const asistente = this._asistentes.value.find(a => a.tokenQr === tokenQR);
+                                       const asistente = this._asistentes.value.find(a => a.tokenQr === tokenQR);
                             observer.next({
                                 status: 'SUCCESS',
                                 message: res.mensaje || '¡Acceso Autorizado!',
                                 asistente: {
                                     id: asistente ? asistente.id : 0,
+                                    personalStaffId: res.personalStaffId,
                                     nombreCompleto: res.nombreCompleto || (asistente ? `${asistente.nombre} ${asistente.apellidos}` : 'Visitante'),
                                     tipo: res.tipoAsistente || (asistente ? asistente.tipo : 'Personal/Staff'),
                                     organizacion: res.organizacion || (asistente ? (asistente.tipo === 'General' ? (asistente.empresa || 'Ninguna') : (asistente.universidad || 'Ninguna')) : 'Ninguna'),
@@ -442,7 +441,7 @@ export class EventosService implements OnDestroy {
                         
                         let errorMessage = 'Error al realizar check-in.';
                         let isDuplicate = false;
-
+ 
                         if (err.error && typeof err.error === 'object') {
                             errorMessage = err.error.mensaje || errorMessage;
                             if (err.error.exito === false || err.error.estatus === 'DUPLICADO') {
@@ -454,7 +453,7 @@ export class EventosService implements OnDestroy {
                         } else if (err.error && typeof err.error === 'string') {
                             errorMessage = err.error;
                         }
-
+ 
                         const asistente = this._asistentes.value.find(a => a.tokenQr === tokenQR);
                         if (isDuplicate) {
                             observer.next({
@@ -462,6 +461,7 @@ export class EventosService implements OnDestroy {
                                 message: errorMessage,
                                 asistente: {
                                     id: asistente ? asistente.id : 0,
+                                    personalStaffId: err.error?.personalStaffId,
                                     nombreCompleto: err.error?.nombreCompleto || (asistente ? `${asistente.nombre} ${asistente.apellidos}` : 'Visitante'),
                                     fechaCheckIn: err.error?.fechaCheckIn ? new Date(err.error.fechaCheckIn).toLocaleString() : (asistente?.fechaCheckIn || new Date().toLocaleString())
                                 }
