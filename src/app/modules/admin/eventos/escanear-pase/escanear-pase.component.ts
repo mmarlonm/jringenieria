@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { EventosService, ActividadMetricsDto, Actividad, EventoEdicion } from '../eventos.service';
+import { environment } from 'environments/environment';
 
 @Component({
     selector: 'escanear-pase',
@@ -89,6 +90,10 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
     public get now(): Date {
         return new Date();
+    }
+
+    public getStaffPhotoUrl(id: number): string {
+        return `${environment.apiUrl}/PersonalStaff/photo/${id}`;
     }
 
     // --- Loading Workshops ---
