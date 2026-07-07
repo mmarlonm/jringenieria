@@ -74,8 +74,8 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
     }
     .btn-float {
         position: fixed !important;
-        bottom: 85px !important;
-        right: 24px;
+        bottom: 24px !important;
+        right: 220px !important;
     }
 
     /* CDK Drag & Drop premium styles */
@@ -166,6 +166,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   timeScale: 'day' | 'week' | 'month' = 'day';
   filterStartDate: Date | null = null;
   filterEndDate: Date | null = null;
+  leftPanelWidthPercent: number = 60;
 
   defaultColumns: Array<{ id: string; label: string; width: number; order?: number }> = [
     { id: 'nombre', label: 'Actividad / Subactividad', width: 220 },
@@ -196,6 +197,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.idSeguimiento = Number(this._route.snapshot.paramMap.get('id'));
     this.initForm();
     this.initColumns();
+    
+    const savedWidth = localStorage.getItem('gantt_left_panel_width_percent');
+    if (savedWidth) {
+      this.leftPanelWidthPercent = Number(savedWidth);
+    }
+
     this.loadData();
     this.loadUsers();
     
@@ -320,6 +327,34 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.filterStartDate = null;
     this.filterEndDate = null;
     this.adjustTimelineRange();
+  }
+
+  onGanttSplitterResizeStart(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const startX = event.clientX;
+    const startPercent = this.leftPanelWidthPercent;
+    
+    // Buscar la superficie del Gantt para medir su ancho de forma precisa
+    const splitter = event.target as HTMLElement;
+    const parentContainer = splitter.parentElement;
+    const containerWidth = parentContainer ? parentContainer.offsetWidth : window.innerWidth;
+    
+    const mouseMoveSub = fromEvent<MouseEvent>(document, 'mousemove').subscribe(moveEv => {
+      const currentX = moveEv.clientX;
+      const diffX = currentX - startX;
+      const diffPercent = (diffX / containerWidth) * 100;
+      // Mantener proporción de la tabla izquierda entre 15% y 85%
+      this.leftPanelWidthPercent = Math.min(85, Math.max(15, startPercent + diffPercent));
+      this._cdr.markForCheck();
+    });
+    
+    const mouseUpSub = fromEvent<MouseEvent>(document, 'mouseup').subscribe(() => {
+      mouseMoveSub.unsubscribe();
+      mouseUpSub.unsubscribe();
+      localStorage.setItem('gantt_left_panel_width_percent', String(this.leftPanelWidthPercent));
+    });
   }
 
   loadData(): void {

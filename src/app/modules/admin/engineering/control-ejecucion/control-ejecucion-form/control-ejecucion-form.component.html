@@ -213,7 +213,7 @@
           <div class="flex-auto flex overflow-hidden">
             
             <!-- Left Panel: Columns Table -->
-            <div class="w-[60%] flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden" cdkDropListGroup>
+            <div [style.width.%]="leftPanelWidthPercent" class="flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden" cdkDropListGroup>
               
               <!-- Dynamic Table Header -->
               <div class="h-12 flex items-center px-4 border-b bg-slate-100/30 text-[10px] font-black uppercase tracking-widest text-slate-500 sticky top-0 z-10"
@@ -473,8 +473,12 @@
               </div>
             </div>
 
+            <!-- Splitter vertical arrastrable -->
+            <div class="w-1 cursor-col-resize hover:bg-indigo-500 active:bg-indigo-600 transition-colors shrink-0 z-20 bg-slate-200 dark:bg-slate-700 h-full border-l border-r border-slate-300 dark:border-slate-800"
+                 (mousedown)="onGanttSplitterResizeStart($event)"></div>
+
             <!-- Right Panel: Canvas Timeline -->
-            <div class="w-[40%] flex-auto overflow-x-auto overflow-y-auto custom-scrollbar bg-slate-50/50 relative shadow-inner" #horizontalTimeline>
+            <div [style.width.%]="100 - leftPanelWidthPercent" class="flex-auto overflow-x-auto overflow-y-auto custom-scrollbar bg-slate-50/50 relative shadow-inner" #horizontalTimeline>
               <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
                 
                 <!-- Timeline Header: Days -->
