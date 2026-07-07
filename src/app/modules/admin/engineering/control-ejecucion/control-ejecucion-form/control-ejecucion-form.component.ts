@@ -74,8 +74,8 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
     }
     .btn-float {
         position: fixed !important;
-        bottom: 24px !important;
-        right: 220px !important;
+        bottom: 12px !important;
+        right: 480px !important;
     }
 
     /* CDK Drag & Drop premium styles */
@@ -784,21 +784,36 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
     let allActivities: any[] = [];
     this.tasks.forEach((t) => {
-      if (t.actividades) t.actividades.forEach((a) => allActivities.push(a));
+      if (t.actividades) {
+        t.actividades.forEach((a) => allActivities.push(a));
+      }
+      if (t.fechaInicio) {
+        allActivities.push(t);
+      }
     });
 
     if (allActivities.length > 0) {
-      const lastDate = allActivities.reduce((latest, act) => {
-        const currentEnd = new Date(act.fechaFin);
-        return currentEnd > latest ? currentEnd : latest;
-      }, new Date(0));
+      let minTime = new Date(allActivities[0].fechaInicio).getTime();
+      let maxTime = new Date(allActivities[0].fechaFin).getTime();
 
-      if (lastDate.getTime() > 0) {
-        const diff = differenceInDays(startOfDay(lastDate), this.startDate);
-        targetPos = (diff - 4) * this.dayWidth;
-      }
+      allActivities.forEach((act) => {
+        const start = new Date(act.fechaInicio).getTime();
+        const end = new Date(act.fechaFin).getTime();
+        if (start < minTime) minTime = start;
+        if (end > maxTime) maxTime = end;
+      });
+
+      const midTime = minTime + (maxTime - minTime) / 2;
+      const midDate = new Date(midTime);
+
+      const diff = differenceInDays(startOfDay(midDate), this.startDate);
+      const midPixelPosition = diff * this.dayWidth;
+      
+      targetPos = midPixelPosition - (element.clientWidth / 2);
     } else if (this.showTodayMarker) {
-      targetPos = this.todayPosition;
+      targetPos = this.todayPosition - (element.clientWidth / 2);
+    } else {
+      targetPos = 0;
     }
 
     element.scrollTo({
