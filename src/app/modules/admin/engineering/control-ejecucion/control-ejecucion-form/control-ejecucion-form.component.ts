@@ -74,7 +74,7 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
     }
     .btn-float {
         position: fixed !important;
-        bottom: 24px !important;
+        bottom: 85px !important;
         right: 24px;
     }
 
