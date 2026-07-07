@@ -158,7 +158,8 @@
 
       <!-- TAB 2: CRONOGRAMA GANTT -->
       <mat-tab label="Cronograma Gantt">
-        <div class="flex flex-col w-full bg-white overflow-hidden h-[calc(100vh-220px)]">
+        <div class="flex flex-col w-full bg-white overflow-hidden transition-all duration-300"
+          [ngClass]="isGanttFullscreen ? 'fixed inset-0 z-[9999] h-screen w-screen p-4' : 'h-[calc(100vh-220px)]'">
 
           <!-- Gantt Header Controls -->
           <div
@@ -216,6 +217,12 @@
                 (click)="openActividadDialog('maestra')">
                 <mat-icon class="mr-2">add</mat-icon>
                 Nueva Actividad Maestra
+              </button>
+
+              <button type="button" mat-icon-button (click)="toggleGanttFullscreen()"
+                [matTooltip]="isGanttFullscreen ? 'Salir de Pantalla Completa' : 'Pantalla Completa'"
+                class="text-indigo-600 hover:bg-indigo-50 rounded-lg shrink-0">
+                <mat-icon>{{ isGanttFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
               </button>
             </div>
           </div>
@@ -800,7 +807,7 @@
   </div>
 
   <!-- Botones Flotantes (btn-float) -->
-  <div class="flex justify-end gap-2 btn-float z-[99]">
+  <div class="flex justify-end gap-2 mb-4 px-4 sm:px-0 btn-float z-99">
     <a mat-raised-button color="warn" [routerLink]="['/engineering/control-ejecucion']">
       Cancelar
     </a>

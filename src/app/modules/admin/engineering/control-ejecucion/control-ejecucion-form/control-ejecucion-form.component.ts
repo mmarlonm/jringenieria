@@ -167,6 +167,15 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   filterStartDate: Date | null = null;
   filterEndDate: Date | null = null;
   leftPanelWidthPercent: number = 60;
+  isGanttFullscreen: boolean = false;
+
+  toggleGanttFullscreen(): void {
+    this.isGanttFullscreen = !this.isGanttFullscreen;
+    setTimeout(() => {
+      this.scrollToTarget();
+      this._cdr.detectChanges();
+    }, 150);
+  }
 
   defaultColumns: Array<{ id: string; label: string; width: number; order?: number }> = [
     { id: 'nombre', label: 'Actividad / Subactividad', width: 220 },
