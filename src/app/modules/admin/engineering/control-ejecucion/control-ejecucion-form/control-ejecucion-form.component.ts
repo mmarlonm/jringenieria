@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -39,6 +39,7 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterModule,
     MatButtonModule,
     MatDatepickerModule,
@@ -72,7 +73,7 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
       animation: stripes 2s linear infinite;
     }
     .btn-float {
-        position: absolute !important;
+        position: fixed !important;
         bottom: 24px !important;
         right: 24px;
     }
@@ -160,6 +161,27 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   showTodayMarker: boolean = false;
   format = format;
 
+  // Dynamic columns
+  columns: any[] = [];
+  timeScale: 'day' | 'week' | 'month' = 'day';
+  filterStartDate: Date | null = null;
+  filterEndDate: Date | null = null;
+
+  defaultColumns: Array<{ id: string; label: string; width: number; order?: number }> = [
+    { id: 'nombre', label: 'Actividad / Subactividad', width: 220 },
+    { id: 'responsable', label: 'Responsable', width: 120 },
+    { id: 'area', label: 'Área', width: 100 },
+    { id: 'progreso', label: 'Progreso', width: 70 },
+    { id: 'inicio', label: 'Inicio', width: 85 },
+    { id: 'fin', label: 'Fin', width: 85 },
+    { id: 'dias', label: 'Días', width: 60 },
+    { id: 'predecesora', label: 'Predecesora', width: 110 },
+    { id: 'prioridad', label: 'Prioridad', width: 70 },
+    { id: 'estatus', label: 'Estatus', width: 90 },
+    { id: 'color', label: 'Color', width: 50 },
+    { id: 'acciones', label: 'Acciones', width: 90 }
+  ];
+
   constructor(
     private _route: ActivatedRoute,
     private _router: Router,
@@ -173,6 +195,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.idSeguimiento = Number(this._route.snapshot.paramMap.get('id'));
     this.initForm();
+    this.initColumns();
     this.loadData();
     this.loadUsers();
     
@@ -204,6 +227,99 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       ordenCompraFolio: [''],
       ordenCompraArchivo: ['']
     });
+  }
+
+  // ==========================================
+  // ⚙️ COLUMNS LAYOUT CONFIG
+  // ==========================================
+  initColumns(): void {
+    const cached = localStorage.getItem('gantt_columns_config_seguimiento');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = this.defaultColumns.map(defCol => {
+            const found = parsed.find(p => p.id === defCol.id);
+            return found ? { ...defCol, width: found.width, order: found.order } : defCol;
+          });
+          this.columns = merged.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+          return;
+        }
+      } catch (e) {
+        console.warn('Error al parsear columnas del Gantt:', e);
+      }
+    }
+    this.columns = this.defaultColumns.map((c, idx) => ({ ...c, order: idx }));
+  }
+
+  saveColumnsConfig(): void {
+    const config = this.columns.map((c, idx) => ({
+      id: c.id,
+      width: c.width,
+      order: idx
+    }));
+    localStorage.setItem('gantt_columns_config_seguimiento', JSON.stringify(config));
+  }
+
+  onColumnReordered(event: CdkDragDrop<any[]>): void {
+    moveItemInArray(this.columns, event.previousIndex, event.currentIndex);
+    this.saveColumnsConfig();
+    this._cdr.markForCheck();
+  }
+
+  onColumnResizeStart(event: MouseEvent, index: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const startX = event.clientX;
+    const startWidth = this.columns[index].width;
+    
+    const mouseMoveSub = fromEvent<MouseEvent>(document, 'mousemove').subscribe(moveEv => {
+      const currentX = moveEv.clientX;
+      const diffX = currentX - startX;
+      this.columns[index].width = Math.max(50, startWidth + diffX);
+      this._cdr.markForCheck();
+    });
+    
+    const mouseUpSub = fromEvent<MouseEvent>(document, 'mouseup').subscribe(() => {
+      mouseMoveSub.unsubscribe();
+      mouseUpSub.unsubscribe();
+      this.saveColumnsConfig();
+    });
+  }
+
+  // ==========================================
+  // 📅 TIME SCALES & FILTERS
+  // ==========================================
+  changeTimeScale(scale: 'day' | 'week' | 'month'): void {
+    this.timeScale = scale;
+    switch (scale) {
+      case 'day':
+        this.dayWidth = 44;
+        break;
+      case 'week':
+        this.dayWidth = 14;
+        break;
+      case 'month':
+        this.dayWidth = 5;
+        break;
+    }
+    this.adjustTimelineRange();
+    this._cdr.markForCheck();
+  }
+
+  applyDateRangeFilter(): void {
+    if (this.filterStartDate && this.filterEndDate) {
+      this.initTimeline(this.filterStartDate, this.filterEndDate);
+      this.scrollToTarget();
+      this._cdr.markForCheck();
+    }
+  }
+
+  clearDateRangeFilter(): void {
+    this.filterStartDate = null;
+    this.filterEndDate = null;
+    this.adjustTimelineRange();
   }
 
   loadData(): void {
@@ -509,6 +625,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         
         // Centrar timeline tras carga de datos
         setTimeout(() => this.scrollToTarget(), 150);
+        this._cdr.detectChanges();
       },
       error: (err) => {
         console.error(err);
