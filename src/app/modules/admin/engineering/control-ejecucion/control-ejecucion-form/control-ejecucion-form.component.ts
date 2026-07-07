@@ -78,21 +78,6 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
         right: 480px !important;
     }
 
-    /* Reglas para ocultar layouts de navegación al maximizar el Gantt */
-    ::ng-deep body.gantt-fullscreen-active fuse-vertical-navigation,
-    ::ng-deep body.gantt-fullscreen-active .fuse-vertical-navigation,
-    ::ng-deep body.gantt-fullscreen-active header,
-    ::ng-deep body.gantt-fullscreen-active .fuse-main-header,
-    ::ng-deep body.gantt-fullscreen-active navigation,
-    ::ng-deep body.gantt-fullscreen-active .navigation,
-    ::ng-deep body.gantt-fullscreen-active [class*="navigation"],
-    ::ng-deep body.gantt-fullscreen-active [class*="sidebar"] {
-        display: none !important;
-        width: 0 !important;
-        min-width: 0 !important;
-        max-width: 0 !important;
-    }
-
     /* CDK Drag & Drop premium styles */
     .cdk-drag-preview {
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -211,12 +196,6 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   toggleGanttFullscreen(): void {
     this.isGanttFullscreen = !this.isGanttFullscreen;
-    const body = document.body;
-    if (this.isGanttFullscreen) {
-      body.classList.add('gantt-fullscreen-active');
-    } else {
-      body.classList.remove('gantt-fullscreen-active');
-    }
     setTimeout(() => {
       this.scrollToTarget();
       this._cdr.detectChanges();
@@ -224,7 +203,6 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    document.body.classList.remove('gantt-fullscreen-active');
     this._unsubscribeAll.next(null);
     this._unsubscribeAll.complete();
   }
@@ -1037,7 +1015,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
           fechaFin: defaultEnd,
           estatus: 1,
           progreso: 0,
-          color: type === 'maestra' ? 'Azul' : 'Verde'
+          color: type === 'maestra' ? 'Azul' : 'Verde',
+          orden: type === 'maestra'
+            ? (this.tasks.reduce((max, t) => Math.max(max, t.orden || 0), 0) + 1)
+            : (parentTask?.actividades
+                ? (parentTask.actividades.reduce((max, a) => Math.max(max, a.orden || 0), 0) + 1)
+                : 1)
         },
         userList: this.userList,
         predecesoras: predList
