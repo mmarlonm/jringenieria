@@ -168,6 +168,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   filterEndDate: Date | null = null;
   leftPanelWidthPercent: number = 60;
   isGanttFullscreen: boolean = false;
+  selectedTabIndex: number = 0;
 
   defaultColumns: Array<{ id: string; label: string; width: number; order?: number }> = [
     { id: 'nombre', label: 'Actividad / Subactividad', width: 220 },
