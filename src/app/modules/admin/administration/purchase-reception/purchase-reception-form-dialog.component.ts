@@ -69,6 +69,36 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
     ngOnInit(): void {
         this.initForm();
         this.loadUsers();
+
+        const rec = this.data?.reception;
+        if (rec) {
+            const id = rec.idRecepcion || rec.id;
+            this.isLoading = true;
+            this._receptionService.getRecepcionPorId(id).subscribe({
+                next: (res) => {
+                    const actualRec = res.data || res;
+                    if (actualRec) {
+                        const facturasStr = actualRec.folioInternoFactura || actualRec.facturas || actualRec.factura || '';
+                        this.receptionForm.patchValue({
+                            folioInternoFactura: facturasStr
+                        });
+                        if (this.ocData) {
+                            this.ocData = {
+                                ...this.ocData,
+                                datosFiscales: {
+                                    ...this.ocData.datosFiscales,
+                                    folioInternoFactura: facturasStr
+                                }
+                            };
+                        }
+                    }
+                    this.isLoading = false;
+                },
+                error: () => {
+                    this.isLoading = false;
+                }
+            });
+        }
     }
 
     ngOnDestroy(): void {
@@ -93,7 +123,14 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             dondeRecibio: [rec?.dondeRecibio || '', Validators.required],
             CondicionesComentarios: [rec?.condicionesComentarios || ''],
             estatus: [statusValue, Validators.required],
-            folioInternoFactura: [rec?.folioInternoFactura || ''],
+            folioInternoFactura: [
+                rec?.folioInternoFactura || 
+                rec?.datosFiscales?.folioInternoFactura || 
+                rec?.datosFacturaContpaqi?.folioInternoFactura || 
+                rec?.facturas || 
+                rec?.factura || 
+                ''
+            ],
             puntajeCalidad: [rec?.puntajeCalidad !== undefined ? rec.puntajeCalidad : 100, Validators.required],
             puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required],
             puntajePrecio: [rec?.puntajePrecio !== undefined ? rec.puntajePrecio : 100, Validators.required],
@@ -135,10 +172,20 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             next: (res) => {
                 this.ocData = res;
                 if (res) {
+                    const currentVal = this.receptionForm.get('folioInternoFactura').value || '';
+                    const newVal = res.datosFiscales?.folioInternoFactura || '';
+                    let finalVal = currentVal;
+                    if (!currentVal) {
+                        finalVal = newVal;
+                    } else if (newVal && !currentVal.includes(newVal)) {
+                        // Limpiar espacios extras al concatenar
+                        finalVal = `${currentVal.trim().replace(/,+$/, '')}, ${newVal.trim()}`;
+                    }
+
                     this.receptionForm.patchValue({
                         idSolicitud: res.idSolicitud || folio,
                         lugarEntrega: res.lugarEntrega || '',
-                        folioInternoFactura: res.datosFiscales?.folioInternoFactura || ''
+                        folioInternoFactura: finalVal
                     });
                 }
                 this.isLoading = false;
@@ -184,6 +231,7 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
         // Ensure we send the data in the format the API expects
         const payload = {
             ...formValues,
+            idRecepcion: this.data?.reception?.idRecepcion || this.data?.reception?.id || undefined,
             idSolicitud: this.ocData?.idSolicitud,
             folioOC: this.ocData?.folioOC,
             sucursal: this.ocData?.sucursal,

@@ -131,20 +131,39 @@ export class UsersService {
     updateUsers(user: any): Observable<any> {
         return this._httpClient.post<any>(`${this.apiUrl}/created-user`, user).pipe(
             tap((updatedUser) => {
+                // Fusionar el payload original con la respuesta de la API para conservar todos los campos
+                const finalUser = {
+                    ...user,
+                    usuarioId: updatedUser.usuarioId || user.usuarioId,
+                    nombreUsuario: updatedUser.nombreUsuario || user.nombreUsuario
+                };
+
+                // Asegurar formato base64 correcto para el avatar
+                if (finalUser.avatar && !finalUser.avatar.startsWith("data:image") && !finalUser.avatar.startsWith("http")) {
+                    finalUser.avatar = `data:image/png;base64,${finalUser.avatar}`;
+                }
+
                 // Actualizar caché maestro: Buscar por ID real o por el marcador temporal (ID 0)
                 const index = this._allUsers.findIndex(r =>
-                    r.usuarioId === updatedUser.usuarioId ||
-                    (updatedUser.usuarioId !== 0 && r.usuarioId === 0)
+                    r.usuarioId === finalUser.usuarioId ||
+                    (finalUser.usuarioId !== 0 && r.usuarioId === 0)
                 );
 
                 if (index !== -1) {
-                    this._allUsers[index] = updatedUser;
+                    const oldUser = this._allUsers[index];
+                    this._allUsers[index] = {
+                        ...oldUser,
+                        ...finalUser
+                    };
                 } else {
-                    this._allUsers = [updatedUser, ...this._allUsers];
+                    this._allUsers = [finalUser, ...this._allUsers];
                 }
 
                 // Emitir la nueva lista filtrada si hay búsqueda activa o la lista completa
                 this._users.next([...this._allUsers]);
+
+                // Actualizar el usuario activo seleccionado para el detalle de la derecha
+                this._user.next(index !== -1 ? this._allUsers[index] : finalUser);
             })
         );
     }
