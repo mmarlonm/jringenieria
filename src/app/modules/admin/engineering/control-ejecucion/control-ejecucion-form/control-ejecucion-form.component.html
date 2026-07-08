@@ -23,8 +23,8 @@
 
   <!-- Tabs Interface -->
   <div class="flex-auto flex flex-col overflow-hidden">
-    <mat-tab-group class="flex-auto flex flex-col overflow-hidden custom-form-tabs" headerPosition="above"
-      [animationDuration]="'200ms'">
+    <mat-tab-group class="flex-auto flex flex-col overflow-hidden custom-form-tabs" headerPosition="above" [animationDuration]="'200ms'"
+      [selectedIndex]="selectedTabIndex" (selectedIndexChange)="onTabChanged($event)">
 
       <!-- TAB 1: INFORMACIÓN GENERAL -->
       <mat-tab label="Información General">

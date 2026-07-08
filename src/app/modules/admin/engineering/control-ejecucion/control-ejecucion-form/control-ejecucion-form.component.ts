@@ -202,6 +202,16 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     }, 150);
   }
 
+  onTabChanged(index: number): void {
+    this.selectedTabIndex = index;
+    localStorage.setItem(`gantt_selected_tab_idx_${this.idSeguimiento}`, String(index));
+    if (index === 1) {
+      setTimeout(() => {
+        this.scrollToTarget();
+      }, 150);
+    }
+  }
+
   ngOnDestroy(): void {
     this._unsubscribeAll.next(null);
     this._unsubscribeAll.complete();
@@ -209,6 +219,10 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.idSeguimiento = Number(this._route.snapshot.paramMap.get('id'));
+    const savedTab = localStorage.getItem(`gantt_selected_tab_idx_${this.idSeguimiento}`);
+    if (savedTab) {
+      this.selectedTabIndex = Number(savedTab);
+    }
     this.initForm();
     this.initColumns();
     
