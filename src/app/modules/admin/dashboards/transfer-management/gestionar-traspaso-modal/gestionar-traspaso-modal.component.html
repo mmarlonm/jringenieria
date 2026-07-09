@@ -64,14 +64,22 @@
                 <input matInput [(ngModel)]="datosEnvio.guiaRastreo" placeholder="Ej. PKX123456...">
                 <mat-icon matPrefix class="icon-size-5 mr-2">local_shipping</mat-icon>
             </mat-form-field>
-            <button mat-flat-button color="accent" 
-                class="!rounded-xl !h-12 !px-4 shadow-sm"
-                [disabled]="actualizandoGuia || !datosEnvio.guiaRastreo"
-                (click)="guardarGuia()"
-                matTooltip="Guardar solo la guía">
-                <mat-icon *ngIf="!actualizandoGuia">save</mat-icon>
-                <mat-spinner diameter="20" *ngIf="actualizandoGuia"></mat-spinner>
-            </button>
+            <div class="flex gap-2">
+                <button *ngIf="mostrarBotonPortalRastreo" mat-stroked-button color="primary"
+                    class="!rounded-xl !h-12 !px-4 shadow-sm"
+                    (click)="abrirPortalRastreo()"
+                    matTooltip="Abrir el portal del transportista con la guía prellenada">
+                    <mat-icon>open_in_new</mat-icon>
+                </button>
+                <button mat-flat-button color="accent" 
+                    class="!rounded-xl !h-12 !px-4 shadow-sm"
+                    [disabled]="actualizandoGuia || !datosEnvio.guiaRastreo"
+                    (click)="guardarGuia()"
+                    matTooltip="Guardar solo la guía">
+                    <mat-icon *ngIf="!actualizandoGuia">save</mat-icon>
+                    <mat-spinner diameter="20" *ngIf="actualizandoGuia"></mat-spinner>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -83,7 +91,7 @@
             <div class="grid grid-cols-1 gap-4">
                 <mat-form-field appearance="outline" class="w-full !mb-[-1.25em]">
                     <mat-label>Transportista / Paquetería</mat-label>
-                    <input matInput [(ngModel)]="datosEnvio.transportista" placeholder="Ej. Paquetexpress, DHL...">
+                    <input matInput [ngModel]="datosEnvio.transportista" (ngModelChange)="onTransportistaChange($event)" placeholder="Ej. Paquetexpress, DHL...">
                 </mat-form-field>
             </div>
 

@@ -85,11 +85,47 @@ export class GestionarTraspasoModalComponent implements OnInit {
         return !this.datosEnvio.transportista || !this.datosEnvio.guiaRastreo || !this.datosEnvio.urlEvidenciaEnvio;
     }
 
+    get mostrarBotonPortalRastreo(): boolean {
+        const guia = this.datosEnvio.guiaRastreo?.trim();
+        const transportista = this.normalizarTexto(this.datosEnvio.transportista || this.traspaso?.transportista || '');
+
+        return !!guia && !transportista.includes('colaborador') && (this.traspaso?.estadoId === 4 || !!guia);
+    }
+
     get esRecepcionInvalida(): boolean {
         if (this.datosRecepcion.conDiferencias && !this.datosRecepcion.observaciones.trim()) {
             return true;
         }
         return false;
+    }
+
+    normalizarTexto(value: string): string {
+        return (value || '').trim().toLowerCase();
+    }
+
+    onTransportistaChange(value: string): void {
+        this.datosEnvio.transportista = this.normalizarTexto(value);
+    }
+
+    abrirPortalRastreo(): void {
+        const guia = this.datosEnvio.guiaRastreo?.trim();
+        if (!guia) {
+            this._chatNotificationService.showWarning('Atención', 'Ingresa una guía de rastreo válida', 3000);
+            return;
+        }
+
+        const transportista = this.normalizarTexto(this.datosEnvio.transportista || this.traspaso?.transportista || '');
+        let url = '';
+
+        if (transportista.includes('dhl')) {
+            url = `https://www.dhl.com/mx-es/home/rastreo.html?tracking-id=${encodeURIComponent(guia)}`;
+        } else if (transportista.includes('estafeta')) {
+            url = `https://www.estafeta.com/seguimiento?guia=${encodeURIComponent(guia)}`;
+        } else {
+            url = `https://www.paquetexpress.com.mx/rastreo/${encodeURIComponent(guia)}`;
+        }
+
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
 
     onFileSelected(event: any, tipo: 'ENVIO' | 'RECEPCION'): void {
