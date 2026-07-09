@@ -112,10 +112,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
                 }
 
                 // Si ya hay un concepto seleccionado (Edición), filtrar subtipos
-                const conceptoId = this.expenseForm.get('conceptoId').value;
-                if (conceptoId) {
-                    this.subtiposFiltrados = this.todosLosSubtipos.filter(s => s.conceptoId == conceptoId);
-                }
+                this.actualizarSubtiposDisponibles();
 
                 // Si ya hay una cuenta seleccionada (Edición), filtrar números
                 const cuentaId = this.expenseForm.get('cuentaId').value;
@@ -129,10 +126,8 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
 
         if (this.isEdit && this.data.expense) {
             // Cargar los subtipos correspondientes al concepto antes de patchear
-            if (this.data.expense.conceptoId) {
-                this.subtiposFiltrados = this.todosLosSubtipos.filter(s => s.conceptoId === this.data.expense.conceptoId);
-            }
             this.expenseForm.patchValue(this.data.expense);
+            this.actualizarSubtiposDisponibles();
         }
 
         // Suscripción a cambios para impuestos
@@ -142,14 +137,11 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects) - ELIMINADA
         // Todos los campos permanecen habilitados por defecto
 
-        // Solo mantenemos la lógica de filtrado de subtipos por concepto para que el select sea útil
-        this.expenseForm.get('conceptoId').valueChanges.subscribe(val => {
-            if (val != null) {
-                this.subtiposFiltrados = this.todosLosSubtipos.filter(s => s.conceptoId == val);
-            } else {
-                this.subtiposFiltrados = this.todosLosSubtipos;
-            }
-            this._changeDetectorRef.markForCheck();
+        merge(
+            this.expenseForm.get('conceptoId').valueChanges,
+            this.expenseForm.get('tipoMovimiento').valueChanges
+        ).pipe(takeUntil(this._unsubscribeAll)).subscribe(() => {
+            this.actualizarSubtiposDisponibles();
         });
 
         // 🔹 Cuenta -> Numero de Cuenta (Cascada)
@@ -328,15 +320,70 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
      * Lógica de Cascada: Filtrar subtipos por Concepto
      */
     onConceptoChange(conceptoId: number): void {
-        if (conceptoId) {
-            this.subtiposFiltrados = this.todosLosSubtipos.filter(s => s.conceptoId == conceptoId);
-        } else {
-            this.subtiposFiltrados = this.todosLosSubtipos;
-        }
+        this.actualizarSubtiposDisponibles();
 
         // Limpiar el select de subtipo si cambió el concepto
         this.expenseForm.get('subtipoId').setValue(null);
         this._changeDetectorRef.markForCheck();
+    }
+
+    private actualizarSubtiposDisponibles(): void {
+        const conceptoId = this.expenseForm.get('conceptoId').value;
+        const tipoMovimiento = this.expenseForm.get('tipoMovimiento').value;
+
+        if (!this.todosLosSubtipos?.length) {
+            this.subtiposFiltrados = [];
+            return;
+        }
+
+        const subtiposBase = this.todosLosSubtipos.filter(s => {
+            if (s.conceptoId === 0) {
+                return false;
+            }
+
+            if (conceptoId == null || conceptoId === '' || conceptoId === 0) {
+                return true;
+            }
+            return s.conceptoId === conceptoId;
+        });
+
+        let subtiposDisponibles = [...subtiposBase];
+
+        if (this._esIngreso(tipoMovimiento)) {
+            const extras = this.todosLosSubtipos.filter(s => s.conceptoId === 0);
+
+            extras.forEach(extra => {
+                const yaExiste = subtiposDisponibles.some(s =>
+                    s.subtipoId === extra.subtipoId ||
+                    (s.nombre || '').trim().toUpperCase() === (extra.nombre || '').trim().toUpperCase()
+                );
+
+                if (!yaExiste) {
+                    subtiposDisponibles.push(extra);
+                }
+            });
+        }
+
+        this.subtiposFiltrados = subtiposDisponibles;
+
+        const subtipoActual = this.expenseForm.get('subtipoId').value;
+        if (subtipoActual != null && !subtiposDisponibles.some(s => s.subtipoId === subtipoActual)) {
+            this.expenseForm.get('subtipoId').setValue(null, { emitEvent: false });
+        }
+
+        this._changeDetectorRef.markForCheck();
+    }
+
+    private _esIngreso(tipoMovimiento: any): boolean {
+        if (tipoMovimiento == null || tipoMovimiento === '') {
+            return false;
+        }
+
+        if (typeof tipoMovimiento === 'string') {
+            return tipoMovimiento.trim() === '1';
+        }
+
+        return Number(tipoMovimiento) === 1;
     }
 
     onCuentaChange(cuentaId: number): void {

@@ -15,7 +15,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MatSidenavModule, MatDrawer } from '@angular/material/sidenav';
 import { MatDividerModule } from '@angular/material/divider';
-import { Subject, takeUntil, map, startWith, forkJoin, debounceTime, switchMap, catchError, of } from 'rxjs';
+import { Subject, takeUntil, map, startWith, forkJoin, debounceTime, switchMap, catchError, of, merge } from 'rxjs';
 import { ExpensesService } from '../expenses.service';
 import { Expense, ExpenseCatalogs, GastoSubtipo } from '../models/expenses.types';
 import { ExpensesExcelService } from '../expenses-excel.service';
@@ -378,14 +378,11 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         // 🔹 CADENA DE DESBLOQUEO SECUENCIAL (Selects) - ELIMINADA
         // Todos los campos permanecen habilitados por defecto
 
-        // Solo mantenemos la lógica de filtrado de subtipos por concepto para que el select sea útil
-        this.rowForm.get('conceptoId').valueChanges.pipe(takeUntil(this._unsubscribeAll)).subscribe(val => {
-            if (val != null) {
-                this.subtiposFiltrados = this.catalogs?.subtipos?.filter(s => s.conceptoId == val) || [];
-            } else {
-                this.subtiposFiltrados = this.catalogs?.subtipos || [];
-            }
-            this._changeDetectorRef.detectChanges();
+        merge(
+            this.rowForm.get('conceptoId').valueChanges,
+            this.rowForm.get('tipoMovimiento').valueChanges
+        ).pipe(takeUntil(this._unsubscribeAll)).subscribe(() => {
+            this.actualizarSubtiposDisponibles();
         });
 
         // 🔹 Cuenta -> Numero de Cuenta (Cascada)
@@ -444,6 +441,65 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
             this.filteredFoliosUUID = res;
             this._changeDetectorRef.markForCheck();
         });
+    }
+
+    private actualizarSubtiposDisponibles(): void {
+        const conceptoId = this.rowForm.get('conceptoId').value;
+        const tipoMovimiento = this.rowForm.get('tipoMovimiento').value;
+
+        if (!this.catalogs?.subtipos?.length) {
+            this.subtiposFiltrados = [];
+            return;
+        }
+
+        const subtiposBase = this.catalogs.subtipos.filter(s => {
+            if (s.conceptoId === 0) {
+                return false;
+            }
+
+            if (conceptoId == null || conceptoId === '' || conceptoId === 0) {
+                return true;
+            }
+            return s.conceptoId === conceptoId;
+        });
+
+        let subtiposDisponibles = [...subtiposBase];
+
+        if (this._esIngreso(tipoMovimiento)) {
+            const extras = this.catalogs.subtipos.filter(s => s.conceptoId === 0);
+
+            extras.forEach(extra => {
+                const yaExiste = subtiposDisponibles.some(s =>
+                    s.subtipoId === extra.subtipoId ||
+                    (s.nombre || '').trim().toUpperCase() === (extra.nombre || '').trim().toUpperCase()
+                );
+
+                if (!yaExiste) {
+                    subtiposDisponibles.push(extra);
+                }
+            });
+        }
+
+        this.subtiposFiltrados = subtiposDisponibles;
+
+        const subtipoActual = this.rowForm.get('subtipoId').value;
+        if (subtipoActual != null && !subtiposDisponibles.some(s => s.subtipoId === subtipoActual)) {
+            this.rowForm.get('subtipoId').setValue(null, { emitEvent: false });
+        }
+
+        this._changeDetectorRef.detectChanges();
+    }
+
+    private _esIngreso(tipoMovimiento: any): boolean {
+        if (tipoMovimiento == null || tipoMovimiento === '') {
+            return false;
+        }
+
+        if (typeof tipoMovimiento === 'string') {
+            return tipoMovimiento.trim() === '1';
+        }
+
+        return Number(tipoMovimiento) === 1;
     }
 
     displayFolioFn(item: any): string {
@@ -575,11 +631,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
 
 
         this.rowForm.patchValue(expense);
-        if (expense.conceptoId != null) {
-            this.subtiposFiltrados = this.catalogs?.subtipos?.filter(s => s.conceptoId == expense.conceptoId) || [];
-        } else {
-            this.subtiposFiltrados = this.catalogs?.subtipos || [];
-        }
+        this.actualizarSubtiposDisponibles();
 
         // Cargar números de cuenta al editar
         if (expense.cuentaId) {
