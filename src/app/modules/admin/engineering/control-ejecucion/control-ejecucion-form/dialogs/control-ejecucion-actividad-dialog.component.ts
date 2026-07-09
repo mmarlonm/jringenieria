@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatNativeDateModule } from '@angular/material/core';
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { CdkDrag, CdkDragHandle, CdkDragEnd } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-control-ejecucion-actividad-dialog',
@@ -25,11 +26,17 @@ import { TextFieldModule } from '@angular/cdk/text-field';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    TextFieldModule
+    TextFieldModule,
+    CdkDrag,
+    CdkDragHandle
   ],
   template: `
-    <div class="flex flex-col max-w-160 min-w-80 overflow-hidden bg-card text-default">
-      <div class="flex items-center justify-between px-6 py-4 border-b">
+    <div class="flex flex-col max-w-160 min-w-80 overflow-hidden bg-card text-default"
+         cdkDrag
+         cdkDragRootElement=".cdk-overlay-pane"
+         [cdkDragFreeDragPosition]="dragPosition"
+         (cdkDragEnded)="onDragEnded($event)">
+      <div class="flex items-center justify-between px-6 py-4 border-b cursor-move select-none" cdkDragHandle>
         <h2 class="text-lg font-bold">
           {{ data.isEdit ? 'Editar' : 'Nueva' }} 
           {{ data.type === 'maestra' ? 'Actividad Maestra' : 'Subactividad' }}
@@ -182,6 +189,11 @@ import { TextFieldModule } from '@angular/cdk/text-field';
   `]
 })
 export class ControlEjecucionActividadDialogComponent implements OnInit {
+  private static readonly POSITION_STORAGE_KEY = 'ce-actividad-dialog-position';
+
+  /** Posición libre del modal, restaurada desde localStorage si existe. */
+  dragPosition: { x: number; y: number } = { x: 0, y: 0 };
+
   form: FormGroup;
   colors = [
     { label: 'Azul', value: 'Azul', hex: '#3b82f6' },
@@ -219,6 +231,41 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
       color: ['Azul'],
       equipoEspecial: ['']
     });
+
+    this.dragPosition = this._loadPosition();
+  }
+
+  /** Guarda la posición del modal cada vez que el usuario termina de arrastrarlo. */
+  onDragEnded(event: CdkDragEnd): void {
+    const pos = event.source.getFreeDragPosition();
+    this.dragPosition = { x: pos.x, y: pos.y };
+    this._savePosition(this.dragPosition);
+  }
+
+  private _loadPosition(): { x: number; y: number } {
+    try {
+      const raw = localStorage.getItem(ControlEjecucionActividadDialogComponent.POSITION_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
+          return { x: parsed.x, y: parsed.y };
+        }
+      }
+    } catch {
+      // Ignorar valores corruptos y usar la posición por defecto (centrado).
+    }
+    return { x: 0, y: 0 };
+  }
+
+  private _savePosition(pos: { x: number; y: number }): void {
+    try {
+      localStorage.setItem(
+        ControlEjecucionActividadDialogComponent.POSITION_STORAGE_KEY,
+        JSON.stringify(pos)
+      );
+    } catch {
+      // Almacenamiento no disponible (modo privado / cuota); se ignora.
+    }
   }
 
   ngOnInit(): void {
