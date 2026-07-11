@@ -33,6 +33,9 @@ import { es } from 'date-fns/locale';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag } from '@angular/cdk/drag-drop';
 
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
 @Component({
   selector: 'app-control-ejecucion-form',
   standalone: true,
@@ -50,7 +53,9 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
     MatSelectModule,
     MatTabsModule,
     MatTooltipModule,
-    DragDropModule
+    DragDropModule,
+    MatMenuModule,
+    MatCheckboxModule
   ],
   templateUrl: './control-ejecucion-form.component.html',
   styles: [`
@@ -75,7 +80,7 @@ import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDra
     .btn-float {
         position: fixed !important;
         bottom: 12px !important;
-        right: 480px !important;
+        right: 80px !important;
     }
 
     /* CDK Drag & Drop premium styles */
@@ -169,6 +174,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   leftPanelWidthPercent: number = 60;
   isGanttFullscreen: boolean = false;
   selectedTabIndex: number = 0;
+  visibleColumnIds: string[] = [];
 
   defaultColumns: Array<{ id: string; label: string; width: number; order?: number }> = [
     { id: 'nombre', label: 'Actividad / Subactividad', width: 220 },
@@ -179,6 +185,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     { id: 'fin', label: 'Fin', width: 85 },
     { id: 'dias', label: 'Días', width: 60 },
     { id: 'predecesora', label: 'Predecesora', width: 110 },
+    { id: 'equipoEspecial', label: 'Equipo Especial / Herramienta', width: 150 },
     { id: 'prioridad', label: 'Prioridad', width: 70 },
     { id: 'estatus', label: 'Estatus', width: 90 },
     { id: 'color', label: 'Color', width: 50 },
@@ -224,6 +231,19 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     if (savedTab) {
       this.selectedTabIndex = Number(savedTab);
     }
+    
+    // Cargar visibilidad de columnas
+    const savedVis = localStorage.getItem('gantt_visible_columns_seguimiento');
+    if (savedVis) {
+      try {
+        this.visibleColumnIds = JSON.parse(savedVis);
+      } catch (e) {
+        this.visibleColumnIds = this.defaultColumns.map(c => c.id);
+      }
+    } else {
+      this.visibleColumnIds = this.defaultColumns.map(c => c.id);
+    }
+
     this.initForm();
     this.initColumns();
     
@@ -264,36 +284,66 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   // ⚙️ COLUMNS LAYOUT CONFIG
   // ==========================================
   initColumns(): void {
+    let baseCols = [...this.defaultColumns];
     const cached = localStorage.getItem('gantt_columns_config_seguimiento');
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const merged = this.defaultColumns.map(defCol => {
+          baseCols = this.defaultColumns.map(defCol => {
             const found = parsed.find(p => p.id === defCol.id);
             return found ? { ...defCol, width: found.width, order: found.order } : defCol;
-          });
-          this.columns = merged.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-          return;
+          }).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         }
       } catch (e) {
         console.warn('Error al parsear columnas del Gantt:', e);
       }
+    } else {
+      baseCols = this.defaultColumns.map((c, idx) => ({ ...c, order: idx }));
     }
-    this.columns = this.defaultColumns.map((c, idx) => ({ ...c, order: idx }));
+    
+    // Filtrar columnas visibles
+    this.columns = baseCols.filter(c => this.visibleColumnIds.includes(c.id));
   }
 
   saveColumnsConfig(): void {
-    const config = this.columns.map((c, idx) => ({
-      id: c.id,
-      width: c.width,
-      order: idx
-    }));
-    localStorage.setItem('gantt_columns_config_seguimiento', JSON.stringify(config));
+    // Para guardar el ancho/orden sin perder las columnas ocultas, guardamos la configuración de todas
+    const configToSave = this.defaultColumns.map((defCol, idx) => {
+      const activeCol = this.columns.find(c => c.id === defCol.id);
+      return {
+        id: defCol.id,
+        width: activeCol ? activeCol.width : defCol.width,
+        order: activeCol ? this.columns.indexOf(activeCol) : idx
+      };
+    });
+    localStorage.setItem('gantt_columns_config_seguimiento', JSON.stringify(configToSave));
   }
 
-  onColumnReordered(event: CdkDragDrop<any[]>): void {
-    moveItemInArray(this.columns, event.previousIndex, event.currentIndex);
+  toggleColumnVisibility(id: string): void {
+    const idx = this.visibleColumnIds.indexOf(id);
+    if (idx !== -1) {
+      if (this.visibleColumnIds.length > 1) { // Al menos una columna debe estar visible
+        this.visibleColumnIds.splice(idx, 1);
+      }
+    } else {
+      this.visibleColumnIds.push(id);
+    }
+    localStorage.setItem('gantt_visible_columns_seguimiento', JSON.stringify(this.visibleColumnIds));
+    this.initColumns();
+    this._cdr.markForCheck();
+  }
+
+  isColumnVisible(id: string): boolean {
+    return this.visibleColumnIds.includes(id);
+  }
+
+  onColumnReordered(event: any): void {
+    // Reordenar columnas visibles
+    const prevIndex = event.previousIndex;
+    const currentIndex = event.currentIndex;
+    const item = this.columns[prevIndex];
+    this.columns.splice(prevIndex, 1);
+    this.columns.splice(currentIndex, 0, item);
     this.saveColumnsConfig();
     this._cdr.markForCheck();
   }
@@ -329,10 +379,10 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         this.dayWidth = 44;
         break;
       case 'week':
-        this.dayWidth = 14;
+        this.dayWidth = 90; // Ancho para la columna de semana entera
         break;
       case 'month':
-        this.dayWidth = 5;
+        this.dayWidth = 140; // Ancho para la columna del mes entero
         break;
     }
     this.adjustTimelineRange();
@@ -493,6 +543,38 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error(err);
         Swal.fire('Error', 'No se pudo descargar el archivo de Orden de Compra.', 'error');
+      }
+    });
+  }
+
+  previsualizarArchivoOC(): void {
+    if (!this.ocFileName) return;
+    this._engineeringService.descargarArchivoOC(this.idSeguimiento).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          const byteCharacters = atob(res.data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: res.contentType });
+          const fileURL = URL.createObjectURL(blob);
+          
+          const isPdf = this.ocFileName.toLowerCase().endsWith('.pdf');
+
+          this._dialog.open(ImagePreviewDialogComponent, {
+            data: {
+              url: fileURL,
+              name: this.ocFileName,
+              isPdf: isPdf
+            }
+          });
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        Swal.fire('Error', 'No se pudo previsualizar el archivo de Orden de Compra.', 'error');
       }
     });
   }
@@ -676,8 +758,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this._engineeringService.getGanttTareas(this.idSeguimiento).subscribe({
       next: (res) => {
         this.tasks = res || [];
-        // Por defecto expandir las actividades cargadas
-        this.tasks.forEach(t => t.expanded = t.expanded !== false);
+        // Por defecto colapsar las actividades
+        this.tasks.forEach(t => t.expanded = false);
         this.updatePredecesorasList();
         this.updateVisibleRows();
         this.adjustTimelineRange();
@@ -708,8 +790,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     const rows: any[] = [];
     this.tasks.forEach((t) => {
       rows.push({ type: 'task', task: t });
-      if (t.expanded !== false) {
-        t.expanded = true;
+      if (t.expanded === true) {
         if (t.actividades && t.actividades.length > 0) {
           t.actividades.forEach((act) => {
             rows.push({ type: 'activity', task: t, activity: act });
@@ -737,10 +818,33 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       this.endDate = addDays(this.startDate, 60);
     }
 
-    this.days = eachDayOfInterval({
-      start: this.startDate,
-      end: this.endDate
-    });
+    const intervalStart = this.startDate;
+    const intervalEnd = this.endDate;
+
+    if (this.timeScale === 'day') {
+      this.days = eachDayOfInterval({
+        start: intervalStart,
+        end: intervalEnd
+      });
+    } else if (this.timeScale === 'week') {
+      // Generar fechas cada lunes
+      const tempDays: Date[] = [];
+      let current = new Date(intervalStart);
+      while (current <= intervalEnd) {
+        tempDays.push(new Date(current));
+        current = addDays(current, 7);
+      }
+      this.days = tempDays;
+    } else {
+      // Generar fechas cada primero de mes
+      const tempDays: Date[] = [];
+      let current = startOfMonth(new Date(intervalStart));
+      while (current <= intervalEnd) {
+        tempDays.push(new Date(current));
+        current = startOfMonth(addDays(endOfMonth(current), 1));
+      }
+      this.days = tempDays;
+    }
 
     this.timelineWidth = this.days.length * this.dayWidth;
     this.calculateTodayMarker();
@@ -752,7 +856,6 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       if (t.actividades) {
         t.actividades.forEach((act) => allActivities.push(act));
       }
-      // También incluir la tarea maestra si tiene fechas
       if (t.fechaInicio) allActivities.push(t);
     });
 
@@ -782,11 +885,21 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this._cdr.detectChanges();
   }
 
+  getXPosition(date: Date | string): number {
+    const d = new Date(date);
+    if (d < this.startDate) return 0;
+    if (d > this.endDate) return this.timelineWidth;
+
+    const totalDays = differenceInDays(this.endDate, this.startDate) || 1;
+    const currentDays = differenceInDays(d, this.startDate);
+
+    return (currentDays / totalDays) * this.timelineWidth;
+  }
+
   calculateTodayMarker(): void {
     const today = startOfDay(new Date());
     if (today >= this.startDate && today <= this.endDate) {
-      const diff = differenceInDays(today, this.startDate);
-      this.todayPosition = diff * this.dayWidth;
+      this.todayPosition = this.getXPosition(today);
       this.showTodayMarker = true;
     } else {
       this.showTodayMarker = false;
@@ -806,42 +919,14 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this._scrollAttemptCount = 0;
     let targetPos = 0;
 
-    let allActivities: any[] = [];
-    this.tasks.forEach((t) => {
-      if (t.actividades) {
-        t.actividades.forEach((a) => allActivities.push(a));
-      }
-      if (t.fechaInicio) {
-        allActivities.push(t);
-      }
-    });
-
-    if (allActivities.length > 0) {
-      let minTime = new Date(allActivities[0].fechaInicio).getTime();
-      let maxTime = new Date(allActivities[0].fechaFin).getTime();
-
-      allActivities.forEach((act) => {
-        const start = new Date(act.fechaInicio).getTime();
-        const end = new Date(act.fechaFin).getTime();
-        if (start < minTime) minTime = start;
-        if (end > maxTime) maxTime = end;
-      });
-
-      const midTime = minTime + (maxTime - minTime) / 2;
-      const midDate = new Date(midTime);
-
-      const diff = differenceInDays(startOfDay(midDate), this.startDate);
-      const midPixelPosition = diff * this.dayWidth;
-      
-      targetPos = midPixelPosition - (element.clientWidth / 2);
-    } else if (this.showTodayMarker) {
-      targetPos = this.todayPosition - (element.clientWidth / 2);
+    if (this.showTodayMarker) {
+      targetPos = this.todayPosition;
     } else {
-      targetPos = 0;
+      targetPos = this.timelineWidth / 2;
     }
 
     element.scrollTo({
-      left: Math.max(0, targetPos),
+      left: Math.max(0, targetPos - element.clientWidth / 3),
       behavior: 'smooth'
     });
   }
@@ -956,25 +1041,20 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       start = startOfDay(dates.start);
       end = startOfDay(dates.end);
     } else {
+      if (!row.activity.fechaInicio || !row.activity.fechaFin) return { display: 'none' };
       start = startOfDay(new Date(row.activity.fechaInicio));
       end = startOfDay(new Date(row.activity.fechaFin));
     }
 
-    let leftDays = differenceInDays(start, this.startDate);
-    let durationDays = differenceInDays(end, start) + 1;
-
-    if (leftDays < 0) {
-      durationDays += leftDays;
-      leftDays = 0;
-    }
-
-    if (durationDays < 0.5) return { display: 'none' };
+    const leftX = this.getXPosition(start);
+    const rightX = this.getXPosition(end);
+    const widthX = Math.max(12, rightX - leftX + (this.timeScale === 'day' ? this.dayWidth : (this.timelineWidth / (differenceInDays(this.endDate, this.startDate) || 1))));
 
     const colorHex = this.getColorHex(row);
 
     return {
-      'left': (leftDays * this.dayWidth) + 'px',
-      'width': (durationDays * this.dayWidth) + 'px',
+      'left': leftX + 'px',
+      'width': widthX + 'px',
       'background-color': row.type === 'task' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.95)',
       'border': `1.5px solid ${colorHex}`,
       'border-left-width': row.type === 'task' ? '4px' : '1.5px',

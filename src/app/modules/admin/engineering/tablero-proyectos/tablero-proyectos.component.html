@@ -6,10 +6,10 @@
             <div class="flex-auto min-w-0">
                 <div class="flex items-center gap-3">
                     <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 italic">
-                        Seguimiento de Proyectos
+                        Seguimiento de Cotizaciones
                     </div>
                     <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
-                        {{ dataSource.data.length }} proyectos
+                        {{ dataSource.data.length }} cotizaciones
                     </span>
                 </div>
 
@@ -148,7 +148,7 @@
                     <!-- Levantamiento -->
                     <ng-container matColumnDef="levantamiento">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Levantamiento</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="levMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center" [ngClass]="s.estatusAprobacion === 2 ? 'opacity-85' : 'cursor-pointer'" [matMenuTriggerFor]="s.estatusAprobacion === 2 ? null : levMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-28"
                                 [ngClass]="getLevantamientoColorClass(s.estatusLevantamiento)">
                                 {{ getLevantamientoName(s.estatusLevantamiento) }}
@@ -175,7 +175,7 @@
                     <!-- Cotizacion -->
                     <ng-container matColumnDef="cotizacion">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Cotización</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="cotMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center" [ngClass]="s.estatusAprobacion === 2 ? 'opacity-85' : 'cursor-pointer'" [matMenuTriggerFor]="s.estatusAprobacion === 2 ? null : cotMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-28"
                                 [ngClass]="getLevantamientoColorClass(s.estatusCotizacion)">
                                 {{ getLevantamientoName(s.estatusCotizacion) }}
@@ -202,7 +202,7 @@
                     <!-- Aprobado -->
                     <ng-container matColumnDef="aprobado">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Aprobado</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="aprobMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center animate-pulse" [ngClass]="s.estatusAprobacion === 2 ? 'opacity-90' : 'cursor-pointer'" [matMenuTriggerFor]="s.estatusAprobacion === 2 ? null : aprobMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-28"
                                 [ngClass]="getAprobacionColorClass(s.estatusAprobacion)">
                                 {{ getAprobacionName(s.estatusAprobacion) }}
@@ -236,10 +236,10 @@
                                 <button mat-icon-button class="text-amber-500 hover:bg-amber-50 transition-colors" (click)="verArchivos(s)" matTooltip="Ver/Subir Archivos (Levantamiento y Cotización)">
                                     <mat-icon class="icon-size-5">folder</mat-icon>
                                 </button>
-                                <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors" (click)="editarSeguimiento(s)" matTooltip="Editar">
-                                    <mat-icon class="icon-size-5">edit</mat-icon>
+                                <button mat-icon-button [ngClass]="s.estatusAprobacion === 2 ? 'text-teal-500 hover:bg-teal-50' : 'text-indigo-500 hover:bg-indigo-50' + ' transition-colors'" (click)="editarSeguimiento(s)" [matTooltip]="s.estatusAprobacion === 2 ? 'Ver Detalles (Solo Lectura)' : 'Editar'">
+                                    <mat-icon class="icon-size-5">{{ s.estatusAprobacion === 2 ? 'visibility' : 'edit' }}</mat-icon>
                                 </button>
-                                <button mat-icon-button class="text-rose-500 hover:bg-rose-50 transition-colors" (click)="eliminarSeguimiento(s.idSeguimiento)" matTooltip="Eliminar">
+                                <button mat-icon-button class="text-rose-500 hover:bg-rose-50 transition-colors disabled:opacity-30 disabled:hover:bg-transparent" (click)="eliminarSeguimiento(s.idSeguimiento)" [disabled]="s.estatusAprobacion === 2" [matTooltip]="s.estatusAprobacion === 2 ? 'No se puede eliminar un proyecto aprobado' : 'Eliminar'">
                                     <mat-icon class="icon-size-5">delete</mat-icon>
                                 </button>
                             </div>

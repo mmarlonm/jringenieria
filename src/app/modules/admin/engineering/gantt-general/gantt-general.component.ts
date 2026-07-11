@@ -18,6 +18,8 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-gantt-general',
@@ -27,7 +29,9 @@ import { fromEvent, Subject, takeUntil } from 'rxjs';
     RouterModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatMenuModule,
+    MatCheckboxModule
   ],
   templateUrl: './gantt-general.component.html',
   styles: [`
@@ -59,8 +63,27 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
   private _unsubscribeAll: Subject<any> = new Subject<any>();
   private _scrollAttemptCount: number = 0;
 
+  timeScale: 'day' | 'week' | 'month' = 'day';
+  visibleColumnIds: string[] = [];
+  defaultColumns = [
+    { id: 'nombre', label: 'Proyecto / Actividad / Subactividad', width: 280 },
+    { id: 'responsable', label: 'Responsable', width: 120 },
+    { id: 'area', label: 'Área / Empresa', width: 120 },
+    { id: 'progreso', label: 'Progreso', width: 70 },
+    { id: 'inicio', label: 'Inicio', width: 85 },
+    { id: 'fin', label: 'Fin', width: 85 },
+    { id: 'dias', label: 'Días', width: 60 },
+    { id: 'predecesora', label: 'Predecesora', width: 110 },
+    { id: 'equipoEspecial', label: 'Equipo Especial / Herramienta', width: 150 },
+    { id: 'prioridad', label: 'Prioridad', width: 70 },
+    { id: 'estatus', label: 'Estatus', width: 90 },
+    { id: 'color', label: 'Color', width: 50 },
+    { id: 'acciones', label: 'Acciones', width: 90 }
+  ];
+
   projects: any[] = [];
   visibleRows: any[] = [];
+  leftPanelWidthPercent: number = 60;
   
   days: Date[] = [];
   startDate: Date = startOfMonth(new Date());
@@ -78,6 +101,23 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    // Cargar visibilidad de columnas
+    const savedVis = localStorage.getItem('gantt_visible_columns_general');
+    if (savedVis) {
+      try {
+        this.visibleColumnIds = JSON.parse(savedVis);
+      } catch (e) {
+        this.visibleColumnIds = this.defaultColumns.map(c => c.id);
+      }
+    } else {
+      this.visibleColumnIds = this.defaultColumns.map(c => c.id);
+    }
+
+    const savedWidth = localStorage.getItem('gantt_general_left_panel_width_percent');
+    if (savedWidth) {
+      this.leftPanelWidthPercent = Number(savedWidth);
+    }
+
     this.loadData();
 
     // Centrar al redimensionar
@@ -97,18 +137,90 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
     setTimeout(() => this.scrollToTarget(), 1000);
   }
 
+  // ==========================================
+  // ⚙️ COLUMNS LAYOUT CONFIG
+  // ==========================================
+  toggleColumnVisibility(id: string): void {
+    const idx = this.visibleColumnIds.indexOf(id);
+    if (idx !== -1) {
+      if (this.visibleColumnIds.length > 1) { // Al menos una columna visible
+        this.visibleColumnIds.splice(idx, 1);
+      }
+    } else {
+      this.visibleColumnIds.push(id);
+    }
+    localStorage.setItem('gantt_visible_columns_general', JSON.stringify(this.visibleColumnIds));
+    this._cdr.markForCheck();
+  }
+
+  isColumnVisible(id: string): boolean {
+    return this.visibleColumnIds.includes(id);
+  }
+
+  getLeftTableWidth(): number {
+    return this.defaultColumns
+      .filter(c => this.visibleColumnIds.includes(c.id))
+      .reduce((sum, c) => sum + c.width, 0);
+  }
+
+  onGanttSplitterResizeStart(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const startX = event.clientX;
+    const startPercent = this.leftPanelWidthPercent;
+    
+    const splitter = event.target as HTMLElement;
+    const parentContainer = splitter.parentElement;
+    const containerWidth = parentContainer ? parentContainer.offsetWidth : window.innerWidth;
+    
+    const mouseMoveSub = fromEvent<MouseEvent>(document, 'mousemove').subscribe(moveEv => {
+      const currentX = moveEv.clientX;
+      const diffX = currentX - startX;
+      const diffPercent = (diffX / containerWidth) * 100;
+      this.leftPanelWidthPercent = Math.min(85, Math.max(15, startPercent + diffPercent));
+      this._cdr.markForCheck();
+    });
+    
+    const mouseUpSub = fromEvent<MouseEvent>(document, 'mouseup').subscribe(() => {
+      mouseMoveSub.unsubscribe();
+      mouseUpSub.unsubscribe();
+      localStorage.setItem('gantt_general_left_panel_width_percent', String(this.leftPanelWidthPercent));
+    });
+  }
+
+  // ==========================================
+  // 📅 TIME SCALES & FILTERS
+  // ==========================================
+  changeTimeScale(scale: 'day' | 'week' | 'month'): void {
+    this.timeScale = scale;
+    switch (scale) {
+      case 'day':
+        this.dayWidth = 44;
+        break;
+      case 'week':
+        this.dayWidth = 90; // Ancho por columna de semana
+        break;
+      case 'month':
+        this.dayWidth = 140; // Ancho por columna de mes
+        break;
+    }
+    this.adjustTimelineRange();
+    this._cdr.markForCheck();
+  }
+
   loadData(): void {
     this.isLoading = true;
     this._engineeringService.getGanttGeneral().subscribe({
       next: (res) => {
         this.projects = res || [];
         
-        // Inicializar expansiones por defecto
+        // Por defecto colapsar todo
         this.projects.forEach((p) => {
-          p.expanded = p.expanded !== false;
+          p.expanded = false;
           if (p.actividadesMaestras) {
             p.actividadesMaestras.forEach((m: any) => {
-              m.expanded = m.expanded !== false;
+              m.expanded = false;
             });
           }
         });
@@ -130,11 +242,11 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
     const rows: any[] = [];
     this.projects.forEach((p) => {
       rows.push({ type: 'project', project: p });
-      if (p.expanded !== false) {
+      if (p.expanded === true) {
         if (p.actividadesMaestras) {
           p.actividadesMaestras.forEach((m: any) => {
             rows.push({ type: 'maestra', project: p, maestra: m });
-            if (m.expanded !== false) {
+            if (m.expanded === true) {
               if (m.actividades) {
                 m.actividades.forEach((act: any) => {
                   rows.push({ type: 'subactividad', project: p, maestra: m, subactividad: act });
@@ -168,10 +280,33 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
       this.endDate = addDays(this.startDate, 60);
     }
 
-    this.days = eachDayOfInterval({
-      start: this.startDate,
-      end: this.endDate
-    });
+    const intervalStart = this.startDate;
+    const intervalEnd = this.endDate;
+
+    if (this.timeScale === 'day') {
+      this.days = eachDayOfInterval({
+        start: intervalStart,
+        end: intervalEnd
+      });
+    } else if (this.timeScale === 'week') {
+      // Generar fechas cada lunes
+      const tempDays: Date[] = [];
+      let current = new Date(intervalStart);
+      while (current <= intervalEnd) {
+        tempDays.push(new Date(current));
+        current = addDays(current, 7);
+      }
+      this.days = tempDays;
+    } else {
+      // Generar fechas cada primero de mes
+      const tempDays: Date[] = [];
+      let current = startOfMonth(new Date(intervalStart));
+      while (current <= intervalEnd) {
+        tempDays.push(new Date(current));
+        current = startOfMonth(addDays(endOfMonth(current), 1));
+      }
+      this.days = tempDays;
+    }
 
     this.timelineWidth = this.days.length * this.dayWidth;
     this.calculateTodayMarker();
@@ -226,8 +361,7 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
   calculateTodayMarker(): void {
     const today = startOfDay(new Date());
     if (today >= this.startDate && today <= this.endDate) {
-      const diff = differenceInDays(today, this.startDate);
-      this.todayPosition = diff * this.dayWidth;
+      this.todayPosition = this.getXPosition(today);
       this.showTodayMarker = true;
     } else {
       this.showTodayMarker = false;
@@ -249,6 +383,8 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (this.showTodayMarker) {
       targetPos = this.todayPosition;
+    } else {
+      targetPos = this.timelineWidth / 2;
     }
 
     element.scrollTo({
@@ -264,6 +400,17 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
         target.scrollTop = source.scrollTop;
       }
     });
+  }
+
+  getXPosition(date: Date | string): number {
+    const d = new Date(date);
+    if (d < this.startDate) return 0;
+    if (d > this.endDate) return this.timelineWidth;
+
+    const totalDays = differenceInDays(this.endDate, this.startDate) || 1;
+    const currentDays = differenceInDays(d, this.startDate);
+
+    return (currentDays / totalDays) * this.timelineWidth;
   }
 
   // ==========================================
@@ -312,28 +459,24 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
       start = startOfDay(new Date(row.project.fechaInicioProyecto));
       end = startOfDay(new Date(row.project.fechaFinProyecto));
     } else if (row.type === 'maestra') {
+      if (!row.maestra.fechaInicio || !row.maestra.fechaFin) return { display: 'none' };
       start = startOfDay(new Date(row.maestra.fechaInicio));
       end = startOfDay(new Date(row.maestra.fechaFin));
     } else {
+      if (!row.subactividad.fechaInicio || !row.subactividad.fechaFin) return { display: 'none' };
       start = startOfDay(new Date(row.subactividad.fechaInicio));
       end = startOfDay(new Date(row.subactividad.fechaFin));
     }
 
-    let leftDays = differenceInDays(start, this.startDate);
-    let durationDays = differenceInDays(end, start) + 1;
-
-    if (leftDays < 0) {
-      durationDays += leftDays;
-      leftDays = 0;
-    }
-
-    if (durationDays < 0.5) return { display: 'none' };
+    const leftX = this.getXPosition(start);
+    const rightX = this.getXPosition(end);
+    const widthX = Math.max(12, rightX - leftX + (this.timeScale === 'day' ? this.dayWidth : (this.timelineWidth / (differenceInDays(this.endDate, this.startDate) || 1))));
 
     const colorHex = this.getColorHex(row);
 
     return {
-      'left': (leftDays * this.dayWidth) + 'px',
-      'width': (durationDays * this.dayWidth) + 'px',
+      'left': leftX + 'px',
+      'width': widthX + 'px',
       'background-color': row.type === 'project' 
         ? 'rgba(71, 85, 105, 0.05)' 
         : row.type === 'maestra' ? 'rgba(15, 23, 42, 0.03)' : 'rgba(255, 255, 255, 0.95)',

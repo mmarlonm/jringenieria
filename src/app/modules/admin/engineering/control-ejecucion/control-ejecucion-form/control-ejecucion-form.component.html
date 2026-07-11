@@ -125,19 +125,7 @@
                     </div>
                     <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Documentación Legal</span>
                   </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                      <mat-label>Contrato (Folio)</mat-label>
-                      <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">description</mat-icon>
-                      <input matInput formControlName="contratoFolio">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                      <mat-label>Fianza (Folio)</mat-label>
-                      <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">verified</mat-icon>
-                      <input matInput formControlName="fianzaFolio">
-                    </mat-form-field>
-
+                  <div class="grid grid-cols-1 gap-6">
                     <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
                       <mat-label>Orden de Compra (Folio)</mat-label>
                       <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">receipt</mat-icon>
@@ -165,7 +153,7 @@
 
       <!-- ng-template que contiene toda la estructura del Gantt -->
       <ng-template #ganttTemplate>
-        <div class="flex flex-col overflow-hidden w-full h-full bg-white">
+        <div class="flex flex-col overflow-hidden w-full bg-white" [ngClass]="isGanttFullscreen ? 'h-full' : 'h-[calc(100vh-270px)] min-h-[500px] border border-slate-100 rounded-2xl shadow-sm'">
 
           <!-- Gantt Header Controls -->
           <div
@@ -224,13 +212,24 @@
                 </button>
               </mat-form-field>
 
-              <button mat-flat-button color="primary" class="!rounded-xl shadow-md hover:shadow-lg transition-all"
-                (click)="openActividadDialog('maestra')">
-                <mat-icon class="mr-2">add</mat-icon>
-                Nueva Actividad Maestra
-              </button>
-            </div>
-          </div>
+               <button mat-stroked-button [matMenuTriggerFor]="columnMenu" class="!rounded-xl border-slate-200">
+                 <mat-icon class="mr-2 icon-size-4">view_column</mat-icon>
+                 Columnas
+               </button>
+               <mat-menu #columnMenu="matMenu" class="p-2">
+                 <div *ngFor="let col of defaultColumns" mat-menu-item (click)="$event.stopPropagation()" class="flex items-center gap-2">
+                   <mat-checkbox [checked]="isColumnVisible(col.id)" (change)="toggleColumnVisibility(col.id)"></mat-checkbox>
+                   <span class="text-xs font-semibold">{{ col.label }}</span>
+                 </div>
+               </mat-menu>
+
+               <button mat-flat-button color="primary" class="!rounded-xl shadow-md hover:shadow-lg transition-all"
+                 (click)="openActividadDialog('maestra')">
+                 <mat-icon class="mr-2">add</mat-icon>
+                 Nueva Actividad Maestra
+               </button>
+             </div>
+           </div>
 
           <!-- Gantt Main Surface -->
           <div class="flex-auto flex overflow-hidden">
@@ -274,7 +273,7 @@
 
                     <!-- Master Row -->
                     <div
-                      class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors bg-indigo-50/20 font-bold text-slate-800 relative group">
+                      class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors bg-indigo-50/30 text-indigo-900 font-extrabold relative group">
                       <!-- Drag Handle for Master Activity -->
                       <div cdkDragHandle
                         class="w-6 h-6 flex items-center justify-center cursor-move text-slate-400 hover:text-indigo-600 transition-colors mr-1 shrink-0">
@@ -290,13 +289,14 @@
                             <ng-container *ngSwitchCase="'nombre'">
                               <div class="flex items-center gap-1 truncate w-full pl-2">
                                 <button mat-icon-button (click)="toggleTask(task); $event.stopPropagation()"
-                                  class="w-6 h-6 min-h-6 p-0 text-slate-500 shrink-0">
-                                  <mat-icon class="icon-size-4">{{ task.expanded !== false ? 'expand_more' :
+                                  class="w-6 h-6 min-h-6 p-0 text-indigo-600 shrink-0">
+                                  <mat-icon class="icon-size-4">{{ task.expanded === true ? 'expand_more' :
                                     'chevron_right' }}</mat-icon>
                                 </button>
-                                <span class="truncate" [title]="task.nombre">{{ task.nombre }}</span>
+                                <span class="truncate font-black text-indigo-950 tracking-wide uppercase text-[11px]" [title]="task.nombre">{{ task.nombre }}</span>
                               </div>
                             </ng-container>
+                                                      <!-- ... other switches kept intact ... -->
 
                             <!-- Responsable -->
                             <ng-container *ngSwitchCase="'responsable'">
@@ -336,6 +336,12 @@
                             <ng-container *ngSwitchCase="'predecesora'">
                               <span class="truncate pr-2" [title]="getPredecesoraName({type: 'task', task: task})">{{
                                 getPredecesoraName({type: 'task', task: task}) }}</span>
+                            </ng-container>
+
+                            <!-- Equipo Especial -->
+                            <ng-container *ngSwitchCase="'equipoEspecial'">
+                              <span class="truncate pr-2 text-slate-500 font-medium" [title]="task.equipoEspecial || ''">{{
+                                task.equipoEspecial || '-' }}</span>
                             </ng-container>
 
                             <!-- Prioridad -->
@@ -415,7 +421,7 @@
                               <!-- Subactivity Name -->
                               <ng-container *ngSwitchCase="'nombre'">
                                 <div class="flex items-center gap-1 truncate w-full pl-8">
-                                  <span class="truncate" [title]="sub.nombre">{{ sub.nombre }}</span>
+                                  <span class="truncate font-semibold text-slate-700 text-xs" [title]="sub.nombre">{{ sub.nombre }}</span>
                                 </div>
                               </ng-container>
 
@@ -458,6 +464,12 @@
                                 <span class="truncate pr-2"
                                   [title]="getPredecesoraName({type: 'activity', activity: sub})">{{
                                   getPredecesoraName({type: 'activity', activity: sub}) }}</span>
+                              </ng-container>
+
+                              <!-- Equipo Especial -->
+                              <ng-container *ngSwitchCase="'equipoEspecial'">
+                                <span class="truncate pr-2 text-slate-500 text-[11px]" [title]="sub.equipoEspecial || ''">{{
+                                  sub.equipoEspecial || '-' }}</span>
                               </ng-container>
 
                               <!-- Prioridad -->
@@ -538,20 +550,42 @@
 
             <!-- Right Panel: Canvas Timeline -->
             <div [style.width.%]="100 - leftPanelWidthPercent"
-              class="flex-auto overflow-x-auto overflow-y-auto custom-scrollbar bg-slate-50/50 relative shadow-inner"
+              class="flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 relative shadow-inner flex flex-col h-full"
               #horizontalTimeline>
               <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
 
-                <!-- Timeline Header: Days -->
+                <!-- Timeline Header: Scales -->
                 <div class="h-12 flex border-b bg-white/95 sticky top-0 z-10 shadow-sm">
-                  <div *ngFor="let day of days"
-                    class="flex-none w-11 border-r flex flex-col items-center justify-center transition-colors"
-                    [ngClass]="{'bg-primary/5': isToday(day), 'bg-slate-50/50': isWeekend(day)}">
-                    <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5"
-                      [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-400'">{{ formatDay(day) }}</span>
-                    <span class="text-xs font-black leading-none"
-                      [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-600'">{{ format(day, 'd') }}</span>
-                  </div>
+                  <ng-container *ngIf="timeScale === 'day'">
+                    <div *ngFor="let day of days"
+                      class="flex-none w-11 border-r flex flex-col items-center justify-center transition-colors"
+                      [style.width.px]="dayWidth"
+                      [ngClass]="{'bg-primary/5': isToday(day), 'bg-slate-50/50': isWeekend(day)}">
+                      <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5"
+                        [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-400'">{{ formatDay(day) }}</span>
+                      <span class="text-xs font-black leading-none"
+                        [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-600'">{{ format(day, 'd') }}</span>
+                    </div>
+                  </ng-container>
+                  
+                  <ng-container *ngIf="timeScale === 'week'">
+                    <div *ngFor="let day of days"
+                      class="flex-none border-r flex flex-col items-center justify-center transition-colors px-2"
+                      [style.width.px]="dayWidth"
+                      [ngClass]="{'bg-primary/5': isToday(day)}">
+                      <span class="text-[9px] uppercase font-bold text-slate-400 leading-none mb-0.5">Semana</span>
+                      <span class="text-xs font-black text-slate-700 leading-none">{{ format(day, 'w') }} ({{ format(day, 'dd/MM') }})</span>
+                    </div>
+                  </ng-container>
+
+                  <ng-container *ngIf="timeScale === 'month'">
+                    <div *ngFor="let day of days"
+                      class="flex-none border-r flex flex-col items-center justify-center transition-colors px-2"
+                      [style.width.px]="dayWidth"
+                      [ngClass]="{'bg-primary/5': isToday(day)}">
+                      <span class="text-xs font-black text-slate-700 leading-none">{{ format(day, 'MMM yyyy', { locale: es }) }}</span>
+                    </div>
+                  </ng-container>
                 </div>
 
                 <!-- Timeline Scroll Area -->
@@ -560,7 +594,8 @@
 
                   <!-- Background Grid Lines -->
                   <div class="absolute inset-0 flex pointer-events-none">
-                    <div *ngFor="let day of days" class="flex-none w-11 border-r border-slate-100/40"
+                    <div *ngFor="let day of days" class="flex-none border-r border-slate-100/40"
+                      [style.width.px]="dayWidth"
                       [ngClass]="{'bg-primary/2': isToday(day)}"></div>
                   </div>
 
@@ -769,6 +804,12 @@
                     <span class="text-xs text-slate-400 font-medium">Archivo adjunto guardado</span>
                   </div>
                   <div class="flex gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <!-- Preview -->
+                    <button mat-icon-button
+                      class="w-8 h-8 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 rounded-lg"
+                      (click)="previsualizarArchivoOC()" matTooltip="Ver">
+                      <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                    </button>
                     <!-- Download -->
                     <button mat-icon-button
                       class="w-8 h-8 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg"
@@ -813,7 +854,7 @@
 
 
   <!-- Botones Flotantes (btn-float) -->
-  <div class="flex justify-end gap-2 mb-4 px-4 sm:px-0 btn-float z-99">
+  <div class="flex justify-end gap-2 mb-4 px-6 md:px-8 btn-float z-99 mr-24">
     <a mat-raised-button color="warn" [routerLink]="['/engineering/control-ejecucion']">
       Cancelar
     </a>

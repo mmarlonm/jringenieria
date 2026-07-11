@@ -4,7 +4,7 @@
         <div class="flex items-center gap-2">
             <mat-icon class="text-primary text-3xl">engineering</mat-icon>
             <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 italic">
-                {{ isEdit ? 'Editar Seguimiento de Cotización' : 'Nuevo Seguimiento de Cotización' }}
+                {{ isReadOnly ? 'Ver Detalles de Cotización (Solo Lectura)' : (isEdit ? 'Editar Seguimiento de Cotización' : 'Nuevo Seguimiento de Cotización') }}
             </h2>
         </div>
         <button mat-icon-button (click)="onCancel()" type="button">
@@ -36,7 +36,7 @@
                             </mat-select>
                             <mat-error *ngIf="form.get('idSolicitante').hasError('required')">El solicitante es requerido</mat-error>
                         </mat-form-field>
-                        <button mat-icon-button type="button" color="primary" class="flex-shrink-0" (click)="agregarSolicitante()" matTooltip="Agregar nuevo solicitante">
+                        <button *ngIf="!isReadOnly" mat-icon-button type="button" color="primary" class="flex-shrink-0" (click)="agregarSolicitante()" matTooltip="Agregar nuevo solicitante">
                             <mat-icon>person_add</mat-icon>
                         </button>
                     </div>
@@ -138,9 +138,9 @@
         <!-- Actions -->
         <div class="flex items-center justify-end gap-3 pt-4 border-t bg-gray-50 dark:bg-transparent">
             <button mat-button type="button" (click)="onCancel()">
-                Cancelar
+                {{ isReadOnly ? 'Cerrar' : 'Cancelar' }}
             </button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+            <button *ngIf="!isReadOnly" mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
                 {{ isEdit ? 'Actualizar' : 'Guardar' }}
             </button>
         </div>

@@ -57,6 +57,8 @@ export class SeguimientoDialogComponent implements OnInit {
 
     tiposProyecto = ['CONSTRUCCION', 'MANTENIMIENTO', 'INSTALACION', 'PROYECTO ESPECIAL', 'OTRO'];
 
+    isReadOnly: boolean = false;
+
     constructor(
         private _fb: FormBuilder,
         private _dialog: MatDialog,
@@ -66,6 +68,7 @@ export class SeguimientoDialogComponent implements OnInit {
     ) { }
 
     agregarSolicitante(): void {
+        if (this.isReadOnly) return;
         const dialogRef = this._dialog.open(SolicitanteDialogComponent, {
             width: '100%',
             maxWidth: '500px',
@@ -102,6 +105,7 @@ export class SeguimientoDialogComponent implements OnInit {
 
     ngOnInit(): void {
         this.isEdit = !!this.data?.seguimiento;
+        this.isReadOnly = this.data?.seguimiento?.estatusAprobacion === 2;
 
         // Cargar solicitantes activos
         this._engineeringService.getSolicitantes().subscribe((solicitantes) => {
@@ -133,6 +137,10 @@ export class SeguimientoDialogComponent implements OnInit {
             quienRealizoLevantamiento: [this.data?.seguimiento?.quienRealizoLevantamiento || '', Validators.maxLength(500)],
             quienCotizo: [this.data?.seguimiento?.quienCotizo || '', Validators.maxLength(255)]
         });
+
+        if (this.isReadOnly) {
+            this.form.disable();
+        }
     }
 
     formatMonto(value: any): string {

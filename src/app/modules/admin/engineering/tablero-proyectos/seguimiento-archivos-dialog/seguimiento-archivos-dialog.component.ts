@@ -102,7 +102,8 @@ export class SeguimientoArchivosDialogComponent implements OnInit {
 
     categories = [
         { name: 'Levantamiento', label: 'Levantamiento Técnico', icon: 'engineering' },
-        { name: 'Cotizacion', label: 'Cotización / Propuesta', icon: 'assignment' }
+        { name: 'Cotizacion', label: 'Cotización / Propuesta', icon: 'assignment' },
+        { name: 'OrdenCompra', label: 'Orden de Compra (OC)', icon: 'receipt' }
     ];
 
     archivos: { nombreArchivo: string, tipo: string }[] = [];

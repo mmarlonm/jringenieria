@@ -140,7 +140,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         this._engineeringService.getSeguimientos(start, end).subscribe({
             next: (data) => {
                 this._calculateKPIs(data || []);
-                this.dataSource.data = (data || []).filter(x => x.estatusAprobacion !== 2);
+                this.dataSource.data = data || [];
             },
             error: (err) => {
                 console.error(err);

@@ -15,6 +15,40 @@
         </p>
       </div>
     </div>
+
+    <!-- Controles superiores -->
+    <div class="flex items-center gap-3">
+      <!-- scale selectors -->
+      <div class="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl flex items-center border">
+        <button type="button" mat-button class="!rounded-lg px-3 py-1 !min-w-0 text-xs font-semibold"
+          [ngClass]="timeScale === 'day' ? 'bg-white shadow text-slate-800' : 'text-slate-500'"
+          (click)="changeTimeScale('day')">
+          Día
+        </button>
+        <button type="button" mat-button class="!rounded-lg px-3 py-1 !min-w-0 text-xs font-semibold"
+          [ngClass]="timeScale === 'week' ? 'bg-white shadow text-slate-800' : 'text-slate-500'"
+          (click)="changeTimeScale('week')">
+          Semana
+        </button>
+        <button type="button" mat-button class="!rounded-lg px-3 py-1 !min-w-0 text-xs font-semibold"
+          [ngClass]="timeScale === 'month' ? 'bg-white shadow text-slate-800' : 'text-slate-500'"
+          (click)="changeTimeScale('month')">
+          Mes
+        </button>
+      </div>
+
+      <!-- Columns selector -->
+      <button mat-stroked-button [matMenuTriggerFor]="columnMenu" class="!rounded-xl border-slate-200">
+        <mat-icon class="mr-2 icon-size-4">view_column</mat-icon>
+        Columnas
+      </button>
+      <mat-menu #columnMenu="matMenu" class="p-2">
+        <div *ngFor="let col of defaultColumns" mat-menu-item (click)="$event.stopPropagation()" class="flex items-center gap-2">
+          <mat-checkbox [checked]="isColumnVisible(col.id)" (change)="toggleColumnVisibility(col.id)"></mat-checkbox>
+          <span class="text-xs font-semibold">{{ col.label }}</span>
+        </div>
+      </mat-menu>
+    </div>
   </div>
 
   <!-- Main Surface -->
@@ -41,99 +75,111 @@
     </div>
 
     <!-- Gantt Body -->
-    <div *ngIf="!isLoading && projects.length > 0" class="flex-auto flex overflow-hidden">
+    <div *ngIf="!isLoading && projects.length > 0" class="flex-auto flex overflow-hidden h-[calc(100vh-160px)] min-h-[500px]">
       
       <!-- Left Panel: Columns Table -->
-      <div class="w-[60%] flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden">
+      <div [style.width.%]="leftPanelWidthPercent" class="flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden">
         <div class="h-12 flex items-center px-4 border-b dark:border-slate-800 bg-slate-100/30 dark:bg-slate-800/30 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 sticky top-0 z-10">
-          <div class="flex w-full min-w-[1150px] items-center text-left">
-            <div class="w-[280px] shrink-0">Proyecto / Actividad / Subactividad</div>
-            <div class="w-[120px] shrink-0">Responsable</div>
-            <div class="w-[120px] shrink-0">Área / Empresa</div>
-            <div class="w-[70px] shrink-0 text-center">Progreso</div>
-            <div class="w-[85px] shrink-0 text-center">Inicio</div>
-            <div class="w-[85px] shrink-0 text-center">Fin</div>
-            <div class="w-[60px] shrink-0 text-center">Días</div>
-            <div class="w-[110px] shrink-0">Predecesora</div>
-            <div class="w-[70px] shrink-0 text-center">Prioridad</div>
-            <div class="w-[90px] shrink-0 text-center">Estatus</div>
-            <div class="w-[50px] shrink-0 text-center">Color</div>
-            <div class="w-[90px] shrink-0 text-center">Acciones</div>
+          <div class="flex w-full items-center text-left" [style.min-width.px]="getLeftTableWidth()">
+            <div *ngIf="isColumnVisible('nombre')" class="w-[280px] shrink-0">Proyecto / Actividad / Subactividad</div>
+            <div *ngIf="isColumnVisible('responsable')" class="w-[120px] shrink-0">Responsable</div>
+            <div *ngIf="isColumnVisible('area')" class="w-[120px] shrink-0">Área / Empresa</div>
+            <div *ngIf="isColumnVisible('progreso')" class="w-[70px] shrink-0 text-center">Progreso</div>
+            <div *ngIf="isColumnVisible('inicio')" class="w-[85px] shrink-0 text-center">Inicio</div>
+            <div *ngIf="isColumnVisible('fin')" class="w-[85px] shrink-0 text-center">Fin</div>
+            <div *ngIf="isColumnVisible('dias')" class="w-[60px] shrink-0 text-center">Días</div>
+            <div *ngIf="isColumnVisible('predecesora')" class="w-[110px] shrink-0">Predecesora</div>
+            <div *ngIf="isColumnVisible('equipoEspecial')" class="w-[150px] shrink-0">Equipo Especial / Herramienta</div>
+            <div *ngIf="isColumnVisible('prioridad')" class="w-[70px] shrink-0 text-center">Prioridad</div>
+            <div *ngIf="isColumnVisible('estatus')" class="w-[90px] shrink-0 text-center">Estatus</div>
+            <div *ngIf="isColumnVisible('color')" class="w-[50px] shrink-0 text-center">Color</div>
+            <div *ngIf="isColumnVisible('acciones')" class="w-[90px] shrink-0 text-center">Acciones</div>
           </div>
         </div>
 
         <div class="flex-auto overflow-y-auto overflow-x-auto custom-scrollbar" #sidebarScroll (scroll)="onScroll($event, timelineScroll)">
-          <div class="min-w-[1150px]">
+          <div [style.min-width.px]="getLeftTableWidth()">
             <div *ngFor="let row of visibleRows" class="h-14 flex items-center px-4 border-b dark:border-slate-800 hover:bg-slate-100/40 dark:hover:bg-slate-800/40 transition-colors"
               [ngClass]="{
-                'bg-slate-100/60 dark:bg-slate-800/60 font-extrabold text-slate-900 dark:text-slate-100 border-l-4 border-l-slate-500': row.type === 'project',
-                'bg-indigo-50/20 dark:bg-indigo-950/20 font-bold text-slate-800 dark:text-slate-200 pl-8': row.type === 'maestra',
-                'bg-white/40 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 pl-16': row.type === 'subactividad'
+                'bg-slate-100/60 dark:bg-slate-800/60 font-black text-slate-800 dark:text-slate-100 border-l-4 border-l-slate-600': row.type === 'project',
+                'bg-indigo-50/30 dark:bg-indigo-950/20 font-extrabold text-indigo-950 dark:text-slate-200 pl-8': row.type === 'maestra',
+                'bg-white/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300 pl-16 font-semibold': row.type === 'subactividad'
               }">
               <div class="flex w-full items-center text-left text-xs">
                 
                 <!-- Name / Toggle Expand -->
-                <div class="w-[280px] shrink-0 truncate flex items-center gap-1">
+                <div *ngIf="isColumnVisible('nombre')" class="w-[280px] shrink-0 truncate flex items-center gap-1">
                   <!-- Project Chevron toggle -->
-                  <button mat-icon-button *ngIf="row.type === 'project'" (click)="toggleProject(row.project); $event.stopPropagation()" class="w-6 h-6 min-h-6 p-0 text-slate-500">
-                    <mat-icon class="icon-size-4">{{ row.project.expanded !== false ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                  <button mat-icon-button *ngIf="row.type === 'project'" (click)="toggleProject(row.project); $event.stopPropagation()" class="w-6 h-6 min-h-6 p-0 text-slate-600">
+                    <mat-icon class="icon-size-4">{{ row.project.expanded === true ? 'expand_more' : 'chevron_right' }}</mat-icon>
                   </button>
                   
                   <!-- Maestra Chevron toggle -->
-                  <button mat-icon-button *ngIf="row.type === 'maestra'" (click)="toggleMaestra(row.maestra); $event.stopPropagation()" class="w-6 h-6 min-h-6 p-0 text-slate-500">
-                    <mat-icon class="icon-size-4">{{ row.maestra.expanded !== false ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                  <button mat-icon-button *ngIf="row.type === 'maestra'" (click)="toggleMaestra(row.maestra); $event.stopPropagation()" class="w-6 h-6 min-h-6 p-0 text-indigo-700">
+                    <mat-icon class="icon-size-4">{{ row.maestra.expanded === true ? 'expand_more' : 'chevron_right' }}</mat-icon>
                   </button>
-
+                  
                   <!-- Subactividad Spacer -->
                   <div *ngIf="row.type === 'subactividad'" class="w-6 shrink-0"></div>
-
+ 
                   <!-- Icons hierarchy -->
-                  <mat-icon class="icon-size-4 text-slate-400 mr-1 shrink-0" *ngIf="row.type === 'project'">folder</mat-icon>
-                  <mat-icon class="icon-size-4 text-indigo-400 mr-1 shrink-0" *ngIf="row.type === 'maestra'">assignment</mat-icon>
-                  <mat-icon class="icon-size-4 text-emerald-400 mr-1 shrink-0" *ngIf="row.type === 'subactividad'">subdirectory_arrow_right</mat-icon>
-
-                  <span class="truncate pr-2 font-medium" [title]="row.type === 'project' ? row.project.actividad : (row.type === 'maestra' ? row.maestra.nombre : row.subactividad.nombre)">
+                  <mat-icon class="icon-size-4 text-slate-500 mr-1 shrink-0" *ngIf="row.type === 'project'">folder</mat-icon>
+                  <mat-icon class="icon-size-4 text-indigo-600 mr-1 shrink-0" *ngIf="row.type === 'maestra'">assignment</mat-icon>
+                  <mat-icon class="icon-size-4 text-slate-500 mr-1 shrink-0" *ngIf="row.type === 'subactividad'">subdirectory_arrow_right</mat-icon>
+ 
+                  <span class="truncate pr-2" 
+                    [ngClass]="{
+                      'font-black text-slate-900 uppercase tracking-wide text-xs': row.type === 'project',
+                      'font-black text-indigo-900 tracking-wide uppercase text-[11px]': row.type === 'maestra',
+                      'font-semibold text-slate-700 text-xs': row.type === 'subactividad'
+                    }"
+                    [title]="row.type === 'project' ? row.project.actividad : (row.type === 'maestra' ? row.maestra.nombre : row.subactividad.nombre)">
                     {{ row.type === 'project' ? row.project.actividad : (row.type === 'maestra' ? row.maestra.nombre : row.subactividad.nombre) }}
                   </span>
                 </div>
-
+ 
                 <!-- Responsable -->
-                <div class="w-[120px] shrink-0 truncate text-slate-600 dark:text-slate-400" [matTooltip]="(row.type === 'project' ? row.project.nombreSolicitante : (row.type === 'maestra' ? row.maestra.nombreResponsable : row.subactividad.nombreResponsable)) || ''">
+                <div *ngIf="isColumnVisible('responsable')" class="w-[120px] shrink-0 truncate text-slate-600 dark:text-slate-400" [matTooltip]="(row.type === 'project' ? row.project.nombreSolicitante : (row.type === 'maestra' ? row.maestra.nombreResponsable : row.subactividad.nombreResponsable)) || ''">
                   {{ row.type === 'project' ? (row.project.nombreSolicitante || '-') : (row.type === 'maestra' ? (row.maestra.nombreResponsable || '-') : (row.subactividad.nombreResponsable || '-')) }}
                 </div>
-
+ 
                 <!-- Area / Empresa -->
-                <div class="w-[120px] shrink-0 truncate text-slate-500 dark:text-slate-400">
+                <div *ngIf="isColumnVisible('area')" class="w-[120px] shrink-0 truncate text-slate-500 dark:text-slate-400">
                   {{ row.type === 'project' ? (row.project.empresa || '-') : (row.type === 'maestra' ? (row.maestra.area || '-') : (row.subactividad.area || '-')) }}
                 </div>
-
+ 
                 <!-- Progreso -->
-                <div class="w-[70px] shrink-0 text-center font-bold text-slate-700 dark:text-slate-300">
+                <div *ngIf="isColumnVisible('progreso')" class="w-[70px] shrink-0 text-center font-bold text-slate-700 dark:text-slate-300">
                   {{ (row.type === 'project' ? row.project.avanceGantt : (row.type === 'maestra' ? row.maestra.progreso : row.subactividad.progreso)) | number:'1.0-0' }}%
                 </div>
-
+ 
                 <!-- Inicio -->
-                <div class="w-[85px] shrink-0 text-center text-slate-600 dark:text-slate-400">
+                <div *ngIf="isColumnVisible('inicio')" class="w-[85px] shrink-0 text-center text-slate-600 dark:text-slate-400">
                   {{ (row.type === 'project' ? row.project.fechaInicioProyecto : (row.type === 'maestra' ? row.maestra.fechaInicio : row.subactividad.fechaInicio)) | date:'dd MMM yy':undefined:'es' }}
                 </div>
-
+ 
                 <!-- Fin -->
-                <div class="w-[85px] shrink-0 text-center text-slate-600 dark:text-slate-400">
+                <div *ngIf="isColumnVisible('fin')" class="w-[85px] shrink-0 text-center text-slate-600 dark:text-slate-400">
                   {{ (row.type === 'project' ? row.project.fechaFinProyecto : (row.type === 'maestra' ? row.maestra.fechaFin : row.subactividad.fechaFin)) | date:'dd MMM yy':undefined:'es' }}
                 </div>
-
+ 
                 <!-- Días -->
-                <div class="w-[60px] shrink-0 text-center font-bold text-slate-700 dark:text-slate-300">
+                <div *ngIf="isColumnVisible('dias')" class="w-[60px] shrink-0 text-center font-bold text-slate-700 dark:text-slate-300">
                   {{ getDurationDays(row) }}
                 </div>
-
+ 
                 <!-- Predecesora -->
-                <div class="w-[110px] shrink-0 truncate pr-2 text-slate-500 dark:text-slate-400" [title]="getPredecesoraName(row)">
+                <div *ngIf="isColumnVisible('predecesora')" class="w-[110px] shrink-0 truncate pr-2 text-slate-500 dark:text-slate-400" [title]="getPredecesoraName(row)">
                   {{ getPredecesoraName(row) }}
                 </div>
 
+                <!-- Equipo Especial / Herramientas -->
+                <div *ngIf="isColumnVisible('equipoEspecial')" class="w-[150px] shrink-0 truncate pr-2 text-slate-500 dark:text-slate-400" [title]="row.type === 'project' ? '' : (row.type === 'maestra' ? row.maestra.equipoEspecial : row.subactividad.equipoEspecial) || ''">
+                  {{ row.type === 'project' ? '-' : (row.type === 'maestra' ? (row.maestra.equipoEspecial || '-') : (row.subactividad.equipoEspecial || '-')) }}
+                </div>
+
                 <!-- Prioridad -->
-                <div class="w-[70px] shrink-0 text-center">
+                <div *ngIf="isColumnVisible('prioridad')" class="w-[70px] shrink-0 text-center">
                   <span *ngIf="row.type !== 'project'" [ngClass]="getPrioridadClass(row)" class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter shadow-sm border">
                     {{ row.type === 'maestra' ? (row.maestra.prioridad || 'Media') : (row.subactividad.prioridad || 'Media') }}
                   </span>
@@ -141,7 +187,7 @@
                 </div>
 
                 <!-- Estatus -->
-                <div class="w-[90px] shrink-0 text-center">
+                <div *ngIf="isColumnVisible('estatus')" class="w-[90px] shrink-0 text-center">
                   <span *ngIf="row.type !== 'project'" [ngClass]="getEstatusClass(row)" class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight shadow-inner">
                     {{ getEstatusLabel(row) }}
                   </span>
@@ -149,12 +195,12 @@
                 </div>
 
                 <!-- Color -->
-                <div class="w-[50px] shrink-0 flex items-center justify-center">
+                <div *ngIf="isColumnVisible('color')" class="w-[50px] shrink-0 flex items-center justify-center">
                   <div class="w-4 h-4 rounded-full border border-slate-200" [style.background-color]="getColorHex(row)"></div>
                 </div>
 
                 <!-- Acciones (Redirección a Edición) -->
-                <div class="w-[90px] shrink-0 flex items-center justify-center">
+                <div *ngIf="isColumnVisible('acciones')" class="w-[90px] shrink-0 flex items-center justify-center">
                   <a mat-icon-button [routerLink]="['/engineering/control-ejecucion/editar', row.project.idSeguimiento]" class="w-8 h-8 p-0 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg flex items-center justify-center" matTooltip="Ver/Editar Proyecto">
                     <mat-icon class="icon-size-4">open_in_new</mat-icon>
                   </a>
@@ -166,20 +212,40 @@
         </div>
       </div>
 
+      <!-- Splitter vertical arrastrable -->
+      <div
+        class="w-1 cursor-col-resize hover:bg-indigo-500 active:bg-indigo-600 transition-colors shrink-0 z-20 bg-slate-200 dark:bg-slate-700 h-full border-l border-r border-slate-300 dark:border-slate-800"
+        (mousedown)="onGanttSplitterResizeStart($event)"></div>
+
       <!-- Right Panel: Canvas Timeline -->
-      <div class="w-[40%] flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50 relative shadow-inner" #horizontalTimeline>
+      <div [style.width.%]="100 - leftPanelWidthPercent" class="flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50 relative shadow-inner flex flex-col h-full" #horizontalTimeline>
         <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
           
-          <!-- Timeline Header: Days -->
+          <!-- Timeline Header: Scales -->
           <div class="h-12 flex border-b dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-10 shadow-sm">
-            <div *ngFor="let day of days" class="flex-none w-11 border-r dark:border-slate-800 flex flex-col items-center justify-center transition-colors" [ngClass]="{'bg-indigo-500/5': isToday(day), 'bg-slate-50/50 dark:bg-slate-900/30': isWeekend(day)}">
-              <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5" [ngClass]="isToday(day) ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'">
-                {{ formatDay(day) }}
-              </span>
-              <span class="text-xs font-black leading-none" [ngClass]="isToday(day) ? 'text-indigo-600' : 'text-slate-600 dark:text-slate-400'">
-                {{ format(day, 'd') }}
-              </span>
-            </div>
+            <ng-container *ngIf="timeScale === 'day'">
+              <div *ngFor="let day of days" class="flex-none w-11 border-r dark:border-slate-800 flex flex-col items-center justify-center transition-colors" [style.width.px]="dayWidth" [ngClass]="{'bg-indigo-500/5': isToday(day), 'bg-slate-50/50 dark:bg-slate-900/30': isWeekend(day)}">
+                <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5" [ngClass]="isToday(day) ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'">
+                  {{ formatDay(day) }}
+                </span>
+                <span class="text-xs font-black leading-none" [ngClass]="isToday(day) ? 'text-indigo-600' : 'text-slate-600 dark:text-slate-400'">
+                  {{ format(day, 'd') }}
+                </span>
+              </div>
+            </ng-container>
+
+            <ng-container *ngIf="timeScale === 'week'">
+              <div *ngFor="let day of days" class="flex-none border-r dark:border-slate-800 flex flex-col items-center justify-center transition-colors px-2" [style.width.px]="dayWidth" [ngClass]="{'bg-indigo-500/5': isToday(day)}">
+                <span class="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500 leading-none mb-0.5">Semana</span>
+                <span class="text-xs font-black text-slate-700 dark:text-slate-300 leading-none">{{ format(day, 'w') }} ({{ format(day, 'dd/MM') }})</span>
+              </div>
+            </ng-container>
+
+            <ng-container *ngIf="timeScale === 'month'">
+              <div *ngFor="let day of days" class="flex-none border-r dark:border-slate-800 flex flex-col items-center justify-center transition-colors px-2" [style.width.px]="dayWidth" [ngClass]="{'bg-indigo-500/5': isToday(day)}">
+                <span class="text-xs font-black text-slate-700 dark:text-slate-300 leading-none">{{ format(day, 'MMM yyyy', { locale: es }) }}</span>
+              </div>
+            </ng-container>
           </div>
 
           <!-- Timeline Scroll Area -->
@@ -187,7 +253,7 @@
             
             <!-- Background Grid Lines -->
             <div class="absolute inset-0 flex pointer-events-none">
-              <div *ngFor="let day of days" class="flex-none w-11 border-r border-slate-100/40 dark:border-slate-800/40" [ngClass]="{'bg-indigo-500/2': isToday(day)}"></div>
+              <div *ngFor="let day of days" class="flex-none border-r border-slate-100/40 dark:border-slate-800/40" [style.width.px]="dayWidth" [ngClass]="{'bg-indigo-500/2': isToday(day)}"></div>
             </div>
 
             <!-- SVG Dependencies arrows -->
