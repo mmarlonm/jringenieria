@@ -33,7 +33,7 @@ export interface ActividadMiembro {
     providedIn: 'root'
 })
 export class SubcontratacionService {
-    private _apiUrl = `${environment.apiUrl}/api/subcontratacion`;
+    private _apiUrl = `${environment.apiUrl}/subcontratacion`;
 
     constructor(private _http: HttpClient) {}
 
