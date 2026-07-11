@@ -76,6 +76,26 @@ import { CdkDrag, CdkDragHandle, CdkDragEnd } from '@angular/cdk/drag-drop';
             <mat-icon matSuffix class="text-secondary">people</mat-icon>
           </mat-form-field>
 
+          <!-- Equipo de Trabajo (JR / Subcontratados) -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Equipo de Trabajo</mat-label>
+            <mat-select formControlName="equipoIds" multiple>
+              <mat-optgroup label="Personal JR">
+                <mat-option *ngFor="let u of data.equiposDisponibles?.jr" [value]="'JR-' + u.id">
+                  {{ u.nombre }}
+                </mat-option>
+              </mat-optgroup>
+              <mat-optgroup label="Personal Subcontratado">
+                <mat-option *ngFor="let s of data.equiposDisponibles?.subcontratado" [value]="'SUBCONTRATADO-' + s.id">
+                  {{ s.nombre }}
+                </mat-option>
+              </mat-optgroup>
+            </mat-select>
+            <mat-icon matSuffix class="text-secondary">groups</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Área -->
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Área / Departamento</mat-label>
@@ -216,11 +236,14 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
       actividad?: any;
       userList: any[];
       predecesoras: any[];
+      equiposDisponibles: any;
+      equipoAsignado: any[];
     }
   ) {
     this.form = this._fb.group({
       nombre: ['', [Validators.required]],
       responsablesIds: [[]],
+      equipoIds: [[]],
       area: [''],
       fechaInicio: [new Date(), [Validators.required]],
       fechaFin: [new Date(), [Validators.required]],
@@ -279,12 +302,19 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
         selectedIds = [this.data.actividad.responsableId];
       }
 
+      // Mapear equipo asignado actual
+      let currentEquipoStrings: string[] = [];
+      if (this.data.equipoAsignado && this.data.equipoAsignado.length > 0) {
+        currentEquipoStrings = this.data.equipoAsignado.map(e => `${e.origen.toUpperCase()}-${e.idMiembro}`);
+      }
+
       this.form.patchValue({
         ...this.data.actividad,
         fechaInicio: this.data.actividad.fechaInicio ? new Date(this.data.actividad.fechaInicio) : new Date(),
         fechaFin: this.data.actividad.fechaFin ? new Date(this.data.actividad.fechaFin) : new Date(),
         predecesoraId: this.data.actividad.predecesoraId || null,
-        responsablesIds: selectedIds
+        responsablesIds: selectedIds,
+        equipoIds: currentEquipoStrings
       });
     }
 
@@ -309,12 +339,23 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
       return u ? u.nombreUsuario : '';
     }).filter(n => !!n);
 
+    // Mapear el equipo de trabajo seleccionado de vuelta
+    const selectedEquipoStrings: string[] = val.equipoIds || [];
+    const equipoMiembros = selectedEquipoStrings.map(str => {
+      const parts = str.split('-');
+      return {
+        origen: parts[0],
+        idMiembro: Number(parts[1])
+      };
+    });
+
     const result = {
       ...this.data.actividad,
       ...val,
       nombreResponsable: names.join(', '),
       responsableId: selectedIds.length > 0 ? selectedIds[0] : null,
-      responsablesIds: selectedIds.join(',')
+      responsablesIds: selectedIds.join(','),
+      equipoMiembros: equipoMiembros
     };
 
     this._dialogRef.close(result);

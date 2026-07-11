@@ -15,6 +15,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad } from '../../engineering.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejecucion-actividad-dialog.component';
+import { SubcontratacionService } from '../../subcontratacion.service';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 import Swal from 'sweetalert2';
 import { 
@@ -192,6 +193,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     { id: 'acciones', label: 'Acciones', width: 90 }
   ];
 
+  equiposDisponibles: { jr: any[], subcontratado: any[] } = { jr: [], subcontratado: [] };
+
   constructor(
     private _route: ActivatedRoute,
     private _router: Router,
@@ -199,8 +202,18 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     private _dialog: MatDialog,
     private _engineeringService: EngineeringService,
     private _usersService: UsersService,
+    private _subcontratacionService: SubcontratacionService,
     private _cdr: ChangeDetectorRef
   ) {}
+
+  loadEquiposDisponibles(): void {
+    this._subcontratacionService.getEquiposDisponibles().subscribe({
+      next: (res) => {
+        this.equiposDisponibles = res || { jr: [], subcontratado: [] };
+      },
+      error: (err) => console.error('Error al cargar equipos:', err)
+    });
+  }
 
   toggleGanttFullscreen(): void {
     this.isGanttFullscreen = !this.isGanttFullscreen;
@@ -254,6 +267,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
     this.loadData();
     this.loadUsers();
+    this.loadEquiposDisponibles();
     
     // Centrar línea de tiempo al redimensionar ventana
     fromEvent(window, 'resize')
@@ -1098,50 +1112,85 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       predList = this.predecesorasList.filter((a) => Number(a.id) !== Number(editItem?.id));
     }
 
-    const dialogRef = this._dialog.open(ControlEjecucionActividadDialogComponent, {
-      width: '500px',
-      data: {
-        type: type,
-        isEdit: isEdit,
-        actividad: isEdit ? { ...editItem } : {
-          idSeguimiento: this.idSeguimiento,
-          actividadMaestraId: parentTask?.id,
-          fechaInicio: defaultStart,
-          fechaFin: defaultEnd,
-          estatus: 1,
-          progreso: 0,
-          color: type === 'maestra' ? 'Azul' : 'Verde',
-          orden: type === 'maestra'
-            ? (this.tasks.reduce((max, t) => Math.max(max, t.orden || 0), 0) + 1)
-            : (parentTask?.actividades
-                ? (parentTask.actividades.reduce((max, a) => Math.max(max, a.orden || 0), 0) + 1)
-                : 1)
-        },
-        userList: this.userList,
-        predecesoras: predList
-      }
-    });
+    const openDialog = (equipoAsignado: any[]) => {
+      const dialogRef = this._dialog.open(ControlEjecucionActividadDialogComponent, {
+        width: '500px',
+        data: {
+          type: type,
+          isEdit: isEdit,
+          actividad: isEdit ? { ...editItem } : {
+            idSeguimiento: this.idSeguimiento,
+            actividadMaestraId: parentTask?.id,
+            fechaInicio: defaultStart,
+            fechaFin: defaultEnd,
+            estatus: 1,
+            progreso: 0,
+            color: type === 'maestra' ? 'Azul' : 'Verde',
+            orden: type === 'maestra'
+              ? (this.tasks.reduce((max, t) => Math.max(max, t.orden || 0), 0) + 1)
+              : (parentTask?.actividades
+                  ? (parentTask.actividades.reduce((max, a) => Math.max(max, a.orden || 0), 0) + 1)
+                  : 1)
+          },
+          userList: this.userList,
+          predecesoras: predList,
+          equiposDisponibles: this.equiposDisponibles,
+          equipoAsignado: equipoAsignado
+        }
+      });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        if (result.delete) {
-          if (type === 'maestra') {
-            this._engineeringService.deleteGanttMaestra(result.id).subscribe(() => this.loadGantt());
-          } else {
-            this._engineeringService.deleteGanttSubactividad(result.id).subscribe(() => this.loadGantt());
+      dialogRef.afterClosed().subscribe((result) => {
+        if (result) {
+          if (result.delete) {
+            if (type === 'maestra') {
+              this._engineeringService.deleteGanttMaestra(result.id).subscribe(() => this.loadGantt());
+            } else {
+              this._engineeringService.deleteGanttSubactividad(result.id).subscribe(() => this.loadGantt());
+            }
+            return;
           }
-          return;
-        }
 
-        result.idSeguimiento = this.idSeguimiento;
-        if (type === 'maestra') {
-          this._engineeringService.saveGanttMaestra(result).subscribe(() => this.loadGantt());
-        } else {
-          result.actividadMaestraId = parentTask?.id || result.actividadMaestraId;
-          this._engineeringService.saveGanttSubactividad(result).subscribe(() => this.loadGantt());
+          result.idSeguimiento = this.idSeguimiento;
+          if (type === 'subactividad') {
+            result.actividadMaestraId = parentTask?.id || result.actividadMaestraId;
+          }
+
+          const saveObs = type === 'maestra' 
+            ? this._engineeringService.saveGanttMaestra(result)
+            : this._engineeringService.saveGanttSubactividad(result);
+
+          saveObs.subscribe({
+            next: (savedAct: any) => {
+              const actId = savedAct?.id || result.id;
+              if (actId && result.equipoMiembros) {
+                this._subcontratacionService.guardarActividadEquipo({
+                  tipoActividad: type,
+                  idActividad: actId,
+                  miembros: result.equipoMiembros
+                }).subscribe(() => {
+                  this.loadGantt();
+                });
+              } else {
+                this.loadGantt();
+              }
+            },
+            error: (err) => {
+              console.error(err);
+              Swal.fire('Error', 'No se pudo guardar la actividad.', 'error');
+            }
+          });
         }
-      }
-    });
+      });
+    };
+
+    if (isEdit && editItem?.id) {
+      this._subcontratacionService.getActividadEquipo(type, editItem.id).subscribe({
+        next: (eq) => openDialog(eq || []),
+        error: () => openDialog([])
+      });
+    } else {
+      openDialog([]);
+    }
   }
 
   editRow(row: any): void {

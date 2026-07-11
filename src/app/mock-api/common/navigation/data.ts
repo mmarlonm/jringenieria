@@ -117,6 +117,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.control-ejecucion', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
             { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' },
+            { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
@@ -355,7 +356,8 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
-            { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' }
+            { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' },
+            { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' }
         ]
     },
     {
@@ -429,7 +431,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
-            { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' }
+            { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' },
+            { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' }
         ]
     },
     { id: 'comercializacion', title: 'COMERCIALIZACION', type: 'group', children: [] },
@@ -480,7 +483,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
             { id: 'ingenieria.control-ejecucion', title: 'Control de Ejecución', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
-            { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' }
+            { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' },
+            { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' }
         ]
     },
     { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },
