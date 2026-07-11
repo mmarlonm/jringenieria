@@ -63,6 +63,8 @@ export class SubcontratacionComponent implements OnInit {
             nombre: ['', [Validators.required, Validators.maxLength(255)]],
             correo: ['', [Validators.email, Validators.maxLength(255)]],
             numero: ['', [Validators.maxLength(50)]],
+            cargo: ['', [Validators.maxLength(150)]],
+            area: ['', [Validators.maxLength(150)]],
             activo: [true]
         });
     }
@@ -166,7 +168,7 @@ export class SubcontratacionComponent implements OnInit {
                 this.personalForm.patchValue(per);
             } else {
                 this.editingPersonalId = null;
-                this.personalForm.reset({ idPersonal: 0, idSubcontratista: '', nombre: '', correo: '', numero: '', activo: true });
+                this.personalForm.reset({ idPersonal: 0, idSubcontratista: '', nombre: '', correo: '', numero: '', cargo: '', area: '', activo: true });
             }
         }
     }

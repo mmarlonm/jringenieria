@@ -16,6 +16,8 @@ export interface SubcontratistaPersonal {
     nombre: string;
     correo?: string;
     numero?: string;
+    cargo?: string;
+    area?: string;
     activo: boolean;
     fechaRegistro?: string;
     empresa?: SubcontratistaEmpresa;
