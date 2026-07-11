@@ -20,6 +20,8 @@ import { es } from 'date-fns/locale';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import * as ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 @Component({
   selector: 'app-gantt-general',
@@ -95,10 +97,39 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
   format = format;
   isLoading: boolean = true;
 
+  // Project Selection properties
+  selectedProjectIds = new Set<number>();
+
   constructor(
     private _engineeringService: EngineeringService,
     private _cdr: ChangeDetectorRef
   ) {}
+
+  toggleProjectSelection(id: number): void {
+    if (this.selectedProjectIds.has(id)) {
+      this.selectedProjectIds.delete(id);
+    } else {
+      this.selectedProjectIds.add(id);
+    }
+    this._cdr.markForCheck();
+  }
+
+  toggleSelectAllProjects(checked: boolean): void {
+    if (checked) {
+      this.projects.forEach(p => this.selectedProjectIds.add(p.idSeguimiento));
+    } else {
+      this.selectedProjectIds.clear();
+    }
+    this._cdr.markForCheck();
+  }
+
+  isProjectSelected(id: number): boolean {
+    return this.selectedProjectIds.has(id);
+  }
+
+  areAllProjectsSelected(): boolean {
+    return this.projects.length > 0 && this.selectedProjectIds.size === this.projects.length;
+  }
 
   ngOnInit(): void {
     // Cargar visibilidad de columnas
@@ -215,9 +246,10 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (res) => {
         this.projects = res || [];
         
-        // Por defecto colapsar todo
+        // Por defecto colapsar todo y seleccionar todos
         this.projects.forEach((p) => {
           p.expanded = false;
+          this.selectedProjectIds.add(p.idSeguimiento);
           if (p.actividadesMaestras) {
             p.actividadesMaestras.forEach((m: any) => {
               m.expanded = false;
@@ -624,4 +656,219 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
       return `M ${startX} ${startY} L ${outX - r} ${startY} Q ${outX} ${startY} ${outX} ${startY + dirY * r} L ${outX} ${gutterY - dirY * r} Q ${outX} ${gutterY} ${outX - r} ${gutterY} L ${inX + r} ${gutterY} Q ${inX} ${gutterY} ${inX} ${gutterY + dirY * r} L ${inX} ${endY - dirY * r} Q ${inX} ${endY} ${inX + r} ${endY} L ${endX} ${endY}`;
     }
   }
+
+  exportarExcel(): void {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Gantt General');
+
+    // 1. Cabeceras Fijas de Columnas
+    const headers = [
+      'Proyecto / Actividad / Subactividad',
+      'Responsable',
+      'Área / Empresa',
+      'Progreso',
+      'Inicio',
+      'Fin',
+      'Días',
+      'Prioridad',
+      'Estatus'
+    ];
+
+    // 2. Cabeceras de Fechas de la Línea de Tiempo (Igual al frontend)
+    const timelineHeaders: string[] = [];
+    this.days.forEach(d => {
+      if (this.timeScale === 'day') {
+        timelineHeaders.push(format(d, 'dd/MM'));
+      } else if (this.timeScale === 'week') {
+        timelineHeaders.push('Sem ' + format(d, 'ww'));
+      } else {
+        timelineHeaders.push(format(d, 'MMMM', { locale: es }));
+      }
+    });
+
+    const allHeaders = [...headers, ...timelineHeaders];
+    const headerRow = worksheet.addRow(allHeaders);
+
+    // Estilos de la Fila de Cabecera
+    headerRow.eachCell((cell, colNumber) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '1E293B' } // Slate-800
+      };
+      cell.font = {
+        name: 'Segoe UI',
+        size: 10,
+        bold: true,
+        color: { argb: 'FFFFFF' }
+      };
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: colNumber > 9 ? 'center' : 'left'
+      };
+    });
+
+    worksheet.getRow(1).height = 28;
+
+    // 3. Procesar las Filas a Exportar
+    // Filtramos únicamente las filas visibles que correspondan a proyectos seleccionados
+    const rowsToExport: any[] = [];
+    this.projects.forEach((p) => {
+      if (!this.selectedProjectIds.has(p.idSeguimiento)) return;
+
+      rowsToExport.push({ type: 'project', project: p });
+      if (p.actividadesMaestras) {
+        p.actividadesMaestras.forEach((m: any) => {
+          rowsToExport.push({ type: 'maestra', project: p, maestra: m });
+          if (m.actividades) {
+            m.actividades.forEach((act: any) => {
+              rowsToExport.push({ type: 'subactividad', project: p, maestra: m, subactividad: act });
+            });
+          }
+        });
+      }
+    });
+
+    // 4. Agregar Datos y Pintar Línea de Tiempo
+    rowsToExport.forEach((row) => {
+      let name = '';
+      let resp = '';
+      let area = '';
+      let prog = '';
+      let startStr = '';
+      let endStr = '';
+      let dias = 0;
+      let prio = '';
+      let est = '';
+      let colorName = 'Azul';
+      let startDateVal: Date | null = null;
+      let endDateVal: Date | null = null;
+
+      if (row.type === 'project') {
+        name = row.project.actividad;
+        resp = row.project.nombreSolicitante || '';
+        area = row.project.empresa || '';
+        prog = row.project.progreso ? `${row.project.progreso}%` : '0%';
+        startStr = row.project.fechaInicioProyecto ? format(new Date(row.project.fechaInicioProyecto), 'dd/MM/yyyy') : '-';
+        endStr = row.project.fechaFinProyecto ? format(new Date(row.project.fechaFinProyecto), 'dd/MM/yyyy') : '-';
+        startDateVal = row.project.fechaInicioProyecto ? new Date(row.project.fechaInicioProyecto) : null;
+        endDateVal = row.project.fechaFinProyecto ? new Date(row.project.fechaFinProyecto) : null;
+      } else if (row.type === 'maestra') {
+        name = '   ' + row.maestra.nombre;
+        resp = row.maestra.nombreResponsable || '';
+        area = row.maestra.area || '';
+        prog = `${row.maestra.progreso || 0}%`;
+        startStr = row.maestra.fechaInicio ? format(new Date(row.maestra.fechaInicio), 'dd/MM/yyyy') : '-';
+        endStr = row.maestra.fechaFin ? format(new Date(row.maestra.fechaFin), 'dd/MM/yyyy') : '-';
+        startDateVal = row.maestra.fechaInicio ? new Date(row.maestra.fechaInicio) : null;
+        endDateVal = row.maestra.fechaFin ? new Date(row.maestra.fechaFin) : null;
+        colorName = row.maestra.color || 'Azul';
+        prio = row.maestra.prioridad || '';
+        est = row.maestra.estatus === 1 ? 'Pendiente' : (row.maestra.estatus === 2 ? 'En Proceso' : 'Completado');
+      } else {
+        name = '      ' + row.subactividad.nombre;
+        resp = row.subactividad.nombreResponsable || '';
+        area = row.subactividad.area || '';
+        prog = `${row.subactividad.progreso || 0}%`;
+        startStr = row.subactividad.fechaInicio ? format(new Date(row.subactividad.fechaInicio), 'dd/MM/yyyy') : '-';
+        endStr = row.subactividad.fechaFin ? format(new Date(row.subactividad.fechaFin), 'dd/MM/yyyy') : '-';
+        startDateVal = row.subactividad.fechaInicio ? new Date(row.subactividad.fechaInicio) : null;
+        endDateVal = row.subactividad.fechaFin ? new Date(row.subactividad.fechaFin) : null;
+        colorName = row.subactividad.color || 'Verde';
+        prio = row.subactividad.prioridad || '';
+        est = row.subactividad.estatus === 1 ? 'Pendiente' : (row.subactividad.estatus === 2 ? 'En Proceso' : 'Completado');
+      }
+
+      if (startDateVal && endDateVal) {
+        dias = Math.max(1, differenceInDays(endDateVal, startDateVal) + 1);
+      }
+
+      const excelRow = worksheet.addRow([name, resp, area, prog, startStr, endStr, dias || '-', prio, est]);
+      const lastRowIdx = excelRow.number;
+
+      // Color de relleno de la Barra del Gantt
+      let barColor = '3B82F6'; // Default Azul
+      if (colorName === 'Verde') barColor = '10B981';
+      else if (colorName === 'Amarillo') barColor = 'F59E0B';
+      else if (colorName === 'Morado') barColor = '8B5CF6';
+      else if (colorName === 'Naranja') barColor = 'F97316';
+      else if (colorName === 'Rosa') barColor = 'EC4899';
+
+      // Rellenar celdas correspondientes de la Línea de Tiempo
+      if (startDateVal && endDateVal) {
+        this.days.forEach((day, idx) => {
+          let cellMatches = false;
+
+          if (this.timeScale === 'day') {
+            cellMatches = day >= startOfDay(startDateVal) && day <= startOfDay(endDateVal);
+          } else if (this.timeScale === 'week') {
+            const nextWeek = addDays(day, 7);
+            cellMatches = startOfDay(startDateVal) < nextWeek && startOfDay(endDateVal) >= day;
+          } else {
+            const nextMonth = addDays(endOfMonth(day), 1);
+            cellMatches = startOfDay(startDateVal) < nextMonth && startOfDay(endDateVal) >= day;
+          }
+
+          if (cellMatches) {
+            const cell = excelRow.getCell(10 + idx);
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: barColor }
+            };
+          }
+        });
+      }
+
+      // Estilo de la fila de datos
+      excelRow.eachCell((cell, colNumber) => {
+        cell.font = {
+          name: 'Segoe UI',
+          size: 9,
+          bold: row.type === 'project' || row.type === 'maestra'
+        };
+
+        if (row.type === 'project') {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'E2E8F0' } // slate-200
+          };
+        } else if (row.type === 'maestra') {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'F1F5F9' } // slate-100
+          };
+        }
+
+        cell.border = {
+          bottom: { style: 'thin', color: { argb: 'E2E8F0' } }
+        };
+      });
+
+      worksheet.getRow(lastRowIdx).height = 22;
+    });
+
+    // 5. Autoajustar anchos de columnas
+    worksheet.columns.forEach((col, idx) => {
+      if (idx < 9) {
+        let maxLen = 0;
+        col.eachCell({ includeEmpty: true }, (c) => {
+          const valStr = c.value ? c.value.toString() : '';
+          if (valStr.length > maxLen) maxLen = valStr.length;
+        });
+        col.width = Math.max(12, maxLen + 3);
+      } else {
+        col.width = 7; // Ancho constante para la cuadrícula
+      }
+    });
+
+    // 6. Guardar archivo
+    workbook.xlsx.writeBuffer().then((data) => {
+      const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, 'Gantt_General_JR.xlsx');
+    });
+  }
 }
+

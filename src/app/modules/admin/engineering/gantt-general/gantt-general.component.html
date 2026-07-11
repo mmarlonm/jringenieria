@@ -48,6 +48,12 @@
           <span class="text-xs font-semibold">{{ col.label }}</span>
         </div>
       </mat-menu>
+
+      <!-- Export Excel button -->
+      <button mat-flat-button color="primary" class="!rounded-xl" (click)="exportarExcel()" [disabled]="selectedProjectIds.size === 0">
+        <mat-icon class="mr-2 icon-size-4">file_download</mat-icon>
+        Exportar Excel
+      </button>
     </div>
   </div>
 
@@ -81,7 +87,10 @@
       <div [style.width.%]="leftPanelWidthPercent" class="flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden">
         <div class="h-12 flex items-center px-4 border-b dark:border-slate-800 bg-slate-100/30 dark:bg-slate-800/30 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 sticky top-0 z-10">
           <div class="flex w-full items-center text-left" [style.min-width.px]="getLeftTableWidth()">
-            <div *ngIf="isColumnVisible('nombre')" class="w-[280px] shrink-0">Proyecto / Actividad / Subactividad</div>
+            <div *ngIf="isColumnVisible('nombre')" class="w-[280px] shrink-0 flex items-center gap-2">
+              <mat-checkbox [checked]="areAllProjectsSelected()" (change)="toggleSelectAllProjects($event.checked)" class="-ml-1"></mat-checkbox>
+              <span>Proyecto / Actividad / Subactividad</span>
+            </div>
             <div *ngIf="isColumnVisible('responsable')" class="w-[120px] shrink-0">Responsable</div>
             <div *ngIf="isColumnVisible('area')" class="w-[120px] shrink-0">Área / Empresa</div>
             <div *ngIf="isColumnVisible('progreso')" class="w-[70px] shrink-0 text-center">Progreso</div>
@@ -109,6 +118,9 @@
                 
                 <!-- Name / Toggle Expand -->
                 <div *ngIf="isColumnVisible('nombre')" class="w-[280px] shrink-0 truncate flex items-center gap-1">
+                  <!-- Project Selection checkbox -->
+                  <mat-checkbox *ngIf="row.type === 'project'" [checked]="isProjectSelected(row.project.idSeguimiento)" (change)="toggleProjectSelection(row.project.idSeguimiento)" class="-ml-1"></mat-checkbox>
+
                   <!-- Project Chevron toggle -->
                   <button mat-icon-button *ngIf="row.type === 'project'" (click)="toggleProject(row.project); $event.stopPropagation()" class="w-6 h-6 min-h-6 p-0 text-slate-600">
                     <mat-icon class="icon-size-4">{{ row.project.expanded === true ? 'expand_more' : 'chevron_right' }}</mat-icon>
