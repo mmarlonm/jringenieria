@@ -1,96 +1,184 @@
-<div class="flex flex-col" *ngIf="expense">
-    <div class="flex items-center justify-between p-6 bg-primary text-on-primary">
+<div class="flex flex-col max-h-[85vh] w-full max-w-[600px] overflow-hidden bg-white rounded-3xl" *ngIf="expense">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 bg-slate-900 text-white shrink-0">
         <div class="flex flex-col">
-            <span class="text-xs font-medium uppercase tracking-wider opacity-80">Detalle del Gasto</span>
-            <span class="text-xl font-bold uppercase">{{ expense.nombreGasto }}</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Detalle del Gasto</span>
+            <span class="text-lg font-black uppercase text-white truncate max-w-[400px]">{{ expense.nombreGasto }}</span>
         </div>
-        <button mat-icon-button (click)="_dialogRef.close()" class="text-white">
+        <button mat-icon-button (click)="_dialogRef.close()" class="text-slate-400 hover:text-white transition-colors">
             <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
         </button>
     </div>
 
-    <mat-dialog-content class="p-0">
-        <div class="flex items-center justify-between p-8 bg-gray-50 dark:bg-gray-800/50">
+    <!-- Scrollable Content -->
+    <mat-dialog-content class="p-0 overflow-y-auto custom-scrollbar flex-auto bg-slate-50/30">
+        
+        <!-- Amount Hero Section -->
+        <div class="flex items-center justify-between p-6 sm:p-8 bg-gray-50 border-b border-slate-200">
             <div class="flex flex-col">
-                <span class="text-sm font-semibold text-secondary uppercase">Monto Total</span>
-                <span class="text-4xl font-extrabold text-primary">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Monto Total</span>
+                <span class="text-3xl sm:text-4xl font-black text-slate-900">
                     {{ expense.cantidad | currency }}
                 </span>
             </div>
             <div class="text-right flex flex-col">
-                <span class="text-sm font-semibold text-secondary uppercase">Fecha de Gasto</span>
-                <span class="text-lg font-medium">{{ expense.fecha | date:'fullDate' }}</span>
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Fecha de Gasto</span>
+                <span class="text-sm sm:text-base font-bold text-slate-800">{{ expense.fecha | date:'mediumDate' }}</span>
             </div>
         </div>
 
-        <div class="p-8 space-y-6">
-            <div class="grid grid-cols-2 gap-x-8 gap-y-6">
+        <!-- Info Grid -->
+        <div class="p-6 sm:p-8 space-y-6">
+            
+            <div class="grid grid-cols-2 gap-x-6 gap-y-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Proveedor</span>
-                    <span class="text-md font-medium">{{ proveedorNombre }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Proveedor</span>
+                    <span class="text-xs font-bold text-slate-800">{{ proveedorNombre }}</span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Factura / Folio</span>
-                    <span class="text-md font-medium">{{ expense.factura || 'SIN FACTURA' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Factura / Folio</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.factura || 'SIN FACTURA' }}</span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Área / Departamento</span>
-                    <span class="text-md font-medium">{{ expense.gastoArea?.nombre || 'N/A' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Área / Departamento</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.gastoArea?.nombre || 'N/A' }}</span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Sucursal (Unidad)</span>
-                    <span class="text-md font-medium">{{ expense.unidadId }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Sucursal (Unidad)</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.unidadId }}</span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Razón Social</span>
-                    <span class="text-md font-medium">{{ expense.razonSocial || 'N/A' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Razón Social</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.razonSocial || 'N/A' }}</span>
                 </div>
 
-                <mat-divider class="col-span-2"></mat-divider>
+                <div class="flex flex-col col-span-2">
+                    <mat-divider></mat-divider>
+                </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Clasificación</span>
-                    <span class="text-md font-medium">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Clasificación</span>
+                    <span class="text-xs font-bold text-slate-800">
                         {{ expense.gastoTipo?.nombre }} / {{ expense.gastoConcepto?.nombre }}
                     </span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Subtipo</span>
-                    <span class="text-md font-medium">{{ expense.gastoSubtipo?.nombre || 'N/A' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Subtipo</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.gastoSubtipo?.nombre || 'N/A' }}</span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Método de Pago</span>
-                    <span class="text-md font-medium">{{ expense.gastoFormaPago?.nombre || 'N/A' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Método de Pago</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.gastoFormaPago?.nombre || 'N/A' }}</span>
                 </div>
 
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-secondary uppercase tracking-tight">Cuenta Origen</span>
-                    <span class="text-md font-medium">{{ expense.gastoCuenta?.nombre || 'N/A' }}</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Cuenta Origen</span>
+                    <span class="text-xs font-bold text-slate-800">{{ expense.gastoCuenta?.nombre || 'N/A' }}</span>
                 </div>
             </div>
 
-            <div class="flex flex-col p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
-                *ngIf="expense.descripcion">
-                <span class="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase mb-1">Descripción /
-                    Notas</span>
-                <p class="text-sm leading-relaxed italic">{{ expense.descripcion }}</p>
+            <!-- Description / Notes -->
+            <div class="flex flex-col p-4 bg-amber-50 rounded-2xl border border-amber-200" *ngIf="expense.descripcion">
+                <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-1">Descripción / Notas</span>
+                <p class="text-xs sm:text-sm leading-relaxed text-amber-900 font-medium italic">{{ expense.descripcion }}</p>
             </div>
 
-            <div
-                class="pt-4 flex justify-between items-center text-[10px] text-hint uppercase tracking-widest border-t">
+            <!-- Integrated Attachments Section -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <mat-icon class="text-indigo-500 icon-size-4" [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
+                        Archivos Adjuntos
+                    </h3>
+                    
+                    <!-- File Selector Button (Always Visible) -->
+                    <button type="button" mat-stroked-button class="!rounded-xl text-xs" (click)="fileInputDetail.click()">
+                        <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        Añadir Archivo
+                    </button>
+                    <input type="file" #fileInputDetail class="hidden" (change)="onFileSelected($event)">
+                </div>
+
+                <!-- Dropzone / Selector Area when file is chosen -->
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl" *ngIf="selectedFile">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <mat-icon class="text-indigo-500 icon-size-5 shrink-0" [svgIcon]="'heroicons_outline:document'"></mat-icon>
+                        <span class="text-xs font-bold text-slate-700 truncate pr-3" [title]="selectedFile.name">
+                            {{ selectedFile.name }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button mat-flat-button color="primary" class="!rounded-xl text-xs font-black h-8 !px-4" 
+                                [disabled]="isUploading" (click)="subirArchivo()">
+                            <span *ngIf="!isUploading" class="flex items-center gap-1">
+                                <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_outline:arrow-up-tray'"></mat-icon>
+                                Subir
+                            </span>
+                            <span *ngIf="isUploading" class="flex items-center gap-1">
+                                <mat-icon class="animate-spin icon-size-3.5" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                                Subiendo...
+                            </span>
+                        </button>
+                        <button mat-icon-button class="text-slate-400 hover:text-rose-600 rounded-lg w-8 h-8" 
+                                (click)="selectedFile = null; $event.stopPropagation()">
+                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <mat-progress-bar *ngIf="isUploading" mode="indeterminate" class="rounded-full"></mat-progress-bar>
+
+                <!-- List of Attachments -->
+                <div class="space-y-2">
+                    <div *ngIf="isLoading" class="flex items-center justify-center py-6">
+                        <mat-icon class="animate-spin text-slate-400 icon-size-6" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                    </div>
+
+                    <ng-container *ngIf="!isLoading">
+                        <div *ngFor="let file of archivos" class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100/50 transition-all">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="p-2 bg-white rounded-lg border border-slate-200 text-slate-400 shrink-0">
+                                    <mat-icon class="icon-size-4" [svgIcon]="getFileIcon(file)"></mat-icon>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700 truncate pr-3" [title]="file">{{ file }}</span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button mat-icon-button class="text-blue-600 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg w-8 h-8" (click)="descargarArchivo(file)" matTooltip="Visualizar">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                </button>
+                                <button mat-icon-button class="text-rose-600 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg w-8 h-8" (click)="eliminarArchivo(file)" matTooltip="Eliminar">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Empty State Attachments -->
+                        <div *ngIf="archivos.length === 0" class="flex flex-col items-center justify-center py-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                            <mat-icon class="icon-size-8 text-slate-300 mb-1" [svgIcon]="'heroicons_outline:document-minus'"></mat-icon>
+                            <span class="text-[11px] font-bold text-slate-400">Sin archivos adjuntos</span>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+
+            <!-- Registry Info -->
+            <div class="flex justify-between items-center text-[9px] text-slate-400 font-bold uppercase tracking-widest pt-2">
                 <span>Registrado por: ID-{{ expense.usuarioId }}</span>
-                <span>Sistema: {{ expense.fechaRegistro | date:'short' }}</span>
+                <span>Fecha Registro: {{ expense.fechaRegistro | date:'short' }}</span>
             </div>
+
         </div>
     </mat-dialog-content>
 
-    <mat-dialog-actions class="p-4 bg-gray-50 dark:bg-transparent border-t flex justify-end">
-        <button mat-flat-button color="primary" (click)="_dialogRef.close()">Entendido</button>
-    </mat-dialog-actions>
+    <!-- Footer -->
+    <div class="flex items-center justify-end p-4 border-t border-slate-200 bg-slate-50 shrink-0">
+        <button mat-flat-button color="primary" class="!rounded-xl px-6" (click)="_dialogRef.close()">Entendido</button>
+    </div>
 </div>
