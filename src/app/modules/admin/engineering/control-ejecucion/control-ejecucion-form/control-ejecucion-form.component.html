@@ -164,6 +164,13 @@
                 class="w-10 h-10 min-h-10 min-w-10 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 transition-colors">
                 <mat-icon class="icon-size-5">{{ isGanttFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
               </button>
+              
+              <button type="button" mat-icon-button (click)="showCriticalPath = !showCriticalPath"
+                [matTooltip]="showCriticalPath ? 'Ocultar Ruta Crítica' : 'Ver Ruta Crítica'"
+                [ngClass]="showCriticalPath ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'"
+                class="w-10 h-10 min-h-10 min-w-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200">
+                <mat-icon class="icon-size-5">{{ showCriticalPath ? 'alt_route' : 'bolt' }}</mat-icon>
+              </button>
               <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                 <mat-icon class="icon-size-5">account_tree</mat-icon>
               </div>
@@ -604,12 +611,14 @@
                     [attr.height]="visibleRows.length * 56">
                     <defs>
                       <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+                        <path d="M0,0 L6,3 L0,6 Z" [attr.fill]="showCriticalPath ? '#ef4444' : '#94a3b8'" />
                       </marker>
                     </defs>
                     <ng-container *ngFor="let row of visibleRows; let idx = index">
-                      <path *ngIf="getDependencyPath(row, idx) as pathD" [attr.d]="pathD" fill="none" stroke="#94a3b8"
-                        stroke-width="1.5" stroke-linecap="round" marker-end="url(#arrowhead)" />
+                      <path *ngIf="getDependencyPath(row, idx) as pathD" [attr.d]="pathD" fill="none"
+                        [attr.stroke]="showCriticalPath && isPathCritical(row) ? '#ef4444' : '#94a3b8'"
+                        [attr.stroke-width]="showCriticalPath && isPathCritical(row) ? '2.5' : '1.5'"
+                        stroke-linecap="round" marker-end="url(#arrowhead)" />
                     </ng-container>
                   </svg>
 
@@ -621,6 +630,7 @@
                         class="h-14 flex items-center relative border-b border-slate-100/5 hover:bg-slate-50/30 transition-colors">
                         <div
                           class="absolute h-8 rounded-lg shadow-md flex items-center overflow-hidden cursor-pointer hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] transition-all duration-300 group"
+                          [ngClass]="{'border-2 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]': showCriticalPath && criticalMaestras.has(task.id)}"
                           [ngStyle]="getBarStyles({type: 'task', task: task})"
                           (click)="editRow({type: 'task', task: task})"
                           [matTooltip]="getRowTooltip({type: 'task', task: task})">
@@ -628,12 +638,12 @@
                             [style.width.%]="task.progreso"
                             [style.background-color]="getColorHex({type: 'task', task: task})"></div>
                           <div class="h-full w-1 absolute left-0 top-0"
-                            [style.background-color]="getColorHex({type: 'task', task: task})"></div>
+                            [style.background-color]="showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task})"></div>
                           <div class="relative flex items-center w-full px-3 gap-2 overflow-hidden">
                             <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase"
-                              [style.color]="getColorHex({type: 'task', task: task})">{{ task.nombre }}</span>
+                              [style.color]="showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task})">{{ task.nombre }}</span>
                             <span class="ml-auto text-[9px] font-black font-mono"
-                              [style.color]="getColorHex({type: 'task', task: task})">{{ task.progreso }}%</span>
+                              [style.color]="showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task})">{{ task.progreso }}%</span>
                           </div>
                           <div *ngIf="task.estatus === 2"
                             class="absolute inset-0 opacity-[0.10] pointer-events-none animate-stripes"></div>
@@ -646,6 +656,7 @@
                           class="h-14 flex items-center relative border-b border-slate-100/5 hover:bg-slate-50/30 transition-colors">
                           <div
                             class="absolute h-8 rounded-lg shadow-md flex items-center overflow-hidden cursor-pointer hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] transition-all duration-300 group"
+                            [ngClass]="{'border-2 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]': showCriticalPath && criticalSubactivities.has(sub.id)}"
                             [ngStyle]="getBarStyles({type: 'activity', activity: sub})"
                             (click)="editRow({type: 'activity', task: task, activity: sub})"
                             [matTooltip]="getRowTooltip({type: 'activity', activity: sub})">
@@ -653,12 +664,12 @@
                               [style.width.%]="sub.progreso"
                               [style.background-color]="getColorHex({type: 'activity', activity: sub})"></div>
                             <div class="h-full w-1 absolute left-0 top-0"
-                              [style.background-color]="getColorHex({type: 'activity', activity: sub})"></div>
+                              [style.background-color]="showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub})"></div>
                             <div class="relative flex items-center w-full px-3 gap-2 overflow-hidden">
                               <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase"
-                                [style.color]="getColorHex({type: 'activity', activity: sub})">{{ sub.nombre }}</span>
+                                [style.color]="showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub})">{{ sub.nombre }}</span>
                               <span class="ml-auto text-[9px] font-black font-mono"
-                                [style.color]="getColorHex({type: 'activity', activity: sub})">{{ sub.progreso
+                                [style.color]="showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub})">{{ sub.progreso
                                 }}%</span>
                             </div>
                             <div *ngIf="sub.estatus === 2"

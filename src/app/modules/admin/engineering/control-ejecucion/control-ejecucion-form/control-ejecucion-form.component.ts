@@ -157,6 +157,9 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   visibleRows: any[] = [];
   userList: any[] = [];
   predecesorasList: any[] = []; // List of all activities for dependencies
+  showCriticalPath: boolean = false;
+  criticalMaestras = new Set<number>();
+  criticalSubactivities = new Set<number>();
 
   days: Date[] = [];
   startDate: Date = startOfMonth(new Date());
@@ -775,6 +778,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         // Por defecto colapsar las actividades
         this.tasks.forEach(t => t.expanded = false);
         this.updatePredecesorasList();
+        this.actualizarCalculosRutaCritica();
         this.updateVisibleRows();
         this.adjustTimelineRange();
         
@@ -1386,5 +1390,110 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         Swal.fire('Error', 'No se pudo guardar la información.', 'error');
       }
     });
+  }
+
+  calcularRutaCritica(items: any[]): Set<number> {
+    const criticalSet = new Set<number>();
+    if (!items || items.length === 0) return criticalSet;
+
+    const nodes = items.map(item => {
+      const start = item.fechaInicio ? new Date(item.fechaInicio).getTime() : new Date().getTime();
+      const end = item.fechaFin ? new Date(item.fechaFin).getTime() : new Date().getTime();
+      const duration = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+      return {
+        id: Number(item.id),
+        duration: duration,
+        predecesoraId: item.predecesoraId ? Number(item.predecesoraId) : null,
+        es: 0,
+        ef: 0,
+        ls: 0,
+        lf: 0,
+        slack: 0,
+        successors: [] as number[]
+      };
+    });
+
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+    nodes.forEach(n => {
+      if (n.predecesoraId && nodeMap.has(n.predecesoraId)) {
+        nodeMap.get(n.predecesoraId).successors.push(n.id);
+      }
+    });
+
+    let changed = true;
+    let iterations = 0;
+    while (changed && iterations < 1000) {
+      changed = false;
+      iterations++;
+      nodes.forEach(n => {
+        let maxPredEf = 0;
+        if (n.predecesoraId && nodeMap.has(n.predecesoraId)) {
+          maxPredEf = nodeMap.get(n.predecesoraId).ef;
+        }
+        const newEs = maxPredEf;
+        const newEf = newEs + n.duration;
+        if (n.es !== newEs || n.ef !== newEf) {
+          n.es = newEs;
+          n.ef = newEf;
+          changed = true;
+        }
+      });
+    }
+
+    const maxEf = nodes.reduce((max, n) => Math.max(max, n.ef), 0);
+
+    nodes.forEach(n => {
+      n.lf = maxEf;
+      n.ls = maxEf - n.duration;
+    });
+
+    changed = true;
+    iterations = 0;
+    while (changed && iterations < 1000) {
+      changed = false;
+      iterations++;
+      nodes.forEach(n => {
+        let minSuccLs = maxEf;
+        if (n.successors.length > 0) {
+          minSuccLs = n.successors.reduce((min, succId) => {
+            const succNode = nodeMap.get(succId);
+            return succNode ? Math.min(min, succNode.ls) : min;
+          }, maxEf);
+        }
+        const newLf = minSuccLs;
+        const newLs = newLf - n.duration;
+        if (n.lf !== newLf || n.ls !== newLs) {
+          n.lf = newLf;
+          n.ls = newLs;
+          changed = true;
+        }
+      });
+    }
+
+    nodes.forEach(n => {
+      n.slack = n.ls - n.es;
+      if (n.slack <= 0) {
+        criticalSet.add(n.id);
+      }
+    });
+
+    return criticalSet;
+  }
+
+  actualizarCalculosRutaCritica(): void {
+    this.criticalMaestras = this.calcularRutaCritica(this.tasks);
+    this.criticalSubactivities = this.calcularRutaCritica(this.predecesorasList);
+    this._cdr.markForCheck();
+  }
+
+  isPathCritical(row: any): boolean {
+    if (row.type === 'task') {
+      const predId = Number(row.task.predecesoraId);
+      return this.criticalMaestras.has(row.task.id) && this.criticalMaestras.has(predId);
+    } else {
+      const predId = Number(row.activity.predecesoraId);
+      return this.criticalSubactivities.has(row.activity.id) && this.criticalSubactivities.has(predId);
+    }
   }
 }

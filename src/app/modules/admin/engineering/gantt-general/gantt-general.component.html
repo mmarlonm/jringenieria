@@ -49,6 +49,15 @@
         </div>
       </mat-menu>
 
+      <!-- Ruta Crítica toggle -->
+      <button type="button" mat-stroked-button (click)="showCriticalPath = !showCriticalPath"
+        [matTooltip]="showCriticalPath ? 'Ocultar Ruta Crítica' : 'Ver Ruta Crítica'"
+        [ngClass]="showCriticalPath ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200' : 'bg-white text-slate-600'"
+        class="!rounded-xl transition-all duration-200">
+        <mat-icon class="mr-2 icon-size-4">{{ showCriticalPath ? 'alt_route' : 'bolt' }}</mat-icon>
+        Ruta Crítica
+      </button>
+
       <!-- Export Excel button -->
       <button mat-flat-button color="primary" class="!rounded-xl" (click)="exportarExcel()" [disabled]="selectedProjectIds.size === 0">
         <mat-icon class="mr-2 icon-size-4">file_download</mat-icon>
@@ -272,11 +281,14 @@
             <svg class="absolute inset-0 pointer-events-none overflow-visible z-10" [attr.width]="timelineWidth" [attr.height]="visibleRows.length * 56">
               <defs>
                 <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                  <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+                  <path d="M0,0 L6,3 L0,6 Z" [attr.fill]="showCriticalPath ? '#ef4444' : '#94a3b8'" />
                 </marker>
               </defs>
               <ng-container *ngFor="let row of visibleRows; let idx = index">
-                <path *ngIf="getDependencyPath(row, idx) as pathD" [attr.d]="pathD" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" marker-end="url(#arrowhead)" />
+                <path *ngIf="getDependencyPath(row, idx) as pathD" [attr.d]="pathD" fill="none"
+                  [attr.stroke]="showCriticalPath && isPathCritical(row) ? '#ef4444' : '#94a3b8'"
+                  [attr.stroke-width]="showCriticalPath && isPathCritical(row) ? '2.5' : '1.5'"
+                  stroke-linecap="round" marker-end="url(#arrowhead)" />
               </ng-container>
             </svg>
 
@@ -285,6 +297,9 @@
               
               <!-- Gantt colored bar -->
               <div class="absolute h-8 rounded-lg shadow-md flex items-center overflow-hidden cursor-pointer hover:scale-[1.01] hover:brightness-105 active:scale-[0.99] transition-all duration-300 group" 
+                   [ngClass]="{
+                     'border-2 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]': showCriticalPath && (row.type === 'maestra' ? criticalMaestras.has(row.maestra.id) : row.type === 'subactividad' ? criticalSubactivities.has(row.subactividad.id) : false)
+                   }"
                    [ngStyle]="getBarStyles(row)" 
                    [routerLink]="['/engineering/control-ejecucion/editar', row.project.idSeguimiento]" 
                    [matTooltip]="getRowTooltip(row)">
@@ -293,13 +308,16 @@
                      [style.width.%]="row.type === 'project' ? row.project.avanceGantt : (row.type === 'maestra' ? row.maestra.progreso : row.subactividad.progreso)" 
                      [style.background-color]="getColorHex(row)"></div>
                 <!-- Side accent line -->
-                <div class="h-full w-1 absolute left-0 top-0" [style.background-color]="getColorHex(row)"></div>
+                <div class="h-full w-1 absolute left-0 top-0" 
+                     [style.background-color]="showCriticalPath && (row.type === 'maestra' ? criticalMaestras.has(row.maestra.id) : row.type === 'subactividad' ? criticalSubactivities.has(row.subactividad.id) : false) ? '#f43f5e' : getColorHex(row)"></div>
                 <!-- Text Overlay -->
                 <div class="relative flex items-center w-full px-3 gap-2 overflow-hidden">
-                  <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase" [style.color]="getColorHex(row)">
+                  <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase" 
+                        [style.color]="showCriticalPath && (row.type === 'maestra' ? criticalMaestras.has(row.maestra.id) : row.type === 'subactividad' ? criticalSubactivities.has(row.subactividad.id) : false) ? '#f43f5e' : getColorHex(row)">
                     {{ row.type === 'project' ? row.project.actividad : (row.type === 'maestra' ? row.maestra.nombre : row.subactividad.nombre) }}
                   </span>
-                  <span class="ml-auto text-[9px] font-black font-mono" [style.color]="getColorHex(row)">
+                  <span class="ml-auto text-[9px] font-black font-mono" 
+                        [style.color]="showCriticalPath && (row.type === 'maestra' ? criticalMaestras.has(row.maestra.id) : row.type === 'subactividad' ? criticalSubactivities.has(row.subactividad.id) : false) ? '#f43f5e' : getColorHex(row)">
                     {{ (row.type === 'project' ? row.project.avanceGantt : (row.type === 'maestra' ? row.maestra.progreso : row.subactividad.progreso)) | number:'1.0-0' }}%
                   </span>
                 </div>

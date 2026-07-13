@@ -99,6 +99,9 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Project Selection properties
   selectedProjectIds = new Set<number>();
+  showCriticalPath: boolean = false;
+  criticalMaestras = new Set<number>();
+  criticalSubactivities = new Set<number>();
 
   constructor(
     private _engineeringService: EngineeringService,
@@ -257,6 +260,7 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
 
+        this.actualizarCalculosRutaCritica();
         this.updateVisibleRows();
         this.adjustTimelineRange();
         this.isLoading = false;
@@ -869,6 +873,138 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
       const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(blob, 'Gantt_General_JR.xlsx');
     });
+  }
+
+  calcularRutaCritica(items: any[]): Set<number> {
+    const criticalSet = new Set<number>();
+    if (!items || items.length === 0) return criticalSet;
+
+    const nodes = items.map(item => {
+      const start = item.fechaInicio ? new Date(item.fechaInicio).getTime() : new Date().getTime();
+      const end = item.fechaFin ? new Date(item.fechaFin).getTime() : new Date().getTime();
+      const duration = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+      return {
+        id: Number(item.id || item.idActividad || item.idSeguimiento),
+        duration: duration,
+        predecesoraId: item.predecesoraId ? Number(item.predecesoraId) : null,
+        es: 0,
+        ef: 0,
+        ls: 0,
+        lf: 0,
+        slack: 0,
+        successors: [] as number[]
+      };
+    });
+
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+    nodes.forEach(n => {
+      if (n.predecesoraId && nodeMap.has(n.predecesoraId)) {
+        nodeMap.get(n.predecesoraId).successors.push(n.id);
+      }
+    });
+
+    let changed = true;
+    let iterations = 0;
+    while (changed && iterations < 1000) {
+      changed = false;
+      iterations++;
+      nodes.forEach(n => {
+        let maxPredEf = 0;
+        if (n.predecesoraId && nodeMap.has(n.predecesoraId)) {
+          maxPredEf = nodeMap.get(n.predecesoraId).ef;
+        }
+        const newEs = maxPredEf;
+        const newEf = newEs + n.duration;
+        if (n.es !== newEs || n.ef !== newEf) {
+          n.es = newEs;
+          n.ef = newEf;
+          changed = true;
+        }
+      });
+    }
+
+    const maxEf = nodes.reduce((max, n) => Math.max(max, n.ef), 0);
+
+    nodes.forEach(n => {
+      n.lf = maxEf;
+      n.ls = maxEf - n.duration;
+    });
+
+    changed = true;
+    iterations = 0;
+    while (changed && iterations < 1000) {
+      changed = false;
+      iterations++;
+      nodes.forEach(n => {
+        let minSuccLs = maxEf;
+        if (n.successors.length > 0) {
+          minSuccLs = n.successors.reduce((min, succId) => {
+            const succNode = nodeMap.get(succId);
+            return succNode ? Math.min(min, succNode.ls) : min;
+          }, maxEf);
+        }
+        const newLf = minSuccLs;
+        const newLs = newLf - n.duration;
+        if (n.lf !== newLf || n.ls !== newLs) {
+          n.lf = newLf;
+          n.ls = newLs;
+          changed = true;
+        }
+      });
+    }
+
+    nodes.forEach(n => {
+      n.slack = n.ls - n.es;
+      if (n.slack <= 0) {
+        criticalSet.add(n.id);
+      }
+    });
+
+    return criticalSet;
+  }
+
+  actualizarCalculosRutaCritica(): void {
+    const maestrasList: any[] = [];
+    const subList: any[] = [];
+
+    this.projects.forEach(p => {
+      if (p.actividadesMaestras) {
+        p.actividadesMaestras.forEach((m: any) => {
+          maestrasList.push({
+            id: m.id,
+            fechaInicio: m.fechaInicio,
+            fechaFin: m.fechaFin,
+            predecesoraId: m.predecesoraId
+          });
+          if (m.actividades) {
+            m.actividades.forEach((s: any) => {
+              subList.push({
+                id: s.id,
+                fechaInicio: s.fechaInicio,
+                fechaFin: s.fechaFin,
+                predecesoraId: s.predecesoraId
+              });
+            });
+          }
+        });
+      }
+    });
+
+    this.criticalMaestras = this.calcularRutaCritica(maestrasList);
+    this.criticalSubactivities = this.calcularRutaCritica(subList);
+    this._cdr.markForCheck();
+  }
+
+  isPathCritical(row: any): boolean {
+    if (row.type === 'maestra') {
+      const predId = Number(row.maestra.predecesoraId);
+      return this.criticalMaestras.has(row.maestra.id) && this.criticalMaestras.has(predId);
+    } else if (row.type === 'subactividad') {
+      const predId = Number(row.subactividad.predecesoraId);
+      return this.criticalSubactivities.has(row.subactividad.id) && this.criticalSubactivities.has(predId);
+    }
+    return false;
   }
 }
 
