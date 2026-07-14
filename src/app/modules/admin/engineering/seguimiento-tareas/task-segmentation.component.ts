@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -12,12 +12,13 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HighchartsChartModule } from 'highcharts-angular';
 import * as Highcharts from 'highcharts';
-import Gantt from 'frappe-gantt';
 import { TaskService } from 'app/modules/admin/dashboards/tasks/tasks.service';
 import { Task } from 'app/modules/admin/dashboards/tasks/models/tasks.model';
 import { EngineeringService, SeguimientoProyecto } from 'app/modules/admin/engineering/engineering.service';
 import { UserService } from 'app/core/user/user.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TaskFormDialogComponent } from 'app/modules/admin/dashboards/tasks/task-form-dialog/task-form-dialog.component';
 import moment from 'moment';
 
 @Component({
@@ -38,11 +39,11 @@ import moment from 'moment';
         MatIconModule,
         MatCheckboxModule,
         MatTooltipModule,
+        MatDialogModule,
         HighchartsChartModule
     ]
 })
-export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewInit, OnDestroy {
-    @ViewChild('ganttContainer', { static: false }) ganttContainer!: ElementRef;
+export class EngineeringSeguimientoTareasComponent implements OnInit {
 
     // Filters and Data
     allTasks: Task[] = [];
@@ -56,7 +57,7 @@ export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewI
     dataSource = new MatTableDataSource<Task>();
     displayedColumns: string[] = [
         'proyecto', 'fase', 'nombre', 'descripcion', 'prioridad', 'importante', 'urgente',
-        'estatus', 'asignado', 'rolArea', 'fechaInicio', 'fechaFin', 'diasRestantes', 'progreso', 'notas'
+        'estatus', 'asignado', 'rolArea', 'fechaInicio', 'fechaFin', 'diasRestantes', 'progreso', 'notas', 'acciones'
     ];
 
     // KPIs
@@ -76,14 +77,12 @@ export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewI
     categoryChartOptions: Highcharts.Options = {};
     priorityChartOptions: Highcharts.Options = {};
 
-    // Gantt
-    private ganttInstance: any;
-
     constructor(
         private _taskService: TaskService,
         private _engineeringService: EngineeringService,
         private _userService: UserService,
         private _usersService: UsersService,
+        private _matDialog: MatDialog,
         private _cdr: ChangeDetectorRef
     ) {}
 
@@ -94,16 +93,6 @@ export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewI
                 this.loadInitialData();
             }
         });
-    }
-
-    ngAfterViewInit(): void {
-        // Gantt will load when data changes or tab changes
-    }
-
-    ngOnDestroy(): void {
-        if (this.ganttInstance) {
-            this.ganttInstance = null;
-        }
     }
 
     loadInitialData(): void {
@@ -142,11 +131,6 @@ export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewI
         this.calculateKPIs();
         this.initCharts();
         
-        // Re-render Gantt if on Gantt tab
-        setTimeout(() => {
-            this.initGantt();
-        }, 100);
-
         this._cdr.detectChanges();
     }
 
@@ -195,6 +179,19 @@ export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewI
         if (!endDate) return 0;
         const diff = moment(endDate).diff(moment(), 'days');
         return diff;
+    }
+
+    // Open creation or edit dialog for tasks
+    openTaskForm(taskId?: number): void {
+        this._matDialog.open(TaskFormDialogComponent, {
+            width: '1200px',
+            height: '95vh',
+            data: taskId ? { id: taskId } : null
+        }).afterClosed().subscribe(res => {
+            if (res === 'refresh') {
+                this.loadTasks();
+            }
+        });
     }
 
     // Charts Initializer
@@ -310,52 +307,5 @@ export class EngineeringSeguimientoTareasComponent implements OnInit, AfterViewI
         };
 
         this.updateChartsFlag = true;
-    }
-
-    // Gantt Diagram
-    initGantt(): void {
-        if (!this.ganttContainer) return;
-
-        const ganttTasks = this.filteredTasks
-            .filter(t => t.fechaInicioEstimada && t.fechaFinEstimada)
-            .map(t => ({
-                id: `T_${t.id}`,
-                name: t.nombre,
-                start: moment(t.fechaInicioEstimada).format('YYYY-MM-DD'),
-                end: moment(t.fechaFinEstimada).format('YYYY-MM-DD'),
-                progress: t.progreso || 0,
-                dependencies: t.dependencies || '',
-                custom_class: t.estatus === 3 ? 'gantt-bar-success' : t.estatus === 2 ? 'gantt-bar-info' : 'gantt-bar-warning'
-            }));
-
-        if (ganttTasks.length === 0) {
-            this.ganttContainer.nativeElement.innerHTML = '<div class="p-8 text-center text-secondary italic">No hay tareas con fechas estimadas para mostrar en el diagrama de Gantt.</div>';
-            return;
-        }
-
-        this.ganttContainer.nativeElement.innerHTML = '';
-        const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgEl.id = 'gantt-chart-project';
-        svgEl.setAttribute('width', '100%');
-        svgEl.setAttribute('height', '100%');
-        this.ganttContainer.nativeElement.appendChild(svgEl);
-
-        this.ganttInstance = new Gantt('#gantt-chart-project', ganttTasks, {
-            header_height: 50,
-            column_width: 30,
-            step: 24,
-            view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
-            view_mode: 'Day',
-            language: 'es',
-            readonly: true
-        } as any);
-    }
-
-    onTabChange(event: any): void {
-        if (event.index === 2) { // Gantt tab
-            setTimeout(() => {
-                this.initGantt();
-            }, 150);
-        }
     }
 }
