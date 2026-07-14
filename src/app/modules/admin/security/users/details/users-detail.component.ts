@@ -136,6 +136,8 @@ export class UsersDetailsComponent implements OnInit, OnDestroy {
             activo: [true, [Validators.required]],
             rolId: ['', [Validators.required]],
             unidadId: [null], // 🔹 Sucursal
+            contpaqiAgenteId: [null],
+            contpaqiAgenteMoralId: [null],
             metasAgrupadas: this._formBuilder.array([]) // 🔹 Metas dinámicas agrupadas
         });
 

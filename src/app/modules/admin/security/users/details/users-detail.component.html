@@ -30,30 +30,40 @@
 
             <div class="mt-3 truncate text-4xl font-bold">{{ user.nombreUsuario }}</div>
 
-            <div class="mt-4 flex flex-col space-y-4 border-t pt-6">
-                <div class="flex items-center">
-                    <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
-                    <div class="ml-6 leading-6">{{ user.email }}</div>
-                    <button mat-icon-button (click)="copyTextToClipboard(user.email)" class="ml-2">
-                        <mat-icon class="icon-size-4">content_copy</mat-icon>
-                    </button>
-                </div>
+                <div class="flex flex-col space-y-4 border-t pt-6">
+                    <div class="flex items-center">
+                        <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:envelope'"></mat-icon>
+                        <div class="ml-6 leading-6">{{ user.email }}</div>
+                        <button mat-icon-button (click)="copyTextToClipboard(user.email)" class="ml-2">
+                            <mat-icon class="icon-size-4">content_copy</mat-icon>
+                        </button>
+                    </div>
+    
+                    <div class="flex items-center" *ngIf="user.telefono">
+                        <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
+                        <div class="ml-6 leading-6">{{ user.telefono }}</div>
+                    </div>
+    
+                    <div class="flex items-center">
+                        <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
+                        <div class="ml-6 leading-6 font-semibold">{{ user.nombreRol }}</div>
+                    </div>
+    
+                    <div class="flex items-center" *ngIf="user.nombreUnidad">
+                        <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
+                        <div class="ml-6 leading-6">{{ user.nombreUnidad }}</div>
+                    </div>
 
-                <div class="flex items-center" *ngIf="user.telefono">
-                    <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:phone'"></mat-icon>
-                    <div class="ml-6 leading-6">{{ user.telefono }}</div>
-                </div>
+                    <div class="flex items-center" *ngIf="user.contpaqiAgenteId">
+                        <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                        <div class="ml-6 leading-6"><span class="font-semibold text-secondary">ID Agente Física (CONTPAQi):</span> {{ user.contpaqiAgenteId }}</div>
+                    </div>
 
-                <div class="flex items-center">
-                    <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:shield-check'"></mat-icon>
-                    <div class="ml-6 leading-6 font-semibold">{{ user.nombreRol }}</div>
+                    <div class="flex items-center" *ngIf="user.contpaqiAgenteMoralId">
+                        <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
+                        <div class="ml-6 leading-6"><span class="font-semibold text-secondary">ID Agente Moral (CONTPAQi):</span> {{ user.contpaqiAgenteMoralId }}</div>
+                    </div>
                 </div>
-
-                <div class="flex items-center" *ngIf="user.nombreUnidad">
-                    <mat-icon class="text-hint" [svgIcon]="'heroicons_outline:building-office'"></mat-icon>
-                    <div class="ml-6 leading-6">{{ user.nombreUnidad }}</div>
-                </div>
-            </div>
 
             <div class="mt-8 border-t pt-6" *ngIf="metasAgrupadasVisualizacion?.length">
                 <h3 class="text-lg font-bold mb-4">Metas de Venta (Totalizado por Año)</h3>
@@ -173,6 +183,18 @@
                     <div class="flex items-center pt-2">
                         <mat-slide-toggle formControlName="activo" color="primary">Usuario Activo</mat-slide-toggle>
                     </div>
+
+                    <mat-form-field class="w-full">
+                        <mat-label>ID Agente Persona Física (CONTPAQi)</mat-label>
+                        <mat-icon matPrefix [svgIcon]="'heroicons_solid:identification'"></mat-icon>
+                        <input matInput type="number" formControlName="contpaqiAgenteId" placeholder="Ej: 1" />
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full">
+                        <mat-label>ID Agente Persona Moral (CONTPAQi)</mat-label>
+                        <mat-icon matPrefix [svgIcon]="'heroicons_solid:identification'"></mat-icon>
+                        <input matInput type="number" formControlName="contpaqiAgenteMoralId" placeholder="Ej: 2" />
+                    </mat-form-field>
                 </div>
 
                 <div class="mt-10 border-t pt-8">
