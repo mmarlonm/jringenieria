@@ -370,7 +370,7 @@ export class ReportVentasDashboardComponent implements OnInit {
                         if (this.esMoral === '3' && this.sucursal === 'TODAS' && (this.desglosePorSucursal.length > 0 || this.detalleVentas.length > 0)) {
                             // 📊 Calcular Totales Globales para la Barra de Progreso
                             this.totalMetaGlobal = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.metaAnualSucursal || 0), 0);
-                            this.totalVentasGlobal = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.totalVenta || 0), 0);
+                            this.totalVentasGlobal = this.desglosePorSucursal.reduce((acc, curr) => acc + (curr.totalVenta || 0), 0) / 1.16;
                             this.porcentajeMetaGlobal = this.totalMetaGlobal > 0 ? (this.totalVentasGlobal / this.totalMetaGlobal) * 100 : 0;
 
                             const paletaColores = [
@@ -388,12 +388,13 @@ export class ReportVentasDashboardComponent implements OnInit {
                                 .filter(s => s.totalVenta > 0)
                                 .map((s, idx) => {
                                     const colorInfo = paletaColores[idx % paletaColores.length];
+                                    const totalVendidoSucursal = s.totalVenta / 1.16;
                                     return {
                                         nombre: s.sucursal,
-                                        totalVendido: s.totalVenta,
+                                        totalVendido: totalVendidoSucursal,
                                         metaAnualSucursal: s.metaAnualSucursal, // 👈 Mantener para la gráfica de barras
-                                        anchoPorcentaje: this.totalMetaGlobal > 0 ? (s.totalVenta / this.totalMetaGlobal) * 100 : 0,
-                                        participacion: this.totalVentasGlobal > 0 ? (s.totalVenta / this.totalVentasGlobal) * 100 : 0,
+                                        anchoPorcentaje: this.totalMetaGlobal > 0 ? (totalVendidoSucursal / this.totalMetaGlobal) * 100 : 0,
+                                        participacion: this.totalVentasGlobal > 0 ? (totalVendidoSucursal / this.totalVentasGlobal) * 100 : 0,
                                         colorClass: colorInfo.class,
                                         hexColor: colorInfo.hex
                                     };
