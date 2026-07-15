@@ -290,7 +290,7 @@ export class ReportVentasDashboardComponent implements OnInit {
                     this.metaAnual = resp.metaAnual || 0;
                     this.ventasAnual = resp.ventasAnual || resp.kpis?.totalVentas || 0;
 
-                    if (this.sucursal && this.sucursal.toLowerCase() === 'puebla') {
+                    if (this.sucursal && this.sucursal !== 'TODAS') {
                         this.ventasAnual = this.ventasAnual / 1.16;
                     }
 
@@ -308,7 +308,7 @@ export class ReportVentasDashboardComponent implements OnInit {
 
                         resp.topVendedores.forEach((vendedor: any, index: number) => {
                             let totalVendidoAgente = vendedor.totalVendido || 0;
-                            if (this.sucursal && this.sucursal.toLowerCase() === 'puebla') {
+                            if (this.sucursal && this.sucursal !== 'TODAS') {
                                 totalVendidoAgente = totalVendidoAgente / 1.16;
                             }
 
@@ -333,7 +333,7 @@ export class ReportVentasDashboardComponent implements OnInit {
                                 const ventasMensuales = Array.from(ventasMensualesMap.entries())
                                     .map(([mesIndex, total]) => {
                                         let totalMes = total || 0;
-                                        if (this.sucursal && this.sucursal.toLowerCase() === 'puebla') {
+                                        if (this.sucursal && this.sucursal !== 'TODAS') {
                                             totalMes = totalMes / 1.16;
                                         }
                                         return {
