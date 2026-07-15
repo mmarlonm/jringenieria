@@ -143,7 +143,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     { name: 'Fianza', label: 'Fianza', icon: 'heroicons_outline:shield-check' },
     { name: 'Dossier', label: 'Dossier', icon: 'heroicons_outline:folder-open' },
     { name: 'ActaEntrega', label: 'Acta Entrega Final', icon: 'heroicons_outline:clipboard-document-check' },
-    { name: 'Planos', label: 'Planos', icon: 'heroicons_outline:map' }
+    { name: 'Planos', label: 'Planos', icon: 'heroicons_outline:map' },
+    { name: 'OC', label: 'OC y Facturas', icon: 'heroicons_outline:document-text' }
   ];
 
   // Files
