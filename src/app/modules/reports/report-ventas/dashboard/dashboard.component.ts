@@ -289,6 +289,11 @@ export class ReportVentasDashboardComponent implements OnInit {
                     // 2. Lógica de Metas
                     this.metaAnual = resp.metaAnual || 0;
                     this.ventasAnual = resp.ventasAnual || resp.kpis?.totalVentas || 0;
+
+                    if (this.sucursal && this.sucursal.toLowerCase() === 'puebla') {
+                        this.ventasAnual = this.ventasAnual / 1.16;
+                    }
+
                     this.porcentajeMetaAnual = this.metaAnual > 0 ? (this.ventasAnual / this.metaAnual) * 100 : 0;
 
                     // 3. Procesamiento de Vendedores (Barras)
@@ -302,8 +307,13 @@ export class ReportVentasDashboardComponent implements OnInit {
                         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
                         resp.topVendedores.forEach((vendedor: any, index: number) => {
-                            const widthBarra = this.metaAnual > 0 ? (vendedor.totalVendido / this.metaAnual) * 100 : 0;
-                            const participacionSucursal = this.ventasAnual > 0 ? (vendedor.totalVendido / this.ventasAnual) * 100 : 0;
+                            let totalVendidoAgente = vendedor.totalVendido || 0;
+                            if (this.sucursal && this.sucursal.toLowerCase() === 'puebla') {
+                                totalVendidoAgente = totalVendidoAgente / 1.16;
+                            }
+
+                            const widthBarra = this.metaAnual > 0 ? (totalVendidoAgente / this.metaAnual) * 100 : 0;
+                            const participacionSucursal = this.ventasAnual > 0 ? (totalVendidoAgente / this.ventasAnual) * 100 : 0;
 
                             if (vendedor.totalVendido > 0) {
                                 const partes = vendedor.vendedor.trim().split(/\s+/);
@@ -321,16 +331,22 @@ export class ReportVentasDashboardComponent implements OnInit {
                                 }
 
                                 const ventasMensuales = Array.from(ventasMensualesMap.entries())
-                                    .map(([mesIndex, total]) => ({
-                                        mesNombre: mesesNombres[mesIndex],
-                                        mesNumero: mesIndex,
-                                        total: total
-                                    })).sort((a, b) => a.mesNumero - b.mesNumero);
+                                    .map(([mesIndex, total]) => {
+                                        let totalMes = total || 0;
+                                        if (this.sucursal && this.sucursal.toLowerCase() === 'puebla') {
+                                            totalMes = totalMes / 1.16;
+                                        }
+                                        return {
+                                            mesNombre: mesesNombres[mesIndex],
+                                            mesNumero: mesIndex,
+                                            total: totalMes
+                                        };
+                                    }).sort((a, b) => a.mesNumero - b.mesNumero);
 
                                 this.segmentosAgentes.push({
                                     nombreCorto: nombreCorto,
                                     nombreCompleto: vendedor.vendedor,
-                                    totalVendido: vendedor.totalVendido,
+                                    totalVendido: totalVendidoAgente,
                                     anchoPorcentaje: widthBarra,
                                     porcentajeParticipacion: participacionSucursal,
                                     colorClass: coloresAgentes[index % coloresAgentes.length],
