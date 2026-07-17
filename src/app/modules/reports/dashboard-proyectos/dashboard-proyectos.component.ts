@@ -214,7 +214,7 @@ export class DashboardProyectosComponent implements OnInit {
         const prioValues = (data.prioridadesGrafico || []).map((x: any) => x.cantidad);
         
         this.chartPrioridades = {
-            chart: { type: 'bar', height: 240, backgroundColor: 'transparent' },
+            chart: { type: 'bar', height: 260, width: null as any, backgroundColor: 'transparent', reflow: true },
             title: { text: '' },
             xAxis: { categories: prioLabels, gridLineWidth: 0 },
             yAxis: { title: { text: '' }, tickInterval: 1 },
@@ -247,7 +247,7 @@ export class DashboardProyectosComponent implements OnInit {
         const respValues = (data.responsablesGrafico || []).map((x: any) => x.cantidad);
 
         this.chartResponsables = {
-            chart: { type: 'column', height: 240, backgroundColor: 'transparent' },
+            chart: { type: 'column', height: 260, width: null as any, backgroundColor: 'transparent', reflow: true },
             title: { text: '' },
             xAxis: { categories: respLabels, labels: { rotation: -45 } },
             yAxis: { title: { text: '' }, tickInterval: 1 },
@@ -281,7 +281,7 @@ export class DashboardProyectosComponent implements OnInit {
         }));
 
         this.chartEstados = {
-            chart: { type: 'pie', height: 240, backgroundColor: 'transparent' },
+            chart: { type: 'pie', height: 260, width: null as any, backgroundColor: 'transparent', reflow: true },
             title: { text: '' },
             credits: { enabled: false },
             plotOptions: {
