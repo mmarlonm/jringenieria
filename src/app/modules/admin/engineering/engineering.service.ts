@@ -261,4 +261,19 @@ export class EngineeringService {
     reordenarGantt(items: any[]): Observable<any> {
         return this._http.post(`${this.apiSeguimientoEjecucion}/gantt/reordenar`, items);
     }
+
+    // ==========================================
+    // 📁 APARTADOS/CATEGORÍAS DE ARCHIVOS PERSONALIZABLES
+    // ==========================================
+    getApartadosEjecucion(idSeguimiento: number): Observable<any[]> {
+        return this._http.get<any[]>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/apartados`);
+    }
+
+    sincronizarApartadosEjecucion(idSeguimiento: number, apartados: any[]): Observable<any[]> {
+        return this._http.post<any[]>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/apartados`, apartados);
+    }
+
+    eliminarApartadoEjecucion(idSeguimiento: number, idApartado: number): Observable<any> {
+        return this._http.delete<any>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/apartados/${idApartado}`);
+    }
 }

@@ -15,6 +15,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad } from '../../engineering.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejecucion-actividad-dialog.component';
+import { ConfigurarApartadosDialogComponent } from './dialogs/configurar-apartados-dialog.component';
 import { SubcontratacionService } from '../../subcontratacion.service';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 import Swal from 'sweetalert2';
@@ -148,6 +149,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   ];
 
   // Files
+  apartados: any[] = [];
   archivos: { nombreArchivo: string, tipo: string }[] = [];
   isUploading: { [key: string]: boolean } = {};
   isUploadingOC: boolean = false;
@@ -272,6 +274,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.loadData();
     this.loadUsers();
     this.loadEquiposDisponibles();
+    this.loadApartados();
     
     // Centrar línea de tiempo al redimensionar ventana
     fromEvent(window, 'resize')
@@ -632,6 +635,34 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
           }
         });
+      }
+    });
+  }
+
+  loadApartados(): void {
+    this._engineeringService.getApartadosEjecucion(this.idSeguimiento).subscribe({
+      next: (res) => {
+        this.apartados = res || [];
+        this._cdr.markForCheck();
+      },
+      error: (err) => console.error('Error al cargar apartados:', err)
+    });
+  }
+
+  openConfigurarApartadosDialog(): void {
+    const dialogRef = this._dialog.open(ConfigurarApartadosDialogComponent, {
+      data: {
+        idSeguimiento: this.idSeguimiento,
+        apartados: this.apartados
+      },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res) {
+        this.apartados = res;
+        this.loadFiles();
+        this._cdr.markForCheck();
       }
     });
   }

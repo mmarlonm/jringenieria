@@ -704,39 +704,58 @@
 
       <!-- TAB 3: ARCHIVOS Y EVIDENCIAS -->
       <mat-tab label="Archivos y Evidencias">
-        <div class="p-6 md:p-8 overflow-y-auto h-full max-h-[calc(100vh-140px)] custom-scrollbar">
+        <div class="p-6 md:p-8 w-full">
           <div class="max-w-7xl mx-auto w-full">
+            
+            <!-- Dynamic Categories Header & Config Button -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-6 gap-4">
+              <div>
+                <h3 class="text-lg font-black text-slate-800 uppercase tracking-wide flex items-center gap-3">
+                  <div class="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+                    <mat-icon class="icon-size-6" [svgIcon]="'heroicons_outline:folder-open'"></mat-icon>
+                  </div>
+                  Expediente de Archivos y Evidencias
+                </h3>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">Sube y organiza los documentos de este proyecto por apartados</p>
+              </div>
+              <button mat-flat-button color="primary" type="button" (click)="openConfigurarApartadosDialog()" class="!rounded-xl shadow-md hover:shadow-lg transition-all">
+                <mat-icon class="mr-2">settings</mat-icon>
+                Configurar Apartados
+              </button>
+            </div>
+
+            <!-- Categories Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-              <ng-container *ngFor="let cat of categories">
-                <div *ngIf="cat.name !== 'OC'"
+              <ng-container *ngFor="let cat of apartados">
+                <div *ngIf="cat.nombre !== 'OC'"
                   class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full min-h-[220px] hover:shadow-md transition-shadow">
                   <!-- Category Header -->
                   <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 flex-none">
                     <div class="flex items-center gap-3">
                       <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                        <mat-icon class="icon-size-5" [svgIcon]="cat.icon"></mat-icon>
+                        <mat-icon class="icon-size-5" [svgIcon]="cat.icon || 'heroicons_outline:folder'"></mat-icon>
                       </div>
                       <span class="text-xs font-black text-slate-800 uppercase tracking-wider">{{ cat.label }}</span>
                     </div>
                     <!-- Upload button -->
-                    <button mat-icon-button (click)="fileInput.click()" [disabled]="isUploading[cat.name]"
+                    <button mat-icon-button (click)="fileInput.click()" [disabled]="isUploading[cat.nombre]"
                       matTooltip="Subir archivo" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
                       <mat-icon class="icon-size-5">cloud_upload</mat-icon>
                     </button>
-                    <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, cat.name)">
+                    <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, cat.nombre)">
                   </div>
 
                   <!-- Category Files List -->
                   <div class="flex-auto space-y-2 overflow-y-auto max-h-48 min-h-[100px] pr-1 custom-scrollbar">
                     <!-- Loader -->
-                    <div *ngIf="isUploading[cat.name]"
+                    <div *ngIf="isUploading[cat.nombre]"
                       class="flex items-center justify-center p-4 text-xs text-indigo-600 gap-2">
                       <mat-icon class="animate-spin icon-size-4">sync</mat-icon>
                       <span>Subiendo archivo...</span>
                     </div>
 
-                    <div *ngIf="getFilesByCategory(cat.name).length === 0 && !isUploading[cat.name]"
+                    <div *ngIf="getFilesByCategory(cat.nombre).length === 0 && !isUploading[cat.nombre]"
                       (click)="fileInput.click()"
                       class="flex flex-col items-center justify-center py-8 text-slate-400 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:text-indigo-600 rounded-xl cursor-pointer transition-all bg-slate-50/50 hover:bg-indigo-50/20 group select-none">
                       <mat-icon
@@ -747,7 +766,7 @@
                       <span class="text-[9px] text-slate-400 mt-1">Haz clic para seleccionar</span>
                     </div>
 
-                    <div *ngFor="let file of getFilesByCategory(cat.name)"
+                    <div *ngFor="let file of getFilesByCategory(cat.nombre)"
                       class="flex items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all group">
                       <span class="text-xs font-bold text-slate-700 truncate pr-2 flex-auto"
                         [title]="file.nombreArchivo">

@@ -169,7 +169,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:chart-pie',
                 children: [
-                    { id: 'reports.report-expenses', title: 'Reporte de gastos', type: 'basic', icon: 'heroicons_outline:document-text', link: '/reports/report-expenses' }
+                    { id: 'reports.report-expenses', title: 'Reporte de gastos', type: 'basic', icon: 'heroicons_outline:document-text', link: '/reports/report-expenses' },
+                    { id: 'reports.dashboard-proyectos', title: 'Dashboard de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/reports/dashboard-proyectos' }
                 ]
             }
         ]

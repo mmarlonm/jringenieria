@@ -112,6 +112,7 @@ export const appRoutes: Route[] = [
                     { path: 'report-product-existence', loadChildren: () => import('app/modules/reports/report-product-existence/report-product-existence.routes') },
                     { path: 'report-customers', loadChildren: () => import('app/modules/reports/report-customers/report-customers.routes') },
                     { path: 'report-expenses', loadChildren: () => import('app/modules/reports/report-expenses/report-expenses.routes') },
+                    { path: 'dashboard-proyectos', loadChildren: () => import('app/modules/reports/dashboard-proyectos/dashboard-proyectos.routes') },
                     { path: 'report-ventas-agente', loadChildren: () => import('app/modules/reports/report-ventas-agente/report-ventas-agente.routes') },
                     { path: 'report-customers-segmentation', loadChildren: () => import('app/modules/reports/report-customers-segmentation/report-customers-segmentation.routes') },
                     { path: 'existencias-tableros', loadChildren: () => import('app/modules/reports/report-existencias-tableros/report-existencias-tableros.routes') },

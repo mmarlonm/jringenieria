@@ -1,0 +1,108 @@
+<div class="flex flex-col max-w-5xl w-full max-h-[90vh]">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b bg-slate-50 dark:bg-slate-900">
+        <div class="flex items-center gap-2">
+            <mat-icon class="text-indigo-600">assessment</mat-icon>
+            <h2 class="text-lg font-black text-slate-800 uppercase tracking-tight m-0">Detalle: {{ data.titulo }}</h2>
+        </div>
+        <button mat-icon-button (click)="close()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 overflow-y-auto space-y-6 flex-auto custom-scrollbar bg-slate-50/50">
+        <!-- KPIs Ribbon -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Total Tareas</span>
+                <span class="text-xl font-black text-slate-700 mt-1 block">{{ totalTareas }}</span>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Completadas</span>
+                <span class="text-xl font-black text-emerald-600 mt-1 block">{{ completadas }}</span>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">En Proceso</span>
+                <span class="text-xl font-black text-blue-600 mt-1 block">{{ enProceso }}</span>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Pendientes</span>
+                <span class="text-xl font-black text-amber-500 mt-1 block">{{ pendientes }}</span>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center col-span-2 md:col-span-1">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Eficiencia</span>
+                <span class="text-xl font-black text-indigo-600 mt-1 block">{{ porcentajeCompletado }}%</span>
+            </div>
+        </div>
+
+        <!-- Visual Analytics Block -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Chart Side -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center items-center">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2 w-full text-left">Distribución del Estado</span>
+                <highcharts-chart 
+                    [Highcharts]="Highcharts" 
+                    [options]="chartOptions" 
+                    style="width: 100%; height: 220px; display: block;">
+                </highcharts-chart>
+            </div>
+
+            <!-- List Table Side -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden md:col-span-2 flex flex-col">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block p-4 border-b">Listado de Actividades</span>
+                <div class="overflow-x-auto flex-auto">
+                    <table mat-table [dataSource]="data.tareas" class="w-full">
+                        <!-- Tarea -->
+                        <ng-container matColumnDef="tarea">
+                            <th mat-header-cell *matHeaderCellDef class="!text-[10px] !font-black !uppercase"> Tarea </th>
+                            <td mat-cell *matCellDef="let t" class="!text-xs font-semibold text-slate-700 max-w-[180px] truncate" [title]="t.tarea"> {{ t.tarea }} </td>
+                        </ng-container>
+
+                        <!-- Proyecto -->
+                        <ng-container matColumnDef="proyecto">
+                            <th mat-header-cell *matHeaderCellDef class="!text-[10px] !font-black !uppercase"> Proyecto </th>
+                            <td mat-cell *matCellDef="let t" class="!text-[11px] text-slate-400 truncate max-w-[120px]" [title]="t.proyectoAsociado"> {{ t.proyectoAsociado }} </td>
+                        </ng-container>
+
+                        <!-- Prioridad -->
+                        <ng-container matColumnDef="prioridad">
+                            <th mat-header-cell *matHeaderCellDef class="!text-[10px] !font-black !uppercase"> Prioridad </th>
+                            <td mat-cell *matCellDef="let t">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase" [ngClass]="getPrioridadBadge(t.prioridad)">{{ t.prioridad }}</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Responsable -->
+                        <ng-container matColumnDef="responsable">
+                            <th mat-header-cell *matHeaderCellDef class="!text-[10px] !font-black !uppercase"> Responsable </th>
+                            <td mat-cell *matCellDef="let t" class="!text-xs text-slate-600"> {{ t.responsable }} </td>
+                        </ng-container>
+
+                        <!-- Estado -->
+                        <ng-container matColumnDef="estado">
+                            <th mat-header-cell *matHeaderCellDef class="!text-[10px] !font-black !uppercase"> Estado </th>
+                            <td mat-cell *matCellDef="let t" class="!text-xs font-bold" 
+                                [ngClass]="{'text-emerald-600': t.estado === 'Completado', 'text-blue-500': t.estado === 'En proceso', 'text-amber-500': t.estado === 'Pendiente'}"> 
+                                {{ t.estado }} 
+                            </td>
+                        </ng-container>
+
+                        <!-- Fecha Límite -->
+                        <ng-container matColumnDef="fechaLimite">
+                            <th mat-header-cell *matHeaderCellDef class="!text-[10px] !font-black !uppercase"> Límite </th>
+                            <td mat-cell *matCellDef="let t" class="!text-[11px] text-slate-500"> {{ t.fechaLimite | date:'dd MMM yyyy':undefined:'es' }} </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50"></tr>
+                    </table>
+                    
+                    <div *ngIf="!data.tareas || data.tareas.length === 0" class="p-8 text-center text-xs text-slate-400 italic">
+                        Sin actividades registradas
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

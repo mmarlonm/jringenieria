@@ -1,0 +1,213 @@
+<div class="flex flex-col flex-auto min-w-0 bg-slate-50 dark:bg-transparent">
+    
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:py-8 sm:px-10 border-b bg-white dark:bg-slate-900 flex-none shadow-sm">
+        <div>
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <mat-icon class="icon-size-8">presentation_chart_bar</mat-icon>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Dashboard de Proyectos</h1>
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Visión unificada de cotizaciones y control de ejecución</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-auto p-6 sm:p-10 space-y-6 max-w-7xl mx-auto w-full">
+
+        <!-- Filters Section -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-4 justify-between">
+            <div class="flex flex-wrap items-center gap-4 flex-1">
+                <!-- Project Selector -->
+                <mat-form-field appearance="outline" class="w-full sm:w-80 fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Filtrar por Proyecto</mat-label>
+                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">folder</mat-icon>
+                    <mat-select [(ngModel)]="selectedProyectoId" (selectionChange)="onBuscar()">
+                        <mat-option [value]="0">Todos los Proyectos</mat-option>
+                        <mat-option *ngFor="let p of proyectos" [value]="p.idSeguimiento">{{ p.actividad }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <!-- Datepicker Filter -->
+                <mat-form-field appearance="outline" class="w-full sm:w-80 fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Filtrar Rango de Fechas</mat-label>
+                    <mat-date-range-input [formGroup]="dateRange">
+                        <input matStartDate formControlName="start" placeholder="Inicio" (dateChange)="onBuscar()">
+                        <input matEndDate formControlName="end" placeholder="Fin" (dateChange)="onBuscar()">
+                    </mat-date-range-input>
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-date-range-picker #picker></mat-date-range-picker>
+                </mat-form-field>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button mat-stroked-button (click)="clearFilters()" class="!rounded-xl border-slate-200">
+                    <mat-icon class="mr-2">filter_alt_off</mat-icon>
+                    Limpiar
+                </button>
+                <button mat-flat-button color="primary" (click)="onBuscar()" class="!rounded-xl shadow-md hover:shadow-lg">
+                    <mat-icon class="mr-2" *ngIf="!isLoading">search</mat-icon>
+                    <mat-icon class="mr-2 animate-spin" *ngIf="isLoading">sync</mat-icon>
+                    Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Metadata Ribbon (Horizontal Table Card) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="grid grid-cols-2 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-slate-100 text-center">
+                <div class="p-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Proyecto</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1 truncate" [title]="metadata.proyecto">{{ metadata.proyecto }}</p>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Líder Proyecto</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1 truncate" [title]="metadata.liderProyecto">{{ metadata.liderProyecto }}</p>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha de Inicio</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1">{{ metadata.fechaInicio }}</p>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha Final</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1">{{ metadata.fechaFin }}</p>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Duración</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1">{{ metadata.duracion }}</p>
+                </div>
+                <div class="p-4">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Días Laborables</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1">{{ metadata.diasLaborables }}</p>
+                </div>
+                <div class="p-4 col-span-2 md:col-span-1">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre del Cliente</span>
+                    <p class="text-xs font-bold text-slate-700 mt-1 truncate" [title]="metadata.nombreCliente">{{ metadata.nombreCliente }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eisenhower Matrix & Progress Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div *ngFor="let item of eisenhower" 
+                 class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between"
+                 [ngClass]="getEisenhowerBg(item.cuadrante)"
+                 (click)="openDetalle(item.cuadrante, 'eisenhower')">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <span class="text-xs font-black uppercase tracking-wider">{{ item.cuadrante }}</span>
+                    <mat-icon [style.color]="getEisenhowerColor(item.cuadrante)">offline_bolt</mat-icon>
+                </div>
+                <div class="flex items-center gap-4 mt-4">
+                    <div class="relative w-16 h-16 shrink-0 flex items-center justify-center rounded-full bg-white shadow-inner">
+                        <span class="text-sm font-black">{{ item.porcentaje }}%</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold opacity-80">Avance General</p>
+                        <p class="text-lg font-black mt-0.5">{{ item.tareasCompletadas }} / {{ item.totalTareas }} <span class="text-[10px] font-bold uppercase tracking-wider">tareas</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Central Worklists Panel -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Tareas que vencen hoy -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col min-h-[300px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 cursor-pointer hover:opacity-80"
+                     (click)="openDetalle('Tareas que vencen hoy', 'vencen-hoy')">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-amber-50 text-amber-500 rounded-lg">
+                            <mat-icon class="icon-size-5">notification_important</mat-icon>
+                        </div>
+                        <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Tareas que vencen hoy</span>
+                    </div>
+                    <mat-icon class="text-slate-400">arrow_forward</mat-icon>
+                </div>
+                <div class="flex-auto space-y-2 overflow-y-auto max-h-72 custom-scrollbar">
+                    <div *ngIf="tareasVencenHoy.length === 0" class="flex flex-col items-center justify-center py-10 text-slate-400 italic text-xs">
+                        <mat-icon class="icon-size-8 text-slate-300 mb-2">check_circle</mat-icon>
+                        No hay tareas que venzan hoy
+                    </div>
+                    <div *ngFor="let t of tareasVencenHoy" class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-800 truncate" [title]="t.tarea">{{ t.tarea }}</p>
+                            <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{{ t.proyectoAsociado }}</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase" [ngClass]="getPrioridadBadge(t.prioridad)">{{ t.prioridad }}</span>
+                            <span class="text-xs font-bold text-slate-600">{{ t.responsable }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tareas atrasadas -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col min-h-[300px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 cursor-pointer hover:opacity-80"
+                     (click)="openDetalle('Tareas Atrasadas', 'atrasadas')">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-rose-50 text-rose-500 rounded-lg">
+                            <mat-icon class="icon-size-5">error_outline</mat-icon>
+                        </div>
+                        <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Tareas atrasadas</span>
+                    </div>
+                    <mat-icon class="text-slate-400">arrow_forward</mat-icon>
+                </div>
+                <div class="flex-auto space-y-2 overflow-y-auto max-h-72 custom-scrollbar">
+                    <div *ngIf="tareasAtrasadas.length === 0" class="flex flex-col items-center justify-center py-10 text-slate-400 italic text-xs">
+                        <mat-icon class="icon-size-8 text-slate-300 mb-2">verified</mat-icon>
+                        ¡Excelente! No hay tareas atrasadas
+                    </div>
+                    <div *ngFor="let t of tareasAtrasadas" class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-800 truncate" [title]="t.tarea">{{ t.tarea }}</p>
+                            <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{{ t.proyectoAsociado }}</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase" [ngClass]="getPrioridadBadge(t.prioridad)">{{ t.prioridad }}</span>
+                            <span class="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded">Límite: {{ t.fechaLimite | date:'dd MMM yy':undefined:'es' }}</span>
+                            <span class="text-xs font-bold text-slate-600">{{ t.responsable }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Dashboard Section (Highcharts) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Prioridades Chart -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Prioridades</span>
+                <highcharts-chart *ngIf="chartPrioridades.series"
+                    [Highcharts]="Highcharts"
+                    [options]="chartPrioridades"
+                    style="width: 100%; height: 240px; display: block;">
+                </highcharts-chart>
+            </div>
+
+            <!-- Personas a cargo Chart -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Persona a cargo</span>
+                <highcharts-chart *ngIf="chartResponsables.series"
+                    [Highcharts]="Highcharts"
+                    [options]="chartResponsables"
+                    style="width: 100%; height: 240px; display: block;">
+                </highcharts-chart>
+            </div>
+
+            <!-- Estado Chart -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Estado</span>
+                <highcharts-chart *ngIf="chartEstados.series"
+                    [Highcharts]="Highcharts"
+                    [options]="chartEstados"
+                    style="width: 100%; height: 240px; display: block;">
+                </highcharts-chart>
+            </div>
+        </div>
+
+    </div>
+</div>
