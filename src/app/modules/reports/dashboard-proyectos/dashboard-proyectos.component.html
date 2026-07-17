@@ -19,31 +19,38 @@
     <div class="flex-auto p-4 sm:p-6 xl:p-8 space-y-6 w-full">
 
         <!-- Filters Section -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-4 justify-between">
-            <div class="flex flex-wrap items-center gap-4 flex-1">
-                <!-- Project Selector -->
-                <mat-form-field appearance="outline" class="w-full sm:w-80 fuse-mat-dense" subscriptSizing="dynamic">
-                    <mat-label>Filtrar por Proyecto</mat-label>
-                    <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">folder</mat-icon>
-                    <mat-select [(ngModel)]="selectedProyectoId" (selectionChange)="onBuscar()">
-                        <mat-option [value]="0">Todos los Proyectos</mat-option>
-                        <mat-option *ngFor="let p of proyectos" [value]="p.idSeguimiento">{{ p.actividad }}</mat-option>
-                    </mat-select>
-                </mat-form-field>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-end gap-4">
 
-                <!-- Datepicker Filter -->
-                <mat-form-field appearance="outline" class="w-full sm:w-80 fuse-mat-dense" subscriptSizing="dynamic">
-                    <mat-label>Filtrar Rango de Fechas</mat-label>
-                    <mat-date-range-input [formGroup]="dateRange">
-                        <input matStartDate formControlName="start" placeholder="Inicio" (dateChange)="onBuscar()">
-                        <input matEndDate formControlName="end" placeholder="Fin" (dateChange)="onBuscar()">
-                    </mat-date-range-input>
-                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                    <mat-date-range-picker #picker></mat-date-range-picker>
-                </mat-form-field>
-            </div>
+            <!-- Project Selector -->
+            <mat-form-field appearance="outline" class="w-full sm:w-72 fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Filtrar por Proyecto</mat-label>
+                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">folder</mat-icon>
+                <mat-select [(ngModel)]="selectedProyectoId">
+                    <mat-option [value]="0">Todos los Proyectos</mat-option>
+                    <mat-option *ngFor="let p of proyectos" [value]="p.idSeguimiento">{{ p.actividad }}</mat-option>
+                </mat-select>
+            </mat-form-field>
 
-            <div class="flex items-center gap-2">
+            <!-- Fecha Inicio -->
+            <mat-form-field appearance="outline" class="w-full sm:w-52 fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Fecha Inicio</mat-label>
+                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">calendar_today</mat-icon>
+                <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" placeholder="dd/mm/aaaa">
+                <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                <mat-datepicker #pickerInicio></mat-datepicker>
+            </mat-form-field>
+
+            <!-- Fecha Fin -->
+            <mat-form-field appearance="outline" class="w-full sm:w-52 fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Fecha Fin</mat-label>
+                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">event</mat-icon>
+                <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" placeholder="dd/mm/aaaa">
+                <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFin></mat-datepicker>
+            </mat-form-field>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 ml-auto">
                 <button mat-stroked-button (click)="clearFilters()" class="!rounded-xl border-slate-200">
                     <mat-icon class="mr-2">filter_alt_off</mat-icon>
                     Limpiar
@@ -51,7 +58,7 @@
                 <button mat-flat-button color="primary" (click)="onBuscar()" class="!rounded-xl shadow-md hover:shadow-lg">
                     <mat-icon class="mr-2" *ngIf="!isLoading">search</mat-icon>
                     <mat-icon class="mr-2 animate-spin" *ngIf="isLoading">sync</mat-icon>
-                    Actualizar
+                    Buscar
                 </button>
             </div>
         </div>

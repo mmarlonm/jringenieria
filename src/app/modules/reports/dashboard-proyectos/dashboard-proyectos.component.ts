@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,7 +23,6 @@ import { DashboardDetalleDialogComponent } from './dialogs/dashboard-detalle-dia
     imports: [
         CommonModule,
         FormsModule,
-        ReactiveFormsModule,
         MatButtonModule,
         MatIconModule,
         MatFormFieldModule,
@@ -41,11 +40,8 @@ export class DashboardProyectosComponent implements OnInit {
     Highcharts: typeof Highcharts = Highcharts;
     proyectos: any[] = [];
     selectedProyectoId: number = 0;
-    
-    dateRange = new FormGroup({
-        start: new FormControl<Date | null>(null),
-        end: new FormControl<Date | null>(null)
-    });
+    fechaInicio: Date | null = null;
+    fechaFin: Date | null = null;
 
     metadata: any = {
         proyecto: 'Todos',
@@ -93,18 +89,16 @@ export class DashboardProyectosComponent implements OnInit {
 
     onBuscar(): void {
         this.isLoading = true;
-        const startVal = this.dateRange.value.start;
-        const endVal = this.dateRange.value.end;
 
         let params: any = {};
         if (this.selectedProyectoId > 0) {
             params.idSeguimiento = this.selectedProyectoId;
         }
-        if (startVal) {
-            params.fechaInicio = startVal.toISOString();
+        if (this.fechaInicio) {
+            params.fechaInicio = this.fechaInicio.toISOString();
         }
-        if (endVal) {
-            params.fechaFin = endVal.toISOString();
+        if (this.fechaFin) {
+            params.fechaFin = this.fechaFin.toISOString();
         }
 
         this._http.get<any>(`${environment.apiUrl}/ReportDashboard/dashboard-proyectos`, { params }).subscribe({
@@ -132,7 +126,8 @@ export class DashboardProyectosComponent implements OnInit {
 
     clearFilters(): void {
         this.selectedProyectoId = 0;
-        this.dateRange.reset();
+        this.fechaInicio = null;
+        this.fechaFin = null;
         this.onBuscar();
     }
 
