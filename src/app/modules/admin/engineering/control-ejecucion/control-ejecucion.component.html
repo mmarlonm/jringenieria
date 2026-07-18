@@ -255,11 +255,16 @@
 
                     <!-- Acciones -->
                     <ng-container matColumnDef="acciones" stickyEnd>
-                        <th mat-header-cell *matHeaderCellDef class="text-center w-16">Data</th>
-                        <td mat-cell *matCellDef="let s" class="text-center">
-                            <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors bg-white shadow-sm border" (click)="editarEjecucion(s)" matTooltip="Actualizar datos">
-                                <mat-icon class="icon-size-5">edit</mat-icon>
-                            </button>
+                        <th mat-header-cell *matHeaderCellDef class="text-center w-24">Acciones</th>
+                        <td mat-cell *matCellDef="let s" class="text-center py-2">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors bg-white shadow-sm border rounded-lg" (click)="editarEjecucion(s)" matTooltip="Actualizar datos">
+                                    <mat-icon class="icon-size-5">edit</mat-icon>
+                                </button>
+                                <button mat-icon-button class="text-rose-500 hover:bg-rose-50 transition-colors bg-white shadow-sm border rounded-lg" (click)="eliminarSeguimiento(s.idSeguimiento); $event.stopPropagation()" matTooltip="Eliminar proyecto">
+                                    <mat-icon class="icon-size-5">delete</mat-icon>
+                                </button>
+                            </div>
                         </td>
                     </ng-container>
 

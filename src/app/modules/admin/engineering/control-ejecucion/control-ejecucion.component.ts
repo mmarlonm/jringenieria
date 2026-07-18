@@ -272,4 +272,40 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
             }
         });
     }
+
+    eliminarSeguimiento(id: number): void {
+        Swal.fire({
+            title: '¿Eliminar seguimiento?',
+            text: 'Esta acción es irreversible y eliminará el registro de seguimiento y ejecución del proyecto.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'inline-flex items-center justify-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg transition-all mx-2',
+                cancelButton: 'inline-flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-lg transition-all mx-2'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._engineeringService.deleteSeguimiento(id).subscribe({
+                    next: () => {
+                        this.getSeguimientos();
+                        Swal.fire({
+                            title: '¡Eliminado!',
+                            text: 'El seguimiento fue eliminado correctamente',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    },
+                    error: (err) => {
+                        console.error(err);
+                        Swal.fire('Error', 'No se pudo eliminar el seguimiento', 'error');
+                    }
+                });
+            }
+        });
+    }
 }
