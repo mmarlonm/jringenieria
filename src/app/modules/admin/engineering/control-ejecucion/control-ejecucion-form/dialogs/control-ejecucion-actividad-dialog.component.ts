@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatNativeDateModule } from '@angular/material/core';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { CdkDrag, CdkDragHandle, CdkDragEnd } from '@angular/cdk/drag-drop';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-control-ejecucion-actividad-dialog',
@@ -333,6 +334,14 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
     if (this.form.invalid) return;
 
     const val = this.form.value;
+    const start = new Date(val.fechaInicio);
+    const end = new Date(val.fechaFin);
+
+    if (start > end) {
+      Swal.fire('Rango de fechas inválido', 'La fecha de fin no puede ser anterior a la fecha de inicio.', 'warning');
+      return;
+    }
+
     const selectedIds: number[] = val.responsablesIds || [];
     const names = selectedIds.map(id => {
       const u = this.data.userList.find(user => user.usuarioId === id);
