@@ -105,7 +105,7 @@ export class SeguimientoDialogComponent implements OnInit {
 
     ngOnInit(): void {
         this.isEdit = !!this.data?.seguimiento;
-        this.isReadOnly = this.data?.seguimiento?.estatusAprobacion === 2;
+        const isApproved = this.data?.seguimiento?.estatusAprobacion === 2;
 
         // Cargar solicitantes activos
         this._engineeringService.getSolicitantes().subscribe((solicitantes) => {
@@ -132,15 +132,11 @@ export class SeguimientoDialogComponent implements OnInit {
             tipo: [this.data?.seguimiento?.tipo || ''],
             estatusLevantamiento: [this.data?.seguimiento?.estatusLevantamiento || 1, Validators.required],
             estatusCotizacion: [this.data?.seguimiento?.estatusCotizacion || 1, Validators.required],
-            estatusAprobacion: [this.data?.seguimiento?.estatusAprobacion || 1, Validators.required],
+            estatusAprobacion: [{ value: this.data?.seguimiento?.estatusAprobacion || 1, disabled: isApproved }, Validators.required],
             montoTotalEstimado: [this.formatMonto(this.data?.seguimiento?.montoTotalEstimado) || ''],
             quienRealizoLevantamiento: [this.data?.seguimiento?.quienRealizoLevantamiento || '', Validators.maxLength(500)],
             quienCotizo: [this.data?.seguimiento?.quienCotizo || '', Validators.maxLength(255)]
         });
-
-        if (this.isReadOnly) {
-            this.form.disable();
-        }
     }
 
     formatMonto(value: any): string {
@@ -179,7 +175,7 @@ export class SeguimientoDialogComponent implements OnInit {
             }
         }
 
-        const val = this.form.value;
+        const val = this.form.getRawValue();
         const payload = {
             ...val,
             montoTotalEstimado: this.parseMonto(val.montoTotalEstimado),

@@ -220,11 +220,22 @@
                   <div class="w-4 h-4 rounded-full border border-slate-200" [style.background-color]="getColorHex(row)"></div>
                 </div>
 
-                <!-- Acciones (Redirección a Edición) -->
-                <div *ngIf="isColumnVisible('acciones')" class="w-[90px] shrink-0 flex items-center justify-center">
-                  <a mat-icon-button [routerLink]="['/engineering/control-ejecucion/editar', row.project.idSeguimiento]" class="w-8 h-8 p-0 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg flex items-center justify-center" matTooltip="Ver/Editar Proyecto">
+                <!-- Acciones (Edición rápida o Redirección) -->
+                <div *ngIf="isColumnVisible('acciones')" class="w-[90px] shrink-0 flex items-center justify-center gap-1">
+                  <!-- Redirección para Proyectos -->
+                  <a *ngIf="row.type === 'project'" mat-icon-button [routerLink]="['/engineering/control-ejecucion/editar', row.project.idSeguimiento]" class="w-8 h-8 p-0 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg flex items-center justify-center" matTooltip="Ver/Editar Proyecto Completo">
                     <mat-icon class="icon-size-4">open_in_new</mat-icon>
                   </a>
+                  
+                  <!-- Edición rápida de Actividades Maestras y Subactividades -->
+                  <ng-container *ngIf="row.type !== 'project'">
+                    <button mat-icon-button (click)="editRow(row); $event.stopPropagation()" class="w-7 h-7 p-0 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg flex items-center justify-center" matTooltip="Editar">
+                      <mat-icon class="icon-size-4">edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteRow(row); $event.stopPropagation()" class="w-7 h-7 p-0 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg flex items-center justify-center" matTooltip="Eliminar">
+                      <mat-icon class="icon-size-4">delete</mat-icon>
+                    </button>
+                  </ng-container>
                 </div>
 
               </div>
@@ -301,7 +312,8 @@
                      'border-2 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]': showCriticalPath && (row.type === 'maestra' ? criticalMaestras.has(row.maestra.id) : row.type === 'subactividad' ? criticalSubactivities.has(row.subactividad.id) : false)
                    }"
                    [ngStyle]="getBarStyles(row)" 
-                   [routerLink]="['/engineering/control-ejecucion/editar', row.project.idSeguimiento]" 
+                   (click)="row.type === 'project' ? null : editRow(row)"
+                   [routerLink]="row.type === 'project' ? ['/engineering/control-ejecucion/editar', row.project.idSeguimiento] : null" 
                    [matTooltip]="getRowTooltip(row)">
                 <!-- Glossy Progress Fill -->
                 <div class="h-full opacity-20 absolute left-0 top-0 transition-all duration-700 ease-out" 

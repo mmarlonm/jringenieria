@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { EngineeringService } from '../engineering.service';
+import { EngineeringService, SeguimientoEjecucionActividadMaestra } from '../engineering.service';
 import { 
   addDays, 
   differenceInDays, 
@@ -20,6 +20,11 @@ import { es } from 'date-fns/locale';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { UsersService } from 'app/modules/admin/security/users/users.service';
+import { SubcontratacionService } from '../subcontratacion.service';
+import { ControlEjecucionActividadDialogComponent } from '../control-ejecucion/control-ejecucion-form/dialogs/control-ejecucion-actividad-dialog.component';
+import Swal from 'sweetalert2';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
@@ -33,7 +38,8 @@ import { saveAs } from 'file-saver';
     MatIconModule,
     MatTooltipModule,
     MatMenuModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatDialogModule
   ],
   templateUrl: './gantt-general.component.html',
   styles: [`
@@ -96,6 +102,8 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
   showTodayMarker: boolean = false;
   format = format;
   isLoading: boolean = true;
+  userList: any[] = [];
+  equiposDisponibles: { jr: any[], subcontratado: any[] } = { jr: [], subcontratado: [] };
 
   // Project Selection properties
   selectedProjectIds = new Set<number>();
@@ -105,7 +113,10 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private _engineeringService: EngineeringService,
-    private _cdr: ChangeDetectorRef
+    private _cdr: ChangeDetectorRef,
+    private _dialog: MatDialog,
+    private _usersService: UsersService,
+    private _subcontratacionService: SubcontratacionService
   ) {}
 
   toggleProjectSelection(id: number): void {
@@ -1005,6 +1016,164 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
       return this.criticalSubactivities.has(row.subactividad.id) && this.criticalSubactivities.has(predId);
     }
     return false;
+  }
+
+  loadUsers(): void {
+    this._usersService.getUsers().subscribe({
+      next: (users) => {
+        this.userList = users || [];
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  loadEquiposDisponibles(): void {
+    this._subcontratacionService.getEquiposDisponibles().subscribe({
+      next: (res) => {
+        this.equiposDisponibles = res || { jr: [], subcontratado: [] };
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  editRow(row: any): void {
+    if (row.type === 'maestra') {
+      this.openActividadDialog('maestra', row.project, null, row.maestra);
+    } else if (row.type === 'subactividad') {
+      this.openActividadDialog('subactividad', row.project, row.maestra, row.subactividad);
+    }
+  }
+
+  deleteRow(row: any): void {
+    Swal.fire({
+      title: '¿Eliminar registro?',
+      text: row.type === 'maestra' 
+        ? 'Esto eliminará la Actividad Maestra y todas sus Subactividades asociadas.' 
+        : 'Esto eliminará la Subactividad del cronograma.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl p-6 shadow-2xl border-0',
+        confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-red-200',
+        cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (row.type === 'maestra') {
+          this._engineeringService.deleteGanttMaestra(row.maestra.id).subscribe(() => {
+            Swal.fire('Eliminado', 'La Actividad Maestra ha sido eliminada.', 'success');
+            this.loadData();
+          });
+        } else {
+          this._engineeringService.deleteGanttSubactividad(row.subactividad.id).subscribe(() => {
+            Swal.fire('Eliminado', 'La Subactividad ha sido eliminada.', 'success');
+            this.loadData();
+          });
+        }
+      }
+    });
+  }
+
+  openActividadDialog(type: 'maestra' | 'subactividad', project: any, parentTask?: any, editItem?: any): void {
+    const isEdit = !!editItem;
+    const defaultStart = editItem?.fechaInicio ? new Date(editItem.fechaInicio) : (parentTask?.fechaInicio ? new Date(parentTask.fechaInicio) : new Date());
+    const defaultEnd = editItem?.fechaFin ? new Date(editItem.fechaFin) : (parentTask?.fechaFin ? new Date(parentTask.fechaFin) : addDays(new Date(), 1));
+
+    let predList: any[] = [];
+    if (type === 'maestra') {
+      predList = (project.actividadesMaestras || []).filter((t: any) => Number(t.id) !== Number(editItem?.id));
+    } else {
+      const subactivities = (project.actividadesMaestras || []).reduce((acc: any[], m: any) => acc.concat(m.actividades || []), []);
+      predList = subactivities.filter((a: any) => Number(a.id) !== Number(editItem?.id));
+    }
+
+    const openDialog = (equipoAsignado: any[]) => {
+      const dialogRef = this._dialog.open(ControlEjecucionActividadDialogComponent, {
+        width: '500px',
+        data: {
+          type: type,
+          isEdit: isEdit,
+          actividad: isEdit ? { ...editItem } : {
+            idSeguimiento: project.idSeguimiento,
+            actividadMaestraId: parentTask?.id,
+            fechaInicio: defaultStart,
+            fechaFin: defaultEnd,
+            estatus: 1,
+            progreso: 0,
+            color: type === 'maestra' ? 'Azul' : 'Verde',
+            orden: type === 'maestra'
+              ? ((project.actividadesMaestras || []).reduce((max: number, t: any) => Math.max(max, t.orden || 0), 0) + 1)
+              : (parentTask?.actividades
+                  ? (parentTask.actividades.reduce((max: number, a: any) => Math.max(max, a.orden || 0), 0) + 1)
+                  : 1)
+          },
+          userList: this.userList,
+          predecesoras: predList,
+          equiposDisponibles: this.equiposDisponibles,
+          equipoAsignado: equipoAsignado
+        }
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        if (result) {
+          if (result.delete) {
+            if (type === 'maestra') {
+              this._engineeringService.deleteGanttMaestra(result.id).subscribe(() => this.loadData());
+            } else {
+              this._engineeringService.deleteGanttSubactividad(result.id).subscribe(() => this.loadData());
+            }
+            return;
+          }
+
+          result.idSeguimiento = project.idSeguimiento;
+          if (type === 'subactividad') {
+            result.actividadMaestraId = parentTask?.id || result.actividadMaestraId;
+          }
+
+          const saveObs = type === 'maestra' 
+            ? this._engineeringService.saveGanttMaestra(result)
+            : this._engineeringService.saveGanttSubactividad(result);
+
+          saveObs.subscribe({
+            next: (savedAct: any) => {
+               const actId = savedAct?.id || result.id;
+               if (actId && result.equipoMiembros) {
+                 this._subcontratacionService.guardarActividadEquipo({
+                   tipoActividad: type,
+                   idActividad: actId,
+                   miembros: result.equipoMiembros
+                 }).subscribe(() => {
+                   this.loadData();
+                 });
+               } else {
+                 this.loadData();
+               }
+            },
+            error: (err) => {
+              console.error(err);
+              Swal.fire('Error', 'No se pudo guardar la actividad.', 'error');
+            }
+          });
+        }
+      });
+    };
+
+    if (isEdit && editItem?.id) {
+      this._subcontratacionService.getActividadEquipo(type, editItem.id).subscribe({
+        next: (res) => {
+          openDialog(res || []);
+        },
+        error: () => {
+          openDialog([]);
+        }
+      });
+    } else {
+      openDialog([]);
+    }
   }
 }
 
