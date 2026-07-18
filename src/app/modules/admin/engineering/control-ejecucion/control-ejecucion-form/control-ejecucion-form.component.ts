@@ -62,7 +62,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   templateUrl: './control-ejecucion-form.component.html',
   styles: [`
     :host { display: block; width: 100%; height: 100%; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { 
         background: rgba(203, 213, 225, 0.6); 
@@ -1198,16 +1198,31 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
           saveObs.subscribe({
             next: (savedAct: any) => {
               const actId = savedAct?.id || result.id;
+              
+              // Si se guardó correctamente, refrescar de inmediato
+              this.loadGantt();
+              
+              Swal.fire({
+                title: '¡Guardado!',
+                text: 'La actividad se guardó correctamente.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+              });
+              
               if (actId && result.equipoMiembros) {
+                // Ejecutar asignación de equipo en segundo plano de forma silenciosa
                 this._subcontratacionService.guardarActividadEquipo({
                   tipoActividad: type,
                   idActividad: actId,
                   miembros: result.equipoMiembros
-                }).subscribe(() => {
-                  this.loadGantt();
+                }).subscribe({
+                  next: () => this.loadGantt(),
+                  error: (e) => {
+                    console.warn('Error no crítico al asignar miembros del equipo:', e);
+                    this.loadGantt();
+                  }
                 });
-              } else {
-                this.loadGantt();
               }
             },
             error: (err) => {

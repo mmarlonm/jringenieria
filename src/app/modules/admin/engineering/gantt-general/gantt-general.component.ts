@@ -44,7 +44,7 @@ import { saveAs } from 'file-saver';
   templateUrl: './gantt-general.component.html',
   styles: [`
     :host { display: block; width: 100%; height: 100%; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { 
         background: rgba(203, 213, 225, 0.6); 
@@ -1141,16 +1141,30 @@ export class GanttGeneralComponent implements OnInit, OnDestroy, AfterViewInit {
           saveObs.subscribe({
             next: (savedAct: any) => {
                const actId = savedAct?.id || result.id;
+               
+               // Cargar los datos de inmediato
+               this.loadData();
+               
+               Swal.fire({
+                 title: '¡Guardado!',
+                 text: 'La actividad se guardó correctamente.',
+                 icon: 'success',
+                 timer: 1500,
+                 showConfirmButton: false
+               });
+               
                if (actId && result.equipoMiembros) {
                  this._subcontratacionService.guardarActividadEquipo({
                    tipoActividad: type,
                    idActividad: actId,
                    miembros: result.equipoMiembros
-                 }).subscribe(() => {
-                   this.loadData();
+                 }).subscribe({
+                   next: () => this.loadData(),
+                   error: (e) => {
+                     console.warn('Error no crítico al asignar miembros del equipo:', e);
+                     this.loadData();
+                   }
                  });
-               } else {
-                 this.loadData();
                }
             },
             error: (err) => {
