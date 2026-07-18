@@ -240,40 +240,39 @@
 
           <!-- Gantt Main Surface -->
           <div class="flex-auto flex overflow-hidden">
-
             <!-- Left Panel: Columns Table -->
             <div [style.width.%]="leftPanelWidthPercent"
-              class="flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden"
+              class="flex-none border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/20 overflow-hidden min-w-[200px] md:min-w-[280px]"
               cdkDropListGroup>
 
-              <!-- Dynamic Table Header -->
-              <div
-                class="h-12 flex items-center px-4 border-b bg-slate-100/30 text-[10px] font-black uppercase tracking-widest text-slate-500 sticky top-0 z-10"
-                cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="onColumnReordered($event)">
-                <div class="flex w-full items-center text-left pl-1">
-                  <!-- Compensador del drag handle de las filas (28px de ancho total) -->
-                  <div class="w-7 shrink-0 mr-1"></div>
+              <!-- Dynamic Table Rows (Now scrollable vertically and horizontally, header is sticky inside) -->
+              <div class="flex-auto overflow-y-auto overflow-x-auto custom-scrollbar" #sidebarScroll
+                (scroll)="onScroll($event, timelineScroll)" cdkDropList [cdkDropListData]="tasks"
+                [cdkDropListEnterPredicate]="masterPredicate" (cdkDropListDropped)="onMasterDropped($event)">
 
-                  <div *ngFor="let col of columns; let i = index" [style.width.px]="col.width"
-                    class="shrink-0 flex items-center relative pr-4 select-none cdk-drag group/col border-r border-slate-200 dark:border-slate-700 h-12"
-                    cdkDrag [cdkDragBoundary]="'.h-12'">
-                    <span class="truncate pl-1 font-bold text-slate-600 dark:text-slate-400">{{ col.label }}</span>
-                    <!-- Resize handler con línea visible al hover -->
-                    <div
-                      class="absolute top-0 bottom-0 right-0 w-2 cursor-col-resize hover:bg-indigo-500/30 active:bg-indigo-600 transition-colors z-20"
-                      (mousedown)="onColumnResizeStart($event, i)">
+                <!-- Dynamic Table Header (Moved inside scrollable container for correct horizontal scrolling) -->
+                <div
+                  class="h-12 flex items-center px-4 border-b bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-500 sticky top-0 z-20 min-w-max"
+                  cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="onColumnReordered($event)">
+                  <div class="flex w-full items-center text-left pl-1">
+                    <!-- Compensador del drag handle de las filas (28px de ancho total) -->
+                    <div class="w-7 shrink-0 mr-1"></div>
+
+                    <div *ngFor="let col of columns; let i = index" [style.width.px]="col.width"
+                      class="shrink-0 flex items-center relative pr-4 select-none cdk-drag group/col border-r border-slate-200 dark:border-slate-700 h-12"
+                      cdkDrag [cdkDragBoundary]="'.h-12'">
+                      <span class="truncate pl-1 font-bold text-slate-600 dark:text-slate-400">{{ col.label }}</span>
+                      <!-- Resize handler con línea visible al hover -->
                       <div
-                        class="absolute right-0 top-2 bottom-2 w-[1.5px] bg-slate-300 dark:bg-slate-600 group-hover/col:bg-indigo-500 transition-colors">
+                        class="absolute top-0 bottom-0 right-0 w-2 cursor-col-resize hover:bg-indigo-500/30 active:bg-indigo-600 transition-colors z-20"
+                        (mousedown)="onColumnResizeStart($event, i)">
+                        <div
+                          class="absolute right-0 top-2 bottom-2 w-[1.5px] bg-slate-300 dark:bg-slate-600 group-hover/col:bg-indigo-500 transition-colors">
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Dynamic Table Rows -->
-              <div class="flex-auto overflow-y-auto overflow-x-auto custom-scrollbar" #sidebarScroll
-                (scroll)="onScroll($event, timelineScroll)" cdkDropList [cdkDropListData]="tasks"
-                [cdkDropListEnterPredicate]="masterPredicate" (cdkDropListDropped)="onMasterDropped($event)">
                 <div class="w-full" *ngIf="tasks.length > 0">
                   <div *ngFor="let task of tasks" cdkDrag [cdkDragData]="task"
                     class="relative bg-white dark:bg-transparent">
@@ -544,11 +543,11 @@
                 <div *ngIf="tasks.length === 0"
                   class="flex flex-col items-center justify-center py-20 px-8 text-center">
                   <mat-icon class="icon-size-12 text-slate-300 mb-2">event_busy</mat-icon>
-                  <p class="text-sm text-slate-400 font-medium italic">No hay actividades cargadas. Crea una Actividad
-                    Maestra para comenzar.</p>
+                  <p class="text-sm text-slate-400 font-medium italic">No hay actividades cargadas. Crea una Actividad Maestra para comenzar.</p>
                 </div>
               </div>
             </div>
+          </div>
 
             <!-- Splitter vertical arrastrable -->
             <div
@@ -557,7 +556,7 @@
 
             <!-- Right Panel: Canvas Timeline -->
             <div [style.width.%]="100 - leftPanelWidthPercent"
-              class="flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 relative shadow-inner flex flex-col h-full"
+              class="flex-auto overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 relative shadow-inner flex flex-col h-full min-w-[200px] md:min-w-[300px]"
               #horizontalTimeline>
               <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
 
