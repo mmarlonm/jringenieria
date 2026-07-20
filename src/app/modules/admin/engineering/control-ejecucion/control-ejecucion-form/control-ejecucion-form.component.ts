@@ -462,7 +462,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
           this.form.patchValue({
             idEjecucion: found.idEjecucion,
             idSeguimiento: found.idSeguimiento,
-            utilidadEsperada: found.utilidadEsperada || '',
+            utilidadEsperada: this.formatMonto(found.utilidadEsperada) || '',
             disponibilidadRecursos: found.disponibilidadRecursos || '',
             fechaInicioProyecto: found.fechaInicioProyecto ? new Date(found.fechaInicioProyecto) : '',
             fechaFinProyecto: found.fechaFinProyecto ? new Date(found.fechaFinProyecto) : '',
@@ -1420,6 +1420,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     const payload = {
       ...this.ejecucion,
       ...formVal,
+      utilidadEsperada: this.parseMonto(formVal.utilidadEsperada),
       fechaInicioProyecto: formVal.fechaInicioProyecto ? new Date(formVal.fechaInicioProyecto).toISOString() : null,
       fechaFinProyecto: formVal.fechaFinProyecto ? new Date(formVal.fechaFinProyecto).toISOString() : null
     };
@@ -1442,6 +1443,25 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         Swal.fire('Error', 'No se pudo guardar la información.', 'error');
       }
     });
+  }
+
+  formatMonto(value: any): string {
+    if (value === null || value === undefined || value === '') return '';
+    const clean = value.toString().replace(/[^0-9.]/g, '');
+    const number = parseFloat(clean);
+    return isNaN(number) ? '' : number.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  parseMonto(value: string): number | null {
+    if (!value) return null;
+    const clean = value.toString().replace(/[^0-9.]/g, '');
+    const number = parseFloat(clean);
+    return isNaN(number) ? null : number;
+  }
+
+  onUtilidadBlur(): void {
+    const val = this.form.get('utilidadEsperada').value;
+    this.form.get('utilidadEsperada').setValue(this.formatMonto(val), { emitEvent: false });
   }
 
   calcularRutaCritica(items: any[]): Set<number> {

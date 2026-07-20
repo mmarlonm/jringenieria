@@ -47,7 +47,7 @@
                     <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
                       <mat-label>Utilidad Esperada (MXN)</mat-label>
                       <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">attach_money</mat-icon>
-                      <input matInput type="number" formControlName="utilidadEsperada" placeholder="0.00">
+                      <input matInput type="text" formControlName="utilidadEsperada" placeholder="0.00" (blur)="onUtilidadBlur()">
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
