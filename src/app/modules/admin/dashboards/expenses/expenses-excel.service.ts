@@ -82,11 +82,29 @@ export class ExpensesExcelService {
         const totalRowsNeeded = expenses.length;
 
         // Si se necesitan más filas de las 62 por defecto del template, insertamos filas nuevas
-        // desplazando el pie de página para que las fórmulas de suma total se actualicen automáticamente.
+        // y copiamos los estilos de la fila modelo (fila 67) para mantener los bordes y el formato de forma idéntica.
         if (totalRowsNeeded > DEFAULT_CAPACITY) {
             const rowsToInsert = totalRowsNeeded - DEFAULT_CAPACITY;
+            const modelRow = sheet.getRow(67); // Fila modelo con formato correcto
+            
             for (let i = 0; i < rowsToInsert; i++) {
-                sheet.insertRow(68, []);
+                const targetRowNumber = 68 + i;
+                const newRow = sheet.insertRow(targetRowNumber, []);
+                newRow.height = modelRow.height;
+
+                // Copiar estilos de las celdas de la columna A a la N (1 a 14)
+                for (let colIdx = 1; colIdx <= 14; colIdx++) {
+                    const modelCell = modelRow.getCell(colIdx);
+                    const newCell = newRow.getCell(colIdx);
+                    
+                    // Copiar estilo (fuente, bordes, alineación, relleno)
+                    newCell.style = JSON.parse(JSON.stringify(modelCell.style || {}));
+                    
+                    // Si es la columna N (Saldo Líquido), replicar la fórmula adaptándola a la fila actual
+                    if (colIdx === 14) {
+                        newCell.value = { formula: `=N${targetRowNumber - 1}+L${targetRowNumber}-M${targetRowNumber}` };
+                    }
+                }
             }
         }
 
