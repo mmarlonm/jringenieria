@@ -385,6 +385,7 @@
                                     <span class="font-bold uppercase text-[10px] block mb-2 text-secondary">Unidad</span>
                                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-no-subscript">
                                         <mat-select (selectionChange)="applyColumnFilter('unidad', $event.value)">
+                                            <mat-option value="">Todos</mat-option>
                                             <mat-option *ngFor="let u of unidadesNegocio"
                                                 [value]="u.nombre">{{u.nombre}}</mat-option>
                                         </mat-select>

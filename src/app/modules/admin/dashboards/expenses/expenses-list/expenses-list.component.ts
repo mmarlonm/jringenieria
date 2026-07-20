@@ -107,9 +107,7 @@ export class ExpensesListComponent implements OnInit, OnDestroy {
         this.isDownloadingExcel = true;
         this._changeDetectorRef.markForCheck();
         try {
-            const dataToExport: Expense[] = this.dataSource.filteredData?.length > 0
-                ? this.dataSource.filteredData.filter(e => e.gastoId !== 0)
-                : this.dataSource.data.filter(e => e.gastoId !== 0);
+            const dataToExport: Expense[] = this.dataSource.data.filter(e => e.gastoId !== 0);
 
             // Obtener nombre del usuario desde localStorage con múltiples fallbacks
             let nombreUsuario = 'N/A';
