@@ -741,7 +741,7 @@
                       matTooltip="Subir archivo" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
                       <mat-icon class="icon-size-5">cloud_upload</mat-icon>
                     </button>
-                    <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, cat.nombre)">
+                    <input type="file" #fileInput class="hidden" multiple (change)="onFileSelected($event, cat.nombre)">
                   </div>
 
                   <!-- Category Files List -->
@@ -813,7 +813,7 @@
                   <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                   Subir Nuevo Archivo
                 </button>
-                <input type="file" #ocFileInput class="hidden" (change)="onFileSelected($event, 'OC')"
+                <input type="file" #ocFileInput class="hidden" multiple (change)="onFileSelected($event, 'OC')"
                   accept=".pdf,.doc,.docx,.jpg,.png,.xls,.xlsx">
               </div>
 

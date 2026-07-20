@@ -32,7 +32,7 @@ import {
   subDays 
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { fromEvent, Subject, takeUntil } from 'rxjs';
+import { fromEvent, Subject, takeUntil, forkJoin } from 'rxjs';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag } from '@angular/cdk/drag-drop';
 
 import { MatMenuModule } from '@angular/material/menu';
@@ -680,16 +680,20 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   onFileSelected(event: any, categoryName: string): void {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files: FileList = event.target.files;
+    if (!files || files.length === 0) return;
 
     this.isUploading[categoryName] = true;
-    this._engineeringService.subirArchivoEjecucion(this.idSeguimiento, file, categoryName).subscribe({
+    const uploadObservables = Array.from(files).map(file => 
+      this._engineeringService.subirArchivoEjecucion(this.idSeguimiento, file, categoryName)
+    );
+
+    forkJoin(uploadObservables).subscribe({
       next: () => {
         this.isUploading[categoryName] = false;
         Swal.fire({
-          title: '¡Subido!',
-          text: 'Archivo cargado con éxito.',
+          title: '¡Subidos!',
+          text: `${files.length} archivo(s) cargado(s) con éxito.`,
           icon: 'success',
           timer: 1500,
           showConfirmButton: false
@@ -699,7 +703,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.isUploading[categoryName] = false;
         console.error(err);
-        Swal.fire('Error', 'No se pudo subir el archivo.', 'error');
+        Swal.fire('Error', 'No se pudieron subir algunos archivos.', 'error');
+        this.loadFiles();
       }
     });
     event.target.value = '';
