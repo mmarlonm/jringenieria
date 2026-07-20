@@ -38,7 +38,7 @@ export class ExpensesExcelService {
 
         // Construir URL del template relativa al baseHref de la app
         const baseHref = document.querySelector('base')?.getAttribute('href') || '/';
-        const templateUrl = `${baseHref}assets/templates/reporte-gastos-template.xlsx`.replace('//', '/');
+        const templateUrl = `${baseHref}assets/templates/template_excel.xlsx`.replace('//', '/');
 
         // Cargar el template desde assets como ArrayBuffer
         const templateBuffer = await this._http
