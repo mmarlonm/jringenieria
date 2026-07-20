@@ -1,19 +1,36 @@
 /* Estilos específicos para Control de Ejecución */
 
-.mat-mdc-table {
-    /* Forzar a que la tabla ocupe su espacio y permita el scroll si el texto es muy largo */
+::ng-deep .mat-mdc-table {
     min-width: 1200px;
 }
 
-.mat-mdc-header-cell {
+::ng-deep .mat-mdc-header-row,
+::ng-deep tr.mat-mdc-header-row {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 200 !important;
+}
+
+::ng-deep .mat-mdc-header-cell,
+::ng-deep th.mat-mdc-header-cell,
+::ng-deep th.mat-mdc-table-sticky {
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     color: #475569;
     letter-spacing: 0.05em;
     padding: 0 12px;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    z-index: 200 !important;
 }
 
-.mat-mdc-cell {
+::ng-deep .mat-mdc-cell {
     padding: 8px 12px;
+}
+
+::ng-deep td.mat-mdc-table-sticky {
+    z-index: 1 !important;
 }

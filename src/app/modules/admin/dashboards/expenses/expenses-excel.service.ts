@@ -81,29 +81,36 @@ export class ExpensesExcelService {
         const DEFAULT_CAPACITY = 62;
         const totalRowsNeeded = expenses.length;
 
-        // Si se necesitan más filas de las 62 por defecto del template, insertamos filas nuevas
-        // y copiamos los estilos de la fila modelo (fila 67) para mantener los bordes y el formato de forma idéntica.
+        // ─── Insertar filas extra si se necesitan más de 62 ─────────────────────
         if (totalRowsNeeded > DEFAULT_CAPACITY) {
             const rowsToInsert = totalRowsNeeded - DEFAULT_CAPACITY;
-            const modelRow = sheet.getRow(67); // Fila modelo con formato correcto
-            
             for (let i = 0; i < rowsToInsert; i++) {
-                const targetRowNumber = 68 + i;
-                const newRow = sheet.insertRow(targetRowNumber, []);
-                newRow.height = modelRow.height;
+                sheet.insertRow(68 + i, []);
+            }
+        }
 
-                // Copiar estilos de las celdas de la columna A a la N (1 a 14)
-                for (let colIdx = 1; colIdx <= 14; colIdx++) {
-                    const modelCell = modelRow.getCell(colIdx);
-                    const newCell = newRow.getCell(colIdx);
-                    
-                    // Copiar estilo (fuente, bordes, alineación, relleno)
-                    newCell.style = JSON.parse(JSON.stringify(modelCell.style || {}));
-                    
-                    // Si es la columna N (Saldo Líquido), replicar la fórmula adaptándola a la fila actual
-                    if (colIdx === 14) {
-                        newCell.value = { formula: `=N${targetRowNumber - 1}+L${targetRowNumber}-M${targetRowNumber}` };
-                    }
+        // ─── Aplicar formato alternado a TODAS las filas de datos ───────────────
+        // IMPORTANTE: Para que ExcelJS sobreescriba el fill de filas existentes del template
+        // es necesario reasignar el objeto `cell.style` completo (no solo cell.fill).
+        const WHITE_FILL: any = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+        const GRAY_FILL:  any = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+
+        const totalRows = Math.max(DEFAULT_CAPACITY, totalRowsNeeded);
+        for (let i = 0; i < totalRows; i++) {
+            const rowNumber = DATA_START_ROW + i;
+            const row = sheet.getRow(rowNumber);
+            const fillToApply = (i % 2 === 0) ? WHITE_FILL : GRAY_FILL;
+
+            for (let colIdx = 1; colIdx <= 14; colIdx++) {
+                const cell = row.getCell(colIdx);
+                // Leer el estilo actual, sobreescribir el fill y reasignar el objeto completo
+                // para que ExcelJS lo marque como "dirty" y lo escriba en el XML de salida.
+                const currentStyle = JSON.parse(JSON.stringify(cell.style || {}));
+                currentStyle.fill = fillToApply;
+                cell.style = currentStyle;
+                // Columna N: asegurar fórmula acumulada
+                if (colIdx === 14 && rowNumber > DATA_START_ROW) {
+                    cell.value = { formula: `=N${rowNumber - 1}+L${rowNumber}-M${rowNumber}` };
                 }
             }
         }

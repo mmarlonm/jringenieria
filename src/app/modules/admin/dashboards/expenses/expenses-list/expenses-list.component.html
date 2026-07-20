@@ -704,7 +704,7 @@
                                 </td>
                             </ng-container>
 
-                            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="h-24"></tr>
+                            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="h-24" style="background-color: #ffffff !important; z-index: 200 !important;"></tr>
                             <tr mat-row *matRowDef="let row; columns: displayedColumns;"
                                 [ngClass]="{
                                     'bg-primary-50 ring-2 ring-inset ring-primary-500 z-10': editingId === row.gastoId,
