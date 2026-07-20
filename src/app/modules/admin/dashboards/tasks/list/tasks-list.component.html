@@ -168,7 +168,7 @@
 
             <!-- 🔹 VISTA DE TABLA -->
             <div *ngIf="viewConfig.viewType === 'table'"
-              class="overflow-x-auto transition-all group-table-wrapper w-full" [class.is-resizing]="resizingColumn">
+              class="overflow-x-auto overflow-y-auto max-h-[440px] transition-all group-table-wrapper w-full custom-scrollbar" [class.is-resizing]="resizingColumn">
               <table mat-table [dataSource]="group.tasks" class="w-full min-w-[800px] bg-transparent border-none"
                 cdkDropList [cdkDropListData]="group.tasks.data"
                 (cdkDropListDropped)="onRowDropped($event, group.groupKey)">
