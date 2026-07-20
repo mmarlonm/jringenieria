@@ -78,7 +78,19 @@ export class ExpensesExcelService {
 
         // ─── Limpiar filas de muestra del template (filas 7 y 8) ────────────────
         const DATA_START_ROW = 7;
-        const DATA_END_ROW = 68;
+        const DEFAULT_CAPACITY = 62;
+        const totalRowsNeeded = expenses.length;
+
+        // Si se necesitan más filas de las 62 por defecto del template, insertamos filas nuevas
+        // desplazando el pie de página para que las fórmulas de suma total se actualicen automáticamente.
+        if (totalRowsNeeded > DEFAULT_CAPACITY) {
+            const rowsToInsert = totalRowsNeeded - DEFAULT_CAPACITY;
+            for (let i = 0; i < rowsToInsert; i++) {
+                sheet.insertRow(68, []);
+            }
+        }
+
+        const DATA_END_ROW = 7 + Math.max(DEFAULT_CAPACITY, totalRowsNeeded) - 1;
 
         for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
             // Limpiamos de la B a la M. Omitimos la N porque contiene la fórmula del Saldo Líquido
@@ -88,8 +100,7 @@ export class ExpensesExcelService {
         }
 
         // ─── Insertar datos de gastos ────────────────────────────────────────────
-        const MAX_REGISTROS = DATA_END_ROW - DATA_START_ROW + 1;
-        expenses.slice(0, MAX_REGISTROS).forEach((expense, idx) => {
+        expenses.forEach((expense, idx) => {
             const row = DATA_START_ROW + idx;
 
             const proveedorNombre = this._getProveedorNombre(expense, catalogs);
