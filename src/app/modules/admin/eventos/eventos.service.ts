@@ -401,6 +401,26 @@ export class EventosService implements OnDestroy {
         });
     }
 
+    // DELETE api/Asistentes/{id}
+    public eliminarAsistente(id: number): Observable<any> {
+        return new Observable<any>(observer => {
+            this._http.delete(`${this.apiBase}/Asistentes/${id}`)
+                .subscribe({
+                    next: (res) => {
+                        // Actualizar lista local inmediatamente
+                        const updated = this._asistentes.value.filter(a => a.id !== id);
+                        this._asistentes.next(updated);
+                        observer.next(res);
+                        observer.complete();
+                    },
+                    error: (err) => {
+                        console.error(`⚠️ [API Error] Delete asistente ${id} failed:`, err);
+                        observer.error(err);
+                    }
+                });
+        });
+    }
+
     // POST api/Asistentes/check-in-publico with header X-Staff-Event-Key: ForoEnergizaPachuca_Key_2026
     public checkInPublico(tokenQR: string, eventoId?: number): Observable<any> {
         return new Observable<any>(observer => {

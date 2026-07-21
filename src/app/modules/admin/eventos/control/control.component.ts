@@ -48,10 +48,16 @@ export class EventosControlComponent implements OnInit, OnDestroy {
     };
     private toastTimeout: any;
 
-    // Modal Control
+    // Modal Control - Upsert
     public isModalOpen: boolean = false;
     public isEditing: boolean = false;
     public editingId: number | null = null;
+
+    // Modal Control - Eliminar
+    public isDeleteModalOpen: boolean = false;
+    public deletingId: number | null = null;
+    public deletingName: string = '';
+    public deletingLoading: boolean = false;
 
     // Form Model
     public formModel = {
@@ -169,6 +175,44 @@ export class EventosControlComponent implements OnInit, OnDestroy {
                     this._cdr.markForCheck();
                 }
             });
+    }
+
+    // --- Delete Handlers ---
+
+    public onEliminar(a: Asistente): void {
+        this.deletingId = a.id;
+        this.deletingName = `${a.nombre} ${a.apellidos}`;
+        this.isDeleteModalOpen = true;
+        this._cdr.markForCheck();
+    }
+
+    public onCancelarEliminar(): void {
+        this.isDeleteModalOpen = false;
+        this.deletingId = null;
+        this.deletingName = '';
+        this._cdr.markForCheck();
+    }
+
+    public onConfirmarEliminar(): void {
+        if (!this.deletingId) return;
+        this.deletingLoading = true;
+        this._cdr.markForCheck();
+
+        this._eventosService.eliminarAsistente(this.deletingId).subscribe({
+            next: () => {
+                this.showToast(`Asistente eliminado correctamente.`, 'success');
+                this.isDeleteModalOpen = false;
+                this.deletingId = null;
+                this.deletingName = '';
+                this.deletingLoading = false;
+                this._cdr.markForCheck();
+            },
+            error: () => {
+                this.showToast('Error al eliminar el asistente.', 'error');
+                this.deletingLoading = false;
+                this._cdr.markForCheck();
+            }
+        });
     }
 
     // --- Toast Alert Helper ---
