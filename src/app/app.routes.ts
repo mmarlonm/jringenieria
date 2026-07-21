@@ -167,5 +167,9 @@ export const appRoutes: Route[] = [
     {
         path: 'eventos/agenda-personal/:token',
         loadComponent: () => import('app/modules/admin/eventos/agenda-personal/agenda-personal.component').then(m => m.AgendaPersonalComponent)
+    },
+    {
+        path: 'eventos/ver-pase',
+        loadComponent: () => import('app/modules/public/ver-pase/ver-pase.component').then(m => m.PublicVerPaseComponent)
     }
 ];
