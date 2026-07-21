@@ -35,6 +35,8 @@ import { es } from 'date-fns/locale';
 import { fromEvent, Subject, takeUntil, forkJoin } from 'rxjs';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag } from '@angular/cdk/drag-drop';
 
+import { ImportarCronogramaDialogComponent } from './dialogs/importar-cronograma-dialog.component';
+
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
@@ -57,7 +59,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatTooltipModule,
     DragDropModule,
     MatMenuModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    ImportarCronogramaDialogComponent
   ],
   templateUrl: './control-ejecucion-form.component.html',
   styles: [`
@@ -157,6 +160,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   // Gantt State
   tasks: SeguimientoEjecucionActividadMaestra[] = [];
+  unsavedTasksImported: any[] = [];
+  hasUnsavedGanttChanges: boolean = false;
   visibleRows: any[] = [];
   userList: any[] = [];
   predecesorasList: any[] = []; // List of all activities for dependencies
@@ -906,12 +911,19 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   adjustTimelineRange(): void {
-    let allActivities: any[] = [];
+    const allActivities: any[] = [];
     this.tasks.forEach((t) => {
-      if (t.actividades) {
-        t.actividades.forEach((act) => allActivities.push(act));
+      if (t.actividades && t.actividades.length > 0) {
+        t.actividades.forEach((act) => {
+          if (act.fechaInicio && act.fechaFin) {
+            allActivities.push({ fechaInicio: act.fechaInicio, fechaFin: act.fechaFin });
+          }
+        });
+      } else {
+        if (t.fechaInicio && t.fechaFin) {
+          allActivities.push({ fechaInicio: t.fechaInicio, fechaFin: t.fechaFin });
+        }
       }
-      if (t.fechaInicio) allActivities.push(t);
     });
 
     if (allActivities.length === 0) {
@@ -921,6 +933,11 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
     let minDate = new Date();
     let maxDate = new Date();
+
+    if (allActivities.length > 0) {
+      minDate = new Date(allActivities[0].fechaInicio);
+      maxDate = new Date(allActivities[0].fechaFin);
+    }
 
     allActivities.forEach((act) => {
       const start = new Date(act.fechaInicio);
@@ -1138,6 +1155,34 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     return day === 0 || day === 6;
   }
 
+  getRelativeWeekNumber(date: Date): number {
+    if (!this.startDate) return 1;
+    const diff = differenceInDays(startOfDay(date), startOfDay(this.startDate));
+    return Math.floor(diff / 7) + 1;
+  }
+
+  getGroupedMonths(): { label: string; width: number }[] {
+    if (!this.days || this.days.length === 0) return [];
+    
+    const groups: { label: string; width: number }[] = [];
+    let currentGroup: { label: string; width: number } | null = null;
+    
+    this.days.forEach((day) => {
+      const monthLabel = format(day, 'MMMM yyyy', { locale: es }).toUpperCase();
+      if (!currentGroup || currentGroup.label !== monthLabel) {
+        currentGroup = {
+          label: monthLabel,
+          width: this.dayWidth
+        };
+        groups.push(currentGroup);
+      } else {
+        currentGroup.width += this.dayWidth;
+      }
+    });
+    
+    return groups;
+  }
+
   // ==========================================
   // GANTT CRUD OPERATIONS
   // ==========================================
@@ -1247,6 +1292,171 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     } else {
       openDialog([]);
     }
+  }
+
+  openImportarCronogramaDialog(): void {
+    const dialogRef = this._dialog.open(ImportarCronogramaDialogComponent, {
+      width: '1200px',
+      maxWidth: '95vw',
+      height: '90vh',
+      data: {
+        idSeguimiento: this.idSeguimiento,
+        fechaInicioProyecto: this.form.get('fechaInicioProyecto')?.value
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((res: any[]) => {
+      if (!res || res.length === 0) return;
+
+      // Guardar localmente en memoria y pintar en el Gantt temporalmente
+      this.unsavedTasksImported = res;
+      this.hasUnsavedGanttChanges = true;
+
+      // Obtener fecha base del proyecto
+      const baseDate = this.form.get('fechaInicioProyecto')?.value 
+        ? new Date(this.form.get('fechaInicioProyecto')?.value) 
+        : new Date();
+
+      const convertWeekToDates = (startWeek: number, endWeek: number) => {
+        const startDate = addDays(baseDate, (startWeek - 1) * 7);
+        const endDate = addDays(startDate, (endWeek - startWeek + 1) * 7 - 1);
+        return {
+          fechaInicio: startDate,
+          fechaFin: endDate
+        };
+      };
+
+      // Mapear el preview a la estructura interna del Gantt para pintarlo en el UI inmediatamente sin guardar en el servidor
+      const localTasks: SeguimientoEjecucionActividadMaestra[] = res.map((m, mIdx) => {
+        const mDates = convertWeekToDates(m.startWeek, m.endWeek);
+        return {
+          id: -(mIdx + 1), // ID ficticio negativo
+          idSeguimiento: this.idSeguimiento,
+          nombre: m.nombre,
+          fechaInicio: mDates.fechaInicio,
+          fechaFin: mDates.fechaFin,
+          progreso: 0,
+          color: 'Azul',
+          orden: mIdx + 1,
+          estatus: 1,
+          expanded: true,
+          actividades: (m.actividades || []).map((s, sIdx) => {
+            const sDates = convertWeekToDates(s.startWeek, s.endWeek);
+            return {
+              id: -((mIdx + 1) * 1000 + sIdx + 1), // ID ficticio negativo
+              actividadMaestraId: -(mIdx + 1),
+              nombre: s.nombre,
+              fechaInicio: sDates.fechaInicio,
+              fechaFin: sDates.fechaFin,
+              progreso: 0,
+              color: 'Verde',
+              orden: sIdx + 1,
+              estatus: 1
+            };
+          })
+        };
+      });
+
+      // Sobrescribir tareas en frontend para previsualizar en el Gantt
+      this.tasks = localTasks;
+      this.updatePredecesorasList();
+      this.actualizarCalculosRutaCritica();
+      this.updateVisibleRows();
+      this.adjustTimelineRange();
+
+      Swal.fire({
+        title: '¡Cargado en Gantt!',
+        text: 'Las actividades se han cargado como vista previa. Presiona "Guardar Cambios Importados" en la barra superior para persistirlos.',
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+      });
+    });
+  }
+
+  saveUnsavedGanttToServer(): void {
+    if (!this.unsavedTasksImported || this.unsavedTasksImported.length === 0) return;
+
+    Swal.fire({
+      title: 'Guardando Cronograma...',
+      text: 'Por favor espera mientras se registran las actividades en el servidor.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    const baseDate = this.form.get('fechaInicioProyecto')?.value 
+      ? new Date(this.form.get('fechaInicioProyecto')?.value) 
+      : new Date();
+
+    const convertWeekToDates = (startWeek: number, endWeek: number) => {
+      const startDate = addDays(baseDate, (startWeek - 1) * 7);
+      const endDate = addDays(startDate, (endWeek - startWeek + 1) * 7 - 1);
+      return {
+        fechaInicio: startDate.toISOString(),
+        fechaFin: endDate.toISOString()
+      };
+    };
+
+    const saveTasksSequentially = async () => {
+      for (let i = 0; i < this.unsavedTasksImported.length; i++) {
+        const m = this.unsavedTasksImported[i];
+        const mDates = convertWeekToDates(m.startWeek, m.endWeek);
+
+        const maestraPayload = {
+          idSeguimiento: this.idSeguimiento,
+          nombre: m.nombre,
+          fechaInicio: mDates.fechaInicio,
+          fechaFin: mDates.fechaFin,
+          progreso: 0,
+          color: 'Azul',
+          orden: i + 1,
+          estatus: 1
+        };
+
+        // Guardar Maestra
+        const savedMaestra = await this._engineeringService.saveGanttMaestra(maestraPayload).toPromise();
+        const maestraId = savedMaestra?.id;
+
+        if (maestraId && m.actividades && m.actividades.length > 0) {
+          for (let j = 0; j < m.actividades.length; j++) {
+            const s = m.actividades[j];
+            const sDates = convertWeekToDates(s.startWeek, s.endWeek);
+
+            const subPayload = {
+              actividadMaestraId: maestraId,
+              nombre: s.nombre,
+              fechaInicio: sDates.fechaInicio,
+              fechaFin: sDates.fechaFin,
+              progreso: 0,
+              color: 'Verde',
+              orden: j + 1,
+              estatus: 1
+            };
+
+            // Guardar Subactividad
+            await this._engineeringService.saveGanttSubactividad(subPayload).toPromise();
+          }
+        }
+      }
+    };
+
+    saveTasksSequentially().then(() => {
+      this.hasUnsavedGanttChanges = false;
+      this.unsavedTasksImported = [];
+      Swal.fire({
+        title: '¡Guardado!',
+        text: 'El cronograma de Gantt ha sido guardado exitosamente en el servidor.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      this.loadGantt();
+    }).catch((err) => {
+      console.error(err);
+      Swal.fire('Error', 'No se pudieron guardar todas las actividades en el servidor.', 'error');
+      this.loadGantt();
+    });
   }
 
   editRow(row: any): void {

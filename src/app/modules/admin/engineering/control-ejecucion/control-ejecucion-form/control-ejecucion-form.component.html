@@ -230,11 +230,23 @@
                  </div>
                </mat-menu>
 
-               <button mat-flat-button color="primary" class="!rounded-xl shadow-md hover:shadow-lg transition-all"
-                 (click)="openActividadDialog('maestra')">
-                 <mat-icon class="mr-2">add</mat-icon>
-                 Nueva Actividad Maestra
-               </button>
+                <button mat-stroked-button color="accent" class="!rounded-xl border-slate-200 hover:bg-slate-50 transition-colors"
+                  (click)="openImportarCronogramaDialog()">
+                  <mat-icon class="mr-2 icon-size-4">cloud_upload</mat-icon>
+                  Importar Excel
+                </button>
+
+                <button *ngIf="hasUnsavedGanttChanges" mat-flat-button color="warn" class="!rounded-xl shadow-md hover:shadow-lg transition-all animate-pulse"
+                  (click)="saveUnsavedGanttToServer()">
+                  <mat-icon class="mr-2">save</mat-icon>
+                  Guardar Cambios Importados
+                </button>
+
+                <button mat-flat-button color="primary" class="!rounded-xl shadow-md hover:shadow-lg transition-all"
+                  (click)="openActividadDialog('maestra')">
+                  <mat-icon class="mr-2">add</mat-icon>
+                  Nueva Actividad Maestra
+                </button>
              </div>
            </div>
 
@@ -560,37 +572,49 @@
               <div [style.width.px]="timelineWidth" class="h-full flex flex-col select-none">
 
                 <!-- Timeline Header: Scales -->
-                <div class="h-12 flex border-b bg-white/95 sticky top-0 z-10 shadow-sm">
-                  <ng-container *ngIf="timeScale === 'day'">
-                    <div *ngFor="let day of days"
-                      class="flex-none w-11 border-r flex flex-col items-center justify-center transition-colors"
-                      [style.width.px]="dayWidth"
-                      [ngClass]="{'bg-primary/5': isToday(day), 'bg-slate-50/50': isWeekend(day)}">
-                      <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5"
-                        [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-400'">{{ formatDay(day) }}</span>
-                      <span class="text-xs font-black leading-none"
-                        [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-600'">{{ format(day, 'd') }}</span>
+                <div class="flex flex-col border-b bg-white/95 sticky top-0 z-20 shadow-sm">
+                  <!-- Fila Agrupada de Mes/Año (Solo si es vista Día) -->
+                  <div *ngIf="timeScale === 'day'" class="h-6 flex border-b bg-slate-100/60 dark:bg-slate-800/60 text-[9px] font-black tracking-wider text-slate-500 uppercase">
+                    <div *ngFor="let group of getGroupedMonths()" 
+                         class="flex-none border-r flex items-center justify-center truncate px-2"
+                         [style.width.px]="group.width">
+                      {{ group.label }}
                     </div>
-                  </ng-container>
-                  
-                  <ng-container *ngIf="timeScale === 'week'">
-                    <div *ngFor="let day of days"
-                      class="flex-none border-r flex flex-col items-center justify-center transition-colors px-2"
-                      [style.width.px]="dayWidth"
-                      [ngClass]="{'bg-primary/5': isToday(day)}">
-                      <span class="text-[9px] uppercase font-bold text-slate-400 leading-none mb-0.5">Semana</span>
-                      <span class="text-xs font-black text-slate-700 leading-none">{{ format(day, 'w') }} ({{ format(day, 'dd/MM') }})</span>
-                    </div>
-                  </ng-container>
+                  </div>
 
-                  <ng-container *ngIf="timeScale === 'month'">
-                    <div *ngFor="let day of days"
-                      class="flex-none border-r flex flex-col items-center justify-center transition-colors px-2"
-                      [style.width.px]="dayWidth"
-                      [ngClass]="{'bg-primary/5': isToday(day)}">
-                      <span class="text-xs font-black text-slate-700 leading-none">{{ format(day, 'MMM yyyy', { locale: es }) }}</span>
-                    </div>
-                  </ng-container>
+                  <!-- Fila de Detalles Diarios / Semanales / Mensuales -->
+                  <div class="h-12 flex">
+                    <ng-container *ngIf="timeScale === 'day'">
+                      <div *ngFor="let day of days"
+                        class="flex-none border-r flex flex-col items-center justify-center transition-colors"
+                        [style.width.px]="dayWidth"
+                        [ngClass]="{'bg-primary/5': isToday(day), 'bg-slate-50/50': isWeekend(day)}">
+                        <span class="text-[8px] uppercase font-black tracking-wider leading-none mb-0.5"
+                          [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-400'">{{ formatDay(day) }}</span>
+                        <span class="text-xs font-black leading-none"
+                          [ngClass]="isToday(day) ? 'text-primary' : 'text-slate-600'">{{ format(day, 'd') }}</span>
+                      </div>
+                    </ng-container>
+                    
+                    <ng-container *ngIf="timeScale === 'week'">
+                      <div *ngFor="let day of days; let wIdx = index"
+                        class="flex-none border-r flex flex-col items-center justify-center transition-colors px-2"
+                        [style.width.px]="dayWidth"
+                        [ngClass]="{'bg-primary/5': isToday(day)}">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 leading-none mb-0.5">Semana</span>
+                        <span class="text-xs font-black text-slate-700 leading-none">Semana {{ getRelativeWeekNumber(day) }}</span>
+                      </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="timeScale === 'month'">
+                      <div *ngFor="let day of days"
+                        class="flex-none border-r flex flex-col items-center justify-center transition-colors px-2"
+                        [style.width.px]="dayWidth"
+                        [ngClass]="{'bg-primary/5': isToday(day)}">
+                        <span class="text-xs font-black text-slate-700 leading-none">{{ format(day, 'MMM yyyy', { locale: es }) }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
                 </div>
 
                 <!-- Timeline Scroll Area -->
