@@ -36,12 +36,28 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public cameraError: string = '';
     public cupoSobrepasado: boolean = false; // bandera de advertencia sin bloquear acceso
 
+    // Offline / Network variables
+    public isOnline: boolean = true;
+    public pendingCheckInsCount: number = 0;
+    private db: IDBDatabase | null = null;
+
     private _html5QrCode: any = null;
 
     // Quick Test Options (derived from service assistants)
     public availableTickets: { label: string; token: string; status: 'present' | 'absent' }[] = [];
 
     ngOnInit(): void {
+        // Initial network status check
+        this.isOnline = navigator.onLine;
+        window.addEventListener('online', this.onNetworkOnline);
+        window.addEventListener('offline', this.onNetworkOffline);
+
+        // Open IndexedDB
+        this.initIndexedDB().then(() => {
+            this.updatePendingCount();
+            this.syncOfflineCheckIns();
+        });
+
         // Subscribe to Editions list
         this._eventosService.ediciones$.subscribe(list => {
             this.ediciones = list || [];
@@ -52,6 +68,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         this._eventosService.selectedEventoId$.subscribe(id => {
             this.selectedEventoId = id;
             this.loadAvailableTalleres();
+            this.syncServerAsistentesToLocalDB();
             this._cdr.markForCheck();
         });
 
@@ -63,6 +80,9 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         // Load assistants to populate helper quick-scan buttons for the operator
         this._eventosService.asistentes$.subscribe(list => {
             if (list.length > 0) {
+                // Cache assistants list to IndexedDB whenever it's updated from the server
+                this.saveAsistentesToLocalDB(list);
+
                 const absentList = list.filter(a => a.asistencia === 'Faltante').slice(0, 3);
                 const presentList = list.filter(a => a.asistencia === 'Presente').slice(0, 2);
 
@@ -154,6 +174,8 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
     ngOnDestroy(): void {
         this.stopCamera();
+        window.removeEventListener('online', this.onNetworkOnline);
+        window.removeEventListener('offline', this.onNetworkOffline);
     }
 
     // --- Dynamic Script Loader ---
@@ -292,7 +314,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public onScanToken(token: string): void {
         if (!token) return;
         
-        // Stop the camera as soon as a scan is detected, then send to backend
+        // Stop the camera as soon as a scan is detected, then send to backend or process offline
         this.stopCamera().then(() => {
             this.tokenInput = token;
             this.scanState = 'scanning';
@@ -310,80 +332,345 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
             }
 
-            if (this.scanMode === 'general') {
-                // Perform backend check-in directly, passing active event ID
-                this._eventosService.checkInPublico(finalToken, this.selectedEventoId).subscribe({
-                    next: (res) => {
-                        if (res.status === 'SUCCESS') {
-                            this.scanState = 'success';
-                            this.scanResult = res.asistente;
-                            this.playBeep('success');
-                        } else if (res.status === 'DUPLICADO') {
-                            this.scanState = 'duplicate';
-                            this.scanResult = res.asistente;
-                            this.playBeep('warning');
-                        } else {
-                            this.scanState = 'error';
-                            this.scanResult = { message: res.message };
-                            this.playBeep('error');
-                        }
-                        this._cdr.markForCheck();
-                    },
-                    error: (err) => {
-                        this.scanState = 'error';
-                        this.scanResult = { message: err?.error?.mensaje || 'Error al conectar con el servidor.' };
-                        this.playBeep('error');
-                        this._cdr.markForCheck();
-                    }
-                });
+            // Route check-in depending on connectivity status
+            if (this.isOnline) {
+                this.checkInOnline(finalToken);
             } else {
-                // Taller o Conferencia específico
-                const tallerId = Number(this.scanMode);
-                this._eventosService.checkInTaller(finalToken, tallerId).subscribe({
-                    next: (res) => {
-                        // Map the response format to match what escanear-pase.component.html expects!
-                        this.scanResult = {
-                            nombreCompleto: res.nombreAsistente,
-                            tipo: res.tipoAsistente,
-                            organizacion: res.organizacion,
-                            fechaCheckIn: new Date().toISOString(),
-                            mensaje: res.mensaje,
-                            cupoSobrepasado: res.cupoSobrepasado
-                        };
-                        this.cupoSobrepasado = !!res.cupoSobrepasado;
-                        
-                        if (res.mensaje && res.mensaje.includes('Re-ingreso')) {
-                            this.scanState = 'duplicate';
-                            this.playBeep('warning');
-                        } else if (res.cupoSobrepasado) {
-                            this.scanState = 'success'; // sigue siendo éxito (acceso registrado)
-                            this.playBeep('warning');   // pero con sonido de alerta
-                        } else {
-                            this.scanState = 'success';
-                            this.playBeep('success');
-                        }
-                        this._eventosService.loadTalleresMetrics(this.selectedEventoId); // refresh metrics
-                        this._cdr.markForCheck();
-                    },
-                    error: (err) => {
-                        this.scanState = 'error';
-                        
-                        let errMsg = 'Acceso Denegado o Error del Servidor.';
-                        if (err.error && err.error.mensaje) {
-                            errMsg = err.error.mensaje;
-                        } else if (err.error && typeof err.error === 'string') {
-                            errMsg = err.error;
-                        }
-
-                        this.scanResult = {
-                            message: errMsg
-                        };
-                        this.playBeep('error');
-                        this._eventosService.loadTalleresMetrics(this.selectedEventoId); // refresh metrics
-                        this._cdr.markForCheck();
-                    }
-                });
+                this.checkInOffline(finalToken);
             }
+        });
+    }
+
+    private checkInOnline(token: string): void {
+        if (this.scanMode === 'general') {
+            // Perform backend check-in directly, passing active event ID
+            this._eventosService.checkInPublico(token, this.selectedEventoId).subscribe({
+                next: (res) => {
+                    if (res.status === 'SUCCESS') {
+                        this.scanState = 'success';
+                        this.scanResult = res.asistente;
+                        this.playBeep('success');
+                    } else if (res.status === 'DUPLICADO') {
+                        this.scanState = 'duplicate';
+                        this.scanResult = res.asistente;
+                        this.playBeep('warning');
+                    } else {
+                        this.scanState = 'error';
+                        this.scanResult = { message: res.message };
+                        this.playBeep('error');
+                    }
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    // Fall back to offline flow if HTTP call fails (e.g. timeout or network dropped mid-air)
+                    console.warn('Network call failed, falling back to offline check-in', err);
+                    this.checkInOffline(token);
+                }
+            });
+        } else {
+            // Taller o Conferencia específico
+            const tallerId = Number(this.scanMode);
+            this._eventosService.checkInTaller(token, tallerId).subscribe({
+                next: (res) => {
+                    this.scanResult = {
+                        nombreCompleto: res.nombreAsistente,
+                        tipo: res.tipoAsistente,
+                        organizacion: res.organizacion,
+                        fechaCheckIn: new Date().toISOString(),
+                        mensaje: res.mensaje,
+                        cupoSobrepasado: res.cupoSobrepasado
+                    };
+                    this.cupoSobrepasado = !!res.cupoSobrepasado;
+                    
+                    if (res.mensaje && res.mensaje.includes('Re-ingreso')) {
+                        this.scanState = 'duplicate';
+                        this.playBeep('warning');
+                    } else if (res.cupoSobrepasado) {
+                        this.scanState = 'success';
+                        this.playBeep('warning');
+                    } else {
+                        this.scanState = 'success';
+                        this.playBeep('success');
+                    }
+                    this._eventosService.loadTalleresMetrics(this.selectedEventoId);
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    // Fall back to offline check-in if HTTP call fails
+                    console.warn('Network call failed, falling back to offline check-in', err);
+                    this.checkInOffline(token);
+                }
+            });
+        }
+    }
+
+    private checkInOffline(token: string): void {
+        this.getAsistenteFromLocalDB(token).then((asistente) => {
+            if (!asistente) {
+                // If not found in offline db, access denied
+                this.scanState = 'error';
+                this.scanResult = {
+                    message: 'Pase Inválido. Código no encontrado en la base de datos local fuera de línea.'
+                };
+                this.playBeep('error');
+                this._cdr.markForCheck();
+                return;
+            }
+
+            // Check if already registered offline or already marked as Presente
+            this.checkIfCheckInExistsLocal(token, this.scanMode).then((isDuplicateOffline) => {
+                const isDuplicateOnline = asistente.asistencia === 'Presente';
+
+                if (isDuplicateOffline || isDuplicateOnline) {
+                    this.scanState = 'duplicate';
+                    this.scanResult = {
+                        nombreCompleto: `${asistente.nombre} ${asistente.apellidos}`,
+                        fechaCheckIn: 'Escaneado previamente'
+                    };
+                    this.playBeep('warning');
+                    this._cdr.markForCheck();
+                } else {
+                    // Successful Offline check-in
+                    const offlineCheckIn = {
+                        tokenQr: token,
+                        scanMode: this.scanMode,
+                        eventoId: this.selectedEventoId,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    this.saveOfflineCheckInToLocalDB(offlineCheckIn).then(() => {
+                        this.scanState = 'success';
+                        this.scanResult = {
+                            nombreCompleto: `${asistente.nombre} ${asistente.apellidos}`,
+                            tipo: asistente.tipo,
+                            organizacion: asistente.empresa || asistente.universidad || 'Ninguna',
+                            fechaCheckIn: offlineCheckIn.timestamp,
+                            isOfflineScan: true
+                        };
+                        this.playBeep('success');
+                        this.updatePendingCount();
+                        this._cdr.markForCheck();
+                    });
+                }
+            });
+        }).catch((err) => {
+            console.error('Error in offline check-in:', err);
+            this.scanState = 'error';
+            this.scanResult = { message: 'Error interno en la base de datos local.' };
+            this.playBeep('error');
+            this._cdr.markForCheck();
+        });
+    }
+
+    // --- IndexedDB Local Database Logic ---
+
+    private initIndexedDB(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('TuzoforumOfflineDB', 1);
+
+            request.onupgradeneeded = (event: any) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('asistentes')) {
+                    db.createObjectStore('asistentes', { keyPath: 'tokenQr' });
+                }
+                if (!db.objectStoreNames.contains('cola_checkins')) {
+                    db.createObjectStore('cola_checkins', { autoIncrement: true });
+                }
+            };
+
+            request.onsuccess = (event: any) => {
+                this.db = event.target.result;
+                console.log('📦 [IndexedDB] Database initialized successfully.');
+                resolve();
+            };
+
+            request.onerror = (event: any) => {
+                console.error('📦 [IndexedDB] Error initializing database:', event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
+
+    private saveAsistentesToLocalDB(asistentes: any[]): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) return resolve();
+            const transaction = this.db.transaction(['asistentes'], 'readwrite');
+            const store = transaction.objectStore(transaction.objectStoreNames[0]);
+
+            // Clear old cache first
+            store.clear();
+
+            asistentes.forEach(a => {
+                store.put(a);
+            });
+
+            transaction.oncomplete = () => {
+                console.log(`📦 [IndexedDB] Cached ${asistentes.length} assistants to local DB.`);
+                resolve();
+            };
+
+            transaction.onerror = (event: any) => {
+                console.error('📦 [IndexedDB] Error caching assistants:', event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
+
+    private getAsistenteFromLocalDB(tokenQr: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) return resolve(null);
+            const transaction = this.db.transaction(['asistentes'], 'readonly');
+            const store = transaction.objectStore('asistentes');
+            const request = store.get(tokenQr);
+
+            request.onsuccess = (event: any) => {
+                resolve(event.target.result || null);
+            };
+
+            request.onerror = (event: any) => {
+                reject(event.target.error);
+            };
+        });
+    }
+
+    private saveOfflineCheckInToLocalDB(checkIn: any): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (!this.db) return resolve();
+            const transaction = this.db.transaction(['cola_checkins'], 'readwrite');
+            const store = transaction.objectStore('cola_checkins');
+            const request = store.add(checkIn);
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = (event: any) => {
+                reject(event.target.error);
+            };
+        });
+    }
+
+    private checkIfCheckInExistsLocal(tokenQr: string, scanMode: 'general' | number): Promise<boolean> {
+        return new Promise((resolve) => {
+            if (!this.db) return resolve(false);
+            const transaction = this.db.transaction(['cola_checkins'], 'readonly');
+            const store = transaction.objectStore('cola_checkins');
+            const request = store.getAll();
+
+            request.onsuccess = (event: any) => {
+                const list = event.target.result || [];
+                const found = list.some((item: any) => item.tokenQr === tokenQr && item.scanMode === scanMode);
+                resolve(found);
+            };
+
+            request.onerror = () => {
+                resolve(false);
+            };
+        });
+    }
+
+    private updatePendingCount(): void {
+        if (!this.db) return;
+        const transaction = this.db.transaction(['cola_checkins'], 'readonly');
+        const store = transaction.objectStore('cola_checkins');
+        const request = store.count();
+
+        request.onsuccess = (event: any) => {
+            this.pendingCheckInsCount = event.target.result || 0;
+            this._cdr.markForCheck();
+        };
+    }
+
+    private syncServerAsistentesToLocalDB(): void {
+        if (this.isOnline) {
+            // Service fetch logic automatically updates assistants BehaviorSubject, 
+            // triggering saveAsistentesToLocalDB cached subscription above.
+            this._eventosService.loadEventos();
+        }
+    }
+
+    // --- Network Connectivity & Syncing Loop ---
+
+    private onNetworkOnline = (): void => {
+        this.isOnline = true;
+        this._cdr.markForCheck();
+        console.log('📡 [Network] Browser went ONLINE. Dispatching sync process.');
+        this.syncOfflineCheckIns();
+    };
+
+    private onNetworkOffline = (): void => {
+        this.isOnline = false;
+        this._cdr.markForCheck();
+        console.log('📡 [Network] Browser went OFFLINE.');
+    };
+
+    private syncOfflineCheckIns(): void {
+        if (!this.isOnline || !this.db) return;
+
+        const transaction = this.db.transaction(['cola_checkins'], 'readonly');
+        const store = transaction.objectStore('cola_checkins');
+        const request = store.getAll();
+
+        request.onsuccess = (event: any) => {
+            const list = event.target.result || [];
+            if (list.length === 0) return;
+
+            console.log(`📡 [Sync] Found ${list.length} offline check-ins to synchronize.`);
+            this.processSyncQueue(list);
+        };
+    }
+
+    private async processSyncQueue(queue: any[]): Promise<void> {
+        for (const item of queue) {
+            try {
+                if (item.scanMode === 'general') {
+                    await this._eventosService.checkInPublico(item.tokenQr, item.eventoId).toPromise();
+                } else {
+                    await this._eventosService.checkInTaller(item.tokenQr, Number(item.scanMode)).toPromise();
+                }
+                // Remove synced item from local DB
+                await this.removeOfflineCheckInFromDB(item.tokenQr, item.scanMode);
+            } catch (err) {
+                console.error('📡 [Sync] Failed to sync item, will retry later:', item, err);
+                break; // Stop sync queue loop if network drops again
+            }
+        }
+        this.updatePendingCount();
+        this.syncServerAsistentesToLocalDB();
+    }
+
+    private removeOfflineCheckInFromDB(tokenQr: string, scanMode: any): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this.db) return resolve();
+            const transaction = this.db.transaction(['cola_checkins'], 'readwrite');
+            const store = transaction.objectStore('cola_checkins');
+            const request = store.getAll();
+
+            request.onsuccess = (event: any) => {
+                const list = event.target.result || [];
+                const target = list.find((item: any) => item.tokenQr === tokenQr && item.scanMode === scanMode);
+                if (target) {
+                    // IndexedDB requires primary key (auto-incremented ID or key)
+                    // We open a cursor or use cursor deletion to delete the exact record matching.
+                    const cursorRequest = store.openCursor();
+                    cursorRequest.onsuccess = (cursorEvent: any) => {
+                        const cursor = cursorEvent.target.result;
+                        if (cursor) {
+                            if (cursor.value.tokenQr === tokenQr && cursor.value.scanMode === scanMode) {
+                                cursor.delete();
+                                resolve();
+                            } else {
+                                cursor.continue();
+                            }
+                        } else {
+                            resolve();
+                        }
+                    };
+                } else {
+                    resolve();
+                }
+            };
+            request.onerror = () => resolve();
         });
     }
 
