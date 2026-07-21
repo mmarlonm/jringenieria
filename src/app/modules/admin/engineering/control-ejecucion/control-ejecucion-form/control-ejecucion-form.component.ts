@@ -1156,8 +1156,11 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   getRelativeWeekNumber(date: Date): number {
-    if (!this.startDate) return 1;
-    const diff = differenceInDays(startOfDay(date), startOfDay(this.startDate));
+    const baseProjectDate = this.form && this.form.get('fechaInicioProyecto')?.value
+      ? startOfDay(new Date(this.form.get('fechaInicioProyecto')?.value))
+      : (this.startDate ? startOfDay(this.startDate) : startOfDay(new Date()));
+      
+    const diff = differenceInDays(startOfDay(date), baseProjectDate);
     return Math.floor(diff / 7) + 1;
   }
 
