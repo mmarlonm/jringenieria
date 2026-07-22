@@ -27,6 +27,10 @@ export interface Asistente {
     universidad?: string;
     carrera?: string;
     eventoId: number; // ID entero del evento
+    emailEnviado?: boolean;
+    whatsappEnviado?: boolean;
+    emailError?: string;
+    whatsappError?: string;
 }
 
 export interface DashboardMetricasDto {
@@ -536,10 +540,13 @@ export class EventosService implements OnDestroy {
                                 medioSeguimiento: item.medioSeguimientoDeseado as 'Correo' | 'WhatsApp' | 'Ninguno',
                                 direccion: item.direccionCiudadEstado,
                                 ocupacion: item.ocupacionCargo,
-                                empresa: item.empresaRepresenta,
                                 universidad: item.universidadRepresentas,
                                 carrera: item.carreraCursas,
-                                eventoId: item.eventoId
+                                eventoId: item.eventoId,
+                                emailEnviado: item.emailEnviado,
+                                whatsappEnviado: item.whatsappEnviado,
+                                emailError: item.emailError,
+                                whatsappError: item.whatsappError
                             };
                         });
                         this._asistentes.next(mappedList);

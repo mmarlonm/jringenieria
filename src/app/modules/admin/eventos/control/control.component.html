@@ -107,14 +107,45 @@
                                 {{ a.tipo }}
                             </span>
                         </td>
-                        <!-- QR Status -->
+                        <!-- QR Status (Email + WhatsApp) -->
                         <td class="px-6 py-4">
-                            <span [ngClass]="{
-                                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900': a.estatusQR === 'Enviado',
-                                'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-800': a.estatusQR === 'Pendiente'
-                            }" class="px-2.5 py-1 rounded-md text-xs font-bold border">
-                                {{ a.estatusQR }}
-                            </span>
+                            <div class="flex flex-col gap-1">
+                                <!-- Email sent state -->
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 w-8">Email:</span>
+                                    <span *ngIf="a.emailEnviado" class="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                        <mat-icon class="icon-size-3 text-emerald-500" svgIcon="heroicons_solid:check-circle"></mat-icon>
+                                        <span>Enviado</span>
+                                    </span>
+                                    <span *ngIf="!a.emailEnviado && !a.emailError" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-650 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                        Pendiente
+                                    </span>
+                                    <span *ngIf="!a.emailEnviado && a.emailError" 
+                                          [title]="a.emailError"
+                                          class="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-450 border border-rose-500/20 cursor-help">
+                                        <mat-icon class="icon-size-3 text-rose-500" svgIcon="heroicons_solid:x-circle"></mat-icon>
+                                        <span>Fallo</span>
+                                    </span>
+                                </div>
+
+                                <!-- WhatsApp sent state -->
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 w-8">Whats:</span>
+                                    <span *ngIf="a.whatsappEnviado" class="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                        <mat-icon class="icon-size-3 text-emerald-500" svgIcon="heroicons_solid:check-circle"></mat-icon>
+                                        <span>Enviado</span>
+                                    </span>
+                                    <span *ngIf="!a.whatsappEnviado && !a.whatsappError" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-650 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                        Pendiente
+                                    </span>
+                                    <span *ngIf="!a.whatsappEnviado && a.whatsappError" 
+                                          [title]="a.whatsappError"
+                                          class="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-450 border border-rose-500/20 cursor-help">
+                                        <mat-icon class="icon-size-3 text-rose-500" svgIcon="heroicons_solid:x-circle"></mat-icon>
+                                        <span>Fallo</span>
+                                    </span>
+                                </div>
+                            </div>
                         </td>
                         <!-- Attendance -->
                         <td class="px-6 py-4">
