@@ -106,7 +106,7 @@ export class PublicVerPaseComponent implements OnInit {
   }
 
   cargarDatosAsistente(token: string): void {
-    const url = `${environment.apiUrl}/api/Asistentes/ver-pase/${token}`;
+    const url = `${environment.apiUrl}/Asistentes/ver-pase/${token}`;
     this.cargando = true;
     this.error = null;
 
