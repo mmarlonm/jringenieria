@@ -38,15 +38,18 @@ import { MatIconModule } from '@angular/material/icon';
             <!-- Pass QR Header with SVG Waves -->
             <div class="relative w-full overflow-visible bg-slate-200 dark:bg-slate-800 flex-shrink-0 flex flex-col items-center justify-center p-8 pt-12 pb-16">
               
-              <!-- QR Code image frame -->
-              <div class="relative bg-white p-4.5 rounded-3xl shadow-2xl border-4 border-white dark:border-slate-900 shadow-indigo-500/10 z-25 group">
-                <!-- Corner reticles -->
-                <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#005082] rounded-tl"></div>
-                <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#005082] rounded-tr"></div>
-                <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#005082] rounded-bl"></div>
-                <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#005082] rounded-br"></div>
+              <!-- Premium QR Code container frame (Responsive size w-48 to w-56, with laser line animation) -->
+              <div class="relative bg-white p-5 rounded-3xl shadow-2xl border-4 border-white dark:border-slate-900 shadow-indigo-950/20 z-25 group transform transition-transform hover:scale-[1.02]">
+                <!-- Target Corner Reticles -->
+                <div class="absolute top-3 left-3 w-5 h-5 border-t-4 border-l-4 border-[#005082] rounded-tl"></div>
+                <div class="absolute top-3 right-3 w-5 h-5 border-t-4 border-r-4 border-[#005082] rounded-tr"></div>
+                <div class="absolute bottom-3 left-3 w-5 h-5 border-b-4 border-l-4 border-[#005082] rounded-bl"></div>
+                <div class="absolute bottom-3 right-3 w-5 h-5 border-b-4 border-r-4 border-[#005082] rounded-br"></div>
+                
+                <!-- Laser Sweep Animation Line -->
+                <div class="absolute inset-x-5 h-1 bg-[#008232] opacity-80 z-20 rounded-full animate-laser-sweep"></div>
 
-                <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + asistente.tokenQR" alt="QR Code" class="w-44 h-44 block rounded-xl">
+                <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + asistente.tokenQR" alt="QR Code" class="w-48 h-48 sm:w-52 sm:h-52 block rounded-2xl relative z-10">
               </div>
 
               <!-- Double Curve Wave Overlay (Brand Green + Brand Blue + White card background) -->
@@ -134,6 +137,14 @@ import { MatIconModule } from '@angular/material/icon';
       display: block;
       width: 100%;
       height: 100%;
+    }
+    @keyframes laserSweep {
+      0% { top: 12px; }
+      50% { top: calc(100% - 16px); }
+      100% { top: 12px; }
+    }
+    .animate-laser-sweep {
+      animation: laserSweep 3s infinite ease-in-out;
     }
   `]
 })
