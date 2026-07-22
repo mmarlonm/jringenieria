@@ -11,100 +11,120 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [CommonModule, MatProgressSpinnerModule, MatIconModule],
   template: `
-    <div class="relative flex flex-col items-center justify-center min-h-screen w-full bg-slate-950 text-slate-100 font-sans overflow-x-hidden p-4 select-none">
+    <div class="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-slate-50 via-[#e6eff5] to-slate-200 select-none dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
       
-      <!-- Mesh Glow Background Elements -->
-      <div class="absolute top-[-10%] left-[-10%] w-[60%] h-[50%] rounded-full bg-indigo-500/10 blur-[130px] pointer-events-none"></div>
-      <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[50%] rounded-full bg-emerald-500/5 blur-[130px] pointer-events-none"></div>
-      
-      <div class="max-w-sm w-full rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_0_50px_rgba(99,102,241,0.1)] border border-slate-800/80 bg-slate-900/60 backdrop-blur-xl relative transition-all duration-300 animate-fade-in z-10">
-        
-        <!-- Header del Pase -->
-        <div class="relative w-full bg-gradient-to-tr from-indigo-700 to-indigo-500 p-8 text-center border-b border-indigo-500/20">
-          <div class="absolute top-4 left-4 flex items-center gap-2">
-            <div class="h-6 w-6 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur-sm">
-              <mat-icon class="text-white icon-size-3.5" svgIcon="heroicons_outline:bolt"></mat-icon>
-            </div>
-            <span class="text-[9px] font-black tracking-widest text-indigo-200 uppercase">Foro Energiza</span>
-          </div>
-
-          <div class="mx-auto h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shadow-lg mb-4 mt-2">
-            <mat-icon class="text-white icon-size-8 animate-pulse" svgIcon="heroicons_outline:qr-code"></mat-icon>
-          </div>
-          <h2 class="text-xl font-black tracking-tight text-white uppercase">Pase de Acceso</h2>
-          <p class="text-indigo-200 text-xs font-semibold mt-1">Presenta este código en el acceso principal</p>
-        </div>
-
-        <!-- Contenido principal -->
-        <div class="p-8 flex flex-col items-center text-center">
-          
-          <ng-container *ngIf="cargando">
-            <mat-progress-spinner mode="indeterminate" diameter="40" class="my-6"></mat-progress-spinner>
-            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider animate-pulse">Cargando detalles...</p>
-          </ng-container>
-
-          <ng-container *ngIf="error">
-            <div class="my-6 flex flex-col items-center">
-              <div class="p-4 bg-rose-500/10 border border-rose-500/25 rounded-full mb-4">
-                <mat-icon class="text-rose-500 icon-size-10" svgIcon="heroicons_outline:exclamation-circle"></mat-icon>
-              </div>
-              <p class="text-base font-black text-rose-400 uppercase tracking-wide">{{ error }}</p>
-            </div>
-            <p class="text-slate-400 text-xs font-medium leading-relaxed px-4">Verifica que el enlace recibido por WhatsApp o Correo sea el correcto.</p>
-          </ng-container>
-
-          <ng-container *ngIf="asistente && !cargando && !error">
-            
-            <span class="px-3.5 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-4 border"
-                  [ngClass]="{
-                      'bg-amber-500/10 text-amber-400 border-amber-500/20': asistente.tipoAsistente === 'General',
-                      'bg-pink-500/10 text-pink-400 border-pink-500/20': asistente.tipoAsistente === 'Estudiante'
-                  }">
-              {{ asistente.tipoAsistente }}
-            </span>
-
-            <h3 class="text-xl font-black text-white leading-tight mb-6">{{ asistente.nombreCompleto }}</h3>
-
-            <!-- Código QR con bordes premium y sweep de lectura -->
-            <div class="relative bg-white p-4.5 rounded-3xl shadow-inner mb-6 border border-slate-700/80 shadow-indigo-500/5 group">
-              <!-- Corner reticles -->
-              <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-indigo-500 rounded-tl"></div>
-              <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-indigo-500 rounded-tr"></div>
-              <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-indigo-500 rounded-bl"></div>
-              <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-indigo-500 rounded-br"></div>
-
-              <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + asistente.tokenQR" alt="QR Code" class="w-48 h-48 block rounded-xl">
-            </div>
-
-            <!-- Details Block -->
-            <div class="w-full space-y-3 bg-slate-950/40 rounded-2xl p-4 border border-slate-800 text-left text-xs mb-4">
-              <div class="flex justify-between items-center py-1 border-b border-slate-900/60">
-                <span class="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Correo</span>
-                <span class="text-slate-300 font-bold max-w-[200px] truncate">{{ asistente.correoElectronico }}</span>
-              </div>
-              <div class="flex justify-between items-center py-1" *ngIf="asistente.empresaRepresenta || asistente.universidadRepresentas">
-                <span class="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Organización</span>
-                <span class="text-slate-300 font-bold max-w-[200px] truncate">{{ asistente.empresaRepresenta || asistente.universidadRepresentas }}</span>
-              </div>
-            </div>
-
-            <div class="w-full text-center">
-              <p class="text-slate-600 font-mono text-[9px]">
-                ID: {{ asistente.tokenQR }}
-              </p>
-              <p class="text-slate-500 text-[10px] font-semibold mt-1">
-                Pase personal y no transferible.
-              </p>
-            </div>
-
-          </ng-container>
-
-        </div>
+      <!-- Loader -->
+      <div *ngIf="cargando" class="flex flex-col items-center justify-center text-slate-600 dark:text-slate-300 absolute inset-0 bg-gradient-to-br from-slate-50 via-[#e6eff5] to-slate-200 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 z-50">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#005082] mb-4"></div>
+        <p class="text-xs font-bold uppercase tracking-widest text-[#005082] dark:text-[#38bdf8] animate-pulse">Obteniendo pase...</p>
       </div>
 
-      <!-- Pie de página -->
-      <div class="mt-8 text-center text-slate-600 text-[10px] font-bold tracking-wide z-10">
-        <p>&copy; 2026 JR Ingeniería Eléctrica. Todos los derechos reservados.</p>
+      <!-- Main Container -->
+      <div class="flex flex-col items-center justify-start sm:justify-center min-h-full p-0 sm:p-4 md:p-6">
+        
+        <!-- Error State -->
+        <div *ngIf="!cargando && error" class="w-full min-h-screen sm:min-h-0 sm:max-w-sm bg-white dark:bg-slate-950 border-0 sm:border border-slate-100 dark:border-slate-900 rounded-none sm:rounded-3xl p-8 flex flex-col items-center justify-center text-center text-slate-800 dark:text-slate-100 shadow-none sm:shadow-2xl">
+          <mat-icon class="icon-size-16 text-rose-500 mb-4">error_outline</mat-icon>
+          <h3 class="text-lg font-bold">Pase no encontrado</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-xs leading-relaxed">
+            El enlace o código QR de pase digital no coincide con ningún asistente registrado en el sistema.
+          </p>
+        </div>
+
+        <!-- Profile / Pass Card -->
+        <div *ngIf="!cargando && !error && asistente" 
+             class="w-full min-h-screen sm:min-h-0 sm:max-w-sm bg-white dark:bg-slate-950 border-0 sm:border border-slate-100 dark:border-slate-900/50 rounded-none sm:rounded-3xl overflow-hidden shadow-none sm:shadow-2xl text-slate-800 dark:text-slate-100 transition-all duration-300 relative flex flex-col">
+            
+            <!-- Pass QR Header with SVG Waves -->
+            <div class="relative w-full overflow-visible bg-slate-200 dark:bg-slate-800 flex-shrink-0 flex flex-col items-center justify-center p-8 pt-12 pb-16">
+              
+              <!-- QR Code image frame -->
+              <div class="relative bg-white p-4.5 rounded-3xl shadow-2xl border-4 border-white dark:border-slate-900 shadow-indigo-500/10 z-25 group">
+                <!-- Corner reticles -->
+                <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#005082] rounded-tl"></div>
+                <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#005082] rounded-tr"></div>
+                <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#005082] rounded-bl"></div>
+                <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#005082] rounded-br"></div>
+
+                <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + asistente.tokenQR" alt="QR Code" class="w-44 h-44 block rounded-xl">
+              </div>
+
+              <!-- Double Curve Wave Overlay (Brand Green + Brand Blue + White card background) -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 200" class="absolute bottom-0 left-0 w-full fill-current block select-none pointer-events-none z-10" style="margin-bottom: -1px;">
+                  <!-- Green Wave (Back) -->
+                  <path fill="#008232" d="M0,80 C320,180 960,20 1440,110 L1440,200 L0,200 Z"></path>
+                  <!-- Blue Wave (Middle) -->
+                  <path fill="#005082" d="M0,110 C320,200 960,50 1440,130 L1440,200 L0,200 Z"></path>
+                  <!-- White Card Body Cut (Front) -->
+                  <path fill="currentColor" class="text-white dark:text-slate-950" d="M0,130 C320,210 960,80 1440,150 L1440,200 L0,200 Z"></path>
+              </svg>
+              
+              <!-- Overlapping Event Badge -->
+              <div class="absolute right-6 -bottom-6 z-20 flex items-center justify-center w-12 h-12 rounded-full shadow-lg border-4 border-white dark:border-slate-950 bg-[#005082] text-white">
+                  <mat-icon class="icon-size-6">bolt</mat-icon>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-6 pt-8 relative flex-grow flex flex-col justify-between">
+                
+                <div>
+                    <!-- Header Text Area with dashed vertical line -->
+                    <div class="pl-4 space-y-1 border-l-[2.5px] border-dashed"
+                         [ngClass]="asistente.tipoAsistente === 'General' ? 'border-[#005082]' : 'border-[#008232]'">
+                        <span class="text-[9px] font-black uppercase tracking-widest"
+                              [ngClass]="asistente.tipoAsistente === 'General' ? 'text-[#005082] dark:text-[#38bdf8]' : 'text-[#008232] dark:text-emerald-400'">
+                            {{ asistente.tipoAsistente }}
+                        </span>
+                        <h2 class="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-50 leading-tight">
+                            {{ asistente.nombreCompleto }}
+                        </h2>
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            Pase de Acceso Digital
+                        </p>
+                        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" *ngIf="asistente.empresaRepresenta || asistente.universidadRepresentas">
+                            {{ asistente.empresaRepresenta || asistente.universidadRepresentas }}
+                        </p>
+                    </div>
+
+                    <!-- Details Area -->
+                    <div class="mt-8 space-y-3.5">
+                        
+                        <!-- Correo Electrónico -->
+                        <div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100/50 dark:border-slate-800/40">
+                            <div class="flex items-center justify-center w-11 h-11 rounded-full bg-[#005082] text-white shadow-md flex-shrink-0">
+                                <mat-icon class="icon-size-5">email</mat-icon>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Correo Registrado</span>
+                                <span class="text-sm font-extrabold text-slate-700 dark:text-slate-200 truncate break-all">{{ asistente.correoElectronico }}</span>
+                            </div>
+                        </div>
+
+                        <!-- ID Registro -->
+                        <div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100/50 dark:border-slate-800/40">
+                            <div class="flex items-center justify-center w-11 h-11 rounded-full bg-[#008232] text-white shadow-md flex-shrink-0">
+                                <mat-icon class="icon-size-5">vpn_key</mat-icon>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Token ID</span>
+                                <span class="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 truncate">{{ asistente.tokenQR }}</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Footer details -->
+                <div class="mt-8 pt-4 border-t border-slate-100 dark:border-slate-900 text-center flex-shrink-0">
+                    <p class="text-slate-400 dark:text-slate-650 text-[10px] font-bold uppercase tracking-wider">Presenta el código en tu pantalla para escanear</p>
+                    <p class="text-slate-400 dark:text-slate-550 text-[9px] mt-0.5">Foro Energiza &copy; 2026. Todos los derechos reservados.</p>
+                </div>
+
+            </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -114,13 +134,6 @@ import { MatIconModule } from '@angular/material/icon';
       display: block;
       width: 100%;
       height: 100%;
-    }
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(12px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in {
-      animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
   `]
 })
