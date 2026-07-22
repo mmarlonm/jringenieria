@@ -37,6 +37,8 @@ export const appRoutes: Route[] = [
             { path: 'survey', loadChildren: () => import('app/modules/survey/survey.routes') }, // Survey module route
             { path: 'survey-productos', loadChildren: () => import('app/modules/survey_productos/survey_productos.routes') }, // Survey module route
             { path: 'public/cuestionario-proveedor/:id', loadComponent: () => import('app/modules/public/cuestionario-proveedor/cuestionario-proveedor.component').then(m => m.PublicCuestionarioProveedorComponent) },
+            { path: 'eventos/ver-pase', loadComponent: () => import('app/modules/public/ver-pase/ver-pase.component').then(m => m.PublicVerPaseComponent) },
+            { path: 'eventos/ver-pase/:token', loadComponent: () => import('app/modules/public/ver-pase/ver-pase.component').then(m => m.PublicVerPaseComponent) }
         ]
     },
 
@@ -167,9 +169,5 @@ export const appRoutes: Route[] = [
     {
         path: 'eventos/agenda-personal/:token',
         loadComponent: () => import('app/modules/admin/eventos/agenda-personal/agenda-personal.component').then(m => m.AgendaPersonalComponent)
-    },
-    {
-        path: 'eventos/ver-pase',
-        loadComponent: () => import('app/modules/public/ver-pase/ver-pase.component').then(m => m.PublicVerPaseComponent)
     }
 ];
