@@ -53,6 +53,13 @@
                     </mat-form-field>
                 </div>
 
+                <!-- Título de Proyecto -->
+                <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Título de Proyecto</mat-label>
+                    <input matInput formControlName="tituloProyecto" placeholder="Escriba el título identificador del proyecto..." [autocomplete]="'off'" />
+                    <mat-error *ngIf="form.get('tituloProyecto').hasError('maxlength')">Límite de 500 caracteres superado</mat-error>
+                </mat-form-field>
+
                 <!-- Actividad (Descripción Completa) -->
                 <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Actividad / Descripción del Proyecto</mat-label>

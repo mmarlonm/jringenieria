@@ -21,6 +21,7 @@ export interface SeguimientoProyecto {
     empresa?: string;
     area?: string;
     actividad: string;
+    tituloProyecto?: string;
     tipo?: string;
     estatusLevantamiento: number;
     estatusCotizacion: number;
@@ -39,6 +40,7 @@ export interface SeguimientoEjecucion {
     idEjecucion: number;
     idSeguimiento: number;
     utilidadEsperada?: number;
+    utilidadReal?: number;
     disponibilidadRecursos?: string;
     fechaInicioProyecto?: string;
     fechaFinProyecto?: string;
@@ -59,6 +61,7 @@ export interface SeguimientoEjecucion {
     nombreSolicitante?: string;
     empresa?: string;
     avanceGantt?: number;
+    tituloProyecto?: string;
 }
 
 export interface SeguimientoEjecucionActividadMaestra {

@@ -126,6 +126,14 @@
                         </td>
                     </ng-container>
 
+                    <!-- Título del Proyecto -->
+                    <ng-container matColumnDef="tituloProyecto">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Título del Proyecto</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-slate-800 whitespace-nowrap py-3 pr-4" [matTooltip]="s.tituloProyecto || ''">
+                            {{ s.tituloProyecto && s.tituloProyecto.length > 20 ? (s.tituloProyecto | slice:0:20) + '...' : (s.tituloProyecto || '-') }}
+                        </td>
+                    </ng-container>
+
                     <!-- Actividad -->
                     <ng-container matColumnDef="actividad">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Actividad</th>

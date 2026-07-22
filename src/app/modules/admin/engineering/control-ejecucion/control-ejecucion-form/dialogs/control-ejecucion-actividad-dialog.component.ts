@@ -32,7 +32,7 @@ import Swal from 'sweetalert2';
     CdkDragHandle
   ],
   template: `
-    <div class="flex flex-col max-w-160 min-w-80 overflow-hidden bg-card text-default"
+    <div class="flex flex-col max-w-200 w-full overflow-hidden bg-card text-default"
          cdkDrag
          cdkDragRootElement=".cdk-overlay-pane"
          [cdkDragFreeDragPosition]="dragPosition"
@@ -67,30 +67,46 @@ import Swal from 'sweetalert2';
                     <div *ngIf="!user.avatar" 
                          class="w-full h-full flex items-center justify-center text-[10px] font-bold text-white uppercase"
                          [style.background-color]="getUserColor(user.nombreUsuario)">
-                      {{ getUserInitials(user.nombreUsuario) }}
-                    </div>
+                       {{ getUserInitials(user.nombreUsuario) }}
+                     </div>
                   </div>
                   <span class="text-sm font-medium">{{ user.nombreUsuario }}</span>
                 </div>
               </mat-option>
             </mat-select>
             <mat-icon matSuffix class="text-secondary">people</mat-icon>
-          </mat-form-field>
-
-          <!-- Equipo de Trabajo (JR / Subcontratados) -->
+          </mat-form-field>          <!-- Equipo de Trabajo (JR / Aliados Jr) con colapsables estilo árbol -->
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Equipo de Trabajo</mat-label>
             <mat-select formControlName="equipoIds" multiple>
-              <mat-optgroup label="Personal JR">
-                <mat-option *ngFor="let u of data.equiposDisponibles?.jr" [value]="'JR-' + u.id">
+              
+              <!-- Cabecera colapsable para Personal JR -->
+              <div class="flex items-center px-3 py-2 hover:bg-slate-50 cursor-pointer select-none text-sm font-bold text-slate-700" (click)="toggleJrCollapse($event)">
+                <mat-icon class="icon-size-4 mr-2 transition-transform duration-200" [style.transform]="isJrCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'">arrow_drop_down</mat-icon>
+                <div class="w-5 h-5 rounded border border-slate-300 flex items-center justify-center mr-2 bg-slate-100">
+                  <div class="w-2.5 h-2.5 bg-slate-500 rounded-sm"></div>
+                </div>
+                <span>Personal JR</span>
+              </div>
+              <ng-container>
+                <mat-option *ngFor="let u of data.equiposDisponibles?.jr" [value]="'JR-' + u.id" class="pl-10" [class.hidden]="isJrCollapsed">
                   {{ u.nombre }}
                 </mat-option>
-              </mat-optgroup>
-              <mat-optgroup label="Personal Subcontratado">
-                <mat-option *ngFor="let s of data.equiposDisponibles?.subcontratado" [value]="'SUBCONTRATADO-' + s.id">
+              </ng-container>
+
+              <!-- Cabecera colapsable para Aliados Jr -->
+              <div class="flex items-center px-3 py-2 hover:bg-slate-50 cursor-pointer select-none text-sm font-bold text-slate-700 mt-1" (click)="toggleAliadosCollapse($event)">
+                <mat-icon class="icon-size-4 mr-2 transition-transform duration-200" [style.transform]="isAliadosCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'">arrow_drop_down</mat-icon>
+                <div class="w-5 h-5 rounded border border-slate-300 flex items-center justify-center mr-2 bg-slate-100">
+                  <div class="w-2.5 h-2.5 bg-slate-500 rounded-sm"></div>
+                </div>
+                <span>Aliados Jr</span>
+              </div>
+              <ng-container>
+                <mat-option *ngFor="let s of data.equiposDisponibles?.subcontratado" [value]="'SUBCONTRATADO-' + s.id" class="pl-10" [class.hidden]="isAliadosCollapsed">
                   {{ s.nombre }}
                 </mat-option>
-              </mat-optgroup>
+              </ng-container>
             </mat-select>
             <mat-icon matSuffix class="text-secondary">groups</mat-icon>
           </mat-form-field>
@@ -225,8 +241,21 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
     { label: 'Rosa', value: 'Rosa', hex: '#ec4899' }
   ];
 
+  isJrCollapsed: boolean = false;
+  isAliadosCollapsed: boolean = false;
+
   private _palette: string[] = ['#6366f1', '#f59e0b', '#10b981', '#f43f5e', '#8b5cf6', '#06b6d4', '#ec4899'];
   private _userColors: { [key: string]: string } = {};
+
+  toggleJrCollapse(event: MouseEvent): void {
+    event.stopPropagation();
+    this.isJrCollapsed = !this.isJrCollapsed;
+  }
+
+  toggleAliadosCollapse(event: MouseEvent): void {
+    event.stopPropagation();
+    this.isAliadosCollapsed = !this.isAliadosCollapsed;
+  }
 
   constructor(
     private _dialogRef: MatDialogRef<ControlEjecucionActividadDialogComponent>,
@@ -293,6 +322,9 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.isJrCollapsed = false;
+    this.isAliadosCollapsed = false;
+
     if (this.data.actividad) {
       let selectedIds: number[] = [];
       if (this.data.actividad.responsablesIds) {

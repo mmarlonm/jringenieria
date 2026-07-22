@@ -14,6 +14,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
 import { EngineeringService, SeguimientoEjecucion } from '../engineering.service';
 import { ControlEjecucionDialogComponent } from './control-ejecucion-dialog/control-ejecucion-dialog.component';
 import Swal from 'sweetalert2';
@@ -36,7 +37,8 @@ import Swal from 'sweetalert2';
         MatDialogModule,
         MatDatepickerModule,
         MatNativeDateModule,
-        MatPaginatorModule
+        MatPaginatorModule,
+        MatSelectModule
     ]
 })
 export class ControlEjecucionComponent implements OnInit, AfterViewInit {
@@ -63,6 +65,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     fechaInicio: any = '';
     fechaFin: any = '';
     filtroSearch: string = '';
+    filterColumn: string = '';
 
     // Listas de estatus
     astOptions = [
@@ -177,6 +180,10 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         this.dataSource.filter = this.filtroSearch;
     }
 
+    onFilterColumnChange(): void {
+        this.dataSource.filter = this.filtroSearch;
+    }
+
     private _setupFilterPredicate(): void {
         this.dataSource.filterPredicate = (data: SeguimientoEjecucion, filter: string) => {
             const search = filter.trim().toLowerCase();
@@ -185,11 +192,27 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
             const solicitante = (data.nombreSolicitante || '').toLowerCase();
             const empresa = (data.empresa || '').toLowerCase();
             const actividad = (data.actividad || '').toLowerCase();
+            const tituloProyecto = (data.tituloProyecto || '').toLowerCase();
+            const oc = (data.ordenCompraFolio || '').toLowerCase();
             const id = String(data.idSeguimiento);
+
+            if (this.filterColumn) {
+                switch(this.filterColumn) {
+                    case 'idSeguimiento': return id.includes(search);
+                    case 'empresa': return empresa.includes(search);
+                    case 'tituloProyecto': return tituloProyecto.includes(search);
+                    case 'actividad': return actividad.includes(search);
+                    case 'nombreSolicitante': return solicitante.includes(search);
+                    case 'ordenCompraFolio': return oc.includes(search);
+                    default: return false;
+                }
+            }
 
             return solicitante.includes(search) ||
                    empresa.includes(search) ||
                    actividad.includes(search) ||
+                   tituloProyecto.includes(search) ||
+                   oc.includes(search) ||
                    id.includes(search);
         };
     }

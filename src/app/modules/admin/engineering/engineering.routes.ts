@@ -26,7 +26,7 @@ export default [
         loadComponent: () => import('./seguimiento-tareas/task-segmentation.component').then(m => m.EngineeringSeguimientoTareasComponent)
     },
     {
-        path: 'subcontratacion',
+        path: 'aliados',
         loadComponent: () => import('./subcontratacion/subcontratacion.component').then(m => m.SubcontratacionComponent)
     }
 ] as Routes;

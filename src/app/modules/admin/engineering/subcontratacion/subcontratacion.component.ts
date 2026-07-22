@@ -97,7 +97,6 @@ export class SubcontratacionComponent implements OnInit {
             }
         }
     }
-
     saveEmpresa(): void {
         if (this.empresaForm.invalid) return;
 
@@ -106,7 +105,7 @@ export class SubcontratacionComponent implements OnInit {
             next: () => {
                 Swal.fire({
                     title: '¡Guardado!',
-                    text: 'Empresa subcontratista guardada con éxito.',
+                    text: 'Empresa aliada guardada con éxito.',
                     icon: 'success',
                     timer: 1500,
                     showConfirmButton: false
@@ -142,7 +141,7 @@ export class SubcontratacionComponent implements OnInit {
                     next: () => {
                         Swal.fire({
                             title: '¡Eliminado!',
-                            text: 'La empresa y su personal han sido eliminados.',
+                            text: 'La empresa aliada y su personal han sido eliminados.',
                             icon: 'success',
                             timer: 1500,
                             showConfirmButton: false

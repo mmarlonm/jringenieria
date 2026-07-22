@@ -129,6 +129,7 @@ export class SeguimientoDialogComponent implements OnInit {
             idSeguimiento: [this.data?.seguimiento?.idSeguimiento || 0],
             idSolicitante: [this.data?.seguimiento?.idSolicitante || '', Validators.required],
             actividad: [this.data?.seguimiento?.actividad || '', [Validators.required, Validators.maxLength(500)]],
+            tituloProyecto: [this.data?.seguimiento?.tituloProyecto || '', Validators.maxLength(500)],
             tipo: [this.data?.seguimiento?.tipo || ''],
             estatusLevantamiento: [this.data?.seguimiento?.estatusLevantamiento || 1, Validators.required],
             estatusCotizacion: [this.data?.seguimiento?.estatusCotizacion || 1, Validators.required],

@@ -294,6 +294,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       idEjecucion: [0],
       idSeguimiento: [this.idSeguimiento],
       utilidadEsperada: ['', [Validators.min(0)]],
+      utilidadReal: ['', [Validators.min(0)]],
       disponibilidadRecursos: [''],
       fechaInicioProyecto: [''],
       fechaFinProyecto: [''],
@@ -468,6 +469,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             idEjecucion: found.idEjecucion,
             idSeguimiento: found.idSeguimiento,
             utilidadEsperada: this.formatMonto(found.utilidadEsperada) || '',
+            utilidadReal: this.formatMonto(found.utilidadReal) || '',
             disponibilidadRecursos: found.disponibilidadRecursos || '',
             fechaInicioProyecto: found.fechaInicioProyecto ? new Date(found.fechaInicioProyecto) : '',
             fechaFinProyecto: found.fechaFinProyecto ? new Date(found.fechaFinProyecto) : '',
@@ -1634,6 +1636,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       ...this.ejecucion,
       ...formVal,
       utilidadEsperada: this.parseMonto(formVal.utilidadEsperada),
+      utilidadReal: this.parseMonto(formVal.utilidadReal),
       fechaInicioProyecto: formVal.fechaInicioProyecto ? new Date(formVal.fechaInicioProyecto).toISOString() : null,
       fechaFinProyecto: formVal.fechaFinProyecto ? new Date(formVal.fechaFinProyecto).toISOString() : null
     };
@@ -1675,6 +1678,11 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   onUtilidadBlur(): void {
     const val = this.form.get('utilidadEsperada').value;
     this.form.get('utilidadEsperada').setValue(this.formatMonto(val), { emitEvent: false });
+  }
+
+  onUtilidadRealBlur(): void {
+    const val = this.form.get('utilidadReal').value;
+    this.form.get('utilidadReal').setValue(this.formatMonto(val), { emitEvent: false });
   }
 
   calcularRutaCritica(items: any[]): Set<number> {

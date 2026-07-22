@@ -50,6 +50,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         'celular',
         'empresa',
         'area',
+        'tituloProyecto',
         'actividad',
         'tipo',
         'levantamiento',

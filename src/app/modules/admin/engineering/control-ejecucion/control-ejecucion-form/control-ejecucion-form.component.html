@@ -12,7 +12,8 @@
       <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
       <div class="flex flex-col min-w-0">
         <h1 class="text-xl font-extrabold text-slate-800 truncate" *ngIf="ejecucion">
-          {{ ejecucion.actividad }}
+          {{ ejecucion.actividad }} 
+          <span *ngIf="ejecucion.tituloProyecto" class="text-indigo-600 font-bold ml-1">({{ ejecucion.tituloProyecto }})</span>
         </h1>
         <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" *ngIf="ejecucion">
           Proyecto #{{ idSeguimiento }} &bull; Solicitante: {{ ejecucion.nombreSolicitante }} ({{ ejecucion.empresa }})
@@ -42,13 +43,20 @@
                       <mat-icon class="icon-size-5">monetization_on</mat-icon>
                     </div>
                     <span class="text-sm font-bold text-slate-800 uppercase tracking-wide">Recursos y Utilidad</span>
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
-                      <mat-label>Utilidad Esperada (MXN)</mat-label>
-                      <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">attach_money</mat-icon>
-                      <input matInput type="text" formControlName="utilidadEsperada" placeholder="0.00" (blur)="onUtilidadBlur()">
-                    </mat-form-field>
+                  </div>                  <div class="grid grid-cols-1 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                        <mat-label>Utilidad Esperada (MXN)</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">attach_money</mat-icon>
+                        <input matInput type="text" formControlName="utilidadEsperada" placeholder="0.00" (blur)="onUtilidadBlur()">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                        <mat-label>Utilidad Real (MXN)</mat-label>
+                        <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">attach_money</mat-icon>
+                        <input matInput type="text" formControlName="utilidadReal" placeholder="0.00" (blur)="onUtilidadRealBlur()">
+                      </mat-form-field>
+                    </div>
 
                     <mat-form-field appearance="outline" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
                       <mat-label>Disponibilidad de Recursos</mat-label>
