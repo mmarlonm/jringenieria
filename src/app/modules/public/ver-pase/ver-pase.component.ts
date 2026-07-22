@@ -38,7 +38,7 @@ import { MatIconModule } from '@angular/material/icon';
             <!-- Pass QR Header with SVG Waves -->
             <div class="relative w-full overflow-visible bg-slate-200 dark:bg-slate-800 flex-shrink-0 flex flex-col items-center justify-center p-8 pt-12 pb-16">
               
-              <!-- Premium QR Code container frame (Responsive size w-48 to w-56, with laser line animation) -->
+              <!-- Premium QR Code container frame (Responsive size w-48 to w-56) -->
               <div class="relative bg-white p-5 rounded-3xl shadow-2xl border-4 border-white dark:border-slate-900 shadow-indigo-950/20 z-25 group transform transition-transform hover:scale-[1.02]">
                 <!-- Target Corner Reticles -->
                 <div class="absolute top-3 left-3 w-5 h-5 border-t-4 border-l-4 border-[#005082] rounded-tl"></div>
@@ -46,9 +46,6 @@ import { MatIconModule } from '@angular/material/icon';
                 <div class="absolute bottom-3 left-3 w-5 h-5 border-b-4 border-l-4 border-[#005082] rounded-bl"></div>
                 <div class="absolute bottom-3 right-3 w-5 h-5 border-b-4 border-r-4 border-[#005082] rounded-br"></div>
                 
-                <!-- Laser Sweep Animation Line -->
-                <div class="absolute inset-x-5 h-1 bg-[#008232] opacity-80 z-20 rounded-full animate-laser-sweep"></div>
-
                 <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + asistente.tokenQR" alt="QR Code" class="w-48 h-48 sm:w-52 sm:h-52 block rounded-2xl relative z-10">
               </div>
 
