@@ -16,8 +16,12 @@
                 <!-- KPIs metrics under the header -->
                 <div class="flex items-center gap-6 mt-4 flex-wrap pb-1">
                     <div class="flex flex-col border-r border-gray-200 pr-6">
-                        <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">Monto Estimado</span>
-                        <span class="text-lg font-black text-indigo-600 leading-none">{{ montoTotal | currency:'MXN':'symbol':'1.2-2' }}</span>
+                        <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">Monto Subtotal</span>
+                        <span class="text-lg font-black text-slate-700 leading-none">{{ montoTotal | currency:'MXN':'symbol':'1.2-2' }}</span>
+                    </div>
+                    <div class="flex flex-col border-r border-gray-200 pr-6">
+                        <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">Total con IVA</span>
+                        <span class="text-lg font-black text-indigo-600 leading-none">{{ (montoTotal * 1.16) | currency:'MXN':'symbol':'1.2-2' }}</span>
                     </div>
                     <div class="flex flex-col border-r border-gray-200 pr-6">
                         <span class="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">Levantamientos OK</span>
@@ -228,19 +232,38 @@
 
 
 
-                    <!-- Monto -->
+                    <!-- Monto (Subtotal) -->
                     <ng-container matColumnDef="monto">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Total</th>
-                        <td mat-cell *matCellDef="let s" class="font-bold text-slate-800 whitespace-nowrap">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Subtotal</th>
+                        <td mat-cell *matCellDef="let s" class="font-semibold text-slate-700 whitespace-nowrap">
                             {{ s.montoTotalEstimado ? (s.montoTotalEstimado | currency:'MXN':'symbol':'1.2-2') : '-' }}
+                        </td>
+                    </ng-container>
+
+                    <!-- IVA -->
+                    <ng-container matColumnDef="iva">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>IVA (16%)</th>
+                        <td mat-cell *matCellDef="let s" class="text-slate-600 whitespace-nowrap">
+                            {{ s.montoTotalEstimado ? ((s.montoTotalEstimado * 0.16) | currency:'MXN':'symbol':'1.2-2') : '-' }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Monto Total con IVA -->
+                    <ng-container matColumnDef="montoTotalConIva">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Total (c/IVA)</th>
+                        <td mat-cell *matCellDef="let s" class="font-bold text-indigo-600 whitespace-nowrap">
+                            {{ s.montoTotalEstimado ? ((s.montoTotalEstimado * 1.16) | currency:'MXN':'symbol':'1.2-2') : '-' }}
                         </td>
                     </ng-container>
 
                     <!-- Acciones -->
                     <ng-container matColumnDef="acciones">
-                        <th mat-header-cell *matHeaderCellDef class="text-center w-20">Acciones</th>
+                        <th mat-header-cell *matHeaderCellDef class="text-center w-28">Acciones</th>
                         <td mat-cell *matCellDef="let s" class="text-center">
                             <div class="flex items-center justify-center gap-1">
+                                <button mat-icon-button class="text-emerald-600 hover:bg-emerald-50 transition-colors" (click)="verGantt(s)" matTooltip="Ver Gantt de Trazabilidad">
+                                    <mat-icon class="icon-size-5">bar_chart</mat-icon>
+                                </button>
                                 <button mat-icon-button class="text-amber-500 hover:bg-amber-50 transition-colors" (click)="verArchivos(s)" matTooltip="Ver/Subir Archivos (Levantamiento y Cotización)">
                                     <mat-icon class="icon-size-5">folder</mat-icon>
                                 </button>

@@ -17,6 +17,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { EngineeringService, SeguimientoProyecto } from '../engineering.service';
 import { SeguimientoDialogComponent } from './seguimiento-dialog/seguimiento-dialog.component';
 import { SeguimientoArchivosDialogComponent } from './seguimiento-archivos-dialog/seguimiento-archivos-dialog.component';
+import { SeguimientoGanttDialogComponent } from './seguimiento-gantt-dialog/seguimiento-gantt-dialog.component';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -40,7 +41,8 @@ import Swal from 'sweetalert2';
         MatNativeDateModule,
         MatSelectModule,
         MatPaginatorModule,
-        SeguimientoArchivosDialogComponent
+        SeguimientoArchivosDialogComponent,
+        SeguimientoGanttDialogComponent
     ]
 })
 export class TableroProyectosComponent implements OnInit, AfterViewInit {
@@ -59,6 +61,8 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         'quienCotizo',
         'aprobado',
         'monto',
+        'iva',
+        'montoTotalConIva',
         'acciones'
     ];
     dataSource = new MatTableDataSource<SeguimientoProyecto>();
@@ -278,6 +282,15 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
                 idSeguimiento: row.idSeguimiento, 
                 actividad: row.actividad 
             },
+            autoFocus: false
+        });
+    }
+
+    verGantt(row: SeguimientoProyecto): void {
+        this._dialog.open(SeguimientoGanttDialogComponent, {
+            width: '100%',
+            maxWidth: '900px',
+            data: { seguimiento: row },
             autoFocus: false
         });
     }

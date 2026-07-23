@@ -34,6 +34,10 @@ export interface SeguimientoProyecto {
     nombreUsuarioRegistro?: string;
     fechaRegistro?: string;
     fechaActualizacion?: string;
+    fechaLevantamiento?: string;
+    fechaCotizacion?: string;
+    fechaAprobacion?: string;
+    motivoRechazo?: string;
 }
 
 export interface SeguimientoEjecucion {

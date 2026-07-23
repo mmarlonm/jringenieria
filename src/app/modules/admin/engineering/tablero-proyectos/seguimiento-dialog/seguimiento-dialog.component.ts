@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { EngineeringService, Solicitante, SeguimientoProyecto } from '../../engineering.service';
 import { SolicitanteDialogComponent } from '../../solicitantes/solicitante-dialog/solicitante-dialog.component';
 import Swal from 'sweetalert2';
@@ -26,7 +28,9 @@ import Swal from 'sweetalert2';
         MatSelectModule,
         MatButtonModule,
         MatIconModule,
-        MatCardModule
+        MatCardModule,
+        MatDatepickerModule,
+        MatNativeDateModule
     ]
 })
 export class SeguimientoDialogComponent implements OnInit {
@@ -55,7 +59,15 @@ export class SeguimientoDialogComponent implements OnInit {
         { id: 3, label: 'Rechazado' }
     ];
 
-    tiposProyecto = ['CONSTRUCCION', 'MANTENIMIENTO', 'INSTALACION', 'PROYECTO ESPECIAL', 'OTRO'];
+    tiposProyecto = [
+        'Construcción e instalación',
+        'Ingeniería',
+        'Mantenimiento',
+        'Instalación',
+        'Estudios y Pruebas',
+        'Gestiones y trámites',
+        'Proyectos llave en mano'
+    ];
 
     isReadOnly: boolean = false;
 
@@ -136,8 +148,30 @@ export class SeguimientoDialogComponent implements OnInit {
             estatusAprobacion: [{ value: this.data?.seguimiento?.estatusAprobacion || 1, disabled: isApproved }, Validators.required],
             montoTotalEstimado: [this.formatMonto(this.data?.seguimiento?.montoTotalEstimado) || ''],
             quienRealizoLevantamiento: [this.data?.seguimiento?.quienRealizoLevantamiento || '', Validators.maxLength(500)],
-            quienCotizo: [this.data?.seguimiento?.quienCotizo || '', Validators.maxLength(255)]
+            quienCotizo: [this.data?.seguimiento?.quienCotizo || '', Validators.maxLength(255)],
+            fechaLevantamiento: [this.data?.seguimiento?.fechaLevantamiento || null],
+            fechaCotizacion: [this.data?.seguimiento?.fechaCotizacion || null],
+            fechaAprobacion: [this.data?.seguimiento?.fechaAprobacion || null],
+            fechaRegistro: [this.data?.seguimiento?.fechaRegistro || null],
+            motivoRechazo: [this.data?.seguimiento?.motivoRechazo || '']
         });
+
+        // Listen to Monto changes and calculate IVA and Total
+        this.form.get('montoTotalEstimado').valueChanges.subscribe((val) => {
+            this.calculateIvaAndTotal(val);
+        });
+        
+        // Initial calculation
+        this.calculateIvaAndTotal(this.form.get('montoTotalEstimado').value);
+    }
+
+    montoIva: number = 0;
+    montoTotalConIva: number = 0;
+
+    calculateIvaAndTotal(val: any): void {
+        const num = this.parseMonto(val) || 0;
+        this.montoIva = num * 0.16;
+        this.montoTotalConIva = num * 1.16;
     }
 
     formatMonto(value: any): string {
@@ -157,6 +191,7 @@ export class SeguimientoDialogComponent implements OnInit {
     onMontoBlur(): void {
         const val = this.form.get('montoTotalEstimado').value;
         this.form.get('montoTotalEstimado').setValue(this.formatMonto(val), { emitEvent: false });
+        this.calculateIvaAndTotal(val);
     }
 
     onSave(): void {

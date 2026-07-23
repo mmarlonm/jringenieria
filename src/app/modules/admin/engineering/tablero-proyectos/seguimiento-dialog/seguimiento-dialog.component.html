@@ -68,13 +68,56 @@
                     <mat-error *ngIf="form.get('actividad').hasError('maxlength')">Límite de 500 caracteres superado</mat-error>
                 </mat-form-field>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Monto Total Estimado -->
                     <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
-                        <mat-label>Monto Total Proyecto ($)</mat-label>
+                        <mat-label>Monto Estimado Subtotal ($)</mat-label>
                         <input matInput type="text" formControlName="montoTotalEstimado" placeholder="Ej. 1,000.00" (blur)="onMontoBlur()" />
                         <span matPrefix class="text-secondary mr-1">$</span>
                         <mat-icon matSuffix class="text-secondary">attach_money</mat-icon>
+                    </mat-form-field>
+
+                    <!-- IVA (ReadOnly) -->
+                    <div class="flex flex-col justify-center p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">IVA (16%)</span>
+                        <span class="text-sm font-bold text-slate-700 leading-none">{{ montoIva | currency:'MXN':'symbol':'1.2-2' }}</span>
+                    </div>
+
+                    <!-- Total con IVA (ReadOnly) -->
+                    <div class="flex flex-col justify-center p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">Total con IVA</span>
+                        <span class="text-sm font-black text-indigo-600 leading-none">{{ montoTotalConIva | currency:'MXN':'symbol':'1.2-2' }}</span>
+                    </div>
+                </div>
+
+                <!-- Fechas de Trazabilidad -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Solicitud</mat-label>
+                        <input matInput [matDatepicker]="pickerReg" formControlName="fechaRegistro" [disabled]="true" />
+                        <mat-datepicker-toggle matSuffix [for]="pickerReg"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerReg></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Levantamiento</mat-label>
+                        <input matInput [matDatepicker]="pickerLev" formControlName="fechaLevantamiento" />
+                        <mat-datepicker-toggle matSuffix [for]="pickerLev"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerLev></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Cotización</mat-label>
+                        <input matInput [matDatepicker]="pickerCot" formControlName="fechaCotizacion" />
+                        <mat-datepicker-toggle matSuffix [for]="pickerCot"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerCot></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Aprobación</mat-label>
+                        <input matInput [matDatepicker]="pickerAprob" formControlName="fechaAprobacion" />
+                        <mat-datepicker-toggle matSuffix [for]="pickerAprob"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerAprob></mat-datepicker>
                     </mat-form-field>
                 </div>
             </div>
@@ -118,6 +161,14 @@
                                 {{ opt.label }}
                             </mat-option>
                         </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- Motivo de Rechazo (si estatusAprobacion == 3) -->
+                <div *ngIf="form.get('estatusAprobacion').value === 3" class="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+                        <mat-label>Motivo de Rechazo</mat-label>
+                        <textarea matInput formControlName="motivoRechazo" placeholder="Escriba la razón del rechazo..." rows="2"></textarea>
                     </mat-form-field>
                 </div>
 
