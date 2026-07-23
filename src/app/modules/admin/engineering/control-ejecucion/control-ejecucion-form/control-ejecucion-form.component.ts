@@ -1206,6 +1206,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     const openDialog = (equipoAsignado: any[]) => {
       const dialogRef = this._dialog.open(ControlEjecucionActividadDialogComponent, {
         width: '500px',
+        panelClass: 'high-z-index-dialog',
         data: {
           type: type,
           isEdit: isEdit,
@@ -1262,7 +1263,10 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
                 text: 'La actividad se guardó correctamente.',
                 icon: 'success',
                 timer: 1500,
-                showConfirmButton: false
+                showConfirmButton: false,
+                customClass: {
+                  container: 'z-[9999999]'
+                }
               });
               
               if (actId && result.equipoMiembros) {
@@ -1304,6 +1308,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       width: '1200px',
       maxWidth: '95vw',
       height: '90vh',
+      panelClass: 'high-z-index-dialog',
       data: {
         idSeguimiento: this.idSeguimiento,
         fechaInicioProyecto: this.form.get('fechaInicioProyecto')?.value
@@ -1373,7 +1378,10 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         title: '¡Cargado en Gantt!',
         text: 'Las actividades se han cargado como vista previa. Presiona "Guardar Cambios Importados" en la barra superior para persistirlos.',
         icon: 'info',
-        confirmButtonText: 'Entendido'
+        confirmButtonText: 'Entendido',
+        customClass: {
+          container: 'z-[9999999]'
+        }
       });
     });
   }
@@ -1385,6 +1393,9 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       title: 'Guardando Cronograma...',
       text: 'Por favor espera mientras se registran las actividades en el servidor.',
       allowOutsideClick: false,
+      customClass: {
+        container: 'z-[9999999]'
+      },
       didOpen: () => {
         Swal.showLoading();
       }
@@ -1454,12 +1465,22 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         text: 'El cronograma de Gantt ha sido guardado exitosamente en el servidor.',
         icon: 'success',
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
+        customClass: {
+          container: 'z-[9999999]'
+        }
       });
       this.loadGantt();
     }).catch((err) => {
       console.error(err);
-      Swal.fire('Error', 'No se pudieron guardar todas las actividades en el servidor.', 'error');
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudieron guardar todas las actividades en el servidor.',
+        icon: 'error',
+        customClass: {
+          container: 'z-[9999999]'
+        }
+      });
       this.loadGantt();
     });
   }

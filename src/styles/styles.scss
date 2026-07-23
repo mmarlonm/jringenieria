@@ -257,3 +257,11 @@ ngx-extended-pdf-viewer {
 .mat-mdc-dialog-content {
   max-height: none !important;
 }
+
+/* Forzar que los diálogos de Material se muestren encima del modo pantalla completa de Gantt */
+.high-z-index-dialog {
+  z-index: 9999999 !important;
+}
+.cdk-overlay-container {
+  z-index: 9999999 !important;
+}
