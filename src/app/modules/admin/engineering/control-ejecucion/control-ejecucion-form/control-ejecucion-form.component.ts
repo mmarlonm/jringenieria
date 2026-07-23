@@ -1485,6 +1485,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       reverseButtons: true,
       buttonsStyling: false,
       customClass: {
+        container: 'z-[9999999]',
         popup: 'rounded-3xl p-6 shadow-2xl border-0',
         confirmButton: 'inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all duration-300 mx-2 shadow-lg shadow-red-200',
         cancelButton: 'inline-flex items-center justify-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 text-sm font-bold rounded-xl transition-all duration-300 mx-2'

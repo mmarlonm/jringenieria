@@ -185,8 +185,19 @@ export class ImportarCronogramaDialogComponent implements OnInit {
             const conceptVal = col3Val || col2Val || col1Val;
             if (!conceptVal) continue;
 
-            const name = typeof conceptVal === 'object' && (conceptVal as any).text ? (conceptVal as any).text : String(conceptVal);
-            if (!name.trim()) continue;
+            let name = '';
+            if (typeof conceptVal === 'object') {
+              if ((conceptVal as any).text) {
+                name = (conceptVal as any).text;
+              } else if ((conceptVal as any).richText && Array.isArray((conceptVal as any).richText)) {
+                name = (conceptVal as any).richText.map((rt: any) => rt.text || '').join('');
+              } else {
+                name = JSON.stringify(conceptVal);
+              }
+            } else {
+              name = String(conceptVal);
+            }
+            if (!name || !name.trim() || name === '{}' || name.includes('[object Object]')) continue;
 
             // Determinar si es Actividad Maestra:
             // Es maestra si la celda original es Bold
