@@ -93,7 +93,7 @@
                         <td class="px-6 py-4">
                             <div class="text-sm font-bold text-slate-800 dark:text-white">{{ a.nombre }} {{ a.apellidos }}</div>
                             <div class="text-xs text-slate-400 font-medium">
-                                {{ a.tipo === 'General' ? a.empresa : a.universidad }}
+                                {{ a.tipo === 'Estudiante' ? a.universidad : a.empresa }}
                             </div>
                         </td>
                         <!-- Email -->
@@ -101,8 +101,8 @@
                         <!-- Type -->
                         <td class="px-6 py-4">
                             <span [ngClass]="{
-                                'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900': a.tipo === 'General',
-                                'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/20 dark:text-pink-400 dark:border-pink-900': a.tipo === 'Estudiante'
+                                'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/20 dark:text-pink-400 dark:border-pink-900': a.tipo === 'Estudiante',
+                                'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900': a.tipo !== 'Estudiante'
                             }" class="px-2.5 py-1 rounded-md text-xs font-bold border">
                                 {{ a.tipo }}
                             </span>

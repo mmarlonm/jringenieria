@@ -122,7 +122,7 @@ export class EventosControlComponent implements OnInit, OnDestroy {
     
     public filterAsistentes(): void {
         const query = this.searchQuery.toLowerCase().trim();
-        const baseList = this.asistentes.filter(a => a.tipo === 'General' || a.tipo === 'Estudiante');
+        const baseList = this.asistentes.filter(a => a.tipo);
         if (!query) {
             this.filteredAsistentes = [...baseList];
         } else {
