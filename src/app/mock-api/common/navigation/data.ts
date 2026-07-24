@@ -187,6 +187,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:shopping-cart',
         children: [
             // Elementos directos
+            { id: 'comercializacion.leads', title: 'Leads e Inbox (ISO 9051)', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
             { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
@@ -367,7 +368,9 @@ export const compactNavigation: FuseNavigationItem[] = [
         tooltip: 'Comercialización',
         type: 'aside',
         icon: 'heroicons_outline:briefcase',
-        children: []
+        children: [
+            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
+        ]
     },
     {
         id: 'marketing',
@@ -436,7 +439,14 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' }
         ]
     },
-    { id: 'comercializacion', title: 'COMERCIALIZACION', type: 'group', children: [] },
+    {
+        id: 'comercializacion',
+        title: 'COMERCIALIZACION',
+        type: 'group',
+        children: [
+            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
+        ]
+    },
     { id: 'marketing', title: 'MARKETING', type: 'group', children: [] },
     { id: 'apps', title: 'SEGURIDAD', type: 'group', children: [] },
     {
@@ -488,7 +498,15 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' }
         ]
     },
-    { id: 'comercializacion', title: 'Comercial', type: 'group', icon: 'heroicons_outline:briefcase', children: [] },
+    {
+        id: 'comercializacion',
+        title: 'Comercial',
+        type: 'group',
+        icon: 'heroicons_outline:briefcase',
+        children: [
+            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
+        ]
+    },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
     {

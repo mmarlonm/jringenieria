@@ -1,0 +1,183 @@
+<!-- DIALOG HEADER -->
+<div class="flex items-center justify-between border-b px-6 py-4 bg-slate-50 dark:bg-slate-900">
+  <div class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+    <mat-icon class="text-primary icon-size-5" 
+              [svgIcon]="action === 'create' ? 'heroicons_outline:plus-circle' : 
+                         action === 'convert' ? 'heroicons_outline:check-badge' : 
+                         'heroicons_outline:x-circle'"></mat-icon>
+    <span>
+      {{ action === 'create' ? 'Registrar Nuevo Lead (Inbox)' : 
+         action === 'convert' ? 'Calificación y Conversión (Sección 7.4 ISO 9001)' : 
+         'Descartar Lead' }}
+    </span>
+  </div>
+  <button mat-icon-button (click)="onCancel()" class="text-slate-400 hover:text-slate-600">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- DIALOG CONTENT -->
+<div class="px-6 py-6 overflow-y-auto max-h-[70vh] bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300">
+
+  <!-- ACTION: CREATE -->
+  <form *ngIf="action === 'create'" [formGroup]="leadForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Nombre del Contacto</mat-label>
+        <input matInput formControlName="nombreContacto" placeholder="Ej. Juan Pérez" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('nombreContacto')?.hasError('required')">El nombre es requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Empresa</mat-label>
+        <input matInput formControlName="empresa" placeholder="Ej. Acme Corp" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('empresa')?.hasError('required')">La empresa es requerida</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Teléfono</mat-label>
+        <input matInput formControlName="telefono" placeholder="Ej. 7711234567" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('telefono')?.hasError('required')">El teléfono es requerido</mat-error>
+        <mat-error *ngIf="leadForm.get('telefono')?.hasError('pattern')">Ingrese un teléfono válido (10-15 dígitos)</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Correo Electrónico</mat-label>
+        <input matInput formControlName="email" placeholder="Ej. juan@acme.com" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('email')?.hasError('required')">El correo es requerido</mat-error>
+        <mat-error *ngIf="leadForm.get('email')?.hasError('email')">Ingrese un correo electrónico válido</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Fuente de Lead</mat-label>
+        <mat-select formControlName="fuenteLead">
+          <mat-option *ngFor="let f of fuentes" [value]="f">{{ f }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Sucursal que Recibe</mat-label>
+        <mat-select formControlName="sucursalQueRecibe">
+          <mat-option *ngFor="let s of sucursales" [value]="s">{{ s }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Usuario Asignado (Seguimiento)</mat-label>
+      <mat-select formControlName="idUsuarioAsignado">
+        <mat-option *ngFor="let u of users" [value]="u.usuarioId">{{ u.nombreUsuario }} ({{ u.email }})</mat-option>
+      </mat-select>
+      <mat-error *ngIf="leadForm.get('idUsuarioAsignado')?.hasError('required')">Debe asignar un usuario</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Necesidad Inicial / Descripción</mat-label>
+      <textarea matInput formControlName="necesidadInicial" rows="4" placeholder="Describa brevemente la necesidad inicial del lead..."></textarea>
+      <mat-error *ngIf="leadForm.get('necesidadInicial')?.hasError('required')">La necesidad inicial es requerida</mat-error>
+    </mat-form-field>
+
+    <!-- ACCIONES -->
+    <div class="flex justify-end gap-2 border-t pt-4 mt-2">
+      <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid">Registrar en Inbox</button>
+    </div>
+  </form>
+
+  <!-- ACTION: CONVERT (ISO 9001 SECTION 7.4) -->
+  <form *ngIf="action === 'convert'" [formGroup]="convertForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <div class="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-4 rounded-lg text-sm mb-4 border border-blue-200">
+      <p class="font-semibold flex items-center gap-1">
+        <mat-icon class="icon-size-4">info</mat-icon>
+        ISO 9001:2015 - Control y Selección de Oportunidades
+      </p>
+      <p class="mt-1">Califique los siguientes parámetros para determinar el potencial, la prioridad y realizar el enrutamiento automatizado a la división correspondiente.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Tipo de Cliente</mat-label>
+        <mat-select formControlName="tipoCliente">
+          <mat-option *ngFor="let tc of tiposCliente" [value]="tc">{{ tc }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="convertForm.get('tipoCliente')?.hasError('required')">Este campo es requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Tipo de Necesidad (Enrutamiento)</mat-label>
+        <mat-select formControlName="tipoNecesidad">
+          <mat-option *ngFor="let tn of tiposNecesidad" [value]="tn">{{ tn }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="convertForm.get('tipoNecesidad')?.hasError('required')">Este campo es requerido</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Zona de Atención</mat-label>
+        <mat-select formControlName="zonaAtencion">
+          <mat-option *ngFor="let za of zonasAtencion" [value]="za">{{ za }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="convertForm.get('zonaAtencion')?.hasError('required')">Este campo es requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Nivel de Prioridad</mat-label>
+        <mat-select formControlName="nivelPrioridad">
+          <mat-option *ngFor="let p of prioridades" [value]="p">{{ p }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="convertForm.get('nivelPrioridad')?.hasError('required')">Este campo es requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Potencial Preliminar</mat-label>
+        <mat-select formControlName="potencialPreliminar">
+          <mat-option *ngFor="let pot of potenciales" [value]="pot">{{ pot }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="convertForm.get('potencialPreliminar')?.hasError('required')">Este campo es requerido</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs rounded border border-amber-200">
+      <span class="font-bold">Regla de Enrutamiento ISO:</span>
+      <ul class="list-disc pl-4 mt-1 space-y-1">
+        <li><strong>Estudios, Instalación o Proyectos:</strong> Se canaliza a Ingeniería (SGC-PRO-ING-01), generando automáticamente la requisición técnica y abriendo una tarea de revisión.</li>
+        <li><strong>Producto:</strong> Se canaliza a Atención Comercial Directa (SGC-PRO-COM-02), creando una cotización en el Kanban comercial.</li>
+      </ul>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="flex justify-end gap-2 border-t pt-4 mt-4">
+      <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="convertForm.invalid">Confirmar Calificación e ISO 7.4</button>
+    </div>
+  </form>
+
+  <!-- ACTION: DISCARD -->
+  <form *ngIf="action === 'discard'" [formGroup]="discardForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <div class="bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300 p-4 rounded-lg text-sm mb-4 border border-red-200">
+      <p class="font-semibold flex items-center gap-1">
+        <mat-icon class="icon-size-4">warning</mat-icon>
+        Descarte de Prospecto / Lead
+      </p>
+      <p class="mt-1">Esta acción marcará el lead como Descartado. Especifique el motivo de descarte detalladamente.</p>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Motivo del Descarte</mat-label>
+      <textarea matInput formControlName="motivoDescarte" rows="4" placeholder="Ej. El cliente no cuenta con presupuesto, duplicado, zona fuera de cobertura..."></textarea>
+      <mat-error *ngIf="discardForm.get('motivoDescarte')?.hasError('required')">El motivo de descarte es requerido</mat-error>
+    </mat-form-field>
+
+    <!-- ACCIONES -->
+    <div class="flex justify-end gap-2 border-t pt-4 mt-2">
+      <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+      <button mat-flat-button color="warn" type="submit" [disabled]="discardForm.invalid">Confirmar Descarte</button>
+    </div>
+  </form>
+
+</div>

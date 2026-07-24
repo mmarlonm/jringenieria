@@ -1,0 +1,378 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-slate-50 dark:bg-slate-900">
+  
+  <!-- Header -->
+  <div class="flex-none border-b bg-white dark:bg-slate-950 px-6 py-6 md:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-primary icon-size-8" svgIcon="heroicons_outline:chat-bubble-left-right"></mat-icon>
+          <h1 class="text-3xl font-extrabold leading-none tracking-tight text-slate-800 dark:text-slate-100">
+            CRM / Leads e Inbox
+          </h1>
+        </div>
+        <p class="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
+          Bandeja de entrada para registro en frío y enrutamiento calificado bajo directrices ISO 9001 (Sección 7.4).
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- View Toggle -->
+        <mat-button-toggle-group [(ngModel)]="viewMode" (change)="applyFilters()" aria-label="Vista">
+          <mat-button-toggle value="kanban" matTooltip="Vista Kanban (Pipeline)">
+            <mat-icon svgIcon="heroicons_outline:rectangle-group"></mat-icon>
+          </mat-button-toggle>
+          <mat-button-toggle value="list" matTooltip="Vista Listado/Inbox">
+            <mat-icon svgIcon="heroicons_outline:list-bullet"></mat-icon>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <!-- New Lead Button -->
+        <button mat-flat-button color="primary" class="gap-2" (click)="openCreateDialog()">
+          <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+          <span>Registrar Lead en Frío</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+      <!-- Search Input -->
+      <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+        <mat-icon matPrefix svgIcon="heroicons_solid:magnifying-glass" class="icon-size-5"></mat-icon>
+        <input matInput [formControl]="searchControl" placeholder="Buscar por contacto, empresa, email..." autocomplete="off" />
+      </mat-form-field>
+
+      <!-- Source Filter -->
+      <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+        <mat-label>Fuente de Lead</mat-label>
+        <mat-select [formControl]="fuenteControl">
+          <mat-option value="Todos">Todas las fuentes</mat-option>
+          <mat-option value="WhatsApp">WhatsApp</mat-option>
+          <mat-option value="Web">Web</mat-option>
+          <mat-option value="Correo">Correo</mat-option>
+          <mat-option value="Llamada">Llamada</mat-option>
+          <mat-option value="Feria">Feria</mat-option>
+          <mat-option value="Recomendación">Recomendación</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Branch Filter -->
+      <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+        <mat-label>Sucursal</mat-label>
+        <mat-select [formControl]="sucursalControl">
+          <mat-option value="Todos">Todas las sucursales</mat-option>
+          <mat-option value="Pachuca">Pachuca</mat-option>
+          <mat-option value="Puebla">Puebla</mat-option>
+          <mat-option value="Querétaro">Querétaro</mat-option>
+          <mat-option value="Corporativo">Corporativo</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Quick Metrics Info -->
+      <div class="flex items-center justify-end px-2 text-xs font-semibold text-slate-500">
+        <span>Coincidencias: {{ filteredLeads.length }} leads</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main View Area -->
+  <div class="flex-auto overflow-y-auto p-6 md:p-8">
+
+    <!-- VIEW: KANBAN -->
+    <div *ngIf="viewMode === 'kanban'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full items-start">
+      
+      <!-- COLUMN 1: NUEVO -->
+      <div class="flex flex-col bg-slate-100 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between px-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100">Bandeja de Entrada (Nuevos)</h2>
+          </div>
+          <span class="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5 rounded-full font-semibold">
+            {{ getLeadsByStatus('Nuevo').length }}
+          </span>
+        </div>
+
+        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] pr-1">
+          <div *ngFor="let lead of getLeadsByStatus('Nuevo')"
+               class="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative transition-transform hover:-translate-y-0.5 duration-200"
+               [class.sla-alert]="isSLAOverdue(lead)">
+            
+            <!-- Overdue SLA Badge -->
+            <div *ngIf="isSLAOverdue(lead)" class="absolute top-2 right-2 flex items-center gap-1 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase animate-pulse">
+              <mat-icon class="icon-size-3">alarm</mat-icon>
+              <span>Alerta SLA: +24h</span>
+            </div>
+
+            <div>
+              <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 flex items-center justify-between gap-1 w-full">
+                <div class="flex items-center gap-1">
+                  <mat-icon svgIcon="heroicons_outline:calendar" class="icon-size-3.5"></mat-icon>
+                  <span>Recibido: {{ lead.fechaRegistro | date:'dd-MM-yyyy HH:mm' }}</span>
+                </div>
+                <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                </button>
+              </div>
+              <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base mt-1">{{ lead.nombreContacto }}</h3>
+              <p class="text-xs font-bold text-primary dark:text-slate-400 mt-0.5">{{ lead.empresa }}</p>
+            </div>
+
+            <div class="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850">
+              <span class="font-bold text-slate-500">Necesidad:</span>
+              <p class="mt-1 line-clamp-3">{{ lead.necesidadInicial }}</p>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-900">
+              <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-350 px-2 py-0.5 rounded-full font-bold text-[10px]">{{ lead.fuenteLead }}</span>
+              <span class="font-medium text-slate-500">{{ lead.sucursalQueRecibe }}</span>
+            </div>
+
+            <!-- Lead actions -->
+            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
+              <button mat-stroked-button color="warn" class="text-xs py-1" (click)="openDiscardDialog(lead)">
+                <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-4 mr-1"></mat-icon>
+                <span>Descartar</span>
+              </button>
+              <button mat-flat-button color="primary" class="text-xs py-1" (click)="openConvertDialog(lead)">
+                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1"></mat-icon>
+                <span>Calificar ISO</span>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="getLeadsByStatus('Nuevo').length === 0" class="text-center text-slate-450 dark:text-slate-500 py-12 text-sm">
+            Sin leads pendientes.
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: OPORTUNIDADES -->
+      <div class="flex flex-col bg-slate-100 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between px-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-green-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100">Calificados (Oportunidad)</h2>
+          </div>
+          <span class="text-xs bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 px-2 py-0.5 rounded-full font-semibold">
+            {{ getLeadsByStatus('Oportunidad').length }}
+          </span>
+        </div>
+
+        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] pr-1">
+          <div *ngFor="let lead of getLeadsByStatus('Oportunidad')"
+               class="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative transition-transform hover:-translate-y-0.5 duration-200">
+            
+            <div>
+              <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 flex items-center justify-between gap-1 w-full">
+                <div class="flex items-center gap-1">
+                  <mat-icon svgIcon="heroicons_outline:check-circle" class="icon-size-3.5 text-green-500"></mat-icon>
+                  <span>Calificado: {{ lead.fechaCalificacion | date:'dd-MM-yyyy HH:mm' }}</span>
+                </div>
+                <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                </button>
+              </div>
+              <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base mt-1">{{ lead.nombreContacto }}</h3>
+              <p class="text-xs font-bold text-primary dark:text-slate-400 mt-0.5">{{ lead.empresa }}</p>
+            </div>
+
+            <!-- ISO 7.4 Parameters badges -->
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span class="bg-blue-55 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-[9px] font-bold px-2 py-0.5 rounded" matTooltip="Tipo Cliente">
+                👥 {{ lead.tipoCliente }}
+              </span>
+              <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 text-[9px] font-bold px-2 py-0.5 rounded" matTooltip="Tipo Necesidad">
+                ⚡ {{ lead.tipoNecesidad }}
+              </span>
+              <span class="bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[9px] font-bold px-2 py-0.5 rounded" matTooltip="Prioridad">
+                ⚠️ {{ lead.nivelPrioridad }}
+              </span>
+              <span class="bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-[9px] font-bold px-2 py-0.5 rounded" matTooltip="Potencial">
+                💼 {{ lead.potencialPreliminar }}
+              </span>
+            </div>
+
+            <div class="text-xs text-slate-600 dark:text-slate-450 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850">
+              <span class="font-bold text-slate-500">Necesidad:</span>
+              <p class="mt-1 line-clamp-2">{{ lead.necesidadInicial }}</p>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-900">
+              <span class="text-slate-500">Por: {{ lead.usuarioAsignadoNombre }}</span>
+              <span class="font-semibold text-slate-600 dark:text-slate-350">{{ lead.zonaAtencion }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="getLeadsByStatus('Oportunidad').length === 0" class="text-center text-slate-450 dark:text-slate-500 py-12 text-sm">
+            Ninguno calificado aún.
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: DESCARTADOS -->
+      <div class="flex flex-col bg-slate-100 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between px-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500"></span>
+            <h2 class="font-bold text-slate-800 dark:text-slate-100">Descartados</h2>
+          </div>
+          <span class="text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5 rounded-full font-semibold">
+            {{ getLeadsByStatus('Descartado').length }}
+          </span>
+        </div>
+
+        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] pr-1">
+          <div *ngFor="let lead of getLeadsByStatus('Descartado')"
+               class="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative transition-transform hover:-translate-y-0.5 duration-200">
+            
+            <div>
+              <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 flex items-center justify-between gap-1 w-full">
+                <div class="flex items-center gap-1">
+                  <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-3.5 text-red-500"></mat-icon>
+                  <span>Descartado: {{ lead.fechaActualizacion | date:'dd-MM-yyyy HH:mm' }}</span>
+                </div>
+                <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                </button>
+              </div>
+              <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base mt-1">{{ lead.nombreContacto }}</h3>
+              <p class="text-xs font-bold text-primary dark:text-slate-400 mt-0.5">{{ lead.empresa }}</p>
+            </div>
+
+            <div class="text-xs text-red-800 dark:text-red-300 bg-red-50 dark:bg-red-900/20 p-2.5 rounded-lg border border-red-100 dark:border-red-900/30">
+              <span class="font-bold">Motivo de Descarte:</span>
+              <p class="mt-1 line-clamp-3">{{ lead.motivoDescarte }}</p>
+            </div>
+
+            <div class="text-xs text-slate-650 dark:text-slate-450 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-850">
+              <span class="font-bold text-slate-500">Necesidad original:</span>
+              <p class="mt-1 line-clamp-2">{{ lead.necesidadInicial }}</p>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-450 pt-2 border-t border-slate-100 dark:border-slate-900">
+              <span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold">{{ lead.fuenteLead }}</span>
+              <span>Por: {{ lead.usuarioAsignadoNombre }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="getLeadsByStatus('Descartado').length === 0" class="text-center text-slate-450 dark:text-slate-500 py-12 text-sm">
+            Sin descartes.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW: GRID LIST / INBOX -->
+    <div *ngIf="viewMode === 'list'" class="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="filteredLeads" class="w-full">
+          
+          <!-- ID -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">ID</th>
+            <td mat-cell *matCellDef="let lead" class="text-xs font-semibold text-slate-400">{{ lead.id }}</td>
+          </ng-container>
+
+          <!-- Contact Name -->
+          <ng-container matColumnDef="nombreContacto">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Nombre Contacto</th>
+            <td mat-cell *matCellDef="let lead" class="font-bold text-slate-800 dark:text-slate-200">
+              <div class="flex items-center gap-2">
+                <span>{{ lead.nombreContacto }}</span>
+                <span *ngIf="isSLAOverdue(lead)" class="text-[9px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded-full uppercase animate-pulse">SLA!</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Empresa -->
+          <ng-container matColumnDef="empresa">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Empresa</th>
+            <td mat-cell *matCellDef="let lead" class="text-slate-600 dark:text-slate-400 font-medium">{{ lead.empresa }}</td>
+          </ng-container>
+
+          <!-- Telefono -->
+          <ng-container matColumnDef="telefono">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Teléfono</th>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-500 dark:text-slate-400">{{ lead.telefono }}</td>
+          </ng-container>
+
+          <!-- Email -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Email</th>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-550 dark:text-slate-450">{{ lead.email }}</td>
+          </ng-container>
+
+          <!-- Fuente -->
+          <ng-container matColumnDef="fuenteLead">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Fuente</th>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-500">
+              <span class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-bold">{{ lead.fuenteLead }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Sucursal -->
+          <ng-container matColumnDef="sucursalQueRecibe">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Sucursal</th>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-500 font-semibold">{{ lead.sucursalQueRecibe }}</td>
+          </ng-container>
+
+          <!-- Fecha -->
+          <ng-container matColumnDef="fechaRegistro">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Registro</th>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-400">{{ lead.fechaRegistro | date:'dd-MM-yyyy HH:mm' }}</td>
+          </ng-container>
+
+          <!-- Estatus -->
+          <ng-container matColumnDef="estatus">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Estatus</th>
+            <td mat-cell *matCellDef="let lead">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                    [class.bg-blue-100]="lead.estatus === 'Nuevo'"
+                    [class.text-blue-800]="lead.estatus === 'Nuevo'"
+                    [class.bg-green-100]="lead.estatus === 'Oportunidad'"
+                    [class.text-green-800]="lead.estatus === 'Oportunidad'"
+                    [class.bg-red-100]="lead.estatus === 'Descartado'"
+                    [class.text-red-800]="lead.estatus === 'Descartado'">
+                {{ lead.estatus }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Acciones</th>
+            <td mat-cell *matCellDef="let lead">
+              <div class="flex items-center gap-1.5">
+                <ng-container *ngIf="lead.estatus === 'Nuevo'">
+                  <button mat-icon-button color="accent" matTooltip="Calificar e ISO 7.4" (click)="openConvertDialog(lead)">
+                    <mat-icon svgIcon="heroicons_outline:check-badge" class="text-green-500"></mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" matTooltip="Descartar Lead" (click)="openDiscardDialog(lead)">
+                    <mat-icon svgIcon="heroicons_outline:x-circle" class="text-red-500"></mat-icon>
+                  </button>
+                </ng-container>
+                <span *ngIf="lead.estatus !== 'Nuevo'" class="text-xs text-slate-400 italic mr-2">{{ lead.estatus }}</span>
+                <button mat-icon-button class="text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [ngClass]="{'bg-red-50/40': isSLAOverdue(row), 'dark:bg-red-950/10': isSLAOverdue(row)}"
+              class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"></tr>
+        </table>
+      </div>
+
+      <div *ngIf="filteredLeads.length === 0" class="text-center text-slate-450 dark:text-slate-500 py-16 font-medium">
+        No se encontraron leads con los filtros seleccionados.
+      </div>
+    </div>
+
+  </div>
+
+</div>

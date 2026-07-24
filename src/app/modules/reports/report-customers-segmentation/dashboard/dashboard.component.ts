@@ -85,6 +85,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
     // Opciones para múltiples gráficas
     chartDonaLealtad: Highcharts.Options = {};
+    chartEstadoVigencia: Highcharts.Options = {}; // 📊 Gráfica de Estado de Vigencia
     chartSplineSegmento: Highcharts.Options = {};
     chartTopProductos: Highcharts.Options = {};
     chartVentasEstado: Highcharts.Options = {};
@@ -97,6 +98,11 @@ export class ReportCustomersDashboardComponent implements OnInit {
     modalProductos: any[] = [];
     clienteSeleccionado: string = '';
     totalVendidoModal: number = 0;
+
+    // Panel Lateral del Perfil del Cliente
+    isProfileDrawerOpen: boolean = false;
+    perfilCliente: any = null;
+    chartPerfilTendencia: Highcharts.Options = {};
 
     // Filtros
     esMoral = 0;
@@ -112,7 +118,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
     ];
     sucursalesDisponibles: any[] = [];
 
-    // Datos
+    // Datos Consolidados
     kpis: any[] = [];
     kpisOriginales: any[] = [];
     listaClientes: any[] = [];
@@ -124,10 +130,22 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
     loading = false;
 
-    // Filtros
+    // Indicadores Dinámicos del Dashboard (KPIs Operativos)
+    totalesKPI = {
+        clientesTotales: 0,
+        clientesActivos: 0,
+        clientesEnRiesgo: 0,
+        clientesInactivos: 0,
+        clientesRecuperados: 0,
+        clientesNuevos: 0
+    };
+
+    // Filtros e Interacción
+    filtroSeleccionadoKPI: string = 'TODOS'; // 'TODOS', 'ACTIVO', 'RIESGO', 'INACTIVO', 'RECUPERADO', 'NUEVO'
     clienteFiltroGlobal: any = 'TODOS';
     filtroNombre: string = '';
     filtroClasificacion: string = 'TODAS';
+    filtroMejorCategoria: string = 'TODAS';
 
     constructor(
         private _reportService: ReportCustomersSegmentationService,
@@ -181,10 +199,12 @@ export class ReportCustomersDashboardComponent implements OnInit {
     }
 
     consultar(): void {
+        this.loading = true;
         this._reportService
             .getDashboardCustomersSegmentation(this.sucursal, this.fechaInicio, this.fechaFin, this.esMoral)
             .subscribe({
                 next: (resp: any) => {
+                    this.loading = false;
                     if (resp) {
                         this.kpisOriginales = resp.resumenSegmentos || [];
 
@@ -202,10 +222,29 @@ export class ReportCustomersDashboardComponent implements OnInit {
                         this.detallesProductos = resp.detallesProductos || [];
                         this.resumenGeograficoOriginal = resp.resumenGeografico || [];
 
+                        this.calcularKPIsOperativos();
                         this.actualizarDashboardGlobal();
                     }
+                },
+                error: () => {
+                    this.loading = false;
                 }
             });
+    }
+
+    calcularKPIsOperativos(): void {
+        const unicos = this.listaClientesUnica;
+        this.totalesKPI.clientesTotales = unicos.length;
+        this.totalesKPI.clientesActivos = unicos.filter(c => c.estatusCliente === 'Activo').length;
+        this.totalesKPI.clientesEnRiesgo = unicos.filter(c => c.estatusCliente === 'En Riesgo').length;
+        this.totalesKPI.clientesInactivos = unicos.filter(c => c.estatusCliente === 'Inactivo').length;
+        this.totalesKPI.clientesRecuperados = unicos.filter(c => c.estatusCliente === 'Recuperado').length;
+        this.totalesKPI.clientesNuevos = unicos.filter(c => c.clasificacion === 'Cliente Nuevo').length;
+    }
+
+    seleccionarFiltroKPI(tipo: string): void {
+        this.filtroSeleccionadoKPI = tipo;
+        this.aplicarFiltrosTabla();
     }
 
     actualizarDashboardGlobal(): void {
@@ -237,6 +276,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
         }
         // 3. Renderizar todas las gráficas
         this.renderGraficaDona();
+        this.renderGraficaEstadoVigencia();
         this.renderGraficaSpline();
         this.renderGraficaTopProductos();
         this.renderGraficaVentasEstado();
@@ -251,8 +291,17 @@ export class ReportCustomersDashboardComponent implements OnInit {
             const matchNombre = (cli.nombreCliente || '').toLowerCase().includes(this.filtroNombre.toLowerCase()) ||
                 (cli.rfc || '').toLowerCase().includes(this.filtroNombre.toLowerCase());
             const matchClasificacion = this.filtroClasificacion === 'TODAS' || cli.clasificacion === this.filtroClasificacion;
+            const matchMejorCategoria = this.filtroMejorCategoria === 'TODAS' || cli.mejorCategoriaHistorica === this.filtroMejorCategoria;
 
-            return matchGlobal && matchNombre && matchClasificacion;
+            // Filtro por tarjetas KPI superiores
+            let matchKPI = true;
+            if (this.filtroSeleccionadoKPI === 'ACTIVO') matchKPI = cli.estatusCliente === 'Activo';
+            else if (this.filtroSeleccionadoKPI === 'RIESGO') matchKPI = cli.estatusCliente === 'En Riesgo';
+            else if (this.filtroSeleccionadoKPI === 'INACTIVO') matchKPI = cli.estatusCliente === 'Inactivo';
+            else if (this.filtroSeleccionadoKPI === 'RECUPERADO') matchKPI = cli.estatusCliente === 'Recuperado';
+            else if (this.filtroSeleccionadoKPI === 'NUEVO') matchKPI = cli.clasificacion === 'Cliente Nuevo';
+
+            return matchGlobal && matchNombre && matchClasificacion && matchMejorCategoria && matchKPI;
         });
     }
 
@@ -268,6 +317,37 @@ export class ReportCustomersDashboardComponent implements OnInit {
                     y: s.numeroClientes,
                     color: this.getClasificacionColor(s.clasificacion)
                 }))
+            } as any]
+        };
+    }
+
+    private renderGraficaEstadoVigencia(): void {
+        const unicos = this.listaClientesUnica;
+        const activos = unicos.filter(c => c.estatusCliente === 'Activo').length;
+        const riesgo = unicos.filter(c => c.estatusCliente === 'En Riesgo').length;
+        const inactivos = unicos.filter(c => c.estatusCliente === 'Inactivo').length;
+        const recuperados = unicos.filter(c => c.estatusCliente === 'Recuperado').length;
+
+        this.chartEstadoVigencia = {
+            chart: { type: 'pie', backgroundColor: 'transparent' },
+            title: { text: 'Vigencia Comercial de Clientes', style: { fontSize: '14px', fontWeight: 'bold' } },
+            plotOptions: {
+                pie: {
+                    innerSize: '65%',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b>: {point.y} ({point.percentage:.1f}%)'
+                    }
+                }
+            },
+            series: [{
+                name: 'Clientes',
+                data: [
+                    { name: 'Activos', y: activos, color: '#10b981' },
+                    { name: 'En Riesgo', y: riesgo, color: '#f59e0b' },
+                    { name: 'Inactivos', y: inactivos, color: '#ef4444' },
+                    { name: 'Recuperados', y: recuperados, color: '#3b82f6' }
+                ].filter(x => x.y > 0)
             } as any]
         };
     }
@@ -474,6 +554,137 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
     cerrarModal(): void {
         this.isModalOpen = false;
+    }
+
+    abrirPerfilCliente(cli: any): void {
+        const todosDocumentos = this.listaClientesOriginal.filter((c: any) => c.clienteId === cli.clienteId);
+        const totalVenta = todosDocumentos.reduce((sum, doc) => sum + (doc.montoDocumento || 0), 0);
+        const totalDocs = todosDocumentos.length || 1;
+        const ticketPromedio = totalVenta / totalDocs;
+
+        // Frecuencia de Compra
+        let frecuenciaPromedio = 'N/A - Única compra';
+        if (todosDocumentos.length > 1) {
+            const fechasOrdenadas = todosDocumentos
+                .map(d => new Date(d.fechaDocumento))
+                .sort((a, b) => a.getTime() - b.getTime());
+            
+            let sumaDias = 0;
+            for (let i = 1; i < fechasOrdenadas.length; i++) {
+                const diffTime = Math.abs(fechasOrdenadas[i].getTime() - fechasOrdenadas[i-1].getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                sumaDias += diffDays;
+            }
+            const prom = Math.round(sumaDias / (fechasOrdenadas.length - 1));
+            frecuenciaPromedio = `${prom} días`;
+        }
+
+        // Participación en ventas de la sucursal seleccionada
+        const totalVentasGeneral = this.listaClientesOriginal.reduce((sum, c) => sum + (c.montoDocumento || 0), 0) || 1;
+        const participacion = (totalVenta / totalVentasGeneral) * 100;
+
+        // Productos del cliente
+        const productosCliente = this.detallesProductos.filter((p: any) => p.clienteId === cli.clienteId);
+
+        // Agrupar por producto y sumar
+        const prodGroupMap = new Map<string, { unidades: number, total: number }>();
+        productosCliente.forEach(p => {
+            const actual = prodGroupMap.get(p.producto) || { unidades: 0, total: 0 };
+            prodGroupMap.set(p.producto, {
+                unidades: actual.unidades + (p.unidades || 0),
+                total: actual.total + (p.totalVendido || 0)
+            });
+        });
+
+        const topProductos = Array.from(prodGroupMap.entries()).map(([nombre, val]) => ({
+            producto: nombre,
+            unidades: val.unidades,
+            total: val.total
+        })).sort((a, b) => b.total - a.total).slice(0, 5);
+
+        // Historial de compras (Agrupado por Folio)
+        const historialCompras = todosDocumentos.map(doc => ({
+            fecha: doc.fechaDocumento,
+            folio: doc.folioCompleto,
+            moneda: doc.moneda,
+            monto: doc.montoDocumento,
+            estatus: doc.estatusPago,
+            vencimiento: doc.fechaVencimiento
+        })).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
+        // Armar perfil completo
+        this.perfilCliente = {
+            clienteId: cli.clienteId,
+            nombre: cli.nombreCliente,
+            rfc: cli.rfc,
+            correo: cli.correo,
+            telefono: cli.telefono,
+            clasificacion: cli.clasificacion,
+            estatusCliente: cli.estatusCliente,
+            mejorCategoria: cli.mejorCategoriaHistorica,
+            estado: cli.estado,
+            ciudad: cli.ciudad,
+            municipio: cli.municipio,
+            totalVenta,
+            ticketPromedio,
+            totalCompras: totalDocs,
+            frecuenciaPromedio,
+            participacion,
+            topProductos,
+            historialCompras
+        };
+
+        // Renderizar Tendencia de Ventas Mensuales para este cliente en específico
+        const ventasPorMesMap = new Map<string, number>();
+        todosDocumentos.forEach(d => {
+            const date = new Date(d.fechaDocumento);
+            const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            const actual = ventasPorMesMap.get(key) || 0;
+            ventasPorMesMap.set(key, actual + (d.montoDocumento || 0));
+        });
+
+        const mesesOrdenados = Array.from(ventasPorMesMap.keys()).sort();
+        const datosTendencia = mesesOrdenados.map(m => ventasPorMesMap.get(m));
+
+        this.chartPerfilTendencia = {
+            chart: { type: 'area', backgroundColor: 'transparent', height: 220 },
+            title: { text: 'Evolución Mensual de Compras', style: { fontSize: '12px', fontWeight: 'bold' } },
+            xAxis: { categories: mesesOrdenados.map(m => {
+                const parts = m.split('-');
+                const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${mesesNombres[parseInt(parts[1]) - 1]} ${parts[0].substring(2)}`;
+            }) },
+            yAxis: { title: { text: 'Monto ($)' }, labels: { format: '${value:,.0f}' } },
+            legend: { enabled: false },
+            plotOptions: {
+                area: {
+                    fillColor: {
+                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                        stops: [
+                            [0, 'rgba(99, 102, 241, 0.4)'],
+                            [1, 'rgba(99, 102, 241, 0.0)']
+                        ]
+                    },
+                    marker: { radius: 3 },
+                    lineWidth: 2,
+                    states: { hover: { lineWidth: 3 } }
+                }
+            },
+            series: [{
+                name: 'Compras',
+                data: datosTendencia,
+                color: '#6366f1'
+            } as any]
+        };
+
+        this.isProfileDrawerOpen = true;
+        this.cdr.detectChanges();
+    }
+
+    cerrarPerfilCliente(): void {
+        this.isProfileDrawerOpen = false;
+        this.perfilCliente = null;
+        this.cdr.detectChanges();
     }
 
     private renderMapas(): void {

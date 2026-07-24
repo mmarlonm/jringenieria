@@ -12,6 +12,7 @@
         </div>
     </div>
 
+    <!-- Filters header -->
     <div class="bg-card shadow-sm relative md:sticky top-0 z-10 p-4 border-b">
         <div class="grid grid-cols-2 sm:flex sm:flex-row sm:items-end gap-4">
 
@@ -71,13 +72,65 @@
 
     <div id="pdf-content" class="p-6 flex flex-col gap-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <!-- 📊 Interactive KPI Cards for Client Lifecycle Vigencia -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <!-- Totales -->
+            <div (click)="seleccionarFiltroKPI('TODOS')"
+                [ngClass]="{'ring-2 ring-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10': filtroSeleccionadoKPI === 'TODOS'}"
+                class="bg-card rounded-2xl p-4 shadow-sm border-l-4 border-indigo-500 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:scale-105 select-none">
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Clientes Totales</div>
+                <div class="text-2xl font-black text-indigo-700 dark:text-indigo-400 mt-1">{{ totalesKPI.clientesTotales | number }}</div>
+                <div class="text-[9px] text-gray-400 mt-0.5">Cartera Completa</div>
+            </div>
+            <!-- Activos -->
+            <div (click)="seleccionarFiltroKPI('ACTIVO')"
+                [ngClass]="{'ring-2 ring-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10': filtroSeleccionadoKPI === 'ACTIVO'}"
+                class="bg-card rounded-2xl p-4 shadow-sm border-l-4 border-emerald-500 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:scale-105 select-none">
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Clientes Activos</div>
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{{ totalesKPI.clientesActivos | number }}</div>
+                <div class="text-[9px] text-emerald-500 font-medium mt-0.5">Compran constante</div>
+            </div>
+            <!-- En Riesgo -->
+            <div (click)="seleccionarFiltroKPI('RIESGO')"
+                [ngClass]="{'ring-2 ring-amber-500 bg-amber-50/30 dark:bg-amber-900/10': filtroSeleccionadoKPI === 'RIESGO'}"
+                class="bg-card rounded-2xl p-4 shadow-sm border-l-4 border-amber-500 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:scale-105 select-none">
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">En Riesgo</div>
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ totalesKPI.clientesEnRiesgo | number }}</div>
+                <div class="text-[9px] text-amber-500 font-medium mt-0.5">Inactividad leve</div>
+            </div>
+            <!-- Inactivos -->
+            <div (click)="seleccionarFiltroKPI('INACTIVO')"
+                [ngClass]="{'ring-2 ring-red-500 bg-red-50/30 dark:bg-red-900/10': filtroSeleccionadoKPI === 'INACTIVO'}"
+                class="bg-card rounded-2xl p-4 shadow-sm border-l-4 border-red-500 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:scale-105 select-none">
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Inactivos</div>
+                <div class="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{{ totalesKPI.clientesInactivos | number }}</div>
+                <div class="text-[9px] text-red-500 font-medium mt-0.5">Sin compras recientes</div>
+            </div>
+            <!-- Recuperados -->
+            <div (click)="seleccionarFiltroKPI('RECUPERADO')"
+                [ngClass]="{'ring-2 ring-blue-500 bg-blue-50/30 dark:bg-blue-900/10': filtroSeleccionadoKPI === 'RECUPERADO'}"
+                class="bg-card rounded-2xl p-4 shadow-sm border-l-4 border-blue-500 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:scale-105 select-none">
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Recuperados</div>
+                <div class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{{ totalesKPI.clientesRecuperados | number }}</div>
+                <div class="text-[9px] text-blue-500 font-medium mt-0.5">Volvieron a comprar</div>
+            </div>
+            <!-- Clientes Nuevos -->
+            <div (click)="seleccionarFiltroKPI('NUEVO')"
+                [ngClass]="{'ring-2 ring-purple-500 bg-purple-50/30 dark:bg-purple-900/10': filtroSeleccionadoKPI === 'NUEVO'}"
+                class="bg-card rounded-2xl p-4 shadow-sm border-l-4 border-purple-500 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:scale-105 select-none">
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Clientes Nuevos</div>
+                <div class="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">{{ totalesKPI.clientesNuevos | number }}</div>
+                <div class="text-[9px] text-purple-500 font-medium mt-0.5">Primera compra</div>
+            </div>
+        </div>
+
+        <!-- Segment metrics summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div *ngFor="let kpi of kpis"
                 class="bg-card rounded-2xl p-4 shadow-sm border-t-4 border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-center transition-transform hover:scale-105"
                 [style.border-top-color]="getClasificacionColor(kpi.clasificacion)">
-                <div class="text-secondary font-medium uppercase tracking-wider text-[10px]">{{ kpi.clasificacion }}
-                </div>
-                <div class="text-3xl font-bold mt-1">{{ kpi.numeroClientes | number }}</div>
+                <div class="text-secondary font-medium uppercase tracking-wider text-[10px]">{{ kpi.clasificacion }}</div>
+                <div class="text-2xl font-bold mt-1">{{ kpi.numeroClientes | number }}</div>
                 <div class="text-[11px] text-gray-400 mt-1">{{ kpi.valorSegmento | currency }}</div>
             </div>
         </div>
@@ -105,12 +158,21 @@
             </div>
         </div>
 
-        <!-- 🔹 Primera Fila: Gráficas de Pastel (50/50) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- 🔹 Primera Fila: Gráficas de Pastel (3 Columnas) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Lealtad de Clientes</h3>
                 @if (kpis.length > 0) {
                 <highcharts-chart [Highcharts]="Highcharts" [options]="chartDonaLealtad" [(update)]="updateFlag"
+                    style="width: 100%; height: 350px; display: block;">
+                </highcharts-chart>
+                }
+            </div>
+
+            <div class="bg-card rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">Vigencia Comercial</h3>
+                @if (listaClientesOriginal.length > 0) {
+                <highcharts-chart [Highcharts]="Highcharts" [options]="chartEstadoVigencia" [(update)]="updateFlag"
                     style="width: 100%; height: 350px; display: block;">
                 </highcharts-chart>
                 }
@@ -212,6 +274,14 @@
                         <option value="Cliente Habitual">Cliente Habitual</option>
                     </select>
 
+                    <select [(ngModel)]="filtroMejorCategoria" (change)="aplicarFiltrosTabla()"
+                        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-medium px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="TODAS">Mejor Cat. Histórica (Todas)</option>
+                        <option value="A">Clase A</option>
+                        <option value="B">Clase B</option>
+                        <option value="C">Clase C</option>
+                    </select>
+
                     <span
                         class="text-xs font-black px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg whitespace-nowrap">
                         Ticket Promedio: {{ (listaClientesFiltrada.length > 0 ? totalVendido / listaClientes.length : 0)
@@ -233,6 +303,7 @@
                             <th class="px-6 py-4">Cliente</th>
                             <th class="px-6 py-4 text-center">Folio</th>
                             <th class="px-6 py-4">Clasificación</th>
+                            <th class="px-6 py-4 text-center">Mejor Cat. Histórica</th>
                             <th class="px-6 py-4 text-right">Importe</th>
                             <th class="px-6 py-4 text-center">Estatus y Vencimiento</th>
                             <th class="px-6 py-4 text-center">Acciones</th>
@@ -243,8 +314,8 @@
                             class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
 
                             <td class="px-6 py-4">
-                                <div>
-                                    <div class="font-bold text-main">{{ cli.nombreCliente }}</div>
+                                <div class="cursor-pointer" (click)="abrirPerfilCliente(cli)">
+                                    <div class="font-bold text-main hover:text-indigo-600 transition-colors">{{ cli.nombreCliente }}</div>
                                     <div class="text-[10px] text-gray-400 font-mono">{{ cli.rfc }}</div>
                                 </div>
                             </td>
@@ -263,6 +334,14 @@
                                     [style.background-color]="getClasificacionColor(cli.clasificacion)">
                                     {{ cli.clasificacion }}
                                 </span>
+                            </td>
+
+                            <td class="px-6 py-4 text-center">
+                                <span *ngIf="cli.mejorCategoriaHistorica"
+                                    class="px-2 py-1 rounded font-black text-xs bg-amber-100 text-amber-800 border border-amber-200">
+                                    Clase {{ cli.mejorCategoriaHistorica }}
+                                </span>
+                                <span *ngIf="!cli.mejorCategoriaHistorica" class="text-gray-400">-</span>
                             </td>
 
                             <td class="px-6 py-4 text-right font-black text-gray-700 dark:text-gray-200 text-base">
@@ -286,8 +365,7 @@
                                     </span>
 
                                     <div class="text-[10px] flex flex-col leading-tight mt-1">
-                                        <span class="text-gray-400">Emisión: {{ cli.fechaDocumento | date:'dd/MM/yy'
-                                            }}</span>
+                                        <span class="text-gray-400">Emisión: {{ cli.fechaDocumento | date:'dd/MM/yy' }}</span>
 
                                         <span
                                             [ngClass]="{'text-red-600 font-bold': cli.estatusPago === 'VENCIDA', 'text-gray-500': cli.estatusPago !== 'VENCIDA'}">
@@ -298,15 +376,21 @@
                             </td>
 
                             <td class="px-6 py-4 text-center">
-                                <button mat-icon-button (click)="verDetallesProducto(cli)" matTooltip="Ver productos comprados"
-                                    class="text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200">
-                                    <mat-icon class="icon-size-5">inventory_2</mat-icon>
-                                </button>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button mat-icon-button (click)="abrirPerfilCliente(cli)" matTooltip="Ver perfil analítico"
+                                        class="text-teal-600 hover:bg-teal-50 rounded-full transition-all duration-200">
+                                        <mat-icon class="icon-size-5">account_circle</mat-icon>
+                                    </button>
+                                    <button mat-icon-button (click)="verDetallesProducto(cli)" matTooltip="Ver productos comprados"
+                                        class="text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200">
+                                        <mat-icon class="icon-size-5">inventory_2</mat-icon>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
 
                         <tr *ngIf="listaClientesFiltrada.length === 0">
-                            <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-400">
                                 No se encontraron facturas con los filtros seleccionados.
                             </td>
                         </tr>
@@ -393,4 +477,162 @@
             </div>
         </div>
     </div>
+
+    <!-- Slide-over panel for Customer Profile Details -->
+    <div *ngIf="isProfileDrawerOpen" class="fixed inset-0 z-[110] flex justify-end">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" (click)="cerrarPerfilCliente()"></div>
+
+        <!-- Drawer Content -->
+        <div class="relative w-full max-w-lg bg-card shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-right duration-300 border-l border-gray-200 dark:border-gray-800">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+                <div class="flex items-center gap-3">
+                    <div class="bg-teal-600 p-2 rounded-xl text-white shadow-lg shadow-teal-200 dark:shadow-none">
+                        <mat-icon>account_circle</mat-icon>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">Perfil de Cliente</h2>
+                        <p class="text-xs text-secondary font-medium uppercase mt-0.5">{{ perfilCliente?.rfc }}</p>
+                    </div>
+                </div>
+                <button mat-icon-button (click)="cerrarPerfilCliente()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <!-- Body (Scrollable) -->
+            <div class="flex-auto overflow-y-auto p-6 space-y-6 scrollbar-thin">
+                <!-- General Info Card -->
+                <div class="bg-gray-50 dark:bg-gray-800/30 p-4 rounded-2xl border dark:border-gray-800 space-y-3">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Información General</h3>
+                    <div class="text-base font-black text-gray-800 dark:text-gray-100">{{ perfilCliente?.nombre }}</div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-400 block">ID Cliente</span>
+                            <span class="font-bold text-gray-700 dark:text-gray-300">{{ perfilCliente?.clienteId }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block">Ubicación</span>
+                            <span class="font-bold text-gray-700 dark:text-gray-300">
+                                {{ perfilCliente?.municipio || perfilCliente?.ciudad || '-' }}, {{ perfilCliente?.estado || '-' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block">Estatus de Vigencia</span>
+                            <div>
+                                <span [ngClass]="{
+                                    'text-emerald-600 bg-emerald-50 border-emerald-200': perfilCliente?.estatusCliente === 'Activo',
+                                    'text-amber-600 bg-amber-50 border-amber-200': perfilCliente?.estatusCliente === 'En Riesgo',
+                                    'text-red-600 bg-red-50 border-red-200': perfilCliente?.estatusCliente === 'Inactivo',
+                                    'text-blue-600 bg-blue-50 border-blue-200': perfilCliente?.estatusCliente === 'Recuperado'
+                                }" class="inline-block px-2.5 py-0.5 rounded-full border text-[10px] font-black uppercase mt-1">
+                                    {{ perfilCliente?.estatusCliente }}
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block">Mejor Cat. Histórica</span>
+                            <div>
+                                <span *ngIf="perfilCliente?.mejorCategoria" class="inline-block px-2.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-black uppercase mt-1">
+                                    Clase {{ perfilCliente?.mejorCategoria }}
+                                </span>
+                                <span *ngIf="!perfilCliente?.mejorCategoria" class="text-gray-400 block mt-1">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Stats -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl flex flex-col justify-between">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ventas Acumuladas</span>
+                        <span class="text-xl font-black text-gray-800 dark:text-gray-100 mt-2">{{ perfilCliente?.totalVenta | currency }}</span>
+                    </div>
+                    <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl flex flex-col justify-between">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ticket Promedio</span>
+                        <span class="text-xl font-black text-gray-800 dark:text-gray-100 mt-2">{{ perfilCliente?.ticketPromedio | currency }}</span>
+                    </div>
+                    <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl flex flex-col justify-between">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Número de Compras</span>
+                        <span class="text-xl font-black text-gray-800 dark:text-gray-100 mt-2">{{ perfilCliente?.totalCompras }}</span>
+                    </div>
+                    <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl flex flex-col justify-between">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Frecuencia Promedio</span>
+                        <span class="text-xl font-black text-gray-800 dark:text-gray-100 mt-2">{{ perfilCliente?.frecuenciaPromedio }}</span>
+                    </div>
+                    <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl flex flex-col justify-between col-span-2">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Participación en la Cartera</span>
+                        <div class="flex items-center gap-3 mt-2">
+                            <div class="flex-auto bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-teal-500 h-full rounded-full" [style.width.%]="perfilCliente?.participacion"></div>
+                            </div>
+                            <span class="text-sm font-black text-teal-600">{{ perfilCliente?.participacion | number:'1.1-2' }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Trend Chart -->
+                <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl">
+                    @if (isProfileDrawerOpen) {
+                    <highcharts-chart [Highcharts]="Highcharts" [options]="chartPerfilTendencia"
+                        style="width: 100%; height: 220px; display: block;">
+                    </highcharts-chart>
+                    }
+                </div>
+
+                <!-- Preferences: Top Products -->
+                <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl space-y-3">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Productos más Comprados</h3>
+                    <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                        <div *ngFor="let prod of perfilCliente?.topProductos" class="py-2 flex items-center justify-between text-xs">
+                            <span class="font-medium text-gray-700 dark:text-gray-300 truncate max-w-[280px]" [title]="prod.producto">{{ prod.producto }}</span>
+                            <div class="text-right flex-shrink-0">
+                                <span class="font-bold text-gray-800 dark:text-gray-100">{{ prod.total | currency }}</span>
+                                <span class="text-[10px] text-gray-400 block">{{ prod.unidades }} unds.</span>
+                            </div>
+                        </div>
+                        <div *ngIf="perfilCliente?.topProductos?.length === 0" class="py-4 text-center text-gray-400 italic">
+                            Sin productos registrados.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Purchase History -->
+                <div class="bg-card border dark:border-gray-800 p-4 rounded-2xl space-y-3">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Historial de Facturas</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-gray-400 font-bold border-b border-gray-100 dark:border-gray-800 pb-2">
+                                    <th class="pb-2">Fecha</th>
+                                    <th class="pb-2">Folio</th>
+                                    <th class="pb-2 text-right">Monto</th>
+                                    <th class="pb-2 text-center">Estatus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let h of perfilCliente?.historialCompras" class="border-b border-gray-50 dark:border-gray-800/40 hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
+                                    <td class="py-2 text-gray-500">{{ h.fecha | date:'dd/MM/yy' }}</td>
+                                    <td class="py-2 font-mono font-bold text-indigo-600">{{ h.folio }}</td>
+                                    <td class="py-2 text-right font-bold text-gray-800 dark:text-gray-200">{{ h.monto | currency }}</td>
+                                    <td class="py-2 text-center">
+                                        <span [ngClass]="{
+                                            'bg-green-50 text-green-700 border-green-200': h.estatus === 'PAGADA',
+                                            'bg-amber-50 text-amber-700 border-amber-200': h.estatus === 'PENDIENTE',
+                                            'bg-red-50 text-red-700 border-red-200': h.estatus === 'VENCIDA'
+                                        }" class="px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase">
+                                            {{ h.estatus }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
