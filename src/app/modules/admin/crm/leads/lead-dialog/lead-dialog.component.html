@@ -3,10 +3,12 @@
   <div class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
     <mat-icon class="text-primary icon-size-5" 
               [svgIcon]="action === 'create' ? 'heroicons_outline:plus-circle' : 
+                         action === 'edit'    ? 'heroicons_outline:pencil-square' :
                          action === 'convert' ? 'heroicons_outline:check-badge' : 
                          'heroicons_outline:x-circle'"></mat-icon>
     <span>
       {{ action === 'create' ? 'Registrar Nuevo Lead (Inbox)' : 
+         action === 'edit'   ? 'Editar Lead — ' + data.lead?.nombreContacto :
          action === 'convert' ? 'Calificación y Conversión (Sección 7.4 ISO 9001)' : 
          'Descartar Lead' }}
     </span>
@@ -17,7 +19,7 @@
 </div>
 
 <!-- DIALOG CONTENT -->
-<div class="px-6 py-6 overflow-y-auto max-h-[70vh] bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300">
+<div class="px-6 py-6 overflow-y-auto max-h-[78vh] bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300">
 
   <!-- ACTION: CREATE -->
   <form *ngIf="action === 'create'" [formGroup]="leadForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
@@ -86,6 +88,201 @@
       <button mat-button type="button" (click)="onCancel()">Cancelar</button>
       <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid">Registrar en Inbox</button>
     </div>
+  </form>
+
+  <!-- ACTION: EDIT -->
+  <form *ngIf="action === 'edit'" [formGroup]="leadForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+
+    <!-- Info Banner -->
+    <div class="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl text-sm text-indigo-700 dark:text-indigo-300">
+      <mat-icon class="icon-size-4 shrink-0">info</mat-icon>
+      <span>Edita los datos del lead. Los archivos adjuntos se gestionan en la sección inferior.</span>
+    </div>
+
+    <!-- Datos del Lead -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Nombre del Contacto</mat-label>
+        <input matInput formControlName="nombreContacto" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('nombreContacto')?.hasError('required')">El nombre es requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Empresa</mat-label>
+        <input matInput formControlName="empresa" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('empresa')?.hasError('required')">La empresa es requerida</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Teléfono</mat-label>
+        <input matInput formControlName="telefono" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('telefono')?.hasError('required')">El teléfono es requerido</mat-error>
+        <mat-error *ngIf="leadForm.get('telefono')?.hasError('pattern')">Formato inválido (10-15 dígitos)</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Correo Electrónico</mat-label>
+        <input matInput formControlName="email" autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('email')?.hasError('required')">El correo es requerido</mat-error>
+        <mat-error *ngIf="leadForm.get('email')?.hasError('email')">Correo inválido</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Fuente de Lead</mat-label>
+        <mat-select formControlName="fuenteLead">
+          <mat-option *ngFor="let f of fuentes" [value]="f">{{ f }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Sucursal que Recibe</mat-label>
+        <mat-select formControlName="sucursalQueRecibe">
+          <mat-option *ngFor="let s of sucursales" [value]="s">{{ s }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Usuario Asignado</mat-label>
+      <mat-select formControlName="idUsuarioAsignado">
+        <mat-option *ngFor="let u of users" [value]="u.usuarioId">{{ u.nombreUsuario }} ({{ u.email }})</mat-option>
+      </mat-select>
+      <mat-error *ngIf="leadForm.get('idUsuarioAsignado')?.hasError('required')">Debe asignar un usuario</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Necesidad Inicial / Descripción</mat-label>
+      <textarea matInput formControlName="necesidadInicial" rows="3"></textarea>
+      <mat-error *ngIf="leadForm.get('necesidadInicial')?.hasError('required')">La necesidad inicial es requerida</mat-error>
+    </mat-form-field>
+
+    <!-- Guardar datos -->
+    <div class="flex justify-end gap-2 border-t pt-4">
+      <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid">
+        <mat-icon svgIcon="heroicons_outline:check" class="icon-size-4 mr-1"></mat-icon>
+        Guardar Cambios
+      </button>
+    </div>
+
+    <!-- ============================== -->
+    <!-- SECCIÓN DE ARCHIVOS ADJUNTOS  -->
+    <!-- ============================== -->
+    <div class="mt-2 border-t border-slate-200 dark:border-slate-800 pt-5">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <mat-icon svgIcon="heroicons_outline:paper-clip" class="text-slate-500 icon-size-5"></mat-icon>
+          <h3 class="font-bold text-slate-700 dark:text-slate-200 text-base">Archivos Adjuntos</h3>
+          <span class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-semibold">
+            {{ archivos.length }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 bg-slate-50 dark:bg-slate-900/50 mb-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <label class="flex-1 flex items-center gap-3 cursor-pointer group">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <mat-icon svgIcon="heroicons_outline:cloud-arrow-up" class="text-primary icon-size-5"></mat-icon>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors">
+                {{ archivosSeleccionados.length > 0 ? archivosSeleccionados.length + ' archivo(s) seleccionado(s)' : 'Seleccionar archivos' }}
+              </p>
+              <p class="text-xs text-slate-400">PDF, Word, Excel, imágenes, ZIP — múltiples</p>
+            </div>
+            <input type="file" multiple class="hidden" (change)="onFilesSelected($event)" accept="*/*" />
+          </label>
+
+          <mat-form-field appearance="outline" class="w-36 fuse-mat-dense">
+            <mat-label>Categoría</mat-label>
+            <mat-select [(ngModel)]="categoriaArchivo" [ngModelOptions]="{standalone: true}">
+              <mat-option value="General">General</mat-option>
+              <mat-option value="Contrato">Contrato</mat-option>
+              <mat-option value="Cotización">Cotización</mat-option>
+              <mat-option value="Propuesta">Propuesta</mat-option>
+              <mat-option value="Evidencia">Evidencia</mat-option>
+              <mat-option value="Otro">Otro</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="button"
+                  [disabled]="archivosSeleccionados.length === 0 || subiendoArchivos"
+                  (click)="subirArchivos()"
+                  class="shrink-0">
+            <mat-icon svgIcon="heroicons_outline:arrow-up-tray" class="icon-size-4 mr-1"></mat-icon>
+            {{ subiendoArchivos ? 'Subiendo...' : 'Subir' }}
+          </button>
+        </div>
+
+        <ng-container *ngIf="archivosSeleccionados.length > 0">
+          <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+            <span *ngFor="let f of archivosSeleccionados"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-full text-slate-600 dark:text-slate-300 font-medium shadow-sm">
+              <mat-icon [svgIcon]="getFileIcon(f.name)" class="icon-size-3.5 text-primary"></mat-icon>
+              {{ f.name }}
+            </span>
+          </div>
+        </ng-container>
+
+        <mat-progress-bar *ngIf="subiendoArchivos" mode="indeterminate" class="mt-3 rounded-full"></mat-progress-bar>
+      </div>
+
+      <div *ngIf="cargandoArchivos" class="flex items-center justify-center py-6">
+        <mat-progress-bar mode="indeterminate" class="w-48 rounded-full"></mat-progress-bar>
+      </div>
+
+      <div *ngIf="!cargandoArchivos && archivos.length === 0" class="text-center py-8 text-slate-400 dark:text-slate-600">
+        <mat-icon svgIcon="heroicons_outline:document-text" class="icon-size-10 mb-2 opacity-30"></mat-icon>
+        <p class="text-sm">No hay archivos adjuntos aún.</p>
+      </div>
+
+      <ng-container *ngIf="!cargandoArchivos && archivos.length > 0">
+        <div class="flex flex-col gap-2">
+          <div *ngFor="let archivo of archivos"
+               class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary/30 transition-all group">
+            <div class="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center"
+                 [ngClass]="getFileTheme(archivo.nombreArchivo)">
+              <mat-icon [svgIcon]="getFileIcon(archivo.nombreArchivo)" class="icon-size-4.5"></mat-icon>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{{ archivo.nombreArchivo }}</p>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-bold uppercase">{{ archivo.categoria }}</span>
+                <span class="text-[10px] text-slate-400">{{ archivo.fechaSubida | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button *ngIf="isViewable(archivo.nombreArchivo)"
+                      mat-icon-button matTooltip="Ver archivo" type="button"
+                      class="w-8 h-8 min-h-8 text-primary hover:bg-primary/10"
+                      (click)="verArchivo(archivo)">
+                <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4"></mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Descargar" type="button"
+                      class="w-8 h-8 min-h-8 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      (click)="descargarArchivo(archivo)">
+                <mat-icon svgIcon="heroicons_outline:arrow-down-tray" class="icon-size-4"></mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Eliminar archivo" type="button"
+                      class="w-8 h-8 min-h-8 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      (click)="eliminarArchivo(archivo)">
+                <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+    <!-- END ARCHIVOS -->
+
   </form>
 
   <!-- ACTION: CONVERT (ISO 9001 SECTION 7.4) -->

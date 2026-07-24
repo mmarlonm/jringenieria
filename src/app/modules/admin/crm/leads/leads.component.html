@@ -129,10 +129,14 @@
             </div>
 
             <!-- Lead actions -->
-            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
+            <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
               <button mat-stroked-button color="warn" class="text-xs py-1" (click)="openDiscardDialog(lead)">
                 <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-4 mr-1"></mat-icon>
                 <span>Descartar</span>
+              </button>
+              <button mat-stroked-button class="text-xs py-1" (click)="openEditDialog(lead)">
+                <mat-icon svgIcon="heroicons_outline:pencil-square" class="icon-size-4 mr-1"></mat-icon>
+                <span>Editar</span>
               </button>
               <button mat-flat-button color="primary" class="text-xs py-1" (click)="openConvertDialog(lead)">
                 <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1"></mat-icon>
@@ -201,6 +205,14 @@
             <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-900">
               <span class="text-slate-500">Por: {{ lead.usuarioAsignadoNombre }}</span>
               <span class="font-semibold text-slate-600 dark:text-slate-350">{{ lead.zonaAtencion }}</span>
+            </div>
+
+            <!-- Edit button for Oportunidad -->
+            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
+              <button mat-stroked-button class="text-xs py-1 w-full" (click)="openEditDialog(lead)">
+                <mat-icon svgIcon="heroicons_outline:pencil-square" class="icon-size-4 mr-1"></mat-icon>
+                <span>Editar datos del lead</span>
+              </button>
             </div>
           </div>
 
@@ -345,6 +357,10 @@
             <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Acciones</th>
             <td mat-cell *matCellDef="let lead">
               <div class="flex items-center gap-1.5">
+                <!-- Edit button always visible -->
+                <button mat-icon-button matTooltip="Editar Lead" (click)="openEditDialog(lead)">
+                  <mat-icon svgIcon="heroicons_outline:pencil-square" class="text-slate-500 hover:text-primary"></mat-icon>
+                </button>
                 <ng-container *ngIf="lead.estatus === 'Nuevo'">
                   <button mat-icon-button color="accent" matTooltip="Calificar e ISO 7.4" (click)="openConvertDialog(lead)">
                     <mat-icon svgIcon="heroicons_outline:check-badge" class="text-green-500"></mat-icon>

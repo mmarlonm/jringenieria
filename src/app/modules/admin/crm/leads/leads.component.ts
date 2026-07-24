@@ -11,7 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { LeadsService, Lead } from './leads.service';
+import { LeadsService, Lead, UpdateLeadDto } from './leads.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { LeadDialogComponent } from './lead-dialog/lead-dialog.component';
 import { debounceTime } from 'rxjs/operators';
@@ -153,7 +153,8 @@ export class LeadsComponent implements OnInit {
 
   openCreateDialog(): void {
     const dialogRef = this.dialog.open(LeadDialogComponent, {
-      width: '650px',
+      width: '720px',
+      maxWidth: '95vw',
       data: { action: 'create', users: this.users }
     });
 
@@ -165,6 +166,27 @@ export class LeadsComponent implements OnInit {
             this.loadLeads();
           },
           error: () => this.showSnackBar('Error al registrar lead', 'Cerrar', 'bg-red-600 text-white')
+        });
+      }
+    });
+  }
+
+  openEditDialog(lead: Lead): void {
+    const dialogRef = this.dialog.open(LeadDialogComponent, {
+      width: '720px',
+      maxWidth: '95vw',
+      data: { action: 'edit', lead: lead, users: this.users }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.action === 'edit') {
+        const dto: UpdateLeadDto = result.data;
+        this.leadsService.updateLead(lead.id, dto).subscribe({
+          next: () => {
+            this.showSnackBar('Lead actualizado exitosamente', 'OK', 'bg-green-600 text-white');
+            this.loadLeads();
+          },
+          error: () => this.showSnackBar('Error al actualizar el lead', 'Cerrar', 'bg-red-600 text-white')
         });
       }
     });
