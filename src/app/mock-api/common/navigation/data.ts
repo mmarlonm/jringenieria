@@ -117,7 +117,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'ingenieria.control-ejecucion', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:wrench-screwdriver', link: '/engineering/control-ejecucion' },
             { id: 'ingenieria.gantt-general', title: 'Gantt General', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/engineering/gantt-general' },
             { id: 'ingenieria.seguimiento-tareas', title: 'Seguimiento de Tareas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/engineering/seguimiento-tareas' },
-            { id: 'ingenieria.subcontratacion', title: 'Subcontratación', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/subcontratacion' },
+            { id: 'ingenieria.aliados', title: 'Aliados', type: 'basic', icon: 'heroicons_outline:user-group', link: '/engineering/aliados' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
