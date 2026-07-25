@@ -208,10 +208,10 @@ export class ReportCustomersDashboardComponent implements OnInit {
                     if (resp) {
                         this.kpisOriginales = resp.resumenSegmentos || [];
 
-                        // Ordenar para que Cliente Nuevo aparezca al inicio
+                        // Ordenar para que Nuevo aparezca al inicio
                         this.kpisOriginales.sort((a, b) => {
-                            if (a.clasificacion === 'Cliente Nuevo') return -1;
-                            if (b.clasificacion === 'Cliente Nuevo') return 1;
+                            if (a.clasificacion === 'Nuevo') return -1;
+                            if (b.clasificacion === 'Nuevo') return 1;
                             return 0;
                         });
 
@@ -239,7 +239,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
         this.totalesKPI.clientesEnRiesgo = unicos.filter(c => c.estatusCliente === 'En Riesgo').length;
         this.totalesKPI.clientesInactivos = unicos.filter(c => c.estatusCliente === 'Inactivo').length;
         this.totalesKPI.clientesRecuperados = unicos.filter(c => c.estatusCliente === 'Recuperado').length;
-        this.totalesKPI.clientesNuevos = unicos.filter(c => c.clasificacion === 'Cliente Nuevo').length;
+        this.totalesKPI.clientesNuevos = unicos.filter(c => c.clasificacion === 'Nuevo').length;
     }
 
     seleccionarFiltroKPI(tipo: string): void {
@@ -299,7 +299,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
             else if (this.filtroSeleccionadoKPI === 'RIESGO') matchKPI = cli.estatusCliente === 'En Riesgo';
             else if (this.filtroSeleccionadoKPI === 'INACTIVO') matchKPI = cli.estatusCliente === 'Inactivo';
             else if (this.filtroSeleccionadoKPI === 'RECUPERADO') matchKPI = cli.estatusCliente === 'Recuperado';
-            else if (this.filtroSeleccionadoKPI === 'NUEVO') matchKPI = cli.clasificacion === 'Cliente Nuevo';
+            else if (this.filtroSeleccionadoKPI === 'NUEVO') matchKPI = cli.clasificacion === 'Nuevo';
 
             return matchGlobal && matchNombre && matchClasificacion && matchMejorCategoria && matchKPI;
         });
@@ -969,11 +969,10 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
     getClasificacionColor(clasificacion: string): string {
         const colors: any = {
-            'Cliente Estratégico': '#f59e0b',
-            'Cliente Fidelizado': '#10b981',
-            'Cliente Habitual': '#06b6d4',
-            'Cliente Recurrente': '#3b82f6',
-            'Cliente Nuevo': '#94a3b8'
+            'PLATA': '#3b82f6',
+            'PLATINO': '#06b6d4',
+            'ORO': '#f59e0b',
+            'DIAMANTE': '#8b5cf6'
         };
         return colors[clasificacion] || '#64748b';
     }
