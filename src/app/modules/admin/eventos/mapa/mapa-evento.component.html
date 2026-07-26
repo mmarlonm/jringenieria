@@ -1,0 +1,126 @@
+<div class="mapa-root" #container>
+
+  <!-- ── Canvas 3D ─────────────────────────────────────────────────────────── -->
+  <canvas #canvas3d
+          class="mapa-canvas"
+          (click)="onCanvasClick($event)"
+          (mousemove)="onCanvasMove($event)">
+  </canvas>
+
+  <!-- ── Spinner de carga ───────────────────────────────────────────────────── -->
+  @if (isLoading) {
+    <div class="mapa-loader">
+      <div class="loader-ring"></div>
+      <span>Cargando mapa 3D…</span>
+    </div>
+  }
+
+  <!-- ── HUD: título y stats ───────────────────────────────────────────────── -->
+  <div class="mapa-hud-top">
+    <div class="hud-title">
+      <mat-icon class="hud-icon">map</mat-icon>
+      <span>Mapa del Evento — Planta Alta</span>
+    </div>
+    <div class="hud-stats">
+      <button class="hud-btn" [class.hud-btn--active]="isTouring" (click)="toggleTour()">
+        <mat-icon>{{ isTouring ? 'stop_circle' : 'play_circle' }}</mat-icon>
+        <span>{{ isTouring ? 'Detener recorrido' : 'Recorrido 3D' }}</span>
+      </button>
+      <button class="hud-btn" (click)="resetView()">
+        <mat-icon>public</mat-icon>
+        <span>Vista general</span>
+      </button>
+      <div class="stat-chip">
+        <span class="stat-value">{{ totalStands }}</span>
+        <span class="stat-label">Stands</span>
+      </div>
+      <div class="stat-chip available">
+        <span class="stat-value">{{ disponibles }}</span>
+        <span class="stat-label">Disponibles</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Indicador de recorrido ─────────────────────────────────────────────── -->
+  @if (tourTitulo) {
+    <div class="tour-badge">
+      <span class="tour-dot"></span>
+      <span>{{ tourTitulo }}</span>
+    </div>
+  }
+
+  <!-- ── Controles de ayuda ─────────────────────────────────────────────────── -->
+  <div class="mapa-controls-hint">
+    <span><mat-icon>mouse</mat-icon> Click → seleccionar stand</span>
+    <span><mat-icon>open_with</mat-icon> Arrastrar → orbitar</span>
+    <span><mat-icon>zoom_in</mat-icon> Scroll → zoom</span>
+  </div>
+
+  <!-- ── Leyenda ────────────────────────────────────────────────────────────── -->
+  <div class="mapa-legend">
+    <p class="legend-title">Tipos de Stand</p>
+    @for (item of legend; track item.tipo) {
+      <div class="legend-item">
+        <span class="legend-dot" [style.background]="item.color"></span>
+        <span>{{ item.label }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- ── Tooltip / Panel de Stand ──────────────────────────────────────────── -->
+  @if (tooltipVisible && selectedStand) {
+    <div class="stand-panel"
+         [style.left.px]="tooltipPos.x"
+         [style.top.px]="tooltipPos.y"
+         [class.stand-panel--visible]="tooltipVisible">
+
+      <button class="panel-close" (click)="closeTooltip()">
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <div class="panel-badge" [style.background]="getTipoColor(selectedStand.tipo)">
+        {{ getTipoLabel(selectedStand.tipo) }}
+      </div>
+
+      <h3 class="panel-title">{{ selectedStand.label }}</h3>
+
+      @if (selectedStand.empresa) {
+        <p class="panel-empresa">
+          <mat-icon>business</mat-icon>
+          {{ selectedStand.empresa }}
+        </p>
+      }
+
+      <div class="panel-meta">
+        <div class="meta-item">
+          <mat-icon>straighten</mat-icon>
+          <span>{{ getDims(selectedStand) }}</span>
+        </div>
+        @if (selectedStand.esStand) {
+          <div class="meta-item">
+            <mat-icon>
+              {{ selectedStand.disponible === false ? 'lock' : 'check_circle' }}
+            </mat-icon>
+            <span [class.text-red]="selectedStand.disponible === false"
+                  [class.text-green]="selectedStand.disponible !== false">
+              {{ selectedStand.disponible === false ? 'Ocupado' : 'Disponible' }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <button class="panel-ghost" (click)="focusSelected()">
+        <mat-icon>center_focus_strong</mat-icon>
+        Ver en 3D
+      </button>
+
+      @if (selectedStand.esStand && selectedStand.disponible !== false) {
+        <button class="panel-cta">
+          <mat-icon>bookmark_add</mat-icon>
+          Apartar Stand
+        </button>
+      }
+    </div>
+  }
+
+</div>
