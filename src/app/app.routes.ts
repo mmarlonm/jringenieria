@@ -154,11 +154,15 @@ export const appRoutes: Route[] = [
                     { path: 'gestion-talleres', loadComponent: () => import('app/modules/admin/eventos/gestion-talleres/gestion-talleres.component').then(m => m.GestionTalleresComponent) },
                     { path: 'personal', loadComponent: () => import('app/modules/admin/eventos/personal-staff/personal-staff.component').then(m => m.EventosPersonalComponent) },
                     { path: 'actividades', loadComponent: () => import('app/modules/admin/eventos/actividades/actividades.component').then(m => m.ActividadesComponent) },
-                    { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) },
-                    { path: 'mapa', loadChildren: () => import('app/modules/admin/eventos/mapa/mapa-evento.routes').then(m => m.MAPA_EVENTO_ROUTES) }
+                    { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) }
                 ]
             }
         ]
+    },
+    // Mapa 3D del evento — ruta pública, sin layout ni guard (igual que escanear-pase)
+    {
+        path: 'eventos/mapa',
+        loadChildren: () => import('app/modules/admin/eventos/mapa/mapa-evento.routes').then(m => m.MAPA_EVENTO_ROUTES)
     },
     {
         path: 'eventos/escanear-pase',

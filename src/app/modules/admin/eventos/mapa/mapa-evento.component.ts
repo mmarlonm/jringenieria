@@ -19,9 +19,9 @@ import { StandConfig, StandTipo, STANDS_DATA } from './mapa-evento.models';
   templateUrl: './mapa-evento.component.html',
   styleUrls: ['./mapa-evento.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // ← Hace que el componente llene el 100% del contenedor padre en Fuse layout
+  // ← Ruta libre (sin layout Fuse): ocupa toda la ventana
   host: {
-    style: 'display:block; height:100%; width:100%; overflow:hidden; flex:1; min-height:0;'
+    style: 'display:block; position:fixed; inset:0; height:100dvh; width:100vw; overflow:hidden;'
   }
 })
 export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
