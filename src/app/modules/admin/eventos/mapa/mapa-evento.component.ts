@@ -328,7 +328,7 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
       imagenes: this.formApartarStand.get('imagenes')?.value || []
     };
 
-    this._eventosService.apartarStand(stand.dbId || 0, standData)
+    this._eventosService.apartarStand(stand.id, standData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

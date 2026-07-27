@@ -734,8 +734,8 @@ export class EventosService implements OnDestroy {
         return this._http.delete<any>(`${this.apiBase}/EventoStands/${id}`);
     }
 
-    public apartarStand(id: number, stand: any): Observable<any> {
-        return this._http.post<any>(`${this.apiBase}/EventoStands/${id}/apartar`, stand);
+    public apartarStand(standId: string | number, stand: any): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/EventoStands/${standId}/apartar`, stand);
     }
 
     // Obtener asistentes profesionales de un evento
