@@ -69,58 +69,149 @@
 
   <!-- ── Tooltip / Panel de Stand ──────────────────────────────────────────── -->
   @if (tooltipVisible && selectedStand) {
-    <div class="stand-panel"
-         [style.left.px]="tooltipPos.x"
-         [style.top.px]="tooltipPos.y"
-         [class.stand-panel--visible]="tooltipVisible">
+    <!-- Panel simple para stands sin empresa -->
+    @if (!selectedStand.empresaInfo) {
+      <div class="stand-panel"
+           [style.left.px]="tooltipPos.x"
+           [style.top.px]="tooltipPos.y"
+           [class.stand-panel--visible]="tooltipVisible">
 
-      <button class="panel-close" (click)="closeTooltip()">
-        <mat-icon>close</mat-icon>
-      </button>
+        <button class="panel-close" (click)="closeTooltip()">
+          <mat-icon>close</mat-icon>
+        </button>
 
-      <div class="panel-badge" [style.background]="getTipoColor(selectedStand.tipo)">
-        {{ getTipoLabel(selectedStand.tipo) }}
-      </div>
-
-      <h3 class="panel-title">{{ selectedStand.label }}</h3>
-
-      @if (selectedStand.empresa) {
-        <p class="panel-empresa">
-          <mat-icon>business</mat-icon>
-          {{ selectedStand.empresa }}
-        </p>
-      }
-
-      <div class="panel-meta">
-        <div class="meta-item">
-          <mat-icon>straighten</mat-icon>
-          <span>{{ getDims(selectedStand) }}</span>
+        <div class="panel-badge" [style.background]="getTipoColor(selectedStand.tipo)">
+          {{ getTipoLabel(selectedStand.tipo) }}
         </div>
-        @if (selectedStand.esStand) {
+
+        <h3 class="panel-title">{{ selectedStand.label }}</h3>
+
+        @if (selectedStand.empresa) {
+          <p class="panel-empresa">
+            <mat-icon>business</mat-icon>
+            {{ selectedStand.empresa }}
+          </p>
+        }
+
+        <div class="panel-meta">
           <div class="meta-item">
-            <mat-icon>
-              {{ selectedStand.disponible === false ? 'lock' : 'check_circle' }}
-            </mat-icon>
-            <span [class.text-red]="selectedStand.disponible === false"
-                  [class.text-green]="selectedStand.disponible !== false">
-              {{ selectedStand.disponible === false ? 'Ocupado' : 'Disponible' }}
-            </span>
+            <mat-icon>straighten</mat-icon>
+            <span>{{ getDims(selectedStand) }}</span>
           </div>
+          @if (selectedStand.esStand) {
+            <div class="meta-item">
+              <mat-icon>
+                {{ selectedStand.disponible === false ? 'lock' : 'check_circle' }}
+              </mat-icon>
+              <span [class.text-red]="selectedStand.disponible === false"
+                    [class.text-green]="selectedStand.disponible !== false">
+                {{ selectedStand.disponible === false ? 'Ocupado' : 'Disponible' }}
+              </span>
+            </div>
+          }
+        </div>
+
+        <button class="panel-ghost" (click)="focusSelected()">
+          <mat-icon>center_focus_strong</mat-icon>
+          Ver en 3D
+        </button>
+
+        @if (selectedStand.esStand && selectedStand.disponible !== false) {
+          <button class="panel-cta" (click)="abrirModalApartarStand(selectedStand)">
+            <mat-icon>bookmark_add</mat-icon>
+            Apartar Stand
+          </button>
         }
       </div>
+    }
 
-      <button class="panel-ghost" (click)="focusSelected()">
-        <mat-icon>center_focus_strong</mat-icon>
-        Ver en 3D
-      </button>
+    <!-- Panel expandido para stands con información de empresa apartada -->
+    @if (selectedStand.empresaInfo) {
+      <div class="stand-panel-expanded"
+           [style.left.px]="tooltipPos.x"
+           [style.top.px]="tooltipPos.y"
+           [class.stand-panel--visible]="tooltipVisible">
 
-      @if (selectedStand.esStand && selectedStand.disponible !== false) {
-        <button class="panel-cta">
-          <mat-icon>bookmark_add</mat-icon>
-          Apartar Stand
+        <button class="panel-close" (click)="closeTooltip()">
+          <mat-icon>close</mat-icon>
         </button>
-      }
-    </div>
+
+        <!-- Logo y nombre de empresa -->
+        <div class="empresa-header">
+          @if (selectedStand.empresaInfo?.logo) {
+            <img [src]="selectedStand.empresaInfo.logo" [alt]="selectedStand.empresa" class="empresa-logo">
+          }
+          <h2 class="empresa-nombre">{{ selectedStand.empresa }}</h2>
+          <p class="empresa-stand">Stand {{ selectedStand.label }}</p>
+        </div>
+
+        <!-- Descripción -->
+        @if (selectedStand.empresaInfo.descripcion) {
+          <div class="empresa-descripcion">
+            {{ selectedStand.empresaInfo.descripcion }}
+          </div>
+        }
+
+        <!-- Galería de imágenes -->
+        @if (selectedStand.empresaInfo.imagenes && selectedStand.empresaInfo.imagenes.length > 0) {
+          <div class="empresa-galeria">
+            <h3 class="galeria-titulo">Galería</h3>
+            <div class="galeria-grid">
+              @for (img of selectedStand.empresaInfo.imagenes; track $index) {
+                <img [src]="img" [alt]="'Imagen ' + ($index + 1)" class="galeria-img">
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Información de contacto B2B -->
+        @if (selectedStand.empresaInfo.contacto) {
+          <div class="empresa-contacto">
+            <h3 class="contacto-titulo">Información B2B</h3>
+            @if (selectedStand.empresaInfo.contacto.nombre) {
+              <p class="contacto-item">
+                <mat-icon>person</mat-icon>
+                <span>{{ selectedStand.empresaInfo.contacto.nombre }}</span>
+              </p>
+            }
+            @if (selectedStand.empresaInfo.contacto.email) {
+              <p class="contacto-item">
+                <mat-icon>email</mat-icon>
+                <a [href]="'mailto:' + selectedStand.empresaInfo.contacto.email">
+                  {{ selectedStand.empresaInfo.contacto.email }}
+                </a>
+              </p>
+            }
+            @if (selectedStand.empresaInfo.contacto.telefono) {
+              <p class="contacto-item">
+                <mat-icon>phone</mat-icon>
+                <a [href]="'tel:' + selectedStand.empresaInfo.contacto.telefono">
+                  {{ selectedStand.empresaInfo.contacto.telefono }}
+                </a>
+              </p>
+            }
+          </div>
+        }
+
+        <!-- Botones de acción -->
+        <div class="empresa-acciones">
+          <button class="btn-secundario" (click)="focusSelected()">
+            <mat-icon>center_focus_strong</mat-icon>
+            Ver en 3D
+          </button>
+          @if (selectedStand.empresaInfo.contacto?.enlace) {
+            <a [href]="selectedStand.empresaInfo.contacto.enlace" target="_blank" class="btn-primario">
+              <mat-icon>public</mat-icon>
+              Visitar Sitio Web
+            </a>
+          }
+          <button class="btn-contacto" (click)="contactarEmpresa()">
+            <mat-icon>mail</mat-icon>
+            Solicitar Información B2B
+          </button>
+        </div>
+      </div>
+    }
   }
 
 </div>

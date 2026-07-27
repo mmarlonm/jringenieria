@@ -707,4 +707,47 @@ export class EventosService implements OnDestroy {
     public selectEventoId(eventoId: number): void {
         this._selectedEventoId.next(eventoId);
     }
+
+    // --- EventoStands (Stands con información de empresa) ---
+
+    public getEventoStands(eventoId: number): Observable<any> {
+        return this._http.get<any>(`${this.apiBase}/EventoStands/evento/${eventoId}`);
+    }
+
+    public getDisponiblesStands(eventoId: number): Observable<any> {
+        return this._http.get<any>(`${this.apiBase}/EventoStands/disponibles/${eventoId}`);
+    }
+
+    public getStandById(id: number): Observable<any> {
+        return this._http.get<any>(`${this.apiBase}/EventoStands/${id}`);
+    }
+
+    public crearStand(stand: any): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/EventoStands`, stand);
+    }
+
+    public actualizarStand(id: number, stand: any): Observable<any> {
+        return this._http.put<any>(`${this.apiBase}/EventoStands/${id}`, stand);
+    }
+
+    public eliminarStand(id: number): Observable<any> {
+        return this._http.delete<any>(`${this.apiBase}/EventoStands/${id}`);
+    }
+
+    public apartarStand(id: number, stand: any): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/EventoStands/${id}/apartar`, stand);
+    }
+
+    // Obtener asistentes profesionales de un evento
+    public getAsistentesProfesionales(eventoId: number): Observable<any[]> {
+        return this.getAsistentes(eventoId).pipe(
+            map((asistentes: any[]) =>
+                asistentes.filter(a =>
+                    a.tipo === 'General' || // Profesionales registrados como "General"
+                    (a.ocupacion && a.ocupacion.trim() !== '') || // Tienen ocupación/cargo
+                    (a.empresa && a.empresa.trim() !== '') // Tienen empresa
+                )
+            )
+        );
+    }
 }
