@@ -321,12 +321,15 @@ export class SolicitudCompraFormComponent implements OnInit {
         const proveedor = event.option.value as ProveedorDto;
         const row = this.proveedoresRows.at(index);
 
+        // cuenta_Bancaria viene de CONTPAQi y se mapea al campo clabe (CLABE interbancaria)
+        const clabeValue = proveedor.cuenta_Bancaria || proveedor.clabe || '';
+
         row.patchValue({
             razonSocial: proveedor.nombre,
             rfc: proveedor.rfc,
             banco: proveedor.banco || '',
             cuenta: proveedor.cuenta || '',
-            clabe: proveedor.clabe || ''
+            clabe: clabeValue
         }, { emitEvent: false });
     }
 
