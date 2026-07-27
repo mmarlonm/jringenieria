@@ -34,16 +34,7 @@
                     <p class="text-[10px] text-secondary mt-1 italic">Presiona Enter o el botón para buscar</p>
                 </div>
 
-                <div class="md:col-span-1">
-                    <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
-                        <mat-label>Factura (CONTPAQi)</mat-label>
-                        <input matInput formControlName="folioInternoFactura" placeholder="Ej. F-123, F-456">
-                        <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
-                    </mat-form-field>
-                    <p class="text-[10px] text-secondary mt-1 italic">Ingresa folios separados por coma</p>
-                </div>
-
-                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
                         <mat-label>Sucursal / Proyecto</mat-label>
                         <input matInput [value]="(ocData?.sucursal || '-') + ' / ' + (ocData?.proyectoCliente || '-')" readonly>
@@ -204,6 +195,44 @@
                         <span class="text-[9px] font-mono font-bold text-gray-500 break-all leading-tight">{{ ocData?.datosFiscales?.folioFiscal_UUID || 'No disponible' }}</span>
                     </div>
                 </div>
+            </mat-card>
+
+            <!-- Section C-bis: Facturas de la Recepción -->
+            <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-white">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                        <mat-icon class="icon-size-5 text-emerald-500 opacity-70" [svgIcon]="'heroicons_solid:document-duplicate'"></mat-icon>
+                        Facturas de la Recepción
+                    </h3>
+                    <button mat-stroked-button type="button" color="primary" class="rounded-lg" (click)="addFactura()">
+                        <mat-icon class="icon-size-5 mr-1" [svgIcon]="'heroicons_solid:plus'"></mat-icon>
+                        Agregar Factura
+                    </button>
+                </div>
+
+                <div formArrayName="facturas" class="space-y-3">
+                    <div *ngFor="let facturaGroup of facturas.controls; let i = index" [formGroupName]="i"
+                         class="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 items-start bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+                        <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                            <mat-label>Folio de Factura</mat-label>
+                            <input matInput formControlName="folioFactura" placeholder="Ej. F-123">
+                            <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_solid:document-text'"></mat-icon>
+                        </mat-form-field>
+
+                        <mat-form-field class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                            <mat-label>Monto (opcional)</mat-label>
+                            <input matInput type="number" formControlName="monto" placeholder="0.00">
+                            <span matPrefix>$&nbsp;</span>
+                        </mat-form-field>
+
+                        <button mat-icon-button type="button" class="text-red-500 hover:bg-red-50 mt-1"
+                                matTooltip="Quitar factura" (click)="removeFactura(i)">
+                            <mat-icon [svgIcon]="'heroicons_solid:trash'"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-[10px] text-secondary mt-2 italic">Agrega una fila por cada factura recibida en esta entrega.</p>
             </mat-card>
 
             <!-- Section D: Carga de Archivos -->

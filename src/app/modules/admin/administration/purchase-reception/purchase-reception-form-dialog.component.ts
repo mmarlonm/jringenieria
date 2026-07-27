@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -12,12 +12,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatNativeDateModule, MatOptionModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { PurchaseReceptionService } from './purchase-reception.service';
 import { UsersService } from '../../security/users/users.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
-import { FormControl } from '@angular/forms';
-import { Subject, takeUntil, debounceTime, switchMap, of, catchError, forkJoin } from 'rxjs';
+import { Subject, forkJoin } from 'rxjs';
 
 @Component({
     selector: 'purchase-reception-form-dialog',
@@ -66,6 +65,10 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
         private _notificationService: ChatNotificationService
     ) { }
 
+    get facturas(): FormArray {
+        return this.receptionForm.get('facturas') as FormArray;
+    }
+
     ngOnInit(): void {
         this.initForm();
         this.loadUsers();
@@ -78,19 +81,7 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
                 next: (res) => {
                     const actualRec = res.data || res;
                     if (actualRec) {
-                        const facturasStr = actualRec.folioInternoFactura || actualRec.facturas || actualRec.factura || '';
-                        this.receptionForm.patchValue({
-                            folioInternoFactura: facturasStr
-                        });
-                        if (this.ocData) {
-                            this.ocData = {
-                                ...this.ocData,
-                                datosFiscales: {
-                                    ...this.ocData.datosFiscales,
-                                    folioInternoFactura: facturasStr
-                                }
-                            };
-                        }
+                        this.setFacturas(actualRec.facturas, actualRec.folioInternoFactura);
                     }
                     this.isLoading = false;
                 },
@@ -123,14 +114,7 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             dondeRecibio: [rec?.dondeRecibio || '', Validators.required],
             CondicionesComentarios: [rec?.condicionesComentarios || ''],
             estatus: [statusValue, Validators.required],
-            folioInternoFactura: [
-                rec?.folioInternoFactura || 
-                rec?.datosFiscales?.folioInternoFactura || 
-                rec?.datosFacturaContpaqi?.folioInternoFactura || 
-                rec?.facturas || 
-                rec?.factura || 
-                ''
-            ],
+            facturas: this._formBuilder.array([]),
             puntajeCalidad: [rec?.puntajeCalidad !== undefined ? rec.puntajeCalidad : 100, Validators.required],
             puntajeEntrega: [rec?.puntajeEntrega !== undefined ? rec.puntajeEntrega : 100, Validators.required],
             puntajePrecio: [rec?.puntajePrecio !== undefined ? rec.puntajePrecio : 100, Validators.required],
@@ -139,13 +123,6 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             puntajeSeguridad: [rec?.puntajeSeguridad !== undefined ? rec.puntajeSeguridad : 100, Validators.required],
             puntajeGarantias: [rec?.puntajeGarantias !== undefined ? rec.puntajeGarantias : 100, Validators.required]
         });
-
-        // Always keep folioInternoFactura enabled to allow editing regardless of status
-        this.receptionForm.get('estatus').valueChanges
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe(() => {
-                this.receptionForm.get('folioInternoFactura').enable({ emitEvent: false });
-            });
 
         if (rec) {
             this.ocData = {
@@ -160,7 +137,55 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
                     folioInternoFactura: rec.folioInternoFactura
                 }
             };
+            this.setFacturas(rec.facturas, rec.folioInternoFactura);
+        } else {
+            this.addFactura();
         }
+    }
+
+    /** Crea una fila del FormArray de facturas */
+    private buildFacturaRow(idFactura: number | null, folioFactura: string, monto: number | null): FormGroup {
+        return this._formBuilder.group({
+            idFactura: [idFactura],
+            folioFactura: [folioFactura || '', Validators.required],
+            monto: [monto]
+        });
+    }
+
+    /**
+     * Reemplaza el contenido del FormArray de facturas.
+     * Compatible con recepciones antiguas que sólo tienen el texto plano en folioInternoFactura.
+     */
+    private setFacturas(facturasApi: any[] | undefined, folioInternoFacturaLegado: string | undefined): void {
+        this.facturas.clear();
+
+        if (facturasApi && facturasApi.length > 0) {
+            facturasApi.forEach(f => {
+                this.facturas.push(this.buildFacturaRow(f.idFactura ?? null, f.folioFactura, f.monto ?? null));
+            });
+            return;
+        }
+
+        // Fallback: registros previos a esta funcionalidad, guardados como texto "F-1, F-2"
+        const folios = (folioInternoFacturaLegado || '')
+            .split(',')
+            .map(f => f.trim())
+            .filter(f => !!f);
+
+        if (folios.length > 0) {
+            folios.forEach(folio => this.facturas.push(this.buildFacturaRow(null, folio, null)));
+        } else {
+            this.addFactura();
+        }
+    }
+
+    addFactura(): void {
+        this.facturas.push(this.buildFacturaRow(null, '', null));
+    }
+
+    removeFactura(index: number): void {
+        this.facturas.removeAt(index);
+        if (this.facturas.length === 0) this.addFactura();
     }
 
     onSearchOC(event: any): void {
@@ -172,20 +197,25 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             next: (res) => {
                 this.ocData = res;
                 if (res) {
-                    const currentVal = this.receptionForm.get('folioInternoFactura').value || '';
-                    const newVal = res.datosFiscales?.folioInternoFactura || '';
-                    let finalVal = currentVal;
-                    if (!currentVal) {
-                        finalVal = newVal;
-                    } else if (newVal && !currentVal.includes(newVal)) {
-                        // Limpiar espacios extras al concatenar
-                        finalVal = `${currentVal.trim().replace(/,+$/, '')}, ${newVal.trim()}`;
+                    const nuevoFolio = res.datosFiscales?.folioInternoFactura;
+                    if (nuevoFolio) {
+                        const yaExiste = this.facturas.controls.some(
+                            c => (c.get('folioFactura').value || '').trim() === nuevoFolio.trim()
+                        );
+                        const primeraVacia = this.facturas.controls.find(c => !c.get('folioFactura').value);
+                        if (!yaExiste) {
+                            if (primeraVacia) {
+                                primeraVacia.patchValue({ folioFactura: nuevoFolio });
+                            } else {
+                                this.addFactura();
+                                this.facturas.at(this.facturas.length - 1).patchValue({ folioFactura: nuevoFolio });
+                            }
+                        }
                     }
 
                     this.receptionForm.patchValue({
                         idSolicitud: res.idSolicitud || folio,
-                        lugarEntrega: res.lugarEntrega || '',
-                        folioInternoFactura: finalVal
+                        lugarEntrega: res.lugarEntrega || ''
                     });
                 }
                 this.isLoading = false;
@@ -197,8 +227,6 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             }
         });
     }
-
-
 
     onFileSelected(event: any): void {
         const files = event.target.files;
@@ -227,6 +255,7 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
         this.isLoading = true;
 
         const formValues = this.receptionForm.getRawValue();
+        const facturasPayload = (formValues.facturas || []).filter((f: any) => !!f.folioFactura?.trim());
 
         // Ensure we send the data in the format the API expects
         const payload = {
@@ -240,17 +269,17 @@ export class PurchaseReceptionFormDialogComponent implements OnInit {
             monto: this.ocData?.datosFiscales?.totalFactura,
             moneda: this.ocData?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (this.ocData?.datosFiscales?.moneda?.trim() || 'MXN'),
             estatus: formValues.estatus,
-            folioInternoFactura: formValues.folioInternoFactura
+            facturas: facturasPayload
         };
 
         this._receptionService.registrarRecepcion(payload).subscribe({
             next: (res) => {
                 const idRecepcion = res.idRecepcion || res.id;
                 if (this.selectedFiles.length > 0) {
-                    const uploads = this.selectedFiles.map(f => 
+                    const uploads = this.selectedFiles.map(f =>
                         this._receptionService.subirArchivoRecepcion(idRecepcion, f.file, f.type)
                     );
-                    
+
                     forkJoin(uploads).subscribe({
                         next: () => this.handleSuccess(),
                         error: () => this.handleError('Error al subir algunos archivos')

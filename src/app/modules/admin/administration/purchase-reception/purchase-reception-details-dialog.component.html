@@ -80,10 +80,6 @@
                             <span class="text-sm font-black text-emerald-600">{{ (df.totalFactura || 0) | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
                         </div>
                         <div class="flex flex-col bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
-                            <span class="text-[9px] font-bold text-secondary uppercase tracking-wider mb-1">Folio Interno</span>
-                            <span class="text-sm font-black text-amber-600">{{ df.folioInternoFactura || '-' }}</span>
-                        </div>
-                        <div class="flex flex-col bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
                             <span class="text-[9px] font-bold text-secondary uppercase tracking-wider mb-1">RFC Proveedor</span>
                             <span class="text-xs font-bold text-gray-700 leading-tight">{{ df.rfcProveedor || '-' }}</span>
                         </div>
@@ -93,6 +89,28 @@
                         </div>
                     </div>
                 </ng-container>
+            </mat-card>
+
+            <!-- Facturas de la Recepción -->
+            <mat-card class="p-6 shadow-sm border-none relative overflow-hidden bg-white md:col-span-2">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+                <h3 class="text-sm font-black text-gray-900 flex items-center gap-2 mb-4 uppercase tracking-tighter">
+                    <mat-icon class="icon-size-5 text-emerald-500" [svgIcon]="'heroicons_solid:document-duplicate'"></mat-icon>
+                    Facturas de la Recepción
+                </h3>
+
+                <div *ngIf="!reception.facturas?.length" class="text-sm text-secondary italic">
+                    Sin facturas registradas.
+                </div>
+
+                <div *ngIf="reception.facturas?.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div *ngFor="let f of reception.facturas" class="flex items-center justify-between bg-emerald-50/40 p-3 rounded-xl border border-emerald-100">
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-xs font-bold text-gray-800 truncate">{{ f.folioFactura }}</span>
+                            <span class="text-[10px] text-secondary" *ngIf="f.monto">{{ f.monto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                        </div>
+                    </div>
+                </div>
             </mat-card>
 
             <!-- Status/Comments -->
