@@ -4,27 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { NgApexchartsModule } from 'ng-apexcharts';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import * as Highcharts from 'highcharts';
+import { HighchartsChartModule } from 'highcharts-angular';
+import Exporting from 'highcharts/modules/exporting';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventosService, Asistente, EventoEdicion } from '../eventos.service';
+import { PersonalStaffService, PersonalStaff } from '../personal-staff/personal-staff.service';
 
-interface ReporteEmpresa {
-  empresa: string;
-  cantidad: number;
-  porcentaje: number;
-  tipos: { tipo: string; count: number }[];
-}
-
-interface ReporteEstadistica {
-  label: string;
-  value: number | string;
-  icon?: string;
-  color?: string;
-}
+Exporting(Highcharts);
+Highcharts.setOptions({
+  time: { useUTC: false },
+  lang: {
+    decimalPoint: '.',
+    thousandsSep: ',',
+    months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+  }
+});
 
 @Component({
   selector: 'app-eventos-reportes',
@@ -34,32 +32,64 @@ interface ReporteEstadistica {
   imports: [
     CommonModule,
     FormsModule,
+    HighchartsChartModule,
     MatButtonModule,
     MatIconModule,
     MatSelectModule,
-    MatTableModule,
-    MatCardModule,
     MatFormFieldModule,
-    NgApexchartsModule
+    MatProgressSpinnerModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EventosReportesComponent implements OnInit, OnDestroy {
+  public Highcharts: typeof Highcharts = Highcharts;
+
   private _eventosService = inject(EventosService);
+  private _personalStaffService = inject(PersonalStaffService);
   private _cdr = inject(ChangeDetectorRef);
 
   public ediciones: EventoEdicion[] = [];
   public selectedEventoId: number = 2026;
   public asistentes: Asistente[] = [];
+  public personalStaff: PersonalStaff[] = [];
   public isLoading: boolean = true;
 
-  public reporteEmpresas: ReporteEmpresa[] = [];
-  public reporteUniversidades: ReporteEmpresa[] = [];
-  public reportePorTipo: { tipo: string; cantidad: number; porcentaje: number }[] = [];
-  public estadisticasGenerales: ReporteEstadistica[] = [];
+  // KPI Data
+  public totalRegistros: number = 0;
+  public totalAsistieron: number = 0;
+  public tasaAsistencia: string = '0%';
 
-  public displayedColumnsEmpresas: string[] = ['empresa', 'cantidad', 'porcentaje', 'tipos'];
-  public displayedColumnsUniversidades: string[] = ['universidad', 'cantidad', 'porcentaje', 'carrera'];
+  // Chart Options
+  public chartEmpresasOptions: any = {};
+  public chartUniversidadesOptions: any = {};
+  public chartTiposAsistentesOptions: any = {};
+  public chartTiposPersonalOptions: any = {};
+
+  private baseTheme: any = {
+    chart: {
+      backgroundColor: 'transparent',
+      spacingBottom: 20,
+      spacingTop: 10,
+      spacingLeft: 10,
+      spacingRight: 10,
+      style: { fontFamily: 'Inter, sans-serif' }
+    },
+    title: { text: undefined },
+    credits: { enabled: false },
+    legend: {
+      itemStyle: { color: '#4b5563', fontWeight: 'bold', fontSize: '11px' },
+      margin: 10,
+      padding: 5
+    },
+    tooltip: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      style: { color: '#1f2937' },
+      borderColor: '#e5e7eb',
+      borderRadius: 12,
+      shadow: true,
+      padding: 12
+    }
+  };
 
   private destroy$ = new Subject<void>();
 
@@ -85,12 +115,28 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
     this._eventosService.getAsistentes(this.selectedEventoId).subscribe({
       next: (asistentes) => {
         this.asistentes = asistentes || [];
+        this.loadPersonalStaff();
+      },
+      error: (err) => {
+        console.error('Error loading asistentes:', err);
+        this.isLoading = false;
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadPersonalStaff(): void {
+    this._personalStaffService.getAll().subscribe({
+      next: (personal) => {
+        this.personalStaff = (personal || []).filter(p =>
+          p.eventoIds && p.eventoIds.includes(this.selectedEventoId)
+        );
         this.generarReportes();
         this.isLoading = false;
         this._cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error loading asistentes:', err);
+        console.error('Error loading personal:', err);
         this.isLoading = false;
         this._cdr.markForCheck();
       }
@@ -102,71 +148,133 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
   }
 
   private generarReportes(): void {
-    this.generarReporteEmpresas();
-    this.generarReporteUniversidades();
-    this.generarReportePorTipo();
-    this.generarEstadisticasGenerales();
+    this.calcularKPIs();
+    this.generarGraficoEmpresas();
+    this.generarGraficoUniversidades();
+    this.generarGraficoTiposAsistentes();
+    this.generarGraficoTiposPersonal();
   }
 
-  private generarReporteEmpresas(): void {
-    const empresasMap = new Map<string, { count: number; tipos: Map<string, number> }>();
-
-    this.asistentes
-      .filter(a => a.empresa && a.empresa.trim() !== '' && a.empresa !== 'S/D')
-      .forEach(a => {
-        const empresa = a.empresa.trim();
-        if (!empresasMap.has(empresa)) {
-          empresasMap.set(empresa, { count: 0, tipos: new Map() });
-        }
-        const data = empresasMap.get(empresa)!;
-        data.count++;
-        const tipoCount = data.tipos.get(a.tipo) || 0;
-        data.tipos.set(a.tipo, tipoCount + 1);
-      });
-
-    const total = Array.from(empresasMap.values()).reduce((sum, d) => sum + d.count, 0);
-
-    this.reporteEmpresas = Array.from(empresasMap.entries())
-      .map(([empresa, data]) => ({
-        empresa,
-        cantidad: data.count,
-        porcentaje: Math.round((data.count / total) * 100 * 100) / 100,
-        tipos: Array.from(data.tipos.entries()).map(([tipo, count]) => ({ tipo, count }))
-      }))
-      .sort((a, b) => b.cantidad - a.cantidad);
+  private calcularKPIs(): void {
+    if (this.asistentes.length > 0) {
+      // Cálculo basado en asistentes
+      const asistieron = this.asistentes.filter(a => a.asistencia === 'Presente').length;
+      this.totalRegistros = this.asistentes.length + this.personalStaff.length;
+      this.totalAsistieron = asistieron + this.personalStaff.length;
+      this.tasaAsistencia = Math.round((asistieron / this.asistentes.length) * 100) + '%';
+    } else if (this.personalStaff.length > 0) {
+      // Cálculo basado en personal/staff (solo presentes)
+      this.totalRegistros = this.personalStaff.length;
+      this.totalAsistieron = this.personalStaff.length;
+      this.tasaAsistencia = '100%';
+    } else {
+      this.totalRegistros = 0;
+      this.totalAsistieron = 0;
+      this.tasaAsistencia = '0%';
+    }
   }
 
-  private generarReporteUniversidades(): void {
-    const univMap = new Map<string, { count: number; carreras: Map<string, number> }>();
+  private generarGraficoEmpresas(): void {
+    const empresasMap = new Map<string, number>();
 
-    this.asistentes
-      .filter(a => a.universidad && a.universidad.trim() !== '')
-      .forEach(a => {
-        const univ = a.universidad.trim();
-        if (!univMap.has(univ)) {
-          univMap.set(univ, { count: 0, carreras: new Map() });
+    if (this.asistentes.length > 0) {
+      this.asistentes
+        .filter(a => a.empresa && a.empresa.trim() !== '' && a.empresa !== 'S/D')
+        .forEach(a => {
+          const empresa = a.empresa.trim();
+          empresasMap.set(empresa, (empresasMap.get(empresa) || 0) + 1);
+        });
+    } else {
+      this.personalStaff
+        .filter(p => p.empresa && p.empresa.trim() !== '')
+        .forEach(p => {
+          const empresa = p.empresa.trim();
+          empresasMap.set(empresa, (empresasMap.get(empresa) || 0) + 1);
+        });
+    }
+
+    const datos = Array.from(empresasMap.entries())
+      .map(([name, y]) => ({ name, y }))
+      .sort((a, b) => b.y - a.y)
+      .slice(0, 15);
+
+    const etiqueta = this.asistentes.length > 0 ? 'Asistentes' : 'Personal';
+
+    this.chartEmpresasOptions = {
+      ...this.baseTheme,
+      chart: { ...this.baseTheme.chart, type: 'bar' },
+      xAxis: {
+        categories: datos.map(d => d.name),
+        title: { text: null },
+        labels: { style: { fontSize: '11px' } }
+      },
+      yAxis: {
+        title: { text: 'Cantidad' },
+        labels: { style: { fontSize: '11px' } }
+      },
+      series: [
+        {
+          name: etiqueta,
+          data: datos.map(d => d.y),
+          color: '#3b82f6'
         }
-        const data = univMap.get(univ)!;
-        data.count++;
-        if (a.carrera) {
-          const carreraCount = data.carreras.get(a.carrera) || 0;
-          data.carreras.set(a.carrera, carreraCount + 1);
-        }
-      });
-
-    const total = Array.from(univMap.values()).reduce((sum, d) => sum + d.count, 0);
-
-    this.reporteUniversidades = Array.from(univMap.entries())
-      .map(([universidad, data]) => ({
-        empresa: universidad,
-        cantidad: data.count,
-        porcentaje: Math.round((data.count / total) * 100 * 100) / 100,
-        tipos: Array.from(data.carreras.entries()).map(([carrera, count]) => ({ tipo: carrera, count }))
-      }))
-      .sort((a, b) => b.cantidad - a.cantidad);
+      ],
+      plotOptions: {
+        bar: { dataLabels: { enabled: true } }
+      }
+    };
   }
 
-  private generarReportePorTipo(): void {
+  private generarGraficoUniversidades(): void {
+    const dataMap = new Map<string, number>();
+
+    if (this.asistentes.length > 0) {
+      this.asistentes
+        .filter(a => a.universidad && a.universidad.trim() !== '')
+        .forEach(a => {
+          const univ = a.universidad.trim();
+          dataMap.set(univ, (dataMap.get(univ) || 0) + 1);
+        });
+    } else {
+      this.personalStaff
+        .filter(p => p.cargo && p.cargo.trim() !== '')
+        .forEach(p => {
+          const cargo = p.cargo.trim();
+          dataMap.set(cargo, (dataMap.get(cargo) || 0) + 1);
+        });
+    }
+
+    const datos = Array.from(dataMap.entries())
+      .map(([name, y]) => ({ name, y }))
+      .sort((a, b) => b.y - a.y)
+      .slice(0, 12);
+
+    const etiqueta = this.asistentes.length > 0 ? 'Estudiantes' : 'Cargos';
+
+    this.chartUniversidadesOptions = {
+      ...this.baseTheme,
+      chart: { ...this.baseTheme.chart, type: 'pie' },
+      series: [
+        {
+          name: etiqueta,
+          data: datos,
+          colorByPoint: true
+        }
+      ],
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '<b>{point.name}</b>: {point.y}'
+          }
+        }
+      }
+    };
+  }
+
+  private generarGraficoTiposAsistentes(): void {
     const tiposMap = new Map<string, number>();
 
     this.asistentes.forEach(a => {
@@ -174,40 +282,62 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
       tiposMap.set(tipo, (tiposMap.get(tipo) || 0) + 1);
     });
 
-    const total = this.asistentes.length;
+    const datos = Array.from(tiposMap.entries()).map(([name, y]) => ({ name, y }));
 
-    this.reportePorTipo = Array.from(tiposMap.entries())
-      .map(([tipo, cantidad]) => ({
-        tipo,
-        cantidad,
-        porcentaje: Math.round((cantidad / total) * 100 * 100) / 100
-      }))
-      .sort((a, b) => b.cantidad - a.cantidad);
+    this.chartTiposAsistentesOptions = {
+      ...this.baseTheme,
+      chart: { ...this.baseTheme.chart, type: 'pie' },
+      series: [
+        {
+          name: 'Tipo de Asistente',
+          data: datos,
+          colorByPoint: true
+        }
+      ],
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '<b>{point.name}</b>: {point.y} ({point.percentage:.1f}%)'
+          }
+        }
+      }
+    };
   }
 
-  private generarEstadisticasGenerales(): void {
-    const totalAsistentes = this.asistentes.length;
-    const asistieron = this.asistentes.filter(a => a.asistencia === 'Presente').length;
-    const empresasUnicas = new Set(this.asistentes.filter(a => a.empresa && a.empresa.trim() !== 'S/D').map(a => a.empresa)).size;
-    const universidadesUnicas = new Set(this.asistentes.filter(a => a.universidad).map(a => a.universidad)).size;
+  private generarGraficoTiposPersonal(): void {
+    const tiposMap = new Map<string, number>();
 
-    this.estadisticasGenerales = [
-      { label: 'Total Registrados', value: totalAsistentes, icon: 'heroicons_outline:users', color: 'emerald' },
-      { label: 'Asistieron', value: asistieron, icon: 'heroicons_outline:check-circle', color: 'green' },
-      {
-        label: 'Tasa Asistencia',
-        value: totalAsistentes > 0 ? Math.round((asistieron / totalAsistentes) * 100) + '%' : '0%',
-        icon: 'heroicons_outline:chart-pie',
-        color: 'indigo'
-      },
-      { label: 'Empresas', value: empresasUnicas, icon: 'heroicons_outline:building-office', color: 'blue' },
-      { label: 'Universidades', value: universidadesUnicas, icon: 'heroicons_outline:academic-cap', color: 'purple' }
-    ];
-  }
+    this.personalStaff.forEach(p => {
+      tiposMap.set(p.tipoPersonal || 'Otro', (tiposMap.get(p.tipoPersonal || 'Otro') || 0) + 1);
+    });
 
-  getPromedioEdad(): string {
-    // Placeholder: calcular edad desde fechaRegistro o campo específico si existe
-    return 'N/D';
+    const datos = Array.from(tiposMap.entries()).map(([name, y]) => ({ name, y }));
+
+    this.chartTiposPersonalOptions = {
+      ...this.baseTheme,
+      chart: { ...this.baseTheme.chart, type: 'donut' },
+      series: [
+        {
+          name: 'Tipo de Personal',
+          data: datos,
+          colorByPoint: true
+        }
+      ],
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          innerSize: '50%',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}'
+          }
+        }
+      }
+    };
   }
 
   ngOnDestroy(): void {

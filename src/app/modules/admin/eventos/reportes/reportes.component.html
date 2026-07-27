@@ -1,27 +1,22 @@
-<div class="relative flex flex-col flex-auto min-h-screen w-full bg-gray-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans overflow-x-hidden p-4 md:p-6 space-y-4">
-  <!-- Mesh Glow Background -->
-  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
-  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none"></div>
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-8 font-sans">
 
-  <!-- HEADER -->
-  <div class="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-4 border-b border-gray-200 dark:border-slate-800/80 z-10">
-    <div>
-      <div class="flex items-center gap-2">
-        <span class="px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border border-indigo-500/20 uppercase flex items-center gap-1">
-          <span class="h-1 w-1 rounded-full bg-indigo-500 animate-pulse"></span>
-          Estadísticas
-        </span>
-      </div>
-      <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-        Reporte General <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-650 via-purple-555 to-emerald-555 dark:from-indigo-400 dark:via-purple-400 dark:to-emerald-400">de Asistentes</span>
+  <!-- Header Section -->
+  <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+    <div class="flex flex-col">
+      <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-blue-600" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
+        Reporte de Eventos
       </h1>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Análisis completo de datos de asistentes, empresas, universidades y categorías</p>
+      <p class="text-secondary text-xs font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-70">
+        Análisis de Asistentes y Personal
+      </p>
     </div>
 
-    <!-- Event Filter -->
-    <div class="min-w-[180px] flex-auto sm:flex-initial">
-      <mat-form-field class="fuse-mat-no-subscript w-full scale-95 origin-right" appearance="outline">
-        <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+    <!-- Event Selector -->
+    <div class="min-w-[200px]">
+      <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+        <mat-label>Seleccionar Evento</mat-label>
+        <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)">
           <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
             {{ ed.nombre }}
           </mat-option>
@@ -30,153 +25,164 @@
     </div>
   </div>
 
-  <!-- LOADING STATE -->
-  <div *ngIf="isLoading" class="relative z-10 flex items-center justify-center py-12">
-    <div class="text-center">
-      <mat-icon class="icon-size-8 text-slate-400 animate-pulse mx-auto" svgIcon="heroicons_outline:chart-bar"></mat-icon>
-      <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-2">Generando reportes...</p>
-    </div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-32">
+    <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+    <p class="mt-6 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse">Generando Reportes...</p>
   </div>
 
-  <!-- ESTADÍSTICAS GENERALES CARDS -->
-  <div *ngIf="!isLoading && estadisticasGenerales.length > 0" class="relative grid grid-cols-2 md:grid-cols-5 gap-3 z-10">
-    <div *ngFor="let stat of estadisticasGenerales" class="relative overflow-hidden bg-white dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm hover:shadow-md transition-all duration-300 group">
-      <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="w-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
 
-      <div class="relative z-10 flex items-start justify-between">
-        <div>
-          <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{{ stat.label }}</p>
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">
-            {{ stat.value }}
-          </h3>
+    <!-- KPI Cards -->
+    <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-2">
+
+      <!-- Total Registrados -->
+      <div class="kpi-card bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-8 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-32 h-32 bg-blue-50/50 rounded-bl-full -mr-10 -mt-10 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.25em] mb-4">Total Registrados</p>
+          <p class="text-6xl font-black text-gray-800 tracking-tighter">{{ totalRegistros }}</p>
         </div>
-        <div class="p-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-650 dark:text-indigo-400 rounded-lg">
-          <mat-icon *ngIf="stat.icon" class="icon-size-5" [svgIcon]="stat.icon"></mat-icon>
+        <div class="mt-8 flex items-center text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">people</mat-icon>
+          {{ asistentes.length > 0 ? 'Asistentes + Personal' : 'Personal/Staff' }}
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- REPORTE POR TIPO -->
-  <div *ngIf="!isLoading && reportePorTipo.length > 0" class="relative bg-white dark:bg-slate-900/35 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-white/5 shadow-sm z-10">
-    <div class="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-slate-800/80 mb-4">
-      <div>
-        <h2 class="text-sm font-extrabold text-slate-850 dark:text-white flex items-center gap-1.5">
-          <mat-icon class="icon-size-4 text-purple-500" svgIcon="heroicons_outline:tag"></mat-icon>
-          Asistentes por Tipo
+      <!-- Presentes/Asistieron -->
+      <div class="kpi-card bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-8 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50/50 rounded-bl-full -mr-10 -mt-10 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.25em] mb-4">{{ asistentes.length > 0 ? 'Asistieron' : 'Presentes' }}</p>
+          <p class="text-6xl font-black text-gray-800 tracking-tighter">{{ totalAsistieron }}</p>
+        </div>
+        <div class="mt-8 flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">check_circle</mat-icon>
+          {{ asistentes.length > 0 ? 'Confirmados' : 'Registrados' }}
+        </div>
+      </div>
+
+      <!-- Tasa de Asistencia -->
+      <div class="kpi-card bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-8 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-32 h-32 bg-amber-50/50 rounded-bl-full -mr-10 -mt-10 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-amber-600 uppercase tracking-[0.25em] mb-4">Tasa de Asistencia</p>
+          <p class="text-6xl font-black text-gray-800 tracking-tighter">{{ tasaAsistencia }}</p>
+        </div>
+        <div class="mt-8 flex items-center text-[10px] font-bold text-amber-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">trending_up</mat-icon>
+          Porcentaje
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Grid - Charts -->
+    <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-8 px-2">
+
+      <!-- Empresas/Personal Chart -->
+      <div *ngIf="totalRegistros > 0" class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+          <mat-icon class="mr-3 text-blue-500 bg-blue-50 p-2 rounded-2xl">business</mat-icon>
+          {{ asistentes.length > 0 ? 'Asistentes por Empresa' : 'Personal por Empresa' }}
         </h2>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <div *ngFor="let tipo of reportePorTipo" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950/30 rounded-lg border border-gray-200 dark:border-slate-800">
-        <div>
-          <p class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ tipo.tipo }}</p>
-          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{{ tipo.porcentaje }}% del total</p>
-        </div>
-        <div class="text-right">
-          <span class="text-lg font-extrabold text-slate-900 dark:text-white">{{ tipo.cantidad }}</span>
+        <div class="w-full h-[400px]">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="chartEmpresasOptions" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- REPORTE DE EMPRESAS -->
-  <div *ngIf="!isLoading && reporteEmpresas.length > 0" class="relative bg-white dark:bg-slate-900/35 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-white/5 shadow-sm z-10 overflow-x-auto">
-    <div class="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-slate-800/80 mb-4">
-      <div>
-        <h2 class="text-sm font-extrabold text-slate-850 dark:text-white flex items-center gap-1.5">
-          <mat-icon class="icon-size-4 text-blue-500" svgIcon="heroicons_outline:building-office"></mat-icon>
-          Asistentes por Empresa
+      <!-- Universidades/Cargos Chart -->
+      <div *ngIf="totalRegistros > 0" class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+          <mat-icon class="mr-3 text-emerald-500 bg-emerald-50 p-2 rounded-2xl">{{ asistentes.length > 0 ? 'school' : 'assignment' }}</mat-icon>
+          {{ asistentes.length > 0 ? 'Estudiantes por Universidad' : 'Distribución por Cargo' }}
         </h2>
-        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Total: {{ reporteEmpresas.length }} empresas registradas</p>
+        <div class="w-full h-[400px]">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="chartUniversidadesOptions" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+        </div>
+      </div>
+
+      <!-- Tipos de Asistentes Chart -->
+      <div *ngIf="asistentes.length > 0 && totalRegistros > 0" class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+          <mat-icon class="mr-3 text-rose-500 bg-rose-50 p-2 rounded-2xl">person_outline</mat-icon>
+          Tipos de Asistentes
+        </h2>
+        <div class="w-full h-[400px]">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="chartTiposAsistentesOptions" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+        </div>
+      </div>
+
+      <!-- Tipos de Personal Chart -->
+      <div *ngIf="personalStaff.length > 0 && totalRegistros > 0" class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+          <mat-icon class="mr-3 text-indigo-500 bg-indigo-50 p-2 rounded-2xl">admin_panel_settings</mat-icon>
+          Personal y Staff
+        </h2>
+        <div class="w-full h-[400px]">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="chartTiposPersonalOptions" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Personal/Staff Table (when no asistentes) -->
+    <div *ngIf="asistentes.length === 0 && personalStaff.length > 0" class="w-full px-2">
+      <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+          <mat-icon class="mr-3 text-purple-500 bg-purple-50 p-2 rounded-2xl">people_alt</mat-icon>
+          Directorio de Personal
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-950/50">
+              <tr>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Nombre Completo</th>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Empresa</th>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Cargo</th>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Tipo</th>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Correo Electrónico</th>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">WhatsApp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let personal of personalStaff" class="border-b border-gray-200 hover:bg-slate-50 transition-colors">
+                <td class="px-4 py-3 font-semibold text-slate-900">{{ personal.nombreCompleto }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ personal.empresa || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ personal.cargo || '-' }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-block px-2 py-1 bg-amber-50 text-amber-700 rounded font-bold text-xs">
+                    {{ personal.tipoPersonal }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-slate-600 text-sm">{{ personal.correoElectronico }}</td>
+                <td class="px-4 py-3 text-slate-600 text-sm">{{ personal.telefonoWhatsapp || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 dark:bg-slate-950/50">
-          <tr>
-            <th class="px-4 py-2 text-left font-bold text-slate-700 dark:text-slate-200">Empresa</th>
-            <th class="px-4 py-2 text-center font-bold text-slate-700 dark:text-slate-200">Cantidad</th>
-            <th class="px-4 py-2 text-center font-bold text-slate-700 dark:text-slate-200">Porcentaje</th>
-            <th class="px-4 py-2 text-left font-bold text-slate-700 dark:text-slate-200">Tipos</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let empresa of reporteEmpresas" class="border-b border-gray-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950/30 transition-colors">
-            <td class="px-4 py-3 font-semibold text-slate-900 dark:text-white">{{ empresa.empresa }}</td>
-            <td class="px-4 py-3 text-center">
-              <span class="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded font-bold text-xs">
-                {{ empresa.cantidad }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-center font-bold text-slate-700 dark:text-slate-300">{{ empresa.porcentaje }}%</td>
-            <td class="px-4 py-3">
-              <div class="flex flex-wrap gap-2">
-                <span *ngFor="let tipo of empresa.tipos" class="inline-block text-[9px] px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded">
-                  {{ tipo.tipo }} ({{ tipo.count }})
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- REPORTE DE UNIVERSIDADES -->
-  <div *ngIf="!isLoading && reporteUniversidades.length > 0" class="relative bg-white dark:bg-slate-900/35 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-white/5 shadow-sm z-10 overflow-x-auto">
-    <div class="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-slate-800/80 mb-4">
-      <div>
-        <h2 class="text-sm font-extrabold text-slate-850 dark:text-white flex items-center gap-1.5">
-          <mat-icon class="icon-size-4 text-emerald-500" svgIcon="heroicons_outline:academic-cap"></mat-icon>
-          Estudiantes por Universidad
-        </h2>
-        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Total: {{ reporteUniversidades.length }} universidades</p>
+    <!-- Empty State -->
+    <div *ngIf="asistentes.length === 0 && personalStaff.length === 0" class="w-full py-16 flex flex-col items-center justify-center text-center px-2">
+      <div class="max-w-sm">
+        <div class="flex justify-center mb-4">
+          <div class="p-4 bg-slate-100 rounded-2xl border border-gray-200">
+            <mat-icon class="icon-size-8 text-slate-400" svgIcon="heroicons_outline:inbox"></mat-icon>
+          </div>
+        </div>
+        <h4 class="text-base font-bold text-slate-800 mb-1">Sin datos disponibles</h4>
+        <p class="text-sm text-slate-500 mb-4">Este evento no tiene asistentes ni personal/staff registrados.</p>
+        <div class="flex items-center justify-center gap-2 text-[11px] text-slate-400">
+          <mat-icon class="icon-size-4">info</mat-icon>
+          <span>Verifica que hayas seleccionado el evento correcto</span>
+        </div>
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 dark:bg-slate-950/50">
-          <tr>
-            <th class="px-4 py-2 text-left font-bold text-slate-700 dark:text-slate-200">Universidad</th>
-            <th class="px-4 py-2 text-center font-bold text-slate-700 dark:text-slate-200">Cantidad</th>
-            <th class="px-4 py-2 text-center font-bold text-slate-700 dark:text-slate-200">Porcentaje</th>
-            <th class="px-4 py-2 text-left font-bold text-slate-700 dark:text-slate-200">Carreras</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let univ of reporteUniversidades" class="border-b border-gray-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950/30 transition-colors">
-            <td class="px-4 py-3 font-semibold text-slate-900 dark:text-white">{{ univ.empresa }}</td>
-            <td class="px-4 py-3 text-center">
-              <span class="inline-block px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded font-bold text-xs">
-                {{ univ.cantidad }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-center font-bold text-slate-700 dark:text-slate-300">{{ univ.porcentaje }}%</td>
-            <td class="px-4 py-3">
-              <div class="flex flex-wrap gap-2">
-                <span *ngFor="let carrera of univ.tipos" class="inline-block text-[9px] px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded">
-                  {{ carrera.tipo }} ({{ carrera.count }})
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
 
-  <!-- EMPTY STATE -->
-  <div *ngIf="!isLoading && asistentes.length === 0" class="relative z-10 py-12 flex flex-col items-center justify-center text-slate-500 gap-2 text-center border border-dashed border-gray-300 dark:border-slate-800 rounded-2xl bg-gray-50/30 dark:bg-slate-900/10">
-    <div class="p-3 bg-slate-100 dark:bg-slate-900/50 rounded-full">
-      <mat-icon class="icon-size-6 text-slate-400" svgIcon="heroicons_outline:chart-bar"></mat-icon>
-    </div>
-    <div>
-      <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Sin datos disponibles</h4>
-      <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">No hay registros de asistentes para este evento.</p>
-    </div>
-  </div>
 </div>

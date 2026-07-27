@@ -1,1 +1,9 @@
-/* Component-specific styles can be added here if needed */
+// KPI Card animations
+.kpi-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  }
+}
