@@ -97,17 +97,57 @@
                 <h3 class="text-sm font-black text-gray-900 flex items-center gap-2 mb-4 uppercase tracking-tighter">
                     <mat-icon class="icon-size-5 text-emerald-500" [svgIcon]="'heroicons_solid:document-duplicate'"></mat-icon>
                     Facturas de la Recepción
+                    <mat-spinner *ngIf="isLoadingFacturas" diameter="16" class="ml-1"></mat-spinner>
                 </h3>
 
                 <div *ngIf="!reception.facturas?.length" class="text-sm text-secondary italic">
                     Sin facturas registradas.
                 </div>
 
-                <div *ngIf="reception.facturas?.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div *ngFor="let f of reception.facturas" class="flex items-center justify-between bg-emerald-50/40 p-3 rounded-xl border border-emerald-100">
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-xs font-bold text-gray-800 truncate">{{ f.folioFactura }}</span>
-                            <span class="text-[10px] text-secondary" *ngIf="f.monto">{{ f.monto | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                <div *ngIf="reception.facturas?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <div *ngFor="let f of reception.facturas" class="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-black text-gray-800">{{ f.folioFactura }}</span>
+                            <span *ngIf="f.detalleContpaq" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase"
+                                [ngClass]="f.detalleContpaq.estatus === 'Activo' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">
+                                {{ f.detalleContpaq.estatus }}
+                            </span>
+                            <span *ngIf="!isLoadingFacturas && !f.detalleContpaq" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-gray-100 text-gray-500">
+                                No encontrada en CONTPAQi
+                            </span>
+                        </div>
+
+                        <div *ngIf="f.detalleContpaq" class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-secondary uppercase">Proveedor</span>
+                                <span class="font-bold text-gray-700 truncate" [matTooltip]="f.detalleContpaq.clienteProveedor">{{ f.detalleContpaq.clienteProveedor || '-' }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-secondary uppercase">Fecha</span>
+                                <span class="font-bold text-gray-700">{{ f.detalleContpaq.fecha | date:'dd/MM/yyyy' }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-secondary uppercase">Total</span>
+                                <span class="font-black text-emerald-700">{{ f.detalleContpaq.total | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-secondary uppercase">Saldo Pendiente</span>
+                                <span class="font-bold" [ngClass]="f.detalleContpaq.saldoPendiente > 0 ? 'text-amber-600' : 'text-gray-700'">
+                                    {{ f.detalleContpaq.saldoPendiente | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                                </span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-secondary uppercase">Subtotal</span>
+                                <span class="font-bold text-gray-700">{{ f.detalleContpaq.subtotal | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-secondary uppercase">IVA</span>
+                                <span class="font-bold text-gray-700">{{ f.detalleContpaq.iva | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                            </div>
+                        </div>
+
+                        <div *ngIf="f.monto && !f.detalleContpaq" class="text-xs text-secondary">
+                            Monto capturado: {{ f.monto | currency:'MXN':'symbol-narrow':'1.2-2' }}
                         </div>
                     </div>
                 </div>

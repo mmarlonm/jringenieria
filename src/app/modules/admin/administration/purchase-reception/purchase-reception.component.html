@@ -140,6 +140,19 @@
                 <div class="hidden sm:block overflow-x-auto">
                     <table mat-table [dataSource]="dataSource" matSort class="w-full">
 
+                        <!-- Ver -->
+                        <ng-container matColumnDef="ver">
+                            <th mat-header-cell *matHeaderCellDef
+                                class="bg-gray-50 text-secondary uppercase font-black text-[10px] tracking-widest py-4 text-center w-12">
+                            </th>
+                            <td mat-cell *matCellDef="let row" class="py-4 text-center">
+                                <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 rounded-xl"
+                                    (click)="openDetailsDialog(row)" matTooltip="Ver detalle">
+                                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                </button>
+                            </td>
+                        </ng-container>
+
                         <!-- ID Recepcion -->
                         <ng-container matColumnDef="idRecepcion">
                             <th mat-header-cell *matHeaderCellDef mat-sort-header
@@ -307,7 +320,7 @@
 
                         <!-- Row shown when there is no matching data. -->
                         <tr class="mat-row" *matNoDataRow>
-                            <td class="mat-cell p-12 text-center" colspan="9">
+                            <td class="mat-cell p-12 text-center" colspan="10">
                                 <div class="flex flex-col items-center justify-center">
                                     <mat-icon class="icon-size-16 text-gray-200 mb-4"
                                         [svgIcon]="'heroicons_outline:archive-box-x-mark'"></mat-icon>

@@ -54,6 +54,7 @@ import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.s
 export class PurchaseReceptionComponent implements OnInit, OnDestroy {
     
     displayedColumns: string[] = [
+        'ver',
         'idRecepcion',
         'idSolicitud',
         'folioOC',

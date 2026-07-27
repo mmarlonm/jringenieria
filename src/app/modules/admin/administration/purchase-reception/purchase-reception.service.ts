@@ -72,4 +72,11 @@ export class PurchaseReceptionService {
     getDetalleFolioContpaq(folio: string, rfc: string): Observable<any> {
         return this._httpClient.get<any>(`${environment.apiUrl}/ReportDashboard/contpaq-detalle-folio?folio=${folio}&rfc=${rfc}`);
     }
+
+    /**
+     * Consulta el detalle fiscal (CONTPAQi) de una factura por su folio interno.
+     */
+    getDetalleFactura(folioFactura: string): Observable<any> {
+        return this._httpClient.get<any>(`${this.apiUrl}/recepcion/factura/${folioFactura}`);
+    }
 }

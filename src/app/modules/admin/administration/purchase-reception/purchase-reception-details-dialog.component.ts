@@ -13,6 +13,9 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'purchase-reception-details-dialog',
@@ -30,13 +33,15 @@ import { MatOptionModule } from '@angular/material/core';
         FormsModule,
         MatFormFieldModule,
         MatSelectModule,
-        MatOptionModule
+        MatOptionModule,
+        MatProgressSpinnerModule
     ]
 })
 export class PurchaseReceptionDetailsDialogComponent implements OnInit {
     reception: any = null;
     archivos: string[] = [];
     isLoading: boolean = true;
+    isLoadingFacturas: boolean = false;
     fileTypes = [
         { value: 'Facturas', label: 'Factura', color: 'text-emerald-500', icon: 'heroicons_outline:document-text' },
         { value: 'Evidencias', label: 'Evidencia', color: 'text-blue-500', icon: 'heroicons_outline:camera' },
@@ -63,11 +68,28 @@ export class PurchaseReceptionDetailsDialogComponent implements OnInit {
             next: (res) => {
                 this.reception = res.data || res;
                 this.isLoading = false;
+                this.loadDetallesFacturas();
             },
             error: () => {
                 this.isLoading = false;
                 this._notificationService.showError('Error', 'No se pudieron cargar los detalles de la recepción');
             }
+        });
+    }
+
+    /** Consulta en CONTPAQi el detalle fiscal de cada factura registrada en la recepción. */
+    loadDetallesFacturas(): void {
+        const facturas = this.reception?.facturas || [];
+        if (!facturas.length) return;
+
+        this.isLoadingFacturas = true;
+        const requests = facturas.map((f: any) =>
+            this._receptionService.getDetalleFactura(f.folioFactura).pipe(catchError(() => of(null)))
+        );
+
+        forkJoin(requests).subscribe((detalles: any[]) => {
+            facturas.forEach((f: any, i: number) => f.detalleContpaq = detalles[i]);
+            this.isLoadingFacturas = false;
         });
     }
 
