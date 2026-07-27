@@ -30,8 +30,23 @@ export function rectToWorld([x1, y1, x2, y2]: PxRect): WorldBox {
   };
 }
 
+export interface ContactoB2B {
+  nombre?: string;
+  email?: string;
+  telefono?: string;
+  enlace?: string;
+}
+
+export interface EmpresaInfo {
+  logo?: string;
+  imagenes?: string[];
+  descripcion?: string;
+  contacto?: ContactoB2B;
+}
+
 export interface StandConfig extends WorldBox {
   id: string;
+  dbId?: number; // ID de la base de datos del stand
   label: string;
   tipo: StandTipo;
   rect: PxRect;
@@ -39,6 +54,7 @@ export interface StandConfig extends WorldBox {
   color?: number;
   empresa?: string;
   disponible?: boolean;
+  empresaInfo?: EmpresaInfo;
   /** Las zonas/escenarios no cuentan como stand comercializable */
   esStand: boolean;
 }
@@ -52,6 +68,7 @@ interface StandRaw {
   color?: number;
   empresa?: string;
   disponible?: boolean;
+  empresaInfo?: EmpresaInfo;
 }
 
 /** Colores tomados de la leyenda impresa del plano */
@@ -106,10 +123,72 @@ const RAW: StandRaw[] = [
   { id: 'B1', label: 'B1', tipo: '3x3', rect: [971, 99, 1017, 140] },
 
   // ── Stands premium centrales ────────────────────────────────────────────────
-  { id: 'O3', label: 'O3', tipo: '9x3', rect: [549, 200, 602, 391], empresa: 'WEG',                     disponible: false },
-  { id: 'O2', label: 'O2', tipo: '9x3', rect: [604, 200, 660, 391], empresa: 'VOLTRAN VRC Group',       disponible: false },
-  { id: 'O1', label: 'O1', tipo: '9x3', rect: [758, 200, 811, 391], empresa: 'JR Ingeniería Eléctrica', disponible: false },
+  {
+    id: 'O3', label: 'O3', tipo: '9x3', rect: [549, 200, 602, 391], empresa: 'WEG', disponible: false,
+    empresaInfo: {
+      logo: 'https://www.weg.net/var/ezflow_site/storage/images/media/images/logos/logo-weg-completo/208-1-por-PT/Logo-WEG-completo.jpg',
+      imagenes: [
+        'https://www.weg.net/var/ezflow_site/storage/images/media/images/weg-brasil-planta-2/208-1-por-PT/WEG-Brasil-planta.jpg'
+      ],
+      descripcion: 'WEG es una empresa global líder en soluciones de energía eficiente. Con más de 60 años de historia, ofrecemos productos y servicios innovadores para industrias de todo el mundo.',
+      contacto: {
+        nombre: 'Equipo de Soluciones B2B',
+        email: 'b2b@weg.com',
+        telefono: '+55 47 3276-4000',
+        enlace: 'https://www.weg.net'
+      }
+    }
+  },
+  {
+    id: 'O2', label: 'O2', tipo: '9x3', rect: [604, 200, 660, 391], empresa: 'VOLTRAN VRC Group', disponible: false,
+    empresaInfo: {
+      logo: 'https://via.placeholder.com/300x150/0066cc/ffffff?text=VOLTRAN',
+      imagenes: [
+        'https://via.placeholder.com/400x300/0066cc/ffffff?text=Instalaciones+VOLTRAN'
+      ],
+      descripcion: 'VOLTRAN VRC Group es especialista en soluciones de transformación digital y gestión empresarial integrada. Transformamos negocios mediante tecnología y consultoría estratégica.',
+      contacto: {
+        nombre: 'Departamento Comercial',
+        email: 'ventas@voltran.com',
+        telefono: '+34 91 000 0000',
+        enlace: 'https://www.voltran.com'
+      }
+    }
+  },
+  {
+    id: 'O1', label: 'O1', tipo: '9x3', rect: [758, 200, 811, 391], empresa: 'JR Ingeniería Eléctrica', disponible: false,
+    empresaInfo: {
+      logo: 'https://via.placeholder.com/300x150/ff6600/ffffff?text=JR+Ingenieria',
+      imagenes: [
+        'https://via.placeholder.com/400x300/ff6600/ffffff?text=Proyectos+JR'
+      ],
+      descripcion: 'JR Ingeniería Eléctrica es una empresa especializada en soluciones eléctricas industriales y energéticas. Con más de 30 años, brindamos soluciones personalizadas y soporte técnico integral.',
+      contacto: {
+        nombre: 'Equipo de Negocios',
+        email: 'contacto@jringenieria.com',
+        telefono: '+593 2 2000 0000',
+        enlace: 'https://www.jringenieria.com'
+      }
+    }
+  },
   { id: 'P2', label: 'P2', tipo: '6x3', rect: [707, 246, 755, 391] },
+
+  // ── Otros stands con empresas (agregar más según necesidad)
+  // Ejemplo de stand con información de empresa:
+  // {
+  //   id: 'B1', label: 'B1', tipo: '3x3', rect: [971, 99, 1017, 140], empresa: 'Mi Empresa',
+  //   empresaInfo: {
+  //     logo: 'https://ejemplo.com/logo.png',
+  //     imagenes: ['https://ejemplo.com/img1.png', 'https://ejemplo.com/img2.png'],
+  //     descripcion: 'Descripción de la empresa...',
+  //     contacto: {
+  //       nombre: 'Juan Pérez',
+  //       email: 'juan@ejemplo.com',
+  //       telefono: '+34 91 000 0000',
+  //       enlace: 'https://www.ejemplo.com'
+  //     }
+  //   }
+  // },
 
   // ── Isla central inferior ───────────────────────────────────────────────────
   { id: 'P3',  label: 'P3',  tipo: '6x3', rect: [544, 485, 599, 595] },

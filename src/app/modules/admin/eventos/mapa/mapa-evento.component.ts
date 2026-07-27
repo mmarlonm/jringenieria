@@ -142,6 +142,7 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
               const standBase = STANDS_DATA.find(s => s.id === stand.standId);
               return {
                 ...(standBase || { id: stand.standId, label: stand.label, tipo: stand.tipoStand as StandTipo }),
+                dbId: stand.id, // ID de la base de datos
                 empresa: stand.empresa,
                 empresaInfo: {
                   logo: stand.logoBase64,
@@ -327,7 +328,7 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
       imagenes: this.formApartarStand.get('imagenes')?.value || []
     };
 
-    this._eventosService.apartarStand(stand.id as any, standData)
+    this._eventosService.apartarStand(stand.dbId || 0, standData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
