@@ -2,7 +2,7 @@ import { Injectable, inject, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from 'environments/environment';
 import { Observable, BehaviorSubject, Subject, timer, Subscription } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, map } from 'rxjs/operators';
 import * as signalR from '@microsoft/signalr';
 
 export interface Asistente {
@@ -653,5 +653,58 @@ export class EventosService implements OnDestroy {
 
     public deleteEvento(id: number): Observable<any> {
         return this._http.delete<any>(`${this.apiBase}/Eventos/${id}`);
+    }
+
+    public getAsistentes(eventoId: number): Observable<Asistente[]> {
+        return this._http.get<any[]>(`${this.apiBase}/Asistentes/evento/${eventoId}`).pipe(
+            map((list) => {
+                if (!list) return [];
+                return list.map(item => {
+                    const asistencias: string[] = (item.fechasAsistencia || []).map((dateStr: string) => {
+                        if (dateStr.includes('-10-16')) return '16 de Octubre';
+                        if (dateStr.includes('-10-17')) return '17 de Octubre';
+                        return dateStr;
+                    });
+
+                    return {
+                        id: item.id,
+                        tokenQr: item.tokenQR,
+                        nombre: item.nombre,
+                        apellidos: item.apellidos,
+                        correo: item.correoElectronico,
+                        telefono: item.numeroTelefonico,
+                        tipo: item.tipoAsistente as 'General' | 'Estudiante',
+                        asistencias: asistencias,
+                        comoSeEntero: item.mediosDifusion || [],
+                        motivacion: item.motivaciones || [],
+                        estatusQR: item.procesadoWorker === 1 ? 'Enviado' : 'Pendiente',
+                        asistencia: item.asistio === 1 ? 'Presente' : 'Faltante',
+                        fechaCheckIn: item.fechaCheckIn ? new Date(item.fechaCheckIn).toLocaleString('es-MX', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        }) : undefined,
+                        fechaCheckInRaw: item.fechaCheckIn || undefined,
+                        medioSeguimiento: item.medioSeguimientoDeseado as 'Correo' | 'WhatsApp' | 'Ninguno',
+                        direccion: item.direccionCiudadEstado,
+                        ocupacion: item.ocupacionCargo,
+                        empresa: item.empresaRepresenta,
+                        universidad: item.universidadRepresentas,
+                        carrera: item.carreraCursas,
+                        eventoId: item.eventoId,
+                        emailEnviado: item.emailEnviado,
+                        whatsappEnviado: item.whatsappEnviado,
+                        emailError: item.emailError,
+                        whatsappError: item.whatsappError
+                    };
+                });
+            })
+        );
+    }
+
+    public selectEventoId(eventoId: number): void {
+        this._selectedEventoId.next(eventoId);
     }
 }

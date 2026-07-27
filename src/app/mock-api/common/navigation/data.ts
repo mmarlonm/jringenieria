@@ -324,6 +324,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
+            { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
             { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
         ]
@@ -402,6 +403,7 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
+            { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
             { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
         ]
@@ -463,6 +465,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
+            { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
             { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
         ]
@@ -524,6 +527,7 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
+            { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
             { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
         ]
