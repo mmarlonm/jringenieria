@@ -19,6 +19,8 @@ import { MapaEventoService, StandClickEvent } from './mapa-evento.service';
 import { StandConfig, StandTipo, STANDS_DATA } from './mapa-evento.models';
 import { EventosService } from '../eventos.service';
 import { ModalApartarStand } from './modal-apartar-stand.component';
+import { ModalReunionesB2B } from './modal-reuniones-b2b.component';
+import { ModalPreguntasB2B } from './modal-preguntas-b2b.component';
 
 @Component({
   selector: 'app-mapa-evento',
@@ -34,7 +36,9 @@ import { ModalApartarStand } from './modal-apartar-stand.component';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     ReactiveFormsModule,
-    ModalApartarStand
+    ModalApartarStand,
+    ModalReunionesB2B,
+    ModalPreguntasB2B
   ],
   providers: [MapaEventoService],
   templateUrl: './mapa-evento.component.html',
@@ -133,6 +137,15 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this._cdr.markForCheck();
       });
+
+    this._mapaService.tooltipPosition$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((pos) => {
+        if (pos) {
+          this.tooltipPos = pos;
+          this._cdr.markForCheck();
+        }
+      });
   }
 
   /** Cargar stands desde el backend y enriquecer STANDS_DATA */
@@ -163,10 +176,10 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
                   imagenes: imagenesUrls,
                   descripcion: stand.descripcion,
                   contacto: {
-                    nombre: stand.contacto?.Nombre,
-                    email: stand.contacto?.Email,
-                    telefono: stand.contacto?.Telefono,
-                    enlace: stand.contacto?.Enlace
+                    nombre: stand.contacto?.nombre,
+                    email: stand.contacto?.email,
+                    telefono: stand.contacto?.telefono,
+                    enlace: stand.contacto?.enlace
                   }
                 } : null,
                 disponible: stand.disponible
@@ -312,6 +325,56 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
           this._cdr.markForCheck();
         }
       });
+  }
+
+  /** Abrir modal para agendar una reunión B2B */
+  abrirModalReunionB2B(stand: StandConfig): void {
+    if (!stand.dbId) {
+      this._snackBar.open('❌ Este stand no cuenta con registro en la base de datos', 'Cerrar', { duration: 4000 });
+      return;
+    }
+
+    const dialogRef = this._dialog.open(ModalReunionesB2B, {
+      width: '600px',
+      disableClose: false,
+      data: { stand }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this._snackBar.open('✅ Cita B2B agendada exitosamente', 'Cerrar', {
+          duration: 5000,
+          panelClass: ['snackbar-success'],
+          horizontalPosition: 'end',
+          verticalPosition: 'bottom'
+        });
+      }
+    });
+  }
+
+  /** Abrir modal para enviar una pregunta B2B */
+  abrirModalPreguntasB2B(stand: StandConfig): void {
+    if (!stand.dbId) {
+      this._snackBar.open('❌ Este stand no cuenta con registro en la base de datos', 'Cerrar', { duration: 4000 });
+      return;
+    }
+
+    const dialogRef = this._dialog.open(ModalPreguntasB2B, {
+      width: '600px',
+      disableClose: false,
+      data: { stand }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this._snackBar.open('✅ Pregunta enviada exitosamente', 'Cerrar', {
+          duration: 5000,
+          panelClass: ['snackbar-success'],
+          horizontalPosition: 'end',
+          verticalPosition: 'bottom'
+        });
+      }
+    });
   }
 
   /** Abrir modal para apartar un stand disponible */

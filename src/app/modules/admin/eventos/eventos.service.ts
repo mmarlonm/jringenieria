@@ -750,4 +750,14 @@ export class EventosService implements OnDestroy {
             )
         );
     }
+
+    // --- B2B Meetings & Schedules ---
+
+    public getHorariosB2B(standId: number): Observable<any> {
+        return this._http.get<any>(`${this.apiBase}/EventoStandsB2B/horarios/${standId}`);
+    }
+
+    public apartarReunionB2B(standId: number, reunion: any): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/EventoStandsB2B/reuniones/${standId}`, reunion);
+    }
 }

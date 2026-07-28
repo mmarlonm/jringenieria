@@ -122,6 +122,16 @@
             Apartar Stand
           </button>
         }
+        @if (selectedStand.esStand && selectedStand.disponible === false) {
+          <button class="panel-cta !bg-indigo-600 hover:!bg-indigo-700" (click)="abrirModalReunionB2B(selectedStand)">
+            <mat-icon>calendar_month</mat-icon>
+            Agendar Reunión B2B
+          </button>
+          <button class="panel-cta !bg-slate-600 hover:!bg-slate-700 mt-2" (click)="abrirModalPreguntasB2B(selectedStand)">
+            <mat-icon>question_answer</mat-icon>
+            Hacer Preguntas B2B
+          </button>
+        }
       </div>
     }
 
@@ -130,7 +140,7 @@
       <div class="stand-panel-expanded"
            [style.left.px]="tooltipPos.x"
            [style.top.px]="tooltipPos.y"
-           [class.stand-panel--visible]="tooltipVisible">
+           [class.stand-panel-expanded--visible]="tooltipVisible">
 
         <button class="panel-close" (click)="closeTooltip()">
           <mat-icon>close</mat-icon>
@@ -205,9 +215,13 @@
               Visitar Sitio Web
             </a>
           }
-          <button class="btn-contacto" (click)="contactarEmpresa()">
-            <mat-icon>mail</mat-icon>
-            Solicitar Información B2B
+          <button class="btn-contacto !bg-indigo-600 hover:!bg-indigo-700 !text-white" (click)="abrirModalReunionB2B(selectedStand)">
+            <mat-icon>calendar_month</mat-icon>
+            Agendar Reunión B2B
+          </button>
+          <button class="btn-contacto" (click)="abrirModalPreguntasB2B(selectedStand)">
+            <mat-icon>question_answer</mat-icon>
+            Hacer Preguntas B2B
           </button>
         </div>
       </div>

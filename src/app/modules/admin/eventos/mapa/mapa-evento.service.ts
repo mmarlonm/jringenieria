@@ -35,6 +35,7 @@ export class MapaEventoService implements OnDestroy {
 
   readonly standClick$ = new Subject<StandClickEvent | null>();
   readonly tourStep$   = new Subject<string | null>();
+  readonly tooltipPosition$ = new Subject<{ x: number; y: number } | null>();
 
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
@@ -47,6 +48,8 @@ export class MapaEventoService implements OnDestroy {
 
   private standMeshes: THREE.Mesh[] = [];
   private labels: LabelRef[] = [];
+  private logoSprites = new Map<string, THREE.Sprite>();
+  private labelSprites = new Map<string, THREE.Sprite>();
   private selectedMesh: THREE.Mesh | null = null;
   private hoveredMesh: THREE.Mesh | null = null;
   private baseColors = new WeakMap<THREE.Mesh, THREE.Color>();
@@ -69,7 +72,9 @@ export class MapaEventoService implements OnDestroy {
   async init(canvas: HTMLCanvasElement, mapImageUrl: string): Promise<void> {
     this.buildScene();
     this.buildRenderer(canvas);
-    this.buildCamera(canvas);
+    this.camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 400);
+    this.camera.position.copy(this.HOME_POS);
+    this.camera.lookAt(this.HOME_TARGET);
     await this.buildControls(canvas);
     this.buildLights();
     this.buildFloor(mapImageUrl);
@@ -117,6 +122,10 @@ export class MapaEventoService implements OnDestroy {
     this.controls.zoomSpeed         = 1.1;
     this.controls.screenSpacePanning = false;
     this.controls.target.copy(this.HOME_TARGET);
+
+    this.controls.addEventListener('change', () => {
+      this.updateTooltipPosition();
+    });
   }
 
   private buildLights(): void {
@@ -282,6 +291,7 @@ export class MapaEventoService implements OnDestroy {
     const sprite = new THREE.Sprite(spriteMat);
     sprite.position.set(x, y, z);
     sprite.renderOrder = 20;
+    sprite.userData = { standId: cfg.id, isLabel: true };
 
     // Alto en fracción de viewport (constante en pantalla)
     const h     = area > 40 ? 0.038 : area > 18 ? 0.032 : 0.027;
@@ -289,6 +299,7 @@ export class MapaEventoService implements OnDestroy {
     sprite.scale.set(h * ratio, h, 1);
 
     this.scene.add(sprite);
+    this.labelSprites.set(cfg.id, sprite);
     this.labels.push({ sprite, h, ratio, maxDist: area > 40 ? 260 : area > 18 ? 120 : 78 });
     this.disposables.push(tex, spriteMat);
   }
@@ -333,6 +344,7 @@ export class MapaEventoService implements OnDestroy {
     this.camera.position.lerpVectors(this.tourEyes[i],  this.tourEyes[j],  e);
     this.controls.target.lerpVectors(this.tourLooks[i], this.tourLooks[j], e);
     this.camera.lookAt(this.controls.target);
+    this.updateTooltipPosition();
 
     if (t >= 1) {
       if (j >= this.tourEyes.length - 1) { this.stopTour(); return; }
@@ -379,32 +391,59 @@ export class MapaEventoService implements OnDestroy {
   }
 
   showStandLogo(stand: any, logoDataUrl: string | null): void {
-    if (!logoDataUrl || !logoDataUrl.includes('base64')) return;
+    if (!logoDataUrl) return;
 
     const mesh = this.standMeshes.find(m => m.userData.id === stand.id);
     if (!mesh) return;
+
+    // Evitar duplicados
+    if (this.logoSprites.has(stand.id)) return;
 
     // Cargar imagen del logo
     const textureLoader = new THREE.TextureLoader();
     textureLoader.load(logoDataUrl, (logoTexture) => {
       logoTexture.colorSpace = THREE.SRGBColorSpace;
 
-      const spriteMat = new THREE.SpriteMaterial({
+      // Obtener relación de aspecto de la imagen cargada
+      const img = logoTexture.image;
+      const aspect = img ? (img.width / img.height) : 1;
+
+      // Dimensiones máximas del plano del logo (80% del ancho y largo del stand)
+      let planeW = stand.w * 0.8;
+      let planeD = stand.d * 0.8;
+
+      // Ajustar para mantener la relación de aspecto sin distorsionar
+      const standAspect = stand.w / stand.d;
+      if (aspect > standAspect) {
+        // El logo es más ancho que la cara superior del stand
+        planeD = planeW / aspect;
+      } else {
+        // El logo es más alto/estrecho
+        planeW = planeD * aspect;
+      }
+
+      // Crear geometría del plano para colocarlo plano sobre el stand
+      const geom = new THREE.PlaneGeometry(planeW, planeD);
+      const mat = new THREE.MeshStandardMaterial({
         map: logoTexture,
         transparent: true,
-        depthTest: false,
-        depthWrite: false,
-        sizeAttenuation: false,
+        roughness: 0.6,
+        metalness: 0.1,
+        side: THREE.DoubleSide
       });
 
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.position.copy(mesh.position);
-      sprite.position.y += stand.h + 0.5; // Encima del stand
-      sprite.renderOrder = 30; // Más alto que las etiquetas normales
-      sprite.scale.set(0.12, 0.12, 1);
+      const logoMesh = new THREE.Mesh(geom, mat);
+      logoMesh.position.copy(mesh.position);
+      // Colocar el plano exactamente en la cara superior (+Y) con un offset mínimo para evitar Z-fighting
+      logoMesh.position.y = stand.h + 0.005;
+      // Rotar el plano para que quede horizontal (acoplado al techo del stand)
+      logoMesh.rotation.x = -Math.PI / 2;
+      logoMesh.receiveShadow = true;
+      logoMesh.userData = { standId: stand.id, isLogo: true };
 
-      this.scene.add(sprite);
-      this.disposables.push(logoTexture, spriteMat);
+      this.scene.add(logoMesh);
+      this.logoSprites.set(stand.id, logoMesh as any); // Guardamos la referencia en el mismo mapa
+      this.disposables.push(geom, mat, logoTexture);
     });
   }
 
@@ -430,6 +469,30 @@ export class MapaEventoService implements OnDestroy {
           }
           (mat as any).needsUpdate = true;
         }
+
+        // Cargar logo inmediatamente si está apartado
+        const logo = updatedStand.empresaInfo?.logo;
+        if (isOccupied && logo) {
+          this.showStandLogo(updatedStand, logo);
+        } else {
+          // Limpiar logo si ya no está ocupado o no tiene logo
+          const existingSprite = this.logoSprites.get(standId);
+          if (existingSprite) {
+            this.scene.remove(existingSprite);
+            this.logoSprites.delete(standId);
+          }
+        }
+
+        // Ajustar altura de la etiqueta si hay logo para que no se encimen
+        const labelSprite = this.labelSprites.get(standId);
+        if (labelSprite) {
+          if (isOccupied && logo) {
+            // Como el logo ahora está plano acoplado al techo, la etiqueta puede flotar a +0.95 elegantemente
+            labelSprite.position.y = updatedStand.h + 0.95;
+          } else {
+            labelSprite.position.y = updatedStand.h + 0.9; // Altura normal
+          }
+        }
       }
     }
   }
@@ -440,8 +503,22 @@ export class MapaEventoService implements OnDestroy {
     this.mouse.x =  ((event.clientX - rect.left) / rect.width)  * 2 - 1;
     this.mouse.y = -((event.clientY - rect.top)  / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const hits = this.raycaster.intersectObjects(this.standMeshes, false);
-    return hits.length ? (hits[0].object as THREE.Mesh) : null;
+
+    // Collect all raycastable objects (stand meshes, label sprites, logo meshes)
+    const targets: THREE.Object3D[] = [...this.standMeshes];
+    this.labelSprites.forEach(sprite => targets.push(sprite));
+    this.logoSprites.forEach(logoMesh => targets.push(logoMesh));
+
+    const hits = this.raycaster.intersectObjects(targets, false);
+    if (!hits.length) return null;
+
+    const hitObj = hits[0].object;
+    if (hitObj.userData.isLabel || hitObj.userData.isLogo) {
+      const standId = hitObj.userData.standId;
+      return this.standMeshes.find(m => m.userData.id === standId) || null;
+    }
+
+    return hitObj as THREE.Mesh;
   }
 
   private restore(mesh: THREE.Mesh | null): void {
@@ -482,11 +559,40 @@ export class MapaEventoService implements OnDestroy {
       this.ngZone.run(() =>
         this.standClick$.next({
           stand: mesh.userData as StandConfig,
-          position: { x: event.clientX, y: event.clientY },
+          position: this.getSelectedStandScreenPos() || { x: event.clientX, y: event.clientY },
         })
       );
     } else {
       this.ngZone.run(() => this.standClick$.next(null));
+    }
+  }
+
+  getSelectedStandScreenPos(): { x: number; y: number } | null {
+    if (!this.selectedMesh || !this.camera || !this.renderer) return null;
+
+    const pos = new THREE.Vector3();
+    this.selectedMesh.getWorldPosition(pos);
+    const stand = this.selectedMesh.userData as StandConfig;
+    pos.y += stand.h;
+
+    pos.project(this.camera);
+
+    const canvas = this.renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+
+    const x = ((pos.x + 1) * canvas.clientWidth) / 2 + rect.left;
+    const y = (-(pos.y - 1) * canvas.clientHeight) / 2 + rect.top;
+
+    return { x, y };
+  }
+
+  updateTooltipPosition(): void {
+    if (!this.selectedMesh) return;
+    const pos = this.getSelectedStandScreenPos();
+    if (pos) {
+      this.ngZone.run(() => {
+        this.tooltipPosition$.next(pos);
+      });
     }
   }
 
