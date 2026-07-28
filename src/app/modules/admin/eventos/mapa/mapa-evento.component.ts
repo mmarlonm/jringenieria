@@ -122,6 +122,11 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
           this.selectedStand  = standEnriquecido;
           this.tooltipPos     = ev.position;
           this.tooltipVisible = true;
+
+          // Mostrar logo encima del stand si existe
+          if (standEnriquecido.empresaInfo?.logo) {
+            this._mapaService.showStandLogo(standEnriquecido, standEnriquecido.empresaInfo.logo);
+          }
         } else {
           this.tooltipVisible = false;
           this.selectedStand  = null;
@@ -140,21 +145,30 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
             // Mapear datos del backend a StandConfig
             const standsBackend = response.items.map((stand: any) => {
               const standBase = STANDS_DATA.find(s => s.id === stand.standId);
+
+              // Convertir base64 a data URL para logo
+              const logoUrl = stand.logoBase64 ? this.convertBase64ToDataUrl(stand.logoBase64) : null;
+
+              // Convertir base64 de imágenes a data URLs
+              const imagenesUrls = (stand.imagenes || []).map((img: string) =>
+                this.convertBase64ToDataUrl(img)
+              );
+
               return {
                 ...(standBase || { id: stand.standId, label: stand.label, tipo: stand.tipoStand as StandTipo }),
                 dbId: stand.id, // ID de la base de datos
                 empresa: stand.empresa,
-                empresaInfo: {
-                  logo: stand.logoBase64,
-                  imagenes: stand.imagenes || [],
+                empresaInfo: stand.empresa ? {
+                  logo: logoUrl,
+                  imagenes: imagenesUrls,
                   descripcion: stand.descripcion,
                   contacto: {
-                    nombre: stand.contacto?.nombre,
-                    email: stand.contacto?.email,
-                    telefono: stand.contacto?.telefono,
-                    enlace: stand.contacto?.enlace
+                    nombre: stand.contacto?.Nombre,
+                    email: stand.contacto?.Email,
+                    telefono: stand.contacto?.Telefono,
+                    enlace: stand.contacto?.Enlace
                   }
-                },
+                } : null,
                 disponible: stand.disponible
               };
             });
@@ -164,12 +178,32 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
               const conInfo = standsBackend.find(s => s.id === stand.id);
               return conInfo ? { ...stand, ...conInfo } : stand;
             });
+
+            // Actualizar visualización 3D con los estados de disponibilidad
+            this._mapaService.updateStandStates(this.standsData);
           }
         },
         error: (err) => {
           console.error('Error loading stands from backend:', err);
+          this._snackBar.open('Error al cargar stands del evento', 'Cerrar', {
+            duration: 5000,
+            panelClass: ['snackbar-error']
+          });
         }
       });
+  }
+
+  /** Convertir string base64 a data URL para imágenes */
+  private convertBase64ToDataUrl(base64String: string): string {
+    if (!base64String) return '';
+
+    // Si ya es una data URL, devolverlo tal cual
+    if (base64String.startsWith('data:')) {
+      return base64String;
+    }
+
+    // Si es solo base64, agregar el prefijo
+    return `data:image/png;base64,${base64String}`;
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -346,8 +380,8 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
               empresa: standData.empresa,
               disponible: false,
               empresaInfo: {
-                logo: standData.logoBase64,
-                imagenes: standData.imagenes || [],
+                logo: standData.logoBase64 ? this.convertBase64ToDataUrl(standData.logoBase64) : null,
+                imagenes: (standData.imagenes || []).map((img: string) => this.convertBase64ToDataUrl(img)),
                 descripcion: standData.descripcion,
                 contacto: {
                   nombre: standData.contactoNombre,
@@ -358,6 +392,8 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
               }
             };
           }
+          // Actualizar visualización 3D
+          this._mapaService.updateStandStates(this.standsData);
           this.tooltipVisible = false;
           this._cdr.markForCheck();
         },

@@ -34,6 +34,10 @@ import Swal from 'sweetalert2';
                                       [style.background-color]="getColorById(solicitud.idEstatus)">
                                     {{ solicitud.nombreEstatus }}
                                 </span>
+                        <span class="mx-2">•</span>
+                        Raz&oacute;n Social: <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 uppercase">
+                                    {{ solicitud.razonSocial || '-' }}
+                                </span>
                     </div>
                 </div>
                 <button mat-icon-button (click)="close()">
@@ -145,6 +149,10 @@ import Swal from 'sweetalert2';
                     <div class="flex flex-col">
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">Solicitante</span>
                         <span class="font-semibold text-primary">{{ getSolicitanteName(solicitud.idPersonaSolicitante) }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Razón Social Emisora</span>
+                        <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ solicitud.razonSocial || '-' }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-xs font-bold uppercase text-secondary tracking-wider">Fecha Requerida</span>
@@ -673,7 +681,7 @@ export class SolicitudDetalleDialogComponent implements OnInit {
         this._service.descargarArchivo(this.data.idSolicitud, nombreArchivo).subscribe(blob => {
             const fileURL = URL.createObjectURL(blob);
             const isPdf = nombreArchivo.toLowerCase().endsWith('.pdf');
-            
+
             this._dialog.open(ImagePreviewDialogComponent, {
                 data: {
                     url: fileURL,

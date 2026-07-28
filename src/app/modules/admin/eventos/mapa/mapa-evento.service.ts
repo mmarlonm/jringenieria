@@ -378,6 +378,62 @@ export class MapaEventoService implements OnDestroy {
     this.renderer.setSize(width, height, false);
   }
 
+  showStandLogo(stand: any, logoDataUrl: string | null): void {
+    if (!logoDataUrl || !logoDataUrl.includes('base64')) return;
+
+    const mesh = this.standMeshes.find(m => m.userData.id === stand.id);
+    if (!mesh) return;
+
+    // Cargar imagen del logo
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(logoDataUrl, (logoTexture) => {
+      logoTexture.colorSpace = THREE.SRGBColorSpace;
+
+      const spriteMat = new THREE.SpriteMaterial({
+        map: logoTexture,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        sizeAttenuation: false,
+      });
+
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.position.copy(mesh.position);
+      sprite.position.y += stand.h + 0.5; // Encima del stand
+      sprite.renderOrder = 30; // Más alto que las etiquetas normales
+      sprite.scale.set(0.12, 0.12, 1);
+
+      this.scene.add(sprite);
+      this.disposables.push(logoTexture, spriteMat);
+    });
+  }
+
+  updateStandStates(standsData: any[]): void {
+    // Actualizar color y opacidad de los meshes según estado de disponibilidad
+    for (const mesh of this.standMeshes) {
+      const standId = mesh.userData.id;
+      const updatedStand = standsData.find(s => s.id === standId);
+
+      if (updatedStand) {
+        const isOccupied = updatedStand.disponible === false;
+        const mat = mesh.material as THREE.Material;
+        const baseColor = this.baseColors.get(mesh);
+        const baseOpacity = this.baseOpacity.get(mesh);
+
+        if (mat && baseColor && baseOpacity !== undefined) {
+          if (isOccupied) {
+            (mat as any).color.copy(new THREE.Color(0x999999)); // Gris
+            (mat as any).opacity = 0.5;
+          } else {
+            (mat as any).color.copy(baseColor);
+            (mat as any).opacity = baseOpacity;
+          }
+          (mat as any).needsUpdate = true;
+        }
+      }
+    }
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   private pick(event: MouseEvent, canvas: HTMLCanvasElement): THREE.Mesh | null {
     const rect = canvas.getBoundingClientRect();
