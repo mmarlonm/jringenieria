@@ -319,6 +319,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
                 this._purchaseReceptionService.getDetalleConsolidado(row.idSolicitud).subscribe({
                     next: (res) => {
+                        const folioInterno = res?.datosFiscales?.folioInternoFactura;
                         const payload = {
                             idSolicitud: row.idSolicitud,
                             fechaRecepcion: new Date(),
@@ -335,7 +336,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                             proyectoCliente: res?.proyectoCliente || row.proyectoCliente,
                             monto: res?.datosFiscales?.totalFactura || row.monto,
                             moneda: res?.datosFiscales?.moneda?.trim().includes('Peso') ? 'MXN' : (res?.datosFiscales?.moneda?.trim() || row.moneda || 'MXN'),
-                            folioInternoFactura: res?.datosFiscales?.folioInternoFactura || ''
+                            folioInternoFactura: (folioInterno != null && folioInterno !== 0) ? String(folioInterno) : null
                         };
 
                         this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
@@ -389,7 +390,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                             proyectoCliente: row.proyectoCliente,
                             monto: row.monto,
                             moneda: row.moneda || 'MXN',
-                            folioInternoFactura: ''
+                            folioInternoFactura: null
                         };
 
                         this._purchaseReceptionService.registrarRecepcion(payload).subscribe({
