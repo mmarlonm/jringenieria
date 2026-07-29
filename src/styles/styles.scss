@@ -265,3 +265,8 @@ ngx-extended-pdf-viewer {
 .cdk-overlay-container {
   z-index: 9999999 !important;
 }
+
+/* Fix para que los selectores de fecha Flatpickr se muestren sobre los modales */
+.flatpickr-calendar {
+  z-index: 99999999 !important;
+}
