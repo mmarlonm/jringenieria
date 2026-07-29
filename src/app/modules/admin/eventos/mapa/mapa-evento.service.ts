@@ -404,26 +404,10 @@ export class MapaEventoService implements OnDestroy {
     textureLoader.load(logoDataUrl, (logoTexture) => {
       logoTexture.colorSpace = THREE.SRGBColorSpace;
 
-      // Obtener relación de aspecto de la imagen cargada
-      const img = logoTexture.image;
-      const aspect = img ? (img.width / img.height) : 1;
+      const planeW = stand.w;
+      const planeD = stand.d;
+      const planeH = stand.h;
 
-      // Dimensiones máximas del plano del logo (80% del ancho y largo del stand)
-      let planeW = stand.w * 0.8;
-      let planeD = stand.d * 0.8;
-
-      // Ajustar para mantener la relación de aspecto sin distorsionar
-      const standAspect = stand.w / stand.d;
-      if (aspect > standAspect) {
-        // El logo es más ancho que la cara superior del stand
-        planeD = planeW / aspect;
-      } else {
-        // El logo es más alto/estrecho
-        planeW = planeD * aspect;
-      }
-
-      // Crear geometría del plano para colocarlo plano sobre el stand
-      const geom = new THREE.PlaneGeometry(planeW, planeD);
       const mat = new THREE.MeshStandardMaterial({
         map: logoTexture,
         transparent: true,
@@ -432,18 +416,54 @@ export class MapaEventoService implements OnDestroy {
         side: THREE.DoubleSide
       });
 
-      const logoMesh = new THREE.Mesh(geom, mat);
-      logoMesh.position.copy(mesh.position);
-      // Colocar el plano exactamente en la cara superior (+Y) con un offset mínimo para evitar Z-fighting
-      logoMesh.position.y = stand.h + 0.005;
-      // Rotar el plano para que quede horizontal (acoplado al techo del stand)
-      logoMesh.rotation.x = -Math.PI / 2;
-      logoMesh.receiveShadow = true;
-      logoMesh.userData = { standId: stand.id, isLogo: true };
+      const group = new THREE.Group();
+      group.userData = { standId: stand.id, isLogo: true };
 
-      this.scene.add(logoMesh);
-      this.logoSprites.set(stand.id, logoMesh as any); // Guardamos la referencia en el mismo mapa
-      this.disposables.push(geom, mat, logoTexture);
+      // 1. CARA TOP (+Y)
+      const geomTop = new THREE.PlaneGeometry(planeW, planeD);
+      const meshTop = new THREE.Mesh(geomTop, mat);
+      meshTop.position.set(0, stand.h / 2 + 0.005, 0);
+      meshTop.rotation.x = -Math.PI / 2;
+      meshTop.receiveShadow = true;
+      group.add(meshTop);
+
+      // 2. CARA FRONT (+Z)
+      const geomFront = new THREE.PlaneGeometry(planeW, planeH);
+      const meshFront = new THREE.Mesh(geomFront, mat);
+      meshFront.position.set(0, 0, planeD / 2 + 0.005);
+      meshFront.receiveShadow = true;
+      group.add(meshFront);
+
+      // 3. CARA BACK (-Z)
+      const geomBack = new THREE.PlaneGeometry(planeW, planeH);
+      const meshBack = new THREE.Mesh(geomBack, mat);
+      meshBack.position.set(0, 0, -(planeD / 2 + 0.005));
+      meshBack.rotation.y = Math.PI;
+      meshBack.receiveShadow = true;
+      group.add(meshBack);
+
+      // 4. CARA LEFT (-X)
+      const geomLeft = new THREE.PlaneGeometry(planeD, planeH);
+      const meshLeft = new THREE.Mesh(geomLeft, mat);
+      meshLeft.position.set(-(planeW / 2 + 0.005), 0, 0);
+      meshLeft.rotation.y = -Math.PI / 2;
+      meshLeft.receiveShadow = true;
+      group.add(meshLeft);
+
+      // 5. CARA RIGHT (+X)
+      const geomRight = new THREE.PlaneGeometry(planeD, planeH);
+      const meshRight = new THREE.Mesh(geomRight, mat);
+      meshRight.position.set(planeW / 2 + 0.005, 0, 0);
+      meshRight.rotation.y = Math.PI / 2;
+      meshRight.receiveShadow = true;
+      group.add(meshRight);
+
+      // Posicionar el grupo en la misma coordenada que el stand
+      group.position.copy(mesh.position);
+
+      this.scene.add(group);
+      this.logoSprites.set(stand.id, group as any); // Guardamos la referencia en el mismo mapa
+      this.disposables.push(geomTop, geomFront, geomBack, geomLeft, geomRight, mat, logoTexture);
     });
   }
 
