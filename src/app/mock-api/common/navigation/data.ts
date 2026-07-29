@@ -98,6 +98,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                         ]
                     }
                 ]
+            },
+            {
+                id: 'administracion.calidad',
+                title: 'Calidad (ISO 9001)',
+                type: 'basic',
+                icon: 'heroicons_outline:check-badge',
+                link: '/administration/calidad'
             }
         ]
     },
@@ -424,7 +431,8 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' },
             { id: 'administracion.proveedores.cuestionario', title: 'Cuestionario de Alta', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/administration/proveedores/cuestionario' },
             { id: 'administracion.proveedores.maestro', title: 'Catálogo Maestro', type: 'basic', icon: 'heroicons_outline:book-open', link: '/administration/proveedores/maestro' },
-            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' }
+            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' },
+            { id: 'administracion.calidad', title: 'Calidad (ISO 9001)', type: 'basic', icon: 'heroicons_outline:check-badge', link: '/administration/calidad' }
         ]
     }
 ];
@@ -484,7 +492,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' },
             { id: 'administracion.proveedores.cuestionario', title: 'Cuestionario de Alta', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/administration/proveedores/cuestionario' },
             { id: 'administracion.proveedores.maestro', title: 'Catálogo Maestro', type: 'basic', icon: 'heroicons_outline:book-open', link: '/administration/proveedores/maestro' },
-            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' }
+            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' },
+            { id: 'administracion.calidad', title: 'Calidad (ISO 9001)', type: 'basic', icon: 'heroicons_outline:check-badge', link: '/administration/calidad' }
         ]
     }
 ];
@@ -547,7 +556,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'administracion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' },
             { id: 'administracion.proveedores.cuestionario', title: 'Cuestionario de Alta', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/administration/proveedores/cuestionario' },
             { id: 'administracion.proveedores.maestro', title: 'Catálogo Maestro', type: 'basic', icon: 'heroicons_outline:book-open', link: '/administration/proveedores/maestro' },
-            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' }
+            { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' },
+            { id: 'administracion.calidad', title: 'Calidad (ISO 9001)', type: 'basic', icon: 'heroicons_outline:check-badge', link: '/administration/calidad' }
         ]
     }
 
