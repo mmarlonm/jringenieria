@@ -26,6 +26,10 @@ export default [
         loadComponent: () => import('./resumen-compras/resumen-compras.component').then(m => m.ResumenComprasComponent)
     },
     {
+        path: 'reporte-detalle-compras',
+        loadComponent: () => import('./reporte-detalle-compras/reporte-detalle-compras.component').then(m => m.ReporteDetalleComprasComponent)
+    },
+    {
         path: 'control-entregas',
         loadChildren: () => import('./control-entregas/control-entregas.routes').then(m => m.default)
     },

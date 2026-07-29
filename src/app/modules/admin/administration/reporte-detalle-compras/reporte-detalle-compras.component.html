@@ -1,0 +1,259 @@
+<div class="w-full min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8 space-y-8 font-sans">
+
+    <!-- Header Section -->
+    <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+        <div class="flex flex-col">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight flex items-center">
+                <mat-icon class="icon-size-10 mr-4 text-indigo-600" [svgIcon]="'heroicons_outline:chart-pie'"></mat-icon>
+                Reporte Detallado de Compras
+            </h1>
+            <p class="text-secondary text-[10px] font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-75">
+                KPIs Operativos, Estatus de Documentación y Liquidación
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button mat-flat-button color="primary" 
+                    class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-xl !px-6 !py-2.5 shadow-lg shadow-emerald-100 flex items-center transition-all hover:scale-105"
+                    (click)="exportToExcel()">
+                <mat-icon class="mr-2 icon-size-5">download</mat-icon>
+                Exportar Excel
+            </button>
+            <button mat-flat-button color="primary" 
+                    class="!bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-xl !px-6 !py-2.5 shadow-lg shadow-indigo-100 flex items-center transition-all hover:scale-105"
+                    (click)="consultar()">
+                <mat-icon class="mr-2 icon-size-5">refresh</mat-icon>
+                Actualizar Datos
+            </button>
+            <button mat-flat-button class="rounded-xl px-5 bg-white border border-gray-200 text-gray-600 shadow-sm hover:bg-gray-50 transition-all" (click)="toggleFilters()">
+                <mat-icon [svgIcon]="'heroicons_outline:funnel'" class="mr-2"></mat-icon>
+                <span class="font-bold text-xs tracking-widest">{{ showFilters ? 'OCULTAR FILTROS' : 'FILTRAR' }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div *ngIf="showFilters" class="mx-2 bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-6 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+        <!-- Date Pickers Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
+            <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+                <mat-label>Fecha Inicio</mat-label>
+                <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" (dateChange)="consultar()">
+                <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                <mat-datepicker #pickerInicio></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+                <mat-label>Fecha Fin</mat-label>
+                <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="consultar()">
+                <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFin></mat-datepicker>
+            </mat-form-field>
+
+            <div class="lg:col-span-2 flex items-center justify-end gap-3">
+                <button mat-stroked-button class="h-12 rounded-xl px-6 border-2 border-gray-200 text-gray-700 font-bold" (click)="limpiarFiltros()">
+                    LIMPIAR FILTROS
+                </button>
+                <button mat-flat-button class="h-12 w-full lg:w-48 !bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-xl shadow-xl shadow-indigo-200 font-bold tracking-widest text-xs" 
+                        (click)="consultar()" [disabled]="isLoading">
+                    <mat-icon *ngIf="!isLoading" class="mr-2 icon-size-6">search</mat-icon>
+                    <mat-progress-spinner *ngIf="isLoading" class="mr-2" [diameter]="24" [mode]="'indeterminate'"></mat-progress-spinner>
+                    CONSULTAR
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Dropdowns Filters Row (In-memory Filter) -->
+        <div class="border-t pt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+                <mat-label>Sucursal</mat-label>
+                <mat-select [(ngModel)]="selectedSucursal" (selectionChange)="aplicarFiltrosLocales()">
+                    <mat-option value="">Todas</mat-option>
+                    <mat-option *ngFor="let s of sucursales" [value]="s">{{ s }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+                <mat-label>Área Solicitante</mat-label>
+                <mat-select [(ngModel)]="selectedArea" (selectionChange)="aplicarFiltrosLocales()">
+                    <mat-option value="">Todas</mat-option>
+                    <mat-option *ngFor="let a of areas" [value]="a">{{ a }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+                <mat-label>Estatus Solicitud</mat-label>
+                <mat-select [(ngModel)]="selectedEstatus" (selectionChange)="aplicarFiltrosLocales()">
+                    <mat-option value="">Todos</mat-option>
+                    <mat-option *ngFor="let est of estatusList" [value]="est">{{ est }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+                <mat-label>Prioridad</mat-label>
+                <mat-select [(ngModel)]="selectedPrioridad" (selectionChange)="aplicarFiltrosLocales()">
+                    <mat-option value="">Todas</mat-option>
+                    <mat-option *ngFor="let p of prioridades" [value]="p">{{ p }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-32">
+        <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+        <p class="mt-6 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse">Consultando Información...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div *ngIf="!isLoading" class="w-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+
+        <!-- Row 1: KPI Summary Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-2">
+            <!-- Total Gastado -->
+            <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-indigo-600 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Inversión Total (MXN)</span>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1">{{ totalGastadoMXN | currency:'MXN' }}</h3>
+                </div>
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                    <mat-icon class="icon-size-6">monetization_on</mat-icon>
+                </div>
+            </div>
+
+            <!-- Pendientes Factura -->
+            <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-amber-500 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pendientes de Factura</span>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countFacturasPendientes }}</h3>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-500 rounded-2xl">
+                    <mat-icon class="icon-size-6">description</mat-icon>
+                </div>
+            </div>
+
+            <!-- Pendientes de Pago -->
+            <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-red-500 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pendientes de Pago</span>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countPagosPendientes }}</h3>
+                </div>
+                <div class="p-3 bg-red-50 text-red-500 rounded-2xl">
+                    <mat-icon class="icon-size-6">credit_card</mat-icon>
+                </div>
+            </div>
+
+            <!-- Pendientes de Evidencia -->
+            <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-sky-500 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">En Tránsito (Sin Recibo)</span>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countEvidenciasPendientes }}</h3>
+                </div>
+                <div class="p-3 bg-sky-50 text-sky-500 rounded-2xl">
+                    <mat-icon class="icon-size-6">local_shipping</mat-icon>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Secondary Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
+            <!-- Facturación Rate -->
+            <div class="bg-white rounded-3xl shadow-md p-6 flex flex-col justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tasa de Cobertura Fiscal (Facturas)</span>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span class="text-4xl font-extrabold text-gray-800">{{ porcentajeFacturacion }}%</span>
+                        <span class="text-xs font-semibold text-gray-400">de compras tienen CFDI adjunto</span>
+                    </div>
+                </div>
+                <div class="mt-4 bg-gray-100 rounded-full h-3.5 overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-1000" [style.width]="porcentajeFacturacion + '%'"></div>
+                </div>
+            </div>
+
+            <!-- Ticket Promedio -->
+            <div class="bg-white rounded-3xl shadow-md p-6 flex flex-col justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ticket Promedio de Solicitud (MXN)</span>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span class="text-4xl font-extrabold text-gray-800">{{ ticketPromedioMXN | currency:'MXN' }}</span>
+                        <span class="text-xs font-semibold text-gray-400">por orden de compra</span>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs font-bold text-indigo-600 uppercase tracking-widest flex items-center">
+                    <mat-icon class="icon-size-4 mr-1.5">trending_up</mat-icon>
+                    Valor promedio de adquisiciones
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Highcharts Graphics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 px-2">
+            <!-- Area Spline Timeline -->
+            <div class="bg-white rounded-3xl shadow-md p-6 border border-gray-100 flex flex-col">
+                <h3 class="text-sm font-extrabold text-gray-800 uppercase tracking-tight mb-4">Tendencia Diaria de Compras</h3>
+                <div class="w-full h-[350px]">
+                    <highcharts-chart *ngIf="filteredSolicitudes.length > 0" [Highcharts]="Highcharts" [options]="chartOptionsTimeline" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+                    <div *ngIf="filteredSolicitudes.length === 0" class="flex items-center justify-center h-full text-gray-400">Sin datos disponibles</div>
+                </div>
+            </div>
+
+            <!-- Column Bar Stack Chart -->
+            <div class="bg-white rounded-3xl shadow-md p-6 border border-gray-100 flex flex-col">
+                <h3 class="text-sm font-extrabold text-gray-800 uppercase tracking-tight mb-4">Monto Total vs. Monto Pendiente Liquidar</h3>
+                <div class="w-full h-[350px]">
+                    <highcharts-chart *ngIf="filteredSolicitudes.length > 0" [Highcharts]="Highcharts" [options]="chartOptionsComparativo" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+                    <div *ngIf="filteredSolicitudes.length === 0" class="flex items-center justify-center h-full text-gray-400">Sin datos disponibles</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: Detailed Audit Table -->
+        <div class="bg-white rounded-3xl shadow-md p-6 border border-gray-100 px-2 mx-2">
+            <h3 class="text-sm font-extrabold text-gray-800 uppercase tracking-tight mb-4">Tabla General Auditada</h3>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="sticky top-0 z-10 bg-white">
+                        <tr class="bg-gray-50 dark:bg-gray-700/50 text-[10px] font-bold text-gray-400 uppercase">
+                            <th class="px-4 py-3">Folio</th>
+                            <th class="px-4 py-3">Sucursal</th>
+                            <th class="px-4 py-3">Proveedor</th>
+                            <th class="px-4 py-3">Estatus</th>
+                            <th class="px-4 py-3">Factura</th>
+                            <th class="px-4 py-3">Estado Pago</th>
+                            <th class="px-4 py-3 text-right">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr *ngFor="let s of filteredSolicitudes" class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-4 py-3 font-bold text-indigo-600">{{ s.idSolicitud }}</td>
+                            <td class="px-4 py-3 font-semibold text-gray-600">{{ s.sucursal }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ s.proveedorSugerido || '—' }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold text-white uppercase tracking-wider"
+                                      [ngClass]="s.idEstatus === 8 ? 'bg-emerald-500' : 'bg-indigo-500'">
+                                    {{ s.nombreEstatus }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                      [ngClass]="(s.datosFacturaContpaqi?.folioInternoFactura || s.datosFacturaContpaqi?.folioFacturaProveedor) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'">
+                                    {{ (s.datosFacturaContpaqi?.folioInternoFactura || s.datosFacturaContpaqi?.folioFacturaProveedor) ? 'VINCULADA' : 'PENDIENTE' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                      [ngClass]="s.estadoLiquidacion === 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'">
+                                    {{ s.estadoLiquidacion === 1 ? 'LIQUIDADA' : 'PENDIENTE' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-black text-indigo-600">{{ s.monto | currency:s.moneda }}</td>
+                        </tr>
+                        <tr *ngIf="filteredSolicitudes.length === 0">
+                            <td colspan="7" class="text-center py-12 text-gray-400 font-semibold">No se encontraron solicitudes con los filtros aplicados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

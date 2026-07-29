@@ -30,13 +30,50 @@
                 </div>
 
                 <!-- Active Filter Badge -->
-                <div *ngIf="selectedStatusId"
-                    class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                    <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
-                    Filtrado por: {{ getStatusName(selectedStatusId) | uppercase }}
-                    <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)"
-                        matTooltip="Quitar filtro">
-                        <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <div *ngIf="selectedStatusId"
+                        class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                        <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
+                        Filtrado por: {{ getStatusName(selectedStatusId) | uppercase }}
+                        <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByStatus(null)"
+                            matTooltip="Quitar filtro">
+                            <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
+                        </button>
+                    </div>
+
+                    <div *ngIf="selectedReportFilter"
+                        class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 text-xs font-bold border border-indigo-200">
+                        <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:presentation-chart-line"></mat-icon>
+                        Reporte: {{ selectedReportFilter === 'pendiente_pago' ? 'PENDIENTES DE PAGO' : (selectedReportFilter === 'pendiente_factura' ? 'PENDIENTES DE FACTURA' : 'PENDIENTES DE EVIDENCIA') }}
+                        <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByReport(null)"
+                            matTooltip="Quitar reporte">
+                            <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Quick Filters Buttons Row -->
+                <div class="flex flex-wrap gap-2 mt-3 pb-1">
+                    <button mat-stroked-button
+                            [ngClass]="selectedReportFilter === 'pendiente_pago' ? '!bg-indigo-600 !text-white' : '!bg-white text-gray-700'"
+                            class="!rounded-lg !text-xs !font-bold transition-all"
+                            (click)="filterByReport('pendiente_pago')">
+                        <mat-icon class="icon-size-4 mr-1.5" [ngClass]="selectedReportFilter === 'pendiente_pago' ? 'text-white' : 'text-indigo-600'">credit_card</mat-icon>
+                        PENDIENTES DE PAGO
+                    </button>
+                    <button mat-stroked-button
+                            [ngClass]="selectedReportFilter === 'pendiente_factura' ? '!bg-indigo-600 !text-white' : '!bg-white text-gray-700'"
+                            class="!rounded-lg !text-xs !font-bold transition-all"
+                            (click)="filterByReport('pendiente_factura')">
+                        <mat-icon class="icon-size-4 mr-1.5" [ngClass]="selectedReportFilter === 'pendiente_factura' ? 'text-white' : 'text-indigo-600'">description</mat-icon>
+                        PENDIENTES DE SUBIR FACTURAS
+                    </button>
+                    <button mat-stroked-button
+                            [ngClass]="selectedReportFilter === 'pendiente_evidencia' ? '!bg-indigo-600 !text-white' : '!bg-white text-gray-700'"
+                            class="!rounded-lg !text-xs !font-bold transition-all"
+                            (click)="filterByReport('pendiente_evidencia')">
+                        <mat-icon class="icon-size-4 mr-1.5" [ngClass]="selectedReportFilter === 'pendiente_evidencia' ? 'text-white' : 'text-indigo-600'">archive</mat-icon>
+                        PENDIENTES EVIDENCIA ALMACÉN
                     </button>
                 </div>
             </div>

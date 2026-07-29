@@ -60,6 +60,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                         icon: 'heroicons_outline:presentation-chart-line',
                         link: '/administration/resumen-compras'
                     },
+                    {
+                        id: 'administracion.reportes.reporte-detalle-compras',
+                        title: 'Reporte Detallado Compras',
+                        type: 'basic',
+                        icon: 'heroicons_outline:presentation-chart-bar',
+                        link: '/administration/reporte-detalle-compras'
+                    }
                 ]
             },
             {

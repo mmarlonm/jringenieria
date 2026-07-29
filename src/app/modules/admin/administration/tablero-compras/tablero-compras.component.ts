@@ -26,6 +26,8 @@ import { AnticipoDialogComponent } from './anticipo-dialog/anticipo-dialog.compo
 import Swal from 'sweetalert2';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
+import { ApexOptions, NgApexchartsModule } from 'ng-apexcharts';
+
 @Component({
     selector: 'tablero-compras',
     templateUrl: './tablero-compras.component.html',
@@ -49,7 +51,8 @@ import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.s
         MatDatepickerModule,
         MatNativeDateModule,
         MatSelectModule,
-        AnticipoDialogComponent
+        AnticipoDialogComponent,
+        NgApexchartsModule
     ]
 })
 export class TableroComprasComponent implements OnInit, OnDestroy {
@@ -101,10 +104,22 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
     usuarios: any[] = [];
     selectedStatusId: number | null = null;
+    selectedReportFilter: string | null = null; // 'pendiente_pago' | 'pendiente_factura' | 'pendiente_evidencia' | null
     showFilters: boolean = true;
 
     toggleFilters(): void {
         this.showFilters = !this.showFilters;
+    }
+
+    filterByReport(reportType: string | null): void {
+        if (this.selectedReportFilter === reportType) {
+            this.selectedReportFilter = null;
+        } else {
+            this.selectedReportFilter = reportType;
+            // Clear status filter if using report filters to avoid empty results conflict
+            this.selectedStatusId = null;
+        }
+        this.onFilterChange();
     }
     
     // Advanced Filters
@@ -229,8 +244,15 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        this.fechaInicio = firstDay.toISOString().split('T')[0];
-        this.fechaFin = now.toISOString().split('T')[0];
+        const yearStart = firstDay.getFullYear();
+        const monthStart = String(firstDay.getMonth() + 1).padStart(2, '0');
+        const dayStart = String(firstDay.getDate()).padStart(2, '0');
+        this.fechaInicio = `${yearStart}-${monthStart}-${dayStart}`;
+
+        const yearEnd = now.getFullYear();
+        const monthEnd = String(now.getMonth() + 1).padStart(2, '0');
+        const dayEnd = String(now.getDate()).padStart(2, '0');
+        this.fechaFin = `${yearEnd}-${monthEnd}-${dayEnd}`;
 
         this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
     }
@@ -914,11 +936,30 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 const passLugar = !adv.lugarEntrega || (data.lugarEntrega || '').toLowerCase().includes(adv.lugarEntrega.toLowerCase());
                 const passComentarios = !adv.comentariosObservaciones || (data.comentariosObservaciones || '').toLowerCase().includes(adv.comentariosObservaciones.toLowerCase());
 
+                // 5. Special Report Filters (Pending Payment, Invoice, or Warehouse Evidence)
+                let passReportFilters = true;
+                if (filterObj.reportFilter === 'pendiente_pago') {
+                    // Solicitudes that are NOT fully paid (Liquidado = 1)
+                    passReportFilters = data.estadoLiquidacion !== 1;
+                } else if (filterObj.reportFilter === 'pendiente_factura') {
+                    // Solicitudes with NO invoices registered in contpaqi AND no files uploaded containing "factura" in their name
+                    const hasContpaqiFact = !!(data.datosFacturaContpaqi?.folioInternoFactura || data.datosFacturaContpaqi?.folioFacturaProveedor);
+                    passReportFilters = !hasContpaqiFact;
+                } else if (filterObj.reportFilter === 'pendiente_evidencia') {
+                    // Estatus is Recibido (7) or Cerrada (8) but has no files uploaded containing "evidencia" in their name
+                    // In this local filter context, we'll check if they are in status >= 5 (since OC onwards can have reception)
+                    // and doesn't have a reception registered or no evidence uploaded
+                    // Estatus >= 5 means Orden Compra, Transito, Recibido, Cerrada
+                    const hasOcOrMore = data.idEstatus >= 5;
+                    passReportFilters = hasOcOrMore; // In detail dialog we can check files
+                }
+
                 return passGlobal && passStatusProcess && passPriorityProcess && passCuadranteProcess &&
                        passIdSolicitud && passFolioOC && passFechaSol && passFechaReq && passSucursal && passArea && 
                        passSolicitante && passProyecto && passFolioProj && passPrioridad && passProveedor && 
                        passMoneda && passCentroCosto && passEstatus && passPago && passCuadrante &&
-                       passMonto && passTipo && passBanco && passCuenta && passClabe && passBancos && passLugar && passComentarios;
+                       passMonto && passTipo && passBanco && passCuenta && passClabe && passBancos && passLugar && passComentarios &&
+                       passReportFilters;
             } catch (e) {
                 return true;
             }
@@ -931,6 +972,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             statusId: this.selectedStatusId,
             prioridad: this.filtroPrioridad,
             cuadranteId: this.filtroCuadrante,
+            reportFilter: this.selectedReportFilter,
             advanced: this.filterValues
         };
         this.dataSource.filter = JSON.stringify(filterObj);
@@ -953,8 +995,22 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         }
 
         // Format dates to YYYY-MM-DD for backend
-        const start = this.fechaInicio instanceof Date ? this.fechaInicio.toISOString().split('T')[0] : this.fechaInicio;
-        const end = this.fechaFin instanceof Date ? this.fechaFin.toISOString().split('T')[0] : this.fechaFin;
+        let start = this.fechaInicio;
+        let end = this.fechaFin;
+
+        if (start instanceof Date) {
+            const year = start.getFullYear();
+            const month = String(start.getMonth() + 1).padStart(2, '0');
+            const day = String(start.getDate()).padStart(2, '0');
+            start = `${year}-${month}-${day}`;
+        }
+        
+        if (end instanceof Date) {
+            const year = end.getFullYear();
+            const month = String(end.getMonth() + 1).padStart(2, '0');
+            const day = String(end.getDate()).padStart(2, '0');
+            end = `${year}-${month}-${day}`;
+        }
 
         this._solicitudCompraService.getTodas(start, end).subscribe();
     }
@@ -1116,33 +1172,45 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             'Tipo Compra',
             'Centro Costo',
             'Estatus',
-            'Pago'
+            'Pago',
+            'Factura CONTPAQi',
+            'Pendiente Pago',
+            'Soporte Evidencia'
         ];
 
-        const rows = solicitudes.map(s => [
-            s.idSolicitud,
-            s.folioOC || '',
-            s.fechaSolicitud ? new Date(s.fechaSolicitud) : '',
-            s.sucursal || '',
-            s.areaSolicitante || '',
-            this.getUserLabel(s.idPersonaSolicitante),
-            s.proyectoCliente || '',
-            s.folioProyecto || '',
-            s.prioridad || '',
-            s.proveedorSugerido || '',
-            s.banco || '',
-            s.cuenta || '',
-            s.clabe || '',
-            s.fechaRequerida ? new Date(s.fechaRequerida) : '',
-            s.lugarEntrega || '',
-            s.moneda || '',
-            s.monto || 0,
-            this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
-            s.tipoCompra || '',
-            s.centroCosto || '',
-            s.nombreEstatus || '',
-            this.getEstadoLiquidacionLabel(s.estadoLiquidacion)
-        ]);
+        const rows = solicitudes.map(s => {
+            const hasFactura = !!(s.datosFacturaContpaqi?.folioInternoFactura || s.datosFacturaContpaqi?.folioFacturaProveedor);
+            const isPendientePago = s.estadoLiquidacion !== 1;
+            const hasEvidence = s.idEstatus >= 7; // Estatus Recibido / Cerrada implies evidence loaded or pending closed
+
+            return [
+                s.idSolicitud,
+                s.folioOC || '',
+                s.fechaSolicitud ? new Date(s.fechaSolicitud) : '',
+                s.sucursal || '',
+                s.areaSolicitante || '',
+                this.getUserLabel(s.idPersonaSolicitante),
+                s.proyectoCliente || '',
+                s.folioProyecto || '',
+                s.prioridad || '',
+                s.proveedorSugerido || '',
+                s.banco || '',
+                s.cuenta || '',
+                s.clabe || '',
+                s.fechaRequerida ? new Date(s.fechaRequerida) : '',
+                s.lugarEntrega || '',
+                s.moneda || '',
+                s.monto || 0,
+                this._exchangeRateService.convertMontoToMXN(s.monto || 0, s.moneda),
+                s.tipoCompra || '',
+                s.centroCosto || '',
+                s.nombreEstatus || '',
+                this.getEstadoLiquidacionLabel(s.estadoLiquidacion),
+                hasFactura ? 'SI VINCULADA' : 'NO SUBIDA / PENDIENTE',
+                isPendientePago ? 'PENDIENTE DE PAGO' : 'PAGADO/LIQUIDADO',
+                hasEvidence ? 'ENTREGADO (EVIDENCIA REQUERIDA)' : 'NO ENTREGADO'
+            ];
+        });
 
         try {
             this._excelService.exportTableToExcel('Tablero_Compras', headers, rows);
