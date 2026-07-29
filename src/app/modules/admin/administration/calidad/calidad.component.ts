@@ -435,17 +435,48 @@ export class CalidadComponent implements OnInit {
     iniciarAnalisisIshikawa(): void {
         if (!this.selectedCategory) return;
         
-        // Seed default 6M structure for selected category
-        this.ishikawaCausas = [
-            { categoria: 'Mano de Obra', causa: 'Falta de capacitación del personal' },
-            { categoria: 'Maquinaria', causa: 'Herramientas de software desactualizadas' },
-            { categoria: 'Métodos', causa: 'Proceso de entrega no estandarizado' },
-            { categoria: 'Materiales', causa: 'Insumos de baja calidad' },
-            { categoria: 'Medio Ambiente', causa: 'Espacio de trabajo ruidoso' },
-            { categoria: 'Medición', causa: 'Falta de indicadores clave (KPIs)' }
-        ];
+        this.loading = true;
+        this._cdr.detectChanges();
 
-        this.setStep(2);
+        this._calidadService.getHerramientasPorTipo('Ishikawa').subscribe({
+            next: (herramientas) => {
+                const tituloBuscado = `Ishikawa - ${this.selectedCategory}`;
+                const existente = herramientas.find(h => h.titulo === tituloBuscado);
+                if (existente && existente.datosJson) {
+                    try {
+                        this.ishikawaCausas = JSON.parse(existente.datosJson);
+                    } catch (e) {
+                        console.error('Error parsing saved Ishikawa', e);
+                    }
+                } else {
+                    // Seed default 6M structure for selected category
+                    this.ishikawaCausas = [
+                        { categoria: 'Mano de Obra', causa: 'Falta de capacitación del personal' },
+                        { categoria: 'Maquinaria', causa: 'Herramientas de software desactualizadas' },
+                        { categoria: 'Métodos', causa: 'Proceso de entrega no estandarizado' },
+                        { categoria: 'Materiales', causa: 'Insumos de baja calidad' },
+                        { categoria: 'Medio Ambiente', causa: 'Espacio de trabajo ruidoso' },
+                        { categoria: 'Medición', causa: 'Falta de indicadores clave (KPIs)' }
+                    ];
+                }
+                this.loading = false;
+                this.setStep(2);
+            },
+            error: (err) => {
+                console.error(err);
+                // Fallback to default
+                this.ishikawaCausas = [
+                    { categoria: 'Mano de Obra', causa: 'Falta de capacitación del personal' },
+                    { categoria: 'Maquinaria', causa: 'Herramientas de software desactualizadas' },
+                    { categoria: 'Métodos', causa: 'Proceso de entrega no estandarizado' },
+                    { categoria: 'Materiales', causa: 'Insumos de baja calidad' },
+                    { categoria: 'Medio Ambiente', causa: 'Espacio de trabajo ruidoso' },
+                    { categoria: 'Medición', causa: 'Falta de indicadores clave (KPIs)' }
+                ];
+                this.loading = false;
+                this.setStep(2);
+            }
+        });
     }
 
     agregarCausaIshikawa(): void {
@@ -531,17 +562,42 @@ export class CalidadComponent implements OnInit {
             datosJson: JSON.stringify(this.ishikawaCausas)
         };
 
+        this.loading = true;
+        this._cdr.detectChanges();
+
         this._calidadService.guardarHerramienta(payload).subscribe({
             next: () => {
                 this._snackBar.open('💾 Diagrama de Ishikawa guardado', 'OK', { duration: 3000 });
-                // Seed initial Mind Map / SCAMPER nodes
-                this.mindMapNodes = [
-                    { id: 'Sustituir', etiqueta: 'Sustituir proveedores de logística', parentId: this.selectedCategory },
-                    { id: 'Combinar', etiqueta: 'Combinar entregas por zonas geográficas', parentId: this.selectedCategory },
-                    { id: 'Adaptar', etiqueta: 'Adaptar software de rastreo GPS', parentId: this.selectedCategory }
-                ];
-                this.nuevoNodoParentId = this.selectedCategory;
-                this.setStep(3);
+                
+                // Now load saved Mind Map for this category
+                this._calidadService.getHerramientasPorTipo('MapaMental').subscribe({
+                    next: (herramientas) => {
+                        const tituloBuscado = `Mapa Mental - ${this.selectedCategory}`;
+                        const existente = herramientas.find(h => h.titulo === tituloBuscado);
+                        if (existente && existente.datosJson) {
+                            try {
+                                this.mindMapNodes = JSON.parse(existente.datosJson);
+                            } catch (e) {
+                                console.error('Error parsing saved Mind Map', e);
+                            }
+                        } else {
+                            // Seed initial Mind Map / SCAMPER nodes
+                            this.mindMapNodes = [
+                                { id: 'Sustituir', etiqueta: 'Sustituir proveedores de logística', parentId: this.selectedCategory },
+                                { id: 'Combinar', etiqueta: 'Combinar entregas por zonas geográficas', parentId: this.selectedCategory },
+                                { id: 'Adaptar', etiqueta: 'Adaptar software de rastreo GPS', parentId: this.selectedCategory }
+                            ];
+                        }
+                        this.nuevoNodoParentId = this.selectedCategory;
+                        this.loading = false;
+                        this.setStep(3);
+                    },
+                    error: (err) => {
+                        console.error(err);
+                        this.loading = false;
+                        this.setStep(3);
+                    }
+                });
             },
             error: (err) => {
                 console.error(err);
