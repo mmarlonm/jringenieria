@@ -125,11 +125,16 @@
         </div>
 
         <!-- Segment metrics summary -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div *ngFor="let kpi of kpis"
                 class="bg-card rounded-2xl p-4 shadow-sm border-t-4 border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-center transition-transform hover:scale-105"
                 [style.border-top-color]="getClasificacionColor(kpi.clasificacion)">
-                <div class="text-secondary font-medium uppercase tracking-wider text-[10px]">{{ kpi.clasificacion }}</div>
+                <div class="flex items-center justify-center gap-1.5 text-secondary font-medium uppercase tracking-wider text-[10px]">
+                    <span>{{ kpi.clasificacion }}</span>
+                    <mat-icon class="icon-size-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help"
+                              [matTooltip]="getClasificacionTooltip(kpi.clasificacion)"
+                              matTooltipClass="custom-modern-tooltip">info</mat-icon>
+                </div>
                 <div class="text-2xl font-bold mt-1">{{ kpi.numeroClientes | number }}</div>
                 <div class="text-[11px] text-gray-400 mt-1">{{ kpi.valorSegmento | currency }}</div>
             </div>

@@ -978,6 +978,17 @@ export class ReportCustomersDashboardComponent implements OnInit {
         return colors[clasificacion] || '#64748b';
     }
 
+    getClasificacionTooltip(clasificacion: string): string {
+        const info: any = {
+            'Nuevo': '• Criterio: Primera compra\n• Objetivo: Captación',
+            'Recurrente (PLATA)': '• Criterio: 2 a 4 compras de $1 a $100,000\n• Objetivo: Crecimiento',
+            'Fidelizado (PLATINO)': '• Criterio: 5 o más compras de $100,001 a $500,000\n• Objetivo: Retención',
+            'Estratégico (ORO)': '• Criterio: Compras mayores a $500,000\n• Objetivo: Desarrollo',
+            'Cuenta Clave (DIAMANTE)': '• Criterio: Ventas mayores a $1,000,000\n• Objetivo: Gestión ejecutiva'
+        };
+        return info[clasificacion] || '';
+    }
+
     /* * Nombre: exportarPDFEstadoSegmentacion
      * Descripción: Genera un PDF de Estado de Cuenta para el cliente filtrado.
      */
