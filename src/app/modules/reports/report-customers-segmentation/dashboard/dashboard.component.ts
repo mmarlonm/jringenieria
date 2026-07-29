@@ -969,10 +969,11 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
     getClasificacionColor(clasificacion: string): string {
         const colors: any = {
-            'PLATA': '#3b82f6',
-            'PLATINO': '#06b6d4',
-            'ORO': '#f59e0b',
-            'DIAMANTE': '#8b5cf6'
+            'Nuevo': '#a855f7',
+            'Recurrente (PLATA)': '#3b82f6',
+            'Fidelizado (PLATINO)': '#06b6d4',
+            'Estratégico (ORO)': '#f59e0b',
+            'Cuenta Clave (DIAMANTE)': '#8b5cf6'
         };
         return colors[clasificacion] || '#64748b';
     }
