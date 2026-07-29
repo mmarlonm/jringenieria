@@ -11,9 +11,10 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { LeadsService, Lead, UpdateLeadDto } from './leads.service';
+import { LeadsService, Lead, UpdateLeadDto, LeadKpi } from './leads.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { LeadDialogComponent } from './lead-dialog/lead-dialog.component';
+import { LeadSeguimientoDialogComponent } from './lead-seguimiento-dialog/lead-seguimiento-dialog.component';
 import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
@@ -66,6 +67,12 @@ export class LeadsComponent implements OnInit {
   filteredLeads: Lead[] = [];
   users: any[] = [];
   viewMode: 'kanban' | 'list' = 'kanban';
+  kpis: LeadKpi = {
+    tasaConversion: 0,
+    totalLeads: 0,
+    leadsConvertidos: 0,
+    tiempoPromedioContactoHoras: 0
+  };
 
   // Filters
   searchControl = new FormControl('');
@@ -88,6 +95,7 @@ export class LeadsComponent implements OnInit {
   ngOnInit(): void {
     this.loadLeads();
     this.loadUsers();
+    this.loadKpis();
 
     // Listen to filters changes
     this.searchControl.valueChanges.pipe(debounceTime(200)).subscribe(() => this.applyFilters());
@@ -100,9 +108,19 @@ export class LeadsComponent implements OnInit {
       next: (data) => {
         this.leads = data;
         this.applyFilters();
+        this.loadKpis(); // Recargar KPIs al modificar leads
         this.cdr.markForCheck();
       },
       error: () => this.showSnackBar('Error al cargar leads', 'Cerrar', 'bg-red-600 text-white')
+    });
+  }
+
+  loadKpis(): void {
+    this.leadsService.getIndicadoresLeads().subscribe({
+      next: (data) => {
+        this.kpis = data;
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -189,6 +207,18 @@ export class LeadsComponent implements OnInit {
           error: () => this.showSnackBar('Error al actualizar el lead', 'Cerrar', 'bg-red-600 text-white')
         });
       }
+    });
+  }
+
+  openSeguimientoDialog(lead: Lead): void {
+    const dialogRef = this.dialog.open(LeadSeguimientoDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      data: { lead: lead, users: this.users }
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.loadLeads();
     });
   }
 

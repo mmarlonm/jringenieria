@@ -35,6 +35,27 @@ export interface LeadArchivo {
   fechaSubida: string;
 }
 
+export interface LeadSeguimiento {
+  id: number;
+  leadId: number;
+  fechaContacto: string;
+  medioUtilizado: string;
+  avanceLogrado: string;
+  informacionFaltante?: string;
+  proximaAction: string;
+  fechaCompromiso?: string;
+  idResponsable: number;
+  responsableNombre?: string;
+  fechaRegistro: string;
+}
+
+export interface LeadKpi {
+  tasaConversion: number;
+  totalLeads: number;
+  leadsConvertidos: number;
+  tiempoPromedioContactoHoras: number;
+}
+
 export interface CreateLeadDto {
   nombreContacto: string;
   empresa: string;
@@ -123,6 +144,24 @@ export class LeadsService {
 
   eliminarArchivoLead(leadId: number, archivoId: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/${leadId}/archivos/${archivoId}`);
+  }
+
+  // --- Seguimientos (Sección 7.7) ---
+  getSeguimientosLead(leadId: number): Observable<LeadSeguimiento[]> {
+    return this.http.get<LeadSeguimiento[]>(`${this.apiUrl}/${leadId}/seguimientos`);
+  }
+
+  saveSeguimientoLead(leadId: number, dto: any): Observable<LeadSeguimiento> {
+    return this.http.post<LeadSeguimiento>(`${this.apiUrl}/${leadId}/seguimientos`, dto);
+  }
+
+  deleteSeguimientoLead(leadId: number, id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${leadId}/seguimientos/${id}`);
+  }
+
+  // --- Indicadores (Sección 10) ---
+  getIndicadoresLeads(): Observable<LeadKpi> {
+    return this.http.get<LeadKpi>(`${this.apiUrl}/indicadores`);
   }
 
   // Get active system users to populate assignment dropdowns

@@ -34,6 +34,67 @@
       </div>
     </div>
 
+    <!-- ISO 9051/9001 KPIs Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+      <!-- Total Leads Card -->
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Total Leads Registrados</span>
+          <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.totalLeads }}</span>
+        </div>
+        <div class="p-2 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-blue-600 dark:text-blue-400">
+          <mat-icon svgIcon="heroicons_outline:chat-bubble-left-right" class="icon-size-6"></mat-icon>
+        </div>
+      </div>
+
+      <!-- Conversion Rate Card (Meta >= 35%) -->
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+           [matTooltip]="'Meta sugerida: >= 35%. Gerencia Comercial.'">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Tasa de Conversión (ISO 10.1)</span>
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tasaConversion }}%</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  [ngClass]="kpis.tasaConversion >= 35 ? 'bg-green-150 text-green-700' : 'bg-amber-100 text-amber-700'">
+              {{ kpis.tasaConversion >= 35 ? 'Meta Cumplida' : 'Bajo Meta' }}
+            </span>
+          </div>
+        </div>
+        <div class="p-2 rounded-xl" [ngClass]="kpis.tasaConversion >= 35 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600'">
+          <mat-icon svgIcon="heroicons_outline:arrow-trending-up" class="icon-size-6"></mat-icon>
+        </div>
+      </div>
+
+      <!-- Time Average Initial Contact Card (Meta <= 24h) -->
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+           [matTooltip]="'Meta sugerida: <= 24 horas hábiles. Sucursal.'">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Contacto Inicial (ISO 10.2)</span>
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tiempoPromedioContactoHoras }}h</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  [ngClass]="kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'bg-green-150 text-green-700' : 'bg-red-100 text-red-700'">
+              {{ kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'Meta Cumplida' : 'Fuera de SLA' }}
+            </span>
+          </div>
+        </div>
+        <div class="p-2 rounded-xl" [ngClass]="kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-red-50 dark:bg-red-950/40 text-red-600'">
+          <mat-icon svgIcon="heroicons_outline:clock" class="icon-size-6"></mat-icon>
+        </div>
+      </div>
+
+      <!-- Leads Calificados Card -->
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Oportunidades Calificadas</span>
+          <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.leadsConvertidos }}</span>
+        </div>
+        <div class="p-2 bg-green-50 dark:bg-green-950/40 rounded-xl text-green-600 dark:text-green-400">
+          <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-6"></mat-icon>
+        </div>
+      </div>
+    </div>
+
     <!-- Filters Section -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
       <!-- Search Input -->
@@ -207,11 +268,15 @@
               <span class="font-semibold text-slate-600 dark:text-slate-350">{{ lead.zonaAtencion }}</span>
             </div>
 
-            <!-- Edit button for Oportunidad -->
-            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
-              <button mat-stroked-button class="text-xs py-1 w-full" (click)="openEditDialog(lead)">
-                <mat-icon svgIcon="heroicons_outline:pencil-square" class="icon-size-4 mr-1"></mat-icon>
-                <span>Editar datos del lead</span>
+            <!-- Edit/Follow-up buttons for Oportunidad -->
+            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-900 grid grid-cols-2 gap-2">
+              <button mat-stroked-button class="text-xs py-1" (click)="openEditDialog(lead)" matTooltip="Editar Datos">
+                <mat-icon svgIcon="heroicons_outline:pencil-square" class="icon-size-4"></mat-icon>
+                <span>Editar</span>
+              </button>
+              <button mat-flat-button color="primary" class="text-xs py-1" (click)="openSeguimientoDialog(lead)" matTooltip="Bitácora Seguimiento ISO 7.7">
+                <mat-icon svgIcon="heroicons_outline:chat-bubble-bottom-center-text" class="icon-size-4 mr-1"></mat-icon>
+                <span>Seguimiento</span>
               </button>
             </div>
           </div>
@@ -361,6 +426,10 @@
                 <button mat-icon-button matTooltip="Editar Lead" (click)="openEditDialog(lead)">
                   <mat-icon svgIcon="heroicons_outline:pencil-square" class="text-slate-500 hover:text-primary"></mat-icon>
                 </button>
+                <!-- Follow-up button visible for Opportunities -->
+                <button *ngIf="lead.estatus === 'Oportunidad'" mat-icon-button matTooltip="Bitácora de Seguimiento Comercial (ISO 7.7)" (click)="openSeguimientoDialog(lead)">
+                  <mat-icon svgIcon="heroicons_outline:chat-bubble-bottom-center-text" class="text-indigo-600"></mat-icon>
+                </button>
                 <ng-container *ngIf="lead.estatus === 'Nuevo'">
                   <button mat-icon-button color="accent" matTooltip="Calificar e ISO 7.4" (click)="openConvertDialog(lead)">
                     <mat-icon svgIcon="heroicons_outline:check-badge" class="text-green-500"></mat-icon>
@@ -369,7 +438,7 @@
                     <mat-icon svgIcon="heroicons_outline:x-circle" class="text-red-500"></mat-icon>
                   </button>
                 </ng-container>
-                <span *ngIf="lead.estatus !== 'Nuevo'" class="text-xs text-slate-400 italic mr-2">{{ lead.estatus }}</span>
+                <span *ngIf="lead.estatus !== 'Nuevo' && lead.estatus !== 'Oportunidad'" class="text-xs text-slate-400 italic mr-2">{{ lead.estatus }}</span>
                 <button mat-icon-button class="text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
                   <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
                 </button>

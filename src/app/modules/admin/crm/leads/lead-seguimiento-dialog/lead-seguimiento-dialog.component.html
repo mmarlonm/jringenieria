@@ -1,0 +1,164 @@
+<div class="flex flex-col max-w-4xl w-full max-h-[90vh] overflow-hidden bg-white text-default rounded-xl">
+  
+  <!-- Header -->
+  <div class="flex items-center justify-between p-6 border-b bg-slate-50 dark:bg-slate-900">
+    <div class="flex flex-col">
+      <div class="flex items-center gap-2">
+        <mat-icon class="text-primary text-2xl">chat_bubble</mat-icon>
+        <h2 class="text-xl font-bold uppercase tracking-tight text-gray-900 dark:text-gray-100">
+          Bitácora de Seguimiento Comercial (ISO 9001 - 7.7)
+        </h2>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        Contacto: <strong class="text-slate-700 dark:text-slate-200">{{ lead.nombreContacto }}</strong> &bull; Empresa: {{ lead.empresa }}
+      </p>
+    </div>
+    <button mat-icon-button (click)="close()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content split in two: Left Form, Right List/Timeline -->
+  <div class="flex-auto overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-gray-50/50 dark:bg-transparent">
+    
+    <!-- LEFT: FORM TO ADD NEW FOLLOW-UP -->
+    <div class="lg:col-span-5 bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-4 self-start">
+      <h3 class="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b pb-2 flex items-center gap-1.5">
+        <mat-icon class="icon-size-4 text-primary">add_circle</mat-icon>
+        Registrar Seguimiento
+      </h3>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+        
+        <!-- Fecha Contacto -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Fecha de Contacto</mat-label>
+          <input matInput [matDatepicker]="pickerCont" formControlName="fechaContacto" required />
+          <mat-datepicker-toggle matSuffix [for]="pickerCont"></mat-datepicker-toggle>
+          <mat-datepicker #pickerCont></mat-datepicker>
+          <mat-error *ngIf="form.get('fechaContacto').hasError('required')">Requerido</mat-error>
+        </mat-form-field>
+
+        <!-- Medio de Contacto -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Medio Utilizado</mat-label>
+          <mat-select formControlName="medioUtilizado" required>
+            <mat-option *ngFor="let m of medios" [value]="m">{{ m }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Responsable -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Responsable</mat-label>
+          <mat-select formControlName="idResponsable" required>
+            <mat-option *ngFor="let u of users" [value]="u.usuarioId">{{ u.nombreUsuario }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Avance Logrado -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Avance Logrado</mat-label>
+          <textarea matInput formControlName="avanceLogrado" rows="3" placeholder="Detalles de lo conversado..." required></textarea>
+          <mat-error *ngIf="form.get('avanceLogrado').hasError('required')">Requerido</mat-error>
+        </mat-form-field>
+
+        <!-- Informacion Faltante -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Información Faltante</mat-label>
+          <textarea matInput formControlName="informacionFaltante" rows="2" placeholder="Documentación o datos pendientes..."></textarea>
+        </mat-form-field>
+
+        <!-- Proxima Accion -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Próxima Acción</mat-label>
+          <input matInput formControlName="proximaAction" placeholder="Ej. Enviar cotización actualizada" required />
+          <mat-error *ngIf="form.get('proximaAction').hasError('required')">Requerido</mat-error>
+        </mat-form-field>
+
+        <!-- Fecha Compromiso -->
+        <mat-form-field appearance="outline" class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
+          <mat-label>Fecha Compromiso</mat-label>
+          <input matInput [matDatepicker]="pickerComp" formControlName="fechaCompromiso" />
+          <mat-datepicker-toggle matSuffix [for]="pickerComp"></mat-datepicker-toggle>
+          <mat-datepicker #pickerComp></mat-datepicker>
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" class="w-full mt-2" type="submit" [disabled]="form.invalid || cargando">
+          <mat-icon>save</mat-icon>
+          <span>Guardar Seguimiento</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- RIGHT: TIMELINE / HISTORY -->
+    <div class="lg:col-span-7 bg-white dark:bg-slate-950 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col min-h-[400px]">
+      <h3 class="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b pb-2 mb-4 flex items-center gap-1.5">
+        <mat-icon class="icon-size-4 text-amber-500">history</mat-icon>
+        Historial de Trazabilidad Comercial
+      </h3>
+
+      <div *ngIf="cargando && seguimientos.length === 0" class="flex-auto flex items-center justify-center">
+        <span class="text-slate-400">Cargando bitácora...</span>
+      </div>
+
+      <div *ngIf="!cargando && seguimientos.length === 0" class="flex-auto flex flex-col items-center justify-center text-slate-400 py-12">
+        <mat-icon class="text-slate-300 text-5xl mb-2">find_in_page</mat-icon>
+        <span class="text-sm font-semibold">Sin registros de seguimiento</span>
+        <span class="text-xs text-center px-4 mt-1">ISO 9001 establece que las oportunidades deben contar con seguimiento para considerarse válidas.</span>
+      </div>
+
+      <div *ngIf="seguimientos.length > 0" class="flex-auto space-y-5 overflow-y-auto max-h-[60vh] pr-2">
+        <div *ngFor="let seg of seguimientos" class="timeline-container relative">
+          <div class="timeline-dot"></div>
+          
+          <div class="bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 p-4 rounded-xl shadow-sm hover:border-primary/20 transition-all group relative">
+            
+            <!-- Remove Button -->
+            <button mat-icon-button (click)="eliminarSeguimiento(seg.id)" 
+                    class="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 w-8 h-8 rounded-lg shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <mat-icon class="icon-size-4">delete</mat-icon>
+            </button>
+
+            <!-- Metadata Header -->
+            <div class="flex items-center gap-2 flex-wrap text-[11px] font-bold text-slate-400">
+              <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded uppercase">
+                📞 {{ seg.medioUtilizado }}
+              </span>
+              <span>•</span>
+              <span>Contacto: {{ seg.fechaContacto | date:'dd-MM-yyyy' }}</span>
+              <span>•</span>
+              <span class="text-slate-500">Por: {{ seg.responsableNombre }}</span>
+            </div>
+
+            <!-- Avance -->
+            <p class="text-sm font-semibold text-slate-850 dark:text-slate-200 mt-2 whitespace-pre-wrap">{{ seg.avanceLogrado }}</p>
+
+            <!-- Faltantes (if any) -->
+            <div *ngIf="seg.informacionFaltante" class="mt-2.5 p-2 bg-red-50/50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/20 text-xs rounded text-slate-650 dark:text-slate-350">
+              <strong>Info Faltante:</strong> {{ seg.informacionFaltante }}
+            </div>
+
+            <!-- Proxima Acción & Fecha Compromiso -->
+            <div class="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-150 dark:border-slate-800 text-[11px]">
+              <span class="text-slate-500">
+                <strong class="text-slate-600 dark:text-slate-400">Próxima Acción:</strong> {{ seg.proximaAction }}
+              </span>
+              <span *ngIf="seg.fechaCompromiso" class="bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded font-bold shrink-0">
+                📅 Compromiso: {{ seg.fechaCompromiso | date:'dd-MM-yyyy' }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="flex items-center justify-end p-6 border-t bg-slate-50 dark:bg-slate-900">
+    <button mat-flat-button color="primary" class="px-8 rounded-xl" (click)="close()">
+      Listo
+    </button>
+  </div>
+</div>
