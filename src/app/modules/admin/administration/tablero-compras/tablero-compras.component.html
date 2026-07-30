@@ -166,7 +166,7 @@
     <div class="flex flex-col flex-auto p-3 sm:p-5 md:overflow-y-auto overflow-visible min-h-0">
 
         <!-- Reference Design: Process Arrow Flow -->
-        <div class="flex-none process-container shadow-sm border border-gray-100 bg-white">
+        <div *ngIf="showFilters" class="flex-none process-container shadow-sm border border-gray-100 bg-white">
 
             <!-- Arrow Flow -->
             <div class="arrow-flow mt-4">
