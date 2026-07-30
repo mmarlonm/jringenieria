@@ -99,25 +99,6 @@ export class TicketsDetailComponent implements OnInit {
     });
   }
 
-  agregarActividad(): void {
-    if (!this.estimacionForm.valid) {
-      alert('Por favor completa todos los campos de la actividad');
-      return;
-    }
-
-    const actividad = {
-      descripcion: this.estimacionForm.get('descripcionActividad')?.value,
-      horas: this.estimacionForm.get('horas')?.value,
-      precioUnitario: this.estimacionForm.get('precioUnitario')?.value,
-      orden: this.actividades.length
-    };
-
-    this.actividades.push(actividad);
-    this.estimacionForm.get('descripcionActividad')?.reset();
-    this.estimacionForm.get('horas')?.reset(0);
-    this.estimacionForm.get('precioUnitario')?.reset(0);
-  }
-
   eliminarActividad(index: number): void {
     this.actividades.splice(index, 1);
   }
@@ -128,36 +109,6 @@ export class TicketsDetailComponent implements OnInit {
 
   calcularTotalHoras(): number {
     return this.actividades.reduce((sum, a) => sum + a.horas, 0);
-  }
-
-  enviarEstimacion(): void {
-    if (this.actividades.length === 0) {
-      alert('Debes agregar al menos una actividad');
-      return;
-    }
-
-    this.isSubmittingEstimacion = true;
-    const dto = {
-      actividades: this.actividades,
-      comentarioEstimacion: this.estimacionForm.get('comentarioEstimacion')?.value || ''
-    };
-
-    this.ticketsService.guardarEstimacion(this.ticketId, dto).subscribe({
-      next: (res: any) => {
-        if (res.success) {
-          alert('Estimación enviada a aprobación');
-          this.mostrarFormEstimacion = false;
-          this.cargarTicket();
-        } else {
-          alert('Error al enviar estimación');
-        }
-        this.isSubmittingEstimacion = false;
-      },
-      error: () => {
-        alert('Error al enviar estimación');
-        this.isSubmittingEstimacion = false;
-      }
-    });
   }
 
   aprobarRechazar(aprobar: boolean): void {
@@ -223,11 +174,6 @@ export class TicketsDetailComponent implements OnInit {
     return this.ticket?.nombreEstatus === 'Estimación Enviada' && this.tieneRolAprobador;
   }
 
-  puedeEstimar(): boolean {
-    return this.ticket?.idResponsable === this.currentUserId &&
-           (this.ticket?.nombreEstatus === 'Nuevo' || this.ticket?.nombreEstatus === 'En Análisis');
-  }
-
   volver(): void {
     this.router.navigate(['/administration/tickets']);
   }
@@ -250,5 +196,100 @@ export class TicketsDetailComponent implements OnInit {
       'Resuelto': 'bg-emerald-600'
     };
     return map[estatus] || 'bg-gray-500';
+  }
+
+  esCreador(): boolean {
+    return this.ticket && this.currentUserId === this.ticket.idSolicitante;
+  }
+
+  puedeEstimar(): boolean {
+    // Mostrar si está en estado "Nuevo" o "En Análisis" (sin restricción de responsable)
+    if (!this.ticket) return false;
+    return this.ticket.ticketEstatusId === 1 || this.ticket.ticketEstatusId === 2;
+  }
+
+  agregarActividad(): void {
+    if (!this.estimacionForm.valid) {
+      alert('Completa todos los campos requeridos');
+      return;
+    }
+
+    const actividad = {
+      descripcion: this.estimacionForm.get('descripcionActividad')?.value,
+      horas: parseFloat(this.estimacionForm.get('horas')?.value),
+      precioUnitario: parseFloat(this.estimacionForm.get('precioUnitario')?.value),
+      orden: this.actividades.length
+    };
+
+    this.actividades.push(actividad);
+    this.estimacionForm.reset();
+  }
+
+  guardarEstimacion(): void {
+    if (this.actividades.length === 0) {
+      alert('Debe agregar al menos una actividad');
+      return;
+    }
+
+    const totalHoras = this.actividades.reduce((sum, a) => sum + a.horas, 0);
+    const totalPrecio = this.actividades.reduce((sum, a) => sum + (a.horas * a.precioUnitario), 0);
+
+    const dto = {
+      actividades: this.actividades,
+      horasEstimadas: totalHoras,
+      precioTotalEstimado: totalPrecio,
+      comentarioEstimacion: this.estimacionForm.get('comentarioEstimacion')?.value || ''
+    };
+
+    this.isSubmittingEstimacion = true;
+    this.ticketsService.guardarEstimacion(this.ticketId, dto).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          alert('Estimación guardada exitosamente');
+          this.actividades = [];
+          this.cargarTicket();
+          this.mostrarFormEstimacion = false;
+        } else {
+          alert(res.message || 'Error al guardar estimación');
+        }
+        this.isSubmittingEstimacion = false;
+      },
+      error: () => {
+        alert('Error al guardar estimación');
+        this.isSubmittingEstimacion = false;
+      }
+    });
+  }
+
+  abrirFormularioEditar(): void {
+    if (!this.esCreador()) {
+      alert('Solo el solicitante puede editar el ticket');
+      return;
+    }
+    // Redirigir a formulario de edición
+    this.router.navigate(['/administration/tickets', this.ticketId, 'editar']);
+  }
+
+  confirmarEliminar(): void {
+    if (!this.esCreador()) {
+      alert('Solo el solicitante puede eliminar el ticket');
+      return;
+    }
+
+    if (confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
+      this.ticketsService.eliminar(this.ticketId).subscribe({
+        next: (res: any) => {
+          if (res.success) {
+            alert('Ticket eliminado exitosamente');
+            this.router.navigate(['/administration/tickets']);
+          } else {
+            alert(res.message || 'Error al eliminar el ticket');
+          }
+        },
+        error: () => {
+          alert('Error al eliminar el ticket');
+        }
+      });
+    }
   }
 }

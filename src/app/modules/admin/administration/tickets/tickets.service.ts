@@ -36,6 +36,16 @@ export class TicketsService {
     return this.http.post<any>(`${this.apiUrl}`, dto);
   }
 
+  // Editar ticket
+  editar(id: number, dto: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  // Eliminar ticket
+  eliminar(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`);
+  }
+
   // Guardar estimación
   guardarEstimacion(id: number, dto: any): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}/estimacion`, dto);

@@ -17,13 +17,24 @@
         <h1 class="text-3xl font-extrabold text-gray-900">{{ ticket.folio }}: {{ ticket.titulo }}</h1>
         <p class="text-sm text-gray-600 mt-1">Creado el {{ ticket.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <span class="px-3 py-1 rounded-full text-sm font-bold text-white" [ngClass]="getEstatusColor(ticket.nombreEstatus)">
           {{ ticket.nombreEstatus }}
         </span>
         <span class="px-3 py-1 rounded-full text-sm font-bold" [ngClass]="getPrioridadColor(ticket.nombrePrioridad)">
           {{ ticket.nombrePrioridad }}
         </span>
+        <!-- Botones: Editar y Eliminar (solo si Nuevo) -->
+        <div *ngIf="ticket.ticketEstatusId === 1" class="flex gap-2">
+          <button mat-raised-button color="accent" (click)="abrirFormularioEditar()" class="!rounded-xl">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </button>
+          <button mat-raised-button color="warn" (click)="confirmarEliminar()" class="!rounded-xl">
+            <mat-icon>delete</mat-icon>
+            Eliminar
+          </button>
+        </div>
       </div>
     </div>
 
@@ -153,7 +164,7 @@
             </button>
             <button type="button" mat-flat-button color="primary" class="!bg-emerald-600 hover:!bg-emerald-700"
                     [disabled]="actividades.length === 0 || isSubmittingEstimacion"
-                    (click)="enviarEstimacion()">
+                    (click)="guardarEstimacion()">
               <mat-icon *ngIf="!isSubmittingEstimacion" class="mr-2">check_circle</mat-icon>
               {{ isSubmittingEstimacion ? 'Enviando...' : 'Enviar a Aprobación' }}
             </button>
