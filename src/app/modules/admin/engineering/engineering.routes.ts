@@ -28,5 +28,9 @@ export default [
     {
         path: 'aliados',
         loadComponent: () => import('./subcontratacion/subcontratacion.component').then(m => m.SubcontratacionComponent)
+    },
+    {
+        path: 'tickets',
+        loadChildren: () => import('../administration/tickets/tickets.routes').then(m => m.ticketsRoutes)
     }
 ] as Routes;

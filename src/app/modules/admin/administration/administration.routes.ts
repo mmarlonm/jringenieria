@@ -40,5 +40,9 @@ export default [
     {
         path: 'calidad',
         loadComponent: () => import('./calidad/calidad.component').then(m => m.CalidadComponent)
+    },
+    {
+        path: 'tickets',
+        loadChildren: () => import('./tickets/tickets.routes').then(m => m.ticketsRoutes)
     }
 ] as Routes;

@@ -1,0 +1,152 @@
+<div class="w-full min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8 space-y-8 font-sans">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between px-2">
+    <div>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-indigo-600" [svgIcon]="'heroicons_outline:ticket'"></mat-icon>
+        Nuevo Ticket
+      </h1>
+      <p class="text-secondary text-[10px] font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-75">
+        Reporta un bug, solicita una feature o crea una historia de usuario
+      </p>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <div *ngIf="!isLoading" class="mx-2 bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-6 sm:p-8">
+
+    <form [formGroup]="form" (ngSubmit)="guardar()">
+
+      <!-- Sección 1: Datos Básicos -->
+      <div class="space-y-6 mb-8">
+        <h2 class="text-lg font-bold text-gray-800 uppercase tracking-tight border-b pb-2">Información General</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Tipo de Ticket *</mat-label>
+            <mat-select formControlName="ticketTipoId">
+              <mat-option *ngFor="let tipo of tipos" [value]="tipo.ticketTipoId">
+                {{ tipo.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Prioridad *</mat-label>
+            <mat-select formControlName="ticketPrioridadId">
+              <mat-option *ngFor="let prio of prioridades" [value]="prio.ticketPrioridadId">
+                {{ prio.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Título *</mat-label>
+          <input matInput formControlName="titulo" placeholder="Describe brevemente el ticket">
+          <mat-error *ngIf="form.get('titulo')?.hasError('required')">El título es requerido</mat-error>
+          <mat-error *ngIf="form.get('titulo')?.hasError('minlength')">Mínimo 5 caracteres</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Descripción *</mat-label>
+          <textarea matInput formControlName="descripcion" placeholder="Describe en detalle el problema o solicitud"
+                    rows="5"></textarea>
+          <mat-error *ngIf="form.get('descripcion')?.hasError('required')">La descripción es requerida</mat-error>
+          <mat-error *ngIf="form.get('descripcion')?.hasError('minlength')">Mínimo 10 caracteres</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Sección 2: Asignación y CC -->
+      <div class="space-y-6 mb-8">
+        <h2 class="text-lg font-bold text-gray-800 uppercase tracking-tight border-b pb-2">Asignación</h2>
+
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Responsable *</mat-label>
+          <mat-select formControlName="idResponsable">
+            <mat-option *ngFor="let resp of responsables" [value]="resp.usuarioId">
+              {{ resp.nombreUsuario }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2">Notificar por CC (Opcional)</label>
+          <mat-form-field appearance="fill" class="w-full" floatLabel="never">
+            <mat-label>Buscar usuarios...</mat-label>
+            <input matInput [formControl]="usuariosCCControl" [matAutocomplete]="autoCC">
+            <mat-autocomplete #autoCC="matAutocomplete" (optionSelected)="agregarUsuarioCC($event.option.value)">
+              <mat-option *ngFor="let usuario of filteredUsuariosCC | async" [value]="usuario">
+                {{ usuario.nombreUsuario }} ({{ usuario.email }})
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <mat-chip-set *ngIf="usuariosSeleccionadosCC.length > 0" class="mt-2" aria-label="Usuarios CC">
+            <mat-chip *ngFor="let usuario of usuariosSeleccionadosCC" [removable]="true"
+                      (removed)="eliminarUsuarioCC(usuario.usuarioId)">
+              {{ usuario.nombreUsuario }}
+              <button matChipRemove>
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+
+      <!-- Sección 3: Archivos -->
+      <div class="space-y-6 mb-8">
+        <h2 class="text-lg font-bold text-gray-800 uppercase tracking-tight border-b pb-2">Documentos de Soporte</h2>
+
+        <div class="border-2 border-dashed border-indigo-300 rounded-xl p-6 text-center bg-indigo-50">
+          <mat-icon class="icon-size-8 text-indigo-600 mx-auto mb-2">cloud_upload</mat-icon>
+          <p class="text-sm font-semibold text-gray-700 mb-2">Sube documentos o imágenes de ejemplo</p>
+          <input type="file" multiple (change)="onFileSelected($event)" class="hidden" #fileInput>
+          <button type="button" mat-flat-button color="primary" class="!bg-indigo-600 hover:!bg-indigo-700 !rounded-xl"
+                  (click)="fileInput.click()">
+            <mat-icon class="mr-2">attach_file</mat-icon>
+            Seleccionar archivos
+          </button>
+        </div>
+
+        <div *ngIf="archivosSeleccionados.length > 0" class="space-y-2">
+          <p class="text-sm font-bold text-gray-700">Archivos seleccionados:</p>
+          <div *ngFor="let archivo of archivosSeleccionados; let i = index"
+               class="flex items-center justify-between bg-gray-100 rounded-lg p-3">
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-gray-600">insert_drive_file</mat-icon>
+              <span class="text-sm text-gray-700">{{ archivo.name }}</span>
+            </div>
+            <button type="button" mat-icon-button (click)="eliminarArchivo(i)" class="text-red-600">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex items-center gap-3 justify-end border-t pt-6">
+        <button type="button" mat-stroked-button class="!rounded-xl" (click)="cancelar()">
+          Cancelar
+        </button>
+        <button type="submit" mat-flat-button color="primary"
+                class="!bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-xl shadow-lg shadow-indigo-100"
+                [disabled]="isSubmitting || !form.valid">
+          <mat-icon *ngIf="!isSubmitting" class="mr-2">save</mat-icon>
+          <mat-progress-spinner *ngIf="isSubmitting" [diameter]="20" [mode]="'indeterminate'" class="mr-2"></mat-progress-spinner>
+          {{ isSubmitting ? 'Creando...' : 'Crear Ticket' }}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-32">
+    <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+    <p class="mt-6 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse">Cargando formulario...</p>
+  </div>
+
+</div>

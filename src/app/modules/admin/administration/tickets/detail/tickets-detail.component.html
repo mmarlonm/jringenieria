@@ -1,0 +1,265 @@
+<div class="w-full min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8 space-y-8 font-sans">
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex items-center justify-center py-32">
+    <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+  </div>
+
+  <!-- Contenido -->
+  <div *ngIf="!isLoading && ticket" class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-2">
+      <div>
+        <button mat-icon-button (click)="volver()" class="mb-2">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1 class="text-3xl font-extrabold text-gray-900">{{ ticket.folio }}: {{ ticket.titulo }}</h1>
+        <p class="text-sm text-gray-600 mt-1">Creado el {{ ticket.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 rounded-full text-sm font-bold text-white" [ngClass]="getEstatusColor(ticket.nombreEstatus)">
+          {{ ticket.nombreEstatus }}
+        </span>
+        <span class="px-3 py-1 rounded-full text-sm font-bold" [ngClass]="getPrioridadColor(ticket.nombrePrioridad)">
+          {{ ticket.nombrePrioridad }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Sección: Información General -->
+    <div class="bg-white rounded-3xl shadow-md p-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 uppercase tracking-tight border-b pb-2">Información General</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Tipo</p>
+          <p class="text-sm font-semibold text-gray-800">{{ ticket.nombreTipo }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Solicitante</p>
+          <p class="text-sm font-semibold text-gray-800">{{ ticket.nombreSolicitante }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Responsable</p>
+          <p class="text-sm font-semibold text-gray-800">{{ ticket.nombreResponsable }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Módulo de Origen</p>
+          <p class="text-sm font-semibold text-gray-800">{{ ticket.moduloOrigen || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Descripción -->
+    <div class="bg-white rounded-3xl shadow-md p-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 uppercase tracking-tight border-b pb-2">Descripción</h2>
+      <p class="text-gray-700 whitespace-pre-wrap">{{ ticket.descripcion }}</p>
+    </div>
+
+    <!-- Sección: Adjuntos -->
+    <div *ngIf="ticket.archivos && ticket.archivos.length > 0" class="bg-white rounded-3xl shadow-md p-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 uppercase tracking-tight border-b pb-2">Documentos Adjuntos</h2>
+      <div class="space-y-2">
+        <div *ngFor="let archivo of ticket.archivos" class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-indigo-600">attachment</mat-icon>
+            <div>
+              <p class="text-sm font-semibold text-gray-800">{{ archivo.nombreOriginal }}</p>
+              <p class="text-xs text-gray-500">Subido por {{ archivo.nombreUsuarioSube }} el {{ archivo.fechaSubida | date: 'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Estimación -->
+    <div class="bg-white rounded-3xl shadow-md p-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 uppercase tracking-tight border-b pb-2">Estimación</h2>
+
+      <div *ngIf="!ticket.horasEstimadas" class="text-center py-8 text-gray-500">
+        <p>No hay estimación aún</p>
+      </div>
+
+      <div *ngIf="ticket.horasEstimadas">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-indigo-50 rounded-xl p-4">
+            <p class="text-xs font-bold text-indigo-600 uppercase">Horas Estimadas</p>
+            <p class="text-2xl font-black text-indigo-900">{{ ticket.horasEstimadas }}</p>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-4">
+            <p class="text-xs font-bold text-emerald-600 uppercase">Precio Total</p>
+            <p class="text-2xl font-black text-emerald-900">$ {{ ticket.precioTotalEstimado | number: '1.2-2' }}</p>
+          </div>
+          <div class="bg-sky-50 rounded-xl p-4">
+            <p class="text-xs font-bold text-sky-600 uppercase">Fecha de Envío</p>
+            <p class="text-lg font-bold text-sky-900">{{ ticket.fechaEnvioEstimacion | date: 'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-2 text-left font-bold text-gray-700">Actividad</th>
+              <th class="px-4 py-2 text-left font-bold text-gray-700">Horas</th>
+              <th class="px-4 py-2 text-left font-bold text-gray-700">Precio Unitario</th>
+              <th class="px-4 py-2 text-left font-bold text-gray-700">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let act of ticket.actividades" class="border-b">
+              <td class="px-4 py-2 text-gray-700">{{ act.descripcion }}</td>
+              <td class="px-4 py-2 text-gray-700">{{ act.horas }}</td>
+              <td class="px-4 py-2 text-gray-700">$ {{ act.precioUnitario | number: '1.2-2' }}</td>
+              <td class="px-4 py-2 text-gray-800 font-bold">$ {{ (act.horas * act.precioUnitario) | number: '1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Botón para estimar (solo si es responsable y está en estado "Nuevo" o "En Análisis") -->
+      <div *ngIf="puedeEstimar()" class="mt-6 pt-6 border-t">
+        <button mat-flat-button color="primary" class="!bg-indigo-600 hover:!bg-indigo-700 !rounded-xl"
+                (click)="mostrarFormEstimacion = !mostrarFormEstimacion">
+          <mat-icon class="mr-2">edit</mat-icon>
+          {{ mostrarFormEstimacion ? 'Ocultar' : 'Agregar' }} Estimación
+        </button>
+
+        <form *ngIf="mostrarFormEstimacion" [formGroup]="estimacionForm" class="mt-6 space-y-4 p-4 bg-indigo-50 rounded-xl">
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Descripción de Actividad</mat-label>
+            <input matInput formControlName="descripcionActividad" placeholder="Describe la actividad">
+          </mat-form-field>
+
+          <div class="grid grid-cols-2 gap-4">
+            <mat-form-field appearance="fill" class="w-full">
+              <mat-label>Horas</mat-label>
+              <input matInput formControlName="horas" type="number" placeholder="0.00">
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="w-full">
+              <mat-label>Precio Unitario</mat-label>
+              <input matInput formControlName="precioUnitario" type="number" placeholder="0.00">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Comentario de Estimación</mat-label>
+            <textarea matInput formControlName="comentarioEstimacion" placeholder="Comentarios opcionales"></textarea>
+          </mat-form-field>
+
+          <div class="flex gap-2">
+            <button type="button" mat-stroked-button (click)="agregarActividad()">
+              <mat-icon class="mr-1">add</mat-icon>
+              Agregar Actividad
+            </button>
+            <button type="button" mat-flat-button color="primary" class="!bg-emerald-600 hover:!bg-emerald-700"
+                    [disabled]="actividades.length === 0 || isSubmittingEstimacion"
+                    (click)="enviarEstimacion()">
+              <mat-icon *ngIf="!isSubmittingEstimacion" class="mr-2">check_circle</mat-icon>
+              {{ isSubmittingEstimacion ? 'Enviando...' : 'Enviar a Aprobación' }}
+            </button>
+          </div>
+
+          <div *ngIf="actividades.length > 0" class="mt-4">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="bg-white">
+                  <th class="px-2 py-2 text-left">Actividad</th>
+                  <th class="px-2 py-2 text-left">Horas</th>
+                  <th class="px-2 py-2 text-left">Precio</th>
+                  <th class="px-2 py-2">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let act of actividades; let i = index" class="border-b">
+                  <td class="px-2 py-2">{{ act.descripcion }}</td>
+                  <td class="px-2 py-2">{{ act.horas }}</td>
+                  <td class="px-2 py-2">$ {{ (act.horas * act.precioUnitario) | number: '1.2-2' }}</td>
+                  <td class="px-2 py-2 text-center">
+                    <button type="button" mat-icon-button (click)="eliminarActividad(i)" class="text-red-600">
+                      <mat-icon class="icon-size-4">delete</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+                <tr class="bg-gray-100 font-bold">
+                  <td class="px-2 py-2">TOTAL</td>
+                  <td class="px-2 py-2">{{ calcularTotalHoras() }}</td>
+                  <td class="px-2 py-2">$ {{ calcularTotalPrecio() | number: '1.2-2' }}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sección: Aprobación -->
+    <div *ngIf="ticket.nombreEstatus === 'Estimación Enviada' && puedeAprobar()" class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-yellow-500">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 uppercase tracking-tight border-b pb-2">Aprobación Pendiente</h2>
+
+      <button mat-flat-button class="!bg-yellow-600 hover:!bg-yellow-700 !text-white !rounded-xl mb-4"
+              (click)="mostrarFormAprobacion = !mostrarFormAprobacion">
+        <mat-icon class="mr-2">rate_review</mat-icon>
+        {{ mostrarFormAprobacion ? 'Ocultar' : 'Mostrar' }} Formulario de Aprobación
+      </button>
+
+      <form *ngIf="mostrarFormAprobacion" [formGroup]="aprobacionForm" class="space-y-4 p-4 bg-yellow-50 rounded-xl">
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Comentario de Aprobación</mat-label>
+          <textarea matInput formControlName="comentarioAprobacion" placeholder="Comentarios sobre la aprobación..."></textarea>
+        </mat-form-field>
+
+        <div class="flex gap-2">
+          <button type="button" mat-flat-button class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-xl"
+                  [disabled]="isSubmittingAprobacion"
+                  (click)="aprobarRechazar(true)">
+            <mat-icon class="mr-2">check_circle</mat-icon>
+            {{ isSubmittingAprobacion ? 'Procesando...' : 'APROBAR' }}
+          </button>
+          <button type="button" mat-flat-button class="!bg-red-600 hover:!bg-red-700 !text-white !rounded-xl"
+                  [disabled]="isSubmittingAprobacion"
+                  (click)="aprobarRechazar(false)">
+            <mat-icon class="mr-2">cancel</mat-icon>
+            {{ isSubmittingAprobacion ? 'Procesando...' : 'RECHAZAR' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Sección: Comentarios -->
+    <div class="bg-white rounded-3xl shadow-md p-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 uppercase tracking-tight border-b pb-2">Comentarios</h2>
+
+      <button mat-stroked-button class="mb-4 !rounded-xl" (click)="mostrarFormComentario = !mostrarFormComentario">
+        <mat-icon class="mr-2">comment</mat-icon>
+        {{ mostrarFormComentario ? 'Cancelar' : 'Agregar Comentario' }}
+      </button>
+
+      <form *ngIf="mostrarFormComentario" [formGroup]="comentarioForm" class="mb-6 p-4 bg-gray-50 rounded-xl space-y-3">
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Tu comentario</mat-label>
+          <textarea matInput formControlName="comentario" placeholder="Escribe tu comentario..."></textarea>
+        </mat-form-field>
+        <button type="button" mat-flat-button color="primary" class="!bg-indigo-600 hover:!bg-indigo-700 !rounded-xl"
+                [disabled]="!comentarioForm.valid || isSubmittingComentario"
+                (click)="agregarComentario()">
+          <mat-icon class="mr-2">send</mat-icon>
+          {{ isSubmittingComentario ? 'Enviando...' : 'Publicar' }}
+        </button>
+      </form>
+
+      <div class="space-y-4">
+        <div *ngFor="let comentario of ticket.comentarios" class="border-l-4 border-indigo-200 pl-4 py-2">
+          <p class="text-xs font-bold text-gray-500">{{ comentario.nombreUsuario }} - {{ comentario.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</p>
+          <p class="text-sm text-gray-800 mt-1">{{ comentario.comentario }}</p>
+        </div>
+
+        <div *ngIf="!ticket.comentarios || ticket.comentarios.length === 0" class="text-center py-8 text-gray-500">
+          <p>No hay comentarios aún</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

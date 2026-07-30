@@ -1,0 +1,190 @@
+<div class="w-full min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8 space-y-8 font-sans">
+
+  <!-- Header Section -->
+  <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+    <div class="flex flex-col">
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-indigo-600" [svgIcon]="'heroicons_outline:ticket'"></mat-icon>
+        Sistema de Tickets
+      </h1>
+      <p class="text-secondary text-[10px] font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-75">
+        Bugs, Features, User Stories y Mejoras Técnicas
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button mat-flat-button color="primary"
+              class="!bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-xl !px-6 !py-2.5 shadow-lg shadow-indigo-100 flex items-center transition-all hover:scale-105"
+              (click)="abrirNuevo()">
+        <mat-icon class="mr-2 icon-size-5">add_circle</mat-icon>
+        Nuevo Ticket
+      </button>
+      <button mat-flat-button class="rounded-xl px-5 bg-white border border-gray-200 text-gray-600 shadow-sm hover:bg-gray-50 transition-all" (click)="toggleFilters()">
+        <mat-icon [svgIcon]="'heroicons_outline:funnel'" class="mr-2"></mat-icon>
+        <span class="font-bold text-xs tracking-widest">{{ showFilters ? 'OCULTAR FILTROS' : 'FILTRAR' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div *ngIf="showFilters" class="mx-2 bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-6 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Tipo</mat-label>
+        <mat-select [(ngModel)]="selectedTipo" (selectionChange)="consultar()">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option *ngFor="let tipo of tipos" [value]="tipo.ticketTipoId">{{ tipo.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Estatus</mat-label>
+        <mat-select [(ngModel)]="selectedEstatus" (selectionChange)="consultar()">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option *ngFor="let est of estatus" [value]="est.ticketEstatusId">{{ est.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Prioridad</mat-label>
+        <mat-select [(ngModel)]="selectedPrioridad" (selectionChange)="consultar()">
+          <mat-option [value]="null">Todas</mat-option>
+          <mat-option *ngFor="let prio of prioridades" [value]="prio.ticketPrioridadId">{{ prio.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Responsable</mat-label>
+        <mat-select [(ngModel)]="selectedResponsable" (selectionChange)="consultar()">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option *ngFor="let resp of responsables" [value]="resp.usuarioId">{{ resp.nombreUsuario }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="border-t pt-6 flex items-center justify-between gap-3">
+      <button mat-stroked-button class="h-12 rounded-xl px-6 border-2 border-gray-200 text-gray-700 font-bold" (click)="limpiarFiltros()">
+        LIMPIAR FILTROS
+      </button>
+      <button mat-flat-button class="h-12 w-full lg:w-48 !bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-xl shadow-xl shadow-indigo-200 font-bold tracking-widest text-xs"
+              (click)="consultar()" [disabled]="isLoading">
+        <mat-icon *ngIf="!isLoading" class="mr-2 icon-size-6">search</mat-icon>
+        <mat-progress-spinner *ngIf="isLoading" class="mr-2" [diameter]="24" [mode]="'indeterminate'"></mat-progress-spinner>
+        CONSULTAR
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-32">
+    <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+    <p class="mt-6 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse">Cargando Tickets...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="w-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+
+    <!-- KPI Summary Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-2">
+      <!-- Nuevos -->
+      <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-indigo-600 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nuevos</span>
+          <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countNuevos }}</h3>
+        </div>
+        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+          <mat-icon class="icon-size-6">add_circle</mat-icon>
+        </div>
+      </div>
+
+      <!-- En Análisis -->
+      <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-amber-500 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">En Análisis</span>
+          <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countEnAnalisis }}</h3>
+        </div>
+        <div class="p-3 bg-amber-50 text-amber-500 rounded-2xl">
+          <mat-icon class="icon-size-6">hourglass_top</mat-icon>
+        </div>
+      </div>
+
+      <!-- Pendientes Aprobación -->
+      <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-sky-500 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pendientes Aprobación</span>
+          <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countPendientesAprobacion }}</h3>
+        </div>
+        <div class="p-3 bg-sky-50 text-sky-500 rounded-2xl">
+          <mat-icon class="icon-size-6">rate_review</mat-icon>
+        </div>
+      </div>
+
+      <!-- Resueltos -->
+      <div class="bg-white rounded-3xl shadow-md p-6 border-l-4 border-emerald-500 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Resueltos</span>
+          <h3 class="text-2xl font-black text-gray-800 mt-1">{{ countResueltos }}</h3>
+        </div>
+        <div class="p-3 bg-emerald-50 text-emerald-500 rounded-2xl">
+          <mat-icon class="icon-size-6">check_circle</mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de Tickets -->
+    <div class="bg-white rounded-3xl shadow-md p-6 border border-gray-100 px-2 mx-2">
+      <h3 class="text-sm font-extrabold text-gray-800 uppercase tracking-tight mb-4">Listado de Tickets</h3>
+      <div class="overflow-x-auto max-h-96 overflow-y-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="sticky top-0 z-10 bg-white">
+            <tr class="bg-gray-50 dark:bg-gray-700/50 text-[10px] font-bold text-gray-400 uppercase">
+              <th class="px-4 py-3">Folio</th>
+              <th class="px-4 py-3">Título</th>
+              <th class="px-4 py-3">Tipo</th>
+              <th class="px-4 py-3">Estatus</th>
+              <th class="px-4 py-3">Prioridad</th>
+              <th class="px-4 py-3">Responsable</th>
+              <th class="px-4 py-3">Fecha Creación</th>
+              <th class="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr *ngFor="let ticket of tickets" class="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                (click)="verDetalle(ticket.ticketId)">
+              <td class="px-4 py-3 font-bold text-indigo-600">{{ ticket.folio }}</td>
+              <td class="px-4 py-3 text-gray-700 font-semibold">{{ ticket.titulo }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ ticket.nombreTipo }}</td>
+              <td class="px-4 py-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold text-white uppercase tracking-wider"
+                      [ngClass]="getEstatusColor(ticket.nombreEstatus)">
+                  {{ ticket.nombreEstatus }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                      [ngClass]="getPrioridadColor(ticket.nombrePrioridad)">
+                  {{ ticket.nombrePrioridad }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-gray-600">{{ ticket.nombreResponsable }}</td>
+              <td class="px-4 py-3 text-gray-500 text-xs">{{ ticket.fechaCreacion | date: 'dd/MM/yyyy' }}</td>
+              <td class="px-4 py-3 text-center">
+                <button mat-icon-button (click)="verDetalle(ticket.ticketId); $event.stopPropagation()"
+                        class="text-indigo-600 hover:text-indigo-800" matTooltip="Ver detalle">
+                  <mat-icon class="icon-size-5">arrow_forward</mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="tickets.length === 0">
+              <td colspan="8" class="text-center py-12 text-gray-400 font-semibold">
+                No se encontraron tickets.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
