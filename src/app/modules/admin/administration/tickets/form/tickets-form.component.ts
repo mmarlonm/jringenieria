@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TicketsService } from '../tickets.service';
 import { Observable } from 'rxjs';
 import { startWith, map } from 'rxjs/operators';
@@ -27,7 +28,8 @@ import { startWith, map } from 'rxjs/operators';
     MatInputModule,
     MatChipsModule,
     MatAutocompleteModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSnackBarModule
   ],
   templateUrl: './tickets-form.component.html',
   styleUrls: ['./tickets-form.component.css']
@@ -54,7 +56,8 @@ export class TicketsFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private ticketsService: TicketsService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {
     this.form = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(5)]],
@@ -151,7 +154,7 @@ export class TicketsFormComponent implements OnInit {
 
   guardar(): void {
     if (!this.form.valid) {
-      alert('Por favor completa todos los campos requeridos');
+      this.snackBar.open('Por favor completa todos los campos requeridos', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -164,15 +167,15 @@ export class TicketsFormComponent implements OnInit {
     this.ticketsService.crear(dto).subscribe({
       next: (res: any) => {
         if (res.success) {
-          alert('Ticket creado exitosamente');
+          this.snackBar.open('Ticket creado', 'Cerrar', { duration: 3000 });
           this.router.navigate(['/administration/tickets']);
         } else {
-          alert('Error al crear ticket');
+          this.snackBar.open('Error al crear ticket', 'Cerrar', { duration: 4000 });
         }
         this.isSubmitting = false;
       },
       error: () => {
-        alert('Error al crear ticket');
+        this.snackBar.open('Error al crear ticket', 'Cerrar', { duration: 4000 });
         this.isSubmitting = false;
       }
     });

@@ -9,7 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TicketsService } from '../tickets.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-tickets-detail',
@@ -23,7 +25,8 @@ import { TicketsService } from '../tickets.service';
     MatInputModule,
     MatProgressSpinnerModule,
     MatTableModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatSnackBarModule
   ],
   templateUrl: './tickets-detail.component.html',
   styleUrls: ['./tickets-detail.component.css']
@@ -53,7 +56,8 @@ export class TicketsDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private ticketsService: TicketsService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private snackBar: MatSnackBar
   ) {
     this.estimacionForm = this.fb.group({
       descripcionActividad: ['', Validators.required],
@@ -93,7 +97,7 @@ export class TicketsDetailComponent implements OnInit {
         this.isLoading = false;
       },
       error: () => {
-        alert('Error al cargar el ticket');
+        this.snackBar.open('Error al cargar el ticket', 'Cerrar', { duration: 4000 });
         this.isLoading = false;
       }
     });
@@ -113,7 +117,7 @@ export class TicketsDetailComponent implements OnInit {
 
   aprobarRechazar(aprobar: boolean): void {
     if (!this.aprobacionForm.valid) {
-      alert('Debes agregar un comentario');
+      this.snackBar.open('Debes agregar un comentario', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -126,16 +130,16 @@ export class TicketsDetailComponent implements OnInit {
     this.ticketsService.aprobarRechazar(this.ticketId, dto).subscribe({
       next: (res: any) => {
         if (res.success) {
-          alert(res.message);
+          this.snackBar.open(res.message, 'Cerrar', { duration: 4000 });
           this.mostrarFormAprobacion = false;
           this.cargarTicket();
         } else {
-          alert('Error al procesar aprobación');
+          this.snackBar.open('Error al procesar aprobación', 'Cerrar', { duration: 4000 });
         }
         this.isSubmittingAprobacion = false;
       },
       error: () => {
-        alert('Error al procesar aprobación');
+        this.snackBar.open('Error al procesar aprobación', 'Cerrar', { duration: 4000 });
         this.isSubmittingAprobacion = false;
       }
     });
@@ -143,7 +147,7 @@ export class TicketsDetailComponent implements OnInit {
 
   agregarComentario(): void {
     if (!this.comentarioForm.valid) {
-      alert('El comentario no puede estar vacío');
+      this.snackBar.open('El comentario no puede estar vacío', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -155,16 +159,17 @@ export class TicketsDetailComponent implements OnInit {
     this.ticketsService.agregarComentario(this.ticketId, dto).subscribe({
       next: (res: any) => {
         if (res.success) {
+          this.snackBar.open('Comentario agregado', 'Cerrar', { duration: 3000 });
           this.comentarioForm.reset();
           this.mostrarFormComentario = false;
           this.cargarTicket();
         } else {
-          alert('Error al agregar comentario');
+          this.snackBar.open('Error al agregar comentario', 'Cerrar', { duration: 4000 });
         }
         this.isSubmittingComentario = false;
       },
       error: () => {
-        alert('Error al agregar comentario');
+        this.snackBar.open('Error al agregar comentario', 'Cerrar', { duration: 4000 });
         this.isSubmittingComentario = false;
       }
     });
@@ -210,7 +215,7 @@ export class TicketsDetailComponent implements OnInit {
 
   agregarActividad(): void {
     if (!this.estimacionForm.valid) {
-      alert('Completa todos los campos requeridos');
+      this.snackBar.open('Completa todos los campos requeridos', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -227,7 +232,7 @@ export class TicketsDetailComponent implements OnInit {
 
   guardarEstimacion(): void {
     if (this.actividades.length === 0) {
-      alert('Debe agregar al menos una actividad');
+      this.snackBar.open('Debe agregar al menos una actividad', 'Cerrar', { duration: 4000 });
       return;
     }
 
@@ -245,17 +250,17 @@ export class TicketsDetailComponent implements OnInit {
     this.ticketsService.guardarEstimacion(this.ticketId, dto).subscribe({
       next: (res: any) => {
         if (res.success) {
-          alert('Estimación guardada exitosamente');
+          this.snackBar.open('Estimación enviada a aprobación', 'Cerrar', { duration: 4000 });
           this.actividades = [];
           this.cargarTicket();
           this.mostrarFormEstimacion = false;
         } else {
-          alert(res.message || 'Error al guardar estimación');
+          this.snackBar.open(res.message || 'Error al guardar estimación', 'Cerrar', { duration: 4000 });
         }
         this.isSubmittingEstimacion = false;
       },
       error: () => {
-        alert('Error al guardar estimación');
+        this.snackBar.open('Error al guardar estimación', 'Cerrar', { duration: 4000 });
         this.isSubmittingEstimacion = false;
       }
     });
@@ -263,33 +268,43 @@ export class TicketsDetailComponent implements OnInit {
 
   abrirFormularioEditar(): void {
     if (!this.esCreador()) {
-      alert('Solo el solicitante puede editar el ticket');
+      this.snackBar.open('Solo el solicitante puede editar el ticket', 'Cerrar', { duration: 4000 });
       return;
     }
-    // Redirigir a formulario de edición
     this.router.navigate(['/administration/tickets', this.ticketId, 'editar']);
   }
 
   confirmarEliminar(): void {
     if (!this.esCreador()) {
-      alert('Solo el solicitante puede eliminar el ticket');
+      this.snackBar.open('Solo el solicitante puede eliminar el ticket', 'Cerrar', { duration: 4000 });
       return;
     }
 
-    if (confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
-      this.ticketsService.eliminar(this.ticketId).subscribe({
-        next: (res: any) => {
-          if (res.success) {
-            alert('Ticket eliminado exitosamente');
-            this.router.navigate(['/administration/tickets']);
-          } else {
-            alert(res.message || 'Error al eliminar el ticket');
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.ticketsService.eliminar(this.ticketId).subscribe({
+          next: (res: any) => {
+            if (res.success) {
+              this.snackBar.open('Ticket eliminado', 'Cerrar', { duration: 3000 });
+              this.router.navigate(['/administration/tickets']);
+            } else {
+              this.snackBar.open(res.message || 'Error al eliminar el ticket', 'Cerrar', { duration: 4000 });
+            }
+          },
+          error: () => {
+            this.snackBar.open('Error al eliminar el ticket', 'Cerrar', { duration: 4000 });
           }
-        },
-        error: () => {
-          alert('Error al eliminar el ticket');
-        }
-      });
-    }
+        });
+      }
+    });
   }
 }
