@@ -78,6 +78,7 @@ export class LeadsComponent implements OnInit {
   searchControl = new FormControl('');
   fuenteControl = new FormControl('Todos');
   sucursalControl = new FormControl('Todos');
+  agenteControl = new FormControl('Todos');
 
   displayedColumns = [
     'id', 'nombreContacto', 'empresa', 'telefono', 'email', 
@@ -101,6 +102,7 @@ export class LeadsComponent implements OnInit {
     this.searchControl.valueChanges.pipe(debounceTime(200)).subscribe(() => this.applyFilters());
     this.fuenteControl.valueChanges.subscribe(() => this.applyFilters());
     this.sucursalControl.valueChanges.subscribe(() => this.applyFilters());
+    this.agenteControl.valueChanges.subscribe(() => this.applyFilters());
   }
 
   loadLeads(): void {
@@ -137,10 +139,11 @@ export class LeadsComponent implements OnInit {
     const search = (this.searchControl.value || '').toLowerCase().trim();
     const fuente = this.fuenteControl.value || 'Todos';
     const sucursal = this.sucursalControl.value || 'Todos';
+    const agente = this.agenteControl.value || 'Todos';
 
     this.filteredLeads = this.leads.filter(lead => {
       // Search matches
-      const matchesSearch = !search || 
+      const matchesSearch = !search ||
         lead.nombreContacto.toLowerCase().includes(search) ||
         lead.empresa.toLowerCase().includes(search) ||
         lead.email.toLowerCase().includes(search) ||
@@ -153,7 +156,10 @@ export class LeadsComponent implements OnInit {
       // Sucursal matches
       const matchesSucursal = sucursal === 'Todos' || lead.sucursalQueRecibe === sucursal;
 
-      return matchesSearch && matchesFuente && matchesSucursal;
+      // Agente matches
+      const matchesAgente = agente === 'Todos' || lead.idUsuarioAsignado === parseInt(agente);
+
+      return matchesSearch && matchesFuente && matchesSucursal && matchesAgente;
     });
     this.cdr.markForCheck();
   }

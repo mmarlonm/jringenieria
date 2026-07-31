@@ -96,7 +96,7 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mt-6">
       <!-- Search Input -->
       <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
         <mat-icon matPrefix svgIcon="heroicons_solid:magnifying-glass" class="icon-size-5"></mat-icon>
@@ -126,6 +126,17 @@
           <mat-option value="Puebla">Puebla</mat-option>
           <mat-option value="Querétaro">Querétaro</mat-option>
           <mat-option value="Corporativo">Corporativo</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Agent Filter -->
+      <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+        <mat-label>Agente/Vendedor</mat-label>
+        <mat-select [formControl]="agenteControl">
+          <mat-option value="Todos">Todos los agentes</mat-option>
+          <mat-option *ngFor="let user of users" [value]="user.usuarioId">
+            {{ user.nombreUsuario }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
 
