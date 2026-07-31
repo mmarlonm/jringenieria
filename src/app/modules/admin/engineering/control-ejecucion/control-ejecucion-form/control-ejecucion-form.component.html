@@ -12,13 +12,24 @@
       <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
       <div class="flex flex-col min-w-0">
         <h1 class="text-xl font-extrabold text-slate-800 truncate" *ngIf="ejecucion">
-          {{ ejecucion.actividad }} 
+          {{ ejecucion.actividad }}
           <span *ngIf="ejecucion.tituloProyecto" class="text-indigo-600 font-bold ml-1">({{ ejecucion.tituloProyecto }})</span>
         </h1>
         <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" *ngIf="ejecucion">
           Proyecto #{{ idSeguimiento }} &bull; Solicitante: {{ ejecucion.nombreSolicitante }} ({{ ejecucion.empresa }})
         </p>
       </div>
+    </div>
+
+    <!-- Botones de Acción (Header) -->
+    <div class="flex items-center gap-3">
+      <a mat-raised-button color="warn" [routerLink]="['/engineering/control-ejecucion']" class="!rounded-xl">
+        <mat-icon class="icon-size-5">close</mat-icon>
+      </a>
+      <button mat-raised-button color="primary" [disabled]="form.invalid || isSaving" (click)="saveGeneralInfo()" class="!rounded-xl">
+        <mat-icon class="icon-size-5" *ngIf="!isSaving">check_circle</mat-icon>
+        <mat-icon class="icon-size-5 animate-spin" *ngIf="isSaving">sync</mat-icon>
+      </button>
     </div>
   </div>
 
@@ -144,8 +155,6 @@
 
                 </div>
               </div>
-
-
 
             </form>
           </div>
@@ -909,17 +918,6 @@
     </mat-tab-group>
   </div>
 
-
-  <!-- Botones Flotantes (btn-float) -->
-  <div class="flex justify-end gap-2 mb-4 px-6 md:px-8 btn-float z-99 mr-24">
-    <a mat-raised-button color="warn" [routerLink]="['/engineering/control-ejecucion']">
-      Cancelar
-    </a>
-    <button mat-raised-button color="primary" [disabled]="form.invalid || isSaving" (click)="saveGeneralInfo()">
-      <mat-icon class="mr-2 animate-spin icon-size-4" *ngIf="isSaving">sync</mat-icon>
-      {{ isSaving ? 'Guardando...' : 'Guardar' }}
-    </button>
-  </div>
 
   <!-- Modal / Diálogo Flotante para el Gantt (100% aislado del resto de los contenedores) -->
   <ng-container *ngIf="isGanttFullscreen">

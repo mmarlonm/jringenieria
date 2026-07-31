@@ -82,12 +82,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       background-size: 20px 20px;
       animation: stripes 2s linear infinite;
     }
-    .btn-float {
-        position: fixed !important;
-        bottom: 12px !important;
-        right: 80px !important;
-    }
-
     /* CDK Drag & Drop premium styles */
     .cdk-drag-preview {
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -117,6 +111,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   private _unsubscribeAll: Subject<any> = new Subject<any>();
   private _scrollAttemptCount: number = 0;
+  private expandedTaskIds: number[] = [];
 
   idSeguimiento!: number;
   ejecucion!: SeguimientoEjecucion;
@@ -815,17 +810,28 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   // ==========================================
   // 📊 GANTT LOGIC
   // ==========================================
+  private saveExpandedTaskIds(): void {
+    this.expandedTaskIds = this.tasks.filter(t => t.expanded).map(t => t.id);
+  }
+
+  private restoreExpandedTaskIds(): void {
+    this.tasks.forEach(t => {
+      t.expanded = this.expandedTaskIds.includes(t.id);
+    });
+    this.expandedTaskIds = [];
+  }
+
   loadGantt(): void {
     this._engineeringService.getGanttTareas(this.idSeguimiento).subscribe({
       next: (res) => {
         this.tasks = res || [];
-        // Por defecto colapsar las actividades
-        this.tasks.forEach(t => t.expanded = false);
+        // Restaurar los estados de expansión de las tareas
+        this.restoreExpandedTaskIds();
         this.updatePredecesorasList();
         this.actualizarCalculosRutaCritica();
         this.updateVisibleRows();
         this.adjustTimelineRange();
-        
+
         // Centrar timeline tras carga de datos
         setTimeout(() => this.scrollToTarget(), 150);
         this._cdr.detectChanges();
@@ -1235,9 +1241,15 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         if (result) {
           if (result.delete) {
             if (type === 'maestra') {
-              this._engineeringService.deleteGanttMaestra(result.id).subscribe(() => this.loadGantt());
+              this._engineeringService.deleteGanttMaestra(result.id).subscribe(() => {
+                this.saveExpandedTaskIds();
+                this.loadGantt();
+              });
             } else {
-              this._engineeringService.deleteGanttSubactividad(result.id).subscribe(() => this.loadGantt());
+              this._engineeringService.deleteGanttSubactividad(result.id).subscribe(() => {
+                this.saveExpandedTaskIds();
+                this.loadGantt();
+              });
             }
             return;
           }
@@ -1247,14 +1259,17 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             result.actividadMaestraId = parentTask?.id || result.actividadMaestraId;
           }
 
-          const saveObs = type === 'maestra' 
+          const saveObs = type === 'maestra'
             ? this._engineeringService.saveGanttMaestra(result)
             : this._engineeringService.saveGanttSubactividad(result);
 
           saveObs.subscribe({
             next: (savedAct: any) => {
               const actId = savedAct?.id || result.id;
-              
+
+              // Guardar el estado de expansión antes de recargar
+              this.saveExpandedTaskIds();
+
               // Si se guardó correctamente, refrescar de inmediato
               this.loadGantt();
               
@@ -1276,9 +1291,13 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
                   idActividad: actId,
                   miembros: result.equipoMiembros
                 }).subscribe({
-                  next: () => this.loadGantt(),
+                  next: () => {
+                    this.saveExpandedTaskIds();
+                    this.loadGantt();
+                  },
                   error: (e) => {
                     console.warn('Error no crítico al asignar miembros del equipo:', e);
+                    this.saveExpandedTaskIds();
                     this.loadGantt();
                   }
                 });
