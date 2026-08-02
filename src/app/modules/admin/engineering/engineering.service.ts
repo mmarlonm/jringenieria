@@ -85,6 +85,7 @@ export interface SeguimientoEjecucionActividadMaestra {
     color?: string;
     orden?: number;
     equipoEspecial?: string;
+    razonDetenido?: string;
     expanded?: boolean; // Frontend only
     actividades?: SeguimientoEjecucionSubactividad[];
 }
@@ -106,6 +107,7 @@ export interface SeguimientoEjecucionSubactividad {
     color?: string;
     orden?: number;
     equipoEspecial?: string;
+    razonDetenido?: string;
 }
 
 @Injectable({

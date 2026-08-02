@@ -178,7 +178,17 @@ import Swal from 'sweetalert2';
               <mat-option [value]="1">Pendiente</mat-option>
               <mat-option [value]="2">En Proceso</mat-option>
               <mat-option [value]="3">Completado</mat-option>
+              <mat-option [value]="4">Detenida</mat-option>
             </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Razón Detenido -->
+        <div *ngIf="form.get('estatus').value === 4" class="grid grid-cols-1 gap-4">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Razón por la que se detuvo</mat-label>
+            <textarea matInput formControlName="razonDetenido" placeholder="Describa la razón del paro..." rows="2" cdkTextareaAutosize></textarea>
+            <mat-icon matSuffix class="text-secondary">warning</mat-icon>
           </mat-form-field>
         </div>
 
@@ -282,7 +292,18 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
       predecesoraId: [null],
       prioridad: ['Media'],
       color: ['Azul'],
-      equipoEspecial: ['']
+      equipoEspecial: [''],
+      razonDetenido: ['']
+    });
+
+    this.form.get('estatus').valueChanges.subscribe(est => {
+      const razonCtrl = this.form.get('razonDetenido');
+      if (est === 4) {
+        razonCtrl.setValidators([Validators.required]);
+      } else {
+        razonCtrl.clearValidators();
+      }
+      razonCtrl.updateValueAndValidity();
     });
 
     this.dragPosition = this._loadPosition();
@@ -347,7 +368,8 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
         fechaFin: this.data.actividad.fechaFin ? new Date(this.data.actividad.fechaFin) : new Date(),
         predecesoraId: this.data.actividad.predecesoraId || null,
         responsablesIds: selectedIds,
-        equipoIds: currentEquipoStrings
+        equipoIds: currentEquipoStrings,
+        razonDetenido: this.data.actividad.razonDetenido || ''
       });
     }
 

@@ -1235,6 +1235,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       case 1: return 'Pendiente';
       case 2: return 'En Proceso';
       case 3: return 'Completado';
+      case 4: return 'Detenida';
       default: return 'No definido';
     }
   }
@@ -1245,6 +1246,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       case 1: return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-200';
       case 2: return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200';
       case 3: return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200';
+      case 4: return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10 border-rose-200';
       default: return 'text-slate-500 bg-slate-50 dark:bg-slate-500/10 border-slate-200';
     }
   }
@@ -1296,7 +1298,17 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     const name = row.type === 'task' ? row.task.nombre : row.activity.nombre;
     const prog = row.type === 'task' ? row.task.progreso : row.activity.progreso;
     const eq = row.type === 'task' ? row.task.equipoEspecial : row.activity.equipoEspecial;
-    return `${name} (${prog}%)${eq ? ' - Equipo Especial: ' + eq : ''}`;
+    const est = row.type === 'task' ? row.task.estatus : row.activity.estatus;
+    const razon = row.type === 'task' ? row.task.razonDetenido : row.activity.razonDetenido;
+
+    let tooltip = `${name} (${prog}%)`;
+    if (est === 4 && razon) {
+      tooltip += ` - [DETENIDA: ${razon}]`;
+    }
+    if (eq) {
+      tooltip += ` - Equipo Especial: ${eq}`;
+    }
+    return tooltip;
   }
 
   formatDay(date: Date): string {
