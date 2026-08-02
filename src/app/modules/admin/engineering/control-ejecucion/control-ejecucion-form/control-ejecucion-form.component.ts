@@ -152,6 +152,135 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   isUploading: { [key: string]: boolean } = {};
   isUploadingOC: boolean = false;
   ocFileName: string = '';
+  
+  // Subfolders tracking: Key is Category (Apartado) name, Value is the active subfolder name (null or empty string means root category)
+  activeSubcarpetas: { [key: string]: string } = {};
+
+  getSubcarpetasByCategory(categoryName: string): string[] {
+    const list = new Set<string>();
+    for (const a of this.archivos) {
+      if (a.tipo === categoryName && a.nombreArchivo && a.nombreArchivo.includes('/')) {
+        const parts = a.nombreArchivo.split('/');
+        if (parts.length > 1 && parts[0]) {
+          list.add(parts[0]);
+        }
+      }
+    }
+    return Array.from(list).sort();
+  }
+
+  getFilesByCategory(categoryName: string): any[] {
+    const activeSub = this.activeSubcarpetas[categoryName];
+    return this.archivos.filter((a) => {
+      if (a.tipo !== categoryName) return false;
+      if (activeSub) {
+        // Files inside the selected subfolder
+        return a.nombreArchivo && a.nombreArchivo.startsWith(activeSub + '/');
+      } else {
+        // Root files (files that do not contain a slash /)
+        return a.nombreArchivo && !a.nombreArchivo.includes('/');
+      }
+    });
+  }
+
+  getFileDisplayName(file: any, categoryName: string): string {
+    if (!file || !file.nombreArchivo) return '';
+    const activeSub = this.activeSubcarpetas[categoryName];
+    if (activeSub && file.nombreArchivo.startsWith(activeSub + '/')) {
+      return file.nombreArchivo.substring(activeSub.length + 1);
+    }
+    return file.nombreArchivo;
+  }
+
+  trackByFileName(index: number, file: any): string {
+    return file ? (file.tipo || '') + '_' + (file.nombreArchivo || index) : index.toString();
+  }
+
+  trackBySubcarpeta(index: number, folder: string): string {
+    return folder;
+  }
+
+  trackByApartado(index: number, cat: any): string {
+    return cat ? (cat.nombre || index) : index.toString();
+  }
+
+  crearSubcarpeta(categoryName: string): void {
+    Swal.fire({
+      title: 'Crear nueva subcarpeta',
+      input: 'text',
+      inputPlaceholder: 'Nombre de la carpeta',
+      showCancelButton: true,
+      confirmButtonText: 'Crear',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value || value.trim() === '') {
+          return 'El nombre de la carpeta no puede estar vacío';
+        }
+        if (value.includes('/') || value.includes('\\')) {
+          return 'El nombre no puede contener barras diagonales (/) o (\\)';
+        }
+        return null;
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        const folderName = result.value.trim();
+        // Set the active folder to the newly created folder
+        this.activeSubcarpetas[categoryName] = folderName;
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  navegarSubcarpeta(categoryName: string, subcarpeta: string | null): void {
+    if (subcarpeta) {
+      this.activeSubcarpetas[categoryName] = subcarpeta;
+    } else {
+      delete this.activeSubcarpetas[categoryName];
+    }
+    this._cdr.markForCheck();
+  }
+
+  triggerFileInput(categoryName: string): void {
+    const inputElement = document.getElementById('fileInput-' + categoryName) as HTMLInputElement;
+    if (inputElement) {
+      inputElement.click();
+    }
+  }
+
+  isDragOver: { [key: string]: boolean } = {};
+
+  onDragOver(event: DragEvent, categoryName: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.isDragOver[categoryName]) {
+      this.isDragOver[categoryName] = true;
+      this._cdr.markForCheck();
+    }
+  }
+
+  onDragLeave(event: DragEvent, categoryName: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    const currentTarget = event.currentTarget as HTMLElement;
+    if (!currentTarget || !currentTarget.contains(relatedTarget)) {
+      this.isDragOver[categoryName] = false;
+      this._cdr.markForCheck();
+    }
+  }
+
+  onFileDropped(event: DragEvent, categoryName: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver[categoryName] = false;
+    this._cdr.markForCheck();
+
+    if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      const droppedFiles = event.dataTransfer.files;
+      const fakeEvent = { target: { files: droppedFiles, value: '' } };
+      this.onFileSelected(fakeEvent, categoryName);
+    }
+  }
 
   // Gantt State
   tasks: SeguimientoEjecucionActividadMaestra[] = [];
@@ -673,12 +802,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this._engineeringService.getArchivosEjecucion(this.idSeguimiento).subscribe({
       next: (res) => {
         this.archivos = res || [];
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar archivos:', err);
       }
     });
-  }
-
-  getFilesByCategory(categoryName: string): any[] {
-    return this.archivos.filter((a) => a.tipo === categoryName);
   }
 
   onFileSelected(event: any, categoryName: string): void {
@@ -686,13 +815,24 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     if (!files || files.length === 0) return;
 
     this.isUploading[categoryName] = true;
-    const uploadObservables = Array.from(files).map(file => 
-      this._engineeringService.subirArchivoEjecucion(this.idSeguimiento, file, categoryName)
-    );
+    this._cdr.markForCheck();
+    const activeSub = this.activeSubcarpetas[categoryName];
+
+    const uploadObservables = Array.from(files).map(file => {
+      let finalFile = file;
+      if (activeSub) {
+        // Prepend the subfolder path to the file name. Since browser File object's name property is read-only,
+        // we can create a new File object with the modified name.
+        const renamedName = `${activeSub}/${file.name}`;
+        finalFile = new File([file], renamedName, { type: file.type });
+      }
+      return this._engineeringService.subirArchivoEjecucion(this.idSeguimiento, finalFile, categoryName);
+    });
 
     forkJoin(uploadObservables).subscribe({
       next: () => {
         this.isUploading[categoryName] = false;
+        this._cdr.markForCheck();
         Swal.fire({
           title: '¡Subidos!',
           text: `${files.length} archivo(s) cargado(s) con éxito.`,
@@ -704,6 +844,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isUploading[categoryName] = false;
+        this._cdr.markForCheck();
         console.error(err);
         Swal.fire('Error', 'No se pudieron subir algunos archivos.', 'error');
         this.loadFiles();
@@ -713,6 +854,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   descargarArchivo(file: any): void {
+    if (!file || !file.tipo || !file.nombreArchivo) return;
     this._engineeringService.descargarArchivoEjecucion(this.idSeguimiento, file.tipo, file.nombreArchivo).subscribe({
       next: (res) => {
         if (res && res.data) {
@@ -722,24 +864,28 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: res.contentType });
+          const blob = new Blob([byteArray], { type: res.contentType || 'application/octet-stream' });
 
           const a = document.createElement('a');
           const objectUrl = URL.createObjectURL(blob);
           a.href = objectUrl;
-          a.download = file.nombreArchivo;
+          const fileName = file.nombreArchivo.includes('/') ? file.nombreArchivo.split('/').pop() : file.nombreArchivo;
+          a.download = fileName || file.nombreArchivo;
+          document.body.appendChild(a);
           a.click();
+          document.body.removeChild(a);
           URL.revokeObjectURL(objectUrl);
         }
       },
       error: (err) => {
-        console.error(err);
+        console.error('Error al descargar archivo:', err);
         Swal.fire('Error', 'No se pudo descargar el archivo.', 'error');
       }
     });
   }
 
   previsualizarArchivo(file: any): void {
+    if (!file || !file.tipo || !file.nombreArchivo) return;
     this._engineeringService.descargarArchivoEjecucion(this.idSeguimiento, file.tipo, file.nombreArchivo).subscribe({
       next: (res) => {
         if (res && res.data) {
@@ -752,28 +898,31 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
           const blob = new Blob([byteArray], { type: res.contentType });
           const fileURL = URL.createObjectURL(blob);
 
-          const isPdf = file.nombreArchivo.toLowerCase().endsWith('.pdf');
+          const fileName = file.nombreArchivo.includes('/') ? file.nombreArchivo.split('/').pop() : file.nombreArchivo;
+          const isPdf = (file.nombreArchivo || '').toLowerCase().endsWith('.pdf');
 
           this._dialog.open(ImagePreviewDialogComponent, {
             data: {
               url: fileURL,
-              name: file.nombreArchivo,
+              name: fileName,
               isPdf: isPdf
             }
           });
         }
       },
       error: (err) => {
-        console.error(err);
+        console.error('Error al previsualizar archivo:', err);
         Swal.fire('Error', 'No se pudo previsualizar el archivo.', 'error');
       }
     });
   }
 
   eliminarArchivo(file: any): void {
+    if (!file || !file.tipo || !file.nombreArchivo) return;
+    const fileName = file.nombreArchivo.includes('/') ? file.nombreArchivo.split('/').pop() : file.nombreArchivo;
     Swal.fire({
       title: '¿Eliminar archivo?',
-      text: `¿Estás seguro de eliminar el archivo "${file.nombreArchivo}"?`,
+      text: `¿Estás seguro de eliminar el archivo "${fileName}"?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
@@ -799,7 +948,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             this.loadFiles();
           },
           error: (err) => {
-            console.error(err);
+            console.error('Error al eliminar archivo:', err);
             Swal.fire('Error', 'No se pudo eliminar el archivo.', 'error');
           }
         });

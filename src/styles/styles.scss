@@ -266,6 +266,11 @@ ngx-extended-pdf-viewer {
   z-index: 9999999 !important;
 }
 
+/* Asegurar que las alertas de SweetAlert2 aparezcan encima de los modales de Angular Material */
+.swal2-container {
+  z-index: 10000000 !important;
+}
+
 /* Fix para que los selectores de fecha Flatpickr se muestren sobre los modales */
 .flatpickr-calendar {
   z-index: 99999999 !important;
