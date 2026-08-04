@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +29,7 @@ import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente, Activid
 export class EventosDashboardComponent implements OnInit, OnDestroy {
     private _eventosService = inject(EventosService);
     private _cdr = inject(ChangeDetectorRef);
+    private _router = inject(Router);
 
     // State Variables
     public metricas!: DashboardMetricasDto;
@@ -128,6 +130,10 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
 
     public onEventoChanged(eventoId: number): void {
         this._eventosService.setSeleccionEdicion(eventoId);
+    }
+
+    public irAEncuestas(): void {
+        this._router.navigate(['/eventos/encuestas-dashboard'], { queryParams: { id: this.selectedEventoId } });
     }
 
     public getAsistenciaPorcentaje(): number {

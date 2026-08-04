@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventosService, Asistente } from '../eventos.service';
+import { EncuestasEventoService } from '../encuestas/encuestas-evento.service';
 
 @Component({
     selector: 'eventos-control',
@@ -28,6 +29,7 @@ import { EventosService, Asistente } from '../eventos.service';
 })
 export class EventosControlComponent implements OnInit, OnDestroy {
     private _eventosService = inject(EventosService);
+    private _encuestaService = inject(EncuestasEventoService);
     private _cdr = inject(ChangeDetectorRef);
 
     // State lists
@@ -175,6 +177,24 @@ export class EventosControlComponent implements OnInit, OnDestroy {
                     this._cdr.markForCheck();
                 }
             });
+    }
+
+    public onEnviarEncuestaIndividual(asistenteId: number): void {
+        this.resendingId = asistenteId; // reuse loader tracking
+        this._cdr.markForCheck();
+
+        this._encuestaService.reenviarEncuesta(asistenteId).subscribe({
+            next: () => {
+                this.showToast('Encuesta enviada exitosamente.', 'success');
+                this.resendingId = null;
+                this._cdr.markForCheck();
+            },
+            error: () => {
+                this.showToast('Error al enviar la encuesta.', 'error');
+                this.resendingId = null;
+                this._cdr.markForCheck();
+            }
+        });
     }
 
     // --- Delete Handlers ---

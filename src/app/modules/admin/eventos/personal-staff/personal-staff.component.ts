@@ -13,6 +13,7 @@ import { RouterModule } from '@angular/router';
 import { PersonalStaff, PersonalStaffService } from './personal-staff.service';
 import { PersonalStaffDialogComponent } from './dialogs/personal-staff-dialog.component';
 import { QrPreviewDialogComponent } from './dialogs/qr-preview-dialog.component';
+import { EncuestaStaffDialogComponent } from '../encuestas/encuesta-staff-dialog.component';
 import { EventosService } from '../eventos.service';
 import Swal from 'sweetalert2';
 
@@ -174,6 +175,31 @@ export class EventosPersonalComponent implements OnInit {
             maxWidth: '400px',
             data: { personal }
         });
+    }
+
+    openEncuestaStaff(personal: PersonalStaff): void {
+        const eventoId = this.selectedEventoId || personal.eventoIds?.[0] || 0;
+        const eventoNombre = this.getEventName(eventoId);
+        const tipo = this.getTipoEncuesta(personal.tipoPersonal);
+
+        this._dialog.open(EncuestaStaffDialogComponent, {
+            width: '100%',
+            maxWidth: '720px',
+            disableClose: true,
+            data: {
+                staffId: personal.id,
+                eventoId,
+                nombreEvento: eventoNombre,
+                nombreStaff: personal.nombreCompleto,
+                tipoStaff: tipo
+            }
+        });
+    }
+
+    getTipoEncuesta(tipoPersonal: string): 'logistica' | 'acompanamiento' {
+        const lower = (tipoPersonal || '').toLowerCase();
+        if (lower.includes('acomp')) return 'acompanamiento';
+        return 'logistica'; // default: Logística / Staff / Organizador
     }
 
     deletePersonal(personal: PersonalStaff): void {

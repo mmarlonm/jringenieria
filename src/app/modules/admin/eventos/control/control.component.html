@@ -171,17 +171,22 @@
                                 <button (click)="openEditModal(a)" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" title="Editar asistente">
                                     <mat-icon class="icon-size-5" svgIcon="heroicons_outline:pencil-square"></mat-icon>
                                 </button>
-                                <!-- Send QR Individual -->
                                 <button 
                                     (click)="onReenviarQRIndividual(a.id)" 
                                     [disabled]="resendingId === a.id"
-                                    class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50" title="Reenviar QR">
+                                    class="p-2 text-slate-450 hover:text-emerald-650 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50" title="Reenviar QR">
                                     
                                     <svg *ngIf="resendingId === a.id" class="animate-spin h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                     <mat-icon *ngIf="resendingId !== a.id" class="icon-size-5" svgIcon="heroicons_outline:envelope"></mat-icon>
+                                </button>
+                                <!-- Send Satisfaction Survey Button -->
+                                <button 
+                                    (click)="onEnviarEncuestaIndividual(a.id)"
+                                    class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-lg transition-colors" title="Enviar Encuesta de Satisfacción">
+                                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:chat-bubble-bottom-center-text"></mat-icon>
                                 </button>
                                 <!-- Delete -->
                                 <button (click)="onEliminar(a)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Eliminar asistente">

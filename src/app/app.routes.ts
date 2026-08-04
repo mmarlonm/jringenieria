@@ -155,7 +155,8 @@ export const appRoutes: Route[] = [
                     { path: 'personal', loadComponent: () => import('app/modules/admin/eventos/personal-staff/personal-staff.component').then(m => m.EventosPersonalComponent) },
                     { path: 'actividades', loadComponent: () => import('app/modules/admin/eventos/actividades/actividades.component').then(m => m.ActividadesComponent) },
                     { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) },
-                    { path: 'reportes', loadComponent: () => import('app/modules/admin/eventos/reportes/reportes.component').then(m => m.EventosReportesComponent) }
+                    { path: 'reportes', loadComponent: () => import('app/modules/admin/eventos/reportes/reportes.component').then(m => m.EventosReportesComponent) },
+                    { path: 'encuestas-dashboard', loadComponent: () => import('app/modules/admin/eventos/encuestas/dashboard-encuestas.component').then(m => m.DashboardEncuestasComponent) }
                 ]
             }
         ]
@@ -180,5 +181,9 @@ export const appRoutes: Route[] = [
     {
         path: 'eventos/agenda-personal/:token',
         loadComponent: () => import('app/modules/admin/eventos/agenda-personal/agenda-personal.component').then(m => m.AgendaPersonalComponent)
+    },
+    {
+        path: 'eventos/encuesta/:token',
+        loadComponent: () => import('app/modules/admin/eventos/encuestas/encuesta-publica.component').then(m => m.EncuestaPublicaComponent)
     }
 ];
