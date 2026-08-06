@@ -3,8 +3,12 @@ name: Deploy Angular App to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch:
+    branches: ["main"]  # Ejecuta el workflow cuando haya cambios en la rama 'main'
+  workflow_dispatch:  # Permite ejecutar manualmente el workflow desde GitHub Actions
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 permissions:
   contents: read
@@ -18,6 +22,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: github-pages
 
     steps:
       - name: Checkout código fuente
@@ -26,19 +31,32 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
+
+      - name: Instalar Angular CLI
+        run: npm install -g @angular/cli
+
+      - name : eliminar package
+        run: rm -rf node_modules package-lock.json
+
+      - name: limpiar cache
+        run: npm cache clean --force
 
       - name: Instalar dependencias
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
+
+      - name: Ensure patch-package is available
+        run: npx patch-package || echo "Skipping patch-package if none exist"
 
       - name: Construir aplicación Angular
-        run: npx ng build --configuration production --base-href /jringenieria/
+        run: ng build --configuration production --base-href /jringenieria/
 
       - name: Subir artefacto para GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/jringenieria/browser
+          path: dist/browser  # 📌 Asegúrate de que coincide con outputPath en angular.json
 
+      # Deployment job
   deploy:
     environment:
       name: github-pages
