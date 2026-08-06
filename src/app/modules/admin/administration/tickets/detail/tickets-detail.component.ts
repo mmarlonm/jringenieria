@@ -51,6 +51,7 @@ export class TicketsDetailComponent implements OnInit {
 
   currentUserId: number = 0;
   tieneRolAprobador = false;
+  private readonly usuariosPermitidosParaAprobacion = [5, 6, 13, 14, 38];
 
   constructor(
     private route: ActivatedRoute,
@@ -176,7 +177,8 @@ export class TicketsDetailComponent implements OnInit {
   }
 
   puedeAprobar(): boolean {
-    return this.ticket?.nombreEstatus === 'Estimación Enviada' && this.tieneRolAprobador;
+    const usuarioPermitido = this.usuariosPermitidosParaAprobacion.includes(this.currentUserId);
+    return this.ticket?.nombreEstatus === 'Estimación Enviada' && (this.tieneRolAprobador || usuarioPermitido);
   }
 
   volver(): void {
