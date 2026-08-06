@@ -9,7 +9,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'administracion',
         title: 'ADMINISTRACION',
         subtitle: 'Gestión administrativa',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:briefcase',
         children: [
             {
@@ -129,7 +129,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'ingenieria',
         title: 'INGENIERIA',
         subtitle: 'Gestión técnica y proyectos',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:cog',
         children: [
             // Elementos directos
@@ -205,7 +205,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'comercializacion',
         title: 'COMERCIALIZACION',
         subtitle: 'Ventas y atención comercial',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:shopping-cart',
         children: [
             // Elementos directos
@@ -269,7 +269,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'marketing',
         title: 'MARKETING',
         subtitle: 'Prospección y satisfacción',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:megaphone',
         children: [
             // Elementos directos
@@ -322,7 +322,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'rrhh',
         title: 'RECURSOS HUMANOS',
         subtitle: 'Gestión de personal',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:users',
         children: [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
@@ -337,7 +337,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'eventos',
         title: 'EVENTOS',
         subtitle: 'Gestión y pases QR',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:calendar',
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
@@ -359,7 +359,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         id: 'apps',
         title: 'SEGURIDAD',
         subtitle: 'Configuración del sistema',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:shield-check',
         children: [
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
@@ -375,7 +375,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         id: 'ingenieria',
         title: 'Ingeniería',
         tooltip: 'Ingeniería',
-        type: 'aside',
+        type: 'collapsable',
         icon: 'heroicons_outline:cog',
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
@@ -390,7 +390,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         id: 'comercializacion',
         title: 'Comercial',
         tooltip: 'Comercialización',
-        type: 'aside',
+        type: 'collapsable',
         icon: 'heroicons_outline:briefcase',
         children: [
             { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
@@ -400,7 +400,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         id: 'marketing',
         title: 'Marketing',
         tooltip: 'Marketing',
-        type: 'aside',
+        type: 'collapsable',
         icon: 'heroicons_outline:megaphone',
         children: []
     },
@@ -408,7 +408,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         id: 'apps',
         title: 'Seguridad',
         tooltip: 'Seguridad',
-        type: 'aside',
+        type: 'collapsable',
         icon: 'heroicons_outline:shield-check',
         children: []
     },
@@ -416,7 +416,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         id: 'eventos',
         title: 'Eventos',
         tooltip: 'Gestión de Eventos',
-        type: 'aside',
+        type: 'collapsable',
         icon: 'heroicons_outline:calendar',
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
@@ -434,7 +434,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         id: 'administracion',
         title: 'Administración',
         tooltip: 'Administración',
-        type: 'aside',
+        type: 'collapsable',
         icon: 'heroicons_outline:briefcase',
         children: [
             { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
@@ -456,7 +456,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
     {
         id: 'ingenieria',
         title: 'INGENIERIA',
-        type: 'group',
+        type: 'collapsable',
         children: [
             { id: 'ingenieria.solicitantes', title: 'Catálogo de Solicitantes', type: 'basic', icon: 'heroicons_outline:users', link: '/engineering/solicitantes' },
             { id: 'ingenieria.tablero-proyectos', title: 'Seguimiento de Proyectos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/engineering/tablero-proyectos' },
@@ -469,17 +469,17 @@ export const futuristicNavigation: FuseNavigationItem[] = [
     {
         id: 'comercializacion',
         title: 'COMERCIALIZACION',
-        type: 'group',
+        type: 'collapsable',
         children: [
             { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
         ]
     },
-    { id: 'marketing', title: 'MARKETING', type: 'group', children: [] },
-    { id: 'apps', title: 'SEGURIDAD', type: 'group', children: [] },
+    { id: 'marketing', title: 'MARKETING', type: 'collapsable', children: [] },
+    { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
     {
         id: 'eventos',
         title: 'EVENTOS',
-        type: 'group',
+        type: 'collapsable',
         icon: 'heroicons_outline:calendar',
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
@@ -496,7 +496,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
     {
         id: 'administracion',
         title: 'ADMINISTRACIÓN',
-        type: 'group',
+        type: 'collapsable',
         children: [
             { id: 'administracion.tablero-compras', title: 'Tablero de compras', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/administration/tablero-compras' },
             { id: 'administracion.historico-compras', title: 'Histórico de compras', type: 'basic', icon: 'heroicons_outline:clock', link: '/administration/historico-compras' },
