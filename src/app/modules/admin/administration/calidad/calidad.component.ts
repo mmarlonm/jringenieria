@@ -10,7 +10,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CalidadService, ParetoItem } from './calidad.service';
 import Swal from 'sweetalert2';
-
 import * as Highcharts from 'highcharts';
 import Pareto from 'highcharts/modules/pareto';
 import Networkgraph from 'highcharts/modules/networkgraph';
