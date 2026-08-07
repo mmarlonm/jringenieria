@@ -120,6 +120,10 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
 
     constructor(private service: ReportPortfolioOverdueService) { }
 
+    compareEmpresa(a: boolean | null, b: boolean | null): boolean {
+        return a === b;
+    }
+
     ngOnInit(): void {
         this.verificarRoles();
         this.consultar();
