@@ -6,21 +6,29 @@
             <p class="text-sm text-gray-500 italic" *ngIf="loading">Procesando datos...</p>
         </div>
 
-        <button *ngIf="filtroTextoAplicado !== ''" (click)="exportarPDFEstado()"
-            class="flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-green-700 transition-all">
-            <mat-icon>receipt_long</mat-icon>
-            Exportar Estado Cuenta
-        </button>
+        <div class="flex gap-2 flex-wrap">
+            <button (click)="exportarExcel()"
+                class="flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-emerald-700 transition-all">
+                <mat-icon>table_chart</mat-icon>
+                Exportar Excel
+            </button>
 
-        <button (click)="exportarPDF()"
-            class="flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-red-700 transition-all">
-            <mat-icon>picture_as_pdf</mat-icon>
-            Exportar PDF
-        </button>
+            <button *ngIf="filtroTextoAplicado !== ''" (click)="exportarPDFEstado()"
+                class="flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-green-700 transition-all">
+                <mat-icon>receipt_long</mat-icon>
+                Estado Cuenta
+            </button>
+
+            <button (click)="exportarPDF()"
+                class="flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-red-700 transition-all">
+                <mat-icon>picture_as_pdf</mat-icon>
+                Exportar PDF
+            </button>
+        </div>
     </div>
 
     <div
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-start">
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 items-start">
 
         <mat-form-field appearance="outline" class="w-full lg:col-span-2">
             <mat-label>Cliente o RFC</mat-label>
@@ -39,8 +47,17 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Empresa</mat-label>
+            <mat-select [(ngModel)]="esMoral">
+                <mat-option [value]="false">Física</mat-option>
+                <mat-option [value]="true">Moral</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
             <mat-label>Sucursal</mat-label>
             <mat-select [(ngModel)]="sucursal">
+                <mat-option value="TODAS">Todas</mat-option>
                 <mat-option *ngFor="let s of sucursalesDisponibles" [value]="s.value">
                     {{ s.label }}
                 </mat-option>

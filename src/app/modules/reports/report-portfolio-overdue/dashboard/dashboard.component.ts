@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import Exporting from 'highcharts/modules/exporting';
+import * as ExcelJS from 'exceljs';
 
 // 🔹 Inicializar Módulos de Highcharts
 if (typeof Exporting === 'function') {
@@ -43,6 +44,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 // Services & Utils
 import { ReportPortfolioOverdueService } from '../report-portfolio-overdue.service';
@@ -80,7 +82,8 @@ export interface CarteraVencidaDto {
         MatFormFieldModule,
         MatInputModule,
         MatNativeDateModule,
-        MatSelectModule
+        MatSelectModule,
+        MatTooltipModule
     ],
 })
 export class ReportPortfolioOverdueDashboardComponent implements OnInit {
@@ -172,8 +175,9 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     consultar(): void {
         this.loading = true;
         this.filtroTextoAplicado = this.filtroTexto.trim();
+        const sucursalParam = this.sucursal === 'TODAS' ? null : this.sucursal;
         this.service
-            .getDashboardReport(this.sucursal, this.fechaInicio, this.fechaFin, this.esMoral)
+            .getDashboardReport(sucursalParam, this.fechaInicio, this.fechaFin, this.esMoral)
             .subscribe({
                 next: (resp: CarteraVencidaDto[]) => {
                     this.loading = false;
@@ -560,7 +564,68 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
 
     limpiarFiltroTexto(): void {
         this.filtroTexto = '';
-        // Al limpiar, volvemos a consultar para traer toda la información original
         this.consultar();
+    }
+
+    async exportarExcel(): Promise<void> {
+        const data = this.detalle || [];
+        if (data.length === 0) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Cartera Vencida');
+
+        const headers = ['Sucursal', 'Agente', 'Cliente', 'RFC', 'Documento', 'Método Pago', 'Condiciones', 'F. Emisión', 'F. Vencimiento', 'Días Vencido', 'Total Factura', 'Saldo Pendiente', 'Estatus', 'Moneda'];
+        worksheet.addRow(headers);
+
+        const headerRow = worksheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1e4b8a' } };
+        headerRow.alignment = { horizontal: 'center', vertical: 'center' };
+
+        data.forEach(row => {
+            worksheet.addRow([
+                row.sucursal,
+                row.agente,
+                row.cliente,
+                row.rfc,
+                row.documento,
+                row.metodoPago,
+                row.condicionesPago,
+                row.fechaEmision,
+                row.fechaVencimiento,
+                row.diasVencido,
+                row.totalFactura,
+                row.saldoPendiente,
+                row.estatus,
+                row.moneda || 'MXN'
+            ]);
+        });
+
+        worksheet.columns = [
+            { width: 15 },
+            { width: 12 },
+            { width: 25 },
+            { width: 15 },
+            { width: 12 },
+            { width: 12 },
+            { width: 15 },
+            { width: 12 },
+            { width: 12 },
+            { width: 12 },
+            { width: 15 },
+            { width: 15 },
+            { width: 12 },
+            { width: 10 }
+        ];
+
+        worksheet.getColumn(10).numFmt = '0';
+        worksheet.getColumn(11).numFmt = '#,##0.00';
+        worksheet.getColumn(12).numFmt = '#,##0.00';
+
+        const filename = `Cartera_${this.sucursal}_${new Date().getTime()}.xlsx`;
+        await workbook.xlsx.writeFile(filename);
     }
 }

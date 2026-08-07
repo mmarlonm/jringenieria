@@ -19,17 +19,20 @@ export class ReportPortfolioOverdueService {
    * @param fechaFin Fecha fin del rango
    */
   getDashboardReport(
-    sucursal: string,
+    sucursal: string | null,
     fechaInicio: Date,
     fechaFin: Date,
     esMoral: boolean
   ): Observable<any> {
 
-    const params = new HttpParams()
-      .set('sucursal', sucursal)
+    let params = new HttpParams()
       .set('fechaInicio', fechaInicio.toISOString())
       .set('fechaFin', fechaFin.toISOString())
       .set('esMoral', esMoral.toString());
+
+    if (sucursal) {
+      params = params.set('sucursal', sucursal);
+    }
 
     return this.http.get<any>(`${this.apiUrl}/cartera-vencida`, { params });
   }
