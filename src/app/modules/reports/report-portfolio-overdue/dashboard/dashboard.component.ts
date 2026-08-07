@@ -583,7 +583,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         const headerRow = worksheet.getRow(1);
         headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1e4b8a' } };
-        headerRow.alignment = { horizontal: 'center', vertical: 'center' };
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
 
         data.forEach(row => {
             worksheet.addRow([
