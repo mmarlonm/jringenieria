@@ -262,6 +262,7 @@ ngx-extended-pdf-viewer {
 .high-z-index-dialog {
   z-index: 9999999 !important;
 }
+
 .cdk-overlay-container {
   z-index: 9999999 !important;
 }
@@ -292,3 +293,82 @@ ngx-extended-pdf-viewer {
   max-width: 280px !important;
   white-space: pre-line !important;
 }
+
+/* Evitar que las etiquetas en reposo (placeholders/labels no flotantes) se encimen con iconos de prefijo y sufijo */
+body {
+  .mat-mdc-form-field, .mat-form-field {
+    /* Si el campo contiene un sufijo (selector de fecha, icono de dinero, etc.) */
+    &:has(.mat-mdc-form-field-icon-suffix, .mat-mdc-form-field-text-suffix, .mat-datepicker-toggle, [matSuffix], .mat-form-field-suffix) {
+      .mdc-notched-outline:not(.mdc-notched-outline--notched) {
+        .mdc-notched-outline__notch {
+          max-width: calc(100% - 48px) !important;
+        }
+      }
+    }
+
+    /* Si el campo contiene un prefijo (símbolo $, etc.) */
+    &:has(.mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-text-prefix, [matPrefix], .mat-form-field-prefix) {
+      .mdc-floating-label:not(.mdc-floating-label--float-above),
+      .mat-mdc-floating-label:not(.mdc-floating-label--float-above),
+      mat-label {
+        left: 28px !important;
+      }
+    }
+
+    /* Si el campo contiene prefijo y sufijo a la vez */
+    &:has(.mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-text-prefix, [matPrefix], .mat-form-field-prefix):has(.mat-mdc-form-field-icon-suffix, .mat-mdc-form-field-text-suffix, .mat-datepicker-toggle, [matSuffix], .mat-form-field-suffix) {
+      .mdc-notched-outline:not(.mdc-notched-outline--notched) {
+        .mdc-notched-outline__notch {
+          max-width: calc(100% - 76px) !important;
+        }
+      }
+      .mdc-floating-label:not(.mdc-floating-label--float-above),
+      .mat-mdc-floating-label:not(.mdc-floating-label--float-above),
+      mat-label {
+        left: 28px !important;
+      }
+    }
+  }
+}
+
+/* Personalización de scrollbars global y un poco más anchos */
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18) !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.3) !important;
+    background-clip: padding-box !important;
+  }
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18) !important;
+  background-clip: padding-box !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    background-clip: padding-box !important;
+  }
+}
+
+/* Compatibilidad de scrollbar para Firefox */
+* {
+  scrollbar-width: auto !important;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent !important;
+}
+
+.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent !important;
+}
