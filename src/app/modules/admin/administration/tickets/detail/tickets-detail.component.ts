@@ -50,8 +50,7 @@ export class TicketsDetailComponent implements OnInit {
   actividades: any[] = [];
 
   currentUserId: number = 0;
-  tieneRolAprobador = false;
-  private readonly usuariosPermitidosParaAprobacion = [5, 6, 13, 14, 38];
+  usuariosPermitidosParaAprobacion: number[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -75,15 +74,35 @@ export class TicketsDetailComponent implements OnInit {
     this.comentarioForm = this.fb.group({
       comentario: ['', [Validators.required, Validators.minLength(3)]]
     });
-
-    // TODO: Obtener del usuario logueado
-    this.currentUserId = parseInt(localStorage.getItem('userId') || '0');
   }
 
   ngOnInit(): void {
+    // Obtener el ID del usuario actual
+    this.currentUserId = parseInt(localStorage.getItem('userId') || '0');
+    console.log('Current User ID:', this.currentUserId);
+
+    // Cargar los aprobadores permitidos del backend
+    this.cargarAprobadores();
+
     this.route.params.subscribe(params => {
       this.ticketId = params['id'];
       this.cargarTicket();
+    });
+  }
+
+  cargarAprobadores(): void {
+    this.ticketsService.obtenerAprobadores().subscribe({
+      next: (res: any) => {
+        if (res.success && Array.isArray(res.data)) {
+          this.usuariosPermitidosParaAprobacion = res.data.map((u: any) =>
+            typeof u === 'number' ? u : u.id
+          );
+          console.log('Aprobadores permitidos:', this.usuariosPermitidosParaAprobacion);
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar aprobadores:', err);
+      }
     });
   }
 
@@ -178,7 +197,15 @@ export class TicketsDetailComponent implements OnInit {
 
   puedeAprobar(): boolean {
     const usuarioPermitido = this.usuariosPermitidosParaAprobacion.includes(this.currentUserId);
-    return this.ticket?.nombreEstatus === 'Estimación Enviada' && (this.tieneRolAprobador || usuarioPermitido);
+    const puedeAprobar = usuarioPermitido;
+    console.log('Verificación de aprobación:', {
+      currentUserId: this.currentUserId,
+      usuariosPermitidos: this.usuariosPermitidosParaAprobacion,
+      usuarioPermitido,
+      estatusTicket: this.ticket?.nombreEstatus,
+      resultado: puedeAprobar
+    });
+    return this.ticket?.nombreEstatus === 'Estimación Enviada' && puedeAprobar;
   }
 
   volver(): void {
