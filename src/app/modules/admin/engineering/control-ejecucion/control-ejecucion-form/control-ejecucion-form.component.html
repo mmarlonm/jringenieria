@@ -285,12 +285,25 @@
                   cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="onColumnReordered($event)">
                   <div class="flex w-full items-center text-left pl-1">
                     <!-- Compensador del drag handle de las filas (28px de ancho total) -->
-                    <div class="w-7 shrink-0 mr-1"></div>
+                    <div class="w-7 shrink-0 mr-1 sticky left-0 bg-slate-100 dark:bg-slate-800 z-30"></div>
 
                     <div *ngFor="let col of columns; let i = index" [style.width.px]="col.width"
-                      class="shrink-0 flex items-center relative pr-4 select-none cdk-drag group/col border-r border-slate-200 dark:border-slate-700 h-12"
+                      class="shrink-0 flex items-center relative pr-4 select-none cdk-drag group/col border-r border-slate-200 dark:border-slate-700 h-12 bg-slate-100 dark:bg-slate-800 transition-all"
+                      [class.sticky]="isPinned(col.id)"
+                      [class.z-30]="isPinned(col.id)"
+                      [style.left]="getPinnedLeft(col.id)"
                       cdkDrag [cdkDragBoundary]="'.h-12'">
                       <span class="truncate pl-1 font-bold text-slate-600 dark:text-slate-400">{{ col.label }}</span>
+                      
+                      <!-- Pin (clip) Icon button -->
+                      <button type="button" 
+                        class="w-5 h-5 ml-1 flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded transition-colors opacity-0 group-hover/col:opacity-100"
+                        [class.opacity-100]="isPinned(col.id)"
+                        (click)="togglePin(col.id); $event.stopPropagation()"
+                        [matTooltip]="isPinned(col.id) ? 'Desfijar columna' : 'Fijar columna'">
+                        <mat-icon class="icon-size-3.5">{{ isPinned(col.id) ? 'push_pin' : 'push_pin' }}</mat-icon>
+                      </button>
+
                       <!-- Resize handler con línea visible al hover -->
                       <div
                         class="absolute top-0 bottom-0 right-0 w-2 cursor-col-resize hover:bg-indigo-500/30 active:bg-indigo-600 transition-colors z-20"
@@ -308,16 +321,28 @@
 
                     <!-- Master Row -->
                     <div
-                      class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors bg-indigo-50/30 text-indigo-900 font-extrabold relative group">
+                      class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors bg-indigo-50/30 text-indigo-900 font-extrabold relative group"
+                      [ngClass]="{'border-t-2 border-b-2 border-l-2 border-r-2 border-rose-500 bg-rose-50/30 shadow-[0_0_8px_rgba(244,63,94,0.15)]': task.estatus === 4}">
                       <!-- Drag Handle for Master Activity -->
                       <div cdkDragHandle
-                        class="w-6 h-6 flex items-center justify-center cursor-move text-slate-400 hover:text-indigo-600 transition-colors mr-1 shrink-0">
+                        class="w-6 h-6 flex items-center justify-center cursor-move text-slate-400 hover:text-indigo-600 transition-colors mr-1 shrink-0 sticky left-0 z-10"
+                        [class.bg-slate-50]="task.estatus !== 4"
+                        [class.dark:bg-slate-900]="task.estatus !== 4"
+                        [class.bg-rose-100]="task.estatus === 4"
+                        [class.dark:bg-rose-950]="task.estatus === 4">
                         <mat-icon class="icon-size-4">drag_indicator</mat-icon>
                       </div>
 
-                      <div class="flex w-full items-center text-left text-xs">
+                      <div class="flex w-full items-center text-left text-xs bg-inherit">
                         <div *ngFor="let col of columns" [style.width.px]="col.width"
-                          class="shrink-0 truncate flex items-center pr-2">
+                          class="shrink-0 truncate flex items-center pr-2"
+                          [class.sticky]="isPinned(col.id)"
+                          [class.z-10]="isPinned(col.id)"
+                          [class.bg-slate-50]="isPinned(col.id) && task.estatus !== 4"
+                          [class.dark:bg-slate-900]="isPinned(col.id) && task.estatus !== 4"
+                          [class.bg-rose-100]="isPinned(col.id) && task.estatus === 4"
+                          [class.dark:bg-rose-950]="isPinned(col.id) && task.estatus === 4"
+                          [style.left]="getPinnedLeft(col.id)">
                           <ng-container [ngSwitch]="col.id">
 
                             <!-- Actividad Name -->
@@ -329,6 +354,11 @@
                                     'chevron_right' }}</mat-icon>
                                 </button>
                                 <span class="truncate font-black text-indigo-950 tracking-wide uppercase text-[11px]" [title]="task.nombre">{{ task.nombre }}</span>
+                                <span *ngIf="task.estatus === 4" 
+                                  class="text-[9px] font-black px-1 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-300 ml-1.5 shrink-0" 
+                                  [matTooltip]="task.razonDetenido || 'Sin motivo especificado'">
+                                  ⚠️ DETENIDA
+                                </span>
                               </div>
                             </ng-container>
                                                       <!-- ... other switches kept intact ... -->
@@ -399,6 +429,13 @@
                               </div>
                             </ng-container>
 
+                            <!-- Razon Detenido -->
+                            <ng-container *ngSwitchCase="'razonDetenido'">
+                              <span class="truncate text-rose-600 font-semibold" [title]="task.razonDetenido || ''">
+                                {{ task.razonDetenido || '-' }}
+                              </span>
+                            </ng-container>
+
                             <!-- Color -->
                             <ng-container *ngSwitchCase="'color'">
                               <div class="w-full flex items-center justify-center">
@@ -440,23 +477,40 @@
 
                       <!-- Subactivities rows -->
                       <div *ngFor="let sub of task.actividades" cdkDrag [cdkDragData]="sub"
-                        class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors bg-white/40 text-slate-700 relative group">
+                        class="h-14 flex items-center px-4 border-b hover:bg-slate-100/40 transition-colors bg-white/40 text-slate-700 relative group"
+                        [ngClass]="{'border-t-2 border-b-2 border-l-2 border-r-2 border-rose-500 bg-rose-50/20 shadow-[0_0_8px_rgba(244,63,94,0.12)]': sub.estatus === 4}">
 
                         <!-- Drag Handle for Subactivity -->
                         <div cdkDragHandle
-                          class="w-6 h-6 flex items-center justify-center cursor-move text-slate-400 hover:text-slate-600 transition-colors mr-1 shrink-0">
+                          class="w-6 h-6 flex items-center justify-center cursor-move text-slate-400 hover:text-slate-600 transition-colors mr-1 shrink-0 sticky left-0 z-10"
+                          [class.bg-white]="sub.estatus !== 4"
+                          [class.dark:bg-slate-900]="sub.estatus !== 4"
+                          [class.bg-rose-100]="sub.estatus === 4"
+                          [class.dark:bg-rose-950]="sub.estatus === 4">
                           <mat-icon class="icon-size-4">drag_indicator</mat-icon>
                         </div>
 
-                        <div class="flex w-full items-center text-left text-xs">
+                        <div class="flex w-full items-center text-left text-xs bg-inherit">
                           <div *ngFor="let col of columns" [style.width.px]="col.width"
-                            class="shrink-0 truncate flex items-center pr-2">
+                            class="shrink-0 truncate flex items-center pr-2"
+                            [class.sticky]="isPinned(col.id)"
+                            [class.z-10]="isPinned(col.id)"
+                            [class.bg-white]="isPinned(col.id) && sub.estatus !== 4"
+                            [class.dark:bg-slate-900]="isPinned(col.id) && sub.estatus !== 4"
+                            [class.bg-rose-50]="isPinned(col.id) && sub.estatus === 4"
+                            [class.dark:bg-rose-950]="isPinned(col.id) && sub.estatus === 4"
+                            [style.left]="getPinnedLeft(col.id)">
                             <ng-container [ngSwitch]="col.id">
 
                               <!-- Subactivity Name -->
                               <ng-container *ngSwitchCase="'nombre'">
                                 <div class="flex items-center gap-1 truncate w-full pl-8">
                                   <span class="truncate font-semibold text-slate-700 text-xs" [title]="sub.nombre">{{ sub.nombre }}</span>
+                                  <span *ngIf="sub.estatus === 4" 
+                                    class="text-[9px] font-black px-1 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-300 ml-1.5 shrink-0" 
+                                    [matTooltip]="sub.razonDetenido || 'Sin motivo especificado'">
+                                    ⚠️ DETENIDA
+                                  </span>
                                 </div>
                               </ng-container>
 
@@ -525,6 +579,13 @@
                                     {{ getEstatusLabel({type: 'activity', activity: sub}) }}
                                   </span>
                                 </div>
+                              </ng-container>
+
+                              <!-- Razon Detenido -->
+                              <ng-container *ngSwitchCase="'razonDetenido'">
+                                <span class="truncate text-rose-600 font-semibold" [title]="sub.razonDetenido || ''">
+                                  {{ sub.razonDetenido || '-' }}
+                                </span>
                               </ng-container>
 
                               <!-- Color -->
@@ -680,12 +741,19 @@
                             [style.background-color]="showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task})"></div>
                           <div class="relative flex items-center w-full px-3 gap-2 overflow-hidden">
                             <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase"
-                              [style.color]="showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task})">{{ task.nombre }}</span>
-                            <span class="ml-auto text-[9px] font-black font-mono"
-                              [style.color]="showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task})">{{ task.progreso }}%</span>
+                              [style.color]="task.estatus === 4 ? '#ef4444' : (showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task}))">
+                              {{ task.nombre }}
+                              <span *ngIf="task.estatus === 4" class="text-rose-600 font-bold ml-1">
+                                [DETENIDA: {{ task.razonDetenido || 'SIN MOTIVO' }}]
+                              </span>
+                            </span>
+                            <span class="ml-auto text-[9px] font-black font-mono shrink-0"
+                              [style.color]="task.estatus === 4 ? '#ef4444' : (showCriticalPath && criticalMaestras.has(task.id) ? '#f43f5e' : getColorHex({type: 'task', task: task}))">{{ task.progreso }}%</span>
                           </div>
                           <div *ngIf="task.estatus === 2"
                             class="absolute inset-0 opacity-[0.10] pointer-events-none animate-stripes"></div>
+                          <div *ngIf="task.estatus === 4"
+                            class="absolute inset-0 opacity-[0.12] pointer-events-none bg-[repeating-linear-gradient(45deg,#ef4444,#ef4444_10px,#transparent_10px,#transparent_20px)]"></div>
                         </div>
                       </div>
 
@@ -706,13 +774,20 @@
                               [style.background-color]="showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub})"></div>
                             <div class="relative flex items-center w-full px-3 gap-2 overflow-hidden">
                               <span class="text-[9px] font-black truncate drop-shadow-sm tracking-tight uppercase"
-                                [style.color]="showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub})">{{ sub.nombre }}</span>
-                              <span class="ml-auto text-[9px] font-black font-mono"
-                                [style.color]="showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub})">{{ sub.progreso
+                                [style.color]="sub.estatus === 4 ? '#ef4444' : (showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub}))">
+                                {{ sub.nombre }}
+                                <span *ngIf="sub.estatus === 4" class="text-rose-600 font-bold ml-1">
+                                  [DETENIDA: {{ sub.razonDetenido || 'SIN MOTIVO' }}]
+                                </span>
+                              </span>
+                              <span class="ml-auto text-[9px] font-black font-mono shrink-0"
+                                [style.color]="sub.estatus === 4 ? '#ef4444' : (showCriticalPath && criticalSubactivities.has(sub.id) ? '#f43f5e' : getColorHex({type: 'activity', activity: sub}))">{{ sub.progreso
                                 }}%</span>
                             </div>
                             <div *ngIf="sub.estatus === 2"
                               class="absolute inset-0 opacity-[0.10] pointer-events-none animate-stripes"></div>
+                            <div *ngIf="sub.estatus === 4"
+                              class="absolute inset-0 opacity-[0.12] pointer-events-none bg-[repeating-linear-gradient(45deg,#ef4444,#ef4444_10px,#transparent_10px,#transparent_20px)]"></div>
                           </div>
                         </div>
 
@@ -864,6 +939,12 @@
                           (click)="previsualizarArchivo(file); $event.stopPropagation()" matTooltip="Ver">
                           <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
                         </button>
+                        <!-- Edit (OnlyOffice) -->
+                        <button *ngIf="isEditable(file.nombreArchivo)" mat-icon-button type="button"
+                          class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-blue-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
+                          (click)="editarDocumento(file, file.nombreArchivo.split('.').pop()?.toLowerCase()); $event.stopPropagation()" matTooltip="Editar archivo">
+                          <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:pencil'"></mat-icon>
+                        </button>
                         <!-- Download -->
                         <button mat-icon-button type="button"
                           class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
@@ -935,6 +1016,12 @@
                       class="w-8 h-8 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
                       (click)="previsualizarArchivo(file); $event.stopPropagation()" matTooltip="Ver">
                       <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                    </button>
+                    <!-- Edit (OnlyOffice) -->
+                    <button *ngIf="isEditable(file.nombreArchivo)" mat-icon-button type="button"
+                      class="w-8 h-8 p-0 text-slate-400 hover:text-blue-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
+                      (click)="editarDocumento(file, file.nombreArchivo.split('.').pop()?.toLowerCase()); $event.stopPropagation()" matTooltip="Editar archivo">
+                      <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
                     </button>
                     <!-- Download -->
                     <button mat-icon-button type="button"

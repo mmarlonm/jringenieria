@@ -333,7 +333,7 @@ export class TaskMediaDialogComponent implements OnInit {
                                 fileType: fileExtension,
 
                                 // ✅ Clave única adaptada para la tarea
-                                key: `${archivo.id || '0'}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
+                                key: `${archivo.tareaArchivoId || this.tareaId}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
                                 title: archivo.nombreArchivo,
 
                                 // ✅ URL de descarga apuntando al endpoint de TAREAS en tu backend

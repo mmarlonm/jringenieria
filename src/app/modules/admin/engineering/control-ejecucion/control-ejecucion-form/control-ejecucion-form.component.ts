@@ -18,6 +18,8 @@ import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejec
 import { ConfigurarApartadosDialogComponent } from './dialogs/configurar-apartados-dialog.component';
 import { SubcontratacionService } from '../../subcontratacion.service';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
+import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
+import { environment } from 'environments/environment';
 import Swal from 'sweetalert2';
 import { 
   addDays, 
@@ -152,6 +154,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   isUploading: { [key: string]: boolean } = {};
   isUploadingOC: boolean = false;
   ocFileName: string = '';
+  onlyOfficeDocsUrl: any = environment.apiOnlyOffice;
+  onlyOfficeApiUrl: any = `${environment.apiUrl}/SeguimientoEjecucion`;
   
   // Subfolders tracking: Key is Category (Apartado) name, Value is the active subfolder name (null or empty string means root category)
   activeSubcarpetas: { [key: string]: string } = {};
@@ -324,6 +328,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     { id: 'equipoEspecial', label: 'Equipo Especial / Herramienta', width: 150 },
     { id: 'prioridad', label: 'Prioridad', width: 70 },
     { id: 'estatus', label: 'Estatus', width: 90 },
+    { id: 'razonDetenido', label: 'Razón Detenido', width: 140 },
     { id: 'color', label: 'Color', width: 50 },
     { id: 'acciones', label: 'Acciones', width: 90 }
   ];
@@ -486,6 +491,35 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   isColumnVisible(id: string): boolean {
     return this.visibleColumnIds.includes(id);
+  }
+
+  // 📌 STICKY COLUMNS PINNING
+  pinnedColumns: string[] = ['nombre'];
+
+  isPinned(colId: string): boolean {
+    return this.pinnedColumns.includes(colId);
+  }
+
+  togglePin(colId: string): void {
+    const idx = this.pinnedColumns.indexOf(colId);
+    if (idx !== -1) {
+      this.pinnedColumns.splice(idx, 1);
+    } else {
+      this.pinnedColumns.push(colId);
+    }
+    this._cdr.markForCheck();
+  }
+
+  getPinnedLeft(colId: string): string | null {
+    if (!this.isPinned(colId)) return null;
+    let left = 48; // Offset for drag handle (28px) + expand button padding
+    for (const col of this.columns) {
+      if (col.id === colId) break;
+      if (this.isPinned(col.id)) {
+        left += col.width;
+      }
+    }
+    return left + 'px';
   }
 
   onColumnReordered(event: any): void {
@@ -917,6 +951,65 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  isEditable(fileName: string): boolean {
+    if (!fileName) return false;
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    return ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'txt', 'csv'].includes(ext);
+  }
+
+  getDocumentType(ext: string): string | null {
+    if (['doc', 'docx', 'rtf', 'txt'].includes(ext)) return 'word';
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'cell';
+    if (['ppt', 'pptx'].includes(ext)) return 'slide';
+    return null;
+  }
+
+  editarDocumento(archivo: any, fileExtension: string): void {
+    const documentType = this.getDocumentType(fileExtension);
+    if (!documentType) return;
+
+    const safeFileName = archivo.nombreArchivo
+      .replace(/[^a-zA-Z0-9_.-]/g, "__")
+      .replace(/\.(?=[^\.]+$)/, "--");
+
+    const userInfoStr = localStorage.getItem('userInformation');
+    if (!userInfoStr) {
+      Swal.fire('Error', 'No se encontró la información del usuario en sesión.', 'error');
+      return;
+    }
+    const userID = JSON.parse(userInfoStr).usuario.id;
+
+    this._engineeringService.getToken(this.idSeguimiento, archivo.tipo, archivo.nombreArchivo).subscribe({
+      next: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.token) {
+          this._dialog.open(OnlyOfficeEditorComponent, {
+            width: '90vw',
+            height: '90vh',
+            data: {
+              documentServerUrl: this.onlyOfficeDocsUrl,
+              editorConfig: {
+                document: {
+                  fileType: fileExtension,
+                  key: `${this.idSeguimiento}_${userID}_${this.idSeguimiento}_${archivo.tipo}_${safeFileName}`,
+                  title: archivo.nombreArchivo,
+                  url: `${this.onlyOfficeApiUrl}/editfile?idSeguimiento=${this.idSeguimiento}&tipo=${archivo.tipo}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+                },
+                documentType: documentType,
+                editorConfig: {
+                  callbackUrl: `${this.onlyOfficeApiUrl}/callback`
+                }
+              }
+            }
+          });
+        }
+      },
+      error: (err) => {
+        console.error('No se pudo obtener el token para OnlyOffice:', err);
+        Swal.fire('Error', 'No se pudo iniciar el editor de OnlyOffice.', 'error');
+      }
+    });
+  }
+
   eliminarArchivo(file: any): void {
     if (!file || !file.tipo || !file.nombreArchivo) return;
     const fileName = file.nombreArchivo.includes('/') ? file.nombreArchivo.split('/').pop() : file.nombreArchivo;
@@ -1281,12 +1374,13 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     const rightX = this.getXPosition(end);
     const widthX = Math.max(12, rightX - leftX + (this.timeScale === 'day' ? this.dayWidth : (this.timelineWidth / (differenceInDays(this.endDate, this.startDate) || 1))));
 
-    const colorHex = this.getColorHex(row);
+    const est = row.type === 'task' ? row.task.estatus : row.activity.estatus;
+    const colorHex = est === 4 ? '#ef4444' : this.getColorHex(row);
 
     return {
       'left': leftX + 'px',
       'width': widthX + 'px',
-      'background-color': row.type === 'task' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.95)',
+      'background-color': est === 4 ? 'rgba(244, 63, 94, 0.15)' : (row.type === 'task' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.95)'),
       'border': `1.5px solid ${colorHex}`,
       'border-left-width': row.type === 'task' ? '4px' : '1.5px',
       'border-left-color': colorHex,

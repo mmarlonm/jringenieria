@@ -552,7 +552,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                         editorConfig: {
                             document: {
                                 fileType: fileExtension,
-                                key: `${archivo.id || '0'}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
+                                key: `${archivo.tareaArchivoId || this.tareaId}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
                                 title: archivo.nombreArchivo,
                                 url: `${this.onlyOfficeApiUrl}/editfileTarea?tareaId=${this.tareaId}&categoria=${archivo.categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
                             },

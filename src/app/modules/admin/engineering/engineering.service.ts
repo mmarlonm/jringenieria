@@ -285,4 +285,12 @@ export class EngineeringService {
     eliminarApartadoEjecucion(idSeguimiento: number, idApartado: number): Observable<any> {
         return this._http.delete<any>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/apartados/${idApartado}`);
     }
+
+    getToken(idSeguimiento: number, tipo: string, nombreArchivo: string): Observable<any> {
+        let params = new HttpParams()
+            .set('idSeguimiento', idSeguimiento)
+            .set('tipo', tipo)
+            .set('nombreArchivo', nombreArchivo);
+        return this._http.get<any>(`${this.apiSeguimientoEjecucion}/token`, { params });
+    }
 }
