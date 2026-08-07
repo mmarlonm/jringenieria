@@ -22,13 +22,13 @@ export class ReportPortfolioOverdueService {
     sucursal: string | null,
     fechaInicio: Date,
     fechaFin: Date,
-    esMoral: boolean
+    tipoEmpresa: number
   ): Observable<any> {
 
     let params = new HttpParams()
       .set('fechaInicio', fechaInicio.toISOString())
       .set('fechaFin', fechaFin.toISOString())
-      .set('esMoral', esMoral.toString());
+      .set('tipoEmpresa', tipoEmpresa.toString());
 
     if (sucursal) {
       params = params.set('sucursal', sucursal);

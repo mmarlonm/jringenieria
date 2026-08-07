@@ -49,6 +49,7 @@
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Empresa</mat-label>
             <mat-select [(ngModel)]="esMoral">
+                <mat-option [value]="null">Todas</mat-option>
                 <mat-option [value]="false">Física</mat-option>
                 <mat-option [value]="true">Moral</mat-option>
             </mat-select>

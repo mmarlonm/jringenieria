@@ -95,7 +95,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     sucursal: string = 'SANTA JULIA';
     fechaInicio: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // Inicio de mes
     fechaFin: Date = new Date();
-    esMoral: boolean = false;
+    esMoral: boolean | null = null;
     filtroTexto: string = ''; // 🔍 Nueva propiedad para el buscador
     filtroTextoAplicado: string = ''; // Texto buscado actualmente
 
@@ -176,8 +176,9 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         this.loading = true;
         this.filtroTextoAplicado = this.filtroTexto.trim();
         const sucursalParam = this.sucursal === 'TODAS' ? null : this.sucursal;
+        const esMoralParam = this.esMoral === null ? 3 : (this.esMoral ? 2 : 1);
         this.service
-            .getDashboardReport(sucursalParam, this.fechaInicio, this.fechaFin, this.esMoral)
+            .getDashboardReport(sucursalParam, this.fechaInicio, this.fechaFin, esMoralParam)
             .subscribe({
                 next: (resp: CarteraVencidaDto[]) => {
                     this.loading = false;
