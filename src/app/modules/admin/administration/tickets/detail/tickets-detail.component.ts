@@ -77,8 +77,13 @@ export class TicketsDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Obtener el ID del usuario actual
-    this.currentUserId = parseInt(localStorage.getItem('userId') || '0');
+    // Obtener el ID del usuario actual desde userInformation
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInformation') || '{}');
+      this.currentUserId = userInfo?.usuario?.id || 0;
+    } catch (e) {
+      this.currentUserId = 0;
+    }
     console.log('Current User ID:', this.currentUserId);
 
     // Cargar los aprobadores permitidos del backend
@@ -95,7 +100,7 @@ export class TicketsDetailComponent implements OnInit {
       next: (res: any) => {
         if (res.success && Array.isArray(res.data)) {
           this.usuariosPermitidosParaAprobacion = res.data.map((u: any) =>
-            typeof u === 'number' ? u : u.id
+            typeof u === 'number' ? u : u.usuarioId
           );
           console.log('Aprobadores permitidos:', this.usuariosPermitidosParaAprobacion);
         }
