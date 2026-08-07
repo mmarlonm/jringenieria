@@ -95,7 +95,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     sucursal: string = 'SANTA JULIA';
     fechaInicio: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // Inicio de mes
     fechaFin: Date = new Date();
-    esMoral: boolean | null = null;
+    tipoEmpresa: number = 3; // 1=Física, 2=Moral, 3=Todas (por defecto)
     filtroTexto: string = ''; // 🔍 Nueva propiedad para el buscador
     filtroTextoAplicado: string = ''; // Texto buscado actualmente
 
@@ -119,10 +119,6 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     };
 
     constructor(private service: ReportPortfolioOverdueService) { }
-
-    compareEmpresa(a: boolean | null, b: boolean | null): boolean {
-        return a === b;
-    }
 
     ngOnInit(): void {
         this.verificarRoles();
@@ -180,9 +176,8 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         this.loading = true;
         this.filtroTextoAplicado = this.filtroTexto.trim();
         const sucursalParam = this.sucursal === 'TODAS' ? null : this.sucursal;
-        const esMoralParam = this.esMoral === null ? 3 : (this.esMoral ? 2 : 1);
         this.service
-            .getDashboardReport(sucursalParam, this.fechaInicio, this.fechaFin, esMoralParam)
+            .getDashboardReport(sucursalParam, this.fechaInicio, this.fechaFin, this.tipoEmpresa)
             .subscribe({
                 next: (resp: CarteraVencidaDto[]) => {
                     this.loading = false;

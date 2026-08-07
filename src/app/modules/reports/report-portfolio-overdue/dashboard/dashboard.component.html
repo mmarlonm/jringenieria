@@ -48,10 +48,10 @@
 
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Empresa</mat-label>
-            <mat-select [(ngModel)]="esMoral" [compareWith]="compareEmpresa">
-                <mat-option [value]="null">Todas</mat-option>
-                <mat-option [value]="false">Física</mat-option>
-                <mat-option [value]="true">Moral</mat-option>
+            <mat-select [(ngModel)]="tipoEmpresa">
+                <mat-option [value]="3">Todas</mat-option>
+                <mat-option [value]="1">Física</mat-option>
+                <mat-option [value]="2">Moral</mat-option>
             </mat-select>
         </mat-form-field>
 
