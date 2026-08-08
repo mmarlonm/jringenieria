@@ -7,12 +7,6 @@
         </div>
 
         <div class="flex gap-2 flex-wrap">
-            <button (click)="exportarExcel()"
-                class="flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-emerald-700 transition-all">
-                <mat-icon>table_chart</mat-icon>
-                Exportar Excel
-            </button>
-
             <button *ngIf="filtroTextoAplicado !== ''" (click)="exportarPDFEstado()"
                 class="flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-green-700 transition-all">
                 <mat-icon>receipt_long</mat-icon>
@@ -118,7 +112,14 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 overflow-hidden">
-        <h2 class="text-lg font-bold text-gray-800 mb-4">Detalle de Facturas</h2>
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-800">Detalle de Facturas</h2>
+            <button (click)="exportarExcel()"
+                class="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-emerald-700 transition-all text-sm font-semibold">
+                <mat-icon class="icon-size-5">download</mat-icon>
+                Descargar Excel
+            </button>
+        </div>
         <div class="overflow-x-auto border rounded-lg">
             <table class="w-full text-sm text-left border-collapse">
                 <thead class="bg-gray-50 border-b">
