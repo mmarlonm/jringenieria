@@ -13,6 +13,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventosService, Asistente, EventoEdicion } from '../eventos.service';
 import { PersonalStaffService, PersonalStaff } from '../personal-staff/personal-staff.service';
+import { DashboardEncuestasComponent } from '../encuestas/dashboard-encuestas.component';
 
 Exporting(Highcharts);
 Highcharts.setOptions({
@@ -37,7 +38,8 @@ Highcharts.setOptions({
     MatIconModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    DashboardEncuestasComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

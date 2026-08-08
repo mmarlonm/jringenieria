@@ -71,6 +71,7 @@
         </button>
         <!-- Components -->
         <div class="ml-auto flex items-center space-x-0.5 pl-2 sm:space-x-2">
+            <server-status-indicator class="hidden sm:flex"></server-status-indicator>
             <div class="flex items-center ml-2 mr-1 sm:mr-4">
                 <button mat-flat-button (click)="abrirMenuYSolicitarPermiso($event)"
                     [color]="asistenciaStatus === 'ENTRADA' ? 'warn' : 'primary'"

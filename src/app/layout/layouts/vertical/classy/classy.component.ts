@@ -77,6 +77,9 @@ import {
     UserComponent
 } from 'app/layout/common/user/user.component';
 import {
+    ServerStatusIndicatorComponent
+} from 'app/layout/common/server-status-indicator/server-status-indicator.component';
+import {
     Subject,
     takeUntil
 } from 'rxjs';
@@ -118,7 +121,8 @@ import { ProfileService } from 'app/modules/admin/pages/profile/profile.services
         TareasCalendarComponent,
         MatMenuModule,
         MatProgressSpinnerModule,
-        CommonModule
+        CommonModule,
+        ServerStatusIndicatorComponent
     ],
 })
 export class ClassyLayoutComponent implements OnInit, OnDestroy {

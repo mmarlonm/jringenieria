@@ -10,6 +10,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventosService, Asistente } from '../eventos.service';
 import { EncuestasEventoService } from '../encuestas/encuestas-evento.service';
+import { DashboardEncuestasComponent } from '../encuestas/dashboard-encuestas.component';
 
 @Component({
     selector: 'eventos-control',
@@ -23,7 +24,8 @@ import { EncuestasEventoService } from '../encuestas/encuestas-evento.service';
         MatIconModule,
         MatInputModule,
         MatFormFieldModule,
-        MatSelectModule
+        MatSelectModule,
+        DashboardEncuestasComponent
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })

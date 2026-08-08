@@ -98,7 +98,20 @@ import Swal from 'sweetalert2';
 
   <!-- ── Tabla de Tracking ─────────────────────────────────────────────────── -->
   <div class="section-card">
-    <div class="section-title">Estado de Envíos por Asistente</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div class="section-title">Estado de Envíos por Asistente</div>
+      <div class="filter-group">
+        <button class="filter-btn" [class.active]="filtroRespuesta === 'todos'" (click)="filtroRespuesta = 'todos'">
+          Todos ({{ tracking.length }})
+        </button>
+        <button class="filter-btn" [class.active]="filtroRespuesta === 'respondidos'" (click)="filtroRespuesta = 'respondidos'">
+          ✓ Respondidos ({{ countRespondidos }})
+        </button>
+        <button class="filter-btn" [class.active]="filtroRespuesta === 'pendientes'" (click)="filtroRespuesta = 'pendientes'">
+          ⏳ Pendientes ({{ countPendientes }})
+        </button>
+      </div>
+    </div>
     <div class="table-wrap">
       <table class="track-table">
         <thead>
@@ -115,7 +128,7 @@ import Swal from 'sweetalert2';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of tracking">
+          <tr *ngFor="let r of trackingFiltrado" [class.respondido-row]="r.respondido" [class.pendiente-row]="!r.respondido">
             <td>
               <div style="font-weight:600;font-size:13px">{{ r.nombre }}</div>
               <div style="font-size:11px;color:#888">{{ r.correo }}</div>
@@ -124,7 +137,7 @@ import Swal from 'sweetalert2';
             <td><span class="badge" [class.badge-ok]="r.enviado" [class.badge-no]="!r.enviado">{{ r.enviado ? '✓' : '–' }}</span></td>
             <td><span class="badge" [class.badge-ok]="r.whatsapp" [class.badge-no]="!r.whatsapp">{{ r.whatsapp ? '✓' : '–' }}</span></td>
             <td><span class="badge" [class.badge-ok]="r.abierto" [class.badge-no]="!r.abierto">{{ r.abierto ? '✓' : '–' }}</span></td>
-            <td><span class="badge" [class.badge-ok]="r.respondido" [class.badge-no]="!r.respondido">{{ r.respondido ? '✓' : '–' }}</span></td>
+            <td><span class="badge-estado" [class.respondido]="r.respondido" [class.pendiente]="!r.respondido">{{ r.respondido ? '✓ Respondido' : 'Pendiente' }}</span></td>
             <td>{{ r.fechaRespuesta ? (r.fechaRespuesta | date:'dd/MM HH:mm') : '–' }}</td>
             <td>{{ r.reenvios }}</td>
             <td>
@@ -136,14 +149,17 @@ import Swal from 'sweetalert2';
           </tr>
         </tbody>
       </table>
+      <div *ngIf="trackingFiltrado.length === 0" style="text-align:center; padding:30px; color:#999; font-size:13px;">
+        No hay asistentes en esta categoría
+      </div>
     </div>
   </div>
 
   <!-- ── Comentarios ───────────────────────────────────────────────────────── -->
-  <div class="section-card" *ngIf="kpis?.comentarios?.length">
+  <div class="section-card" *ngIf="kpis && kpis.comentarios && kpis.comentarios.length > 0">
     <div class="section-title">💬 Comentarios "¿Qué podríamos mejorar?"</div>
     <div class="comentarios">
-      <div class="comentario" *ngFor="let c of kpis.comentarios">{{ c }}</div>
+      <div class="comentario" *ngFor="let c of kpis.comentarios">{{ formatearComentario(c) }}</div>
     </div>
   </div>
 
@@ -195,6 +211,18 @@ import Swal from 'sweetalert2';
 .badge-ok { background:#e6f4ea; color:#2e7d32; }
 .badge-no { background:#fafafa; color:#ccc; }
 
+.badge-estado { display:inline-flex; align-items:center; justify-content:center; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; }
+.badge-estado.respondido { background:#e6f4ea; color:#2e7d32; }
+.badge-estado.pendiente { background:#fff3cd; color:#856404; }
+
+.filter-group { display:flex; gap:8px; }
+.filter-btn { padding:6px 14px; border:1px solid #ddd; background:white; border-radius:6px; font-size:12px; font-weight:600; color:#666; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.filter-btn:hover { border-color:#1565c0; color:#1565c0; }
+.filter-btn.active { background:#1565c0; color:white; border-color:#1565c0; }
+
+.respondido-row { background:#f0f8f5; }
+.pendiente-row { background:#fffbf0; }
+
 .comentarios { display:flex; flex-direction:column; gap:8px; }
 .comentario { background:#f7f9ff; border-left:3px solid #1565c0; padding:10px 14px; border-radius:0 8px 8px 0; font-size:13px; color:#444; line-height:1.5; }
     `]
@@ -205,6 +233,29 @@ export class DashboardEncuestasComponent implements OnInit, OnChanges {
     kpis: any = null;
     tracking: any[] = [];
     sending = false;
+    filtroRespuesta: 'todos' | 'respondidos' | 'pendientes' = 'todos';
+
+    get trackingFiltrado(): any[] {
+        if (this.filtroRespuesta === 'respondidos') {
+            return this.tracking.filter(r => r.respondido);
+        } else if (this.filtroRespuesta === 'pendientes') {
+            return this.tracking.filter(r => !r.respondido);
+        }
+        return this.tracking;
+    }
+
+    get countRespondidos(): number {
+        return this.tracking.filter(r => r.respondido).length;
+    }
+
+    get countPendientes(): number {
+        return this.tracking.filter(r => !r.respondido).length;
+    }
+
+    formatearComentario(c: any): string {
+        if (typeof c === 'string') return c;
+        return c?.texto || c?.comentario || c?.queMejorar || '';
+    }
 
     preguntasLabels = [
         { key: 'expGeneral',         label: 'Experiencia general' },

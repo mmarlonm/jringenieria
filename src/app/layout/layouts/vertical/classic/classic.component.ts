@@ -18,6 +18,7 @@ import { QuickChatComponent } from 'app/layout/common/quick-chat/quick-chat.comp
 import { SearchComponent } from 'app/layout/common/search/search.component';
 import { ShortcutsComponent } from 'app/layout/common/shortcuts/shortcuts.component';
 import { UserComponent } from 'app/layout/common/user/user.component';
+import { ServerStatusIndicatorComponent } from 'app/layout/common/server-status-indicator/server-status-indicator.component';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -39,6 +40,7 @@ import { Subject, takeUntil } from 'rxjs';
         UserComponent,
         RouterOutlet,
         QuickChatComponent,
+        ServerStatusIndicatorComponent,
     ],
 })
 export class ClassicLayoutComponent implements OnInit, OnDestroy {
