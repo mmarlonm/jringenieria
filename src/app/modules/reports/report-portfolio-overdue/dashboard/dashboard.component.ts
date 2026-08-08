@@ -626,6 +626,13 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         worksheet.getColumn(12).numFmt = '#,##0.00';
 
         const filename = `Cartera_${this.sucursal}_${new Date().getTime()}.xlsx`;
-        await workbook.xlsx.writeFile(filename);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
     }
 }
