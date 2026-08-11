@@ -183,11 +183,313 @@
             </div>
         </div>
 
-        <!-- Charts Dashboard Section (Highcharts) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- ============================================ -->
+        <!-- 📊 SECCIÓN 1: SEGUIMIENTO DE COTIZACIONES    -->
+        <!-- ============================================ -->
+        <div class="space-y-6 border-t border-slate-200 pt-6">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                    <mat-icon class="icon-size-6">assignment</mat-icon>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Seguimiento de Cotizaciones</h2>
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Tiempos de atención, efectividad de conversión y montos cotizados</p>
+                </div>
+            </div>
+
+            <!-- KPIs de Tiempos Promedio y Montos Generales -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+                <!-- Tiempo Lev -> Cotización -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiempo Levantamiento ➔ Cotización</span>
+                    <div class="flex items-baseline gap-2 mt-3">
+                        <span class="text-3xl font-black text-indigo-600">{{ cotizaciones.tiempoPromedioLevantamientoACotizacion || 0 }}</span>
+                        <span class="text-xs font-bold text-slate-500">días promedio</span>
+                    </div>
+                </div>
+
+                <!-- Tiempo Cotización -> Aprobación -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiempo Cotización ➔ Aprobación/Rechazo</span>
+                    <div class="flex items-baseline gap-2 mt-3">
+                        <span class="text-3xl font-black text-blue-600">{{ cotizaciones.tiempoPromedioCotizacionAAprobacion || 0 }}</span>
+                        <span class="text-xs font-bold text-slate-500">días promedio</span>
+                    </div>
+                </div>
+
+                <!-- Monto Total Realizadas -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Total Realizadas</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ cotizaciones.porcentajeRealizadas || 0 }}%</span>
+                    </div>
+                    <p class="text-xl font-black text-slate-800 mt-3">{{ (cotizaciones.montoTotalRealizado || 0) | currency:'MXN':'symbol':'1.0-0' }}</p>
+                    <span class="text-[10px] font-semibold text-slate-400 mt-1">{{ cotizaciones.totalRealizadas || 0 }} cotizaciones realizadas</span>
+                </div>
+
+                <!-- Monto Total Aprobadas -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Total Aprobadas</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{{ cotizaciones.porcentajeAprobadas || 0 }}%</span>
+                    </div>
+                    <p class="text-xl font-black text-emerald-600 mt-3">{{ (cotizaciones.montoTotalAprobado || 0) | currency:'MXN':'symbol':'1.0-0' }}</p>
+                    <span class="text-[10px] font-semibold text-slate-400 mt-1">{{ cotizaciones.totalAprobadas || 0 }} cotizaciones aprobadas</span>
+                </div>
+
+                <!-- Monto Total Rechazadas -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Total Rechazadas</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">{{ cotizaciones.porcentajeRechazadas || 0 }}%</span>
+                    </div>
+                    <p class="text-xl font-black text-rose-600 mt-3">{{ (cotizaciones.montoTotalRechazado || 0) | currency:'MXN':'symbol':'1.0-0' }}</p>
+                    <span class="text-[10px] font-semibold text-slate-400 mt-1">{{ cotizaciones.totalRechazadas || 0 }} cotizaciones rechazadas</span>
+                </div>
+            </div>
+
+            <!-- Gráficos de Cotizaciones -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Porcentaje por Estado Donut Chart -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Porcentaje por Estatus</span>
+                    <highcharts-chart *ngIf="chartCotizacionesEstado.series"
+                        [Highcharts]="Highcharts"
+                        [options]="chartCotizacionesEstado"
+                        [oneToOne]="true"
+                        style="width: 100%; height: 260px; display: block;">
+                    </highcharts-chart>
+                </div>
+
+                <!-- Cotizaciones por Tipo de Proyecto -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Monto por Tipo de Proyecto</span>
+                    <highcharts-chart *ngIf="chartCotizacionesTipo.series"
+                        [Highcharts]="Highcharts"
+                        [options]="chartCotizacionesTipo"
+                        [oneToOne]="true"
+                        style="width: 100%; height: 260px; display: block;">
+                    </highcharts-chart>
+                </div>
+
+                <!-- Cotizaciones por Empresa -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Monto por Empresa</span>
+                    <highcharts-chart *ngIf="chartCotizacionesEmpresa.series"
+                        [Highcharts]="Highcharts"
+                        [options]="chartCotizacionesEmpresa"
+                        [oneToOne]="true"
+                        style="width: 100%; height: 260px; display: block;">
+                    </highcharts-chart>
+                </div>
+            </div>
+
+            <!-- Tablas Desglosadas: Por Tipo y Por Empresa -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <!-- Tabla por Tipo de Proyecto -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Cotizaciones por Tipo de Proyecto</span>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-slate-50 uppercase text-[10px] font-extrabold text-slate-500 border-b border-slate-100">
+                                <tr>
+                                    <th class="py-2.5 px-3">Tipo</th>
+                                    <th class="py-2.5 px-3 text-center">Total</th>
+                                    <th class="py-2.5 px-3 text-right">Monto Total</th>
+                                    <th class="py-2.5 px-3 text-center">Aprobadas</th>
+                                    <th class="py-2.5 px-3 text-right">Monto Aprob.</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium">
+                                <tr *ngFor="let item of cotizaciones.cotizacionesPorTipo" class="hover:bg-slate-50">
+                                    <td class="py-2 px-3 font-bold text-slate-700">{{ item.grupo }}</td>
+                                    <td class="py-2 px-3 text-center font-bold">{{ item.total }}</td>
+                                    <td class="py-2 px-3 text-right font-mono font-bold text-slate-800">{{ item.montoTotal | currency:'MXN':'symbol':'1.0-0' }}</td>
+                                    <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">{{ item.aprobadas }}</span></td>
+                                    <td class="py-2 px-3 text-right font-mono text-emerald-600 font-bold">{{ item.montoAprobado | currency:'MXN':'symbol':'1.0-0' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tabla por Empresa -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Cotizaciones por Empresa</span>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-slate-50 uppercase text-[10px] font-extrabold text-slate-500 border-b border-slate-100">
+                                <tr>
+                                    <th class="py-2.5 px-3">Empresa</th>
+                                    <th class="py-2.5 px-3 text-center">Total</th>
+                                    <th class="py-2.5 px-3 text-right">Monto Total</th>
+                                    <th class="py-2.5 px-3 text-center">Aprobadas</th>
+                                    <th class="py-2.5 px-3 text-right">Monto Aprob.</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium">
+                                <tr *ngFor="let item of cotizaciones.cotizacionesPorEmpresa" class="hover:bg-slate-50">
+                                    <td class="py-2 px-3 font-bold text-slate-700 truncate max-w-[150px]">{{ item.grupo }}</td>
+                                    <td class="py-2 px-3 text-center font-bold">{{ item.total }}</td>
+                                    <td class="py-2 px-3 text-right font-mono font-bold text-slate-800">{{ item.montoTotal | currency:'MXN':'symbol':'1.0-0' }}</td>
+                                    <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">{{ item.aprobadas }}</span></td>
+                                    <td class="py-2 px-3 text-right font-mono text-emerald-600 font-bold">{{ item.montoAprobado | currency:'MXN':'symbol':'1.0-0' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- 🏗️ SECCIÓN 2: SEGUIMIENTO DE PROYECTOS     -->
+        <!-- ============================================ -->
+        <div class="space-y-6 border-t border-slate-200 pt-6">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <mat-icon class="icon-size-6">engineering</mat-icon>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Seguimiento de Proyectos en Ejecución</h2>
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Estado operativo, comparativa de utilidades e incidencias de obra</p>
+                </div>
+            </div>
+
+            <!-- Cards de Proyectos por Estatus y Financiero -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- En Ejecución -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">En Ejecución</span>
+                        <p class="text-3xl font-black text-emerald-600 mt-1">{{ proyectosResumen.proyectosEnEjecucion || 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <mat-icon class="icon-size-6">play_circle_filled</mat-icon>
+                    </div>
+                </div>
+
+                <!-- Detenidos -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detenidos</span>
+                        <p class="text-3xl font-black text-rose-600 mt-1">{{ proyectosResumen.proyectosDetenidos || 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                        <mat-icon class="icon-size-6">pause_circle_filled</mat-icon>
+                    </div>
+                </div>
+
+                <!-- Por Ejecutar -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Por Ejecutar</span>
+                        <p class="text-3xl font-black text-amber-600 mt-1">{{ proyectosResumen.proyectosPorEjecutar || 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                        <mat-icon class="icon-size-6">pending_actions</mat-icon>
+                    </div>
+                </div>
+
+                <!-- Cumplimiento Cronograma -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cumplimiento Cronograma</span>
+                        <p class="text-3xl font-black text-indigo-600 mt-1">{{ proyectosResumen.cumplimientoCronogramaPorcentaje || 0 }}%</p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <mat-icon class="icon-size-6">date_range</mat-icon>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utilidad Cotizada vs Real y Gráfico -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <!-- Utilidad Real VS Cotizada Summary Card -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block">Utilidad Real vs. Cotizada</span>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-slate-400">Utilidad Cotizada (Esperada)</span>
+                            <p class="text-2xl font-black text-blue-600 mt-0.5">{{ (proyectosResumen.utilidadEsperadaTotal || 0) | currency:'MXN':'symbol':'1.0-0' }}</p>
+                        </div>
+
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-slate-400">Utilidad Real Obtenida</span>
+                            <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ (proyectosResumen.utilidadRealTotal || 0) | currency:'MXN':'symbol':'1.0-0' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-600">Desviación:</span>
+                        <span class="text-xs font-black" [ngClass]="(proyectosResumen.utilidadRealTotal - proyectosResumen.utilidadEsperadaTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                            {{ (proyectosResumen.utilidadRealTotal - proyectosResumen.utilidadEsperadaTotal) | currency:'MXN':'symbol':'1.0-0' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Gráfico Utilidad Cotizada vs Real -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 xl:col-span-2">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Comparativa de Utilidades ($ MXN)</span>
+                    <highcharts-chart *ngIf="chartUtilidadVsCotizada.series"
+                        [Highcharts]="Highcharts"
+                        [options]="chartUtilidadVsCotizada"
+                        [oneToOne]="true"
+                        style="width: 100%; height: 260px; display: block;">
+                    </highcharts-chart>
+                </div>
+            </div>
+
+            <!-- Reporte de Incidencias & Actividades Detenidas -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                    <div class="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                        <mat-icon class="icon-size-5">warning</mat-icon>
+                    </div>
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Reporte de Incidencias y Motivos de Detención / Rechazo</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-50 uppercase text-[10px] font-extrabold text-slate-500 border-b border-slate-100">
+                            <tr>
+                                <th class="py-2.5 px-3">Empresa</th>
+                                <th class="py-2.5 px-3">Proyecto / Actividad</th>
+                                <th class="py-2.5 px-3">Tipo de Incidencia</th>
+                                <th class="py-2.5 px-3">Razón / Justificación</th>
+                                <th class="py-2.5 px-3 text-center">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium">
+                            <tr *ngIf="!proyectosResumen.incidencias || proyectosResumen.incidencias.length === 0">
+                                <td colspan="5" class="py-8 text-center text-slate-400 italic">
+                                    No hay incidencias ni actividades detenidas en el período seleccionado.
+                                </td>
+                            </tr>
+                            <tr *ngFor="let inc of proyectosResumen.incidencias" class="hover:bg-slate-50">
+                                <td class="py-2.5 px-3 font-bold text-slate-700">{{ inc.empresa }}</td>
+                                <td class="py-2.5 px-3 text-slate-800 font-bold max-w-xs truncate" [title]="inc.actividad">{{ inc.actividad }}</td>
+                                <td class="py-2.5 px-3">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                        [ngClass]="inc.tipoIncidencia.includes('Rechazada') ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'">
+                                        {{ inc.tipoIncidencia }}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 text-slate-600 italic max-w-sm">{{ inc.razonDetenido || 'Sin motivo registrado' }}</td>
+                                <td class="py-2.5 px-3 text-center text-slate-500 font-mono">{{ inc.fecha }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Dashboard Section (Highcharts Tareas) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-200 pt-6">
             <!-- Prioridades Chart -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Prioridades</span>
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Prioridades de Tareas</span>
                 <highcharts-chart *ngIf="chartPrioridades.series"
                     [Highcharts]="Highcharts"
                     [options]="chartPrioridades"
@@ -198,7 +500,7 @@
 
             <!-- Personas a cargo Chart -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Persona a cargo</span>
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Tareas por Responsable</span>
                 <highcharts-chart *ngIf="chartResponsables.series"
                     [Highcharts]="Highcharts"
                     [options]="chartResponsables"
@@ -209,7 +511,7 @@
 
             <!-- Estado Chart -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Estado</span>
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 block mb-4">Estado de Tareas</span>
                 <highcharts-chart *ngIf="chartEstados.series"
                     [Highcharts]="Highcharts"
                     [options]="chartEstados"

@@ -60,10 +60,19 @@ export class DashboardProyectosComponent implements OnInit {
     progresoGeneral: number = 0;
     isLoading: boolean = false;
 
+    cotizaciones: any = {};
+    proyectosResumen: any = {};
+
     // Highcharts options
     chartPrioridades: Highcharts.Options = {};
     chartResponsables: Highcharts.Options = {};
     chartEstados: Highcharts.Options = {};
+
+    // Nuevos Highcharts para Cotizaciones y Proyectos
+    chartCotizacionesEstado: Highcharts.Options = {};
+    chartCotizacionesTipo: Highcharts.Options = {};
+    chartCotizacionesEmpresa: Highcharts.Options = {};
+    chartUtilidadVsCotizada: Highcharts.Options = {};
 
     constructor(
         private _http: HttpClient,
@@ -111,6 +120,8 @@ export class DashboardProyectosComponent implements OnInit {
                     this.todasLasTareas = res.todasLasTareas || [];
                     this.eisenhower = res.eisenhowerMatrix || [];
                     this.progresoGeneral = res.progresoGeneralTareas || 0;
+                    this.cotizaciones = res.cotizaciones || {};
+                    this.proyectosResumen = res.proyectos || {};
 
                     this.buildCharts(res);
                 }
@@ -299,6 +310,80 @@ export class DashboardProyectosComponent implements OnInit {
                 name: 'Tareas',
                 type: 'pie',
                 data: estData
+            }] as any
+        };
+
+        // 4. Cotizaciones por Estado (Donut Chart)
+        const cot = data.cotizaciones || {};
+        this.chartCotizacionesEstado = {
+            chart: { type: 'pie', height: 260, backgroundColor: 'transparent', reflow: true },
+            title: { text: '' },
+            credits: { enabled: false },
+            plotOptions: {
+                pie: {
+                    innerSize: '65%',
+                    dataLabels: { enabled: true, format: '{point.name}: {point.percentage:.1f}%' },
+                    showInLegend: true
+                }
+            },
+            series: [{
+                name: 'Cotizaciones',
+                type: 'pie',
+                data: [
+                    { name: 'En Proceso', y: cot.totalEnProceso || 0, color: '#f59e0b' },
+                    { name: 'Aprobadas', y: cot.totalAprobadas || 0, color: '#10b981' },
+                    { name: 'Rechazadas', y: cot.totalRechazadas || 0, color: '#ef4444' }
+                ]
+            }] as any
+        };
+
+        // 5. Cotizaciones por Tipo de Proyecto (Column Chart)
+        const tipos = cot.cotizacionesPorTipo || [];
+        const tipoLabels = tipos.map((t: any) => t.grupo);
+        const tipoTotales = tipos.map((t: any) => t.montoTotal);
+        const tipoAprobados = tipos.map((t: any) => t.montoAprobado);
+
+        this.chartCotizacionesTipo = {
+            chart: { type: 'column', height: 260, backgroundColor: 'transparent', reflow: true },
+            title: { text: '' },
+            xAxis: { categories: tipoLabels },
+            yAxis: { title: { text: 'Monto ($ MXN)' } },
+            credits: { enabled: false },
+            plotOptions: { column: { borderRadius: 4 } },
+            series: [
+                { name: 'Monto Total Cotizado', type: 'column', data: tipoTotales, color: '#6366f1' },
+                { name: 'Monto Aprobado', type: 'column', data: tipoAprobados, color: '#10b981' }
+            ] as any
+        };
+
+        // 6. Cotizaciones por Empresa (Bar Chart)
+        const emp = (cot.cotizacionesPorEmpresa || []).slice(0, 8);
+        const empLabels = emp.map((e: any) => e.grupo);
+        const empTotales = emp.map((e: any) => e.montoTotal);
+
+        this.chartCotizacionesEmpresa = {
+            chart: { type: 'bar', height: 260, backgroundColor: 'transparent', reflow: true },
+            title: { text: '' },
+            xAxis: { categories: empLabels },
+            yAxis: { title: { text: 'Monto ($ MXN)' } },
+            credits: { enabled: false },
+            plotOptions: { bar: { borderRadius: 4, color: '#3b82f6' } },
+            series: [{ name: 'Monto Cotizado', type: 'bar', data: empTotales }] as any
+        };
+
+        // 7. Utilidad Cotizada (Esperada) vs Real (Column Chart)
+        const proy = data.proyectos || {};
+        this.chartUtilidadVsCotizada = {
+            chart: { type: 'column', height: 260, backgroundColor: 'transparent', reflow: true },
+            title: { text: '' },
+            xAxis: { categories: ['Utilidad Esperada (Cotizada)', 'Utilidad Real'] },
+            yAxis: { title: { text: 'Monto ($ MXN)' } },
+            credits: { enabled: false },
+            plotOptions: { column: { borderRadius: 6, colorByPoint: true, colors: ['#3b82f6', '#10b981'] } },
+            series: [{
+                name: 'Monto',
+                type: 'column',
+                data: [proy.utilidadEsperadaTotal || 0, proy.utilidadRealTotal || 0]
             }] as any
         };
     }
