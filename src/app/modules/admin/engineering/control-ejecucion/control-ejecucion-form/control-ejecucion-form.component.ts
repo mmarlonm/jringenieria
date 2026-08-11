@@ -500,19 +500,41 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     return this.pinnedColumns.includes(colId);
   }
 
+  /** Número de columnas actualmente fijadas */
+  get pinnedCount(): number {
+    return this.pinnedColumns.length;
+  }
+
+  /**
+   * Fijar / desfijar una columna.
+   * Al fijar, se mantiene el orden visual que tiene la columna en `this.columns`,
+   * de modo que `getPinnedLeft` calcule los offsets correctamente.
+   */
   togglePin(colId: string): void {
     const idx = this.pinnedColumns.indexOf(colId);
     if (idx !== -1) {
+      // Desfijar
       this.pinnedColumns.splice(idx, 1);
     } else {
-      this.pinnedColumns.push(colId);
+      // Fijar: insertar respetando el orden de columns[]
+      const visualOrder = this.columns.map(c => c.id);
+      const newPinned = [...this.pinnedColumns, colId].sort(
+        (a, b) => visualOrder.indexOf(a) - visualOrder.indexOf(b)
+      );
+      this.pinnedColumns = newPinned;
     }
     this._cdr.markForCheck();
   }
 
+  /**
+   * Devuelve el `left` CSS para una columna fijada,
+   * sumando el ancho de todas las columnas fijadas que la preceden en el orden visual.
+   * El offset base (28px) corresponde al drag-handle fijo (`w-7`) del encabezado.
+   */
   getPinnedLeft(colId: string): string | null {
     if (!this.isPinned(colId)) return null;
-    let left = 48; // Offset for drag handle (28px) + expand button padding
+    const DRAG_HANDLE_WIDTH = 28; // w-7 = 28px sticky left-0
+    let left = DRAG_HANDLE_WIDTH;
     for (const col of this.columns) {
       if (col.id === colId) break;
       if (this.isPinned(col.id)) {
@@ -520,6 +542,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
       }
     }
     return left + 'px';
+  }
+
+  /** Restaura las columnas fijadas al estado por defecto (solo 'nombre') */
+  resetPinnedColumns(): void {
+    this.pinnedColumns = ['nombre'];
+    this._cdr.markForCheck();
   }
 
   onColumnReordered(event: any): void {
@@ -1052,18 +1080,71 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   // ==========================================
   // 📊 GANTT LOGIC
   // ==========================================
-  private saveExpandedTaskIds(): void {
-    this.expandedTaskIds = this.tasks.filter(t => t.expanded).map(t => t.id);
+  private savedScrollState = {
+    scrollTop: 0,
+    scrollLeft: 0,
+    hasSavedState: false
+  };
+
+  saveScrollState(): void {
+    if (this.sidebarScroll?.nativeElement) {
+      this.savedScrollState.scrollTop = this.sidebarScroll.nativeElement.scrollTop;
+    } else if (this.timelineScroll?.nativeElement) {
+      this.savedScrollState.scrollTop = this.timelineScroll.nativeElement.scrollTop;
+    }
+    if (this.horizontalTimeline?.nativeElement) {
+      this.savedScrollState.scrollLeft = this.horizontalTimeline.nativeElement.scrollLeft;
+    }
+    this.savedScrollState.hasSavedState = true;
+  }
+
+  restoreScrollState(): void {
+    if (!this.savedScrollState.hasSavedState) return;
+
+    const top = this.savedScrollState.scrollTop;
+    const left = this.savedScrollState.scrollLeft;
+
+    setTimeout(() => {
+      if (this.sidebarScroll?.nativeElement) {
+        this.sidebarScroll.nativeElement.scrollTop = top;
+      }
+      if (this.timelineScroll?.nativeElement) {
+        this.timelineScroll.nativeElement.scrollTop = top;
+      }
+      if (this.horizontalTimeline?.nativeElement) {
+        this.horizontalTimeline.nativeElement.scrollLeft = left;
+      }
+      this.savedScrollState.hasSavedState = false;
+    }, 80);
+  }
+
+  private saveExpandedTaskIds(extraTaskId?: number): void {
+    const ids: number[] = [];
+    if (this.tasks) {
+      this.tasks.forEach(t => {
+        if (t.expanded && t.id != null) {
+          ids.push(Number(t.id));
+        }
+      });
+    }
+    if (extraTaskId != null) {
+      ids.push(Number(extraTaskId));
+    }
+    this.expandedTaskIds = Array.from(new Set(ids));
   }
 
   private restoreExpandedTaskIds(): void {
+    if (!this.expandedTaskIds || this.expandedTaskIds.length === 0) return;
+    const expandedSet = new Set(this.expandedTaskIds.map(id => Number(id)));
     this.tasks.forEach(t => {
-      t.expanded = this.expandedTaskIds.includes(t.id);
+      if (t.id != null && expandedSet.has(Number(t.id))) {
+        t.expanded = true;
+      }
     });
     this.expandedTaskIds = [];
   }
 
-  loadGantt(): void {
+  loadGantt(preserveScroll: boolean = false): void {
     this._engineeringService.getGanttTareas(this.idSeguimiento).subscribe({
       next: (res) => {
         this.tasks = res || [];
@@ -1074,8 +1155,13 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         this.updateVisibleRows();
         this.adjustTimelineRange();
 
-        // Centrar timeline tras carga de datos
-        setTimeout(() => this.scrollToTarget(), 150);
+        // Preservar la posición de scroll si es una actualización o si hay estado guardado
+        if (this.savedScrollState.hasSavedState || preserveScroll) {
+          this.restoreScrollState();
+        } else {
+          // Centrar timeline solo tras la carga inicial
+          setTimeout(() => this.scrollToTarget(), 150);
+        }
         this._cdr.detectChanges();
       },
       error: (err) => {
@@ -1494,16 +1580,18 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
       dialogRef.afterClosed().subscribe((result) => {
         if (result) {
+          const parentId = parentTask?.id || result.actividadMaestraId;
+          this.saveScrollState();
+          this.saveExpandedTaskIds(parentId);
+
           if (result.delete) {
             if (type === 'maestra') {
               this._engineeringService.deleteGanttMaestra(result.id).subscribe(() => {
-                this.saveExpandedTaskIds();
-                this.loadGantt();
+                this.loadGantt(true);
               });
             } else {
               this._engineeringService.deleteGanttSubactividad(result.id).subscribe(() => {
-                this.saveExpandedTaskIds();
-                this.loadGantt();
+                this.loadGantt(true);
               });
             }
             return;
@@ -1511,7 +1599,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
           result.idSeguimiento = this.idSeguimiento;
           if (type === 'subactividad') {
-            result.actividadMaestraId = parentTask?.id || result.actividadMaestraId;
+            result.actividadMaestraId = parentId;
           }
 
           const saveObs = type === 'maestra'
@@ -1522,11 +1610,12 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             next: (savedAct: any) => {
               const actId = savedAct?.id || result.id;
 
-              // Guardar el estado de expansión antes de recargar
-              this.saveExpandedTaskIds();
+              // Guardar el estado de expansión y scroll antes de recargar
+              this.saveScrollState();
+              this.saveExpandedTaskIds(parentId);
 
-              // Si se guardó correctamente, refrescar de inmediato
-              this.loadGantt();
+              // Si se guardó correctamente, refrescar de inmediato manteniendo scroll y expansión
+              this.loadGantt(true);
               
               Swal.fire({
                 title: '¡Guardado!',
@@ -1547,13 +1636,15 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
                   miembros: result.equipoMiembros
                 }).subscribe({
                   next: () => {
-                    this.saveExpandedTaskIds();
-                    this.loadGantt();
+                    this.saveScrollState();
+                    this.saveExpandedTaskIds(parentId);
+                    this.loadGantt(true);
                   },
                   error: (e) => {
                     console.warn('Error no crítico al asignar miembros del equipo:', e);
-                    this.saveExpandedTaskIds();
-                    this.loadGantt();
+                    this.saveScrollState();
+                    this.saveExpandedTaskIds(parentId);
+                    this.loadGantt(true);
                   }
                 });
               }

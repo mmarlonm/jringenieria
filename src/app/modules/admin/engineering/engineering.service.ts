@@ -66,6 +66,9 @@ export interface SeguimientoEjecucion {
     empresa?: string;
     avanceGantt?: number;
     tituloProyecto?: string;
+    tipo?: string;               // Tipo de proyecto
+    actividadDetenida?: string;  // Nombre de actividad con estatus=4 (Detenida)
+    hayActividadDetenida?: boolean; // true si hay al menos una actividad detenida
 }
 
 export interface SeguimientoEjecucionActividadMaestra {

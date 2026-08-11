@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef, OnDestroy } from "@angular/core";
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef, OnDestroy } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatSort } from "@angular/material/sort";
@@ -92,6 +92,26 @@ interface GroupedTasks {
 export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild(MatPaginator) paginator: MatPaginator;
     @ViewChild(MatSort) sort: MatSort;
+    @ViewChild('tasksScrollContainer') tasksScrollContainer!: ElementRef;
+
+    private savedScrollTop: number = 0;
+
+    saveScrollPosition(): void {
+        if (this.tasksScrollContainer?.nativeElement) {
+            this.savedScrollTop = this.tasksScrollContainer.nativeElement.scrollTop;
+        }
+    }
+
+    restoreScrollPosition(): void {
+        if (this.savedScrollTop > 0 && this.tasksScrollContainer?.nativeElement) {
+            const topToRestore = this.savedScrollTop;
+            setTimeout(() => {
+                if (this.tasksScrollContainer?.nativeElement) {
+                    this.tasksScrollContainer.nativeElement.scrollTop = topToRestore;
+                }
+            }, 80);
+        }
+    }
 
     allColumns: string[] = [
         'id',
@@ -434,6 +454,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.initHighcharts(this.groupedTasks);
         this.initGanttChart(tasks);
         this.initColumnSorting();
+        this.restoreScrollPosition();
     }
 
     groupTasksByStatus(tasks: Task[]): void {
@@ -448,22 +469,44 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
         statuses.forEach(status => {
             if (this.hideCompleted && status.id === 3) return;
             const groupTasks = tasks.filter(t => t.estatus === status.id);
-            const groupKey = `status-${status.id}`;
+            if (groupTasks.length > 0) {
+                const groupKey = `status-${status.id}`;
+                const groupColumns = (this.viewConfig.groupColumns?.[groupKey] || [...this.displayedColumns])
+                    .filter(col => this.displayedColumns.includes(col));
 
-            if (this.filterValue && groupTasks.length === 0) return;
+                this.groupedTasks.push({
+                    groupName: status.name,
+                    groupKey: groupKey,
+                    tasks: new MatTableDataSource(groupTasks),
+                    count: groupTasks.length,
+                    color: status.color,
+                    displayedColumns: groupColumns
+                });
+            }
+        });
+    }
 
-            // Recuperar columnas del grupo y filtrar para que solo existan las reales
-            const groupColumns = (this.viewConfig.groupColumns?.[groupKey] || [...this.displayedColumns])
-                .filter(col => this.allColumns.includes(col));
+    // --- Actions ---
 
-            this.groupedTasks.push({
-                groupName: status.name,
-                groupKey: groupKey,
-                tasks: new MatTableDataSource(groupTasks),
-                count: groupTasks.length,
-                color: status.color,
-                displayedColumns: groupColumns
-            });
+    openTaskDialog(taskId?: number, readOnly: boolean = false): void {
+        this.saveScrollPosition();
+        const dialogRef = this.dialog.open(TaskFormDialogComponent, {
+            width: '100%',
+            maxWidth: taskId ? '1200px' : '900px',
+            maxHeight: '95vh',
+            panelClass: 'task-floating-panel',
+            data: taskId ? { id: taskId, readOnly } : null
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result === 'refresh') {
+                this.saveScrollPosition();
+                this.loadTasks();
+                this._notificationService.showSuccess(
+                    taskId ? 'Tarea actualizada' : 'Tarea agregada',
+                    taskId ? 'Los cambios se han guardado.' : 'La nueva tarea está lista.'
+                );
+            }
         });
     }
 
@@ -840,26 +883,6 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // --- Actions ---
-
-    openTaskDialog(taskId?: number, readOnly: boolean = false): void {
-        const dialogRef = this.dialog.open(TaskFormDialogComponent, {
-            width: '100%',
-            maxWidth: taskId ? '1200px' : '900px',
-            maxHeight: '95vh',
-            panelClass: 'task-floating-panel',
-            data: taskId ? { id: taskId, readOnly } : null
-        });
-
-        dialogRef.afterClosed().subscribe(result => {
-            if (result === 'refresh') {
-                this.loadTasks();
-                this._notificationService.showSuccess(
-                    taskId ? 'Tarea actualizada' : 'Tarea agregada',
-                    taskId ? 'Los cambios se han guardado.' : 'La nueva tarea está lista.'
-                );
-            }
-        });
-    }
 
     openChat(task: Task): void {
         // Marcar como leídas las notificaciones de esta tarea (Persistente + Local)

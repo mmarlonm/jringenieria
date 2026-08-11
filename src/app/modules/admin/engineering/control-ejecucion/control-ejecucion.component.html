@@ -25,47 +25,91 @@
         </div>
 
         <!-- Filters Row -->
-        <div *ngIf="showFilters" class="mt-4 grid grid-cols-1 sm:grid-cols-4 gap-4 pt-1 items-end animate-in fade-in slide-in-from-top-2 duration-300">
-            <!-- Search -->
-            <div class="sm:col-span-1">
-                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                    <mat-label>Buscador</mat-label>
-                    <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
-                    <input matInput (keyup)="applyFilter($event)" [placeholder]="'Buscar por proyecto, cliente...'" autocomplete="off">
-                </mat-form-field>
+        <div *ngIf="showFilters" class="mt-4 pt-1 animate-in fade-in slide-in-from-top-2 duration-300">
+            <!-- Fila 1: Buscador + Columna -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end mb-3">
+                <!-- Search -->
+                <div class="sm:col-span-1">
+                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                        <mat-label>Buscador</mat-label>
+                        <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                        <input matInput (keyup)="applyFilter($event)" [placeholder]="'Buscar por proyecto, cliente...'" autocomplete="off">
+                    </mat-form-field>
+                </div>
+                <!-- Column Select Filter -->
+                <div>
+                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                        <mat-label>Filtrar por Columna</mat-label>
+                        <mat-select [(ngModel)]="filterColumn" (selectionChange)="onFilterColumnChange()">
+                            <mat-option value="">Todas las columnas</mat-option>
+                            <mat-option value="idSeguimiento">ID Proyecto</mat-option>
+                            <mat-option value="empresa">Empresa</mat-option>
+                            <mat-option value="tituloProyecto">Título de Proyecto</mat-option>
+                            <mat-option value="actividad">Actividad / Descripción</mat-option>
+                            <mat-option value="nombreSolicitante">Solicitante</mat-option>
+                            <mat-option value="ordenCompraFolio">Folio OC</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <!-- Date range start -->
+                <div>
+                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Inicio</mat-label>
+                        <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" (dateChange)="getSeguimientos()">
+                        <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerInicio></mat-datepicker>
+                    </mat-form-field>
+                </div>
+                <!-- Date range end -->
+                <div>
+                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                        <mat-label>Fecha de Fin</mat-label>
+                        <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="getSeguimientos()">
+                        <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                        <mat-datepicker #pickerFin></mat-datepicker>
+                    </mat-form-field>
+                </div>
             </div>
-            <!-- Column Select Filter -->
-            <div>
-                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                    <mat-label>Filtrar por Columna</mat-label>
-                    <mat-select [(ngModel)]="filterColumn" (selectionChange)="onFilterColumnChange()">
-                        <mat-option value="">Todas las columnas</mat-option>
-                        <mat-option value="idSeguimiento">ID Proyecto</mat-option>
-                        <mat-option value="empresa">Empresa</mat-option>
-                        <mat-option value="tituloProyecto">Título de Proyecto</mat-option>
-                        <mat-option value="actividad">Actividad / Descripción</mat-option>
-                        <mat-option value="nombreSolicitante">Solicitante</mat-option>
-                        <mat-option value="ordenCompraFolio">Folio OC</mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </div>
-            <!-- Date range start -->
-            <div>
-                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                    <mat-label>Fecha de Inicio</mat-label>
-                    <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio" (dateChange)="getSeguimientos()">
-                    <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
-                    <mat-datepicker #pickerInicio></mat-datepicker>
-                </mat-form-field>
-            </div>
-            <!-- Date range end -->
-            <div>
-                <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                    <mat-label>Fecha de Fin</mat-label>
-                    <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin" (dateChange)="getSeguimientos()">
-                    <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
-                    <mat-datepicker #pickerFin></mat-datepicker>
-                </mat-form-field>
+
+            <!-- Fila 2: Empresa + Tipo de Proyecto + Botón Limpiar -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                <!-- Filtro por Empresa -->
+                <div>
+                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                        <mat-label>Empresa</mat-label>
+                        <mat-icon class="icon-size-4" matPrefix>business</mat-icon>
+                        <mat-select [(ngModel)]="filterEmpresa" (selectionChange)="onFilterEmpresaChange()">
+                            <mat-option value="">Todas las empresas</mat-option>
+                            <mat-option *ngFor="let emp of empresas" [value]="emp">{{ emp }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <!-- Filtro por Tipo de Proyecto -->
+                <div>
+                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                        <mat-label>Tipo de Proyecto</mat-label>
+                        <mat-icon class="icon-size-4" matPrefix>category</mat-icon>
+                        <mat-select [(ngModel)]="filterTipo" (selectionChange)="onFilterTipoChange()">
+                            <mat-option value="">Todos los tipos</mat-option>
+                            <mat-option *ngFor="let t of tiposProyecto" [value]="t">{{ t }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <!-- Indicador de filtros activos + Botón limpiar -->
+                <div class="sm:col-span-2 flex items-center gap-3">
+                    <div *ngIf="filterEmpresa || filterTipo" class="flex items-center gap-2 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
+                        <mat-icon class="icon-size-4 text-indigo-500">filter_alt</mat-icon>
+                        <span>Filtros activos:</span>
+                        <span *ngIf="filterEmpresa" class="bg-indigo-100 px-2 py-0.5 rounded-full">{{ filterEmpresa }}</span>
+                        <span *ngIf="filterTipo" class="bg-indigo-100 px-2 py-0.5 rounded-full">{{ filterTipo }}</span>
+                    </div>
+                    <button *ngIf="filterEmpresa || filterTipo || filtroSearch || filterColumn"
+                        mat-stroked-button class="rounded-lg text-slate-600 border-slate-200 hover:bg-slate-50"
+                        (click)="resetFilters()">
+                        <mat-icon class="icon-size-4 mr-1">clear_all</mat-icon>
+                        Limpiar filtros
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -87,20 +131,32 @@
                     <!-- Proyecto -->
                     <ng-container matColumnDef="proyecto">
                         <th mat-header-cell *matHeaderCellDef>Proyecto (Empresa - Actividad)</th>
-                        <td mat-cell *matCellDef="let s" class="py-3 pr-4">
+                        <td mat-cell *matCellDef="let s" class="py-3 pr-4" style="background:inherit">
                             <div class="font-bold text-slate-800 whitespace-nowrap">
-                                {{ s.empresa }} 
+                                {{ s.empresa }}
                                 <span *ngIf="s.tituloProyecto" class="text-indigo-600 font-bold ml-1">({{ s.tituloProyecto }})</span>
                             </div>
                             <div class="text-xs text-slate-500 max-w-xs truncate" [matTooltip]="s.actividad">{{ s.actividad }}</div>
                             <div class="text-[10px] text-indigo-500 font-medium">Solicita: {{ s.nombreSolicitante }}</div>
                         </td>
                     </ng-container>
+
+                    <!-- Tipo de Proyecto -->
+                    <ng-container matColumnDef="tipoProyecto">
+                        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                        <td mat-cell *matCellDef="let s" class="py-2 whitespace-nowrap" style="background:inherit">
+                            <span *ngIf="s.tipo"
+                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                {{ s.tipo }}
+                            </span>
+                            <span *ngIf="!s.tipo" class="text-slate-300 text-xs">—</span>
+                        </td>
+                    </ng-container>
  
                     <!-- OC -->
                     <ng-container matColumnDef="oc">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>OC</th>
-                        <td mat-cell *matCellDef="let s" class="py-3 pr-4">
+                        <td mat-cell *matCellDef="let s" class="py-3 pr-4" style="background:inherit">
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-amber-600 tabular-nums">{{ s.ordenCompraFolio || '-' }}</span>
                                 <button *ngIf="s.ordenCompraArchivo" mat-icon-button class="w-6 h-6 min-h-6 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition-all duration-200 animate-pulse" (click)="descargarArchivoOC(s); $event.stopPropagation()" matTooltip="Descargar Archivo OC ({{ s.ordenCompraArchivo }})">
@@ -113,7 +169,7 @@
                     <!-- Utilidad -->
                     <ng-container matColumnDef="utilidadEsperada">
                         <th mat-header-cell *matHeaderCellDef>Utilidades</th>
-                        <td mat-cell *matCellDef="let s" class="py-3 pr-4 whitespace-nowrap">
+                        <td mat-cell *matCellDef="let s" class="py-3 pr-4 whitespace-nowrap" style="background:inherit">
                             <div class="text-xs"><span class="font-bold text-slate-500">Esp:</span> <span class="font-bold text-emerald-600">{{ s.utilidadEsperada ? (s.utilidadEsperada | currency:'MXN':'symbol':'1.2-2') : '-' }}</span></div>
                             <div class="text-xs"><span class="font-bold text-slate-500">Real:</span> <span class="font-bold text-indigo-600">{{ s.utilidadReal ? (s.utilidadReal | currency:'MXN':'symbol':'1.2-2') : '-' }}</span></div>
                         </td>
@@ -122,7 +178,7 @@
                     <!-- Fechas -->
                     <ng-container matColumnDef="fechas">
                         <th mat-header-cell *matHeaderCellDef>Inicio - Fin</th>
-                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap" style="background:inherit">
                             <div class="text-xs"><span class="font-bold text-slate-600">I:</span> {{ s.fechaInicioProyecto ? (s.fechaInicioProyecto | date:'shortDate') : '-' }}</div>
                             <div class="text-xs"><span class="font-bold text-slate-600">F:</span> {{ s.fechaFinProyecto ? (s.fechaFinProyecto | date:'shortDate') : '-' }}</div>
                         </td>
@@ -131,7 +187,7 @@
                     <!-- Recursos -->
                     <ng-container matColumnDef="recursos">
                         <th mat-header-cell *matHeaderCellDef>Recursos</th>
-                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap text-[11px] font-bold">
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap text-[11px] font-bold" style="background:inherit">
                             {{ s.disponibilidadRecursos || '-' }}
                         </td>
                     </ng-container>
@@ -139,7 +195,7 @@
                     <!-- Riesgo y Prioridad -->
                     <ng-container matColumnDef="riesgoPrioridad">
                         <th mat-header-cell *matHeaderCellDef>Riesgo / Prioridad</th>
-                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap">
+                        <td mat-cell *matCellDef="let s" class="whitespace-nowrap" style="background:inherit">
                             <div class="text-[10px] uppercase font-bold text-rose-600">{{ s.riesgoTecnico || '-' }}</div>
                             <div class="text-[10px] font-medium text-slate-500">{{ s.nivelPrioridad || '-' }}</div>
                         </td>
@@ -148,7 +204,7 @@
                     <!-- AST -->
                     <ng-container matColumnDef="ast">
                         <th mat-header-cell *matHeaderCellDef class="text-center">AST's</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="astMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" style="background:inherit" [matMenuTriggerFor]="astMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
                                 [ngClass]="getEstatusColorClass(s.estatusAst, astOptions)">
                                 {{ getEstatusName(s.estatusAst, astOptions) }}
@@ -167,7 +223,7 @@
                     <!-- Gantt -->
                     <ng-container matColumnDef="gantt">
                         <th mat-header-cell *matHeaderCellDef class="text-center">Prog. Gantt</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="ganttMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" style="background:inherit" [matMenuTriggerFor]="ganttMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
                                 [ngClass]="getEstatusColorClass(s.estatusProgramaGantt, ganttOptions)">
                                 {{ getEstatusName(s.estatusProgramaGantt, ganttOptions) }}
@@ -186,12 +242,31 @@
                     <!-- Avance Gantt -->
                     <ng-container matColumnDef="avanceGantt">
                         <th mat-header-cell *matHeaderCellDef class="text-center">Avance Gantt</th>
-                        <td mat-cell *matCellDef="let s" class="text-center px-4">
-                            <div class="flex items-center justify-center gap-2">
-                                <span class="text-xs font-black text-slate-700 min-w-[32px]">{{ (s.avanceGantt || 0) | number:'1.0-0' }}%</span>
-                                <div class="w-16 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden shadow-inner hidden sm:block">
-                                    <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 rounded-full" [style.width.%]="s.avanceGantt || 0"></div>
+                        <td mat-cell *matCellDef="let s" class="text-center px-3" style="background:inherit">
+                            <!-- Barra de progreso -->
+                            <div class="flex items-center justify-center gap-1.5 mb-1">
+                                <span class="text-xs font-black min-w-[32px]"
+                                    [ngClass]="s.hayActividadDetenida ? 'text-rose-600' : 'text-slate-700'">
+                                    {{ (s.avanceGantt || 0) | number:'1.0-0' }}%
+                                </span>
+                                <div class="w-16 h-2 rounded-full overflow-hidden shadow-inner hidden sm:block"
+                                    [ngClass]="s.hayActividadDetenida ? 'bg-rose-100' : 'bg-slate-200'">
+                                    <div class="h-full transition-all duration-500 rounded-full"
+                                        [ngClass]="s.hayActividadDetenida
+                                            ? 'bg-gradient-to-r from-rose-400 to-rose-600'
+                                            : 'bg-gradient-to-r from-blue-500 to-indigo-600'"
+                                        [style.width.%]="s.avanceGantt || 0">
+                                    </div>
                                 </div>
+                            </div>
+                            <!-- Alerta actividad detenida -->
+                            <div *ngIf="s.hayActividadDetenida"
+                                class="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded bg-rose-50 border border-rose-200"
+                                [matTooltip]="'Actividad detenida: ' + (s.actividadDetenida || 'Sin nombre')">
+                                <mat-icon class="icon-size-3 text-rose-500 shrink-0">warning</mat-icon>
+                                <span class="text-[9px] font-bold text-rose-600 truncate max-w-[80px]">
+                                    {{ s.actividadDetenida || 'Detenida' }}
+                                </span>
                             </div>
                         </td>
                     </ng-container>
@@ -199,7 +274,7 @@
                     <!-- IMSS -->
                     <ng-container matColumnDef="imss">
                         <th mat-header-cell *matHeaderCellDef class="text-center">IMSS/SUA</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="imssMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" style="background:inherit" [matMenuTriggerFor]="imssMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
                                 [ngClass]="getEstatusColorClass(s.estatusImssSua, imssOptions)">
                                 {{ getEstatusName(s.estatusImssSua, imssOptions) }}
@@ -218,7 +293,7 @@
                     <!-- Adquisicion -->
                     <ng-container matColumnDef="adquisicion">
                         <th mat-header-cell *matHeaderCellDef class="text-center">Materiales</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="adqMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" style="background:inherit" [matMenuTriggerFor]="adqMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
                                 [ngClass]="getEstatusColorClass(s.estatusAdquisicionMateriales, adquisicionOptions)">
                                 {{ getEstatusName(s.estatusAdquisicionMateriales, adquisicionOptions) }}
@@ -237,7 +312,7 @@
                     <!-- Construccion -->
                     <ng-container matColumnDef="construccion">
                         <th mat-header-cell *matHeaderCellDef class="text-center">Reportes</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="constMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" style="background:inherit" [matMenuTriggerFor]="constMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
                                 [ngClass]="getEstatusColorClass(s.estatusConstruccionEntrega, construccionOptions)">
                                 {{ getEstatusName(s.estatusConstruccionEntrega, construccionOptions) }}
@@ -256,7 +331,7 @@
                     <!-- Reporte -->
                     <ng-container matColumnDef="reporte">
                         <th mat-header-cell *matHeaderCellDef class="text-center">Reporte</th>
-                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" [matMenuTriggerFor]="repMenu" (click)="$event.stopPropagation()">
+                        <td mat-cell *matCellDef="let s" class="text-center cursor-pointer" style="background:inherit" [matMenuTriggerFor]="repMenu" (click)="$event.stopPropagation()">
                             <div class="inline-flex items-center justify-center px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm border transition-all duration-300 w-24 text-center leading-tight whitespace-normal"
                                 [ngClass]="getEstatusColorClass(s.estatusReporte, reporteOptions)">
                                 {{ getEstatusName(s.estatusReporte, reporteOptions) }}
@@ -274,13 +349,13 @@
 
                     <!-- Acciones -->
                     <ng-container matColumnDef="acciones" stickyEnd>
-                        <th mat-header-cell *matHeaderCellDef class="text-center w-24">Acciones</th>
-                        <td mat-cell *matCellDef="let s" class="text-center py-2">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors bg-white shadow-sm border rounded-lg" (click)="editarEjecucion(s)" matTooltip="Actualizar datos">
+                        <th mat-header-cell *matHeaderCellDef class="text-center w-24" style="background-color:#ffffff !important;">Acciones</th>
+                        <td mat-cell *matCellDef="let s" class="text-center py-2" style="background-color:#ffffff !important; box-shadow: -2px 0 6px -2px rgba(0,0,0,0.06);">
+                            <div class="flex items-center justify-center gap-1">
+                                <button mat-icon-button class="text-indigo-500 hover:bg-indigo-50 transition-colors" (click)="editarEjecucion(s)" matTooltip="Actualizar datos">
                                     <mat-icon class="icon-size-5">edit</mat-icon>
                                 </button>
-                                <button mat-icon-button class="text-rose-500 hover:bg-rose-50 transition-colors bg-white shadow-sm border rounded-lg" (click)="eliminarSeguimiento(s.idSeguimiento); $event.stopPropagation()" matTooltip="Eliminar proyecto">
+                                <button mat-icon-button class="text-rose-500 hover:bg-rose-50 transition-colors" (click)="eliminarSeguimiento(s.idSeguimiento); $event.stopPropagation()" matTooltip="Eliminar proyecto">
                                     <mat-icon class="icon-size-5">delete</mat-icon>
                                 </button>
                             </div>
@@ -288,8 +363,10 @@
                     </ng-container>
 
                     <!-- Filas -->
-                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" style="background-color: #ffffff !important; z-index: 200 !important;"></tr>
-                    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-slate-50/50"></tr>
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" style="background-color:#ffffff !important; z-index:200 !important;"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                        class="bg-white hover:bg-slate-50/80 transition-colors"
+                        [style.background-color]="'#ffffff'"></tr>
                 </table>
             </div>
 

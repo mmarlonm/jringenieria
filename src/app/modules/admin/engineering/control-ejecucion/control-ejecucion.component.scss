@@ -4,6 +4,9 @@
     min-width: 1200px;
 }
 
+/* =============================================
+   HEADER FIJO
+   ============================================= */
 ::ng-deep .mat-mdc-header-row,
 ::ng-deep tr.mat-mdc-header-row {
     background-color: #ffffff !important;
@@ -27,10 +30,48 @@
     z-index: 200 !important;
 }
 
-::ng-deep .mat-mdc-cell {
-    padding: 8px 12px;
+/* =============================================
+   CELDAS — FONDO BLANCO GARANTIZADO
+   La estrategia: el <tr> tiene background-color
+   y el <td> hereda via background:inherit (inline).
+   Pero también forzamos aquí con máxima especificidad.
+   ============================================= */
+::ng-deep .mat-mdc-row {
+    background-color: #ffffff !important;
 }
 
-::ng-deep td.mat-mdc-table-sticky {
+::ng-deep .mat-mdc-cell,
+::ng-deep td.mat-mdc-cell,
+::ng-deep td[class*="mat-column-"] {
+    padding: 8px 12px;
+    /* background:inherit es el inline style del HTML — esto es el fallback */
+    background-color: #ffffff !important;
+}
+
+/* Sticky end (columna Acciones) */
+::ng-deep td.mat-mdc-table-sticky,
+::ng-deep td.mat-column-acciones {
     z-index: 1 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    box-shadow: -2px 0 6px -2px rgba(0, 0, 0, 0.06);
+}
+
+/* =============================================
+   HOVER — fila completa incluye sticky
+   ============================================= */
+::ng-deep tr.mat-mdc-row:hover {
+    background-color: #f8fafc !important;
+}
+
+::ng-deep tr.mat-mdc-row:hover .mat-mdc-cell,
+::ng-deep tr.mat-mdc-row:hover td.mat-mdc-cell,
+::ng-deep tr.mat-mdc-row:hover td[class*="mat-column-"] {
+    background-color: #f8fafc !important;
+}
+
+::ng-deep tr.mat-mdc-row:hover td.mat-mdc-table-sticky,
+::ng-deep tr.mat-mdc-row:hover td.mat-column-acciones {
+    background-color: #f8fafc !important;
+    background: #f8fafc !important;
 }

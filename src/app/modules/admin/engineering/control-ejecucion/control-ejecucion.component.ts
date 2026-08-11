@@ -45,6 +45,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     displayedColumns: string[] = [
         'idSeguimiento',
         'proyecto',
+        'tipoProyecto',
         'oc',
         'utilidadEsperada',
         'fechas',
@@ -66,6 +67,20 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     fechaFin: any = '';
     filtroSearch: string = '';
     filterColumn: string = '';
+    filterEmpresa: string = '';   // Filtro dropdown empresa
+    filterTipo: string = '';      // Filtro dropdown tipo de proyecto
+
+    /** Lista única de empresas extraída de los datos cargados */
+    get empresas(): string[] {
+        const raw = this.dataSource.data.map(d => d.empresa || '').filter(Boolean);
+        return [...new Set(raw)].sort();
+    }
+
+    /** Lista única de tipos de proyecto extraída de los datos cargados */
+    get tiposProyecto(): string[] {
+        const raw = this.dataSource.data.map(d => d.tipo || '').filter(Boolean);
+        return [...new Set(raw)].sort();
+    }
 
     // Listas de estatus
     astOptions = [
@@ -164,6 +179,8 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         this._engineeringService.getSeguimientosEjecucion(start, end).subscribe({
             next: (data) => {
                 this.dataSource.data = data;
+                // Re-aplicar filtros combinados después de cargar
+                this._applyAllFilters();
             },
             error: (err) => {
                 console.error(err);
@@ -177,43 +194,89 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
 
     applyFilter(event: Event): void {
         this.filtroSearch = (event.target as HTMLInputElement).value;
-        this.dataSource.filter = this.filtroSearch;
+        this._applyAllFilters();
     }
 
     onFilterColumnChange(): void {
-        this.dataSource.filter = this.filtroSearch;
+        this._applyAllFilters();
+    }
+
+    onFilterEmpresaChange(): void {
+        this._applyAllFilters();
+    }
+
+    onFilterTipoChange(): void {
+        this._applyAllFilters();
+    }
+
+    resetFilters(): void {
+        this.filtroSearch = '';
+        this.filterColumn = '';
+        this.filterEmpresa = '';
+        this.filterTipo = '';
+        this._applyAllFilters();
+    }
+
+    /** Dispara el predicate pasando un token con todos los filtros activos */
+    private _applyAllFilters(): void {
+        // El filter string es solo un trigger; el predicate lee las props del componente
+        this.dataSource.filter = JSON.stringify({
+            search: this.filtroSearch,
+            column: this.filterColumn,
+            empresa: this.filterEmpresa,
+            tipo: this.filterTipo
+        });
     }
 
     private _setupFilterPredicate(): void {
         this.dataSource.filterPredicate = (data: SeguimientoEjecucion, filter: string) => {
-            const search = filter.trim().toLowerCase();
-            if (!search) return true;
+            // Parsear filtros combinados
+            let parsed: { search: string; column: string; empresa: string; tipo: string };
+            try { parsed = JSON.parse(filter); } catch { return true; }
+
+            const { search, column, empresa: empFilter, tipo: tipoFilter } = parsed;
+
+            // Filtro por empresa (dropdown)
+            if (empFilter) {
+                if ((data.empresa || '') !== empFilter) return false;
+            }
+
+            // Filtro por tipo (dropdown)
+            if (tipoFilter) {
+                if ((data.tipo || '') !== tipoFilter) return false;
+            }
+
+            // Filtro de texto
+            if (!search || !search.trim()) return true;
+            const s = search.trim().toLowerCase();
 
             const solicitante = (data.nombreSolicitante || '').toLowerCase();
             const empresa = (data.empresa || '').toLowerCase();
             const actividad = (data.actividad || '').toLowerCase();
             const tituloProyecto = (data.tituloProyecto || '').toLowerCase();
             const oc = (data.ordenCompraFolio || '').toLowerCase();
+            const tipo = (data.tipo || '').toLowerCase();
             const id = String(data.idSeguimiento);
 
-            if (this.filterColumn) {
-                switch(this.filterColumn) {
-                    case 'idSeguimiento': return id.includes(search);
-                    case 'empresa': return empresa.includes(search);
-                    case 'tituloProyecto': return tituloProyecto.includes(search);
-                    case 'actividad': return actividad.includes(search);
-                    case 'nombreSolicitante': return solicitante.includes(search);
-                    case 'ordenCompraFolio': return oc.includes(search);
+            if (column) {
+                switch (column) {
+                    case 'idSeguimiento': return id.includes(s);
+                    case 'empresa': return empresa.includes(s);
+                    case 'tituloProyecto': return tituloProyecto.includes(s);
+                    case 'actividad': return actividad.includes(s);
+                    case 'nombreSolicitante': return solicitante.includes(s);
+                    case 'ordenCompraFolio': return oc.includes(s);
                     default: return false;
                 }
             }
 
-            return solicitante.includes(search) ||
-                   empresa.includes(search) ||
-                   actividad.includes(search) ||
-                   tituloProyecto.includes(search) ||
-                   oc.includes(search) ||
-                   id.includes(search);
+            return solicitante.includes(s) ||
+                   empresa.includes(s) ||
+                   actividad.includes(s) ||
+                   tituloProyecto.includes(s) ||
+                   oc.includes(s) ||
+                   tipo.includes(s) ||
+                   id.includes(s);
         };
     }
 
