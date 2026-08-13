@@ -58,6 +58,7 @@ import { ApexOptions, NgApexchartsModule } from 'ng-apexcharts';
 export class TableroComprasComponent implements OnInit, OnDestroy {
     displayedColumns: string[] = [
         'folio',
+        'tipoOperacion',
         'esAprobada',
         'aprobacionCredito',
         'folioOC',

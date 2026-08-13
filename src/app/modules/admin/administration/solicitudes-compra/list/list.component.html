@@ -81,6 +81,17 @@
                     <td mat-cell *matCellDef="let s" class="font-bold text-primary bg-white dark:bg-gray-900">{{ s.idSolicitud }}</td>
                 </ng-container>
 
+                <!-- Tipo de Operación -->
+                <ng-container matColumnDef="tipoOperacion">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo Op.</th>
+                    <td mat-cell *matCellDef="let s">
+                        <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm border"
+                              [ngClass]="s.tipoOperacion === 2 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'">
+                            {{ s.tipoOperacion === 2 ? 'Gasto' : 'Compra' }}
+                        </span>
+                    </td>
+                </ng-container>
+
                 <!-- Aprobación -->
                 <ng-container matColumnDef="esAprobada">
                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Validación</th>

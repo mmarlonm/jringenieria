@@ -47,6 +47,22 @@
                             </h3>
 
                             <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Tipo de Operación</mat-label>
+                                <mat-select formControlName="tipoOperacion">
+                                    <mat-option [value]="1">
+                                        <span class="flex items-center gap-2 font-bold text-indigo-600">
+                                            <mat-icon class="icon-size-4 text-indigo-500">shopping_bag</mat-icon> 1: Compra
+                                        </span>
+                                    </mat-option>
+                                    <mat-option [value]="2">
+                                        <span class="flex items-center gap-2 font-bold text-amber-600">
+                                            <mat-icon class="icon-size-4 text-amber-500">receipt_long</mat-icon> 2: Gasto
+                                        </span>
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Razón Social (Facturación)</mat-label>
                                 <mat-select formControlName="razonSocial">
                                     <mat-option *ngFor="let r of razonesSociales" [value]="r">{{r}}</mat-option>

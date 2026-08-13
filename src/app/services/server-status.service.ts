@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, interval } from 'rxjs';
+import { BehaviorSubject, Observable, interval, of } from 'rxjs';
 import { switchMap, catchError, startWith } from 'rxjs/operators';
 import { environment } from 'environments/environment';
 
@@ -19,14 +19,19 @@ export class ServerStatusService {
     interval(30000) // Verificar cada 30 segundos
       .pipe(
         startWith(0),
-        switchMap(() => this.checkServerStatus()),
-        catchError(() => {
-          this.serverStatusSubject.next(false);
-          return [];
-        })
+        switchMap(() =>
+          this.checkServerStatus().pipe(
+            catchError(() => {
+              this.serverStatusSubject.next(false);
+              return of(null);
+            })
+          )
+        )
       )
-      .subscribe(() => {
-        this.serverStatusSubject.next(true);
+      .subscribe((res) => {
+        if (res !== null) {
+          this.serverStatusSubject.next(true);
+        }
       });
   }
 

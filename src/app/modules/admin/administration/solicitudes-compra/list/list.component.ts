@@ -33,7 +33,7 @@ import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.s
 export class SolicitudCompraListComponent implements OnInit {
     solicitudes$: Observable<SolicitudCompra[]>;
     filteredSolicitudes$: Observable<SolicitudCompra[]>;
-    displayedColumns: string[] = ['folio', 'esAprobada', 'aprobacionCredito', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'nombreUsuarioCreacion', 'createdDate', 'acciones'];
+    displayedColumns: string[] = ['folio', 'tipoOperacion', 'esAprobada', 'aprobacionCredito', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'nombreUsuarioCreacion', 'createdDate', 'acciones'];
     filterValue: string = '';
     selectedSucursal: string = 'Todas';
     sucursales: any[] = [];
@@ -322,6 +322,7 @@ export class SolicitudCompraListComponent implements OnInit {
 
             const headers = [
                 'Folio',
+                'Tipo Operación',
                 'Creado Por',
                 'Fecha Creación',
                 'Validación',
@@ -338,6 +339,7 @@ export class SolicitudCompraListComponent implements OnInit {
 
             const rows = solicitudes.map(s => [
                 s.idSolicitud,
+                s.tipoOperacion === 2 ? 'Gasto' : 'Compra',
                 this.getUserName(s.idUsuarioLogueado),
                 s.createdDate ? new Date(s.createdDate) : '',
                 s.esAprobada ? 'Aprobada' : 'Pendiente',

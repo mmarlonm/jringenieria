@@ -39,6 +39,7 @@ export interface SolicitudCompra {
     nombreEstatus: string;
     datosFacturaContpaqi?: any;
     estadoLiquidacion: number;
+    tipoOperacion?: number; // 1: Compra, 2: Gasto
 
     idAprobador?: number;
     esAprobada: boolean;
@@ -105,6 +106,7 @@ export interface SolicitudCompraCreateDto {
     fechaRequerida: string | Date;
     tipoCompra: string;
     centroCosto: string;
+    tipoOperacion?: number; // 1: Compra, 2: Gasto
     folioProyecto?: string;
     moneda: string;
     formaPago?: string;

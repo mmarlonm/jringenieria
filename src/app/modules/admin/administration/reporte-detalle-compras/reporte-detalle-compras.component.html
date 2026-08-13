@@ -215,6 +215,7 @@
                     <thead class="sticky top-0 z-10 bg-white">
                         <tr class="bg-gray-50 dark:bg-gray-700/50 text-[10px] font-bold text-gray-400 uppercase">
                             <th class="px-4 py-3">Folio</th>
+                            <th class="px-4 py-3">Tipo Op.</th>
                             <th class="px-4 py-3">Sucursal</th>
                             <th class="px-4 py-3">Proveedor</th>
                             <th class="px-4 py-3">Estatus</th>
@@ -226,6 +227,12 @@
                     <tbody class="divide-y divide-gray-100">
                         <tr *ngFor="let s of filteredSolicitudes" class="hover:bg-gray-50/50 transition-colors">
                             <td class="px-4 py-3 font-bold text-indigo-600">{{ s.idSolicitud }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shadow-sm border"
+                                      [ngClass]="s.tipoOperacion === 2 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'">
+                                    {{ s.tipoOperacion === 2 ? 'Gasto' : 'Compra' }}
+                                </span>
+                            </td>
                             <td class="px-4 py-3 font-semibold text-gray-600">{{ s.sucursal }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ s.proveedorSugerido || '—' }}</td>
                             <td class="px-4 py-3">

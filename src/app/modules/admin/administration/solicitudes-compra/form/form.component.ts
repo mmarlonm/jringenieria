@@ -197,6 +197,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             folioOC: [''],
             sucursal: ['', Validators.required],
             areaSolicitante: ['', Validators.required],
+            tipoOperacion: [1, Validators.required],
             idPersonaSolicitante: [this.currentUserId],
             idAprobador: [null, Validators.required],
             esAprobada: [false],

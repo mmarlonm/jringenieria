@@ -130,6 +130,17 @@
                 </div>
             </div>
 
+            <!-- Tipo de Operación (Compra vs Gasto) -->
+            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all lg:col-span-2">
+                <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+                    <mat-icon class="mr-3 text-indigo-500 bg-indigo-50 p-2 rounded-2xl">shopping_bag</mat-icon>
+                    Distribución por Tipo de Operación (Compra vs. Gasto)
+                </h2>
+                <div class="w-full h-[350px]">
+                    <highcharts-chart *ngIf="solicitudes.length > 0" [Highcharts]="Highcharts" [options]="chartOptionsTipoOperacion" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+                </div>
+            </div>
+
             <!-- Row 2: Sucursal & Liquidación -->
             <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
                 <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">

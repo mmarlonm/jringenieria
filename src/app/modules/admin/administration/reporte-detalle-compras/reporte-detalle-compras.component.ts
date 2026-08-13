@@ -123,6 +123,7 @@ export class ReporteDetalleComprasComponent implements OnInit, OnDestroy {
 
         const headers = [
             'Folio',
+            'Tipo Operación',
             'Sucursal',
             'Área Solicitante',
             'Prioridad',
@@ -142,6 +143,7 @@ export class ReporteDetalleComprasComponent implements OnInit, OnDestroy {
 
             return [
                 s.idSolicitud,
+                s.tipoOperacion === 2 ? 'Gasto' : 'Compra',
                 s.sucursal || '',
                 s.areaSolicitante || '',
                 s.prioridad || '',

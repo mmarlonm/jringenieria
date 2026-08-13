@@ -87,6 +87,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
     chartOptionsFormaPago: any = {};
     chartOptionsArea: any = {};
     chartOptionsTimelinePago: any = {};
+    chartOptionsTipoOperacion: any = {};
     
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -369,6 +370,17 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             timelinePagoSeries.push({ name: method, data: seriesData, color: method === 'Contado' ? '#38bdf8' : '#818cf8' });
         });
 
+        // 9. Tipo de Operación (Compra vs Gasto)
+        const tipoOpMap = new Map<string, number>();
+        this.solicitudes.forEach(s => {
+            const label = s.tipoOperacion === 2 ? 'Gasto' : 'Compra';
+            tipoOpMap.set(label, (tipoOpMap.get(label) || 0) + 1);
+        });
+        const tipoOpData = [
+            { name: 'Compra', y: tipoOpMap.get('Compra') || 0, color: '#6366f1' },
+            { name: 'Gasto', y: tipoOpMap.get('Gasto') || 0, color: '#f59e0b' }
+        ];
+
         this.chartOptionsCentroCosto = this._buildCentroCostoChart(sortedCCs, ccSeries);
         this.chartOptionsPrioridad = this._buildPrioridadChart(priorityData);
         this.chartOptionsTimeline = this._buildTimelineChart(timelineSeries);
@@ -377,6 +389,7 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
         this.chartOptionsFormaPago = this._buildFormaPagoChart(currenciesListFinal, paymentSeries);
         this.chartOptionsArea = this._buildAreaChart(sortedAreas, areaSeries);
         this.chartOptionsTimelinePago = this._buildTimelinePagoChart(timelinePagoSeries);
+        this.chartOptionsTipoOperacion = this._buildTipoOperacionChart(tipoOpData);
         
         this._changeDetectorRef.markForCheck();
     }
@@ -457,6 +470,15 @@ export class ResumenComprasComponent implements OnInit, OnDestroy {
             yAxis: { title: { text: 'Monto Diario' }, gridLineDashStyle: 'Dash', gridLineColor: '#f3f4f6' },
             plotOptions: { spline: { lineWidth: 3, marker: { radius: 4, symbol: 'circle' } } },
             series: series
+        });
+    }
+
+    private _buildTipoOperacionChart(data: any[]): any {
+        return Highcharts.merge(this.baseTheme, {
+            chart: { type: 'pie' },
+            tooltip: { pointFormat: 'Cantidad: <b>{point.y}</b> ({point.percentage:.1f}%)' },
+            plotOptions: { pie: { innerSize: '60%', dataLabels: { enabled: true, format: '{point.name}: {point.y}' }, showInLegend: true } },
+            series: [{ name: 'Tipo de Operación', data: data }]
         });
     }
 }
