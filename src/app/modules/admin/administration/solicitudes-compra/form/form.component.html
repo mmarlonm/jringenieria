@@ -49,15 +49,25 @@
                             <mat-form-field appearance="fill" class="w-full">
                                 <mat-label>Tipo de Operación</mat-label>
                                 <mat-select formControlName="tipoOperacion">
+                                    <mat-select-trigger>
+                                        <div class="flex items-center gap-2 font-bold" [ngClass]="solicitudForm.get('tipoOperacion')?.value === 2 ? 'text-amber-600' : 'text-indigo-600'">
+                                            <mat-icon class="icon-size-4" [ngClass]="solicitudForm.get('tipoOperacion')?.value === 2 ? 'text-amber-500' : 'text-indigo-500'" 
+                                                      [svgIcon]="solicitudForm.get('tipoOperacion')?.value === 2 ? 'heroicons_outline:banknotes' : 'heroicons_outline:shopping-bag'"></mat-icon>
+                                            <span>{{ solicitudForm.get('tipoOperacion')?.value === 2 ? '2: Gasto' : '1: Compra' }}</span>
+                                        </div>
+                                    </mat-select-trigger>
+
                                     <mat-option [value]="1">
-                                        <span class="flex items-center gap-2 font-bold text-indigo-600">
-                                            <mat-icon class="icon-size-4 text-indigo-500">shopping_bag</mat-icon> 1: Compra
-                                        </span>
+                                        <div class="flex items-center gap-2 font-bold text-indigo-600 py-1">
+                                            <mat-icon class="icon-size-4 text-indigo-500" [svgIcon]="'heroicons_outline:shopping-bag'"></mat-icon>
+                                            <span>1: Compra</span>
+                                        </div>
                                     </mat-option>
                                     <mat-option [value]="2">
-                                        <span class="flex items-center gap-2 font-bold text-amber-600">
-                                            <mat-icon class="icon-size-4 text-amber-500">receipt_long</mat-icon> 2: Gasto
-                                        </span>
+                                        <div class="flex items-center gap-2 font-bold text-amber-600 py-1">
+                                            <mat-icon class="icon-size-4 text-amber-500" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+                                            <span>2: Gasto</span>
+                                        </div>
                                     </mat-option>
                                 </mat-select>
                             </mat-form-field>
