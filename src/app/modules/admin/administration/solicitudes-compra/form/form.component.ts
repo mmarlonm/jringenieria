@@ -503,8 +503,9 @@ export class SolicitudCompraFormComponent implements OnInit {
 
         if (values.length > 0) {
             subtotal = Number(subtotal.toFixed(2));
-            const iva = Number((subtotal * 0.16).toFixed(2));
-            const total = Number((subtotal + iva - isrRetenido - descuento).toFixed(2));
+            const subtotalConDescuento = Math.max(0, Number((subtotal - descuento).toFixed(2)));
+            const iva = Number((subtotalConDescuento * 0.16).toFixed(2));
+            const total = Number((subtotalConDescuento + iva - isrRetenido).toFixed(2));
 
             this.solicitudForm.patchValue({
                 subtotal: subtotal,
