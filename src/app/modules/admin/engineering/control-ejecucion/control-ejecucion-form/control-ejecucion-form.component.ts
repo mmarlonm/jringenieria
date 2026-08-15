@@ -1155,7 +1155,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     }, 80);
   }
 
-  private saveExpandedTaskIds(extraTaskId?: number): void {
+  private saveExpandedTaskIds(): void {
     const ids: number[] = [];
     if (this.tasks) {
       this.tasks.forEach(t => {
@@ -1163,9 +1163,6 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
           ids.push(Number(t.id));
         }
       });
-    }
-    if (extraTaskId != null) {
-      ids.push(Number(extraTaskId));
     }
     this.expandedTaskIds = Array.from(new Set(ids));
   }
@@ -1176,6 +1173,9 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.tasks.forEach(t => {
       if (t.id != null && expandedSet.has(Number(t.id))) {
         t.expanded = true;
+      } else {
+        // No expandir tareas que no estaban expandidas antes
+        t.expanded = false;
       }
     });
     this.expandedTaskIds = [];
@@ -1619,7 +1619,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         if (result) {
           const parentId = parentTask?.id || result.actividadMaestraId;
           this.saveScrollState();
-          this.saveExpandedTaskIds(parentId);
+          this.saveExpandedTaskIds();
 
           if (result.delete) {
             if (type === 'maestra') {
@@ -1649,7 +1649,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
               // Guardar el estado de expansión y scroll antes de recargar
               this.saveScrollState();
-              this.saveExpandedTaskIds(parentId);
+              this.saveExpandedTaskIds();
 
               // Si se guardó correctamente, refrescar de inmediato manteniendo scroll y expansión
               this.loadGantt(true);
@@ -1674,13 +1674,13 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
                 }).subscribe({
                   next: () => {
                     this.saveScrollState();
-                    this.saveExpandedTaskIds(parentId);
+                    this.saveExpandedTaskIds();
                     this.loadGantt(true);
                   },
                   error: (e) => {
                     console.warn('Error no crítico al asignar miembros del equipo:', e);
                     this.saveScrollState();
-                    this.saveExpandedTaskIds(parentId);
+                    this.saveExpandedTaskIds();
                     this.loadGantt(true);
                   }
                 });

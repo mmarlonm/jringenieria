@@ -163,6 +163,10 @@
             </div>
             <!-- Desktop Secondary Actions -->
             <div class="hidden lg:flex items-center space-x-2">
+                <!-- Rayito IA Button (Company Design) -->
+                <button mat-icon-button (click)="toggleChat()" matTooltip="Agente IA Rayito">
+                    <mat-icon [svgIcon]="'heroicons_outline:bolt'"></mat-icon>
+                </button>
                 <button mat-icon-button (click)="toggleScheme()" matTooltip="Cambiar tema">
                     @if (!isDark) {
                     <mat-icon class="text-amber-500" [svgIcon]="'heroicons_outline:sun'"></mat-icon>
@@ -206,6 +210,12 @@
                         <div class="flex items-center">
                             <mat-icon>calendar_today</mat-icon>
                             <span class="font-bold ml-3">Calendario</span>
+                        </div>
+                    </button>
+                    <button mat-menu-item (click)="toggleChat()">
+                        <div class="flex items-center">
+                            <mat-icon [svgIcon]="'heroicons_outline:bolt'"></mat-icon>
+                            <span class="font-bold ml-3">Agente IA Rayito</span>
                         </div>
                     </button>
                     <button mat-menu-item (click)="quickChat.open()">

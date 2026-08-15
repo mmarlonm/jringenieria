@@ -97,6 +97,7 @@ import { FuseConfig } from '@fuse/services/config/config.types';
 import { PersonalManagementService } from 'app/modules/rrhh/personal-management/personal-management.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { ProfileService } from 'app/modules/admin/pages/profile/profile.services';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
 
 @Component({
     selector: 'classy-layout',
@@ -170,7 +171,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         private _personalManagementService: PersonalManagementService,
         private _ngZone: NgZone,
         private _chatNotificationService: ChatNotificationService,
-        private _profileService: ProfileService
+        private _profileService: ProfileService,
+        private _chatIaService: ChatIaService
     ) { }
 
     // ----------------------------------------------------------
@@ -265,6 +267,13 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     toggleScheme(): void {
         const scheme = this.isDark ? 'light' : 'dark';
         this._fuseConfigService.config = { scheme };
+    }
+
+    /**
+     * Alternar el chat global de Rayito IA
+     */
+    toggleChat(): void {
+        this._chatIaService.toggleChat();
     }
 
     ngOnDestroy(): void {

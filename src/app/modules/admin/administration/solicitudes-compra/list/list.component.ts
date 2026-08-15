@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,6 +21,7 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
 
 @Component({
     selector: 'solicitud-compra-list',
@@ -30,7 +31,7 @@ import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.s
     standalone: true,
     imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatTableModule, MatInputModule, MatTooltipModule, MatSortModule, FormsModule, MatMenuModule, MatPaginatorModule, MatSelectModule, MatDialogModule, ImagePreviewDialogComponent]
 })
-export class SolicitudCompraListComponent implements OnInit {
+export class SolicitudCompraListComponent implements OnInit, OnDestroy {
     solicitudes$: Observable<SolicitudCompra[]>;
     filteredSolicitudes$: Observable<SolicitudCompra[]>;
     displayedColumns: string[] = ['folio', 'tipoOperacion', 'esAprobada', 'aprobacionCredito', 'fecha', 'sucursal', 'area', 'prioridad', 'proveedor', 'cuadranteId', 'estatus', 'nombreUsuarioCreacion', 'createdDate', 'acciones'];
@@ -46,7 +47,8 @@ export class SolicitudCompraListComponent implements OnInit {
         private _usersService: UsersService,
         private _chatNotificationService: ChatNotificationService,
         private _excelService: CommonExcelExportService,
-        private _dialog: MatDialog
+        private _dialog: MatDialog,
+        private _chatIaService: ChatIaService
     ) { }
 
     ngOnInit(): void {
@@ -77,7 +79,32 @@ export class SolicitudCompraListComponent implements OnInit {
         this.solicitudes$.subscribe(s => {
             const filtered = this._filterSolicitudes(s);
             this.count = filtered.length;
+            
+            // Push active list context to Gemini Chat Agent
+            const datosContexto = {
+                totalSolicitudes: s.length,
+                solicitudesFiltradas: filtered.length,
+                sucursalSeleccionada: this.selectedSucursal,
+                solicitudes: filtered.map(sol => ({
+                    folio: sol.idSolicitud,
+                    tipo: sol.tipoOperacion === 2 ? 'Gasto' : 'Compra',
+                    esAprobada: sol.esAprobada ? 'Aprobada' : 'Pendiente',
+                    aprobacionCredito: sol.formaPago === 'CREDITO (PPD)' ? (sol.esAprobadaCredito ? 'Aprobado' : 'Pendiente') : 'N/A',
+                    fecha: sol.fechaSolicitud,
+                    sucursal: sol.sucursal,
+                    area: sol.areaSolicitante,
+                    prioridad: sol.prioridad,
+                    cuadrante: this.getCuadranteName(sol.cuadranteId),
+                    proveedor: this.getSelectedProvider(sol),
+                    estatus: sol.nombreEstatus || 'Creada'
+                }))
+            };
+            this._chatIaService.setContext('Solicitudes de Compra', datosContexto);
         });
+    }
+
+    ngOnDestroy(): void {
+        this._chatIaService.clearContext();
     }
 
     loadBranches(): void {

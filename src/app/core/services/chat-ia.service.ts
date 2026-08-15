@@ -11,9 +11,26 @@ export interface ChatIaContext {
 })
 export class ChatIaService {
     private _context$ = new BehaviorSubject<ChatIaContext | null>(null);
+    private _isOpen$ = new BehaviorSubject<boolean>(false);
 
     get context$(): Observable<ChatIaContext | null> {
         return this._context$.asObservable();
+    }
+
+    get isOpen$(): Observable<boolean> {
+        return this._isOpen$.asObservable();
+    }
+
+    toggleChat(): void {
+        this._isOpen$.next(!this._isOpen$.value);
+    }
+
+    openChat(): void {
+        this._isOpen$.next(true);
+    }
+
+    closeChat(): void {
+        this._isOpen$.next(false);
     }
 
     setContext(moduloName: string, datos: any): void {

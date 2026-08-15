@@ -14,6 +14,9 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ChatIaService } from 'app/core/services/chat-ia.service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { environment } from 'environments/environment';
 import { FuseConfig, FuseConfigService } from '@fuse/services/config';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
@@ -56,6 +59,9 @@ import { ThinLayoutComponent } from './layouts/vertical/thin/thin.component';
         FormsModule,
         MatIconModule,
         MatButtonModule,
+        MatFormFieldModule,
+        MatInputModule,
+        TextFieldModule,
     ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {
@@ -191,6 +197,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
                     this.currentModuleDataJson = '';
                 }
             });
+
+        // Suscribirse al estado abierto/cerrado global del chat
+        this._chatIaService.isOpen$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((isOpen) => {
+                this.isChatOpen = isOpen;
+                if (isOpen) {
+                    setTimeout(() => this.scrollToBottom(), 50);
+                }
+            });
     }
 
     /**
@@ -296,10 +312,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     // 🤖 AGENTE DE IA METODOS Y LOGICA
     // ============================================
     toggleChat(): void {
-        this.isChatOpen = !this.isChatOpen;
-        if (this.isChatOpen) {
-            setTimeout(() => this.scrollToBottom(), 50);
-        }
+        this._chatIaService.toggleChat();
     }
 
     sendSuggestion(text: string): void {
