@@ -56,6 +56,15 @@ export class MapaEventoService implements OnDestroy {
   private baseOpacity = new WeakMap<THREE.Mesh, number>();
   private disposables: Array<{ dispose(): void }> = [];
 
+  // Animaciones de Salidas, Área de Comida (Food Trucks, Mesas, Sombrillas) y Mascota Rayito
+  private animatedDoors: Array<{ leftDoor: THREE.Mesh; rightDoor: THREE.Mesh; basePosLeft: THREE.Vector3; basePosRight: THREE.Vector3; width: number; axis: 'x' | 'z' }> = [];
+  private foodSignGroup!: THREE.Group;
+  private foodTrucks: Array<{ group: THREE.Group; baseX: number; wheels: THREE.Mesh[] }> = [];
+  private foodUmbrellas: THREE.Mesh[] = [];
+  private rayitoGroup!: THREE.Group;
+  private rayitoLeftLeg!: THREE.Mesh;
+  private rayitoRightLeg!: THREE.Mesh;
+
   // ── recorrido ───────────────────────────────────────────────────────────────
   private touring = false;
   private tourIdx = 0;
@@ -80,6 +89,9 @@ export class MapaEventoService implements OnDestroy {
     this.buildFloor(mapImageUrl);
     this.buildWalls();
     this.buildStands();
+    this.buildAnimatedDoors();
+    this.buildFoodAreaAnimation();
+    this.buildRayitoMascot();
     this.buildTour();
     this.ngZone.runOutsideAngular(() => this.animate());
   }
@@ -304,6 +316,351 @@ export class MapaEventoService implements OnDestroy {
     this.disposables.push(tex, spriteMat);
   }
 
+  private buildAnimatedDoors(): void {
+    const doorExits = [
+      // 1. Entrada / Salida Principal en el muro divisorio del salón
+      { name: 'ENTRADA_PPAL', px: wx(1036), pz: wz(447), w: 5.2, h: 3.4, axis: 'z' as const },
+      
+      // 2. Salida al Área de Alimentos / Café Izquierda (entre B16 y B17)
+      { name: 'SALIDA_CAFE_IZQ', px: wx(735), pz: wz(694), w: 4.2, h: 3.2, axis: 'x' as const },
+
+      // 3. Salida al Área de Alimentos / Café Derecha (entre B12 y B13)
+      { name: 'SALIDA_CAFE_DER', px: wx(475), pz: wz(694), w: 4.2, h: 3.2, axis: 'x' as const },
+
+      // 4. Entrada / Salida Descarga Norte
+      { name: 'DESCARGA_N', px: wx(82), pz: wz(330), w: 4.5, h: 3.4, axis: 'z' as const },
+
+      // 5. Entrada / Salida Descarga Sur
+      { name: 'DESCARGA_S', px: wx(82), pz: wz(460), w: 4.5, h: 3.4, axis: 'z' as const },
+
+      // 6. Acceso a Escenarios
+      { name: 'ACCESO_ESC', px: wx(443), pz: wz(365), w: 4.8, h: 3.4, axis: 'z' as const },
+    ];
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a, roughness: 0.2, metalness: 0.85
+    });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8, transparent: true, opacity: 0.55, roughness: 0.1, metalness: 0.95
+    });
+    const signMat = new THREE.MeshStandardMaterial({
+      color: 0x059669, emissive: 0x10b981, emissiveIntensity: 0.85, roughness: 0.3
+    });
+
+    this.disposables.push(frameMat, glassMat, signMat);
+
+    doorExits.forEach((exit) => {
+      const postWidth = 0.22;
+      const frameDepth = 0.35;
+      const portalGroup = new THREE.Group();
+
+      // 1. MARCO DEL PORTAL (Postes y Dintel Superior)
+      const postGeom = exit.axis === 'x'
+        ? new THREE.BoxGeometry(postWidth, exit.h, frameDepth)
+        : new THREE.BoxGeometry(frameDepth, exit.h, postWidth);
+      
+      const leftPost = new THREE.Mesh(postGeom, frameMat);
+      if (exit.axis === 'x') {
+        leftPost.position.set(exit.px - exit.w / 2, exit.h / 2, exit.pz);
+      } else {
+        leftPost.position.set(exit.px, exit.h / 2, exit.pz - exit.w / 2);
+      }
+      portalGroup.add(leftPost);
+
+      const rightPost = new THREE.Mesh(postGeom, frameMat);
+      if (exit.axis === 'x') {
+        rightPost.position.set(exit.px + exit.w / 2, exit.h / 2, exit.pz);
+      } else {
+        rightPost.position.set(exit.px, exit.h / 2, exit.pz + exit.w / 2);
+      }
+      portalGroup.add(rightPost);
+
+      const lintelGeom = exit.axis === 'x'
+        ? new THREE.BoxGeometry(exit.w + postWidth, 0.3, frameDepth)
+        : new THREE.BoxGeometry(frameDepth, 0.3, exit.w + postWidth);
+      const lintel = new THREE.Mesh(lintelGeom, frameMat);
+      lintel.position.set(exit.px, exit.h + 0.15, exit.pz);
+      portalGroup.add(lintel);
+
+      // 2. HOJAS DOBLES DE CRISTAL CORREDERAS
+      const doorW = (exit.w / 2) * 0.94;
+      const doorH = exit.h * 0.96;
+      const doorD = 0.08;
+
+      const doorGroupLeft = new THREE.Group();
+      const doorGroupRight = new THREE.Group();
+
+      const glassGeom = exit.axis === 'x'
+        ? new THREE.BoxGeometry(doorW, doorH, doorD)
+        : new THREE.BoxGeometry(doorD, doorH, doorW);
+
+      const glassLeft = new THREE.Mesh(glassGeom, glassMat);
+      doorGroupLeft.add(glassLeft);
+
+      const glassRight = new THREE.Mesh(glassGeom, glassMat);
+      doorGroupRight.add(glassRight);
+
+      const basePosLeft = exit.axis === 'x'
+        ? new THREE.Vector3(exit.px - doorW / 2, exit.h / 2, exit.pz)
+        : new THREE.Vector3(exit.px, exit.h / 2, exit.pz - doorW / 2);
+
+      const basePosRight = exit.axis === 'x'
+        ? new THREE.Vector3(exit.px + doorW / 2, exit.h / 2, exit.pz)
+        : new THREE.Vector3(exit.px, exit.h / 2, exit.pz + doorW / 2);
+
+      doorGroupLeft.position.copy(basePosLeft);
+      doorGroupRight.position.copy(basePosRight);
+
+      portalGroup.add(doorGroupLeft);
+      portalGroup.add(doorGroupRight);
+
+      // 3. LETRERO LUMINOSO "SALIDA / EXIT"
+      const signGeom = exit.axis === 'x'
+        ? new THREE.BoxGeometry(exit.w * 0.7, 0.45, 0.2)
+        : new THREE.BoxGeometry(0.2, 0.45, exit.w * 0.7);
+      const signMesh = new THREE.Mesh(signGeom, signMat);
+      signMesh.position.set(exit.px, exit.h + 0.5, exit.pz);
+      portalGroup.add(signMesh);
+
+      this.scene.add(portalGroup);
+
+      this.animatedDoors.push({
+        leftDoor: doorGroupLeft as any,
+        rightDoor: doorGroupRight as any,
+        basePosLeft,
+        basePosRight,
+        width: doorW,
+        axis: exit.axis
+      });
+
+      this.disposables.push(postGeom, lintelGeom, glassGeom, signGeom);
+    });
+  }
+
+  private buildFoodAreaAnimation(): void {
+    const foodZ = wz(770);
+
+    // 1. CARRI TOS DE COMIDA 3D (FOOD TRUCKS EN MOVIMIENTO)
+    const truckConfigs = [
+      { name: 'Coffee & Snacks', color: 0x1e293b, baseX: wx(310) },
+      { name: 'Street Eats', color: 0x334155, baseX: wx(860) }
+    ];
+
+    truckConfigs.forEach((cfg) => {
+      const truckGroup = new THREE.Group();
+      truckGroup.position.set(cfg.baseX, 0, foodZ);
+
+      // Carrocería del Food Truck
+      const bodyGeom = new THREE.BoxGeometry(3.4, 1.8, 1.8);
+      const bodyMat  = new THREE.MeshStandardMaterial({ color: cfg.color, roughness: 0.3, metalness: 0.7 });
+      const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+      bodyMesh.position.y = 1.1;
+      truckGroup.add(bodyMesh);
+
+      // Ventana de atención al cliente
+      const windowGeom = new THREE.BoxGeometry(1.8, 0.8, 0.05);
+      const windowMat  = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75, roughness: 0.1 });
+      const windowMesh = new THREE.Mesh(windowGeom, windowMat);
+      windowMesh.position.set(0, 1.2, 0.91);
+      truckGroup.add(windowMesh);
+
+      // Toldo de terraza sobre la ventana
+      const awningGeom = new THREE.BoxGeometry(2.0, 0.08, 0.6);
+      const awningMat  = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4 });
+      const awningMesh = new THREE.Mesh(awningGeom, awningMat);
+      awningMesh.position.set(0, 1.65, 1.1);
+      awningMesh.rotation.x = 0.25;
+      truckGroup.add(awningMesh);
+
+      // Ruedas (4 ruedas)
+      const wheelGeom = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 16);
+      const wheelMat  = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+      const wheels: THREE.Mesh[] = [];
+
+      const wheelPositions = [
+        [-1.0, 0.35, 0.9], [1.0, 0.35, 0.9],
+        [-1.0, 0.35, -0.9], [1.0, 0.35, -0.9]
+      ];
+
+      wheelPositions.forEach(([x, y, z]) => {
+        const wheel = new THREE.Mesh(wheelGeom, wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, y, z);
+        truckGroup.add(wheel);
+        wheels.push(wheel);
+      });
+
+      // Luces delanteras cálidas
+      const lightL = new THREE.PointLight(0xfef08a, 1.2, 6);
+      lightL.position.set(-1.7, 0.8, 0.5);
+      truckGroup.add(lightL);
+
+      this.scene.add(truckGroup);
+      this.foodTrucks.push({ group: truckGroup, baseX: cfg.baseX, wheels });
+      this.disposables.push(bodyGeom, bodyMat, windowGeom, windowMat, awningGeom, awningMat, wheelGeom, wheelMat);
+    });
+
+    // 2. MESAS Y SOMBRILLAS DE COMIDA 3D (TERRAZA DE ALIMENTOS)
+    const tablePositions = [wx(440), wx(540), wx(650), wx(750)];
+    const umbrellaColors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981];
+
+    tablePositions.forEach((tx, idx) => {
+      const tableGroup = new THREE.Group();
+      tableGroup.position.set(tx, 0, foodZ);
+
+      // Mesa redonda
+      const tableTopGeom = new THREE.CylinderGeometry(0.9, 0.9, 0.08, 20);
+      const tableMat     = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.6, roughness: 0.3 });
+      const tableTop     = new THREE.Mesh(tableTopGeom, tableMat);
+      tableTop.position.y = 0.75;
+      tableGroup.add(tableTop);
+
+      // Poste de la sombrilla
+      const poleGeom = new THREE.CylinderGeometry(0.05, 0.05, 2.4, 12);
+      const poleMat  = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const pole     = new THREE.Mesh(poleGeom, poleMat);
+      pole.position.y = 1.2;
+      tableGroup.add(pole);
+
+      // Sombrilla de terraza (Cono)
+      const umbrellaGeom = new THREE.ConeGeometry(1.4, 0.6, 16);
+      const umbrellaMat  = new THREE.MeshStandardMaterial({
+        color: umbrellaColors[idx % umbrellaColors.length],
+        roughness: 0.5,
+        side: THREE.DoubleSide
+      });
+      const umbrella = new THREE.Mesh(umbrellaGeom, umbrellaMat);
+      umbrella.position.y = 2.2;
+      tableGroup.add(umbrella);
+      this.foodUmbrellas.push(umbrella);
+
+      this.scene.add(tableGroup);
+      this.disposables.push(tableTopGeom, tableMat, poleGeom, poleMat, umbrellaGeom, umbrellaMat);
+    });
+  }
+
+  private buildRayitoMascot(): void {
+    this.rayitoGroup = new THREE.Group();
+
+    // 1. Cuerpo de Rayo 3D Estilizado
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 1.8);
+    shape.lineTo(-0.7, 0.4);
+    shape.lineTo(-0.15, 0.4);
+    shape.lineTo(-0.6, -0.9);
+    shape.lineTo(0.7, 0.1);
+    shape.lineTo(0.15, 0.1);
+    shape.lineTo(0.6, 1.0);
+    shape.closePath();
+
+    const extrudeSettings = { depth: 0.35, bevelEnabled: true, bevelSegments: 4, steps: 1, bevelSize: 0.06, bevelThickness: 0.06 };
+    const rayGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    const rayMat  = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.5,
+      metalness: 0.4,
+      roughness: 0.15,
+    });
+    const rayMesh = new THREE.Mesh(rayGeom, rayMat);
+    rayMesh.position.set(0, 0.9, -0.175);
+    this.rayitoGroup.add(rayMesh);
+
+    // 2. Ojos Grandes y Expresivos (Carismáticos con Brillo)
+    const eyeGeom = new THREE.SphereGeometry(0.12, 16, 16);
+    const eyeMat  = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1 });
+    
+    const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
+    leftEye.position.set(-0.2, 1.15, 0.22);
+    this.rayitoGroup.add(leftEye);
+
+    const rightEye = new THREE.Mesh(eyeGeom, eyeMat);
+    rightEye.position.set(0.2, 1.15, 0.22);
+    this.rayitoGroup.add(rightEye);
+
+    // Brillo de las pupilas
+    const pupilGeom = new THREE.SphereGeometry(0.04, 12, 12);
+    const pupilMat  = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    
+    const p1 = new THREE.Mesh(pupilGeom, pupilMat);
+    p1.position.set(-0.17, 1.18, 0.32);
+    this.rayitoGroup.add(p1);
+
+    const p2 = new THREE.Mesh(pupilGeom, pupilMat);
+    p2.position.set(0.23, 1.18, 0.32);
+    this.rayitoGroup.add(p2);
+
+    // Mejillas sonrosadas
+    const blushGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16);
+    const blushMat  = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.7 });
+    
+    const b1 = new THREE.Mesh(blushGeom, blushMat);
+    b1.rotation.x = Math.PI / 2;
+    b1.position.set(-0.35, 1.0, 0.2);
+    this.rayitoGroup.add(b1);
+
+    const b2 = new THREE.Mesh(blushGeom, blushMat);
+    b2.rotation.x = Math.PI / 2;
+    b2.position.set(0.35, 1.0, 0.2);
+    this.rayitoGroup.add(b2);
+
+    // 3. Brazos y Guantes Blancos Animados
+    const armGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.45, 12);
+    const armMat  = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.2 });
+    const gloveGeom = new THREE.SphereGeometry(0.1, 16, 16);
+    const gloveMat  = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+
+    const leftArm = new THREE.Mesh(armGeom, armMat);
+    leftArm.rotation.z = Math.PI / 3;
+    leftArm.position.set(-0.45, 0.8, 0);
+    const leftGlove = new THREE.Mesh(gloveGeom, gloveMat);
+    leftGlove.position.set(0, -0.22, 0);
+    leftArm.add(leftGlove);
+    this.rayitoGroup.add(leftArm);
+
+    const rightArm = new THREE.Mesh(armGeom, armMat);
+    rightArm.rotation.z = -Math.PI / 3;
+    rightArm.position.set(0.45, 0.8, 0);
+    const rightGlove = new THREE.Mesh(gloveGeom, gloveMat);
+    rightGlove.position.set(0, -0.22, 0);
+    rightArm.add(rightGlove);
+    this.rayitoGroup.add(rightArm);
+
+    // 4. Piernas y Tenis Blancos
+    const legGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.5, 12);
+    const legMat  = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.3 });
+
+    this.rayitoLeftLeg = new THREE.Mesh(legGeom, legMat);
+    this.rayitoLeftLeg.position.set(-0.22, 0.25, 0);
+    this.rayitoGroup.add(this.rayitoLeftLeg);
+
+    this.rayitoRightLeg = new THREE.Mesh(legGeom, legMat);
+    this.rayitoRightLeg.position.set(0.22, 0.25, 0);
+    this.rayitoGroup.add(this.rayitoRightLeg);
+
+    const shoeGeom = new THREE.BoxGeometry(0.18, 0.14, 0.3);
+    const shoeMat  = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 });
+
+    const leftShoe = new THREE.Mesh(shoeGeom, shoeMat);
+    leftShoe.position.set(0, -0.25, 0.08);
+    this.rayitoLeftLeg.add(leftShoe);
+
+    const rightShoe = new THREE.Mesh(shoeGeom, shoeMat);
+    rightShoe.position.set(0, -0.25, 0.08);
+    this.rayitoRightLeg.add(rightShoe);
+
+    // 5. Luz y Aura Dorada
+    const rayLight = new THREE.PointLight(0xfacc15, 2.5, 12);
+    rayLight.position.set(0, 1.2, 0.2);
+    this.rayitoGroup.add(rayLight);
+
+    this.rayitoGroup.scale.set(0.9, 0.9, 0.9);
+    this.rayitoGroup.visible = false;
+
+    this.scene.add(this.rayitoGroup);
+    this.disposables.push(rayGeom, rayMat, eyeGeom, eyeMat, pupilGeom, pupilMat, blushGeom, blushMat, armGeom, armMat, gloveGeom, gloveMat, legGeom, legMat, shoeGeom, shoeMat);
+  }
+
   private buildTour(): void {
     this.tourEyes  = TOUR.map(s => new THREE.Vector3(wx(s.eye[0]),  EYE_Y,  wz(s.eye[1])));
     this.tourLooks = TOUR.map(s => new THREE.Vector3(wx(s.look[0]), LOOK_Y, wz(s.look[1])));
@@ -316,11 +673,78 @@ export class MapaEventoService implements OnDestroy {
     const dt  = this.lastTs ? Math.min(0.1, (now - this.lastTs) / 1000) : 0;
     this.lastTs = now;
 
-    if (this.touring) this.updateTour(dt);
-    else this.controls?.update();
+    this.updateDoors(now);
+    this.updateFoodArea(now, dt);
+
+    if (this.touring) {
+      this.updateTour(dt);
+      this.updateRayito(now);
+    } else {
+      if (this.rayitoGroup) this.rayitoGroup.visible = false;
+      this.controls?.update();
+    }
 
     this.updateLabels();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private updateDoors(now: number): void {
+    const openFactor = Math.abs(Math.sin(now * 0.0015));
+    for (const door of this.animatedDoors) {
+      const offset = openFactor * (door.width * 0.42);
+      if (door.axis === 'x') {
+        door.leftDoor.position.x = door.basePosLeft.x - offset;
+        door.rightDoor.position.x = door.basePosRight.x + offset;
+      } else {
+        door.leftDoor.position.z = door.basePosLeft.z - offset;
+        door.rightDoor.position.z = door.basePosRight.z + offset;
+      }
+    }
+  }
+
+  private updateFoodArea(now: number, dt: number): void {
+    // 1. Movimiento dinámico de los Carritos de Comida (Food Trucks 3D)
+    const truckMove = Math.sin(now * 0.001) * 0.6;
+    for (const truck of this.foodTrucks) {
+      truck.group.position.x = truck.baseX + truckMove;
+      for (const wheel of truck.wheels) {
+        wheel.rotation.x += dt * 1.5;
+      }
+    }
+
+    // 2. Rotación de Sombrillas de las Mesas de Comida en la Terraza
+    for (const umbrella of this.foodUmbrellas) {
+      umbrella.rotation.y += dt * 0.5;
+    }
+
+    // 3. Elevación e icono flotante de comida
+    if (this.foodSignGroup) {
+      this.foodSignGroup.rotation.y += dt * 1.2;
+      this.foodSignGroup.position.y = 3.8 + Math.sin(now * 0.003) * 0.3;
+    }
+  }
+
+  private updateRayito(now: number): void {
+    if (!this.rayitoGroup) return;
+    this.rayitoGroup.visible = true;
+
+    const target = this.controls.target;
+    const camPos = this.camera.position;
+    const dir = new THREE.Vector3().subVectors(target, camPos).normalize();
+
+    const rayPos = new THREE.Vector3().copy(target).addScaledVector(dir, 1.2);
+    rayPos.y = 0;
+
+    this.rayitoGroup.position.copy(rayPos);
+    this.rayitoGroup.lookAt(camPos.x, 1, camPos.z);
+
+    const walkCycle = Math.sin(now * 0.012);
+    this.rayitoGroup.position.y = Math.abs(walkCycle) * 0.35;
+
+    if (this.rayitoLeftLeg && this.rayitoRightLeg) {
+      this.rayitoLeftLeg.rotation.x = walkCycle * 0.7;
+      this.rayitoRightLeg.rotation.x = -walkCycle * 0.7;
+    }
   }
 
   private updateLabels(): void {

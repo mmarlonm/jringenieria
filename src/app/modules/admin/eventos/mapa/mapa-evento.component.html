@@ -117,10 +117,17 @@
         </button>
 
         @if (selectedStand.esStand && selectedStand.disponible !== false) {
-          <button class="panel-cta" (click)="abrirModalApartarStand(selectedStand)">
-            <mat-icon>bookmark_add</mat-icon>
-            Apartar Stand
-          </button>
+          @if (hasSession) {
+            <button class="panel-cta" (click)="abrirModalApartarStand(selectedStand)">
+              <mat-icon>bookmark_add</mat-icon>
+              Apartar Stand
+            </button>
+          } @else {
+            <button class="panel-cta !bg-slate-700 !opacity-90 hover:!bg-slate-600" (click)="abrirModalApartarStand(selectedStand)">
+              <mat-icon class="!text-amber-400">lock</mat-icon>
+              <span>Inicia sesión para apartar</span>
+            </button>
+          }
         }
         @if (selectedStand.esStand && selectedStand.disponible === false) {
           <button class="panel-cta !bg-indigo-600 hover:!bg-indigo-700" (click)="abrirModalReunionB2B(selectedStand)">

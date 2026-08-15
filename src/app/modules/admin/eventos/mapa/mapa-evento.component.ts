@@ -21,6 +21,8 @@ import { EventosService } from '../eventos.service';
 import { ModalApartarStand } from './modal-apartar-stand.component';
 import { ModalReunionesB2B } from './modal-reuniones-b2b.component';
 import { ModalPreguntasB2B } from './modal-preguntas-b2b.component';
+import { AuthService } from 'app/core/auth/auth.service';
+import { AuthUtils } from 'app/core/auth/auth.utils';
 
 @Component({
   selector: 'app-mapa-evento',
@@ -56,6 +58,7 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private _mapaService         = inject(MapaEventoService);
   private _eventosService      = inject(EventosService);
+  private _authService         = inject(AuthService);
   private _cdr                 = inject(ChangeDetectorRef);
   private _dialog              = inject(MatDialog);
   private _fb                  = inject(FormBuilder);
@@ -63,6 +66,11 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroy$             = new Subject<void>();
   private resizeObserver!: ResizeObserver;
   private standsData: StandConfig[] = [...STANDS_DATA];
+
+  get hasSession(): boolean {
+    const token = this._authService.accessToken;
+    return !!token && !AuthUtils.isTokenExpired(token);
+  }
 
   // Datos para modales
   formApartarStand!: FormGroup;
@@ -379,6 +387,16 @@ export class MapaEventoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** Abrir modal para apartar un stand disponible */
   abrirModalApartarStand(stand: StandConfig): void {
+    if (!this.hasSession) {
+      this._snackBar.open('🔒 Debes iniciar sesión para poder apartar un stand. Solo puedes consultar la información.', 'Entendido', {
+        duration: 5000,
+        panelClass: ['snackbar-warning'],
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
+      return;
+    }
+
     if (stand.disponible === false) {
       this._snackBar.open('❌ Este stand ya está apartado', 'Cerrar', { duration: 4000, panelClass: ['snackbar-error'] });
       return;
