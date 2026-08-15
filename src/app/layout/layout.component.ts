@@ -336,11 +336,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
         // Contexto dinámico de la vista activa o genérico
         const contexto = this.currentModuleDataJson || JSON.stringify({ mensaje: 'No hay datos de reporte activos en esta pantalla.' });
         const modulo = this.currentModuleName || 'General / Desconocido';
+        const rutaActual = this._router.url;
 
         this._http.post<any>(`${environment.apiUrl}/ReportDashboard/chat-agente-ia`, {
             contextoJson: contexto,
             pregunta: query,
-            moduloName: modulo
+            moduloName: `${modulo} (ruta: ${rutaActual})`
         }).subscribe({
             next: (res) => {
                 this.isChatLoading = false;
