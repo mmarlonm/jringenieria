@@ -1562,17 +1562,20 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
   /**
  * Función auxiliar para mapear la extensión a un tipo de documento de OnlyOffice
  */
-  private getDocumentType(ext: string): 'word' | 'cell' | 'presentation' | null {
+  private getDocumentType(ext: string): 'word' | 'cell' | 'slide' | null {
     ext = ext?.toLowerCase();
-    if (['docx', 'doc', 'odt'].includes(ext)) {
-      return 'word';
-    }
-    if (['xlsx', 'xls', 'ods'].includes(ext)) {
-      return 'cell';
-    }
-    if (['pptx', 'ppt', 'odp'].includes(ext)) {
-      return 'presentation';
-    }
+    if ([
+      'doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'fodt', 'ott', 'rtf', 'txt', 'html', 'htm', 'mht', 'mhtml', 'epub', 'pdf', 'djvu', 'fb2', 'xps', 'oxps'
+    ].includes(ext)) return 'word';
+    
+    if ([
+      'xls', 'xlsx', 'xlsm', 'xlt', 'xltx', 'xltm', 'ods', 'fods', 'ots', 'csv'
+    ].includes(ext)) return 'cell';
+    
+    if ([
+      'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'pot', 'potx', 'potm', 'odp', 'fodp', 'otp'
+    ].includes(ext)) return 'slide';
+    
     return null;
   }
 

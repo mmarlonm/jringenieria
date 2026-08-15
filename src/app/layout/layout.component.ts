@@ -8,6 +8,13 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
+import { environment } from 'environments/environment';
 import { FuseConfig, FuseConfigService } from '@fuse/services/config';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { FusePlatformService } from '@fuse/services/platform';
@@ -45,6 +52,10 @@ import { ThinLayoutComponent } from './layouts/vertical/thin/thin.component';
         FuturisticLayoutComponent,
         ThinLayoutComponent,
         SettingsComponent,
+        CommonModule,
+        FormsModule,
+        MatIconModule,
+        MatButtonModule,
     ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {
@@ -53,6 +64,23 @@ export class LayoutComponent implements OnInit, OnDestroy {
     scheme: 'dark' | 'light';
     theme: string;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
+
+    // ============================================
+    // 🤖 AGENTE DE IA CHAT FLOTANTE GLOBAL
+    // ============================================
+    isChatOpen = false;
+    chatInput = '';
+    isChatLoading = false;
+    chatMessages: Array<{ sender: 'user' | 'ia'; text: string; timestamp: Date }> = [];
+    currentModuleName = '';
+    currentModuleDataJson = '';
+    
+    quickSuggestions: string[] = [
+        'Resumen de cotizaciones aprobadas',
+        '¿Cuáles tareas están atrasadas?',
+        'Dime la desviación de utilidad de obra',
+        'Resumen de incidencias recientes'
+    ];
 
     /**
      * Constructor
@@ -64,7 +92,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _fuseConfigService: FuseConfigService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
-        private _fusePlatformService: FusePlatformService
+        private _fusePlatformService: FusePlatformService,
+        private _http: HttpClient,
+        private _chatIaService: ChatIaService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -148,6 +178,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
             this._document.body,
             this._fusePlatformService.osName
         );
+
+        // Suscribirse al contexto del modulo activo para tener conciencia del reporte en pantalla
+        this._chatIaService.context$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((ctx) => {
+                if (ctx) {
+                    this.currentModuleName = ctx.moduloName;
+                    this.currentModuleDataJson = ctx.datosJson;
+                } else {
+                    this.currentModuleName = '';
+                    this.currentModuleDataJson = '';
+                }
+            });
     }
 
     /**
@@ -247,5 +290,90 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
         // Add class name for the currently selected theme
         this._document.body.classList.add(this.theme);
+    }
+
+    // ============================================
+    // 🤖 AGENTE DE IA METODOS Y LOGICA
+    // ============================================
+    toggleChat(): void {
+        this.isChatOpen = !this.isChatOpen;
+        if (this.isChatOpen) {
+            setTimeout(() => this.scrollToBottom(), 50);
+        }
+    }
+
+    sendSuggestion(text: string): void {
+        this.chatInput = text;
+        this.sendChatMessage();
+    }
+
+    sendChatMessage(): void {
+        const query = this.chatInput.trim();
+        if (!query || this.isChatLoading) return;
+
+        this.chatMessages.push({
+            sender: 'user',
+            text: query,
+            timestamp: new Date()
+        });
+
+        this.chatInput = '';
+        this.isChatLoading = true;
+        
+        // Contexto dinámico de la vista activa o genérico
+        const contexto = this.currentModuleDataJson || JSON.stringify({ mensaje: 'No hay datos de reporte activos en esta pantalla.' });
+        const modulo = this.currentModuleName || 'General / Desconocido';
+
+        this._http.post<any>(`${environment.apiUrl}/ReportDashboard/chat-agente-ia`, {
+            contextoJson: contexto,
+            pregunta: query,
+            moduloName: modulo
+        }).subscribe({
+            next: (res) => {
+                this.isChatLoading = false;
+                let rawRespuesta = res?.respuesta || 'No he podido obtener una respuesta.';
+                
+                // Analizar si contiene comando de navegación
+                // Formato: [NAVIGATE: /ruta/destino]
+                const navRegex = /\[NAVIGATE:\s*([^\s\]]+)\]/i;
+                const match = rawRespuesta.match(navRegex);
+                
+                if (match && match[1]) {
+                    const targetRoute = match[1];
+                    // Remover el comando del texto visible para que sea estético
+                    rawRespuesta = rawRespuesta.replace(navRegex, '').trim();
+                    
+                    // Navegar al destino
+                    this._router.navigateByUrl(targetRoute);
+                }
+
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: rawRespuesta,
+                    timestamp: new Date()
+                });
+                
+                setTimeout(() => this.scrollToBottom(), 50);
+            },
+            error: (err) => {
+                this.isChatLoading = false;
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: 'Ocurrió un error al procesar tu pregunta. Por favor, intenta de nuevo.',
+                    timestamp: new Date()
+                });
+                console.error(err);
+                setTimeout(() => this.scrollToBottom(), 50);
+            }
+        });
+    }
+
+    private scrollToBottom(): void {
+        try {
+            const element = document.getElementById('globalChatHistory');
+            if (element) {
+                element.scrollTop = element.scrollHeight;
+            }
+        } catch (err) {}
     }
 }

@@ -243,7 +243,11 @@ export class TaskMediaDialogComponent implements OnInit {
     abrirArchivo(file: any): void {
         const fileExtension = file.nombreArchivo.split('.').pop()?.toLowerCase() || '';
         const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'pdf'];
-        const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+        const docExtensions = [
+            'doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'fodt', 'ott', 'rtf', 'txt', 'html', 'htm', 'mht', 'mhtml',
+            'xls', 'xlsx', 'xlsm', 'xlt', 'xltx', 'xltm', 'ods', 'fods', 'ots', 'csv',
+            'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'pot', 'potx', 'potm', 'odp', 'fodp', 'otp'
+        ];
 
         if (imageExtensions.includes(fileExtension)) {
             this.verImagen(file, fileExtension);
@@ -358,9 +362,19 @@ export class TaskMediaDialogComponent implements OnInit {
      * Helper de OnlyOffice (Si no lo tienes en la clase, agrégalo)
      */
     getDocumentType(ext: string): string | null {
-        if (['doc', 'docx', 'rtf', 'txt'].includes(ext)) return 'word';
-        if (['xls', 'xlsx', 'csv'].includes(ext)) return 'cell';
-        if (['ppt', 'pptx'].includes(ext)) return 'slide';
-        return null; // OnlyOffice puede abrir PDFs en algunas versiones, pero requiere config extra
+        ext = ext?.toLowerCase();
+        if ([
+          'doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'fodt', 'ott', 'rtf', 'txt', 'html', 'htm', 'mht', 'mhtml', 'epub', 'pdf', 'djvu', 'fb2', 'xps', 'oxps'
+        ].includes(ext)) return 'word';
+        
+        if ([
+          'xls', 'xlsx', 'xlsm', 'xlt', 'xltx', 'xltm', 'ods', 'fods', 'ots', 'csv'
+        ].includes(ext)) return 'cell';
+        
+        if ([
+          'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'pot', 'potx', 'potm', 'odp', 'fodp', 'otp'
+        ].includes(ext)) return 'slide';
+        
+        return null;
     }
 }

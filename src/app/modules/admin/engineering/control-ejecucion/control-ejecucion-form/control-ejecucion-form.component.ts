@@ -982,13 +982,30 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   isEditable(fileName: string): boolean {
     if (!fileName) return false;
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
-    return ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'txt', 'csv'].includes(ext);
+    return [
+      // Word documents
+      'doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'fodt', 'ott', 'rtf', 'txt', 'html', 'htm', 'mht', 'mhtml', 'epub', 'pdf', 'djvu', 'fb2', 'xps', 'oxps',
+      // Excel/cell documents
+      'xls', 'xlsx', 'xlsm', 'xlt', 'xltx', 'xltm', 'ods', 'fods', 'ots', 'csv',
+      // Slide/presentation documents
+      'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'pot', 'potx', 'potm', 'odp', 'fodp', 'otp'
+    ].includes(ext);
   }
 
   getDocumentType(ext: string): string | null {
-    if (['doc', 'docx', 'rtf', 'txt'].includes(ext)) return 'word';
-    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'cell';
-    if (['ppt', 'pptx'].includes(ext)) return 'slide';
+    ext = ext?.toLowerCase();
+    if ([
+      'doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'fodt', 'ott', 'rtf', 'txt', 'html', 'htm', 'mht', 'mhtml', 'epub', 'pdf', 'djvu', 'fb2', 'xps', 'oxps'
+    ].includes(ext)) return 'word';
+    
+    if ([
+      'xls', 'xlsx', 'xlsm', 'xlt', 'xltx', 'xltm', 'ods', 'fods', 'ots', 'csv'
+    ].includes(ext)) return 'cell';
+    
+    if ([
+      'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'pot', 'potx', 'potm', 'odp', 'fodp', 'otp'
+    ].includes(ext)) return 'slide';
+    
     return null;
   }
 

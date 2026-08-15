@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -36,7 +37,7 @@ import { DashboardDetalleDialogComponent } from './dialogs/dashboard-detalle-dia
     ],
     templateUrl: './dashboard-proyectos.component.html'
 })
-export class DashboardProyectosComponent implements OnInit {
+export class DashboardProyectosComponent implements OnInit, OnDestroy {
     Highcharts: typeof Highcharts = Highcharts;
     proyectos: any[] = [];
     selectedProyectoId: number = 0;
@@ -84,12 +85,17 @@ export class DashboardProyectosComponent implements OnInit {
         private _http: HttpClient,
         private _engineeringService: EngineeringService,
         private _cdr: ChangeDetectorRef,
-        private _dialog: MatDialog
+        private _dialog: MatDialog,
+        private _chatIaService: ChatIaService
     ) {}
 
     ngOnInit(): void {
         this.loadProyectos();
         this.onBuscar();
+    }
+
+    ngOnDestroy(): void {
+        this._chatIaService.clearContext();
     }
 
     loadProyectos(): void {
@@ -140,6 +146,7 @@ export class DashboardProyectosComponent implements OnInit {
                     this.proyectosResumen = res.proyectos || {};
 
                     this.buildCharts(res);
+                    this.actualizarContextoIa();
                 }
                 this._cdr.markForCheck();
             },
@@ -149,6 +156,11 @@ export class DashboardProyectosComponent implements OnInit {
                 this._cdr.markForCheck();
             }
         });
+    }
+
+    actualizarContextoIa(): void {
+        const datos = this.obtenerContextoJson();
+        this._chatIaService.setContext('Dashboard de Proyectos', datos);
     }
 
     clearFilters(): void {
@@ -404,5 +416,129 @@ export class DashboardProyectosComponent implements OnInit {
                 data: [proy.utilidadEsperadaTotal || 0, proy.utilidadRealTotal || 0]
             }] as any
         };
+    }
+
+    // ============================================
+    // 🤖 AGENTE DE IA CHAT FLOTANTE
+    // ============================================
+    @ViewChild('chatHistoryContainer') chatHistoryContainer!: ElementRef<HTMLDivElement>;
+
+    isChatOpen = false;
+    chatInput = '';
+    isChatLoading = false;
+    chatMessages: Array<{ sender: 'user' | 'ia'; text: string; timestamp: Date }> = [];
+    
+    quickSuggestions: string[] = [
+        'Resumen de cotizaciones aprobadas',
+        '¿Cuáles tareas están atrasadas?',
+        'Dime la desviación de utilidad de obra',
+        'Resumen de incidencias recientes'
+    ];
+
+    toggleChat(): void {
+        this.isChatOpen = !this.isChatOpen;
+        this._cdr.markForCheck();
+        if (this.isChatOpen) {
+            setTimeout(() => this.scrollToBottom(), 50);
+        }
+    }
+
+    sendSuggestion(text: string): void {
+        this.chatInput = text;
+        this.sendChatMessage();
+    }
+
+    sendChatMessage(): void {
+        const query = this.chatInput.trim();
+        if (!query || this.isChatLoading) return;
+
+        this.chatMessages.push({
+            sender: 'user',
+            text: query,
+            timestamp: new Date()
+        });
+
+        this.chatInput = '';
+        this.isChatLoading = true;
+        this._cdr.markForCheck();
+        setTimeout(() => this.scrollToBottom(), 50);
+
+        const contexto = this.obtenerContextoJson();
+
+        this._http.post<any>(`${environment.apiUrl}/ReportDashboard/chat-agente-ia`, {
+            contextoJson: contexto,
+            pregunta: query,
+            moduloName: 'Dashboard de Proyectos'
+        }).subscribe({
+            next: (res) => {
+                this.isChatLoading = false;
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: res?.respuesta || 'No he podido obtener una respuesta.',
+                    timestamp: new Date()
+                });
+                this._cdr.markForCheck();
+                setTimeout(() => this.scrollToBottom(), 50);
+            },
+            error: (err) => {
+                this.isChatLoading = false;
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: 'Ocurrió un error al procesar tu pregunta. Por favor, intenta de nuevo.',
+                    timestamp: new Date()
+                });
+                console.error(err);
+                this._cdr.markForCheck();
+                setTimeout(() => this.scrollToBottom(), 50);
+            }
+        });
+    }
+
+    private obtenerContextoJson(): string {
+        const datos = {
+            metadata: this.metadata,
+            resumenTareas: {
+                totalVencenHoy: this.tareasVencenHoy.length,
+                totalAtrasadas: this.tareasAtrasadas.length,
+                progresoGeneral: this.progresoGeneral
+            },
+            eisenhower: this.eisenhower,
+            cotizaciones: {
+                totalRealizadas: this.cotizaciones.totalRealizadas,
+                montoTotalRealizado: this.cotizaciones.montoTotalRealizado,
+                totalAprobadas: this.cotizaciones.totalAprobadas,
+                montoTotalAprobado: this.cotizaciones.montoTotalAprobado,
+                totalRechazadas: this.cotizaciones.totalRechazadas,
+                montoTotalRechazado: this.cotizaciones.montoTotalRechazado,
+                tiempoPromedioLevantamientoACotizacion: this.cotizaciones.tiempoPromedioLevantamientoACotizacion,
+                tiempoPromedioCotizacionAAprobacion: this.cotizaciones.tiempoPromedioCotizacionAAprobacion
+            },
+            proyectos: {
+                enEjecucion: this.proyectosResumen.proyectosEnEjecucion,
+                detenidos: this.proyectosResumen.proyectosDetenidos,
+                porEjecutar: this.proyectosResumen.proyectosPorEjecutar,
+                utilidadEsperadaTotal: this.proyectosResumen.utilidadEsperadaTotal,
+                utilidadRealTotal: this.proyectosResumen.utilidadRealTotal,
+                desviacionUtilidad: (this.proyectosResumen.utilidadRealTotal || 0) - (this.proyectosResumen.utilidadEsperadaTotal || 0),
+                cumplimientoCronograma: this.proyectosResumen.cumplimientoCronogramaPorcentaje
+            },
+            incidencias: (this.proyectosResumen.incidencias || []).map((i: any) => ({
+                empresa: i.empresa,
+                actividad: i.actividad,
+                tipoIncidencia: i.tipoIncidencia,
+                razonDetenido: i.razonDetenido,
+                fecha: i.fecha
+            }))
+        };
+        return JSON.stringify(datos);
+    }
+
+    private scrollToBottom(): void {
+        try {
+            if (this.chatHistoryContainer) {
+                const element = this.chatHistoryContainer.nativeElement;
+                element.scrollTop = element.scrollHeight;
+            }
+        } catch (err) {}
     }
 }
