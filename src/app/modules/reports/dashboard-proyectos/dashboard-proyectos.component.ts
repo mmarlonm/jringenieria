@@ -42,6 +42,12 @@ export class DashboardProyectosComponent implements OnInit {
     selectedProyectoId: number = 0;
     fechaInicio: Date | null = null;
     fechaFin: Date | null = null;
+    
+    // Filtros adicionales por empresa y tipo de proyecto
+    empresas: string[] = [];
+    tiposProyecto: string[] = [];
+    selectedEmpresa: string = '';
+    selectedTipoProyecto: string = '';
 
     metadata: any = {
         proyecto: 'Todos',
@@ -90,6 +96,10 @@ export class DashboardProyectosComponent implements OnInit {
         this._engineeringService.getSeguimientos().subscribe({
             next: (res) => {
                 this.proyectos = res || [];
+                // Obtener lista única de empresas
+                this.empresas = Array.from(new Set(this.proyectos.map(p => p.empresa).filter(Boolean))).sort() as string[];
+                // Obtener lista única de tipos de proyecto
+                this.tiposProyecto = Array.from(new Set(this.proyectos.map(p => p.tipo).filter(Boolean))).sort() as string[];
                 this._cdr.markForCheck();
             },
             error: (err) => console.error('Error al cargar proyectos:', err)
@@ -108,6 +118,12 @@ export class DashboardProyectosComponent implements OnInit {
         }
         if (this.fechaFin) {
             params.fechaFin = this.fechaFin.toISOString();
+        }
+        if (this.selectedEmpresa) {
+            params.empresa = this.selectedEmpresa;
+        }
+        if (this.selectedTipoProyecto) {
+            params.tipoProyecto = this.selectedTipoProyecto;
         }
 
         this._http.get<any>(`${environment.apiUrl}/ReportDashboard/dashboard-proyectos`, { params }).subscribe({
@@ -139,6 +155,8 @@ export class DashboardProyectosComponent implements OnInit {
         this.selectedProyectoId = 0;
         this.fechaInicio = null;
         this.fechaFin = null;
+        this.selectedEmpresa = '';
+        this.selectedTipoProyecto = '';
         this.onBuscar();
     }
 

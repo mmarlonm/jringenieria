@@ -31,6 +31,26 @@
                 </mat-select>
             </mat-form-field>
 
+            <!-- Empresa Selector -->
+            <mat-form-field appearance="outline" class="w-full sm:w-60 fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Filtrar por Empresa</mat-label>
+                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">business</mat-icon>
+                <mat-select [(ngModel)]="selectedEmpresa">
+                    <mat-option value="">Todas las Empresas</mat-option>
+                    <mat-option *ngFor="let emp of empresas" [value]="emp">{{ emp }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <!-- Tipo de Proyecto Selector -->
+            <mat-form-field appearance="outline" class="w-full sm:w-60 fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Tipo de Proyecto</mat-label>
+                <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">category</mat-icon>
+                <mat-select [(ngModel)]="selectedTipoProyecto">
+                    <mat-option value="">Todos los Tipos</mat-option>
+                    <mat-option *ngFor="let tipo of tiposProyecto" [value]="tipo">{{ tipo }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
             <!-- Fecha Inicio -->
             <mat-form-field appearance="outline" class="w-full sm:w-52 fuse-mat-dense" subscriptSizing="dynamic">
                 <mat-label>Fecha Inicio</mat-label>
