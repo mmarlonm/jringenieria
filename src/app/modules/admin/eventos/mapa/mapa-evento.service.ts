@@ -68,9 +68,14 @@ export class MapaEventoService implements OnDestroy {
   // ── recorrido ───────────────────────────────────────────────────────────────
   private touring = false;
   private tourIdx = 0;
-  private tourElapsed = 0;
-  private tourEyes: THREE.Vector3[] = [];
-  private tourLooks: THREE.Vector3[] = [];
+  private pathDistances: number[] = [];
+  private totalPathLength = 0;
+  private currentPathDist = 0;
+  private lastStepTime = 0;
+  private firstTourFrame = false;
+  private smoothCamPos = new THREE.Vector3();
+  private smoothTarget = new THREE.Vector3();
+  private smoothRayitoDir = new THREE.Vector3();
 
   private readonly HOME_POS    = new THREE.Vector3(0, 60, 56);
   private readonly HOME_TARGET = new THREE.Vector3(0, 0, 0);
@@ -211,8 +216,8 @@ export class MapaEventoService implements OnDestroy {
       const baseColor = cfg.color ?? STAND_COLORS[cfg.tipo];
       const ocupado   = cfg.disponible === false;
       const opacity   = cfg.tipo === 'zona' ? 0.55 : cfg.tipo === 'escenario' ? 0.7 : ocupado ? 0.95 : 0.82;
+      const area = cfg.w * cfg.d;
 
-      const geom = new THREE.BoxGeometry(cfg.w, cfg.h, cfg.d);
       const mat  = new THREE.MeshStandardMaterial({
         color: baseColor,
         transparent: opacity < 1,
@@ -221,29 +226,124 @@ export class MapaEventoService implements OnDestroy {
         metalness: cfg.tipo === '6x3' ? 0.55 : cfg.tipo === '9x3' ? 0.4 : 0.08,
         emissive: new THREE.Color(baseColor).multiplyScalar(0.08),
       });
+      this.disposables.push(mat);
 
-      const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.set(cfg.px, cfg.h / 2, cfg.pz);
-      mesh.castShadow = mesh.receiveShadow = true;
-      mesh.userData = cfg;
-      this.scene.add(mesh);
-      this.standMeshes.push(mesh);
-      this.baseColors.set(mesh, new THREE.Color(baseColor));
-      this.baseOpacity.set(mesh, opacity);
-      this.disposables.push(geom, mat);
+      const addHoverData = (m: THREE.Mesh) => {
+        this.baseColors.set(m, new THREE.Color(baseColor));
+        this.baseOpacity.set(m, opacity);
+      };
 
-      // Contorno para separar volúmenes contiguos
-      const edges   = new THREE.EdgesGeometry(geom);
-      const edgeMat = new THREE.LineBasicMaterial({
-        color: new THREE.Color(baseColor).multiplyScalar(0.45),
-      });
-      const wire = new THREE.LineSegments(edges, edgeMat);
-      wire.position.copy(mesh.position);
-      this.scene.add(wire);
-      this.disposables.push(edges, edgeMat);
+      if (cfg.esStand) {
+        const standGroup = new THREE.Group();
+        standGroup.position.set(cfg.px, 0, cfg.pz);
 
-      const area = cfg.w * cfg.d;
-      this.addLabel(cfg, cfg.px, cfg.h + 0.9, cfg.pz, area);
+        const floorGeo = new THREE.BoxGeometry(cfg.w, 0.1, cfg.d);
+        const floor = new THREE.Mesh(floorGeo, mat);
+        floor.position.y = 0.05;
+        floor.receiveShadow = true;
+        floor.userData = cfg;
+        standGroup.add(floor);
+        this.standMeshes.push(floor);
+        addHoverData(floor);
+
+        const wallGeo = new THREE.BoxGeometry(cfg.w, cfg.h, 0.2);
+        const wall = new THREE.Mesh(wallGeo, mat);
+        wall.position.set(0, cfg.h / 2, -cfg.d / 2 + 0.1);
+        wall.castShadow = true; wall.receiveShadow = true;
+        standGroup.add(wall);
+        
+        const deskW = Math.min(2.0, cfg.w * 0.6);
+        const deskGeo = new THREE.BoxGeometry(deskW, 1.0, 0.6);
+        const deskMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+        const desk = new THREE.Mesh(deskGeo, deskMat);
+        desk.position.set(0, 0.5, cfg.d / 2 - 0.5);
+        desk.castShadow = true; desk.receiveShadow = true;
+        standGroup.add(desk);
+
+        const tvGeo = new THREE.BoxGeometry(1.8, 1.0, 0.1);
+        const tvMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
+        const tv = new THREE.Mesh(tvGeo, tvMat);
+        tv.position.set(0, cfg.h * 0.6, -cfg.d / 2 + 0.25);
+        standGroup.add(tv);
+
+        // Techo del stand (Roof)
+        const roofGeo = new THREE.BoxGeometry(cfg.w, 0.1, cfg.d);
+        const roof = new THREE.Mesh(roofGeo, mat);
+        roof.position.y = cfg.h; // Colocar el techo en la parte superior
+        roof.castShadow = true;
+        roof.receiveShadow = true;
+        standGroup.add(roof);
+
+        const edges = new THREE.EdgesGeometry(wallGeo);
+        const edgeMat = new THREE.LineBasicMaterial({ color: new THREE.Color(baseColor).multiplyScalar(0.45) });
+        const wire = new THREE.LineSegments(edges, edgeMat);
+        wire.position.copy(wall.position);
+        standGroup.add(wire);
+
+        this.scene.add(standGroup);
+        this.disposables.push(floorGeo, wallGeo, deskGeo, deskMat, tvGeo, tvMat, roofGeo, edges, edgeMat);
+        this.addLabel(cfg, cfg.px, cfg.h + 0.9, cfg.pz, area);
+
+      } else if (cfg.tipo === 'escenario') {
+        const stageGroup = new THREE.Group();
+        stageGroup.position.set(cfg.px, 0, cfg.pz);
+
+        const platGeo = new THREE.BoxGeometry(cfg.w, 0.6, cfg.d);
+        const platform = new THREE.Mesh(platGeo, mat);
+        platform.position.y = 0.3;
+        platform.receiveShadow = true;
+        platform.userData = cfg;
+        stageGroup.add(platform);
+        this.standMeshes.push(platform);
+        addHoverData(platform);
+
+        const stairW = 2.0;
+        const stairGeo1 = new THREE.BoxGeometry(stairW, 0.2, 1.5);
+        const stair1 = new THREE.Mesh(stairGeo1, mat);
+        stair1.position.set(cfg.w / 2 + stairW / 2, 0.1, 0);
+        stageGroup.add(stair1);
+
+        const stairGeo2 = new THREE.BoxGeometry(stairW, 0.4, 1.0);
+        const stair2 = new THREE.Mesh(stairGeo2, mat);
+        stair2.position.set(cfg.w / 2 + stairW / 2, 0.2, 0);
+        stageGroup.add(stair2);
+
+        const podiumGeo = new THREE.BoxGeometry(0.8, 1.2, 0.6);
+        const podiumMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+        const podium = new THREE.Mesh(podiumGeo, podiumMat);
+        podium.position.set(-cfg.w / 4, 0.6 + 0.6, 1.0);
+        podium.castShadow = true;
+        stageGroup.add(podium);
+
+        const screenGeo = new THREE.BoxGeometry(0.2, 3.0, cfg.d * 0.7);
+        const screenMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
+        const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.set(-cfg.w / 2 + 0.5, 2.1, 0);
+        stageGroup.add(screen);
+
+        this.scene.add(stageGroup);
+        this.disposables.push(platGeo, stairGeo1, stairGeo2, podiumGeo, podiumMat, screenGeo, screenMat);
+        this.addLabel(cfg, cfg.px, cfg.h + 0.9, cfg.pz, area);
+
+      } else {
+        const geom = new THREE.BoxGeometry(cfg.w, cfg.h, cfg.d);
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(cfg.px, cfg.h / 2, cfg.pz);
+        mesh.castShadow = mesh.receiveShadow = true;
+        mesh.userData = cfg;
+        this.scene.add(mesh);
+        this.standMeshes.push(mesh);
+        addHoverData(mesh);
+
+        const edges = new THREE.EdgesGeometry(geom);
+        const edgeMat = new THREE.LineBasicMaterial({ color: new THREE.Color(baseColor).multiplyScalar(0.45) });
+        const wire = new THREE.LineSegments(edges, edgeMat);
+        wire.position.copy(mesh.position);
+        this.scene.add(wire);
+
+        this.disposables.push(geom, edges, edgeMat);
+        this.addLabel(cfg, cfg.px, cfg.h + 0.9, cfg.pz, area);
+      }
     });
   }
 
@@ -351,7 +451,7 @@ export class MapaEventoService implements OnDestroy {
 
     doorExits.forEach((exit) => {
       const postWidth = 0.22;
-      const frameDepth = 0.35;
+      const frameDepth = 1.2;
       const portalGroup = new THREE.Group();
 
       // 1. MARCO DEL PORTAL (Postes y Dintel Superior)
@@ -542,7 +642,7 @@ export class MapaEventoService implements OnDestroy {
   private buildRayitoMascot(): void {
     this.rayitoGroup = new THREE.Group();
 
-    // 1. Cuerpo de Rayo 3D Estilizado
+    // 1. Cuerpo de Rayo 3D Estilizado Original
     const shape = new THREE.Shape();
     shape.moveTo(0, 1.8);
     shape.lineTo(-0.7, 0.4);
@@ -566,7 +666,7 @@ export class MapaEventoService implements OnDestroy {
     rayMesh.position.set(0, 0.9, -0.175);
     this.rayitoGroup.add(rayMesh);
 
-    // 2. Ojos Grandes y Expresivos (Carismáticos con Brillo)
+    // 2. Ojos Grandes y Expresivos
     const eyeGeom = new THREE.SphereGeometry(0.12, 16, 16);
     const eyeMat  = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1 });
     
@@ -578,7 +678,6 @@ export class MapaEventoService implements OnDestroy {
     rightEye.position.set(0.2, 1.15, 0.22);
     this.rayitoGroup.add(rightEye);
 
-    // Brillo de las pupilas
     const pupilGeom = new THREE.SphereGeometry(0.04, 12, 12);
     const pupilMat  = new THREE.MeshBasicMaterial({ color: 0xffffff });
     
@@ -590,7 +689,6 @@ export class MapaEventoService implements OnDestroy {
     p2.position.set(0.23, 1.18, 0.32);
     this.rayitoGroup.add(p2);
 
-    // Mejillas sonrosadas
     const blushGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16);
     const blushMat  = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.7 });
     
@@ -656,14 +754,39 @@ export class MapaEventoService implements OnDestroy {
 
     this.rayitoGroup.scale.set(0.9, 0.9, 0.9);
     this.rayitoGroup.visible = false;
-
     this.scene.add(this.rayitoGroup);
+
     this.disposables.push(rayGeom, rayMat, eyeGeom, eyeMat, pupilGeom, pupilMat, blushGeom, blushMat, armGeom, armMat, gloveGeom, gloveMat, legGeom, legMat, shoeGeom, shoeMat);
   }
 
+  private getPointAtDist(d: number): { p: [number, number], index: number } {
+    if (d <= 0) return { p: TOUR[0].p, index: 0 };
+    if (d >= this.totalPathLength) return { p: TOUR[TOUR.length - 1].p, index: TOUR.length - 1 };
+    
+    for (let i = 0; i < this.pathDistances.length - 1; i++) {
+      if (d >= this.pathDistances[i] && d <= this.pathDistances[i+1]) {
+        const segDist = this.pathDistances[i+1] - this.pathDistances[i];
+        const t = segDist > 0 ? (d - this.pathDistances[i]) / segDist : 0;
+        const A = TOUR[i].p;
+        const B = TOUR[i+1].p;
+        const px = A[0] + (B[0] - A[0]) * t;
+        const py = A[1] + (B[1] - A[1]) * t;
+        return { p: [px, py], index: i };
+      }
+    }
+    return { p: TOUR[TOUR.length - 1].p, index: TOUR.length - 1 };
+  }
+
   private buildTour(): void {
-    this.tourEyes  = TOUR.map(s => new THREE.Vector3(wx(s.eye[0]),  EYE_Y,  wz(s.eye[1])));
-    this.tourLooks = TOUR.map(s => new THREE.Vector3(wx(s.look[0]), LOOK_Y, wz(s.look[1])));
+    this.pathDistances = [0];
+    this.totalPathLength = 0;
+    for (let i = 0; i < TOUR.length - 1; i++) {
+      const A = TOUR[i].p;
+      const B = TOUR[i+1].p;
+      const dist = Math.hypot(B[0] - A[0], B[1] - A[1]);
+      this.totalPathLength += dist;
+      this.pathDistances.push(this.totalPathLength);
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -677,8 +800,7 @@ export class MapaEventoService implements OnDestroy {
     this.updateFoodArea(now, dt);
 
     if (this.touring) {
-      this.updateTour(dt);
-      this.updateRayito(now);
+      this.updateTour(now);
     } else {
       if (this.rayitoGroup) this.rayitoGroup.visible = false;
       this.controls?.update();
@@ -689,9 +811,9 @@ export class MapaEventoService implements OnDestroy {
   }
 
   private updateDoors(now: number): void {
-    const openFactor = Math.abs(Math.sin(now * 0.0015));
+    const openFactor = Math.pow(Math.sin(now * 0.0008), 2);
     for (const door of this.animatedDoors) {
-      const offset = openFactor * (door.width * 0.42);
+      const offset = openFactor * (door.width * 0.85);
       if (door.axis === 'x') {
         door.leftDoor.position.x = door.basePosLeft.x - offset;
         door.rightDoor.position.x = door.basePosRight.x + offset;
@@ -703,43 +825,48 @@ export class MapaEventoService implements OnDestroy {
   }
 
   private updateFoodArea(now: number, dt: number): void {
-    // 1. Movimiento dinámico de los Carritos de Comida (Food Trucks 3D)
-    const truckMove = Math.sin(now * 0.001) * 0.6;
-    for (const truck of this.foodTrucks) {
-      truck.group.position.x = truck.baseX + truckMove;
-      for (const wheel of truck.wheels) {
-        wheel.rotation.x += dt * 1.5;
-      }
-    }
-
-    // 2. Rotación de Sombrillas de las Mesas de Comida en la Terraza
+    // Sombrillas y food trucks estáticos (sin movimiento a petición del usuario)
+    // Sólo rotación muy sutil para las sombrillas
     for (const umbrella of this.foodUmbrellas) {
-      umbrella.rotation.y += dt * 0.5;
-    }
-
-    // 3. Elevación e icono flotante de comida
-    if (this.foodSignGroup) {
-      this.foodSignGroup.rotation.y += dt * 1.2;
-      this.foodSignGroup.position.y = 3.8 + Math.sin(now * 0.003) * 0.3;
+      umbrella.rotation.y += dt * 0.15;
     }
   }
 
-  private updateRayito(now: number): void {
+  private updateRayitoFixed(now: number, dt: number, rayPos: THREE.Vector3, dir2D: THREE.Vector3): void {
     if (!this.rayitoGroup) return;
     this.rayitoGroup.visible = true;
 
-    const target = this.controls.target;
-    const camPos = this.camera.position;
-    const dir = new THREE.Vector3().subVectors(target, camPos).normalize();
+    // Calcular altura del piso
+    rayPos.y = 10;
+    this.raycaster.set(rayPos, new THREE.Vector3(0, -1, 0));
+    
+    const validObjects: THREE.Object3D[] = [];
+    this.scene.traverse((obj) => {
+      if (obj.name === 'floor' || obj.name === 'stage_platform') {
+        validObjects.push(obj);
+      }
+    });
 
-    const rayPos = new THREE.Vector3().copy(target).addScaledVector(dir, 1.2);
-    rayPos.y = 0;
+    const hits = this.raycaster.intersectObjects(validObjects, false);
+    let floorY = 0;
+    if (hits.length > 0) {
+      floorY = hits[0].point.y;
+    }
+
+    const walkCycle = Math.sin(now * 0.008); // Pasos ligeramente más lentos acordes a la nueva velocidad
+    rayPos.y = floorY + Math.abs(walkCycle) * 0.35;
 
     this.rayitoGroup.position.copy(rayPos);
-    this.rayitoGroup.lookAt(camPos.x, 1, camPos.z);
 
-    const walkCycle = Math.sin(now * 0.012);
-    this.rayitoGroup.position.y = Math.abs(walkCycle) * 0.35;
+    // Suavizado de la rotación de Rayito para que no gire como robot en las esquinas
+    if (this.firstTourFrame) {
+      this.smoothRayitoDir.copy(dir2D);
+    } else {
+      const lerpFactor = 1 - Math.pow(0.85, dt / 16);
+      this.smoothRayitoDir.lerp(dir2D, lerpFactor).normalize();
+    }
+    
+    this.rayitoGroup.lookAt(rayPos.x + this.smoothRayitoDir.x, rayPos.y, rayPos.z + this.smoothRayitoDir.z);
 
     if (this.rayitoLeftLeg && this.rayitoRightLeg) {
       this.rayitoLeftLeg.rotation.x = walkCycle * 0.7;
@@ -757,35 +884,82 @@ export class MapaEventoService implements OnDestroy {
     }
   }
 
-  private updateTour(dt: number): void {
-    this.tourElapsed += dt * 1000;
-    const t = Math.min(1, this.tourElapsed / SEG_MS);
-    const e = t * t * (3 - 2 * t);   // smoothstep
+  private updateTour(now: number): void {
+    let dt = now - this.lastStepTime;
+    if (dt > 100) dt = 16;
+    this.lastStepTime = now;
 
-    const i = this.tourIdx;
-    const j = Math.min(i + 1, this.tourEyes.length - 1);
+    // Velocidad constante: 55 pixeles de mapa por segundo (mucho más lento y suave)
+    const speed = 55 * (dt / 1000); 
+    this.currentPathDist += speed;
+    
+    if (this.currentPathDist >= this.totalPathLength) {
+       this.currentPathDist = this.totalPathLength;
+       this.stopTour();
+       return;
+    }
 
-    this.camera.position.lerpVectors(this.tourEyes[i],  this.tourEyes[j],  e);
-    this.controls.target.lerpVectors(this.tourLooks[i], this.tourLooks[j], e);
-    this.camera.lookAt(this.controls.target);
+    const camData = this.getPointAtDist(this.currentPathDist);
+    if (camData.index !== this.tourIdx) {
+       this.tourIdx = camData.index;
+       this.ngZone.run(() => this.tourStep$.next(TOUR[this.tourIdx].titulo));
+    }
+
+    // Rayito siempre va 50 pixeles por delante sobre el MISMO path
+    const rayitoData = this.getPointAtDist(this.currentPathDist + 50);
+    
+    // LookTarget de la cámara 80 pixeles por delante para anticipar las curvas
+    const lookData = this.getPointAtDist(this.currentPathDist + 80);
+
+    const cx = wx(camData.p[0]); const cz = wz(camData.p[1]);
+    const rx = wx(rayitoData.p[0]); const rz = wz(rayitoData.p[1]);
+    const lx = wx(lookData.p[0]); const lz = wz(lookData.p[1]);
+
+    const camPos = new THREE.Vector3(cx, EYE_Y, cz);
+    const targetVector = new THREE.Vector3(lx, LOOK_Y, lz);
+
+    if (this.firstTourFrame) {
+       this.smoothCamPos.copy(camPos);
+       this.smoothTarget.copy(targetVector);
+    } else {
+       // Lerp orgánico para hacer que la cámara tome las curvas de forma curvilínea muy suave
+       const lerpFactor = 1 - Math.pow(0.94, dt / 16);
+       this.smoothCamPos.lerp(camPos, lerpFactor);
+       this.smoothTarget.lerp(targetVector, lerpFactor);
+    }
+
+    this.camera.position.copy(this.smoothCamPos);
+    if (this.smoothCamPos.distanceTo(this.smoothTarget) > 0.1) {
+       this.controls.target.copy(this.smoothTarget);
+       this.camera.lookAt(this.smoothTarget);
+    }
     this.updateTooltipPosition();
 
-    if (t >= 1) {
-      if (j >= this.tourEyes.length - 1) { this.stopTour(); return; }
-      this.tourIdx = j;
-      this.tourElapsed = 0;
-      this.ngZone.run(() => this.tourStep$.next(TOUR[j].titulo));
+    // Calcular dirección real para Rayito
+    const prevRayito = this.getPointAtDist(this.currentPathDist + 49);
+    const prx = wx(prevRayito.p[0]); const prz = wz(prevRayito.p[1]);
+    const dir2D = new THREE.Vector3(rx - prx, 0, rz - prz).normalize();
+    
+    if (dir2D.lengthSq() < 0.1) {
+      dir2D.copy(new THREE.Vector3().subVectors(this.smoothTarget, this.smoothCamPos).normalize());
+      dir2D.y = 0;
+      dir2D.normalize();
     }
+
+    const rayPos = new THREE.Vector3(rx, 10, rz);
+    this.updateRayitoFixed(now, dt, rayPos, dir2D);
+    
+    this.firstTourFrame = false;
   }
 
   startTour(): void {
     if (!this.controls) return;
     this.touring     = true;
     this.tourIdx     = 0;
-    this.tourElapsed = 0;
+    this.currentPathDist = 0;
+    this.lastStepTime = performance.now();
+    this.firstTourFrame = true;
     this.controls.enabled = false;
-    this.camera.position.copy(this.tourEyes[0]);
-    this.controls.target.copy(this.tourLooks[0]);
     this.ngZone.run(() => this.tourStep$.next(TOUR[0].titulo));
   }
 

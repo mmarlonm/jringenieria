@@ -245,20 +245,34 @@ export const WALLS: WallDef[] = [
   { rect: [ 440, 688, 1030, 700], h: 4.4 },
 ];
 
-// ═══ Recorrido virtual (waypoints en px de la imagen) ════════════════════════
-export interface TourStep { eye: [number, number]; look: [number, number]; titulo: string; }
+export interface TourStep { p: [number, number]; titulo: string; }
 
 export const TOUR: TourStep[] = [
-  { eye: [1120, 160], look: [1120, 260], titulo: 'Escaleras — Módulo de Atención 🪜' },
-  { eye: [1120, 340], look: [1120, 447], titulo: 'Experiencia Inmersiva & Photo Opportunity 💫' },
-  { eye: [1050, 447], look: [ 960, 447], titulo: 'Entrada Principal — Ingreso al Salón de Exposición 🚪' },
-  { eye: [ 920, 447], look: [ 750, 447], titulo: 'Pasillo Principal del Salón 🏬' },
-  { eye: [ 750, 447], look: [ 650, 290], titulo: 'Pasillo Central — Vista a Stands Premium (JR · VOLTRAN · WEG)' },
-  { eye: [ 650, 447], look: [ 520, 447], titulo: 'Pasillo de Isla Central B20 – B27' },
-  { eye: [ 520, 447], look: [ 520, 365], titulo: 'Pasillo Oeste — Hacia Escenarios' },
-  { eye: [ 480, 365], look: [ 380, 365], titulo: 'Acceso a Escenarios 🎭' },
-  { eye: [ 350, 365], look: [ 320, 200], titulo: 'Escenario Principal — Conferencias' },
-  { eye: [ 350, 520], look: [ 320, 620], titulo: 'Escenario Talleres' },
-  { eye: [ 735, 620], look: [ 735, 694], titulo: 'Pasillo a Terraza de Alimentos ☕' },
-  { eye: [ 735, 770], look: [ 580, 770], titulo: 'Área de Alimentos y Descanso Exterior 🍔☕' },
+  { p: [1120, 197], titulo: 'Escaleras — Módulo de Atención 🪜' },
+  { p: [1120, 438], titulo: 'Experiencia Inmersiva & Photo Opportunity 💫' },
+  { p: [ 980, 438], titulo: 'Entrada Principal — Ingreso al Salón 🚪' },
+  { p: [ 850, 438], titulo: 'Pasillo Principal del Salón 🏬' },
+  { p: [ 683, 438], titulo: 'Vista a Stands Premium (JR · VOLTRAN)' },
+  { p: [ 522, 438], titulo: 'Recorrido Pasillo Central' },
+  { p: [ 522, 280], titulo: 'Pasillos Interiores' },
+  { p: [ 522, 170], titulo: 'Explorando Stands' },
+  { p: [ 683, 170], titulo: 'Pasillo Superior' },
+  { p: [ 683, 438], titulo: 'Regreso al Pasillo Central' },
+  { p: [ 522, 438], titulo: 'Hacia Escenarios' },
+  { p: [ 522, 365], titulo: 'Pasillo Oeste — Hacia Escenarios' },
+  { p: [ 443, 365], titulo: 'Acceso a Escenarios 🎭' },
+  { p: [ 350, 365], titulo: 'Ingreso a Zona de Escenarios' },
+  { p: [ 350, 191], titulo: 'Hacia Escenario Principal' },
+  { p: [ 300, 191], titulo: 'Escenario Principal — Conferencias' },
+  { p: [ 250, 191], titulo: 'Podio - Escenario Principal' },
+  { p: [ 350, 191], titulo: 'Bajando del Escenario' },
+  { p: [ 350, 620], titulo: 'Hacia Escenario Talleres' },
+  { p: [ 300, 620], titulo: 'Escenario Talleres' },
+  { p: [ 250, 620], titulo: 'Podio - Escenario Talleres' },
+  { p: [ 350, 620], titulo: 'Saliendo del Podio' },
+  { p: [ 522, 620], titulo: 'Pasillo a Terraza de Alimentos ☕' },
+  { p: [ 683, 620], titulo: 'Hacia Salida Sur' },
+  { p: [ 735, 620], titulo: 'Pasillo de Salida' },
+  { p: [ 735, 770], titulo: 'Cruzando al Área de Alimentos 🍔' },
+  { p: [ 550, 770], titulo: 'Área de Alimentos y Descanso Exterior 🍔☕' }
 ];
