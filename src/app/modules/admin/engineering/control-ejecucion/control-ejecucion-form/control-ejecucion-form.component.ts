@@ -1010,35 +1010,43 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this._engineeringService.getToken(this.idSeguimiento, archivo.tipo, archivo.nombreArchivo).subscribe({
       next: (tokenResponse) => {
         if (tokenResponse && tokenResponse.token) {
+          let editorConfig: any;
+          if (tokenResponse.config) {
+            editorConfig = tokenResponse.config;
+            editorConfig.token = tokenResponse.token;
+          } else {
+            editorConfig = {
+              document: {
+                fileType: fileExtension,
+                key: tokenResponse.key || `${archivo.id || 0}_${userID}_${this.idSeguimiento}_${archivo.tipo}_${safeFileName}`,
+                title: archivo.nombreArchivo,
+                url: `${this.onlyOfficeApiUrl}/editfile?idSeguimiento=${this.idSeguimiento}&tipo=${archivo.tipo}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`,
+                permissions: {
+                  edit: true,
+                  download: true,
+                  print: true,
+                  fillForms: true,
+                  review: true,
+                  comment: true,
+                  modifyFilter: true,
+                  modifyContentControl: true
+                }
+              },
+              token: tokenResponse.token,
+              documentType: documentType,
+              editorConfig: {
+                callbackUrl: `${this.onlyOfficeApiUrl}/callback`,
+                mode: 'edit'
+              }
+            };
+          }
+
           this._dialog.open(OnlyOfficeEditorComponent, {
             width: '90vw',
             height: '90vh',
             data: {
               documentServerUrl: this.onlyOfficeDocsUrl,
-              editorConfig: {
-                document: {
-                  fileType: fileExtension,
-                  key: tokenResponse.key || `${archivo.id || 0}_${userID}_${this.idSeguimiento}_${archivo.tipo}_${safeFileName}`,
-                  title: archivo.nombreArchivo,
-                  url: `${this.onlyOfficeApiUrl}/editfile?idSeguimiento=${this.idSeguimiento}&tipo=${archivo.tipo}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`,
-                  permissions: {
-                    edit: true,
-                    download: true,
-                    print: true,
-                    fillForms: true,
-                    review: true,
-                    comment: true,
-                    modifyFilter: true,
-                    modifyContentControl: true
-                  }
-                },
-                token: tokenResponse.token,
-                documentType: documentType,
-                editorConfig: {
-                  callbackUrl: `${this.onlyOfficeApiUrl}/callback`,
-                  mode: 'edit'
-                }
-              }
+              editorConfig: editorConfig
             }
           });
         }
