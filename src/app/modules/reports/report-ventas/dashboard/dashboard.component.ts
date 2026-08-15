@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
@@ -57,6 +57,7 @@ import { ReportVentasService } from '../report-ventas.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
 
 // 🔹 Componentes Modal
 import { DetalleEmpresaModalComponent } from './detalle-empresa-modal.component';
@@ -83,7 +84,7 @@ import { DetalleVentaModalComponent } from './detalle-venta-modal.component';
         MatSnackBarModule
     ]
 })
-export class ReportVentasDashboardComponent implements OnInit {
+export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
     // 🔹 Highcharts
     public Highcharts: typeof Highcharts = Highcharts;
@@ -148,13 +149,18 @@ export class ReportVentasDashboardComponent implements OnInit {
         private router: Router,
         private dialog: MatDialog,
         private snackBar: MatSnackBar,
-        private _excelService: CommonExcelExportService
+        private _excelService: CommonExcelExportService,
+        private _chatIaService: ChatIaService
     ) { }
 
 
     ngOnInit(): void {
         this.verificarRoles();
         this.consultar();
+    }
+
+    ngOnDestroy(): void {
+        this._chatIaService.clearContext();
     }
 
     verificarRoles(): void {
@@ -414,12 +420,50 @@ export class ReportVentasDashboardComponent implements OnInit {
                         }
                     }, 200);
 
+                    // Registrar contexto para Rayito IA
+                    setTimeout(() => this.actualizarContextoIa(resp), 300);
+
                 },
                 error: (err) => {
                     console.error('Error al consultar el dashboard:', err);
                     this.resetDashboard();
                 }
             });
+    }
+
+    private actualizarContextoIa(resp: any): void {
+        const datos = {
+            modulo: 'Reporte de Ventas',
+            filtros: {
+                sucursal: this.sucursal,
+                fechaInicio: this.fechaInicio,
+                fechaFin: this.fechaFin,
+                tipPersona: this.esMoral === '1' ? 'Física' : this.esMoral === '2' ? 'Moral' : 'Todas'
+            },
+            kpis: {
+                totalVentas: this.kpis.totalVentas,
+                totalFacturas: this.kpis.totalFacturas,
+                totalClientes: this.kpis.totalClientes,
+                ventaPromedio: this.kpis.ventaPromedio,
+                utilidadBruta: this.kpis.utilidadBruta
+            },
+            metaAnual: this.metaAnual,
+            ventasAnual: this.ventasAnual,
+            porcentajeMetaAnual: this.porcentajeMetaAnual,
+            topVendedores: (resp.topVendedores || []).map((v: any) => ({
+                vendedor: v.vendedor,
+                totalVendido: v.totalVendido,
+                totalFacturas: v.totalFacturas
+            })),
+            topProductos: (resp.topProductos || []).slice(0, 10).map((p: any) => ({
+                producto: p.producto,
+                totalVendido: p.totalVendido,
+                cantidadVendida: p.cantidadVendida
+            })),
+            desglosePorSucursal: this.desglosePorSucursal,
+            ventasPorMes: (resp.ventasPorMes || []).filter((m: any) => m.periodo?.toLowerCase() === 'actual')
+        };
+        this._chatIaService.setContext('Reporte de Ventas', datos);
     }
 
     private resetDashboard(): void {
