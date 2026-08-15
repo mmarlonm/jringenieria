@@ -1018,14 +1018,25 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
               editorConfig: {
                 document: {
                   fileType: fileExtension,
-                  key: `${archivo.id || 0}_${userID}_${this.idSeguimiento}_${archivo.tipo}_${safeFileName}`,
+                  key: tokenResponse.key || `${archivo.id || 0}_${userID}_${this.idSeguimiento}_${archivo.tipo}_${safeFileName}`,
                   title: archivo.nombreArchivo,
-                  url: `${this.onlyOfficeApiUrl}/editfile?idSeguimiento=${this.idSeguimiento}&tipo=${archivo.tipo}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+                  url: `${this.onlyOfficeApiUrl}/editfile?idSeguimiento=${this.idSeguimiento}&tipo=${archivo.tipo}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`,
+                  permissions: {
+                    edit: true,
+                    download: true,
+                    print: true,
+                    fillForms: true,
+                    review: true,
+                    comment: true,
+                    modifyFilter: true,
+                    modifyContentControl: true
+                  }
                 },
                 token: tokenResponse.token,
                 documentType: documentType,
                 editorConfig: {
-                  callbackUrl: `${this.onlyOfficeApiUrl}/callback`
+                  callbackUrl: `${this.onlyOfficeApiUrl}/callback`,
+                  mode: 'edit'
                 }
               }
             }
