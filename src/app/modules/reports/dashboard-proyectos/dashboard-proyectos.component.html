@@ -25,7 +25,7 @@
             <mat-form-field appearance="outline" class="w-full sm:w-72 fuse-mat-dense" subscriptSizing="dynamic">
                 <mat-label>Filtrar por Proyecto</mat-label>
                 <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">folder</mat-icon>
-                <mat-select [(ngModel)]="selectedProyectoId">
+                <mat-select [(ngModel)]="selectedProyectoId" (selectionChange)="onBuscar()">
                     <mat-option [value]="0">Todos los Proyectos</mat-option>
                     <mat-option *ngFor="let p of proyectos" [value]="p.idSeguimiento">{{ p.actividad }}</mat-option>
                 </mat-select>
@@ -35,7 +35,7 @@
             <mat-form-field appearance="outline" class="w-full sm:w-60 fuse-mat-dense" subscriptSizing="dynamic">
                 <mat-label>Filtrar por Empresa</mat-label>
                 <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">business</mat-icon>
-                <mat-select [(ngModel)]="selectedEmpresa">
+                <mat-select [(ngModel)]="selectedEmpresa" (selectionChange)="onBuscar()">
                     <mat-option value="">Todas las Empresas</mat-option>
                     <mat-option *ngFor="let emp of empresas" [value]="emp">{{ emp }}</mat-option>
                 </mat-select>
@@ -45,7 +45,7 @@
             <mat-form-field appearance="outline" class="w-full sm:w-60 fuse-mat-dense" subscriptSizing="dynamic">
                 <mat-label>Tipo de Proyecto</mat-label>
                 <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-1">category</mat-icon>
-                <mat-select [(ngModel)]="selectedTipoProyecto">
+                <mat-select [(ngModel)]="selectedTipoProyecto" (selectionChange)="onBuscar()">
                     <mat-option value="">Todos los Tipos</mat-option>
                     <mat-option *ngFor="let tipo of tiposProyecto" [value]="tipo">{{ tipo }}</mat-option>
                 </mat-select>
