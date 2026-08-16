@@ -1,36 +1,54 @@
-<div class="flex h-full w-full flex-col items-center justify-center">
-    <div class="w-full max-w-3xl">
-        <div class="prose prose-sm mx-auto max-w-none">
-            <img class="w-20" src="/jr-ingenieria/images/logo/LOGO-BN-SIN-FONDO.svg" alt="Logo image" />
-            <h1>Landing Module</h1>
-            <p>
-                This can be the landing or the welcome page of your application.
-                If you have an SSR (Server Side Rendering) setup, or if you
-                don't need to have Search engine visibility and optimizations,
-                you can even use this page as your primary landing page.
-            </p>
-            <p>
-                This is a separate "module", it has its own directory and
-                routing setup and also it's completely separated from the actual
-                application. This is also a simple example of a multiple
-                applications setup that uses the same codebase. You can have
-                different entry points and essentially have different
-                applications within the same codebase.
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6 md:p-12">
+    <div class="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-xl rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <!-- Banner / Header -->
+        <div class="bg-gray-950 text-white p-8 md:p-12 text-center border-b-4 border-blue-500 relative">
+            <div class="flex justify-center mb-6">
+                <img class="h-16" src="images/logo/LOGO-HORIZOLTAL-COLOR.png" alt="JR Ingeniería Eléctrica" onerror="this.src='images/logo/LOGO-BN-SIN-FONDO.png'" />
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Portal Corporativo JR</h1>
+            <p class="mt-3 text-gray-400 text-md md:text-lg max-w-xl mx-auto">
+                Sistema interno de administración de proyectos, presupuestos y control operativo.
             </p>
         </div>
-        <div>
-            <a
-                class="mt-8"
-                mat-flat-button
-                [color]="'primary'"
-                [routerLink]="'/dashboards/project'"
-            >
-                <span>Launch the App</span>
-                <mat-icon
-                    class="ml-2 icon-size-5"
-                    [svgIcon]="'heroicons_mini:arrow-long-right'"
-                ></mat-icon>
-            </a>
+
+        <!-- Content -->
+        <div class="p-8 md:p-12 space-y-8">
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white border-b pb-2 dark:border-gray-700">Sobre la Aplicación</h2>
+                <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-md">
+                    En <strong>JR Ingeniería Eléctrica</strong> brindamos servicios especializados en ingeniería y proyectos eléctricos de la más alta calidad. Este portal de CRM es una herramienta de uso interno exclusivo para nuestro personal operativo y administrativo, diseñada para coordinar las etapas de los proyectos eléctricos de nuestros clientes.
+                </p>
+            </div>
+
+            <!-- Google OAuth Block -->
+            <div class="p-6 rounded-2xl bg-blue-50 dark:bg-gray-900/50 border border-blue-100 dark:border-gray-700 space-y-4">
+                <div class="flex items-center space-x-3 text-blue-600 dark:text-blue-400">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="w-6 h-6" />
+                    <h3 class="text-xl font-bold">Integración con Google Calendar</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300 text-sm md:text-md leading-relaxed">
+                    Nuestra aplicación se integra de manera segura con <strong>Google Calendar</strong> para optimizar las actividades diarias de nuestros ingenieros y supervisores en campo. Esta vinculación permite:
+                </p>
+                <ul class="list-disc pl-5 text-gray-600 dark:text-gray-300 text-sm md:text-md space-y-2">
+                    <li>Sincronizar reuniones, visitas técnicas e hitos de obra directamente en tu agenda de Google.</li>
+                    <li>Visualizar tus compromisos laborales de Google Calendar de forma centralizada en el tablero del CRM.</li>
+                    <li>Utilizar a nuestro asistente virtual inteligente, <strong>Rayito IA</strong>, para programar y coordinar eventos mediante comandos de chat fáciles y naturales.</li>
+                </ul>
+            </div>
+
+            <!-- Actions & Links -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t dark:border-gray-700">
+                <div class="flex items-center space-x-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    <a href="assets/privacy.html" target="_blank" class="hover:underline">Política de Privacidad</a>
+                    <span>•</span>
+                    <a href="assets/terms.html" target="_blank" class="hover:underline">Condiciones de Servicio</a>
+                </div>
+                
+                <a mat-flat-button [color]="'primary'" [routerLink]="'/sign-in'" class="px-8 h-12 rounded-xl text-lg font-bold shadow-md hover:shadow-lg transition">
+                    <span>Iniciar Sesión</span>
+                    <mat-icon class="ml-2 icon-size-5" [svgIcon]="'heroicons_mini:arrow-long-right'"></mat-icon>
+                </a>
+            </div>
         </div>
     </div>
 </div>
