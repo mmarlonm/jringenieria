@@ -446,6 +446,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
                             this.crearEventoGoogleCalendarDesdeChat(eventMatch[1], Number(userId));
                         }
 
+                        // Analizar si contiene comando de eliminación de evento en Google Calendar
+                        // Formato: [DELETE_EVENT: eventId]
+                        const deleteEventRegex = /\[DELETE_EVENT:\s*([^\]]+)\]/i;
+                        const deleteEventMatch = rawRespuesta.match(deleteEventRegex);
+                        if (deleteEventMatch && deleteEventMatch[1] && userId) {
+                            rawRespuesta = rawRespuesta.replace(deleteEventRegex, '').trim();
+                            this.eliminarEventoGoogleCalendarDesdeChat(deleteEventMatch[1].trim(), Number(userId));
+                        }
+
                         this.chatMessages.push({
                             sender: 'ia',
                             text: rawRespuesta,
@@ -506,6 +515,29 @@ export class LayoutComponent implements OnInit, OnDestroy {
                 this.chatMessages.push({
                     sender: 'ia',
                     text: '⚠️ No pude agregar el evento a tu Google Calendar automáticamente. Por favor, asegúrate de haber verificado tu sesión de Google en el panel superior.',
+                    timestamp: new Date()
+                });
+                setTimeout(() => this.scrollToBottom(), 50);
+            }
+        });
+    }
+
+    private eliminarEventoGoogleCalendarDesdeChat(eventId: string, userId: number): void {
+        this._userService.deleteEvent(userId, eventId).subscribe({
+            next: () => {
+                console.log('Evento eliminado de Google Calendar:', eventId);
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: `🗑️ Listo. El evento ha sido eliminado de tu Google Calendar correctamente.`,
+                    timestamp: new Date()
+                });
+                setTimeout(() => this.scrollToBottom(), 50);
+            },
+            error: (err) => {
+                console.error('Error al eliminar evento desde chat:', err);
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: '⚠️ No pude eliminar el evento de tu Google Calendar. Verifica que el evento exista y que tu sesión de Google esté activa.',
                     timestamp: new Date()
                 });
                 setTimeout(() => this.scrollToBottom(), 50);

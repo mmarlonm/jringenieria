@@ -185,6 +185,13 @@ export class UserService {
     }
 
     /**
+     * Elimina un evento de Google Calendar por su ID
+     */
+    deleteEvent(usuarioId: number, eventId: string): Observable<any> {
+        return this._httpClient.delete<any>(`${this.apiUrlGoogle}/events/${usuarioId}/${encodeURIComponent(eventId)}`);
+    }
+
+    /**
      * Revoca la sesión de Google y remueve la vinculación
      */
     logoutFromGoogle(usuarioId: number): Observable<any> {
