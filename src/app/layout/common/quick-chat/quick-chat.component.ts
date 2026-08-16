@@ -27,6 +27,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NewChatComponent } from './new/new-chat.component';
 import { UsersService } from '../../../modules/admin/security/users/users.service';
 import { SignalRService } from 'app/signalr.service';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
 
 @Component({
   selector: 'quick-chat',
@@ -83,7 +84,8 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
     private _scrollStrategyOptions: ScrollStrategyOptions,
     private _usersService: UsersService,
     private dialog: MatDialog,
-    private signalRService: SignalRService
+    private signalRService: SignalRService,
+    private _chatIaService: ChatIaService
   ) { }
 
   @HostBinding('class') get classList(): any {
@@ -268,5 +270,9 @@ export class QuickChatComponent implements OnInit, AfterViewInit, OnDestroy {
       this.messageInput.nativeElement.value = '';
       this._resizeMessageInput();
     });
+  }
+
+  openRayitoIa(): void {
+    this._chatIaService.openChat();
   }
 }

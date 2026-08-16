@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - JR Ingeniería Eléctrica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #039BE5;
+            --primary-dark: #0288D1;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 4px solid var(--primary-color);
+        }
+
+        .logo {
+            max-width: 180px;
+            margin-bottom: 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 0;
+            color: #0f172a;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        p, li {
+            font-size: 1rem;
+            color: #475569;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem 1rem;
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h2>JR INGENIERÍA ELÉCTRICA</h2>
+    </header>
+
+    <main class="container">
+        <article class="card">
+            <h1>Política de Privacidad</h1>
+            <p><strong>Última actualización:</strong> 16 de agosto de 2026</p>
+
+            <p>En <strong>JR Ingeniería Eléctrica</strong>, valoramos su privacidad y nos comprometemos a proteger sus datos personales. Esta Política de Privacidad describe cómo recopilamos, utilizamos y resguardamos su información al utilizar la integración de Google Calendar y Rayito IA dentro de nuestra plataforma de CRM interna.</p>
+
+            <h2>1. Información que recopilamos</h2>
+            <p>Al conectar su cuenta de Google con nuestro CRM corporativo, solicitamos acceso a los siguientes alcances (scopes) de la API de Google:</p>
+            <ul>
+                <li><strong>Google Calendar API (/auth/calendar):</strong> Acceso para ver, editar y crear eventos en sus calendarios primarios de Google.</li>
+            </ul>
+            <p>No recopilamos ni almacenamos correos electrónicos (Gmail), contactos, archivos de Drive u otra información que no esté estrictamente relacionada con los eventos del calendario.</p>
+
+            <h2>2. Uso de la información</h2>
+            <p>La información del calendario de Google se utiliza de manera exclusiva para las siguientes funciones en beneficio del usuario corporativo:</p>
+            <ul>
+                <li>Mostrar sus reuniones y compromisos del día/mes en la interfaz del CRM.</li>
+                <li>Permitir que el asistente de Inteligencia Artificial (Rayito IA) lea sus reuniones del día para recordarle compromisos pendientes.</li>
+                <li>Permitir la creación y modificación de eventos de Google Calendar mediante instrucciones de lenguaje natural dadas al chat.</li>
+            </ul>
+
+            <h2>3. Resguardo y Seguridad de Datos</h2>
+            <p>La seguridad de sus datos es nuestra prioridad:</p>
+            <ul>
+                <li>Los tokens de acceso (Access Tokens) y de actualización (Refresh Tokens) se almacenan de manera estrictamente cifrada en nuestra base de datos utilizando el algoritmo de cifrado estándar AES-256.</li>
+                <li>La transferencia de información entre el CRM, nuestro servidor de API y Google se realiza a través de conexiones seguras HTTPS cifradas con certificados SSL/TLS.</li>
+                <li>Ningún dato de su calendario es compartido con terceros, socios comerciales o anunciantes.</li>
+            </ul>
+
+            <h2>4. Control del Usuario y Desvinculación</h2>
+            <p>El usuario mantiene en todo momento el control absoluto sobre su sesión:</p>
+            <ul>
+                <li>Puede revocar la sesión y desvincular su cuenta de Google en cualquier momento desde el menú de la aplicación del CRM seleccionando <strong>"Desvincular cuenta"</strong>.</li>
+                <li>Al desvincularse, todos los tokens y referencias de Google del usuario son eliminados permanentemente de nuestra base de datos corporativa.</li>
+            </ul>
+
+            <h2>5. Contacto</h2>
+            <p>Si tiene alguna pregunta o inquietud sobre nuestra política de privacidad o el manejo de sus datos de Google, puede ponerse en contacto con nuestro equipo de soporte técnico en:</p>
+            <p>📧 <strong>Soporte TI:</strong> <a href="mailto:soporte@jringenieriaelectrica.net">soporte@jringenieriaelectrica.net</a></p>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 JR Ingeniería Eléctrica. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

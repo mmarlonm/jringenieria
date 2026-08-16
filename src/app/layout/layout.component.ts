@@ -22,7 +22,10 @@ import { FuseConfig, FuseConfigService } from '@fuse/services/config';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { FusePlatformService } from '@fuse/services/platform';
 import { FUSE_VERSION } from '@fuse/version';
-import { Subject, combineLatest, filter, map, takeUntil } from 'rxjs';
+import { Subject, combineLatest, filter, map, takeUntil, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { UserService } from 'app/core/user/user.service';
+import { TaskService } from '@fuse/components/calendar/calendar.service';
 import { SettingsComponent } from './common/settings/settings.component';
 import { EmptyLayoutComponent } from './layouts/empty/empty.component';
 import { CenteredLayoutComponent } from './layouts/horizontal/centered/centered.component';
@@ -100,7 +103,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
         private _fuseMediaWatcherService: FuseMediaWatcherService,
         private _fusePlatformService: FusePlatformService,
         private _http: HttpClient,
-        private _chatIaService: ChatIaService
+        private _chatIaService: ChatIaService,
+        private _userService: UserService,
+        private _taskService: TaskService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -333,52 +338,272 @@ export class LayoutComponent implements OnInit, OnDestroy {
         this.chatInput = '';
         this.isChatLoading = true;
         
-        // Contexto dinámico de la vista activa o genérico
-        const contexto = this.currentModuleDataJson || JSON.stringify({ mensaje: 'No hay datos de reporte activos en esta pantalla.' });
-        const modulo = this.currentModuleName || 'General / Desconocido';
-        const rutaActual = this._router.url;
+        const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
+        const userId = storedData.usuario?.id;
 
-        this._http.post<any>(`${environment.apiUrl}/ReportDashboard/chat-agente-ia`, {
-            contextoJson: contexto,
-            pregunta: query,
-            moduloName: `${modulo} (ruta: ${rutaActual})`
-        }).subscribe({
-            next: (res) => {
-                this.isChatLoading = false;
-                let rawRespuesta = res?.respuesta || 'No he podido obtener una respuesta.';
+        let contextObs$;
+        if (userId) {
+            console.log('[Rayito IA Debug] Fetching tasks and calendar for userId:', userId);
+            contextObs$ = forkJoin({
+                tasks: this._taskService.getTasks(Number(userId)).pipe(
+                    map(tasks => {
+                        const mappedTasks = (tasks || []).map(t => ({
+                            titulo: t.title || t.nombre || t.descripcion,
+                            estado: t.status || t.estatus,
+                            vence: t.dueDate || t.fechaVencimiento || t.fechaLimite,
+                            prioridad: t.priority
+                        }));
+                        console.log('[Rayito IA Debug] Mapped CRM tasks:', mappedTasks);
+                        return mappedTasks;
+                    }),
+                    catchError((err) => {
+                        console.error('[Rayito IA Debug] Error fetching CRM tasks:', err);
+                        return of([]);
+                    })
+                ),
+                calendar: this._userService.getCalendar(Number(userId)).pipe(
+                    map(res => {
+                        console.log('[Rayito IA Debug] Raw Google Calendar response:', res);
+                        const items = res?.items || res?.Items || [];
+                        const mapped = items.map(e => ({
+                            id: e.id,
+                            titulo: e.summary || e.titulo || e.nombre,
+                            inicio: e.start?.dateTime || e.start?.date,
+                            fin: e.end?.dateTime || e.end?.date,
+                            ubicacion: e.location || e.ubicacion
+                        }));
+                        console.log('[Rayito IA Debug] Mapped calendar events:', mapped);
+                        return mapped;
+                    }),
+                    catchError((err) => {
+                        console.error('[Rayito IA Debug] Error fetching Google Calendar:', err);
+                        return of([]);
+                    })
+                )
+            });
+        } else {
+            console.warn('[Rayito IA Debug] No userId found in localStorage.');
+            contextObs$ = of({ tasks: [], calendar: [] });
+        }
+
+        contextObs$.subscribe({
+            next: (extraContext) => {
+                let contexto = this.currentModuleDataJson || '';
                 
-                // Analizar si contiene comando de navegación
-                // Formato: [NAVIGATE: /ruta/destino]
-                const navRegex = /\[NAVIGATE:\s*([^\s\]]+)\]/i;
-                const match = rawRespuesta.match(navRegex);
-                
-                if (match && match[1]) {
-                    const targetRoute = match[1];
-                    // Remover el comando del texto visible para que sea estético
-                    rawRespuesta = rawRespuesta.replace(navRegex, '').trim();
-                    
-                    // Navegar al destino
-                    this._router.navigateByUrl(targetRoute);
+                // Si cargamos contexto extra del calendario/tareas, lo inyectamos al JSON
+                if (extraContext.tasks.length > 0 || extraContext.calendar.length > 0) {
+                    try {
+                        const parsedContext = contexto ? JSON.parse(contexto) : {};
+                        parsedContext.tareasCRM = extraContext.tasks;
+                        parsedContext.calendarioGoogle = extraContext.calendar;
+                        contexto = JSON.stringify(parsedContext);
+                    } catch (e) {
+                        contexto = JSON.stringify({
+                            tareasCRM: extraContext.tasks,
+                            calendarioGoogle: extraContext.calendar,
+                            mensajeErrorParsing: 'Error parsing active module context'
+                        });
+                    }
                 }
 
-                this.chatMessages.push({
-                    sender: 'ia',
-                    text: rawRespuesta,
-                    timestamp: new Date()
+                if (!contexto) {
+                    contexto = JSON.stringify({ mensaje: 'No hay datos de reporte activos en esta pantalla.' });
+                }
+
+                const modulo = this.currentModuleName || 'General / Desconocido';
+                const rutaActual = this._router.url;
+
+                this._http.post<any>(`${environment.apiUrl}/ReportDashboard/chat-agente-ia`, {
+                    contextoJson: contexto,
+                    pregunta: query,
+                    moduloName: `${modulo} (ruta: ${rutaActual})`
+                }).subscribe({
+                    next: (res) => {
+                        this.isChatLoading = false;
+                        let rawRespuesta = res?.respuesta || 'No he podido obtener una respuesta.';
+                        
+                        // Analizar si contiene comando de navegación
+                        const navRegex = /\[NAVIGATE:\s*([^\s\]]+)\]/i;
+                        const match = rawRespuesta.match(navRegex);
+                        
+                        if (match && match[1]) {
+                            const targetRoute = match[1];
+                            rawRespuesta = rawRespuesta.replace(navRegex, '').trim();
+                            
+                            if (this.checkPermissionForRoute(targetRoute)) {
+                                this._router.navigateByUrl(targetRoute);
+                            } else {
+                                rawRespuesta = "No tienes los permisos necesarios para acceder al módulo solicitado (" + targetRoute + ").";
+                            }
+                        }
+
+                        // Analizar si contiene comando de creación de evento en Google Calendar
+                        // Formato: [CREATE_EVENT: title | start | end | location | body]
+                        const eventRegex = /\[CREATE_EVENT:\s*([^\]]+)\]/i;
+                        const eventMatch = rawRespuesta.match(eventRegex);
+                        if (eventMatch && eventMatch[1] && userId) {
+                            rawRespuesta = rawRespuesta.replace(eventRegex, '').trim();
+                            this.crearEventoGoogleCalendarDesdeChat(eventMatch[1], Number(userId));
+                        }
+
+                        this.chatMessages.push({
+                            sender: 'ia',
+                            text: rawRespuesta,
+                            timestamp: new Date()
+                        });
+                        
+                        setTimeout(() => this.scrollToBottom(), 50);
+                    },
+                    error: (err) => {
+                        this.isChatLoading = false;
+                        this.chatMessages.push({
+                            sender: 'ia',
+                            text: 'Ocurrió un error al procesar tu pregunta. Por favor, intenta de nuevo.',
+                            timestamp: new Date()
+                        });
+                        console.error(err);
+                        setTimeout(() => this.scrollToBottom(), 50);
+                    }
                 });
-                
-                setTimeout(() => this.scrollToBottom(), 50);
             },
             error: (err) => {
                 this.isChatLoading = false;
+                console.error('Error fetching calendar context:', err);
+            }
+        });
+    }
+
+    private crearEventoGoogleCalendarDesdeChat(paramsStr: string, userId: number): void {
+        const parts = paramsStr.split('|').map(p => p.trim());
+        const title = parts[0] || 'Reunión desde Rayito IA';
+        const startStr = parts[1]; // e.g. "2026-08-17T10:00:00"
+        const endStr = parts[2];   // e.g. "2026-08-17T11:00:00"
+        const location = parts[3] || '';
+        const body = parts[4] || '';
+
+        const eventDto = {
+            title: title,
+            start: startStr ? new Date(startStr) : new Date(Date.now() + 3600000), // por defecto en 1 hora
+            end: endStr ? new Date(endStr) : new Date(Date.now() + 7200000), // duración 1 hora por defecto
+            location: location,
+            body: body,
+            usuarioId: userId,
+            calendarId: 'primary'
+        };
+
+        this._userService.createEvent(eventDto).subscribe({
+            next: (res) => {
+                console.log('Evento creado exitosamente en Google Calendar', res);
                 this.chatMessages.push({
                     sender: 'ia',
-                    text: 'Ocurrió un error al procesar tu pregunta. Por favor, intenta de nuevo.',
+                    text: `📢 Hecho. He agendado la reunión "${title}" en tu Google Calendar para el ${new Date(eventDto.start).toLocaleString()}.`,
                     timestamp: new Date()
                 });
-                console.error(err);
+                setTimeout(() => this.scrollToBottom(), 50);
+            },
+            error: (err) => {
+                console.error('Error al crear evento desde chat:', err);
+                this.chatMessages.push({
+                    sender: 'ia',
+                    text: '⚠️ No pude agregar el evento a tu Google Calendar automáticamente. Por favor, asegúrate de haber verificado tu sesión de Google en el panel superior.',
+                    timestamp: new Date()
+                });
                 setTimeout(() => this.scrollToBottom(), 50);
             }
+        });
+    }
+
+    private checkPermissionForRoute(route: string): boolean {
+        const routeToPermissionMap: { [key: string]: string } = {
+            '/administration/solicitudes-compra': 'solicitudes-compra',
+            '/administration/tablero-compras': 'tablero-compras',
+            '/administration/recepcion-compras': 'recepcion-compras',
+            '/administration/historico-compras': 'historico-compras',
+            '/administration/cierre-terminal': 'cierre-terminal',
+            '/administration/tickets': 'tickets',
+            '/administration/resumen-compras': 'resumen-compras',
+            '/administration/reporte-detalle-compras': 'reporte-detalle-compras',
+            '/administration/control-entregas': 'control-entregas',
+            '/administration/proveedores/cuestionario': 'cuestionario',
+            '/administration/proveedores/maestro': 'maestro',
+            '/administration/proveedores/reportes/resumen': 'resumen',
+            '/administration/calidad': 'calidad',
+            '/engineering/solicitantes': 'solicitantes',
+            '/engineering/tablero-proyectos': 'tablero-proyectos',
+            '/engineering/control-ejecucion': 'control-ejecucion',
+            '/engineering/gantt-general': 'gantt-general',
+            '/engineering/seguimiento-tareas': 'seguimiento-tareas',
+            '/engineering/aliados': 'aliados',
+            '/engineering/tickets': 'tickets',
+            '/dashboards/tasks': 'tasks',
+            '/catalogs/clients': 'clients',
+            '/dashboards/prospects': 'prospects',
+            '/dashboards/analytics': 'analytics',
+            '/dashboards/roadmap': 'roadmap',
+            '/dashboards/expenses': 'expenses',
+            '/dashboards/quote': 'quote',
+            '/dashboards/transfer-management': 'transfer-management',
+            '/dashboards/project': 'project',
+            '/reports/project-progress': 'project-progress',
+            '/reports/existencias-tableros': 'existencias-tableros',
+            '/reports/report-product-existence': 'report-product-existence',
+            '/reports/inventory/kardex': 'kardex',
+            '/reports/report-expenses': 'report-expenses',
+            '/reports/dashboard-proyectos': 'dashboard-proyectos',
+            '/crm/leads': 'leads',
+            '/reports/report-venta': 'report-ventas',
+            '/reports/report-ventas-agente': 'report-ventas-agente',
+            '/reports/report-venta-product': 'report-ventas-product',
+            '/reports/report-customers-segmentation': 'report-customers-segmentation',
+            '/reports/report-customers': 'report-customers',
+            '/reports/report-portfolio-overdue': 'report-portfolio-overdue',
+            '/dashboards/surveys': 'surveys',
+            '/dashboards/surveys-products': 'surveys-products',
+            '/rrhh/personal-management': 'personal-management',
+            '/rrhh/report-entrada-salida': 'report-entrada-salida',
+            '/eventos/dashboard': 'dashboard',
+            '/eventos/control': 'control',
+            '/eventos/gestion-talleres': 'talleres',
+            '/eventos/personal': 'personal',
+            '/eventos/actividades': 'actividades',
+            '/eventos/gestion-eventos': 'gestion',
+            '/eventos/reportes': 'reportes',
+            '/eventos/escanear-pase': 'escanear',
+            '/eventos/mapa': 'mapa',
+            '/security/users': 'users',
+            '/security/roles': 'roles',
+            '/security/activity-monitor': 'activity-monitor',
+            '/reports/login-logs': 'login-logs'
+        };
+
+        const cleanRoute = route.split('?')[0];
+        const permissionName = routeToPermissionMap[cleanRoute];
+        if (!permissionName) {
+            return true;
+        }
+
+        const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
+        const roles = storedData.roles || [];
+        
+        if (roles.some((r: string) => r && ['admin', 'pruebas'].includes(r.toLowerCase()))) {
+            return true;
+        }
+
+        const vistasPermitidas: string[] = (storedData.permisos || []).map((p: any) => {
+            return p.vista?.nombreVista || p.vistaId || p.nombreVista || p.vista?.idVista || "";
+        }).filter((v: string) => v !== "");
+
+        return vistasPermitidas.some(permiso => {
+            if (!permiso) return false;
+            const basePermiso = permiso.split('.').pop()?.toLowerCase();
+            const basePermName = permissionName.toLowerCase();
+            
+            if (basePermName === 'users' && basePermiso === 'contacts') return true;
+            if (basePermName === 'report-ventas' && basePermiso === 'report-venta') return true;
+            if (basePermName === 'existencias-tableros' && basePermiso === 'products') return true;
+            if (basePermName === 'tasks' && basePermiso === 'tasjks') return true;
+            
+            return basePermiso === basePermName || permiso.toLowerCase() === basePermName;
         });
     }
 

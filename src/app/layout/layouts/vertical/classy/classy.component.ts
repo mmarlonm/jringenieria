@@ -335,6 +335,23 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         this._userService.loginWithGoogle(Number(this.user.id));
     }
 
+    logoutFromGoogle(): void {
+        this._userService.logoutFromGoogle(Number(this.user.id)).subscribe({
+            next: () => {
+                this._chatNotificationService.showSuccess('¡Desvinculado!', 'Tu cuenta de Google se ha desvinculado con éxito.', 3000);
+                this.googleStatus = { isLoggedIn: false, isExpired: true };
+                this.calendarEvents = null;
+                if (this.calendarInstance) {
+                    this.calendarInstance.clear();
+                }
+            },
+            error: (err) => {
+                console.error('❌ Error al desvincular Google:', err);
+                this._chatNotificationService.showError('Error', 'No se pudo desvincular la cuenta de Google.', 3000);
+            }
+        });
+    }
+
     // ✅ Modal con TUI Calendar
     openGoogleEventsModal(): void {
         this.showGoogleModal = true;

@@ -184,4 +184,11 @@ export class UserService {
         return this._httpClient.post(`${this.apiUrlGoogle}/events/create`, event);
     }
 
+    /**
+     * Revoca la sesión de Google y remueve la vinculación
+     */
+    logoutFromGoogle(usuarioId: number): Observable<any> {
+        return this._httpClient.post(`${this.apiUrlGoogle}/google/logout/${usuarioId}`, {});
+    }
+
 }
