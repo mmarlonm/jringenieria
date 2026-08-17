@@ -50,7 +50,7 @@ import { NeumorphicProgressComponent } from '@fuse/components/neumorphic-progres
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { CurrencyPipe } from '@angular/common';
 import { environment } from 'environments/environment'; // Asegúrate de tener la URL base de tu API aquí
-import { DocumentEditorModule, type IConfig } from "@onlyoffice/document-editor-angular";
+import { DocumentEditorModule } from "@onlyoffice/document-editor-angular";
 import { HistorialComponent } from '../historial-archivo/historial.component';
 import { AvanceDialogComponent } from "../avance/avance-dialog.component";
 import { MatTableModule } from '@angular/material/table';
