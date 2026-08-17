@@ -53,15 +53,23 @@
 
         <div class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
           <div class="pointer-events-none opacity-90 grayscale-[10%]">
-            @if (navigation && navigation.length > 0) {
-            <app-role-navigation [navigation]="navigation" [selectedPermissions]="selectedPermissions">
-            </app-role-navigation>
-            } @else {
-            <div class="flex flex-col items-center justify-center py-8 text-secondary">
-              <mat-spinner [diameter]="30"></mat-spinner>
-              <span class="mt-2 text-sm">Cargando permisos...</span>
-            </div>
-            }
+             @if (navigation && navigation.length > 0) {
+             <app-role-navigation
+               [navigation]="navigation"
+               [selectedPermissions]="selectedPermissions"
+               (permisosLoadError)="onPermisosLoadError($event)">
+             </app-role-navigation>
+             } @else if (loadError) {
+             <div class="flex flex-col items-center justify-center py-8 text-red-500">
+               <mat-icon class="icon-size-6 mb-2">error_outline</mat-icon>
+               <span class="text-sm font-medium">{{ loadError }}</span>
+             </div>
+             } @else {
+             <div class="flex flex-col items-center justify-center py-8 text-secondary">
+               <mat-spinner [diameter]="30"></mat-spinner>
+               <span class="mt-2 text-sm">Cargando permisos...</span>
+             </div>
+             }
           </div>
         </div>
       </div>
@@ -104,18 +112,26 @@
           </div>
 
           <div class="bg-card shadow rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
-            @if (navigation && navigation.length > 0) {
-            <div class="p-6 max-h-160 overflow-y-auto">
-              <app-role-navigation [navigation]="navigation" [selectedPermissions]="selectedPermissions"
-                (permisosSeleccionados)="actualizarPermisos($event)">
-              </app-role-navigation>
-            </div>
-            } @else {
-            <div class="flex flex-col items-center justify-center p-12">
-              <mat-spinner [diameter]="40"></mat-spinner>
-              <span class="mt-4 text-secondary font-medium">Cargando árbol de navegación...</span>
-            </div>
-            }
+             @if (navigation && navigation.length > 0) {
+             <div class="p-6 max-h-160 overflow-y-auto">
+               <app-role-navigation
+                 [navigation]="navigation"
+                 [selectedPermissions]="selectedPermissions"
+                 (permisosSeleccionados)="actualizarPermisos($event)"
+                 (permisosLoadError)="onPermisosLoadError($event)">
+               </app-role-navigation>
+             </div>
+             } @else if (loadError) {
+             <div class="flex flex-col items-center justify-center p-12 text-red-500">
+               <mat-icon class="icon-size-6 mb-2">error_outline</mat-icon>
+               <span class="text-sm font-medium">{{ loadError }}</span>
+             </div>
+             } @else {
+             <div class="flex flex-col items-center justify-center p-12">
+               <mat-spinner [diameter]="40"></mat-spinner>
+               <span class="mt-4 text-secondary font-medium">Cargando árbol de navegación...</span>
+             </div>
+             }
           </div>
         </div>
 

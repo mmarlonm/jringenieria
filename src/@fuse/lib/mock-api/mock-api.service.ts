@@ -34,6 +34,10 @@ export class FuseMockApiService {
         handler: FuseMockApiHandler | undefined;
         urlParams: { [key: string]: string };
     } {
+        const normalizeUrl = (u: string) => u.replace(/^\/+|\/+$/g, '');
+
+        const urlParts = normalizeUrl(url).split('/');
+
         // Prepare the return object
         const matchingHandler: {
             handler: FuseMockApiHandler | undefined;
@@ -42,9 +46,6 @@ export class FuseMockApiService {
             handler: undefined,
             urlParams: {},
         };
-
-        // Split the url
-        const urlParts = url.split('/');
 
         // Get all related request handlers
         const handlers = this._handlers[method.toLowerCase()];
@@ -57,7 +58,7 @@ export class FuseMockApiService {
             }
 
             // Split the handler url
-            const handlerUrlParts = handlerUrl.split('/');
+            const handlerUrlParts = normalizeUrl(handlerUrl).split('/');
 
             // Skip if the lengths of the urls we are comparing are not the same
             if (urlParts.length !== handlerUrlParts.length) {
@@ -189,13 +190,9 @@ export class FuseMockApiService {
         url: string,
         delay?: number
     ): FuseMockApiHandler {
-        // Create a new instance of FuseMockApiRequestHandler
-        const fuseMockHttp = new FuseMockApiHandler(url, delay);
-
-        // Store the handler to access it from the interceptor
-        this._handlers[method].set(url, fuseMockHttp);
-
-        // Return the instance
+        const normalizedUrl = url.replace(/^\/+|\/+$/g, '');
+        const fuseMockHttp = new FuseMockApiHandler(normalizedUrl, delay);
+        this._handlers[method].set(normalizedUrl, fuseMockHttp);
         return fuseMockHttp;
     }
 }

@@ -15,6 +15,7 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { FuseNavigationItem } from '@fuse/components/navigation';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
+import { defaultNavigation } from 'app/mock-api/common/navigation/data';
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
 import { RolesListComponent } from 'app/modules/admin/security/roles/list/roles-list.component';
 import { RoleNavigationModule } from '../rol-navigation/rol-navigation.module';
@@ -37,6 +38,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     rol: any;
     contactForm: UntypedFormGroup;
     navigation: FuseNavigationItem[] = [];
+    loadError: string | null = null;
 
     // 🔹 1. CORRECCIÓN: Ahora es un diccionario de arreglos numéricos { 'dashboards.quote': [1, 2, 3] }
     selectedPermissions: { [id: string]: number[] } = {};
@@ -66,70 +68,82 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         // 1. OBTENER ROL Y MAPEAR PERMISOS
         this._rolService.rol$
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((rol: any) => {
-                if (!rol) return;
-                console.log("JSON DEL ROL DESDE C#:", rol);
-                this.rol = rol;
-                this.selectedPermissions = {};
+            .subscribe({
+                next: (rol: any) => {
+                    if (!rol) return;
+                    console.log("JSON DEL ROL DESDE C#:", rol);
+                    this.rol = rol;
+                    this.selectedPermissions = {};
 
-                // 🔹 PROCESAR PERMISOS (Soportando la estructura de userInformation proporcionada)
+                    // 🔹 PROCESAR PERMISOS (Soportando la estructura de userInformation proporcionada)
 
-                // 1. Procesar array 'permisos' (Estructura: { permisoId, vista: { nombreVista } })
-                if (rol.permisos && Array.isArray(rol.permisos)) {
-                    rol.permisos.forEach((p: any) => {
-                        const idVista = p.vista?.nombreVista || p.vista?.vistaId || p.nombreVista || p.vistaId;
-                        const idPermiso = Number(p.permisoId || p.idPermiso || p.id);
+                    // 1. Procesar array 'permisos' (Estructura: { permisoId, vista: { nombreVista } })
+                    if (rol.permisos && Array.isArray(rol.permisos)) {
+                        rol.permisos.forEach((p: any) => {
+                            const idVista = p.vista?.nombreVista || p.vista?.vistaId || p.nombreVista || p.vistaId;
+                            const idPermiso = Number(p.permisoId || p.idPermiso || p.id);
 
-                        if (idVista && !isNaN(idPermiso)) {
+                            if (idVista && !isNaN(idPermiso)) {
+                                if (!this.selectedPermissions[idVista]) {
+                                    this.selectedPermissions[idVista] = [];
+                                }
+                                if (!this.selectedPermissions[idVista].includes(idPermiso)) {
+                                    this.selectedPermissions[idVista].push(idPermiso);
+                                }
+                            }
+                        });
+                    }
+
+                    // 2. Procesar array 'vistas' (Estructura: { vistaId, permisos: [...] })
+                    if (rol.vistas && Array.isArray(rol.vistas)) {
+                        rol.vistas.forEach((v: any) => {
+                            const idVista = v.nombreVista || v.vistaId || v.idVista;
+                            if (!idVista) return;
+
+                            let permisosAsignados: number[] = [];
+                            if (v.permisos && Array.isArray(v.permisos)) {
+                                permisosAsignados = v.permisos.map((p: any) => {
+                                    const id = typeof p === 'number' ? p : (p.permisoId || p.idPermiso || p.id);
+                                    return Number(id);
+                                }).filter(id => !isNaN(id));
+                            } else if (v.permisoId || v.idPermiso || v.id) {
+                                const id = Number(v.permisoId || v.idPermiso || v.id);
+                                if (!isNaN(id)) permisosAsignados = [id];
+                            }
+
                             if (!this.selectedPermissions[idVista]) {
-                                this.selectedPermissions[idVista] = [];
+                                this.selectedPermissions[idVista] = permisosAsignados;
+                            } else {
+                                this.selectedPermissions[idVista] = [...new Set([...this.selectedPermissions[idVista], ...permisosAsignados])];
                             }
-                            if (!this.selectedPermissions[idVista].includes(idPermiso)) {
-                                this.selectedPermissions[idVista].push(idPermiso);
-                            }
-                        }
+                        });
+                    }
+
+                    this.contactForm.patchValue({
+                        rolId: rol.rolId || rol.id,
+                        nombreRol: rol.nombreRol || (rol.roles ? rol.roles[0] : ''),
                     });
-                }
 
-                // 2. Procesar array 'vistas' (Estructura: { vistaId, permisos: [...] })
-                if (rol.vistas && Array.isArray(rol.vistas)) {
-                    rol.vistas.forEach((v: any) => {
-                        const idVista = v.nombreVista || v.vistaId || v.idVista;
-                        if (!idVista) return;
-
-                        let permisosAsignados: number[] = [];
-                        if (v.permisos && Array.isArray(v.permisos)) {
-                            permisosAsignados = v.permisos.map((p: any) => {
-                                const id = typeof p === 'number' ? p : (p.permisoId || p.idPermiso || p.id);
-                                return Number(id);
-                            }).filter(id => !isNaN(id));
-                        } else if (v.permisoId || v.idPermiso || v.id) {
-                            const id = Number(v.permisoId || v.idPermiso || v.id);
-                            if (!isNaN(id)) permisosAsignados = [id];
-                        }
-
-                        if (!this.selectedPermissions[idVista]) {
-                            this.selectedPermissions[idVista] = permisosAsignados;
-                        } else {
-                            this.selectedPermissions[idVista] = [...new Set([...this.selectedPermissions[idVista], ...permisosAsignados])];
-                        }
-                    });
-                }
-
-                this.contactForm.patchValue({
-                    rolId: rol.rolId || rol.id,
-                    nombreRol: rol.nombreRol || (rol.roles ? rol.roles[0] : ''),
-                });
-
-                this._changeDetectorRef.markForCheck();
+                    this._changeDetectorRef.markForCheck();
+                },
+                error: (err) => console.error('[RolesDetail] Error cargando rol:', err)
             });
 
         // 2. OBTENER NAVEGACIÓN
         this._rolService.getNavigation()
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((nav: any) => {
-                this.navigation = nav.default || nav;
-                this._changeDetectorRef.markForCheck();
+            .subscribe({
+                next: (nav: any) => {
+                    this.loadError = null;
+                    this.navigation = nav?.default || nav || [];
+                    this._changeDetectorRef.markForCheck();
+                },
+                error: (err) => {
+                    console.error('[RolesDetail] Error cargando navegación:', err);
+                    this.loadError = 'No se pudo cargar el árbol de módulos. Usando datos locales.';
+                    this.navigation = defaultNavigation || [];
+                    this._changeDetectorRef.markForCheck();
+                }
             });
     }
 
@@ -200,5 +214,11 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
                 this._router.navigate(['../'], { relativeTo: this._activatedRoute });
             }
         });
+    }
+
+    onPermisosLoadError(errorMessage: string): void {
+        console.error('[RolesDetail] Error al cargar permisos desde rol-navigation:', errorMessage);
+        this.loadError = errorMessage;
+        this._changeDetectorRef.markForCheck();
     }
 }

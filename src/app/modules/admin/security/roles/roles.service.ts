@@ -162,4 +162,11 @@ export class RolService {
     getPermisos(): Observable<any[]> {
         return this._httpClient.get<any[]>(`${this.apiUrl}/permisos`);
     }
+
+    /**
+     * Inicializar permisos si están vacíos
+     */
+    inicializarPermisos(): Observable<any> {
+        return this._httpClient.post<any>(`${this.apiUrl}/inicializar-permisos`, {});
+    }
 }

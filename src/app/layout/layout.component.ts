@@ -22,7 +22,6 @@ import { FuseConfig, FuseConfigService } from '@fuse/services/config';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { FusePlatformService } from '@fuse/services/platform';
 import { FUSE_VERSION } from '@fuse/version';
-import { UserTrackerService } from 'app/core/tracker/user-tracker.service';
 import { Subject, combineLatest, filter, map, takeUntil, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
@@ -106,8 +105,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
         private _http: HttpClient,
         private _chatIaService: ChatIaService,
         private _userService: UserService,
-        private _taskService: TaskService,
-        private _userTrackerService: UserTrackerService
+        private _taskService: TaskService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -339,9 +337,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
         this.chatInput = '';
         this.isChatLoading = true;
-
-        this._userTrackerService.registrarEvento('Rayito IA', `Consulta: ${query}`, 'RayitoIA');
-
+        
         const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
         const userId = storedData.usuario?.id;
 

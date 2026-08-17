@@ -1,27 +1,35 @@
 <div class="flex flex-col w-full">
-
-  <ng-container *ngFor="let group of navigation">
-
-    <div *ngIf="group.type === 'group'"
-      class="mb-6 rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
-
-      <div
-        class="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-transparent">
-        <mat-icon class="icon-size-5 text-primary" [svgIcon]="group.icon"></mat-icon>
-        <div class="ml-3">
-          <div class="text-md font-bold uppercase tracking-wider text-gray-800 dark:text-gray-100">
-            {{ group.title }}
-          </div>
-          <div *ngIf="group.subtitle" class="text-xs text-secondary mt-0.5">{{ group.subtitle }}</div>
-        </div>
-      </div>
-
-      <div class="p-4 flex flex-col gap-1">
-        <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: group.children }"></ng-container>
-      </div>
-
+  <!-- DEBUG: Mostrar si navigation está vacío -->
+  @if (!navigation || navigation.length === 0) {
+    <div class="p-4 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded text-sm">
+      <strong>⚠️ Debug:</strong> La navegación está vacía ({{ navigation?.length || 0 }} elementos)
     </div>
-  </ng-container>
+  } @else {
+    <!-- Mostrar estructura de navegación -->
+    <ng-container *ngFor="let group of navigation">
+
+      <!-- Soportar type 'group' o 'collapsable' como grupo principal -->
+      <div *ngIf="group.type === 'group' || group.type === 'collapsable'"
+        class="mb-6 rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
+
+        <div
+          class="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-transparent">
+          <mat-icon class="icon-size-5 text-primary" [svgIcon]="group.icon"></mat-icon>
+          <div class="ml-3">
+            <div class="text-md font-bold uppercase tracking-wider text-gray-800 dark:text-gray-100">
+              {{ group.title }}
+            </div>
+            <div *ngIf="group.subtitle" class="text-xs text-secondary mt-0.5">{{ group.subtitle }}</div>
+          </div>
+        </div>
+
+        <div class="p-4 flex flex-col gap-1">
+          <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: group.children }"></ng-container>
+        </div>
+
+      </div>
+    </ng-container>
+  }
 
 </div>
 
@@ -58,16 +66,28 @@
           </mat-checkbox>
         </div>
 
-        <div class="ml-10 mt-1 mb-2 grid grid-cols-2 sm:grid-cols-4 gap-2" *ngIf="permisos && permisos.length > 0">
-          <ng-container *ngFor="let permiso of permisos">
-            <mat-checkbox *ngIf="isPermisoVisibleForNode(node.id, permiso)" [color]="'accent'"
-              class="text-xs text-gray-500 scale-90 origin-left"
-              [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
-              (change)="togglePermission(node.id, permiso.permisoId)">
-              {{ permiso.descripcionPermiso }}
-            </mat-checkbox>
-          </ng-container>
-        </div>
+        @if (loadError) {
+          <div class="ml-10 mt-1 mb-2 p-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded text-xs">
+            <mat-icon class="icon-size-3 inline mr-1">error</mat-icon>
+            Error al cargar permisos
+          </div>
+        } @else if (permisos && permisos.length > 0) {
+          <div class="ml-10 mt-1 mb-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <ng-container *ngFor="let permiso of permisos">
+              <mat-checkbox *ngIf="isPermisoVisibleForNode(node.id, permiso)" [color]="'accent'"
+                class="text-xs text-gray-500 scale-90 origin-left"
+                [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
+                (change)="togglePermission(node.id, permiso.permisoId)">
+                {{ permiso.descripcionPermiso }}
+              </mat-checkbox>
+            </ng-container>
+          </div>
+        } @else {
+          <div class="ml-10 mt-1 mb-2 p-2 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded text-xs">
+            <mat-icon class="icon-size-3 inline mr-1">info</mat-icon>
+            Sin permisos configurados
+          </div>
+        }
 
       </div>
 

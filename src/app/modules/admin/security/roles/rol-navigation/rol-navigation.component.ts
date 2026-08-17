@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, ChangeDetectorRef, SimpleChanges, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -10,6 +10,7 @@ import { RolService } from 'app/modules/admin/security/roles/roles.service'; // 
   selector: 'app-role-navigation',
   templateUrl: './rol-navigation.component.html',
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -18,7 +19,7 @@ import { RolService } from 'app/modules/admin/security/roles/roles.service'; // 
     MatButtonModule
   ]
 })
-export class RoleNavigationComponent implements OnInit {
+export class RoleNavigationComponent implements OnInit, OnChanges {
 
   @Input() navigation: FuseNavigationItem[] = [];
 
@@ -27,9 +28,11 @@ export class RoleNavigationComponent implements OnInit {
 
   // 🔹 2. RESTAURADO: El emisor vuelve a enviar un arreglo para no romper al componente padre
   @Output() permisosSeleccionados = new EventEmitter<any[]>();
+  @Output() permisosLoadError = new EventEmitter<string>();
 
   // 🔹 3. RESTAURADO: La variable que guarda los catálogos (Agregar, Editar, etc.)
   permisos: any[] = [];
+  loadError: string | null = null;
 
   constructor(
     private rolService: RolService,
@@ -37,27 +40,87 @@ export class RoleNavigationComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    console.log("[RoleNavigation] ngOnInit - navigation:", this.navigation);
     this.obtenerPermisos();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['navigation'] && !changes['navigation'].firstChange) {
+      console.log("[RoleNavigation] Navigation input cambió:", changes['navigation'].currentValue);
+      this._changeDetectorRef.markForCheck();
+    }
+  }
+
   obtenerPermisos(): void {
+    this.loadError = null;
+    console.log("[RoleNavigation] Iniciando carga de permisos...");
+
     this.rolService.getPermisos().subscribe({
       next: (data: any) => {
-        // Aseguramos que sea un arreglo sin importar la envoltura del backend
+        console.log("[RoleNavigation] Permisos recibidos:", data);
         const rawPermisos = Array.isArray(data) ? data : (data.data || data.result || []);
 
-        // 🔹 CORRECCIÓN: Asegurar que permisoId sea numérico para comparaciones consistentes
-        this.permisos = rawPermisos.map(p => ({
-          ...p,
-          permisoId: Number(p.permisoId || p.idPermiso || p.id)
-        }));
+        console.log("[RoleNavigation] Permisos procesados:", rawPermisos);
 
-        console.log(this.permisos);
-        this.initializePermissions();
-        this._changeDetectorRef.detectChanges();
+        if (!rawPermisos || rawPermisos.length === 0) {
+          console.warn("[RoleNavigation] ⚠️ No hay permisos en la BD. Intentando inicializar...");
+          this.inicializarPermisosEnServidor();
+          return;
+        }
+
+        this.procesarPermisos(rawPermisos);
       },
-      error: (err) => console.error("Error al cargar permisos", err)
+      error: (err) => {
+        console.error("[RoleNavigation] Error al cargar permisos:", err);
+        console.error("[RoleNavigation] Status:", err.status);
+        console.error("[RoleNavigation] Mensaje:", err.message);
+
+        this.loadError = `Error al cargar permisos: ${err.status || 'Error de conexión'}. ${err.message || 'Intenta recargar la página.'}`;
+        this.permisos = [];
+        this.permisosLoadError.emit(this.loadError);
+        this._changeDetectorRef.detectChanges();
+      }
     });
+  }
+
+  private inicializarPermisosEnServidor(): void {
+    console.log("[RoleNavigation] 🔄 Llamando endpoint de inicialización...");
+    this.rolService.inicializarPermisos().subscribe({
+      next: (response: any) => {
+        console.log("[RoleNavigation] ✅ Permisos inicializados exitosamente:", response);
+        if (response.permisos && Array.isArray(response.permisos)) {
+          this.procesarPermisos(response.permisos);
+        } else {
+          this.obtenerPermisos(); // Reintentar la carga normal
+        }
+      },
+      error: (err) => {
+        console.error("[RoleNavigation] ❌ Error al inicializar permisos:", err);
+        this.loadError = "La tabla de permisos está vacía y no se pudo inicializar automáticamente. Contacta al administrador.";
+        this.permisos = [];
+        this.permisosLoadError.emit(this.loadError);
+        this._changeDetectorRef.detectChanges();
+      }
+    });
+  }
+
+  private procesarPermisos(rawPermisos: any[]): void {
+    this.permisos = rawPermisos.map((p: any) => {
+      const permisoId = Number(p.permisoId || p.PermisoId || p.idPermiso || p.id);
+      const descripcion = p.descripcionPermiso || p.DescripcionPermiso || '';
+
+      return {
+        ...p,
+        permisoId,
+        descripcionPermiso: descripcion
+      };
+    });
+
+    console.log("[RoleNavigation] ✅ Permisos mapeados:", this.permisos);
+    console.log("[RoleNavigation] Navigation disponible:", this.navigation);
+    this.loadError = null;
+    this.initializePermissions();
+    this._changeDetectorRef.markForCheck();
   }
 
   /**
