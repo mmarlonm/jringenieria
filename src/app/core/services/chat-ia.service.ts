@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { UserTrackerService } from 'app/core/tracker/user-tracker.service';
 
 export interface ChatIaContext {
     moduloName: string;
@@ -12,6 +13,7 @@ export interface ChatIaContext {
 export class ChatIaService {
     private _context$ = new BehaviorSubject<ChatIaContext | null>(null);
     private _isOpen$ = new BehaviorSubject<boolean>(false);
+    private _userTrackerService = inject(UserTrackerService);
 
     get context$(): Observable<ChatIaContext | null> {
         return this._context$.asObservable();
@@ -22,11 +24,16 @@ export class ChatIaService {
     }
 
     toggleChat(): void {
-        this._isOpen$.next(!this._isOpen$.value);
+        const wasOpen = this._isOpen$.value;
+        this._isOpen$.next(!wasOpen);
+        if (!wasOpen) {
+            this._userTrackerService.registrarEvento('Rayito IA', 'Abrir chat', 'RayitoIA');
+        }
     }
 
     openChat(): void {
         this._isOpen$.next(true);
+        this._userTrackerService.registrarEvento('Rayito IA', 'Abrir chat', 'RayitoIA');
     }
 
     closeChat(): void {
