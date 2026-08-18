@@ -46,4 +46,13 @@ export class CalidadService {
     convertirEnTarea(tarea: { titulo: string; comentarios: string; proyectoId?: number; prioridad?: string; rolArea?: string }): Observable<any> {
         return this._http.post<any>(`${this._apiUrl}/convertir-en-tarea`, tarea);
     }
+
+    eliminarHerramienta(tipo: string, titulo: string): Observable<any> {
+        return this._http.delete<any>(`${this._apiUrl}/herramienta/${tipo}/${encodeURIComponent(titulo)}`);
+    }
+
+    getSpcControl(): Observable<any> {
+        return this._http.get<any>(`${this._apiUrl}/spc-control`);
+    }
 }
+
