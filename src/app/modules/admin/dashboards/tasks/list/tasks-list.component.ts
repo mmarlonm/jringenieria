@@ -172,6 +172,7 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     // Filters State
     filterValue: string = '';
     hideCompleted: boolean = false;
+    filterByUserId: number | null = null; // Filtro por usuario
 
     // Nuevas variables de clase
     userMap = new Map<number, any>();
@@ -425,7 +426,16 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
             tasks = tasks.filter(t => t.estatus !== 3);
         }
 
-        // 3. Remove "Detenido" (Status 4) completely as requested
+        // 3. Apply "Filter by User" — muestra solo tareas donde el usuario es creador o asignado
+        if (this.filterByUserId) {
+            const uid = this.filterByUserId;
+            tasks = tasks.filter(t =>
+                t.creadorId === uid ||
+                (t.usuarioIds && t.usuarioIds.includes(uid))
+            );
+        }
+
+        // 4. Remove "Detenido" (Status 4) completely as requested
         tasks = tasks.filter(t => t.estatus !== 4);
 
         // 4. Grouping Logic
@@ -754,6 +764,16 @@ export class TaskListComponent implements OnInit, AfterViewInit, OnDestroy {
     toggleHideCompleted(): void {
         this.hideCompleted = !this.hideCompleted;
         this.configService.updateFilter('hideCompleted', this.hideCompleted);
+        this.processTasks();
+    }
+
+    updateFilterByUser(userId: number | null): void {
+        this.filterByUserId = userId;
+        this.processTasks();
+    }
+
+    clearUserFilter(): void {
+        this.filterByUserId = null;
         this.processTasks();
     }
 

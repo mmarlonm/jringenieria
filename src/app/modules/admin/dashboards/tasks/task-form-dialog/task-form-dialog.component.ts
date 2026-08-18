@@ -339,6 +339,15 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
             notas: formValue.notas
         };
 
+        // 🔧 Auto-asignar al creador si no hay usuarios asignados
+        // Garantiza que el creador siempre pueda ver su propia tarea en la lista
+        if (!task.usuarioIds || task.usuarioIds.length === 0) {
+            const creadorId = formValue.CreadorId || this.user?.id;
+            if (creadorId) {
+                task.usuarioIds = [Number(creadorId)];
+            }
+        }
+
         if (this.data?.id) {
             this.taskService.updateTask(this.data.id, task).subscribe({
                 next: () => {

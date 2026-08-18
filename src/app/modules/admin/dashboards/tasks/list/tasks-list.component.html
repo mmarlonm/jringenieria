@@ -105,12 +105,38 @@
         </div>
       </div>
 
-      <div class="w-full">
-        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full sm:max-w-lg" subscriptSizing="dynamic">
+      <div class="w-full flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <!-- Buscador por nombre/ID -->
+        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full sm:max-w-md" subscriptSizing="dynamic">
           <mat-icon matPrefix svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
           <input matInput [ngModel]="filterValue" (ngModelChange)="updateFilterValue($event)"
             placeholder="Buscar por nombre o ID...">
         </mat-form-field>
+
+        <!-- Filtro por usuario -->
+        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full sm:w-64" subscriptSizing="dynamic">
+          <mat-icon matPrefix svgIcon="heroicons_outline:user"></mat-icon>
+          <mat-select
+            id="task-user-filter"
+            [value]="filterByUserId"
+            (selectionChange)="updateFilterByUser($event.value)"
+            placeholder="Filtrar por persona...">
+            <mat-option [value]="null">— Todos —</mat-option>
+            <mat-option *ngFor="let u of userList" [value]="u.usuarioId || u.id">
+              {{ u.nombreUsuario || u.nombre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Chip indicador cuando hay filtro activo -->
+        <div *ngIf="filterByUserId"
+          class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold">
+          <mat-icon class="icon-size-4" svgIcon="heroicons_mini:funnel"></mat-icon>
+          <span>Filtrando por: {{ getUserFullName(filterByUserId) }}</span>
+          <button mat-icon-button class="icon-size-5 -mr-1" (click)="clearUserFilter()">
+            <mat-icon class="icon-size-3.5" svgIcon="heroicons_mini:x-mark"></mat-icon>
+          </button>
+        </div>
       </div>
     </div>
 
