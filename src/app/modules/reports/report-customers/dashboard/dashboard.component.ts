@@ -74,7 +74,7 @@ export class ReportCustomersDashboardComponent implements OnInit {
     updateFlag = false;
     chartOptions: Highcharts.Options = {};
 
-    esMoral = false;
+    esMoral = '3'; // '3': Todas, '1': Física, '2': Moral
     sucursal = 'TODAS'; // Cambiado a TODAS por defecto
     fechaInicio: Date = new Date(new Date().getFullYear(), 0, 1);
     fechaFin: Date = new Date();
