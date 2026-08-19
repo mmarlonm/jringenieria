@@ -633,7 +633,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
     // 📊 1. Gráfica Top Productos (SOLO PIEZAS / UNIDADES)
     private graficaTopProductosPiezas(data: any[]): void {
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const borderColor = isDark ? '#334155' : '#E2E8F0';
@@ -739,7 +739,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
     // 📊 2. Gráfica Top Productos (SOLO MONTO / DINERO)
     private graficaTopProductosMonto(data: any[]): void {
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const borderColor = isDark ? '#334155' : '#E2E8F0';
@@ -852,7 +852,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
     }
 
     private graficaTopVendedores(data: any[]): void {
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#FFFFFF' : '#333333';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const tooltipBorder = isDark ? '#1E293B' : '#E2E8F0';
@@ -1177,7 +1177,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
     }
     // 📊 Gráficas Nuevas: Desglose por Sucursal y Cumplimiento de Meta
     private graficarDesgloseConsolidado(data: any[]): void {
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
 
         if (!data || data.length === 0) return;
@@ -1269,7 +1269,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
     }
 
     private crearMiniDonut(containerId: string, title: string, data: any[], colorPrincipal: string): void {
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
 
         // 🛡️ CANDADO DE SEGURIDAD PARA EVITAR ERROR 13
@@ -1339,7 +1339,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             .sort((a, b) => b.y - a.y)
             .slice(0, 5);
 
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
 
         const container = document.getElementById('chartTopClientesMonto');
@@ -1392,7 +1392,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
     private graficarComparativaFisicaVsMoral(): void {
         setTimeout(() => {
-            const isDark = document.body.classList.contains('dark');
+            const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#F1F5F9' : '#1E293B';
             const borderColor = isDark ? '#1E293B' : '#FFFFFF';
 

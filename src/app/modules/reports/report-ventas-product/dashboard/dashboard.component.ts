@@ -339,7 +339,7 @@ export class ReportVentasProductDashboardComponent implements OnInit {
         if (!container) return;
 
         // 🔹 Detectar si estamos en Modo Oscuro
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#FFFFFF' : '#333333';
         const secondaryTextColor = isDark ? '#FFFFFF' : '#666666'; // Gris para etiquetas
         const gridColor = isDark ? '#334155' : '#E6E6E6'; // Color de las líneas de fondo

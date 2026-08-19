@@ -493,7 +493,7 @@ export class ReportVentasAgenteDashboardComponent implements OnInit {
     }
 
     private graficaTopVendedores(data: any[]): void {
-        const isDark = document.body.classList.contains('dark');
+        const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#FFFFFF' : '#333333';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const tooltipBorder = isDark ? '#1E293B' : '#E2E8F0';

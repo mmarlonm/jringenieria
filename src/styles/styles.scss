@@ -114,6 +114,62 @@ body.is-resizing-column {
     }
   }
 
+  // 🎨 HIGHCHARTS: RESET MODO OSCURO (Títulos centrales, Series, Leyendas, Ejes y Etiquetas)
+  .highcharts-container {
+    .highcharts-title,
+    .highcharts-title text,
+    .highcharts-title tspan,
+    .highcharts-subtitle,
+    .highcharts-subtitle text,
+    .highcharts-subtitle tspan {
+      fill: #f8fafc !important;
+      color: #f8fafc !important;
+      font-weight: 700 !important;
+    }
+
+    .highcharts-legend-item text,
+    .highcharts-legend-item tspan,
+    .highcharts-legend-item span {
+      fill: #f8fafc !important;
+      color: #f8fafc !important;
+      font-weight: 600 !important;
+    }
+
+    .highcharts-axis-title,
+    .highcharts-axis-title text,
+    .highcharts-axis-title tspan,
+    .highcharts-axis-labels text,
+    .highcharts-axis-labels tspan,
+    .highcharts-series text,
+    .highcharts-series tspan {
+      fill: #cbd5e1 !important;
+      color: #cbd5e1 !important;
+    }
+
+    .highcharts-data-label text,
+    .highcharts-data-label tspan,
+    .highcharts-data-label span,
+    .highcharts-data-label div,
+    .highcharts-data-label b,
+    .highcharts-stack-labels text,
+    .highcharts-stack-labels tspan {
+      fill: #f8fafc !important;
+      color: #f8fafc !important;
+      text-shadow: none !important;
+    }
+
+    .highcharts-text-outline {
+      fill: none !important;
+      stroke: none !important;
+    }
+
+    .highcharts-grid-line,
+    .highcharts-axis-line,
+    .highcharts-tick {
+      stroke: #334155 !important;
+    }
+  }
+
   // 4. Form Fields (Inputs, Selects, Labels) - REFORZADO
   .mat-mdc-form-field {
     // Colores de texto e input
@@ -371,4 +427,222 @@ body {
 
 .dark * {
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent !important;
-}
+}
+
+/* ----------------------------------------------------------------------------------------------------- */
+/* 🎨 FIX DEFINITIVO: PANTALLA COMPLETA (FULLSCREEN) HIGHCHARTS EN MODO CLARO Y OSCURO                  */
+/* ----------------------------------------------------------------------------------------------------- */
+
+/* 1. FORZAR BACKDROP DEL NAVEGADOR EN BLANCO (MODO CLARO POR DEFECTO) */
+::backdrop {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+body.dark ::backdrop,
+html.dark ::backdrop {
+  background-color: #0f172a !important;
+  background: #0f172a !important;
+}
+
+/* 2. CONTENEDORES EN PANTALLA COMPLETA - MODO CLARO (BLANCO) POR DEFECTO */
+:fullscreen,
+:-webkit-full-screen,
+:-moz-full-screen,
+:-ms-fullscreen,
+:fullscreen .highcharts-container,
+:-webkit-full-screen .highcharts-container,
+.highcharts-fullscreen-container,
+.highcharts-container.highcharts-fullscreen,
+.highcharts-fullscreen,
+div[id^="chart"]:fullscreen,
+div[class*="chart"]:fullscreen {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+
+  /* SVG rect de fondo */
+  .highcharts-background {
+    fill: #ffffff !important;
+  }
+
+  /* Títulos y Subtítulos */
+  .highcharts-title,
+  .highcharts-subtitle,
+  .highcharts-axis-title {
+    fill: #0f172a !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+
+  /* Etiquetas de ejes X e Y */
+  .highcharts-axis-labels text,
+  .highcharts-xaxis-labels text,
+  .highcharts-yaxis-labels text {
+    fill: #334155 !important;
+    color: #334155 !important;
+    font-weight: 500 !important;
+  }
+
+  /* Leyendas */
+  .highcharts-legend-item text {
+    fill: #0f172a !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
+  }
+
+  /* Etiquetas de datos (Data Labels) */
+  .highcharts-data-label text,
+  .highcharts-data-label span,
+  .highcharts-data-label div,
+  .highcharts-data-label b,
+  .highcharts-label span,
+  .highcharts-label div {
+    fill: #0f172a !important;
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  /* Conectores de gráfica de dona/pastel */
+  .highcharts-data-label-connector {
+    stroke: #475569 !important;
+    stroke-width: 1.5px !important;
+  }
+
+  /* Rejilla y líneas de ejes */
+  .highcharts-grid-line,
+  .highcharts-axis-line,
+  .highcharts-tick {
+    stroke: #e2e8f0 !important;
+  }
+
+  /* Menú desplegable de exportación */
+  .highcharts-contextmenu {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px !important;
+
+    .highcharts-menu-item {
+      color: #1e293b !important;
+      font-size: 12px !important;
+      padding: 8px 14px !important;
+
+      &:hover {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+      }
+    }
+  }
+
+  /* Botón hamburguesa */
+  .highcharts-button-box {
+    fill: #ffffff !important;
+    stroke: #cbd5e1 !important;
+  }
+  .highcharts-button-symbol {
+    stroke: #334155 !important;
+    fill: #334155 !important;
+  }
+}
+
+/* 3. CONTENEDORES EN PANTALLA COMPLETA - MODO OSCURO (DARK MODE) */
+body.dark :fullscreen,
+body.dark :-webkit-full-screen,
+body.dark :-moz-full-screen,
+body.dark :-ms-fullscreen,
+html.dark :fullscreen,
+html.dark :-webkit-full-screen,
+.dark .highcharts-fullscreen-container,
+.dark .highcharts-container.highcharts-fullscreen,
+.dark .highcharts-fullscreen,
+.dark div[id^="chart"]:fullscreen,
+.dark div[class*="chart"]:fullscreen {
+  background-color: #0f172a !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+
+  /* SVG rect de fondo */
+  .highcharts-background {
+    fill: #0f172a !important;
+  }
+
+  /* Títulos y Subtítulos */
+  .highcharts-title,
+  .highcharts-subtitle,
+  .highcharts-axis-title {
+    fill: #f8fafc !important;
+    color: #f8fafc !important;
+    font-weight: 700 !important;
+  }
+
+  /* Etiquetas de ejes X e Y */
+  .highcharts-axis-labels text,
+  .highcharts-xaxis-labels text,
+  .highcharts-yaxis-labels text {
+    fill: #cbd5e1 !important;
+    color: #cbd5e1 !important;
+  }
+
+  /* Leyendas */
+  .highcharts-legend-item text {
+    fill: #f8fafc !important;
+    color: #f8fafc !important;
+  }
+
+  /* Etiquetas de datos (Data Labels) */
+  .highcharts-data-label text,
+  .highcharts-data-label span,
+  .highcharts-data-label div,
+  .highcharts-data-label b,
+  .highcharts-label span,
+  .highcharts-label div {
+    fill: #f8fafc !important;
+    color: #f8fafc !important;
+    text-shadow: none !important;
+  }
+
+  /* Conectores de gráfica de dona/pastel */
+  .highcharts-data-label-connector {
+    stroke: #94a3b8 !important;
+    stroke-width: 1.5px !important;
+  }
+
+  /* Rejilla y líneas de ejes */
+  .highcharts-grid-line,
+  .highcharts-axis-line,
+  .highcharts-tick {
+    stroke: #334155 !important;
+  }
+
+  /* Menú desplegable de exportación */
+  .highcharts-contextmenu {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px !important;
+
+    .highcharts-menu-item {
+      color: #f8fafc !important;
+      font-size: 12px !important;
+      padding: 8px 14px !important;
+
+      &:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  /* Botón hamburguesa */
+  .highcharts-button-box {
+    fill: #1e293b !important;
+    stroke: #334155 !important;
+  }
+  .highcharts-button-symbol {
+    stroke: #f8fafc !important;
+    fill: #f8fafc !important;
+  }
+}
