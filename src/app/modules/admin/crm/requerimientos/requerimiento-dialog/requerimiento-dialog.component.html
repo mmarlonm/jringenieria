@@ -1,0 +1,86 @@
+<div class="flex flex-col max-w-160 max-h-screen bg-card text-default rounded-2xl overflow-hidden shadow-2xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-primary text-on-primary">
+        <div class="flex items-center space-x-2">
+            <mat-icon class="text-on-primary" svgIcon="heroicons_outline:clipboard-document-list"></mat-icon>
+            <span class="text-lg font-semibold tracking-tight">
+                {{ isEditMode ? 'Editar Requerimiento' : 'Nuevo Requerimiento (SGC-PRO-COM-02)' }}
+            </span>
+        </div>
+        <button mat-icon-button (click)="onCancel()" class="text-on-primary">
+            <mat-icon svgIcon="heroicons_outline:x-mark"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Form Content -->
+    <form [formGroup]="reqForm" (ngSubmit)="onSubmit()" class="flex flex-col p-6 space-y-4 overflow-y-auto">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Contact Name -->
+            <mat-form-field class="w-full" appearance="fill">
+                <mat-label>Nombre de Contacto</mat-label>
+                <input matInput formControlName="nombreContacto" placeholder="Ej. Juan Pérez">
+                <mat-error *ngIf="reqForm.get('nombreContacto')?.hasError('required')">El nombre de contacto es obligatorio</mat-error>
+            </mat-form-field>
+
+            <!-- Company -->
+            <mat-form-field class="w-full" appearance="fill">
+                <mat-label>Empresa</mat-label>
+                <input matInput formControlName="empresa" placeholder="Ej. ACME S.A.">
+                <mat-error *ngIf="reqForm.get('empresa')?.hasError('required')">La empresa es obligatoria</mat-error>
+            </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Phone -->
+            <mat-form-field class="w-full" appearance="fill">
+                <mat-label>Teléfono</mat-label>
+                <input matInput formControlName="telefono" placeholder="Ej. 7711234567">
+            </mat-form-field>
+
+            <!-- Email -->
+            <mat-form-field class="w-full" appearance="fill">
+                <mat-label>Correo Electrónico</mat-label>
+                <input matInput formControlName="email" type="email" placeholder="Ej. juan@empresa.com">
+                <mat-error *ngIf="reqForm.get('email')?.hasError('email')">Formato de correo no válido</mat-error>
+            </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Sucursal -->
+            <mat-form-field class="w-full" appearance="fill">
+                <mat-label>Sucursal que Recibe</mat-label>
+                <mat-select formControlName="sucursal">
+                    <mat-option *ngFor="let suc of sucursales" [value]="suc">{{ suc }}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="reqForm.get('sucursal')?.hasError('required')">La sucursal es obligatoria</mat-error>
+            </mat-form-field>
+
+            <!-- Agent Assigned -->
+            <mat-form-field class="w-full" appearance="fill">
+                <mat-label>Responsable Asignado</mat-label>
+                <mat-select formControlName="usuarioAsignadoId">
+                    <mat-option [value]="null">Sin Asignar</mat-option>
+                    <mat-option *ngFor="let user of usuarios" [value]="user.id">
+                        {{ user.nombreUsuario }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <!-- Description -->
+        <mat-form-field class="w-full" appearance="fill">
+            <mat-label>Descripción de Necesidad (¿Qué y para qué lo necesita?)</mat-label>
+            <textarea matInput formControlName="descripcion" rows="4" placeholder="Describa a detalle la necesidad comercial o técnica del cliente..."></textarea>
+            <mat-error *ngIf="reqForm.get('descripcion')?.hasError('required')">La descripción es obligatoria</mat-error>
+        </mat-form-field>
+
+        <!-- Actions Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
+            <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="reqForm.invalid">
+                {{ isEditMode ? 'Guardar Cambios' : 'Registrar Requerimiento' }}
+            </button>
+        </div>
+    </form>
+</div>

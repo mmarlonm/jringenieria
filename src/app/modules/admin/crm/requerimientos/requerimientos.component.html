@@ -1,0 +1,343 @@
+<div class="flex flex-col flex-auto min-w-0 bg-gray-100 dark:bg-card p-6 md:p-8 space-y-6">
+
+    <!-- KPI Header Dashboard Panel -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- KPI 1 -->
+        <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-blue-500">
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Calificación Correcta</span>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-bold tracking-tight text-blue-600 dark:text-blue-400">{{ kpis.tasaCalificacionCorrecta }}%</span>
+            </div>
+            <span class="text-[10px] text-gray-500 mt-2">Aceptados sin devolución (Meta SGC: >=90%)</span>
+        </div>
+
+        <!-- KPI 2 -->
+        <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-green-500">
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Tiempo Calificación</span>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-bold tracking-tight text-green-600 dark:text-green-400">{{ kpis.tiempoPromedioCalificacionHoras }}h</span>
+            </div>
+            <span class="text-[10px] text-gray-500 mt-2">Promedio horas de resolución (Meta: <=24h)</span>
+        </div>
+
+        <!-- KPI 3 -->
+        <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-orange-500">
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Devueltos (Falta Info)</span>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-bold tracking-tight text-orange-600 dark:text-orange-400">{{ kpis.porcentajeDevueltos }}%</span>
+            </div>
+            <span class="text-[10px] text-gray-500 mt-2">Requerimientos incompletos recibidos (Meta: <=10%)</span>
+        </div>
+
+        <!-- KPI 4 -->
+        <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-purple-500">
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Campos Mínimos OK</span>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-bold tracking-tight text-purple-600 dark:text-purple-400">{{ kpis.porcentajeCompletos }}%</span>
+            </div>
+            <span class="text-[10px] text-gray-500 mt-2">Integridad documental en el registro inicial (Meta: 100%)</span>
+        </div>
+    </div>
+
+    <!-- Toolbar and Filter Panel -->
+    <div class="flex flex-col md:flex-row items-center justify-between p-4 bg-card rounded-2xl shadow gap-4">
+        <!-- Filters Left -->
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <!-- Search -->
+            <mat-form-field appearance="outline" class="w-full sm:w-64 max-h-12" subscriptSizing="dynamic">
+                <mat-icon matPrefix svgIcon="heroicons_solid:magnifying-glass" class="icon-size-5 text-gray-400 mr-2"></mat-icon>
+                <input matInput [formControl]="searchControl" placeholder="Buscar por folio, cliente, empresa...">
+            </mat-form-field>
+
+            <!-- Sucursal Filter -->
+            <mat-form-field appearance="outline" class="w-full sm:w-44 max-h-12" subscriptSizing="dynamic">
+                <mat-select [formControl]="sucursalControl">
+                    <mat-option value="Todos">Todas las Sucursales</mat-option>
+                    <mat-option value="Pachuca">Pachuca</mat-option>
+                    <mat-option value="Puebla">Puebla</mat-option>
+                    <mat-option value="Querétaro">Querétaro</mat-option>
+                    <mat-option value="Corporativo">Corporativo</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <!-- Agent Filter -->
+            <mat-form-field appearance="outline" class="w-full sm:w-44 max-h-12" subscriptSizing="dynamic">
+                <mat-select [formControl]="agenteControl">
+                    <mat-option value="Todos">Todos los Agentes</mat-option>
+                    <mat-option *ngFor="let user of usuarios" [value]="user.id">{{ user.nombreUsuario }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <!-- Controls Right -->
+        <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+            <!-- View Mode toggle -->
+            <mat-button-toggle-group [(ngModel)]="viewMode" aria-label="Modo de vista">
+                <mat-button-toggle value="kanban" matTooltip="Tablero Kanban">
+                    <mat-icon svgIcon="heroicons_outline:squares-2x2" class="icon-size-5"></mat-icon>
+                </mat-button-toggle>
+                <mat-button-toggle value="list" matTooltip="Vista Lista">
+                    <mat-icon svgIcon="heroicons_outline:bars-3" class="icon-size-5"></mat-icon>
+                </mat-button-toggle>
+            </mat-button-toggle-group>
+
+            <!-- New Requirement Button -->
+            <button mat-flat-button color="primary" class="h-10 px-4 rounded-xl flex items-center space-x-2" (click)="openCreateDialog()">
+                <mat-icon svgIcon="heroicons_outline:plus" class="icon-size-5"></mat-icon>
+                <span>Nuevo Requerimiento</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- KANBAN VIEW -->
+    <div *ngIf="viewMode === 'kanban'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Column 1: Pendiente -->
+        <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-sm text-gray-500 uppercase tracking-wider">Pendientes</span>
+                <span class="px-2 py-0.5 text-xs font-semibold bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">
+                    {{ getRequerimientosByEstatus('Pendiente').length }}
+                </span>
+            </div>
+            <div class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of getRequerimientosByEstatus('Pendiente')" 
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:shadow-md transition duration-150 relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-blue-500">{{ r.folio }}</span>
+                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                            {{ r.sucursal }}
+                        </span>
+                    </div>
+                    <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
+                    <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2 italic">"{{ r.descripcion }}"</p>
+                    
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t">
+                        <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
+                        <div class="flex items-center space-x-1">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Calificar Requerimiento" (click)="openCalificarDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-blue-500"></mat-icon>
+                            </button>
+                            <button mat-icon-button class="w-8 h-8 min-h-8" (click)="openEditDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:pencil" class="icon-size-4.5"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 2: Calificado Comercial -->
+        <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-sm text-green-600 uppercase tracking-wider">Calificado Comercial</span>
+                <span class="px-2 py-0.5 text-xs font-semibold bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400 rounded-full">
+                    {{ getRequerimientosByEstatus('Calificado Comercial').length }}
+                </span>
+            </div>
+            <div class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of getRequerimientosByEstatus('Calificado Comercial')" 
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-green-200 dark:border-green-900/50 hover:shadow-md transition duration-150 relative">
+                    <!-- Warning / Info Faltante SGC Badge -->
+                    <div *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos" 
+                         class="absolute -top-2 -right-1.5 px-2 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded-full uppercase tracking-wider">
+                        Pendiente Info
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-green-500">{{ r.folio }}</span>
+                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400">
+                            {{ r.sucursal }}
+                        </span>
+                    </div>
+                    <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
+                    <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
+                    
+                    <div class="text-[10px] text-gray-500 mt-2 space-y-0.5 bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
+                        <div><strong>Ruta:</strong> {{ r.rutaAtencion }}</div>
+                        <div><strong>Naturaleza:</strong> {{ r.naturaleza }}</div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t">
+                        <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
+                        <div class="flex items-center space-x-1">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Calificar / Ver Checklist SGC" (click)="openCalificarDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-green-500"></mat-icon>
+                            </button>
+                            <button mat-icon-button class="w-8 h-8 min-h-8" (click)="openEditDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:pencil" class="icon-size-4.5"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 3: Calificado Técnico -->
+        <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-sm text-blue-600 uppercase tracking-wider">Calificado Técnico</span>
+                <span class="px-2 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-full">
+                    {{ getRequerimientosByEstatus('Calificado Técnico').length }}
+                </span>
+            </div>
+            <div class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of getRequerimientosByEstatus('Calificado Técnico')" 
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 hover:shadow-md transition duration-150 relative">
+                    <!-- Warning / Info Faltante SGC Badge -->
+                    <div *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos" 
+                         class="absolute -top-2 -right-1.5 px-2 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded-full uppercase tracking-wider">
+                        Pendiente Info
+                    </div>
+
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-blue-500">{{ r.folio }}</span>
+                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                            {{ r.sucursal }}
+                        </span>
+                    </div>
+                    <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
+                    <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
+                    
+                    <div class="text-[10px] text-gray-500 mt-2 space-y-0.5 bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
+                        <div><strong>Ruta:</strong> {{ r.rutaAtencion }}</div>
+                        <div><strong>Naturaleza:</strong> {{ r.naturaleza }}</div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t">
+                        <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
+                        <div class="flex items-center space-x-1">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Calificar / Ver Checklist SGC" (click)="openCalificarDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-blue-500"></mat-icon>
+                            </button>
+                            <button mat-icon-button class="w-8 h-8 min-h-8" (click)="openEditDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:pencil" class="icon-size-4.5"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 4: No Viable -->
+        <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-sm text-red-600 uppercase tracking-wider">No Viable / Descartado</span>
+                <span class="px-2 py-0.5 text-xs font-semibold bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-full">
+                    {{ getRequerimientosByEstatus('No Viable').length }}
+                </span>
+            </div>
+            <div class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of getRequerimientosByEstatus('No Viable')" 
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-red-200 dark:border-red-900/50 hover:shadow-md transition duration-150 relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-red-500">{{ r.folio }}</span>
+                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400">
+                            {{ r.sucursal }}
+                        </span>
+                    </div>
+                    <h4 class="font-semibold text-sm leading-tight text-gray-500 line-through">{{ r.empresa }}</h4>
+                    <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
+                    
+                    <div class="bg-red-50 dark:bg-red-950/10 p-2 rounded mt-2 border border-red-100 text-[10px] text-red-600 dark:text-red-400">
+                        <strong>Descarte:</strong> {{ r.motivoDescarte || 'Sin motivo registrado' }}
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t">
+                        <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
+                        <div class="flex items-center space-x-1">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver Calificación" (click)="openCalificarDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-red-500"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LIST VIEW -->
+    <div *ngIf="viewMode === 'list'" class="bg-card rounded-2xl shadow overflow-hidden border">
+        <table mat-table [dataSource]="filteredRequerimientos" class="w-full">
+
+            <!-- Folio -->
+            <ng-container matColumnDef="folio">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Folio</th>
+                <td mat-cell *matCellDef="let r" class="text-sm font-bold text-primary">{{ r.folio }}</td>
+            </ng-container>
+
+            <!-- Contact Name -->
+            <ng-container matColumnDef="nombreContacto">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Contacto</th>
+                <td mat-cell *matCellDef="let r" class="text-sm text-default">{{ r.nombreContacto }}</td>
+            </ng-container>
+
+            <!-- Empresa -->
+            <ng-container matColumnDef="empresa">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Empresa</th>
+                <td mat-cell *matCellDef="let r" class="text-sm text-default font-semibold">{{ r.empresa }}</td>
+            </ng-container>
+
+            <!-- Sucursal -->
+            <ng-container matColumnDef="sucursal">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Sucursal</th>
+                <td mat-cell *matCellDef="let r" class="text-sm text-default">{{ r.sucursal }}</td>
+            </ng-container>
+
+            <!-- Fecha Recepcion -->
+            <ng-container matColumnDef="fechaRecepcion">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Fecha Recepción</th>
+                <td mat-cell *matCellDef="let r" class="text-xs text-gray-500">{{ r.fechaRecepcion | date:'dd/MM/yyyy HH:mm' }}</td>
+            </ng-container>
+
+            <!-- Estatus -->
+            <ng-container matColumnDef="estatus">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Estatus</th>
+                <td mat-cell *matCellDef="let r">
+                    <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded"
+                          [ngClass]="{
+                            'bg-gray-100 text-gray-600': r.estatus === 'Pendiente',
+                            'bg-green-100 text-green-600': r.estatus === 'Calificado Comercial',
+                            'bg-blue-100 text-blue-600': r.estatus === 'Calificado Técnico',
+                            'bg-red-100 text-red-600': r.estatus === 'No Viable'
+                          }">
+                        {{ r.estatus }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <!-- Viabilidad -->
+            <ng-container matColumnDef="viabilidad">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Viabilidad</th>
+                <td mat-cell *matCellDef="let r" class="text-xs text-gray-500">{{ r.viabilidad || '-' }}</td>
+            </ng-container>
+
+            <!-- Ruta -->
+            <ng-container matColumnDef="rutaAtencion">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Ruta</th>
+                <td mat-cell *matCellDef="let r" class="text-xs text-gray-500">{{ r.rutaAtencion || '-' }}</td>
+            </ng-container>
+
+            <!-- Acciones -->
+            <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Acciones</th>
+                <td mat-cell *matCellDef="let r">
+                    <div class="flex items-center space-x-1">
+                        <button mat-icon-button color="primary" matTooltip="Calificar / Checklist SGC" (click)="openCalificarDialog(r)">
+                            <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-5"></mat-icon>
+                        </button>
+                        <button mat-icon-button (click)="openEditDialog(r)">
+                            <mat-icon svgIcon="heroicons_outline:pencil" class="icon-size-5"></mat-icon>
+                        </button>
+                    </div>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+    </div>
+
+</div>

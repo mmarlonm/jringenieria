@@ -210,6 +210,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             // Elementos directos
             { id: 'comercializacion.leads', title: 'Leads e Inbox (ISO 9051)', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
+            { id: 'comercializacion.requerimientos', title: 'Requerimientos (SGC-PRO-COM-02)', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
             { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
@@ -393,7 +394,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         type: 'collapsable',
         icon: 'heroicons_outline:briefcase',
         children: [
-            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
+            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
+            { id: 'comercializacion.requerimientos', title: 'Requerimientos', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' }
         ]
     },
     {
@@ -471,7 +473,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         title: 'COMERCIALIZACION',
         type: 'collapsable',
         children: [
-            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
+            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
+            { id: 'comercializacion.requerimientos', title: 'Requerimientos', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' }
         ]
     },
     { id: 'marketing', title: 'MARKETING', type: 'collapsable', children: [] },
@@ -534,7 +537,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:briefcase',
         children: [
-            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' }
+            { id: 'comercializacion.leads', title: 'Leads e Inbox', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
+            { id: 'comercializacion.requerimientos', title: 'Requerimientos', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' }
         ]
     },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },

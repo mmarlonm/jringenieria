@@ -1,0 +1,220 @@
+<div class="flex flex-col w-[750px] max-h-[85vh] bg-card text-default rounded-2xl overflow-hidden shadow-2xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-primary text-on-primary">
+        <div class="flex flex-col">
+            <span class="text-sm text-blue-200 font-bold uppercase tracking-wider">SGC-PRO-COM-02</span>
+            <div class="flex items-center space-x-2">
+                <mat-icon class="text-on-primary" svgIcon="heroicons_outline:check-badge"></mat-icon>
+                <span class="text-lg font-semibold tracking-tight">
+                    Calificar Requerimiento: {{ requerimiento.folio }}
+                </span>
+            </div>
+        </div>
+        <button mat-icon-button (click)="onCancel()" class="text-on-primary">
+            <mat-icon svgIcon="heroicons_outline:x-mark"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="bg-gray-50 dark:bg-gray-800/40 p-4 border-b text-xs flex flex-col space-y-1">
+        <div><strong>Contacto:</strong> {{ requerimiento.nombreContacto }} | <strong>Empresa:</strong> {{ requerimiento.empresa }}</div>
+        <div><strong>Ubicación/Sucursal:</strong> {{ requerimiento.sucursal || 'Sin definir' }}</div>
+        <div class="text-gray-500 italic mt-1">"{{ requerimiento.descripcion }}"</div>
+    </div>
+
+    <mat-tab-group class="flex-1 overflow-hidden" mat-stretch-tabs="false">
+        
+        <!-- TAB 1: CALIFICACIÓN -->
+        <mat-tab label="Clasificación SGC">
+            <form [formGroup]="calificarForm" (ngSubmit)="onSubmit()" class="p-6 space-y-4 overflow-y-auto max-h-[50vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Estatus -->
+                    <mat-form-field class="w-full" appearance="fill">
+                        <mat-label>Estatus de Calificación</mat-label>
+                        <mat-select formControlName="estatus">
+                            <mat-option *ngFor="let est of estatusList" [value]="est">{{ est }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <!-- Viabilidad -->
+                    <mat-form-field class="w-full" appearance="fill">
+                        <mat-label>Viabilidad Preliminar</mat-label>
+                        <mat-select formControlName="viabilidad">
+                            <mat-option [value]="''">Sin Definir</mat-option>
+                            <mat-option *ngFor="let viab of viabilidades" [value]="viab">{{ viab }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Naturaleza -->
+                    <mat-form-field class="w-full" appearance="fill">
+                        <mat-label>Naturaleza del Requerimiento</mat-label>
+                        <mat-select formControlName="naturaleza">
+                            <mat-option [value]="''">Sin Definir</mat-option>
+                            <mat-option *ngFor="let nat of naturalezas" [value]="nat">{{ nat }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <!-- Ruta -->
+                    <mat-form-field class="w-full" appearance="fill">
+                        <mat-label>Ruta de Atención Interna</mat-label>
+                        <mat-select formControlName="rutaAtencion">
+                            <mat-option [value]="''">Sin Definir</mat-option>
+                            <mat-option *ngFor="let r of rutas" [value]="r">{{ r }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- Observaciones de Riesgo -->
+                <mat-form-field class="w-full" appearance="fill">
+                    <mat-label>Análisis de Riesgos / Observaciones Técnicas</mat-label>
+                    <textarea matInput formControlName="observacionesRiesgo" rows="3" placeholder="Señale cualquier alerta de riesgo o detalle operativo visible..."></textarea>
+                </mat-form-field>
+
+                <!-- Motivo de Descarte (Solo si es No Viable) -->
+                <div *ngIf="calificarForm.get('estatus')?.value === 'No Viable' || calificarForm.get('viabilidad')?.value === 'No viable'" class="bg-red-50 dark:bg-red-950/20 p-4 rounded-xl border border-red-200">
+                    <mat-form-field class="w-full" appearance="fill">
+                        <mat-label>Justificación / Motivo de Rechazo (Obligatorio en SGC)</mat-label>
+                        <textarea matInput formControlName="motivoDescarte" rows="3" placeholder="Detalle la justificación del descarte del requerimiento..."></textarea>
+                    </mat-form-field>
+                </div>
+
+                <!-- Save Action inside first tab for convenience -->
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="calificarForm.invalid">
+                        Guardar Calificación
+                    </button>
+                </div>
+            </form>
+        </mat-tab>
+
+        <!-- TAB 2: CHECKLIST INFO FALTANTE -->
+        <mat-tab label="Checklist Información Faltante">
+            <form [formGroup]="calificarForm" (ngSubmit)="onSubmit()" class="p-6 space-y-6 overflow-y-auto max-h-[50vh]">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Marque los elementos de información faltante:</div>
+                
+                <div class="checklist-grid">
+                    <mat-checkbox formControlName="faltaPlano">Plano Eléctrico</mat-checkbox>
+                    <mat-checkbox formControlName="faltaFotografia">Fotografías del Sitio</mat-checkbox>
+                    <mat-checkbox formControlName="faltaCantidad">Cantidades definidas</mat-checkbox>
+                    <mat-checkbox formControlName="faltaUbicacion">Ubicación exacta</mat-checkbox>
+                    <mat-checkbox formControlName="faltaDatosElectricos">Datos eléctricos</mat-checkbox>
+                    <mat-checkbox formControlName="faltaCapacidad">Capacidad / Carga</mat-checkbox>
+                    <mat-checkbox formControlName="faltaFechaEjecucion">Fecha de ejecución</mat-checkbox>
+                    <mat-checkbox formControlName="faltaCondicionesSitio">Condiciones de sitio</mat-checkbox>
+                    <mat-checkbox formControlName="faltaNormativa">Requisitos normativos</mat-checkbox>
+                    <mat-checkbox formControlName="faltaEvidenciaFalla">Evidencia de fallas</mat-checkbox>
+                    <mat-checkbox formControlName="faltaMarcaModelo">Marca o Modelo específico</mat-checkbox>
+                    <mat-checkbox formControlName="faltaVisita">Visita / Levantamiento previo</mat-checkbox>
+                    <mat-checkbox formControlName="faltaOtros">Otros elementos</mat-checkbox>
+                </div>
+
+                <div *ngIf="calificarForm.get('faltaOtros')?.value" class="mt-4">
+                    <mat-form-field class="w-full" appearance="fill">
+                        <mat-label>Especifique otros elementos faltantes</mat-label>
+                        <input matInput formControlName="faltaOtrosDescripcion">
+                    </mat-form-field>
+                </div>
+
+                <!-- Save Action inside second tab for convenience -->
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="calificarForm.invalid">
+                        Guardar Checklist
+                    </button>
+                </div>
+            </form>
+        </mat-tab>
+
+        <!-- TAB 3: BITÁCORA DE SEGUIMIENTO -->
+        <mat-tab label="Seguimiento de Información Faltante">
+            <div class="p-6 flex flex-col space-y-4 overflow-y-auto max-h-[50vh]">
+                
+                <!-- Create follow-up -->
+                <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border flex flex-col space-y-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Registrar Contacto de Seguimiento</span>
+                    <div class="flex items-center space-x-3">
+                        <mat-form-field appearance="fill" class="w-1/3">
+                            <mat-label>Medio</mat-label>
+                            <mat-select [(ngModel)]="medioSeguimiento">
+                                <mat-option value="WhatsApp">WhatsApp</mat-option>
+                                <mat-option value="Llamada">Llamada</mat-option>
+                                <mat-option value="Correo">Correo Electrónico</mat-option>
+                                <mat-option value="Reunión">Reunión Virtual</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field appearance="fill" class="flex-1">
+                            <mat-label>Detalle de lo conversado</mat-label>
+                            <input matInput [(ngModel)]="detalleSeguimiento" placeholder="Ej. Se solicitaron planos al cliente por correo...">
+                        </mat-form-field>
+                        <button mat-flat-button color="accent" class="h-12" (click)="addSeguimiento()">
+                            Agregar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Timeline / List of follow-ups -->
+                <div class="space-y-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Historial de Seguimientos</span>
+                    <div *ngIf="seguimientos.length === 0" class="text-sm text-gray-400 italic">No hay seguimientos registrados.</div>
+                    
+                    <div *ngFor="let seg of seguimientos" class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/20 border-l-4 border-accent">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-sm text-accent">{{ seg.medio }}</span>
+                                <span class="text-xs text-gray-400">{{ seg.fechaContacto | date:'dd/MM/yyyy HH:mm' }}</span>
+                            </div>
+                            <p class="text-sm text-default mt-1">{{ seg.detalle }}</p>
+                            <div class="text-xs text-gray-500 mt-1">Registrado por: {{ seg.responsableNombre }}</div>
+                        </div>
+                        <button mat-icon-button color="warn" size="small" (click)="eliminarSeguimiento(seg.id)">
+                            <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- TAB 4: ARCHIVOS / EVIDENCIAS -->
+        <mat-tab label="Archivos y Planos">
+            <div class="p-6 flex flex-col space-y-4 overflow-y-auto max-h-[50vh]">
+                <!-- Drag and drop or simple upload button -->
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center flex flex-col items-center justify-center bg-gray-50/50 dark:bg-gray-900/10 hover:bg-gray-50 dark:hover:bg-gray-900/20 transition duration-150">
+                    <mat-icon svgIcon="heroicons_outline:cloud-arrow-up" class="text-gray-400 icon-size-12 mb-2"></mat-icon>
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Seleccione archivos de planos, fotos o diagramas</span>
+                    <input type="file" id="file-uploader" class="hidden" multiple (change)="onFileSelected($event)">
+                    <button mat-flat-button color="primary" class="mt-4" onclick="document.getElementById('file-uploader').click()">
+                        Subir Archivos
+                    </button>
+                </div>
+
+                <!-- Uploaded Files List -->
+                <div class="space-y-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Archivos Cargados</span>
+                    <div *ngIf="archivos.length === 0" class="text-sm text-gray-400 italic">No hay archivos adjuntos.</div>
+                    
+                    <div *ngFor="let file of archivos" class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/20 border">
+                        <div class="flex items-center space-x-3">
+                            <mat-icon svgIcon="heroicons_outline:document" class="text-primary"></mat-icon>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold truncate max-w-xs">{{ file.nombreArchivo }}</span>
+                                <span class="text-xs text-gray-400">{{ file.fechaSubida | date:'dd/MM/yyyy' }}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button mat-icon-button (click)="descargarArchivo(file)">
+                                <mat-icon svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" (click)="eliminarArchivo(file)">
+                                <mat-icon svgIcon="heroicons_outline:trash"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+
+    </mat-tab-group>
+</div>
