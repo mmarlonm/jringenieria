@@ -120,12 +120,30 @@ export class QuoteDetailsComponent implements OnInit {
       montoTotal: [0],
       ajustesCostos: [null],
       comentarios: [null],
-      unidadId: [null]
+      unidadId: [null],
+
+      // SGC-PRO-COM-03 fields
+      clasificacion: ['Simple', [Validators.required]],
+      version: [1],
+      motivoDescarte: [null],
+      ingenieriaValidada: [false],
+      direccionAprobada: [false]
     });
     this.getEstatus();
     this.getClientes();
     this.getProspects();
     this.getUnidadesDeNegocio();
+
+    // Validar motivoDescarte obligatorio si el estatus es Rechazada/Descartada (Id 3)
+    this.quotesForm.get('estatus')?.valueChanges.subscribe(est => {
+      const motivoControl = this.quotesForm.get('motivoDescarte');
+      if (est == 3) {
+        motivoControl?.setValidators([Validators.required]);
+      } else {
+        motivoControl?.clearValidators();
+      }
+      motivoControl?.updateValueAndValidity();
+    });
 
     const userData = JSON.parse(this.quotesService.userInformation);
     this.quotesForm.get("usuarioCreadorId").setValue(userData.usuario.id);
@@ -202,7 +220,12 @@ export class QuoteDetailsComponent implements OnInit {
             montoTotal: quotes.montoTotal,
             ajustesCostos: quotes.ajustesCostos,
             comentarios: quotes.comentarios,
-            unidadId: quotes.unidadId
+            unidadId: quotes.unidadId,
+            clasificacion: quotes.clasificacion || 'Simple',
+            version: quotes.version || 1,
+            motivoDescarte: quotes.motivoDescarte,
+            ingenieriaValidada: quotes.ingenieriaValidada || false,
+            direccionAprobada: quotes.direccionAprobada || false
           });
         }
         else {
@@ -266,6 +289,25 @@ export class QuoteDetailsComponent implements OnInit {
       // Guardar directamente si no está aprobada
       guardarCotizacion();
     }
+  }
+
+  crearNuevaVersion(): void {
+    const currentVersion = this.quotesForm.get('version')?.value || 1;
+    Swal.fire({
+      title: '¿Crear nueva versión?',
+      text: `Esto generará una copia de esta cotización con versión V${currentVersion + 1}.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, crear versión',
+      cancelButtonText: 'Cancelar'
+    }).then(res => {
+      if (res.isConfirmed) {
+        this.quotesForm.get('cotizacionId')?.setValue(0);
+        this.quotesForm.get('version')?.setValue(currentVersion + 1);
+        this.quotesId = null; // Reiniciar ID para crear como nuevo registro
+        this.saveQuotes();
+      }
+    });
   }
 
 

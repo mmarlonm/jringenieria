@@ -135,8 +135,8 @@
                                     <mat-autocomplete #autoProject="matAutocomplete"
                                         (optionSelected)="onProjectSelected($event)">
                                         <mat-option *ngFor="let p of (filteredProyectos$ | async)" [value]="p">
-                                            <span class="font-bold text-primary">{{ p.proyectoId || p.id }}</span>
-                                            <span class="ml-2 text-secondary">{{ p.nombre || p.nombreProyecto }}</span>
+                                            <span class="font-bold text-primary">{{ p.proyectoId || p.idSeguimiento || p.id }}</span>
+                                            <span class="ml-2 text-secondary">{{ p.nombre || p.tituloProyecto || p.actividad || p.nombreProyecto }}</span>
                                         </mat-option>
                                     </mat-autocomplete>
                                 </mat-form-field>

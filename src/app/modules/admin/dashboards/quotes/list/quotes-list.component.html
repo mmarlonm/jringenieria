@@ -87,7 +87,19 @@
                     <mat-icon>filter_list</mat-icon>
                   </button>
                 </th>
-                <td mat-cell *matCellDef="let quote">{{ quote.cotizacion }}</td>
+                <td mat-cell *matCellDef="let quote">
+                  <div class="flex flex-col">
+                    <div class="flex items-center">
+                      <span class="font-semibold">{{ quote.cotizacion || '-' }}</span>
+                      <span *ngIf="quote.version" class="ml-1.5 px-1 py-0.2 text-[9px] font-bold bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded">
+                        V{{ quote.version }}
+                      </span>
+                    </div>
+                    <span *ngIf="quote.clasificacion" class="text-[10px] text-gray-400 font-medium mt-0.5">
+                      {{ quote.clasificacion }}
+                    </span>
+                  </div>
+                </td>
               </ng-container>
           
               <!-- Cliente -->

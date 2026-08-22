@@ -298,6 +298,59 @@
           </mat-form-field>
         </div> -->
 
+        <!-- SGC-PRO-COM-03 fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-gray-50/50 dark:bg-gray-800/10 p-4 rounded-xl border">
+          <!-- Clasificación -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Clasificación SGC</mat-label>
+            <mat-select formControlName="clasificacion">
+              <mat-option value="Simple">Comercial Simple (Venta Directa)</mat-option>
+              <mat-option value="Tecnico-Comercial">Técnico-Comercial (Proyectos/Fabricación)</mat-option>
+              <mat-option value="Estrategica">Estratégica (Licitaciones/Cuentas Clave)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Versión -->
+          <mat-form-field appearance="fill" class="w-full">
+            <mat-label>Versión de Cotización (SGC)</mat-label>
+            <input matInput formControlName="version" readonly matTooltip="Use el botón inferior para generar una nueva versión V2, V3..." />
+          </mat-form-field>
+
+          <!-- Motivo de Descarte (Solo si estatus = 3) -->
+          <mat-form-field *ngIf="quotesForm.get('estatus')?.value == 3" appearance="fill" class="w-full">
+            <mat-label>Motivo de Pérdida / Descarte SGC</mat-label>
+            <mat-select formControlName="motivoDescarte">
+              <mat-option value="Precio">Precio demasiado alto</mat-option>
+              <mat-option value="Tiempo de entrega">Tiempo de entrega prolongado</mat-option>
+              <mat-option value="Competencia">Perdido con competencia</mat-option>
+              <mat-option value="Marca">Especificación de marca</mat-option>
+              <mat-option value="Presupuesto">Presupuesto del cliente cancelado</mat-option>
+              <mat-option value="Especificacion Tecnica">Falta de capacidad técnica</mat-option>
+              <mat-option value="Otro">Otro motivo</mat-option>
+            </mat-select>
+            <mat-error *ngIf="quotesForm.get('motivoDescarte')?.hasError('required')">El motivo de descarte es obligatorio en SGC</mat-error>
+          </mat-form-field>
+
+          <!-- Validaciones Internas -->
+          <div class="flex flex-col space-y-2 md:col-span-2 pt-2" *ngIf="quotesForm.get('clasificacion')?.value !== 'Simple'">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Validaciones y Firmas Electrónicas (Revisión Interna)</span>
+            
+            <div class="flex flex-wrap gap-4">
+              <!-- Validación Ingeniería -->
+              <label class="flex items-center space-x-2 cursor-pointer bg-card p-3 rounded-lg border">
+                <input type="checkbox" formControlName="ingenieriaValidada" class="form-checkbox h-5 w-5 text-primary">
+                <span class="text-sm font-semibold">Validación Técnica (Ingeniería)</span>
+              </label>
+
+              <!-- Aprobación Dirección (Solo Estratégica) -->
+              <label class="flex items-center space-x-2 cursor-pointer bg-card p-3 rounded-lg border" *ngIf="quotesForm.get('clasificacion')?.value === 'Estrategica'">
+                <input type="checkbox" formControlName="direccionAprobada" class="form-checkbox h-5 w-5 text-primary">
+                <span class="text-sm font-semibold">Aprobación Dirección General</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 gap-4 mt-4">
           <!-- Comentarios, Notas -->
           <mat-form-field appearance="fill" class="w-full">
@@ -385,6 +438,9 @@
   <!-- Botones -->
 
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float">
+    <button *ngIf="quotesId" mat-flat-button color="accent" type="button" (click)="crearNuevaVersion()" matTooltip="Clona esta cotización incrementando el número de versión (SGC)">
+      Generar Nueva Versión
+    </button>
     <button mat-raised-button color="primary" type="submit" (click)="saveQuotes()">
       Guardar
     </button>

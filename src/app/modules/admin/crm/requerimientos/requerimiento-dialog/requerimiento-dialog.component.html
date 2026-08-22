@@ -61,7 +61,7 @@
                 <mat-label>Responsable Asignado</mat-label>
                 <mat-select formControlName="usuarioAsignadoId">
                     <mat-option [value]="null">Sin Asignar</mat-option>
-                    <mat-option *ngFor="let user of usuarios" [value]="user.id">
+                    <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">
                         {{ user.nombreUsuario }}
                     </mat-option>
                 </mat-select>

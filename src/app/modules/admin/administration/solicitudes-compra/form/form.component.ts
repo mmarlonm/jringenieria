@@ -17,6 +17,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { SolicitudCompraService } from '../solicitud-compra.service';
 import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
+import { EngineeringService } from 'app/modules/admin/engineering/engineering.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto, ContpaqiMaterialDto, AnticipoDto } from '../models/solicitud-compra.types';
 import { ImportarMaterialesDialogComponent } from './importar-materiales-dialog/importar-materiales-dialog.component';
@@ -118,6 +119,7 @@ export class SolicitudCompraFormComponent implements OnInit {
         private _clientsService: ClientsService,
         private _usersService: UsersService,
         private _chatNotificationService: ChatNotificationService,
+        private _engineeringService: EngineeringService,
         private _route: ActivatedRoute,
         private _router: Router,
         private _dialog: MatDialog,
@@ -178,7 +180,7 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     loadProjects(): void {
-        this._projectService.getProjects().subscribe((response: any) => {
+        this._engineeringService.getSeguimientosEjecucion().subscribe((response: any) => {
             this.proyectos = response?.data || response || [];
             this._setupProjectFilter();
         });
@@ -214,6 +216,7 @@ export class SolicitudCompraFormComponent implements OnInit {
             tipoCompra: ['', Validators.required],
             centroCosto: ['', Validators.required],
             folioProyecto: [''],
+            idSeguimiento: [null],
             moneda: ['MXN', Validators.required],
             formaPago: ['', Validators.required],
             razonSocial: ['', Validators.required], // Internal company
@@ -367,8 +370,8 @@ export class SolicitudCompraFormComponent implements OnInit {
     private _filterProjects(name: string): any[] {
         const filterValue = name.toLowerCase();
         return this.proyectos.filter(p =>
-            String(p.proyectoId || p.id).toLowerCase().includes(filterValue) ||
-            String(p.nombre || p.nombreProyecto).toLowerCase().includes(filterValue)
+            String(p.proyectoId || p.idSeguimiento || p.id || '').toLowerCase().includes(filterValue) ||
+            String(p.nombre || p.tituloProyecto || p.actividad || p.nombreProyecto || '').toLowerCase().includes(filterValue)
         );
     }
 
@@ -392,12 +395,13 @@ export class SolicitudCompraFormComponent implements OnInit {
 
     onProjectSelected(event: any): void {
         const project = event.option.value;
-        const projectLabel = `${project.proyectoId || project.id} - ${project.nombre || project.nombreProyecto}`;
-        const clientLabel = project.nombreCliente || project.cliente || project.clienteNombre || '';
+        const projectLabel = `${project.proyectoId || project.idSeguimiento || project.id} - ${project.nombre || project.tituloProyecto || project.actividad || project.nombreProyecto}`;
+        const clientLabel = project.clienteNombre || project.empresa || project.nombreCliente || project.cliente || '';
 
         this.solicitudForm.patchValue({
             folioProyecto: projectLabel,
-            cliente: clientLabel || project.nombre || project.nombreProyecto
+            idSeguimiento: project.proyectoId || project.idSeguimiento || project.id || null,
+            cliente: clientLabel || project.nombre || project.tituloProyecto || project.actividad || project.nombreProyecto
         }, { emitEvent: false });
     }
 

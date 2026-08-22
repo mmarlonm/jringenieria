@@ -1,23 +1,23 @@
-<div class="flex flex-col flex-auto min-w-0 bg-gray-100 dark:bg-card p-6 md:p-8 space-y-6">
+﻿<div class="flex flex-col flex-auto min-w-0 bg-gray-100 dark:bg-card p-6 md:p-8 space-y-6">
 
     <!-- KPI Header Dashboard Panel -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- KPI 1 -->
         <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-blue-500">
-            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Calificación Correcta</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">CalificaciÃ³n Correcta</span>
             <div class="flex items-baseline space-x-2">
                 <span class="text-3xl font-bold tracking-tight text-blue-600 dark:text-blue-400">{{ kpis.tasaCalificacionCorrecta }}%</span>
             </div>
-            <span class="text-[10px] text-gray-500 mt-2">Aceptados sin devolución (Meta SGC: >=90%)</span>
+            <span class="text-[10px] text-gray-500 mt-2">Aceptados sin devoluciÃ³n (Meta SGC: >=90%)</span>
         </div>
 
         <!-- KPI 2 -->
         <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-green-500">
-            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Tiempo Calificación</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Tiempo CalificaciÃ³n</span>
             <div class="flex items-baseline space-x-2">
                 <span class="text-3xl font-bold tracking-tight text-green-600 dark:text-green-400">{{ kpis.tiempoPromedioCalificacionHoras }}h</span>
             </div>
-            <span class="text-[10px] text-gray-500 mt-2">Promedio horas de resolución (Meta: <=24h)</span>
+            <span class="text-[10px] text-gray-500 mt-2">Promedio horas de resoluciÃ³n (Meta: <=24h)</span>
         </div>
 
         <!-- KPI 3 -->
@@ -31,7 +31,7 @@
 
         <!-- KPI 4 -->
         <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-purple-500">
-            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Campos Mínimos OK</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Campos MÃ­nimos OK</span>
             <div class="flex items-baseline space-x-2">
                 <span class="text-3xl font-bold tracking-tight text-purple-600 dark:text-purple-400">{{ kpis.porcentajeCompletos }}%</span>
             </div>
@@ -55,7 +55,7 @@
                     <mat-option value="Todos">Todas las Sucursales</mat-option>
                     <mat-option value="Pachuca">Pachuca</mat-option>
                     <mat-option value="Puebla">Puebla</mat-option>
-                    <mat-option value="Querétaro">Querétaro</mat-option>
+                    <mat-option value="QuerÃ©taro">QuerÃ©taro</mat-option>
                     <mat-option value="Corporativo">Corporativo</mat-option>
                 </mat-select>
             </mat-form-field>
@@ -64,7 +64,7 @@
             <mat-form-field appearance="outline" class="w-full sm:w-44 max-h-12" subscriptSizing="dynamic">
                 <mat-select [formControl]="agenteControl">
                     <mat-option value="Todos">Todos los Agentes</mat-option>
-                    <mat-option *ngFor="let user of usuarios" [value]="user.id">{{ user.nombreUsuario }}</mat-option>
+                    <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">{{ user.nombreUsuario }}</mat-option>
                 </mat-select>
             </mat-form-field>
         </div>
@@ -97,22 +97,27 @@
             <div class="flex items-center justify-between mb-4">
                 <span class="font-bold text-sm text-gray-500 uppercase tracking-wider">Pendientes</span>
                 <span class="px-2 py-0.5 text-xs font-semibold bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">
-                    {{ getRequerimientosByEstatus('Pendiente').length }}
+                    {{ pendientes.length }}
                 </span>
             </div>
-            <div class="space-y-4 kanban-col overflow-y-auto">
-                <div *ngFor="let r of getRequerimientosByEstatus('Pendiente')" 
-                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:shadow-md transition duration-150 relative">
+            <div id="kanban-pendiente" class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of pendientes" [attr.data-id]="r.id"
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:shadow-md cursor-grab active:cursor-grabbing relative">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-blue-500">{{ r.folio }}</span>
-                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-                            {{ r.sucursal }}
-                        </span>
+                        <div class="flex items-center space-x-1">
+                            <span *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos"
+                                  class="px-1.5 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded uppercase">
+                                Faltas
+                            </span>
+                            <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                                {{ r.sucursal }}
+                            </span>
+                        </div>
                     </div>
                     <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
                     <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2 italic">"{{ r.descripcion }}"</p>
-                    
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
                         <div class="flex items-center space-x-1">
@@ -133,32 +138,31 @@
             <div class="flex items-center justify-between mb-4">
                 <span class="font-bold text-sm text-green-600 uppercase tracking-wider">Calificado Comercial</span>
                 <span class="px-2 py-0.5 text-xs font-semibold bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400 rounded-full">
-                    {{ getRequerimientosByEstatus('Calificado Comercial').length }}
+                    {{ calificadosComercial.length }}
                 </span>
             </div>
-            <div class="space-y-4 kanban-col overflow-y-auto">
-                <div *ngFor="let r of getRequerimientosByEstatus('Calificado Comercial')" 
-                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-green-200 dark:border-green-900/50 hover:shadow-md transition duration-150 relative">
-                    <!-- Warning / Info Faltante SGC Badge -->
-                    <div *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos" 
-                         class="absolute -top-2 -right-1.5 px-2 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded-full uppercase tracking-wider">
-                        Pendiente Info
-                    </div>
-                    
+            <div id="kanban-comercial" class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of calificadosComercial" [attr.data-id]="r.id"
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-green-200 dark:border-green-900/50 hover:shadow-md cursor-grab active:cursor-grabbing relative">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-green-500">{{ r.folio }}</span>
-                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400">
-                            {{ r.sucursal }}
-                        </span>
+                        <div class="flex items-center space-x-1">
+                            <span *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos"
+                                  class="px-1.5 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded uppercase"
+                                  matTooltip="Pendiente de Información">
+                                Pendiente Info
+                            </span>
+                            <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400">
+                                {{ r.sucursal }}
+                            </span>
+                        </div>
                     </div>
                     <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
                     <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
-                    
                     <div class="text-[10px] text-gray-500 mt-2 space-y-0.5 bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
                         <div><strong>Ruta:</strong> {{ r.rutaAtencion }}</div>
                         <div><strong>Naturaleza:</strong> {{ r.naturaleza }}</div>
                     </div>
-
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
                         <div class="flex items-center space-x-1">
@@ -174,37 +178,36 @@
             </div>
         </div>
 
-        <!-- Column 3: Calificado Técnico -->
+        <!-- Column 3: Calificado Tecnico -->
         <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
             <div class="flex items-center justify-between mb-4">
-                <span class="font-bold text-sm text-blue-600 uppercase tracking-wider">Calificado Técnico</span>
+                <span class="font-bold text-sm text-blue-600 uppercase tracking-wider">Calificado Tecnico</span>
                 <span class="px-2 py-0.5 text-xs font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-full">
-                    {{ getRequerimientosByEstatus('Calificado Técnico').length }}
+                    {{ calificadosTecnico.length }}
                 </span>
             </div>
-            <div class="space-y-4 kanban-col overflow-y-auto">
-                <div *ngFor="let r of getRequerimientosByEstatus('Calificado Técnico')" 
-                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 hover:shadow-md transition duration-150 relative">
-                    <!-- Warning / Info Faltante SGC Badge -->
-                    <div *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos" 
-                         class="absolute -top-2 -right-1.5 px-2 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded-full uppercase tracking-wider">
-                        Pendiente Info
-                    </div>
-
+            <div id="kanban-tecnico" class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of calificadosTecnico" [attr.data-id]="r.id"
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 hover:shadow-md cursor-grab active:cursor-grabbing relative">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-blue-500">{{ r.folio }}</span>
-                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-                            {{ r.sucursal }}
-                        </span>
+                        <div class="flex items-center space-x-1">
+                            <span *ngIf="r.faltaPlano || r.faltaFotografia || r.faltaVisita || r.faltaDatosElectricos"
+                                  class="px-1.5 py-0.5 text-[8px] font-bold bg-amber-500 text-white rounded uppercase"
+                                  matTooltip="Pendiente de Información">
+                                Pendiente Info
+                            </span>
+                            <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                                {{ r.sucursal }}
+                            </span>
+                        </div>
                     </div>
                     <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
                     <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
-                    
                     <div class="text-[10px] text-gray-500 mt-2 space-y-0.5 bg-gray-50 dark:bg-gray-800/20 p-2 rounded-lg">
                         <div><strong>Ruta:</strong> {{ r.rutaAtencion }}</div>
                         <div><strong>Naturaleza:</strong> {{ r.naturaleza }}</div>
                     </div>
-
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
                         <div class="flex items-center space-x-1">
@@ -225,12 +228,12 @@
             <div class="flex items-center justify-between mb-4">
                 <span class="font-bold text-sm text-red-600 uppercase tracking-wider">No Viable / Descartado</span>
                 <span class="px-2 py-0.5 text-xs font-semibold bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-full">
-                    {{ getRequerimientosByEstatus('No Viable').length }}
+                    {{ noViables.length }}
                 </span>
             </div>
-            <div class="space-y-4 kanban-col overflow-y-auto">
-                <div *ngFor="let r of getRequerimientosByEstatus('No Viable')" 
-                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-red-200 dark:border-red-900/50 hover:shadow-md transition duration-150 relative">
+            <div id="kanban-no-viable" class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of noViables" [attr.data-id]="r.id"
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-red-200 dark:border-red-900/50 hover:shadow-md cursor-grab active:cursor-grabbing relative">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold text-red-500">{{ r.folio }}</span>
                         <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400">
@@ -239,15 +242,13 @@
                     </div>
                     <h4 class="font-semibold text-sm leading-tight text-gray-500 line-through">{{ r.empresa }}</h4>
                     <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
-                    
                     <div class="bg-red-50 dark:bg-red-950/10 p-2 rounded mt-2 border border-red-100 text-[10px] text-red-600 dark:text-red-400">
                         <strong>Descarte:</strong> {{ r.motivoDescarte || 'Sin motivo registrado' }}
                     </div>
-
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
                         <div class="flex items-center space-x-1">
-                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver Calificación" (click)="openCalificarDialog(r)">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver Calificacion" (click)="openCalificarDialog(r)">
                                 <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-red-500"></mat-icon>
                             </button>
                         </div>
@@ -288,7 +289,7 @@
 
             <!-- Fecha Recepcion -->
             <ng-container matColumnDef="fechaRecepcion">
-                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Fecha Recepción</th>
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Fecha RecepciÃ³n</th>
                 <td mat-cell *matCellDef="let r" class="text-xs text-gray-500">{{ r.fechaRecepcion | date:'dd/MM/yyyy HH:mm' }}</td>
             </ng-container>
 
@@ -300,7 +301,7 @@
                           [ngClass]="{
                             'bg-gray-100 text-gray-600': r.estatus === 'Pendiente',
                             'bg-green-100 text-green-600': r.estatus === 'Calificado Comercial',
-                            'bg-blue-100 text-blue-600': r.estatus === 'Calificado Técnico',
+                            'bg-blue-100 text-blue-600': r.estatus === 'Calificado TÃ©cnico',
                             'bg-red-100 text-red-600': r.estatus === 'No Viable'
                           }">
                         {{ r.estatus }}

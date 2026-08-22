@@ -72,6 +72,7 @@
                             "src/@fuse/styles/main.scss",
                             "src/styles/styles.scss",
                             "src/styles/tailwind.scss",
+                            "node_modules/@angular/cdk/overlay-prebuilt.css",
                             "node_modules/sileo/dist/styles.css",
                             "node_modules/leaflet/dist/leaflet.css",
                             "node_modules/angular-calendar/css/angular-calendar.css",
