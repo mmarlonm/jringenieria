@@ -47,6 +47,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         'proyecto',
         'tipoProyecto',
         'oc',
+        'montoTotalEstimado',
         'utilidadEsperada',
         'fechas',
         'recursos',
@@ -60,6 +61,12 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         'reporte',
         'acciones'
     ];
+
+    /** Suma del total cotizado de los proyectos visibles/filtrados */
+    get montoTotalCotizado(): number {
+        const data = this.dataSource.filteredData || this.dataSource.data;
+        return data.reduce((acc, curr) => acc + (curr.montoTotalEstimado || 0), 0);
+    }
     
     dataSource = new MatTableDataSource<SeguimientoEjecucion>();
     showFilters: boolean = true;
@@ -266,6 +273,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
                     case 'actividad': return actividad.includes(s);
                     case 'nombreSolicitante': return solicitante.includes(s);
                     case 'ordenCompraFolio': return oc.includes(s);
+                    case 'montoTotalEstimado': return data.montoTotalEstimado ? String(data.montoTotalEstimado).includes(s) : false;
                     default: return false;
                 }
             }

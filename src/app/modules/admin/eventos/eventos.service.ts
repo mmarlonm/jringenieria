@@ -20,6 +20,8 @@ export interface Asistente {
     asistencia: 'Presente' | 'Faltante';
     fechaCheckIn?: string;
     fechaCheckInRaw?: string;
+    fechaRegistro?: string;
+    fechaRegistroRaw?: string;
     medioSeguimiento: 'Correo' | 'WhatsApp' | 'Ninguno';
     direccion?: string;
     ocupacion?: string;
@@ -537,6 +539,14 @@ export class EventosService implements OnDestroy {
                                     second: '2-digit'
                                 }) : undefined,
                                 fechaCheckInRaw: item.fechaCheckIn || undefined,
+                                fechaRegistro: item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleString('es-MX', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) : undefined,
+                                fechaRegistroRaw: item.fechaRegistro || undefined,
                                 medioSeguimiento: item.medioSeguimientoDeseado as 'Correo' | 'WhatsApp' | 'Ninguno',
                                 direccion: item.direccionCiudadEstado,
                                 ocupacion: item.ocupacionCargo,
@@ -687,6 +697,14 @@ export class EventosService implements OnDestroy {
                             second: '2-digit'
                         }) : undefined,
                         fechaCheckInRaw: item.fechaCheckIn || undefined,
+                        fechaRegistro: item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleString('es-MX', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : undefined,
+                        fechaRegistroRaw: item.fechaRegistro || undefined,
                         medioSeguimiento: item.medioSeguimientoDeseado as 'Correo' | 'WhatsApp' | 'Ninguno',
                         direccion: item.direccionCiudadEstado,
                         ocupacion: item.ocupacionCargo,

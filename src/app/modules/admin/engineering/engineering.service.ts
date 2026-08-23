@@ -67,6 +67,7 @@ export interface SeguimientoEjecucion {
     avanceGantt?: number;
     tituloProyecto?: string;
     tipo?: string;               // Tipo de proyecto
+    montoTotalEstimado?: number; // Total cotizado del proyecto
     actividadDetenida?: string;  // Nombre de actividad con estatus=4 (Detenida)
     hayActividadDetenida?: boolean; // true si hay al menos una actividad detenida
 }
@@ -295,5 +296,12 @@ export class EngineeringService {
             .set('tipo', tipo)
             .set('nombreArchivo', nombreArchivo);
         return this._http.get<any>(`${this.apiSeguimientoEjecucion}/token`, { params });
+    }
+
+    // ==========================================
+    // 💰 FINANZAS Y SOLICITUDES DE COMPRA DE PROYECTO
+    // ==========================================
+    getSolicitudesCompraProyecto(idSeguimiento: number): Observable<any[]> {
+        return this._http.get<any[]>(`${environment.apiUrl}/SolicitudesCompra/proyecto/${idSeguimiento}`);
     }
 }

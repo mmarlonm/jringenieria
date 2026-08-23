@@ -135,6 +135,7 @@ export class EventosControlComponent implements OnInit, OnDestroy {
                 a.apellidos.toLowerCase().includes(query) ||
                 a.correo.toLowerCase().includes(query) ||
                 String(a.id).toLowerCase().includes(query) ||
+                (a.fechaRegistro && a.fechaRegistro.toLowerCase().includes(query)) ||
                 (a.empresa && a.empresa.toLowerCase().includes(query)) ||
                 (a.universidad && a.universidad.toLowerCase().includes(query))
             );

@@ -685,12 +685,63 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
         }
         this.loadFiles();
         this.loadGantt();
+        this.loadFinanzas();
       },
       error: (err) => {
         console.error(err);
         Swal.fire('Error', 'No se pudo cargar el control de ejecución', 'error');
       }
     });
+  }
+
+  // ==========================================
+  // 💰 FINANZAS Y GASTOS DEL PROYECTO
+  // ==========================================
+  solicitudesCompraProyecto: any[] = [];
+  isLoadingFinanzas: boolean = false;
+  expandedSolicitudId: number | null = null;
+
+  get totalGastosMateriales(): number {
+    return this.solicitudesCompraProyecto.reduce((acc, curr) => acc + (curr.monto || 0), 0);
+  }
+
+  get totalCotizadoSubtotal(): number {
+    return this.ejecucion?.montoTotalEstimado || 0;
+  }
+
+  get totalCotizadoConIva(): number {
+    return (this.ejecucion?.montoTotalEstimado || 0) * 1.16;
+  }
+
+  get balanceProyecto(): number {
+    return this.totalCotizadoSubtotal - this.totalGastosMateriales;
+  }
+
+  get porcentajeConsumidoMateriales(): number {
+    if (!this.totalCotizadoSubtotal || this.totalCotizadoSubtotal === 0) return 0;
+    return Math.min(100, Math.max(0, (this.totalGastosMateriales / this.totalCotizadoSubtotal) * 100));
+  }
+
+  loadFinanzas(): void {
+    if (!this.idSeguimiento) return;
+    this.isLoadingFinanzas = true;
+    this._engineeringService.getSolicitudesCompraProyecto(this.idSeguimiento).subscribe({
+      next: (data) => {
+        this.solicitudesCompraProyecto = data || [];
+        this.isLoadingFinanzas = false;
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar finanzas del proyecto:', err);
+        this.isLoadingFinanzas = false;
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  toggleExpandSolicitud(id: number): void {
+    this.expandedSolicitudId = this.expandedSolicitudId === id ? null : id;
+    this._cdr.markForCheck();
   }
 
   loadUsers(): void {

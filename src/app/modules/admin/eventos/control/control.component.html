@@ -79,6 +79,7 @@
                         <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Tipo</th>
                         <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Estatus QR</th>
                         <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Asistencia</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Fecha Registro</th>
                         <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Check-In</th>
                         <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-center">Acciones</th>
                     </tr>
@@ -156,6 +157,14 @@
                                 {{ a.asistencia }}
                             </span>
                         </td>
+                        <!-- Registration Date & Time -->
+                        <td class="px-6 py-4">
+                            <span *ngIf="a.fechaRegistro" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 whitespace-nowrap">
+                                <mat-icon class="icon-size-3.5 text-indigo-500" svgIcon="heroicons_solid:calendar"></mat-icon>
+                                {{ a.fechaRegistro }}
+                            </span>
+                            <span *ngIf="!a.fechaRegistro" class="text-xs font-medium text-slate-300 dark:text-slate-600">—</span>
+                        </td>
                         <!-- Check In Date -->
                         <td class="px-6 py-4">
                             <span *ngIf="a.fechaCheckIn" class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
@@ -196,7 +205,7 @@
                         </td>
                     </tr>
                     <tr *ngIf="filteredAsistentes.length === 0">
-                        <td colspan="8" class="px-6 py-12 text-center text-slate-400 text-sm font-semibold">
+                        <td colspan="9" class="px-6 py-12 text-center text-slate-400 text-sm font-semibold">
                             No se encontraron asistentes para esta búsqueda.
                         </td>
                     </tr>
