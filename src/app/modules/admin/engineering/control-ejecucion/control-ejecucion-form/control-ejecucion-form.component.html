@@ -1289,7 +1289,14 @@
                           </span>
                         </div>
                         <div class="text-xs text-slate-500 font-medium truncate mt-0.5">
-                          <span class="font-bold text-slate-700">Proveedor:</span> {{ sol.razonSocial || sol.proveedorSugerido || 'Sin proveedor' }} &bull; 
+                          <span class="font-bold text-slate-700">Proveedor{{ sol.proveedores?.length !== 1 ? 'es' : '' }}:</span>
+                          <ng-container *ngIf="sol.proveedores?.length; else proveedorLegacy">
+                            <ng-container *ngFor="let proveedor of sol.proveedores; let last = last">
+                              {{ proveedor.razonSocial }}<span *ngIf="!last">, </span>
+                            </ng-container>
+                          </ng-container>
+                          <ng-template #proveedorLegacy>{{ sol.razonSocial || sol.proveedorSugerido || 'Sin proveedor' }}</ng-template>
+                          &bull; 
                           <span class="font-bold text-slate-700">Fecha:</span> {{ sol.fechaSolicitud | date:'dd/MM/yyyy' }}
                         </div>
                       </div>
