@@ -201,9 +201,9 @@ import Swal from 'sweetalert2';
 .btn-action:hover { filter:brightness(1.07); transform:translateY(-1px); }
 .btn-action:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 
-.table-wrap { overflow-x:auto; }
+.table-wrap { max-height: 420px; overflow-y: auto; overflow-x: auto; border: 1px solid #e8eaf6; border-radius: 8px; }
 .track-table { width:100%; border-collapse:collapse; font-size:12.5px; }
-.track-table th { background:#f7f9ff; color:#555; font-weight:700; text-transform:uppercase; font-size:10px; padding:10px 12px; border-bottom:2px solid #e8eaf6; text-align:left; }
+.track-table th { position: sticky; top: 0; z-index: 2; background:#f7f9ff; color:#555; font-weight:700; text-transform:uppercase; font-size:10px; padding:10px 12px; border-bottom:2px solid #e8eaf6; text-align:left; }
 .track-table td { padding:10px 12px; border-bottom:1px solid #f0f2f8; }
 .track-table tr:hover td { background:#fafbff; }
 

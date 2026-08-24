@@ -66,6 +66,7 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
   public chartUniversidadesOptions: any = {};
   public chartTiposAsistentesOptions: any = {};
   public chartTiposPersonalOptions: any = {};
+  public chartRegistrosPorDiaOptions: any = {};
 
   private baseTheme: any = {
     chart: {
@@ -110,10 +111,24 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
         this.loadReports();
         this._cdr.markForCheck();
       });
+
+    this._eventosService.metricas$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(metrics => {
+        if (metrics) {
+          this.totalRegistros = metrics.totalRegistrados;
+          this.totalAsistieron = metrics.totalAsistieron;
+          this.tasaAsistencia = metrics.totalRegistrados > 0
+            ? Math.round((metrics.totalAsistieron / metrics.totalRegistrados) * 100) + '%'
+            : '0%';
+          this._cdr.markForCheck();
+        }
+      });
   }
 
   loadReports(): void {
     this.isLoading = true;
+    this._eventosService.loadDashboardMetrics(this.selectedEventoId);
     this._eventosService.getAsistentes(this.selectedEventoId).subscribe({
       next: (asistentes) => {
         this.asistentes = asistentes || [];
@@ -151,29 +166,100 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
 
   private generarReportes(): void {
     this.calcularKPIs();
+    this.generarGraficoRegistrosPorDia();
     this.generarGraficoEmpresas();
     this.generarGraficoUniversidades();
     this.generarGraficoTiposAsistentes();
     this.generarGraficoTiposPersonal();
   }
 
+  private generarGraficoRegistrosPorDia(): void {
+    const registrosPorDiaMap = new Map<string, number>();
+
+    this.asistentes.forEach(a => {
+      const rawDate = a.fechaRegistroRaw || a.fechaRegistro;
+      if (rawDate) {
+        const dateObj = new Date(rawDate);
+        if (!isNaN(dateObj.getTime())) {
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          const key = `${year}-${month}-${day}`;
+          registrosPorDiaMap.set(key, (registrosPorDiaMap.get(key) || 0) + 1);
+        }
+      }
+    });
+
+    this.personalStaff.forEach(p => {
+      if (p.fechaRegistro) {
+        const dateObj = new Date(p.fechaRegistro);
+        if (!isNaN(dateObj.getTime())) {
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          const key = `${year}-${month}-${day}`;
+          registrosPorDiaMap.set(key, (registrosPorDiaMap.get(key) || 0) + 1);
+        }
+      }
+    });
+
+    const sortedEntries = Array.from(registrosPorDiaMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const categories = sortedEntries.map(([dateStr]) => {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+      }
+      return dateStr;
+    });
+
+    const values = sortedEntries.map(([, count]) => count);
+
+    this.chartRegistrosPorDiaOptions = {
+      ...this.baseTheme,
+      chart: { ...this.baseTheme.chart, type: 'spline' },
+      xAxis: {
+        categories: categories,
+        title: { text: 'Fecha de Registro' },
+        labels: { style: { fontSize: '11px', fontWeight: 'bold' } }
+      },
+      yAxis: {
+        title: { text: 'Nuevos Registros' },
+        min: 0,
+        allowDecimals: false,
+        labels: { style: { fontSize: '11px' } }
+      },
+      series: [
+        {
+          name: 'Registros Diarios',
+          data: values,
+          color: '#4f46e5',
+          marker: {
+            enabled: true,
+            radius: 5,
+            symbol: 'circle',
+            fillColor: '#4f46e5'
+          }
+        }
+      ],
+      plotOptions: {
+        spline: {
+          dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 'bold', color: '#4f46e5' } },
+          enableMouseTracking: true
+        }
+      }
+    };
+  }
+
   private calcularKPIs(): void {
-    if (this.asistentes.length > 0) {
-      // Cálculo basado en asistentes
-      const asistieron = this.asistentes.filter(a => a.asistencia === 'Presente').length;
-      this.totalRegistros = this.asistentes.length + this.personalStaff.length;
-      this.totalAsistieron = asistieron + this.personalStaff.length;
-      this.tasaAsistencia = Math.round((asistieron / this.asistentes.length) * 100) + '%';
-    } else if (this.personalStaff.length > 0) {
-      // Cálculo basado en personal/staff (solo presentes)
-      this.totalRegistros = this.personalStaff.length;
-      this.totalAsistieron = this.personalStaff.length;
-      this.tasaAsistencia = '100%';
-    } else {
-      this.totalRegistros = 0;
-      this.totalAsistieron = 0;
-      this.tasaAsistencia = '0%';
-    }
+    const asistieron = this.asistentes.filter(a => a.asistencia === 'Presente').length;
+    this.totalRegistros = this.asistentes.length + this.personalStaff.length;
+    this.totalAsistieron = asistieron;
+    this.tasaAsistencia = this.totalRegistros > 0
+      ? Math.round((this.totalAsistieron / this.totalRegistros) * 100) + '%'
+      : '0%';
   }
 
   private generarGraficoEmpresas(): void {
@@ -320,7 +406,7 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
 
     this.chartTiposPersonalOptions = {
       ...this.baseTheme,
-      chart: { ...this.baseTheme.chart, type: 'donut' },
+      chart: { ...this.baseTheme.chart, type: 'pie' },
       series: [
         {
           name: 'Tipo de Personal',
