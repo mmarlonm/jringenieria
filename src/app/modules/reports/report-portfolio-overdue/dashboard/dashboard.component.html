@@ -125,6 +125,7 @@
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="p-3 font-semibold text-gray-600">Sucursal</th>
+                        <th class="p-3 font-semibold text-gray-600">Empresa</th>
                         <th class="p-3 font-semibold text-gray-600">Agente</th>
                         <th class="p-3 font-semibold text-gray-600">Cliente</th>
                         <th class="p-3 font-semibold text-gray-600">Documento</th>
@@ -142,6 +143,12 @@
                         [class.bg-red-50]="row.estatus === 'VENCIDO'"
                         [class.bg-amber-50]="row.estatus === 'POR VENCER'">
                         <td class="p-3 text-xs text-gray-600">{{ row.sucursal }}</td>
+                        <td class="p-3 text-xs">
+                            <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded"
+                                [ngClass]="row.tipoEmpresa === 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'">
+                                {{ row.tipoEmpresa === 2 ? 'JR Ing. Eléctrica' : 'Jesús R. Méndez' }}
+                            </span>
+                        </td>
                         <td class="p-3 text-xs font-medium text-indigo-600 uppercase">{{ row.agente }}</td>
                         <td class="p-3 font-medium text-gray-800">{{ row.cliente }}</td>
                         <td class="p-3 font-mono text-xs text-gray-500">{{ row.documento }}</td>

@@ -66,6 +66,8 @@ export interface CarteraVencidaDto {
     saldoPendiente: number;
     estatus: string;
     moneda?: string;
+    empresaOrigen?: string;
+    tipoEmpresa?: number;
 }
 
 @Component({
@@ -379,13 +381,16 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
             const diasVencidos = calculateDiasVencidos(item.fechaVencimiento, estatus);
             const moneda = item.moneda || 'MXN';
 
+            const empresaNombre = item.tipoEmpresa === 2 ? 'JR Ing. Eléctrica' : 'Jesús R. Méndez';
+
             tableRows += `
             <tr style="background-color: ${bgColor}; color: #374151; font-size: 8px;">
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${i + 1}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${formatDate(item.fechaEmision)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold;">${item.documento || '-'}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-size: 7.5px; font-weight: bold; color: ${item.tipoEmpresa === 2 ? '#009640' : '#005A9C'};">${empresaNombre}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">Venta de Equipos/Serv.</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${moneda}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold;">${moneda}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(cargo)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${abono > 0 ? formatCurrency(abono) : '-'}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${formatCurrency(saldo)}</td>
@@ -402,6 +407,57 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         const totalSaldos = data.reduce((acc, curr) => acc + (curr.saldoPendiente || 0), 0);
         const totalCargos = data.reduce((acc, curr) => acc + (curr.totalFactura || 0), 0);
         const totalAbonos = totalCargos - totalSaldos;
+
+        // --- DETECCIÓN DE ENTIDADES Y BANCOS ---
+        const hasMoral = data.some(x => x.tipoEmpresa === 2 || (x.empresaOrigen && x.empresaOrigen.toUpperCase().includes('JR')));
+        const hasFisica = data.some(x => x.tipoEmpresa === 1 || (x.empresaOrigen && (x.empresaOrigen.toUpperCase().includes('JESUS') || x.empresaOrigen.toUpperCase().includes('RICARDO'))));
+
+        const showMoral = hasMoral || (this.tipoEmpresa === 2);
+        const showFisica = hasFisica || (this.tipoEmpresa === 1);
+        const showAmbas = !showMoral && !showFisica;
+
+        let bankAccountsHtml = '';
+
+        if (showMoral || showAmbas) {
+            bankAccountsHtml += `
+            <div style="border: 2px solid #009640; background-color: #f4fbf7; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: bold; color: #007030; margin-bottom: 6px; border-bottom: 1px solid #c8e6d5; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>NOMBRE DEL BENEFICIARIO: JR INGENIERIA ELECTRICA S.A DE C.V.</span>
+                    <span>BANCO: BBVA | R.F.C.: JIE250214R69</span>
+                </div>
+                <div style="display: flex; gap: 15px; font-size: 9px; color: #1e293b;">
+                    <div style="flex: 1; background-color: white; border: 1px solid #a7f3d0; border-radius: 6px; padding: 6px 10px;">
+                        <div style="font-weight: bold; color: #0284c7; font-size: 9px; margin-bottom: 3px;">MONEDA: PESOS MXN</div>
+                        <div><strong>NO. DE CUENTA:</strong> 012 494 8939</div>
+                        <div><strong>NO. CUENTA CLABE:</strong> 012 290 00124948939 9</div>
+                    </div>
+                    <div style="flex: 1; background-color: white; border: 1px solid #a7f3d0; border-radius: 6px; padding: 6px 10px;">
+                        <div style="font-weight: bold; color: #16a34a; font-size: 9px; margin-bottom: 3px;">MONEDA: DÓLARES USD</div>
+                        <div><strong>NO. DE CUENTA:</strong> 012 494 9706</div>
+                        <div><strong>NO. CUENTA CLABE:</strong> 012 290 00124949706 4</div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        if (showFisica || showAmbas) {
+            bankAccountsHtml += `
+            <div style="border: 2px solid #005A9C; background-color: #f0f7ff; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: bold; color: #005A9C; margin-bottom: 6px; border-bottom: 1px solid #bfdbfe; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>NOMBRE DEL BENEFICIARIO: JESÚS RICARDO MÉNDEZ ARRILLAGA</span>
+                    <span>BANCO: BBVA | R.F.C.: MEAJ730516T86 | NO. CLIENTE: C9808974</span>
+                </div>
+                <div style="font-size: 9px; color: #1e293b;">
+                    <div style="background-color: white; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px 10px;">
+                        <div style="font-weight: bold; color: #0284c7; font-size: 9px; margin-bottom: 3px;">MONEDA: PESOS MXN</div>
+                        <div><strong>NO. DE CUENTA:</strong> 0478628203</div>
+                        <div><strong>NO. CUENTA CLABE:</strong> 012290004786282030</div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
 
         // --- CONTENDEDOR TEMPORAL ---
         const container = document.createElement('div');
@@ -444,6 +500,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
                     <th style="padding: 8px; text-align: center;">NO.</th>
                     <th style="padding: 8px; text-align: center;">FECHA FACTURACION</th>
                     <th style="padding: 8px; text-align: center;">FOLIO</th>
+                    <th style="padding: 8px; text-align: center;">EMPRESA</th>
                     <th style="padding: 8px; text-align: center;">DESCRIPCION</th>
                     <th style="padding: 8px; text-align: center;">MONEDA</th>
                     <th style="padding: 8px; text-align: right;">CARGO</th>
@@ -459,7 +516,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
             </tbody>
         </table>
 
-        <div style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 15px;">
             <div style="background-color: #e5e7eb; padding: 8px; border-radius: 6px; min-width: 120px; text-align: center;">
                 <div style="font-size: 9px; font-weight: bold; color: #374151; margin-bottom: 2px;">TOTAL CARGOS</div>
                 <div style="font-size: 14px; font-weight: 900; color: #1f2937; white-space: nowrap;">${formatCurrency(totalCargos)}</div>
@@ -491,8 +548,11 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
             </div>
         </div>
 
+        <!-- 🏦 CUENTAS BANCARIAS SEGÚN BENEFICIARIO -->
+        ${bankAccountsHtml}
+
         <div style="margin-top: 10px; border-top: 1px solid #d1d5db; padding-top: 8px; font-size: 9px; color: #6b7280; margin-bottom: 20px;">
-            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza, email: cobranza@jringenieriaelectrica.com
+            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza.
         </div>
     </div>
     `;
