@@ -111,6 +111,78 @@
         </highcharts-chart>
     </div>
 
+    <!-- Cuentas Bancarias del Cliente Seleccionado (Dinámicas) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="mostrarCuentasMoral || mostrarCuentasFisica">
+        
+        <!-- JR INGENIERIA ELECTRICA S.A DE C.V -->
+        <div *ngIf="mostrarCuentasMoral" class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between border-b border-emerald-200/60 pb-3 mb-4">
+                    <div>
+                        <h3 class="text-xs font-bold text-emerald-800 uppercase tracking-wider">Beneficiario</h3>
+                        <p class="text-sm font-black text-gray-850">JR INGENIERIA ELECTRICA S.A DE C.V</p>
+                    </div>
+                    <span class="bg-emerald-600 text-white font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-wider">BBVA</span>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Pesos -->
+                    <div class="bg-white/80 backdrop-blur border border-emerald-100 rounded-xl p-4">
+                        <div class="flex items-center gap-1.5 text-blue-600 font-bold text-xs uppercase tracking-wider mb-2">
+                            <span class="text-base">🇲🇽</span> Pesos MXN
+                        </div>
+                        <div class="space-y-1 text-xs text-gray-700">
+                            <div><span class="text-gray-400 font-medium">Cuenta:</span> <strong class="font-mono text-gray-900 text-sm">012 494 8939</strong></div>
+                            <div><span class="text-gray-400 font-medium">CLABE:</span> <strong class="font-mono text-gray-900">012 290 00124948939 9</strong></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dólares -->
+                    <div class="bg-white/80 backdrop-blur border border-emerald-100 rounded-xl p-4">
+                        <div class="flex items-center gap-1.5 text-green-600 font-bold text-xs uppercase tracking-wider mb-2">
+                            <span class="text-base">🇺🇸</span> Dólares USD
+                        </div>
+                        <div class="space-y-1 text-xs text-gray-700">
+                            <div><span class="text-gray-400 font-medium">Cuenta:</span> <strong class="font-mono text-gray-900 text-sm">012 494 9706</strong></div>
+                            <div><span class="text-gray-400 font-medium">CLABE:</span> <strong class="font-mono text-gray-900">012 290 00124949706 4</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-emerald-200/40 flex justify-between items-center text-[11px] text-emerald-800/80 font-bold">
+                <span>R.F.C: JIE250214R69</span>
+            </div>
+        </div>
+
+        <!-- JESÚS RICARDO MÉNDEZ ARRILLAGA -->
+        <div *ngIf="mostrarCuentasFisica" class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between border-b border-blue-200/60 pb-3 mb-4">
+                    <div>
+                        <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wider">Beneficiario</h3>
+                        <p class="text-sm font-black text-gray-850">JESÚS RICARDO MÉNDEZ ARRILLAGA</p>
+                    </div>
+                    <span class="bg-blue-600 text-white font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-wider">BBVA</span>
+                </div>
+                
+                <div class="bg-white/80 backdrop-blur border border-blue-100 rounded-xl p-4">
+                    <div class="flex items-center gap-1.5 text-blue-600 font-bold text-xs uppercase tracking-wider mb-2">
+                        <span class="text-base">🇲🇽</span> Pesos MXN
+                    </div>
+                    <div class="space-y-1.5 text-xs text-gray-700">
+                        <div><span class="text-gray-400 font-medium">No. Cuenta:</span> <strong class="font-mono text-gray-900 text-sm">0478628203</strong></div>
+                        <div><span class="text-gray-400 font-medium">Cuenta CLABE:</span> <strong class="font-mono text-gray-900 text-sm">012290004786282030</strong></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-blue-200/40 flex justify-between items-center text-[11px] text-blue-800/80 font-bold">
+                <span>R.F.C: MEAJ730516T86</span>
+                <span>No. Cliente: C9808974</span>
+            </div>
+        </div>
+        
+    </div>
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 overflow-hidden">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-bold text-gray-800">Detalle de Facturas</h2>

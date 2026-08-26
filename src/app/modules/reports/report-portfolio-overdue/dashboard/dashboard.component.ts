@@ -552,7 +552,7 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
         ${bankAccountsHtml}
 
         <div style="margin-top: 10px; border-top: 1px solid #d1d5db; padding-top: 8px; font-size: 9px; color: #6b7280; margin-bottom: 20px;">
-            Este documento es informativo y no constituye comprobante fiscal. Para cualquier aclaración contacte a su departamento de cobranza.
+            Este documento es informativo y no constituye comprobante fiscal.
         </div>
     </div>
     `;
@@ -625,6 +625,16 @@ export class ReportPortfolioOverdueDashboardComponent implements OnInit {
     limpiarFiltroTexto(): void {
         this.filtroTexto = '';
         this.consultar();
+    }
+
+    get mostrarCuentasMoral(): boolean {
+        if (this.filtroTextoAplicado === '') return false;
+        return this.detalle.some(x => x.tipoEmpresa === 2 || (x.empresaOrigen && x.empresaOrigen.toUpperCase().includes('JR')));
+    }
+
+    get mostrarCuentasFisica(): boolean {
+        if (this.filtroTextoAplicado === '') return false;
+        return this.detalle.some(x => x.tipoEmpresa === 1 || (x.empresaOrigen && (x.empresaOrigen.toUpperCase().includes('JESUS') || x.empresaOrigen.toUpperCase().includes('RICARDO'))));
     }
 
     async exportarExcel(): Promise<void> {

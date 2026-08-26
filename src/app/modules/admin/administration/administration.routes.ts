@@ -44,5 +44,9 @@ export default [
     {
         path: 'tickets',
         loadChildren: () => import('./tickets/tickets.routes').then(m => m.ticketsRoutes)
+    },
+    {
+        path: 'notificaciones',
+        loadComponent: () => import('./notificaciones/notificaciones-config.component').then(m => m.NotificacionesConfigComponent)
     }
 ] as Routes;
