@@ -69,6 +69,12 @@ export class SeguimientoDialogComponent implements OnInit {
         'Proyectos llave en mano'
     ];
 
+    sucursales = [
+        { id: 1, label: 'Pachuca' },
+        { id: 2, label: 'Puebla' },
+        { id: 3, label: 'Querétaro' }
+    ];
+
     isReadOnly: boolean = false;
 
     constructor(
@@ -143,6 +149,7 @@ export class SeguimientoDialogComponent implements OnInit {
             actividad: [this.data?.seguimiento?.actividad || '', [Validators.required, Validators.maxLength(500)]],
             tituloProyecto: [this.data?.seguimiento?.tituloProyecto || '', Validators.maxLength(500)],
             tipo: [this.data?.seguimiento?.tipo || ''],
+            sucursalId: [this.data?.seguimiento?.sucursalId || null],
             estatusLevantamiento: [this.data?.seguimiento?.estatusLevantamiento || 1, Validators.required],
             estatusCotizacion: [this.data?.seguimiento?.estatusCotizacion || 1, Validators.required],
             estatusAprobacion: [{ value: this.data?.seguimiento?.estatusAprobacion || 1, disabled: isApproved }, Validators.required],

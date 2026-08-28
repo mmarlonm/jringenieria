@@ -38,6 +38,7 @@ export interface SeguimientoProyecto {
     fechaCotizacion?: string;
     fechaAprobacion?: string;
     motivoRechazo?: string;
+    sucursalId?: number | null;
 }
 
 export interface SeguimientoEjecucion {
@@ -146,13 +147,16 @@ export class EngineeringService {
     // ==========================================
     // 📊 SEGUIMIENTO DE PROYECTOS (TABLERO)
     // ==========================================
-    getSeguimientos(fechaInicio?: string, fechaFin?: string): Observable<SeguimientoProyecto[]> {
+    getSeguimientos(fechaInicio?: string, fechaFin?: string, usuarioId?: number): Observable<SeguimientoProyecto[]> {
         let params = new HttpParams();
         if (fechaInicio) {
             params = params.set('fechaInicio', fechaInicio);
         }
         if (fechaFin) {
             params = params.set('fechaFin', fechaFin);
+        }
+        if (usuarioId) {
+            params = params.set('usuarioId', usuarioId.toString());
         }
         return this._http.get<SeguimientoProyecto[]>(this.apiSeguimiento, { params });
     }

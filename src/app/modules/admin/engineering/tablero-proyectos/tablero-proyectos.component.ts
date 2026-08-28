@@ -52,6 +52,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         'celular',
         'empresa',
         'area',
+        'sucursal',
         'tituloProyecto',
         'actividad',
         'tipo',
@@ -142,7 +143,19 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         if (start) localStorage.setItem('tableroProyectos_fechaInicio', start);
         if (end) localStorage.setItem('tableroProyectos_fechaFin', end);
 
-        this._engineeringService.getSeguimientos(start, end).subscribe({
+        // Obtener el ID de usuario registrado desde localStorage
+        const userObjStr = localStorage.getItem('userInformation');
+        let idUsuario = 1; // fallback
+        if (userObjStr) {
+            try {
+                const userObj = JSON.parse(userObjStr);
+                idUsuario = userObj?.usuario?.usuarioId || userObj?.usuario?.id || 1;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        this._engineeringService.getSeguimientos(start, end, idUsuario).subscribe({
             next: (data) => {
                 this._calculateKPIs(data || []);
                 this.dataSource.data = data || [];
@@ -248,7 +261,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
     nuevoSeguimiento(): void {
         const dialogRef = this._dialog.open(SeguimientoDialogComponent, {
             width: '100%',
-            maxWidth: '650px',
+            maxWidth: '850px',
             autoFocus: false
         });
 
@@ -298,7 +311,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
     editarSeguimiento(row: SeguimientoProyecto): void {
         const dialogRef = this._dialog.open(SeguimientoDialogComponent, {
             width: '100%',
-            maxWidth: '650px',
+            maxWidth: '850px',
             data: { seguimiento: row },
             autoFocus: false
         });
