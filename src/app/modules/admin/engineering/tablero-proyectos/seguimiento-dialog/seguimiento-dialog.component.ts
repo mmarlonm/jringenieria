@@ -70,9 +70,9 @@ export class SeguimientoDialogComponent implements OnInit {
     ];
 
     sucursales = [
-        { id: 1, label: 'Pachuca' },
+        { id: 1, label: 'Querétaro' },
         { id: 2, label: 'Puebla' },
-        { id: 3, label: 'Querétaro' }
+        { id: 3, label: 'Hidalgo (Pachuca)' }
     ];
 
     isReadOnly: boolean = false;

@@ -188,13 +188,16 @@ export class EngineeringService {
     // ==========================================
     // 🛠️ CONTROL DE EJECUCIÓN
     // ==========================================
-    getSeguimientosEjecucion(fechaInicio?: string, fechaFin?: string): Observable<SeguimientoEjecucion[]> {
+    getSeguimientosEjecucion(fechaInicio?: string, fechaFin?: string, usuarioId?: number): Observable<SeguimientoEjecucion[]> {
         let params = new HttpParams();
         if (fechaInicio) {
             params = params.set('fechaInicio', fechaInicio);
         }
         if (fechaFin) {
             params = params.set('fechaFin', fechaFin);
+        }
+        if (usuarioId) {
+            params = params.set('usuarioId', usuarioId.toString());
         }
         return this._http.get<SeguimientoEjecucion[]>(this.apiSeguimientoEjecucion, { params });
     }

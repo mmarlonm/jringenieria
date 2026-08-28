@@ -48,7 +48,11 @@
                 <div class="p-6 md:p-8">
                     @if (users$ | async; as users) {
                     @if (users.length) {
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div class="grid gap-6 transition-all duration-300"
+                        [ngClass]="{
+                            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4': !selectedContact,
+                            'grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2': selectedContact
+                        }">
                         @for (user of users; track trackByFn(i, user); let i = $index) {
                         <!-- User Card -->
                         <div class="group relative flex flex-col rounded-2xl bg-card p-6 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden active:scale-95"

@@ -183,7 +183,19 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         if (start) localStorage.setItem('controlEjecucion_fechaInicio', start);
         if (end) localStorage.setItem('controlEjecucion_fechaFin', end);
 
-        this._engineeringService.getSeguimientosEjecucion(start, end).subscribe({
+        // Obtener el ID de usuario registrado desde localStorage
+        const userObjStr = localStorage.getItem('userInformation');
+        let idUsuario = 1; // fallback
+        if (userObjStr) {
+            try {
+                const userObj = JSON.parse(userObjStr);
+                idUsuario = userObj?.usuario?.usuarioId || userObj?.usuario?.id || 1;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        this._engineeringService.getSeguimientosEjecucion(start, end, idUsuario).subscribe({
             next: (data) => {
                 this.dataSource.data = data;
                 // Re-aplicar filtros combinados después de cargar
