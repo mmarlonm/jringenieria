@@ -202,6 +202,14 @@ export class EngineeringService {
         return this._http.get<SeguimientoEjecucion[]>(this.apiSeguimientoEjecucion, { params });
     }
 
+    getListadoSeleccionProyectos(usuarioId?: number): Observable<any[]> {
+        let params = new HttpParams();
+        if (usuarioId) {
+            params = params.set('usuarioId', usuarioId.toString());
+        }
+        return this._http.get<any[]>(`${this.apiSeguimiento}/listado-seleccion`, { params });
+    }
+
     saveSeguimientoEjecucion(ejecucion: any): Observable<any> {
         return this._http.post(this.apiSeguimientoEjecucion, ejecucion);
     }

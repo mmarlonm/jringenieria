@@ -180,9 +180,15 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     loadProjects(): void {
-        this._engineeringService.getSeguimientosEjecucion().subscribe((response: any) => {
+        this._engineeringService.getListadoSeleccionProyectos(this.currentUserId).subscribe((response: any) => {
             this.proyectos = response?.data || response || [];
             this._setupProjectFilter();
+            
+            // Forzar actualización del control para que el filtro se ejecute con los proyectos ya cargados
+            const control = this.solicitudForm.get('folioProyecto');
+            if (control) {
+                control.updateValueAndValidity({ emitEvent: true });
+            }
         });
     }
 
