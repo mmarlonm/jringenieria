@@ -46,6 +46,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
         'idSeguimiento',
         'proyecto',
         'tipoProyecto',
+        'solicitudesCompra',
         'oc',
         'montoTotalEstimado',
         'utilidadEsperada',
@@ -277,6 +278,8 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
             const tipo = (data.tipo || '').toLowerCase();
             const id = String(data.idSeguimiento);
 
+            const tieneCompras = data.tieneSolicitudesCompra ? 'solicitud solicitudes compra compras' : 'sin compras';
+
             if (column) {
                 switch (column) {
                     case 'idSeguimiento': return id.includes(s);
@@ -286,6 +289,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
                     case 'nombreSolicitante': return solicitante.includes(s);
                     case 'ordenCompraFolio': return oc.includes(s);
                     case 'montoTotalEstimado': return data.montoTotalEstimado ? String(data.montoTotalEstimado).includes(s) : false;
+                    case 'solicitudesCompra': return tieneCompras.includes(s);
                     default: return false;
                 }
             }
@@ -296,6 +300,7 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
                    tituloProyecto.includes(s) ||
                    oc.includes(s) ||
                    tipo.includes(s) ||
+                   tieneCompras.includes(s) ||
                    id.includes(s);
         };
     }

@@ -73,6 +73,8 @@ export interface SeguimientoEjecucion {
     montoTotalEstimado?: number; // Total cotizado del proyecto
     actividadDetenida?: string;  // Nombre de actividad con estatus=4 (Detenida)
     hayActividadDetenida?: boolean; // true si hay al menos una actividad detenida
+    tieneSolicitudesCompra?: boolean;
+    totalSolicitudesCompra?: number;
 }
 
 export interface SeguimientoEjecucionActividadMaestra {
