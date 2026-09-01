@@ -39,6 +39,8 @@ export interface SeguimientoProyecto {
     fechaAprobacion?: string;
     motivoRechazo?: string;
     sucursalId?: number | null;
+    tieneSolicitudesCompra?: boolean;
+    totalSolicitudesCompra?: number;
 }
 
 export interface SeguimientoEjecucion {

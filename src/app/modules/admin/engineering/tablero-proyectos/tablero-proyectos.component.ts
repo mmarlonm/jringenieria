@@ -61,6 +61,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
         'cotizacion',
         'quienCotizo',
         'aprobado',
+        'solicitudesCompra',
         'monto',
         'iva',
         'montoTotalConIva',
@@ -190,6 +191,8 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
             const quienCotizo = (data.quienCotizo || '').toLowerCase();
             const id = String(data.idSeguimiento);
 
+            const tieneCompras = data.tieneSolicitudesCompra ? 'solicitud solicitudes compra compras' : 'sin compras';
+
             return solicitante.includes(search) ||
                    empresa.includes(search) ||
                    area.includes(search) ||
@@ -198,6 +201,7 @@ export class TableroProyectosComponent implements OnInit, AfterViewInit {
                    oc.includes(search) ||
                    realizoLevantamiento.includes(search) ||
                    quienCotizo.includes(search) ||
+                   tieneCompras.includes(search) ||
                    id.includes(search);
         };
     }

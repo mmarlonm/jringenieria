@@ -243,6 +243,25 @@
 
 
 
+                    <!-- Solicitudes de Compra -->
+                    <ng-container matColumnDef="solicitudesCompra">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Sol. Compra</th>
+                        <td mat-cell *matCellDef="let s" class="text-center whitespace-nowrap">
+                            <span *ngIf="s.tieneSolicitudesCompra" 
+                                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm"
+                                  [matTooltip]="'Este proyecto tiene ' + s.totalSolicitudesCompra + ' solicitud(es) de compra registrada(s)'">
+                                <mat-icon class="icon-size-3.5 text-emerald-600">shopping_cart</mat-icon>
+                                {{ s.totalSolicitudesCompra }} OC
+                            </span>
+                            <span *ngIf="!s.tieneSolicitudesCompra" 
+                                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 bg-slate-100/70 border border-slate-200"
+                                  matTooltip="Sin solicitudes de compra asociadas">
+                                <mat-icon class="icon-size-3 text-slate-400">remove_shopping_cart</mat-icon>
+                                Sin OC
+                            </span>
+                        </td>
+                    </ng-container>
+
                     <!-- Monto (Subtotal) -->
                     <ng-container matColumnDef="monto">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Subtotal</th>
