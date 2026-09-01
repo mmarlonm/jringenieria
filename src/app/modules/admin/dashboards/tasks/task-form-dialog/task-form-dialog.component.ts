@@ -239,7 +239,7 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
                 usuarioIds: task.usuarioIds ?? [],
                 empresa: task.empresa,
                 ubicacion: task.ubicacion,
-                CreadorId: this.user?.id || null, // Asigna el ID del usuario logueado de forma segura
+                CreadorId: task.creadorId || this.user?.id || null,
                 estatus: task.estatus,
                 cuadranteId: task.cuadranteId ?? null,
                 proyectoId: task.proyectoId ?? null,
@@ -435,6 +435,13 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
         this.usersService.getUsers().subscribe(users => {
             this.userList = users.filter(u => u.activo !== false);
         });
+    }
+
+    getCreatorName(): string {
+        const creadorId = this.form.get('CreadorId')?.value;
+        if (!creadorId) return 'No especificado';
+        const found = this.userList.find(u => (u.usuarioId || u.id) === Number(creadorId));
+        return found ? (found.nombreUsuario || found.nombre) : `Usuario #${creadorId}`;
     }
 
     onFileSelected(event: any): void {

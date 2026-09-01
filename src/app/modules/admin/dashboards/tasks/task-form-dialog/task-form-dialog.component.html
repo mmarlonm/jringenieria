@@ -103,12 +103,17 @@
                                 </mat-form-field>
                             </div>
 
-                            <!-- Fila 4: Equipo y Estatus -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                            <!-- Fila 4: Asignador, Equipo y Estatus -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>Asignado por</mat-label>
+                                    <input matInput [value]="getCreatorName()" [readonly]="true" class="font-bold text-primary" />
+                                    <mat-icon matSuffix class="text-gray-400 icon-size-4">account_circle</mat-icon>
+                                </mat-form-field>
                                 <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
                                     <mat-label>Asignar usuarios</mat-label>
                                     <mat-select formControlName="usuarioIds" multiple>
-                                        <mat-option *ngFor="let u of userList" [value]="u.usuarioId">{{ u.nombreUsuario }}</mat-option>
+                                        <mat-option *ngFor="let u of userList" [value]="u.usuarioId || u.id">{{ u.nombreUsuario || u.nombre }}</mat-option>
                                     </mat-select>
                                 </mat-form-field>
                                 <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
