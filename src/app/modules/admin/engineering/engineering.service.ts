@@ -236,6 +236,16 @@ export class EngineeringService {
         return this._http.post(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos`, formData);
     }
 
+    subirMultiplesArchivosEjecucion(idSeguimiento: number, archivos: File[] | FileList, tipo: string): Observable<any> {
+        const formData = new FormData();
+        const fileArray = Array.from(archivos);
+        fileArray.forEach(file => {
+            formData.append('archivos', file);
+        });
+        formData.append('tipo', tipo);
+        return this._http.post(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos`, formData);
+    }
+
     descargarArchivoEjecucion(idSeguimiento: number, tipo: string, nombreArchivo: string): Observable<any> {
         const encodedFile = encodeURIComponent(nombreArchivo);
         return this._http.get<any>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/archivos/${tipo}/${encodedFile}`);

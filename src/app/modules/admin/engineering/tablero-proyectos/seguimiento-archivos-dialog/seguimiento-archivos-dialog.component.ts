@@ -46,7 +46,7 @@ import Swal from 'sweetalert2';
                         <button mat-icon-button (click)="fileInput.click()" [disabled]="isUploading[cat.name]" matTooltip="Subir archivo" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
                             <mat-icon>cloud_upload</mat-icon>
                         </button>
-                        <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, cat.name)">
+                        <input type="file" #fileInput class="hidden" multiple (change)="onFileSelected($event, cat.name)">
                     </div>
 
                     <!-- Category Files List -->
@@ -54,14 +54,14 @@ import Swal from 'sweetalert2';
                         <!-- Loader -->
                         <div *ngIf="isUploading[cat.name]" class="flex items-center justify-center p-4 text-xs text-indigo-600 gap-2">
                             <mat-icon class="animate-spin">sync</mat-icon>
-                            <span>Subiendo archivo...</span>
+                            <span>Subiendo archivo(s)...</span>
                         </div>
 
                         <div *ngIf="getFilesByCategory(cat.name).length === 0 && !isUploading[cat.name]" 
                              (click)="fileInput.click()"
                              class="flex flex-col items-center justify-center py-6 text-slate-400 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:text-indigo-600 rounded-xl cursor-pointer transition-all bg-slate-50/50 hover:bg-indigo-50/20 group select-none">
                             <mat-icon class="text-slate-300 group-hover:text-indigo-500 mb-2 transition-colors">cloud_upload</mat-icon>
-                            <span class="text-[10px] font-bold uppercase tracking-wider group-hover:text-indigo-600 transition-colors">Subir Archivo</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider group-hover:text-indigo-600 transition-colors">Subir Archivo(s)</span>
                         </div>
 
                         <div *ngFor="let file of getFilesByCategory(cat.name)" class="flex items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all group">
@@ -139,16 +139,17 @@ export class SeguimientoArchivosDialogComponent implements OnInit {
     }
 
     onFileSelected(event: any, categoryName: string): void {
-        const file = event.target.files[0];
-        if (!file) return;
+        const files: FileList = event.target.files;
+        if (!files || files.length === 0) return;
 
         this.isUploading[categoryName] = true;
-        this._engineeringService.subirArchivoEjecucion(this.idSeguimiento, file, categoryName).subscribe({
+
+        this._engineeringService.subirMultiplesArchivosEjecucion(this.idSeguimiento, files, categoryName).subscribe({
             next: () => {
                 this.isUploading[categoryName] = false;
                 Swal.fire({
                     title: '¡Subido!',
-                    text: 'Archivo cargado con éxito.',
+                    text: files.length > 1 ? `${files.length} archivos cargados con éxito.` : 'Archivo cargado con éxito.',
                     icon: 'success',
                     timer: 1500,
                     showConfirmButton: false
@@ -158,7 +159,7 @@ export class SeguimientoArchivosDialogComponent implements OnInit {
             error: (err) => {
                 this.isUploading[categoryName] = false;
                 console.error(err);
-                Swal.fire('Error', 'No se pudo subir el archivo.', 'error');
+                Swal.fire('Error', 'No se pudieron subir los archivos.', 'error');
             }
         });
         event.target.value = '';
