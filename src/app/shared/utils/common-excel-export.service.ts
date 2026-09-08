@@ -57,6 +57,23 @@ export class CommonExcelExportService {
             return;
         }
 
+        // Asignar dinámicamente el nombre de la pestaña y el título del reporte en B1
+        let tituloReporte = '';
+        try {
+            const h1Element = document.querySelector('h1');
+            if (h1Element && h1Element.innerText && h1Element.innerText.trim()) {
+                tituloReporte = h1Element.innerText.trim().replace(/[\r\n]+/g, ' ');
+            }
+        } catch (_) {}
+
+        if (!tituloReporte) {
+            tituloReporte = filename ? filename.replace(/_/g, ' ').trim() : 'Reporte General';
+        }
+
+        // Formatear nombre de pestaña (máx 31 caracteres) y título completo en celda B1
+        sheet.name = tituloReporte.slice(0, 31);
+        this._setCellValue(sheet, 'B1', `JR INGENIERÍA ELECTRICA — ${tituloReporte.toUpperCase()}`);
+
         // 5. Rellenar encabezado del usuario
         this._setCellValue(sheet, 'C2', nombre);           // Nombre
         this._setCellValue(sheet, 'H2', puesto);           // Puesto

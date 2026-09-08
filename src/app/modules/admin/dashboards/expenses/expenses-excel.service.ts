@@ -52,13 +52,29 @@ export class ExpensesExcelService {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(templateBuffer);
 
-        // Obtener la hoja "Reporte de Gastos"
-        const sheet = workbook.getWorksheet('Reporte de Gastos');
+        // Obtener la hoja "Reporte de Gastos" o la primera hoja
+        const sheet = workbook.getWorksheet('Reporte de Gastos') || workbook.worksheets[0];
         if (!sheet) {
-            console.error('No se encontró la hoja "Reporte de Gastos"');
+            console.error('No se encontró la hoja en la plantilla');
             alert('Error: no se encontró la hoja en el template.');
             return;
         }
+
+        // Asignar dinámicamente el nombre de la pestaña y el título principal en B1 desde el HTML o fallback
+        let tituloReporte = '';
+        try {
+            const h1Element = document.querySelector('h1');
+            if (h1Element && h1Element.innerText && h1Element.innerText.trim()) {
+                tituloReporte = h1Element.innerText.trim().replace(/[\r\n]+/g, ' ');
+            }
+        } catch (_) {}
+
+        if (!tituloReporte) {
+            tituloReporte = 'Reporte de Gastos';
+        }
+
+        sheet.name = tituloReporte.slice(0, 31);
+        this._setCellValue(sheet, 'B1', `JR INGENIERÍA ELECTRICA — ${tituloReporte.toUpperCase()}`);
 
         // ─── Encabezado del reporte (fuera de la tabla, filas 1-5) ──────────────
         const puesto = this._resolvePuestoFromStorage();
