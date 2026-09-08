@@ -12,7 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad } from '../../engineering.service';
+import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad, SalidaAlmacen } from '../../engineering.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejecucion-actividad-dialog.component';
 import { ConfigurarApartadosDialogComponent } from './dialogs/configurar-apartados-dialog.component';
@@ -157,6 +157,14 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   onlyOfficeDocsUrl: any = environment.apiOnlyOffice;
   onlyOfficeApiUrl: any = `${environment.apiUrl}/SeguimientoEjecucion`;
   
+  // Salidas de Almacén
+  salidasAlmacen: SalidaAlmacen[] = [];
+  nuevoFolioAlmacen: string = '';
+  isSearchingSalida: boolean = false;
+  isSavingSalida: boolean = false;
+  salidaPreview: SalidaAlmacen | null = null;
+  salidaExpandida: { [key: number]: boolean } = {};
+
   // Subfolders tracking: Key is Category (Apartado) name, Value is the active subfolder name (null or empty string means root category)
   activeSubcarpetas: { [key: string]: string } = {};
 
@@ -409,6 +417,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.loadUsers();
     this.loadEquiposDisponibles();
     this.loadApartados();
+    this.loadSalidasAlmacen();
     
     // Centrar línea de tiempo al redimensionar ventana
     fromEvent(window, 'resize')
@@ -2257,11 +2266,100 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   isPathCritical(row: any): boolean {
     if (row.type === 'task') {
-      const predId = Number(row.task.predecesoraId);
-      return this.criticalMaestras.has(row.task.id) && this.criticalMaestras.has(predId);
+      return this.criticalMaestras.has(row.raw.id);
     } else {
-      const predId = Number(row.activity.predecesoraId);
-      return this.criticalSubactivities.has(row.activity.id) && this.criticalSubactivities.has(predId);
+      return this.criticalSubactivities.has(row.raw.id);
     }
+  }
+
+  // ==========================================
+  // 📦 MÉTODOS SALIDAS DE ALMACÉN
+  // ==========================================
+  loadSalidasAlmacen(): void {
+    if (!this.idSeguimiento) return;
+    this._engineeringService.getSalidasAlmacen(this.idSeguimiento).subscribe({
+      next: (data) => {
+        this.salidasAlmacen = data || [];
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar salidas de almacén:', err);
+      }
+    });
+  }
+
+  agregarSalidaAlmacen(): void {
+    const folio = (this.nuevoFolioAlmacen || '').trim();
+    if (!folio) {
+      Swal.fire('Atención', 'Por favor ingresa un folio válido.', 'warning');
+      return;
+    }
+
+    // Verificar si ya está en la lista local
+    const existe = this.salidasAlmacen.some(s => s.folio.toLowerCase() === folio.toLowerCase());
+    if (existe) {
+      Swal.fire('Atención', `El folio '${folio}' ya se encuentra guardado en este proyecto.`, 'warning');
+      return;
+    }
+
+    this.isSavingSalida = true;
+    this._engineeringService.guardarSalidaAlmacen(this.idSeguimiento, folio).subscribe({
+      next: (data) => {
+        this.isSavingSalida = false;
+        this.salidasAlmacen = data || [];
+        this.nuevoFolioAlmacen = '';
+        this._cdr.markForCheck();
+        Swal.fire({
+          icon: 'success',
+          title: 'Folio agregado',
+          text: `La salida de almacén con folio ${folio} fue guardada exitosamente.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        this.isSavingSalida = false;
+        this._cdr.markForCheck();
+        const msg = err?.error?.mensaje || err?.error || err?.message || 'Error al guardar el folio.';
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  eliminarSalidaAlmacen(item: SalidaAlmacen): void {
+    if (!item || !item.id) return;
+    Swal.fire({
+      title: '¿Eliminar Folio?',
+      text: `¿Deseas desvincular la salida de almacén folio '${item.folio}' de este proyecto?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._engineeringService.eliminarSalidaAlmacen(item.id!).subscribe({
+          next: (data) => {
+            this.salidasAlmacen = data || [];
+            this._cdr.markForCheck();
+            Swal.fire({
+              icon: 'success',
+              title: 'Folio eliminado',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          },
+          error: (err) => {
+            Swal.fire('Error', 'No se pudo eliminar el folio.', 'error');
+          }
+        });
+      }
+    });
+  }
+
+  toggleExpandirSalida(id: number): void {
+    this.salidaExpandida[id] = !this.salidaExpandida[id];
+    this._cdr.markForCheck();
   }
 }

@@ -1390,6 +1390,173 @@
         </div>
       </mat-tab>
 
+      <!-- TAB 5: SALIDAS DE ALMACÉN -->
+      <mat-tab label="Salidas de Almacén">
+        <div class="p-6 md:p-8 overflow-y-auto h-full max-h-[calc(100vh-140px)] custom-scrollbar">
+          <div class="max-w-7xl mx-auto space-y-6">
+
+            <!-- Card Superior: Formulario de Registro / Ingreso Manual -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <mat-icon class="icon-size-6 text-amber-500">inventory</mat-icon>
+                    Salidas de Almacén del Proyecto
+                  </h3>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Ingresa manualmente los folios de las salidas de almacén. Al guardar, el sistema consultará automáticamente el Stored Procedure <code class="bg-slate-100 px-1.5 py-0.5 rounded text-amber-700 font-mono text-[11px]">sp_CRM_ObtenerSalidaAlmacenPorFolio</code>.
+                  </p>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">
+                    Total Folios: {{ salidasAlmacen.length }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Control Input para Folio -->
+              <div class="flex flex-col sm:flex-row items-center gap-3">
+                <mat-form-field appearance="outline" class="w-full sm:w-96 fuse-mat-dense" subscriptSizing="dynamic">
+                  <mat-label>Folio de Salida de Almacén</mat-label>
+                  <mat-icon matPrefix class="icon-size-5 text-slate-400 mr-2">tag</mat-icon>
+                  <input matInput [(ngModel)]="nuevoFolioAlmacen" placeholder="Ej. 489" (keyup.enter)="agregarSalidaAlmacen()">
+                </mat-form-field>
+
+                <button mat-raised-button color="primary" [disabled]="!nuevoFolioAlmacen.trim() || isSavingSalida" (click)="agregarSalidaAlmacen()" class="!rounded-xl h-11 px-6 w-full sm:w-auto">
+                  <mat-icon class="icon-size-5" *ngIf="!isSavingSalida">add_circle</mat-icon>
+                  <mat-icon class="icon-size-5 animate-spin" *ngIf="isSavingSalida">sync</mat-icon>
+                  <span class="ml-1 font-bold">Consultar y Vincular Folio</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Listado de Folios de Salida Registrados -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                <h4 class="text-sm font-extrabold text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                  <mat-icon class="icon-size-5 text-indigo-500">receipt_long</mat-icon>
+                  Registros Vincualdos ({{ salidasAlmacen.length }})
+                </h4>
+              </div>
+
+              <!-- Lista vacía -->
+              <div *ngIf="salidasAlmacen.length === 0" class="p-12 text-center text-slate-400">
+                <mat-icon class="icon-size-12 text-slate-300 mb-2">output</mat-icon>
+                <p class="text-sm font-bold text-slate-600">No hay salidas de almacén registradas.</p>
+                <p class="text-xs text-slate-400 mt-1">Ingresa un folio de salida en el campo superior para consultar la información del almacén.</p>
+              </div>
+
+              <!-- Acordeón / Cards de Folios -->
+              <div *ngIf="salidasAlmacen.length > 0" class="space-y-4">
+                <div *ngFor="let item of salidasAlmacen" class="border border-slate-200 rounded-xl overflow-hidden shadow-xs hover:border-slate-300 transition-all">
+                  
+                  <!-- Header del Folio -->
+                  <div class="p-4 bg-slate-50/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer select-none" (click)="toggleExpandirSalida(item.id!)">
+                    <div class="flex items-center gap-3">
+                      <button mat-icon-button class="!w-8 !h-8 text-slate-500">
+                        <mat-icon class="icon-size-5">
+                          {{ salidaExpandida[item.id!] ? 'expand_less' : 'expand_more' }}
+                        </mat-icon>
+                      </button>
+
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-base font-black text-indigo-700">Folio: {{ item.folio }}</span>
+                          <span *ngIf="item.serieFolio && item.serieFolio !== item.folio" class="text-xs text-slate-500 font-semibold">({{ item.serieFolio }})</span>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800" *ngIf="item.estatus">
+                            {{ item.estatus }}
+                          </span>
+                        </div>
+                        <div class="text-xs text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1 mt-0.5">
+                          <span *ngIf="item.razonSocial"><strong class="text-slate-700">Cliente/Receptor:</strong> {{ item.razonSocial }}</span>
+                          <span *ngIf="item.fecha"><strong class="text-slate-700">Fecha:</strong> {{ item.fecha }}</span>
+                          <span *ngIf="item.nombreConcepto"><strong class="text-slate-700">Concepto:</strong> {{ item.nombreConcepto }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 shrink-0 self-end sm:self-center">
+                      <div class="text-right" *ngIf="item.total !== null && item.total !== undefined">
+                        <div class="text-xs text-slate-400 font-bold uppercase">Total</div>
+                        <div class="text-base font-black text-slate-800 tabular-nums">
+                          {{ item.total | currency:'MXN':'symbol':'1.2-2' }}
+                        </div>
+                      </div>
+
+                      <button mat-icon-button color="warn" (click)="$event.stopPropagation(); eliminarSalidaAlmacen(item)" matTooltip="Desvincular Folio">
+                        <mat-icon class="icon-size-5 text-rose-500">delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Detalle Expandido (Partidas devueltas por el SP) -->
+                  <div *ngIf="salidaExpandida[item.id!]" class="p-4 bg-white border-t border-slate-200 animate-in fade-in duration-150">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs">
+                      <div>
+                        <span class="text-slate-400 font-bold uppercase">RFC:</span>
+                        <span class="ml-1 font-semibold text-slate-700">{{ item.rfc || 'N/A' }}</span>
+                      </div>
+                      <div>
+                        <span class="text-slate-400 font-bold uppercase">Referencia:</span>
+                        <span class="ml-1 font-semibold text-slate-700">{{ item.referencia || 'N/A' }}</span>
+                      </div>
+                      <div>
+                        <span class="text-slate-400 font-bold uppercase">Observaciones:</span>
+                        <span class="ml-1 font-semibold text-slate-700">{{ item.observaciones || 'N/A' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Tabla de Partidas / Productos del SP -->
+                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-2 flex items-center gap-2">
+                      <mat-icon class="icon-size-4 text-indigo-500">inventory_2</mat-icon>
+                      <span>Partidas / Movimientos de Almacén ({{ item.detalleRaw?.length || 0 }})</span>
+                    </div>
+
+                    <div *ngIf="!item.detalleRaw || item.detalleRaw.length === 0" class="text-xs text-slate-400 italic py-2">
+                      No se encontraron partidas detalladas para este folio en la base de datos de almacén.
+                    </div>
+
+                    <div *ngIf="item.detalleRaw && item.detalleRaw.length > 0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                      <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-600 uppercase text-[10px] font-black tracking-wider border-b">
+                          <tr>
+                            <th class="py-2.5 px-3">#</th>
+                            <th class="py-2.5 px-3">Código</th>
+                            <th class="py-2.5 px-3">Producto / Descripción</th>
+                            <th class="py-2.5 px-3 text-center">Almacén</th>
+                            <th class="py-2.5 px-3 text-center">Cantidad</th>
+                            <th class="py-2.5 px-3 text-right">Costo Unit.</th>
+                            <th class="py-2.5 px-3 text-right">Importe Total</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                          <tr *ngFor="let det of item.detalleRaw; let idx = index" class="hover:bg-slate-50">
+                            <td class="py-2 px-3 font-bold text-slate-400">{{ det.consecutivo || (idx + 1) }}</td>
+                            <td class="py-2 px-3 font-mono text-indigo-600 font-bold">{{ det.codigoProducto || '-' }}</td>
+                            <td class="py-2 px-3 font-bold text-slate-800">
+                              {{ det.producto || '-' }}
+                              <div *ngIf="det.observacionesPartida" class="text-[10px] text-slate-400 font-normal mt-0.5">Obs: {{ det.observacionesPartida }}</div>
+                            </td>
+                            <td class="py-2 px-3 text-center text-slate-500 font-medium">{{ det.almacenPartida || '-' }}</td>
+                            <td class="py-2 px-3 text-center font-extrabold text-slate-700 tabular-nums">{{ det.cantidad || 0 }}</td>
+                            <td class="py-2 px-3 text-right text-slate-600 tabular-nums">{{ (det.costoUnitario || 0) | currency:'MXN':'symbol':'1.2-2' }}</td>
+                            <td class="py-2 px-3 text-right font-bold text-indigo-700 tabular-nums">{{ (det.importeTotal || 0) | currency:'MXN':'symbol':'1.2-2' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </mat-tab>
+
     </mat-tab-group>
   </div>
 

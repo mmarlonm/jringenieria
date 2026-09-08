@@ -333,4 +333,46 @@ export class EngineeringService {
     getSolicitudesCompraProyecto(idSeguimiento: number): Observable<any[]> {
         return this._http.get<any[]>(`${environment.apiUrl}/SolicitudesCompra/proyecto/${idSeguimiento}`);
     }
+
+    // ==========================================
+    // 📦 SALIDAS DE ALMACÉN (SP_CRM_ObtenerSalidaAlmacenPorFolio)
+    // ==========================================
+    getSalidasAlmacen(idSeguimiento: number): Observable<SalidaAlmacen[]> {
+        return this._http.get<SalidaAlmacen[]>(`${this.apiSeguimientoEjecucion}/salidas-almacen/${idSeguimiento}`);
+    }
+
+    buscarSalidaAlmacen(folio: string): Observable<SalidaAlmacen> {
+        return this._http.get<SalidaAlmacen>(`${this.apiSeguimientoEjecucion}/salida-almacen/buscar/${encodeURIComponent(folio)}`);
+    }
+
+    guardarSalidaAlmacen(idSeguimiento: number, folio: string, idUsuarioRegistro?: number): Observable<SalidaAlmacen[]> {
+        return this._http.post<SalidaAlmacen[]>(`${this.apiSeguimientoEjecucion}/salidas-almacen`, {
+            idSeguimiento,
+            folio,
+            idUsuarioRegistro
+        });
+    }
+
+    eliminarSalidaAlmacen(id: number): Observable<SalidaAlmacen[]> {
+        return this._http.delete<SalidaAlmacen[]>(`${this.apiSeguimientoEjecucion}/salidas-almacen/${id}`);
+    }
 }
+
+export interface SalidaAlmacen {
+    id?: number;
+    idSeguimiento: number;
+    folio: string;
+    fechaRegistro?: string;
+    serieFolio?: string;
+    fecha?: string;
+    razonSocial?: string;
+    rfc?: string;
+    codigoConcepto?: string;
+    nombreConcepto?: string;
+    referencia?: string;
+    observaciones?: string;
+    total?: number;
+    estatus?: string;
+    detalleRaw?: any[];
+}
+
