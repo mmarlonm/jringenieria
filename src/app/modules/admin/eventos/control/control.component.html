@@ -25,8 +25,18 @@
             </p>
         </div>
         
-        <!-- Action Buttons -->
-        <div class="flex items-center gap-3 w-full md:w-auto">
+        <!-- Event Selector & Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <!-- Event Selector Dropdown -->
+            <div class="min-w-[180px]">
+                <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
+                    <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
+                            {{ ed.nombre }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
             <!-- Bulk Send QR (Alert variant) -->
             <button 
                 (click)="onReenviarQRMasivo()"

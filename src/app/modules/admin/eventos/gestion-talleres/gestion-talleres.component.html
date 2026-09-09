@@ -25,23 +25,36 @@
             </p>
         </div>
         
-        <!-- SignalR Connection Status Pill -->
-        <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 shadow-sm">
-            <div class="h-2.5 w-2.5 rounded-full transition-all duration-300"
-                 [ngClass]="{
-                     'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.7)]': signalrStatus === 'Connected',
-                     'bg-amber-500 animate-bounce': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
-                     'bg-rose-500': signalrStatus === 'Disconnected'
-                 }">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <!-- Event Selector Dropdown -->
+            <div class="min-w-[180px]">
+                <mat-form-field class="fuse-mat-no-subscript w-full" appearance="outline">
+                    <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
+                            {{ ed.nombre }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
             </div>
-            <span class="text-xs font-black tracking-wider uppercase"
-                  [ngClass]="{
-                      'text-emerald-600 dark:text-emerald-400': signalrStatus === 'Connected',
-                      'text-amber-600 dark:text-amber-400': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
-                      'text-rose-600 dark:text-rose-400': signalrStatus === 'Disconnected'
-                  }">
-                SignalR: {{ signalrStatus === 'Connected' ? 'EN VIVO' : signalrStatus }}
-            </span>
+
+            <!-- SignalR Connection Status Pill -->
+            <div class="flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-855 border border-gray-200 dark:border-slate-800 shadow-sm">
+                <div class="h-2.5 w-2.5 rounded-full transition-all duration-300"
+                     [ngClass]="{
+                         'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.7)]': signalrStatus === 'Connected',
+                         'bg-amber-500 animate-bounce': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
+                         'bg-rose-500': signalrStatus === 'Disconnected'
+                     }">
+                </div>
+                <span class="text-xs font-black tracking-wider uppercase"
+                      [ngClass]="{
+                          'text-emerald-600 dark:text-emerald-400': signalrStatus === 'Connected',
+                          'text-amber-600 dark:text-amber-400': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
+                          'text-rose-600 dark:text-rose-400': signalrStatus === 'Disconnected'
+                      }">
+                    SignalR: {{ signalrStatus === 'Connected' ? 'EN VIVO' : signalrStatus }}
+                </span>
+            </div>
         </div>
     </div>
 
@@ -183,7 +196,9 @@
         <div *ngIf="activeTab === 'matrix'" class="animate-fade-in flex flex-col space-y-6 relative">
             <div>
                 <h2 class="text-lg font-black text-slate-900 dark:text-white">Matriz de Pre-asignación en CRM</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Busca asistentes y pre-asígnales los talleres de Pago que tienen derecho a presenciar tras liquidar su pago.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Mostrando asistentes del Evento {{ selectedEventoId }}. Busca un asistente y pre-asígna los talleres de Pago a los que tiene derecho tras liquidar su pago.
+                </p>
             </div>
 
             <!-- Search Panel -->
@@ -216,6 +231,9 @@
                             </h4>
                             <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wide border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" *ngIf="asistente.tipo === 'General'">G</span>
                             <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wide border bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-500/10 dark:text-pink-400 dark:border-pink-500/20" *ngIf="asistente.tipo === 'Estudiante'">E</span>
+                            <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wide border bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20" *ngIf="asistente.eventoId">
+                                Evento {{ asistente.eventoId }}
+                            </span>
                         </div>
                         <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ asistente.correo }}</p>
                     </div>

@@ -67,10 +67,20 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     };
     private toastTimeout: any;
 
+    public ediciones: any[] = [];
+
     private destroy$ = new Subject<void>();
 
     ngOnInit(): void {
         this.initTallerForm();
+
+        // Subscribe to Ediciones
+        this._eventosService.ediciones$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(eds => {
+                this.ediciones = eds || [];
+                this._cdr.markForCheck();
+            });
 
         // Subscribe to Selected Event ID
         this._eventosService.selectedEventoId$
@@ -107,6 +117,10 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
                 this.talleresMetrics = metrics || [];
                 this._cdr.markForCheck();
             });
+    }
+
+    public onEventoChanged(eventoId: number): void {
+        this._eventosService.setSeleccionEdicion(eventoId);
     }
 
     ngOnDestroy(): void {

@@ -98,13 +98,23 @@ export class EventosControlComponent implements OnInit, OnDestroy {
         carrera: ''
     };
 
+    public ediciones: any[] = [];
+
     private destroy$ = new Subject<void>();
 
     ngOnInit(): void {
+        this._eventosService.ediciones$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(eds => {
+                this.ediciones = eds || [];
+                this._cdr.markForCheck();
+            });
+
         this._eventosService.selectedEventoId$
             .pipe(takeUntil(this.destroy$))
             .subscribe(id => {
                 this.selectedEventoId = id;
+                this._cdr.markForCheck();
             });
 
         this._eventosService.asistentes$
@@ -114,6 +124,10 @@ export class EventosControlComponent implements OnInit, OnDestroy {
                 this.filterAsistentes();
                 this._cdr.markForCheck();
             });
+    }
+
+    public onEventoChanged(eventoId: number): void {
+        this._eventosService.setSeleccionEdicion(eventoId);
     }
 
     ngOnDestroy(): void {
