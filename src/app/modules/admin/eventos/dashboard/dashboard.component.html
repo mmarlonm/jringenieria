@@ -100,20 +100,21 @@
 
             <!-- Time Range Selector -->
             <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-950/60 rounded-xl p-1 flex-shrink-0 self-start sm:self-auto">
+                <button (click)="setChartView('tiempo_real')"
+                        [ngClass]="chartView === 'tiempo_real' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                        class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap flex items-center gap-1">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    ⚡ Tiempo Real
+                </button>
                 <button (click)="setChartView('15min')"
                         [ngClass]="chartView === '15min' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
-                    15 min
+                        class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
+                    ⏱️ 15 min
                 </button>
                 <button (click)="setChartView('1h')"
                         [ngClass]="chartView === '1h' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
-                    1 Hora
-                </button>
-                <button (click)="setChartView('jornada')"
-                        [ngClass]="chartView === 'jornada' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
-                    Jornada Completa
+                        class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
+                    📅 1 Hora
                 </button>
             </div>
         </div>
@@ -218,50 +219,54 @@
         </div>
 
         <!-- Últimos 5 Accesos — Horizontal Strip (prominente) -->
-        <div class="border-t border-gray-100 dark:border-slate-800/60 px-3 sm:px-5 py-2.5 bg-gray-50/40 dark:bg-slate-900/30 flex-shrink-0">
-            <div class="flex items-center gap-3 overflow-x-auto pb-0.5" style="-webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                <!-- Label -->
-                <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 flex-shrink-0">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
+        <div class="border-t border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 py-3 bg-slate-50/70 dark:bg-slate-900/60 flex-shrink-0 flex items-center gap-4 min-w-0">
+            <!-- Label Badge fixed on left -->
+            <div class="flex items-center gap-2.5 flex-shrink-0 pr-3 border-r border-slate-200 dark:border-slate-800">
+                <div class="relative flex items-center justify-center h-4 w-4">
+                    <span class="animate-ping absolute inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-emerald-500/30"></span>
+                </div>
+                <span class="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest whitespace-nowrap">
                     Últimos 5 Accesos:
                 </span>
+            </div>
 
+            <!-- Scrollable chips container with hidden scrollbars -->
+            <div #ultimosAccesosContainer class="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 px-1 min-w-0 flex-1 scroll-smooth" style="-webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
                 <!-- Person chips -->
-                <div class="flex items-center gap-2 flex-nowrap" *ngIf="ultimosIngresos.length > 0">
+                <div class="flex items-center gap-3 flex-nowrap" *ngIf="ultimosIngresos.length > 0">
                     <div *ngFor="let ci of ultimosIngresos; let first = first"
-                         class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border transition-all flex-shrink-0"
+                         class="flex items-center gap-3 px-3.5 py-2 rounded-2xl border transition-all duration-200 flex-shrink-0 shadow-sm hover:shadow"
                          [ngClass]="first
-                             ? 'bg-emerald-500/10 border-emerald-500/30 dark:border-emerald-500/25'
-                             : 'bg-white dark:bg-slate-900/60 border-gray-200 dark:border-slate-800'">
+                             ? 'bg-emerald-500/10 border-emerald-500/40 dark:border-emerald-500/30 ring-1 ring-emerald-500/20'
+                             : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800'">
                         <div [ngClass]="{
                                  'bg-gradient-to-tr from-emerald-600 to-teal-400': ci.tipo === 'General',
                                  'bg-gradient-to-tr from-pink-600 to-rose-400': ci.tipo === 'Estudiante',
                                  'bg-gradient-to-tr from-indigo-600 to-violet-400': ci.tipo !== 'General' && ci.tipo !== 'Estudiante'
                              }"
-                             class="h-8 w-8 rounded-lg flex items-center justify-center text-white font-black text-xs flex-shrink-0 shadow-sm">
+                             class="h-9.5 w-9.5 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-white font-black text-xs sm:text-sm flex-shrink-0 shadow-sm">
                             {{ ci.nombre?.charAt(0) || '' }}{{ ci.apellidos?.charAt(0) || '' }}
                         </div>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                            <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white whitespace-nowrap">
                                 {{ ci.nombre }} {{ ci.apellidos || '' }}
                             </p>
-                            <p class="text-[10px] text-slate-400 font-mono whitespace-nowrap">
-                                {{ ci.fechaCheckIn ? (ci.fechaCheckIn.split(',')[1]?.trim() || ci.fechaCheckIn) : 'Ahora' }}
+                            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono font-medium whitespace-nowrap mt-0.5 flex items-center gap-1">
+                                <mat-icon class="icon-size-3.5 text-slate-400">schedule</mat-icon>
+                                {{ getCheckInTime(ci) }}
                             </p>
                         </div>
                         <span *ngIf="first"
-                              class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20 whitespace-nowrap ml-0.5">
+                              class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 whitespace-nowrap ml-1 uppercase tracking-wider shadow-2xs">
                             ÚLTIMO
                         </span>
                     </div>
                 </div>
 
                 <!-- Empty state -->
-                <span *ngIf="ultimosIngresos.length === 0" class="text-[10px] text-slate-400 italic whitespace-nowrap">
-                    Esperando primer acceso en tiempo real...
+                <span *ngIf="ultimosIngresos.length === 0" class="text-xs text-slate-400 font-medium italic whitespace-nowrap pl-2">
+                    Sin accesos registrados en esta jornada...
                 </span>
             </div>
         </div>

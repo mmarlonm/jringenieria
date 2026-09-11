@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,10 @@ import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente, Activid
 @Component({
     selector: 'eventos-dashboard',
     templateUrl: './dashboard.component.html',
+    styles: [`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    `],
     standalone: true,
     imports: [
         CommonModule,
@@ -27,6 +31,8 @@ import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente, Activid
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EventosDashboardComponent implements OnInit, OnDestroy {
+    @ViewChild('ultimosAccesosContainer') ultimosAccesosContainer?: ElementRef;
+
     private _eventosService = inject(EventosService);
     private _cdr = inject(ChangeDetectorRef);
     private _router = inject(Router);
@@ -38,7 +44,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public signalrStatus: string = 'Disconnected';
     public ultimosIngresos: Asistente[] = [];
     public talleresMetrics: ActividadMetricsDto[] = [];
-    public chartView: '15min' | '1h' | 'jornada' = 'jornada';
+    public chartView: 'tiempo_real' | '15min' | '1h' = '15min';
     private _fullHistorial: { hora: string; cantidad: number }[] = [];
 
     private fullAnnouncedIds = new Set<number>();
@@ -67,6 +73,8 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(id => {
                 this.selectedEventoId = id;
+                this._eventosService.loadDashboardMetrics(id);
+                this._eventosService.loadAsistentesPorEvento(id);
                 this._eventosService.loadTalleresMetrics(id);
                 this._cdr.markForCheck();
             });
@@ -85,10 +93,20 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .subscribe(list => {
                 if (list) {
                     this.ultimosIngresos = list
-                        .filter(a => a.asistencia === 'Presente' && a.fechaCheckInRaw)
-                        .sort((a, b) => (b.fechaCheckInRaw || '').localeCompare(a.fechaCheckInRaw || '')) // Chronological sort (newest first)
-                        .slice(0, 5); // Take the top 5
+                        .filter(a => (a.asistencia === 'Presente' || (a as any).asistio === 1 || (a as any).asistio === true || !!a.fechaCheckInRaw || !!a.fechaCheckIn) && (a.fechaCheckInRaw || a.fechaCheckIn))
+                        .sort((a, b) => {
+                            const timeA = a.fechaCheckInRaw ? new Date(a.fechaCheckInRaw).getTime() : (a.fechaCheckIn ? new Date(a.fechaCheckIn).getTime() : 0);
+                            const timeB = b.fechaCheckInRaw ? new Date(b.fechaCheckInRaw).getTime() : (b.fechaCheckIn ? new Date(b.fechaCheckIn).getTime() : 0);
+                            return timeB - timeA;
+                        })
+                        .slice(0, 5);
+                    this._applyChartView();
                     this._cdr.markForCheck();
+                    setTimeout(() => {
+                        if (this.ultimosAccesosContainer?.nativeElement) {
+                            this.ultimosAccesosContainer.nativeElement.scrollTo({ left: 0, behavior: 'smooth' });
+                        }
+                    }, 50);
                 }
             });
 
@@ -143,7 +161,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         return Math.round((this.metricas.totalAsistieron / this.metricas.totalRegistrados) * 100);
     }
 
-    public setChartView(view: '15min' | '1h' | 'jornada'): void {
+    public setChartView(view: 'tiempo_real' | '15min' | '1h'): void {
         this.chartView = view;
         this._applyChartView();
         this._cdr.markForCheck();
@@ -328,24 +346,90 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .map(([hora, cantidad]) => ({ hora, cantidad }));
     }
 
+    private _buildChartData(): { hora: string; cantidad: number }[] {
+        const list = this._eventosService.asistentesValue || [];
+        const checkedInList = list.filter(a =>
+            (a.asistencia === 'Presente' || (a as any).asistio === 1 || (a as any).asistio === true || !!a.fechaCheckInRaw || !!a.fechaCheckIn) &&
+            (a.fechaCheckInRaw || a.fechaCheckIn)
+        );
+
+        if (checkedInList.length === 0) {
+            if (this._fullHistorial && this._fullHistorial.length > 0) {
+                return this._bucketData(this._fullHistorial, this.chartView === 'tiempo_real' ? 5 : (this.chartView === '15min' ? 15 : 60));
+            }
+            return [];
+        }
+
+        const dates: Date[] = [];
+        checkedInList.forEach(a => {
+            const raw = a.fechaCheckInRaw || a.fechaCheckIn;
+            if (raw) {
+                const d = new Date(raw);
+                if (!isNaN(d.getTime())) {
+                    dates.push(d);
+                }
+            }
+        });
+
+        if (dates.length === 0) {
+            return this._bucketData(this._fullHistorial, this.chartView === 'tiempo_real' ? 5 : (this.chartView === '15min' ? 15 : 60));
+        }
+
+        dates.sort((a, b) => a.getTime() - b.getTime());
+
+        const intervalMinutes = this.chartView === 'tiempo_real' ? 5 : (this.chartView === '15min' ? 15 : 60);
+
+        const minDate = new Date(dates[0]);
+        let maxDate = new Date(dates[dates.length - 1]);
+
+        const minMins = Math.floor((minDate.getHours() * 60 + minDate.getMinutes()) / intervalMinutes) * intervalMinutes;
+        minDate.setHours(Math.floor(minMins / 60), minMins % 60, 0, 0);
+
+        const maxMins = Math.ceil((maxDate.getHours() * 60 + maxDate.getMinutes() + 1) / intervalMinutes) * intervalMinutes;
+        maxDate.setHours(Math.floor(maxMins / 60), maxMins % 60, 0, 0);
+
+        const countMap = new Map<string, number>();
+        dates.forEach(d => {
+            const h = d.getHours();
+            const m = d.getMinutes();
+            const bucketMins = Math.floor((h * 60 + m) / intervalMinutes) * intervalMinutes;
+            const bh = Math.floor(bucketMins / 60);
+            const bm = bucketMins % 60;
+            const key = `${bh.toString().padStart(2, '0')}:${bm.toString().padStart(2, '0')}`;
+            countMap.set(key, (countMap.get(key) || 0) + 1);
+        });
+
+        const result: { hora: string; cantidad: number }[] = [];
+        const current = new Date(minDate);
+
+        while (current.getTime() <= maxDate.getTime()) {
+            const h = current.getHours();
+            const m = current.getMinutes();
+            const key = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            result.push({
+                hora: key,
+                cantidad: countMap.get(key) || 0
+            });
+            current.setMinutes(current.getMinutes() + intervalMinutes);
+        }
+
+        return result;
+    }
+
     private _applyChartView(): void {
-        // Aggregate into appropriate buckets — always show ALL data (first to last entry)
-        let data: { hora: string; cantidad: number }[];
+        const data = this._buildChartData();
         let yLabel: string;
         let tooltipLabel: string;
 
-        if (this.chartView === '15min') {
-            data = this._bucketData(this._fullHistorial, 15);
+        if (this.chartView === 'tiempo_real') {
+            yLabel = 'pers/5min';
+            tooltipLabel = 'Ingresos en tiempo real (5 min): ';
+        } else if (this.chartView === '15min') {
             yLabel = 'pers/15min';
             tooltipLabel = 'Ingresos (c/15 min): ';
-        } else if (this.chartView === '1h') {
-            data = this._bucketData(this._fullHistorial, 60);
+        } else {
             yLabel = 'pers/hora';
             tooltipLabel = 'Ingresos por hora: ';
-        } else {
-            data = [...this._fullHistorial];
-            yLabel = 'personas';
-            tooltipLabel = 'Total ingresos: ';
         }
 
         const hours = data.map(h => h.hora);
@@ -378,20 +462,20 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             }];
         }
 
-        // 'Ahora' vertical line — only for live (non-past) events
+        // 'Tiempo Real / Ahora' vertical line — only for live (non-past) events
         if (hours.length > 0 && !this.isEventoPasado) {
             annotations.xaxis = [{
                 x: hours[hours.length - 1],
-                borderColor: '#818cf8',
+                borderColor: '#10b981',
                 borderWidth: 2,
                 strokeDashArray: 5,
                 label: {
-                    text: `\u26A1 Ahora (${hours[hours.length - 1]})`,
+                    text: `\u26A1 Tiempo Real (${hours[hours.length - 1]})`,
                     borderColor: 'transparent',
                     orientation: 'horizontal',
                     position: 'top',
                     style: {
-                        background: '#6366f1',
+                        background: '#10b981',
                         color: '#fff',
                         fontSize: '10px',
                         fontWeight: '700',
@@ -508,5 +592,18 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         } catch (e) {
             this.announceText(announcement);
         }
+    }
+
+    public getCheckInTime(ci: any): string {
+        const raw = ci?.fechaCheckInRaw || ci?.fechaCheckIn;
+        if (!raw) return 'Ahora';
+        const date = new Date(raw);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        }
+        if (typeof ci.fechaCheckIn === 'string' && ci.fechaCheckIn.includes(',')) {
+            return ci.fechaCheckIn.split(',')[1]?.trim() || ci.fechaCheckIn;
+        }
+        return ci.fechaCheckIn || 'Ahora';
     }
 }

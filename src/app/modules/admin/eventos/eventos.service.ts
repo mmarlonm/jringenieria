@@ -112,6 +112,10 @@ export class EventosService implements OnDestroy {
     private _asistentes = new BehaviorSubject<Asistente[]>([]);
     public asistentes$ = this._asistentes.asObservable();
 
+    public get asistentesValue(): Asistente[] {
+        return this._asistentes.value;
+    }
+
     private _metricas = new BehaviorSubject<DashboardMetricasDto>({
         totalRegistrados: 0,
         totalAsistieron: 0,
@@ -141,15 +145,9 @@ export class EventosService implements OnDestroy {
     constructor() {
         this.loadEventos();
 
-        // Listen to active edition change to reload real lists and restart SignalR
-        this._selectedEventoId
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(eventoId => {
-                this.loadAsistentesPorEvento(eventoId);
-                this.loadTalleresMetrics(eventoId);
-                // Restart SignalR connection for the new group
-                this.connectToEventHub(eventoId);
-            });
+        // Connect SignalR hub once at startup for the default event
+        const initialId = this._selectedEventoId.value;
+        this.connectToEventHub(initialId);
     }
 
     ngOnDestroy(): void {
@@ -162,24 +160,10 @@ export class EventosService implements OnDestroy {
     // --- SignalR Real-Time Logic ---
     
     public connectToEventHub(eventoId: number): void {
-        const oldId = this._selectedEventoId.value;
-        
-        // If we are changing event, leave previous group and stop
         if (this.hubConnection) {
-            this.hubConnection.invoke('LeaveEventoGroup', Number(oldId))
-                .then(() => {
-                    console.log(`📡 [SignalR] Left group for event ${oldId}`);
-                    this.stopAndCleanConnection();
-                    this.initiateNewConnection(eventoId);
-                })
-                .catch(err => {
-                    console.error('📡 [SignalR] Error leaving group:', err);
-                    this.stopAndCleanConnection();
-                    this.initiateNewConnection(eventoId);
-                });
-        } else {
-            this.initiateNewConnection(eventoId);
+            return;
         }
+        this.initiateNewConnection(eventoId);
     }
 
     private initiateNewConnection(eventoId: number): void {
@@ -228,8 +212,11 @@ export class EventosService implements OnDestroy {
 
         this.hubConnection.on('ReceiveCheckInEvent', (res: any) => {
             console.log('📡 [SignalR] Check-in event received, reloading assistants:', res);
-            if (res && res.eventoId) {
-                this.loadAsistentesPorEvento(res.eventoId);
+            const activeId = this._selectedEventoId.value;
+            if (res && res.eventoId && Number(res.eventoId) === Number(activeId)) {
+                this.loadAsistentesPorEvento(activeId);
+                this.loadDashboardMetrics(activeId);
+                this.loadTalleresMetrics(activeId);
             }
         });
 
@@ -240,8 +227,11 @@ export class EventosService implements OnDestroy {
 
         this.hubConnection.onreconnected(() => {
             this._signalrStatus.next('Connected');
-            this.hubConnection?.invoke('JoinEventoGroup', Number(eventoId))
-                .catch(err => console.error('📡 [SignalR] Error joining group after reconnect:', err));
+            const activeId = this._selectedEventoId.value;
+            if (activeId) {
+                this.hubConnection?.invoke('JoinEventoGroup', Number(activeId))
+                    .catch(err => console.error('📡 [SignalR] Error joining group after reconnect:', err));
+            }
         });
 
         this.hubConnection.onclose(() => {
@@ -252,9 +242,10 @@ export class EventosService implements OnDestroy {
         this.hubConnection.start()
             .then(() => {
                 this._signalrStatus.next('Connected');
-                console.log(`📡 [SignalR] Connected to /eventoHub for event ${eventoId}`);
-                this.hubConnection?.invoke('JoinEventoGroup', Number(eventoId))
-                    .then(() => console.log(`📡 [SignalR] Joined group: ${eventoId}`))
+                const activeId = this._selectedEventoId.value || eventoId;
+                console.log(`📡 [SignalR] Connected to /eventoHub for event ${activeId}`);
+                this.hubConnection?.invoke('JoinEventoGroup', Number(activeId))
+                    .then(() => console.log(`📡 [SignalR] Joined group: ${activeId}`))
                     .catch(err => console.error('📡 [SignalR] Error invoking JoinEventoGroup:', err));
             })
             .catch(err => {
@@ -283,10 +274,26 @@ export class EventosService implements OnDestroy {
             this.hubConnection = null;
             this._signalrStatus.next('Disconnected');
         }
-    }    // --- REST HTTP Endpoints & Actions ---
+    }
+
+    // --- REST HTTP Endpoints & Actions ---
 
     public setSeleccionEdicion(eventoId: number): void {
+        const oldEventoId = this._selectedEventoId.value;
         this._selectedEventoId.next(eventoId);
+
+        if (this.hubConnection && this._signalrStatus.value === 'Connected') {
+            if (oldEventoId && Number(oldEventoId) !== Number(eventoId)) {
+                this.hubConnection.invoke('LeaveEventoGroup', Number(oldEventoId)).catch(() => {});
+            }
+            this.hubConnection.invoke('JoinEventoGroup', Number(eventoId)).catch(() => {});
+        } else if (!this.hubConnection) {
+            this.connectToEventHub(eventoId);
+        }
+
+        this.loadDashboardMetrics(eventoId);
+        this.loadAsistentesPorEvento(eventoId);
+        this.loadTalleresMetrics(eventoId);
     }
 
 
@@ -443,7 +450,20 @@ export class EventosService implements OnDestroy {
                     next: (res) => {
                         if (res && res.exito) {
                             const evId = this._selectedEventoId.value;
-                                       const asistente = this._asistentes.value.find(a => a.tokenQr === tokenQR);
+                            const asistente = this._asistentes.value.find(a => a.tokenQr === tokenQR);
+                            const nowIso = res.fechaCheckIn ? new Date(res.fechaCheckIn).toISOString() : new Date().toISOString();
+
+                            if (asistente) {
+                                asistente.asistencia = 'Presente';
+                                asistente.fechaCheckInRaw = nowIso;
+                                asistente.fechaCheckIn = new Date(nowIso).toLocaleString('es-MX', {
+                                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit'
+                                });
+                                this._asistentes.next([...this._asistentes.value]);
+                            } else {
+                                this.loadAsistentesPorEvento(evId);
+                            }
+
                             observer.next({
                                 status: 'SUCCESS',
                                 message: res.mensaje || '¡Acceso Autorizado!',
@@ -453,7 +473,7 @@ export class EventosService implements OnDestroy {
                                     nombreCompleto: res.nombreCompleto || (asistente ? `${asistente.nombre} ${asistente.apellidos}` : 'Visitante'),
                                     tipo: res.tipoAsistente || (asistente ? asistente.tipo : 'Personal/Staff'),
                                     organizacion: res.organizacion || (asistente ? (asistente.tipo === 'General' ? (asistente.empresa || 'Ninguna') : (asistente.universidad || 'Ninguna')) : 'Ninguna'),
-                                    fechaCheckIn: new Date().toISOString()
+                                    fechaCheckIn: nowIso
                                 }
                             });
                         } else {
@@ -508,7 +528,7 @@ export class EventosService implements OnDestroy {
 
     // --- State helpers ---
 
-    private loadAsistentesPorEvento(eventoId: number): void {
+    public loadAsistentesPorEvento(eventoId: number): void {
         this._http.get<any[]>(`${this.apiBase}/Asistentes/evento/${eventoId}`)
             .subscribe({
                 next: (list) => {
@@ -532,7 +552,7 @@ export class EventosService implements OnDestroy {
                                 comoSeEntero: item.mediosDifusion || [],
                                 motivacion: item.motivaciones || [],
                                 estatusQR: item.procesadoWorker === 1 ? 'Enviado' : 'Pendiente',
-                                asistencia: item.asistio === 1 ? 'Presente' : 'Faltante',
+                                asistencia: (item.asistio === 1 || item.asistio === true || !!item.fechaCheckIn) ? 'Presente' : 'Faltante',
                                 fechaCheckIn: item.fechaCheckIn ? new Date(item.fechaCheckIn).toLocaleString('es-MX', {
                                     day: 'numeric',
                                     month: 'short',
