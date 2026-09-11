@@ -182,7 +182,7 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
     this.stopHeroTimer();
     this.slideTimer = setInterval(() => {
       this.nextSlide();
-    }, 20000);
+    }, 30000);
   }
 
   private stopHeroTimer(): void {
