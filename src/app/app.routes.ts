@@ -162,6 +162,15 @@ export const appRoutes: Route[] = [
             }
         ]
     },
+    // Cartelera tipo cine de talleres — RUTA PÚBLICA 100% PANTALLA COMPLETA (SIN LAYOUT NI MENÚ DE NAVEGACIÓN)
+    {
+        path: 'eventos/cartelera',
+        loadComponent: () => import('app/modules/admin/eventos/cartelera-talleres/cartelera-talleres.component').then(m => m.CarteleraTalleresComponent)
+    },
+    {
+        path: 'eventos/cartelera/:eventoId',
+        loadComponent: () => import('app/modules/admin/eventos/cartelera-talleres/cartelera-talleres.component').then(m => m.CarteleraTalleresComponent)
+    },
     // Mapa 3D del evento — ruta pública, sin layout ni guard (igual que escanear-pase)
     {
         path: 'eventos/mapa',

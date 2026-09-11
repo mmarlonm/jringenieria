@@ -1,0 +1,290 @@
+/* Hero Slider Styles (1:1 Sierra Negra Replica - Focused Speaker Thumbnail Image Framing) */
+.container-slider {
+  position: relative;
+  width: 100%;
+  height: 680px;
+  background: #020617;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    height: 560px;
+  }
+}
+
+.slide {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.item {
+  width: 200px;
+  height: 300px;
+  position: absolute;
+  top: 50%;
+  transform: translate(0, -50%);
+  border-radius: 20px;
+  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.65);
+  background-position: 85% center; // Focus on the speaker photo on the right side of 1200x500 banner
+  background-size: cover;
+  display: inline-block;
+  transition: 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Base overlay for small floating cards */
+.item-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(2, 6, 23, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
+/* Active expanded slide 1 and 2 occupy full screen */
+.slide .item:nth-child(1),
+.slide .item:nth-child(2) {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: translate(0, 0);
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background-position: center center; // Full banner view on expanded hero slide
+
+  .item-overlay {
+    background: 
+      linear-gradient(
+        to right,
+        rgba(2, 6, 23, 0.92) 0%,
+        rgba(2, 6, 23, 0.7) 45%,
+        rgba(2, 6, 23, 0.2) 75%,
+        transparent 100%
+      ),
+      linear-gradient(
+        to top,
+        rgba(2, 6, 23, 0.85) 0%,
+        transparent 50%
+      );
+  }
+}
+
+/* Original Sierra Negra Vertical Floating Cards (200x300 px) */
+.slide .item:nth-child(3) {
+  left: 50%;
+  cursor: pointer;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+.slide .item:nth-child(4) {
+  left: calc(50% + 220px);
+  cursor: pointer;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+.slide .item:nth-child(5) {
+  left: calc(50% + 440px);
+  cursor: pointer;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+.slide .item:nth-child(n + 6) {
+  left: calc(50% + 660px);
+  opacity: 0;
+  cursor: pointer;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+/* Hover effect on vertical floating cards */
+.slide .item:nth-child(n + 3):hover {
+  transform: translate(0, -53%) scale(1.05);
+  border-color: rgba(6, 182, 212, 0.9);
+  box-shadow: 0 0 35px rgba(6, 182, 212, 0.6);
+}
+
+.item .content {
+  position: absolute;
+  top: 50%;
+  left: 70px;
+  width: 580px;
+  max-width: 85%;
+  text-align: left;
+  color: #eee;
+  transform: translate(0, -50%);
+  display: none;
+  z-index: 20;
+
+  @media (max-width: 768px) {
+    left: 40px;
+    width: calc(100% - 80px);
+  }
+}
+
+.slide .item:nth-child(2) .content {
+  display: flex;
+  flex-direction: column;
+}
+
+.content .name {
+  font-size: 40px;
+  text-transform: uppercase;
+  font-weight: 900;
+  opacity: 0;
+  animation: animateSlide 1s ease-in-out forwards;
+  color: white;
+  text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.95);
+  line-height: 1.1;
+
+  @media (max-width: 768px) {
+    font-size: 26px;
+  }
+}
+
+.content .des {
+  margin: 12px 0 18px;
+  opacity: 0;
+  animation: animateSlide 1s ease-in-out 0.3s forwards;
+  color: #f0f0f0;
+  font-size: 15px;
+  line-height: 1.6;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.95);
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+}
+
+/* Single Sleek Action Button */
+.btn-slide {
+  opacity: 0;
+  animation: animateSlide 1s ease-in-out 0.6s forwards;
+}
+
+@keyframes animateSlide {
+  from {
+    opacity: 0;
+    transform: translate(0, 80px);
+    filter: blur(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+    filter: blur(0);
+  }
+}
+
+/* Button Controls Sierra Negra Style */
+.button-controls {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  z-index: 50;
+}
+
+.btn-ctrl {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.25s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+    transform: scale(1.15);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.scroll-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-mouse {
+  width: 24px;
+  height: 40px;
+  border: 2px solid white;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+  animation: bounceMouse 2s infinite;
+}
+
+.scroll-wheel {
+  width: 4px;
+  height: 8px;
+  background: white;
+  border-radius: 2px;
+}
+
+@keyframes bounceMouse {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Modal Animations */
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

@@ -10,6 +10,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 import { EventosService, Asistente, ActividadMetricsDto, Actividad } from '../eventos.service';
 
 @Component({
@@ -37,7 +38,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     private _fb = inject(FormBuilder);
 
     // State
-    public activeTab: 'metrics' | 'matrix' | 'config' | 'scanLink' = 'metrics';
+    public activeTab: 'metrics' | 'matrix' | 'config' | 'scanLink' | 'slider' = 'metrics';
     public selectedEventoId: number = 2026;
     public signalrStatus: string = 'Disconnected';
     
@@ -58,6 +59,19 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     public tallerForm!: FormGroup;
     public isCreatingTaller: boolean = false;
     public editingTaller: Actividad | null = null;
+    public fotoPreview: string | null = null;
+
+    // Slider Touch & Detail Modal
+    public currentSlideIndex: number = 0;
+    public selectedTallerDetail: Actividad | ActividadMetricsDto | null = null;
+    public correoInscripcion: string = '';
+    public isInscribiendoCorreo: boolean = false;
+    public inscripcionRes: { success?: boolean; notRegistered?: boolean; message?: string; name?: string } | null = null;
+    public readonly registroUniversitariosUrl = 'https://foroenergiza.jringenieriaelectrica.com.mx/formulario-universitarios/';
+    
+    // Touch swipe control
+    private touchStartX: number = 0;
+    private touchEndX: number = 0;
 
     // Toast Alert
     public toast: { show: boolean; message: string; type: 'success' | 'error' | 'warning' } = {
@@ -115,6 +129,9 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(metrics => {
                 this.talleresMetrics = metrics || [];
+                if (this.currentSlideIndex >= this.talleresMetrics.length) {
+                    this.currentSlideIndex = 0;
+                }
                 this._cdr.markForCheck();
             });
     }
@@ -142,21 +159,22 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     }
 
     // --- Tab Switcher ---
-    public setTab(tab: 'metrics' | 'matrix' | 'config' | 'scanLink'): void {
+    public setTab(tab: 'metrics' | 'matrix' | 'config' | 'scanLink' | 'slider'): void {
         this.activeTab = tab;
-        if (tab === 'config') {
+        if (tab === 'config' || tab === 'slider') {
             this.loadTalleresAdminList();
         }
         this._cdr.markForCheck();
     }
 
     // --- Tab A: Live Dashboard Helpers ---
-    public getOccupancyPercent(taller: ActividadMetricsDto): number {
+    public getOccupancyPercent(taller: ActividadMetricsDto | Actividad): number {
         if (!taller || taller.cupoMaximo === 0) return 0;
-        return Math.min(100, Math.round((taller.registradosActuales / taller.cupoMaximo) * 100));
+        const registrados = (taller as ActividadMetricsDto).registradosActuales || (taller as Actividad).registradosActuales || 0;
+        return Math.min(100, Math.round((registrados / taller.cupoMaximo) * 100));
     }
 
-    public getProgressBarColor(taller: ActividadMetricsDto): string {
+    public getProgressBarColor(taller: ActividadMetricsDto | Actividad): string {
         const percent = this.getOccupancyPercent(taller);
         if (percent < 70) return 'bg-emerald-500';
         if (percent < 100) return 'bg-amber-500';
@@ -252,7 +270,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         });
     }
 
-    // --- Tab C: Workshop Administration Helpers ---
+    // --- Tab C: Workshop Administration & Photo Helpers ---
     private initTallerForm(): void {
         this.tallerForm = this._fb.group({
             titulo: ['', [Validators.required]],
@@ -260,9 +278,38 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
             tipo: ['Pago', [Validators.required]],
             cupoMaximo: [30, [Validators.required, Validators.min(1)]],
             ubicacionLugar: ['', [Validators.required]],
+            fotoPublicidadUrl: [''],
             fechaHoraInicio: ['', [Validators.required]],
             fechaHoraFin: ['', [Validators.required]]
         });
+    }
+
+    public onFotoSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+
+            // Limit file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                this.showToast('La imagen excede el límite permitido de 5MB.', 'warning');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e: any) => {
+                const base64Url = e.target.result;
+                this.fotoPreview = base64Url;
+                this.tallerForm.patchValue({ fotoPublicidadUrl: base64Url });
+                this._cdr.markForCheck();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    public removeFoto(): void {
+        this.fotoPreview = null;
+        this.tallerForm.patchValue({ fotoPublicidadUrl: '' });
+        this._cdr.markForCheck();
     }
 
     public loadTalleresAdminList(): void {
@@ -292,12 +339,14 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
 
     public startEditTaller(taller: Actividad): void {
         this.editingTaller = taller;
+        this.fotoPreview = taller.fotoPublicidadUrl || null;
         this.tallerForm.patchValue({
             titulo: taller.titulo,
             expositor: taller.expositor,
             tipo: taller.tipo,
             cupoMaximo: taller.cupoMaximo,
             ubicacionLugar: taller.ubicacionLugar,
+            fotoPublicidadUrl: taller.fotoPublicidadUrl || '',
             fechaHoraInicio: this.formatDateTimeLocal(taller.fechaHoraInicio),
             fechaHoraFin: this.formatDateTimeLocal(taller.fechaHoraFin)
         });
@@ -306,9 +355,11 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
 
     public cancelEditTaller(): void {
         this.editingTaller = null;
+        this.fotoPreview = null;
         this.tallerForm.reset({
             tipo: 'Pago',
-            cupoMaximo: 30
+            cupoMaximo: 30,
+            fotoPublicidadUrl: ''
         });
         this._cdr.markForCheck();
     }
@@ -327,6 +378,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
             tipo: formValue.tipo,
             cupoMaximo: Number(formValue.cupoMaximo),
             ubicacionLugar: formValue.ubicacionLugar,
+            fotoPublicidadUrl: formValue.fotoPublicidadUrl || null,
             fechaHoraInicio: new Date(formValue.fechaHoraInicio).toISOString(),
             fechaHoraFin: new Date(formValue.fechaHoraFin).toISOString()
         };
@@ -336,9 +388,11 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
                 next: (updatedTaller) => {
                     this.isCreatingTaller = false;
                     this.editingTaller = null;
+                    this.fotoPreview = null;
                     this.tallerForm.reset({
                         tipo: 'Pago',
-                        cupoMaximo: 30
+                        cupoMaximo: 30,
+                        fotoPublicidadUrl: ''
                     });
                     this.loadTalleresAdminList();
                     this._eventosService.loadTalleresMetrics(this.selectedEventoId); // refresh metrics
@@ -355,9 +409,11 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
             this._eventosService.crearTaller(payload).subscribe({
                 next: (newTaller) => {
                     this.isCreatingTaller = false;
+                    this.fotoPreview = null;
                     this.tallerForm.reset({
                         tipo: 'Pago',
-                        cupoMaximo: 30
+                        cupoMaximo: 30,
+                        fotoPublicidadUrl: ''
                     });
                     this.loadTalleresAdminList();
                     this._eventosService.loadTalleresMetrics(this.selectedEventoId); // refresh metrics
@@ -371,5 +427,139 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
                 }
             });
         }
+    }
+
+    public eliminarTaller(taller: Actividad): void {
+        Swal.fire({
+            title: '¿Eliminar este Taller?',
+            text: `Se eliminará "${taller.titulo}" y las asignaciones asociadas a este taller de forma permanente.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, Eliminar',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'rounded-2xl dark:bg-slate-900 dark:text-white',
+                confirmButton: 'rounded-xl px-5 py-2.5 font-bold',
+                cancelButton: 'rounded-xl px-5 py-2.5 font-bold'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._eventosService.eliminarTaller(taller.id).subscribe({
+                    next: () => {
+                        this.loadTalleresAdminList();
+                        this._eventosService.loadTalleresMetrics(this.selectedEventoId);
+                        this.showToast('El taller fue eliminado exitosamente.', 'success');
+                        Swal.fire({
+                            title: '¡Eliminado!',
+                            text: 'El taller ha sido borrado del sistema.',
+                            icon: 'success',
+                            confirmButtonColor: '#4f46e5',
+                            customClass: { popup: 'rounded-2xl dark:bg-slate-900 dark:text-white' }
+                        });
+                    },
+                    error: (err) => {
+                        console.error('Error al eliminar taller:', err);
+                        this.showToast('No se pudo eliminar el taller.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // --- Slider & Touch Carousel Control ---
+    public get currentSliderItems(): Actividad[] {
+        return this.talleresList.length > 0 ? this.talleresList : [];
+    }
+
+    public nextSlide(): void {
+        const total = this.currentSliderItems.length;
+        if (total === 0) return;
+        this.currentSlideIndex = (this.currentSlideIndex + 1) % total;
+        this._cdr.markForCheck();
+    }
+
+    public prevSlide(): void {
+        const total = this.currentSliderItems.length;
+        if (total === 0) return;
+        this.currentSlideIndex = (this.currentSlideIndex - 1 + total) % total;
+        this._cdr.markForCheck();
+    }
+
+    public goToSlide(index: number): void {
+        this.currentSlideIndex = index;
+        this._cdr.markForCheck();
+    }
+
+    public onTouchStart(e: TouchEvent): void {
+        this.touchStartX = e.changedTouches[0].screenX;
+    }
+
+    public onTouchEnd(e: TouchEvent): void {
+        this.touchEndX = e.changedTouches[0].screenX;
+        this.handleSwipe();
+    }
+
+    private handleSwipe(): void {
+        const swipeThreshold = 40;
+        if (this.touchEndX < this.touchStartX - swipeThreshold) {
+            this.nextSlide();
+        } else if (this.touchEndX > this.touchStartX + swipeThreshold) {
+            this.prevSlide();
+        }
+    }
+
+    // --- Workshop Detail Modal & Self Registration by Email ---
+    public openDetailModal(taller: Actividad | ActividadMetricsDto): void {
+        this.selectedTallerDetail = taller;
+        this.correoInscripcion = '';
+        this.inscripcionRes = null;
+        this._cdr.markForCheck();
+    }
+
+    public closeDetailModal(): void {
+        this.selectedTallerDetail = null;
+        this.correoInscripcion = '';
+        this.inscripcionRes = null;
+        this._cdr.markForCheck();
+    }
+
+    public submitInscripcionCorreo(): void {
+        if (!this.selectedTallerDetail || !this.correoInscripcion.trim()) return;
+
+        this.isInscribiendoCorreo = true;
+        this.inscripcionRes = null;
+        this._cdr.markForCheck();
+
+        const tallerId = (this.selectedTallerDetail as Actividad).id || (this.selectedTallerDetail as ActividadMetricsDto).actividadId;
+
+        this._eventosService.inscribirTallerPorCorreo(this.correoInscripcion.trim(), tallerId, this.selectedEventoId).subscribe({
+            next: (res) => {
+                this.isInscribiendoCorreo = false;
+                this.inscripcionRes = {
+                    success: res.exito,
+                    notRegistered: res.noRegistrado,
+                    message: res.mensaje,
+                    name: res.nombreAsistente
+                };
+                if (res.exito) {
+                    this._eventosService.loadTalleresMetrics(this.selectedEventoId);
+                    this.loadTalleresAdminList();
+                }
+                this._cdr.markForCheck();
+            },
+            error: (err) => {
+                this.isInscribiendoCorreo = false;
+                const errorMsg = err?.error?.mensaje || 'Error al procesar la inscripción por correo.';
+                const notReg = err?.error?.noRegistrado || false;
+                this.inscripcionRes = {
+                    success: false,
+                    notRegistered: notReg,
+                    message: errorMsg
+                };
+                this._cdr.markForCheck();
+            }
+        });
     }
 }

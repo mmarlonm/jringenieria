@@ -57,6 +57,7 @@ export interface ActividadMetricsDto {
     cupoMaximo: number;
     registradosActuales: number;
     ingresaronActuales: number;
+    fotoPublicidadUrl?: string;
     fechaHoraInicio: string;
     fechaHoraFin: string;
     disponibles: number;
@@ -71,6 +72,7 @@ export interface Actividad {
     tipo: 'Pago' | 'Gratuito';
     cupoMaximo: number;
     ubicacionLugar: string;
+    fotoPublicidadUrl?: string;
     fechaHoraInicio: string;
     fechaHoraFin: string;
     fechaCreacion: string;
@@ -607,6 +609,14 @@ export class EventosService implements OnDestroy {
 
     public editarTaller(id: number, taller: any): Observable<Actividad> {
         return this._http.put<Actividad>(`${this.apiBase}/Asistentes/talleres/${id}`, taller);
+    }
+
+    public eliminarTaller(id: number): Observable<any> {
+        return this._http.delete<any>(`${this.apiBase}/Asistentes/talleres/${id}`);
+    }
+
+    public inscribirTallerPorCorreo(correo: string, actividadId: number, eventoId: number): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/Asistentes/talleres/inscribir-correo`, { correo, actividadId, eventoId });
     }
 
     public getTalleresPreasignados(asistenteId: number): Observable<number[]> {
