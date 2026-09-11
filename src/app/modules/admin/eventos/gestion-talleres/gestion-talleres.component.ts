@@ -146,16 +146,19 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         if (this.toastTimeout) clearTimeout(this.toastTimeout);
     }
 
-    // --- Toast Alert Helper ---
+    // --- System Standard Alert Helper (SweetAlert2) ---
     private showToast(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
-        if (this.toastTimeout) clearTimeout(this.toastTimeout);
-        this.toast = { show: true, message, type };
-        this._cdr.markForCheck();
-        
-        this.toastTimeout = setTimeout(() => {
-            this.toast.show = false;
-            this._cdr.markForCheck();
-        }, 3000);
+        Swal.fire({
+            icon: type,
+            title: type === 'success' ? '¡Guardado!' : type === 'warning' ? 'Atención' : 'Error',
+            text: message,
+            timer: 2000,
+            showConfirmButton: false,
+            confirmButtonColor: '#4f46e5',
+            customClass: {
+                popup: 'rounded-2xl dark:bg-slate-900 dark:text-white'
+            }
+        });
     }
 
     // --- Tab Switcher ---
