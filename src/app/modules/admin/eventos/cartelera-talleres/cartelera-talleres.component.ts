@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,12 +26,13 @@ import Swal from 'sweetalert2';
     RouterModule
   ],
   templateUrl: './cartelera-talleres.component.html',
-  styleUrls: ['./cartelera-talleres.component.scss']
+  styleUrls: ['./cartelera-talleres.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CarteleraTalleresComponent implements OnInit, OnDestroy {
   private _eventosService = inject(EventosService);
   private _route = inject(ActivatedRoute);
-  private _cdr = inject(ChangeDetectorRef);
+  public _cdr = inject(ChangeDetectorRef);
 
   @ViewChild('slideRef') slideRef!: ElementRef<HTMLDivElement>;
 
@@ -45,6 +46,9 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
   // 3D Card Stack Items Array
   public sliderItems: any[] = [];
   private slideTimer: any = null;
+
+  // Filtered list (cached - rebuilt only when data/filter/search actually changes)
+  public _filteredTalleres: any[] = [];
 
   // Detail Modal
   public showDetailModal: boolean = false;
@@ -90,6 +94,7 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
         if (metrics && metrics.length > 0) {
           this.talleresMetrics = metrics;
           this.rebuildSliderItems();
+          this.rebuildFilteredList();
           this.startHeroTimer();
           this._cdr.markForCheck();
         }
@@ -112,6 +117,7 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
         next: (talleres) => {
           this.talleresDetalle = talleres;
           this.rebuildSliderItems();
+          this.rebuildFilteredList();
           this._cdr.markForCheck();
         },
         error: (err) => console.error('Error fetching talleres detail catalog:', err)
@@ -142,9 +148,9 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
     this.sliderItems = expandedList;
   }
 
-  // --- Filtering Logic (Unique workshops for bottom grid) ---
-  public get filteredTalleres(): any[] {
-    let list = this.talleresMetrics.map(m => {
+  // --- Filtering Logic (cached list - rebuilt only when filter/search/data changes) ---
+  private buildMergedList(): any[] {
+    return this.talleresMetrics.map(m => {
       const full = this.talleresDetalle.find(d => d.id === m.actividadId);
       return {
         ...m,
@@ -154,11 +160,15 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
         fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin
       };
     });
+  }
+
+  public rebuildFilteredList(): void {
+    let list = this.buildMergedList();
 
     if (this.searchTerm.trim()) {
       const q = this.searchTerm.toLowerCase();
-      list = list.filter(t => 
-        t.titulo.toLowerCase().includes(q) || 
+      list = list.filter(t =>
+        t.titulo.toLowerCase().includes(q) ||
         t.expositor.toLowerCase().includes(q) ||
         t.ubicacionLugar.toLowerCase().includes(q)
       );
@@ -170,11 +180,17 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
       list = list.filter(t => t.tipo === 'Pago');
     }
 
-    return list;
+    this._filteredTalleres = list;
   }
 
   public setFilter(filter: 'TODOS' | 'TALLER' | 'CONFERENCIA' | 'GRATUITO' | 'PAGO'): void {
     this.activeFilter = filter;
+    this.rebuildFilteredList();
+    this._cdr.markForCheck();
+  }
+
+  public trackByActividadId(_index: number, taller: any): number {
+    return taller.actividadId;
   }
 
   // --- 3D Card Stack Slider Control (EXACT SIERRA NEGRA NATIVE DOM ALGORITHM) ---

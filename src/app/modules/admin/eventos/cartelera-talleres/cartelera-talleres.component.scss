@@ -389,20 +389,20 @@
 }
 
 /* =====================================================================
-   CINEMA POSTER CARD — GPU-smooth hover (pseudo-element glow trick)
-   Only `opacity` is transitioned: 100% GPU composited, zero CPU paint
+   CINEMA POSTER CARD — wrapper/inner architecture
+   Wrapper: no overflow-hidden → ::before glow never gets clipped
+   Inner:   overflow-hidden → image clipping inside rounded corners
+   Only `opacity` transitions → 100% GPU composited, zero CPU paint
    ===================================================================== */
-.cinema-card {
+.cinema-card-wrapper {
   position: relative;
-  transform: translateZ(0); /* Force own compositor layer */
-  will-change: transform;
 
-  /* Glow ring lives in ::before, always rendered, just invisible */
+  /* Glow ring: always rendered, invisible until hover */
   &::before {
     content: '';
     position: absolute;
     inset: -1px;
-    border-radius: 1.5rem; /* rounded-3xl = 24px */
+    border-radius: 1.5rem; /* rounded-3xl */
     border: 1.5px solid rgba(6, 182, 212, 0.7);
     box-shadow:
       0 0 0 1px rgba(6, 182, 212, 0.15),
@@ -410,10 +410,26 @@
     opacity: 0;
     transition: opacity 0.22s ease;
     pointer-events: none;
-    z-index: 2;
+    z-index: 10;
   }
 
   &:hover::before {
     opacity: 1;
   }
+
+  /* Button inside responds to wrapper hover */
+  &:hover .cinema-card-btn {
+    background-color: #06b6d4; /* cyan-500 */
+    color: #020617;            /* slate-950 */
+  }
+}
+
+.cinema-card-inner {
+  /* Nothing animated here — just structural */
+}
+
+.cinema-card-btn {
+  background-color: #1e293b; /* slate-800 */
+  color: #e2e8f0;            /* slate-200 */
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

@@ -10,8 +10,8 @@
                 </div>
             </div>
             <div>
-                <h1 class="text-xs sm:text-base md:text-lg font-black tracking-tight text-white flex flex-wrap items-center gap-1.5">
-                    CARTELERA <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 uppercase tracking-widest font-black">3D Showcase</span>
+                <h1 class="text-xs sm:text-base md:text-lg font-black tracking-tight text-white">
+                    CARTELERA
                 </h1>
                 <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Foro Energiza 2026 — TuzoForum Pachuca, Hidalgo | Cartelera Oficial de Talleres y Conferencias</p>
             </div>
@@ -171,7 +171,8 @@
                 <input type="text"
                        [(ngModel)]="searchTerm"
                        placeholder="Buscar por título, ponente..."
-                       class="w-full bg-slate-950 text-slate-200 text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:outline-none transition-all placeholder:text-slate-500">
+                       class="w-full bg-slate-950 text-slate-200 text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:outline-none transition-all placeholder:text-slate-500"
+                       (ngModelChange)="rebuildFilteredList(); _cdr.markForCheck()">
             </div>
         </div>
 
@@ -184,21 +185,21 @@
                     <mat-icon class="text-cyan-400 icon-size-5 sm:icon-size-6" svgIcon="heroicons_outline:film"></mat-icon>
                     Cartelera Completa
                 </h3>
-                <span class="text-xs text-slate-400 font-semibold">{{ filteredTalleres.length }} Disponibles</span>
+                <span class="text-xs text-slate-400 font-semibold">{{ _filteredTalleres.length }} Disponibles</span>
             </div>
 
             <!-- Empty State -->
-            <div *ngIf="filteredTalleres.length === 0" class="py-16 text-center bg-slate-900/40 rounded-3xl border border-slate-800">
+            <div *ngIf="_filteredTalleres.length === 0" class="py-16 text-center bg-slate-900/40 rounded-3xl border border-slate-800">
                 <mat-icon class="icon-size-10 text-slate-600 mb-3" svgIcon="heroicons_outline:ticket"></mat-icon>
                 <p class="text-sm font-bold text-slate-300">No se encontraron talleres</p>
                 <p class="text-xs text-slate-500 mt-1">Intenta cambiando los filtros de búsqueda.</p>
             </div>
 
             <!-- Grid of Cinema Cards -->
-            <div *ngIf="filteredTalleres.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+            <div *ngIf="_filteredTalleres.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
 
                 <!-- WRAPPER: handles click + glow hover (NO overflow-hidden) -->
-                <div *ngFor="let taller of filteredTalleres"
+                <div *ngFor="let taller of _filteredTalleres; trackBy: trackByActividadId"
                      (click)="openDetailModal(taller)"
                      class="cinema-card-wrapper cursor-pointer rounded-3xl">
 
