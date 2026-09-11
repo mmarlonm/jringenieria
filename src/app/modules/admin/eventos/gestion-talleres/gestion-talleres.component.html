@@ -58,8 +58,8 @@
 
             <!-- Botón abrir Cartelera tipo Cine (Pública) -->
             <a routerLink="/eventos/cartelera" target="_blank"
-               class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md hover:shadow-cyan-500/20 transition-all flex items-center gap-2">
-                <mat-icon class="icon-size-4 text-slate-950" svgIcon="heroicons_outline:film"></mat-icon>
+               class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 border-0">
+                <mat-icon class="icon-size-4 text-white" svgIcon="heroicons_outline:film"></mat-icon>
                 <span>Ver Cartelera Cine (Pública)</span>
             </a>
         </div>
@@ -559,7 +559,7 @@
                         <button 
                             type="submit" 
                             [disabled]="tallerForm.invalid || isCreatingTaller"
-                            class="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-300 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white font-black text-xs shadow-md shadow-indigo-600/25 uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer border-0"
+                            class="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white font-bold text-xs shadow-md hover:shadow-lg uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer border-0"
                         >
                             <mat-icon *ngIf="isCreatingTaller" class="icon-size-4 animate-spin text-white" svgIcon="heroicons_outline:arrow-path"></mat-icon>
                             {{ isCreatingTaller ? 'Guardando...' : (editingTaller ? 'Guardar Cambios' : 'Crear Taller / Conferencia') }}
