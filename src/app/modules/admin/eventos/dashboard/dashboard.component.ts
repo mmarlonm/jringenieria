@@ -38,6 +38,8 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public signalrStatus: string = 'Disconnected';
     public ultimosIngresos: Asistente[] = [];
     public talleresMetrics: ActividadMetricsDto[] = [];
+    public chartView: '15min' | '1h' | 'jornada' = 'jornada';
+    private _fullHistorial: { hora: string; cantidad: number }[] = [];
 
     private fullAnnouncedIds = new Set<number>();
     private soonAnnouncedIds = new Set<number>();
@@ -141,6 +143,20 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         return Math.round((this.metricas.totalAsistieron / this.metricas.totalRegistrados) * 100);
     }
 
+    public setChartView(view: '15min' | '1h' | 'jornada'): void {
+        this.chartView = view;
+        this._applyChartView();
+        this._cdr.markForCheck();
+    }
+
+    public get isEventoPasado(): boolean {
+        if (!this.ediciones || this.ediciones.length === 0) return false;
+        const ed = this.ediciones.find(e => e.id === this.selectedEventoId);
+        if (!ed) return false;
+        const currentYear = new Date().getFullYear();
+        return ((ed as any).anio || 0) < currentYear;
+    }
+
     // --- Workshop Capacity Helpers ---
     public getOccupancyPercent(taller: ActividadMetricsDto): number {
         if (!taller || taller.cupoMaximo === 0) return 0;
@@ -157,51 +173,68 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     // --- Chart Helpers ---
 
     private initChartsConfig(): void {
-        // Attendance chart config (Area chart for modern feel)
         this.chartAsistencia = {
             chart: {
                 type: 'area',
-                height: 250,
+                height: '100%',
                 toolbar: { show: false },
                 background: 'transparent',
-                animations: { enabled: true, speed: 800 }
+                animations: { enabled: true, speed: 500, dynamicAnimation: { enabled: true, speed: 300 } },
+                zoom: { enabled: false }
             },
-            colors: ['#6366f1'], // Indigo
+            colors: ['#6366f1'],
             dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 3 },
+            stroke: { curve: 'smooth', width: 2.5 },
             fill: {
                 type: 'gradient',
                 gradient: {
                     shadeIntensity: 1,
-                    opacityFrom: 0.45,
-                    opacityTo: 0.05,
+                    opacityFrom: 0.35,
+                    opacityTo: 0.02,
                     stops: [0, 100]
                 }
+            },
+            markers: {
+                size: 4,
+                colors: ['#6366f1'],
+                strokeColors: '#fff',
+                strokeWidth: 2,
+                hover: { size: 7 }
             },
             xaxis: {
                 categories: [],
                 labels: {
-                    style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif' }
+                    style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: '600' }
                 },
                 axisBorder: { show: false },
-                axisTicks: { show: false }
+                axisTicks: { show: false },
+                crosshairs: {
+                    show: true,
+                    stroke: { color: '#6366f1', width: 1, dashArray: 4 }
+                }
             },
             yaxis: {
                 labels: {
-                    style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif' }
-                }
+                    style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif', fontSize: '10px' },
+                    formatter: (val: number) => `${val} pers/h`
+                },
+                min: 0
             },
             grid: {
-                borderColor: 'rgba(148, 163, 184, 0.08)',
-                strokeDashArray: 4
+                borderColor: 'rgba(148, 163, 184, 0.07)',
+                strokeDashArray: 4,
+                padding: { top: 4, right: 8, bottom: 0, left: 8 }
             },
             tooltip: {
                 theme: 'dark',
                 x: { show: true },
                 y: {
-                    title: { formatter: () => 'Check-ins: ' }
-                }
-            }
+                    title: { formatter: () => 'Ingresos: ' },
+                    formatter: (val: number) => `${val} personas`
+                },
+                style: { fontFamily: 'Inter, sans-serif', fontSize: '11px' }
+            },
+            annotations: {}
         };
 
         // Donut chart config
@@ -238,7 +271,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                                 fontSize: '24px',
                                 fontFamily: 'Inter, sans-serif',
                                 fontWeight: 'bold',
-                                color: '#6366f1', // Always Indigo for high contrast readability
+                                color: '#6366f1',
                                 formatter: (val) => val
                             },
                             total: {
@@ -246,50 +279,162 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                                 label: 'Total',
                                 color: '#94a3b8',
                                 formatter: (w) => {
-                                    return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toString();
+                                    return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toString();
                                 }
                             }
                         }
                     }
                 }
             },
-            stroke: {
-                width: 2,
-                colors: ['rgba(30, 41, 59, 0.2)']
-            },
+            stroke: { width: 2, colors: ['rgba(30, 41, 59, 0.2)'] },
             dataLabels: { enabled: false },
             tooltip: { theme: 'dark' }
+        };
+    }
+
+    /**
+     * Aggregates time-series data into fixed-minute buckets.
+     * Parses hora strings like "09:15" and groups them.
+     */
+    private _bucketData(
+        data: { hora: string; cantidad: number }[],
+        intervalMinutes: number
+    ): { hora: string; cantidad: number }[] {
+        if (!data || data.length === 0) return [];
+
+        const buckets = new Map<string, number>();
+
+        data.forEach(point => {
+            const parts = (point.hora || '').split(':');
+            if (parts.length >= 2) {
+                const h = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10);
+                if (!isNaN(h) && !isNaN(m)) {
+                    const totalMin = h * 60 + m;
+                    const bucketMin = Math.floor(totalMin / intervalMinutes) * intervalMinutes;
+                    const bh = Math.floor(bucketMin / 60);
+                    const bm = bucketMin % 60;
+                    const key = `${bh.toString().padStart(2, '0')}:${bm.toString().padStart(2, '0')}`;
+                    buckets.set(key, (buckets.get(key) || 0) + point.cantidad);
+                    return;
+                }
+            }
+            // Fallback: use hora as-is
+            buckets.set(point.hora, (buckets.get(point.hora) || 0) + point.cantidad);
+        });
+
+        return Array.from(buckets.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([hora, cantidad]) => ({ hora, cantidad }));
+    }
+
+    private _applyChartView(): void {
+        // Aggregate into appropriate buckets — always show ALL data (first to last entry)
+        let data: { hora: string; cantidad: number }[];
+        let yLabel: string;
+        let tooltipLabel: string;
+
+        if (this.chartView === '15min') {
+            data = this._bucketData(this._fullHistorial, 15);
+            yLabel = 'pers/15min';
+            tooltipLabel = 'Ingresos (c/15 min): ';
+        } else if (this.chartView === '1h') {
+            data = this._bucketData(this._fullHistorial, 60);
+            yLabel = 'pers/hora';
+            tooltipLabel = 'Ingresos por hora: ';
+        } else {
+            data = [...this._fullHistorial];
+            yLabel = 'personas';
+            tooltipLabel = 'Total ingresos: ';
+        }
+
+        const hours = data.map(h => h.hora);
+        const values = data.map(h => h.cantidad);
+
+        // Peak annotation
+        const maxVal = values.length > 0 ? Math.max(...values) : 0;
+        const maxIdx = values.indexOf(maxVal);
+        const peakHora = maxIdx >= 0 ? hours[maxIdx] : null;
+
+        const annotations: any = {};
+        if (peakHora && maxVal > 0) {
+            annotations.points = [{
+                x: peakHora,
+                y: maxVal,
+                marker: { size: 8, fillColor: '#f59e0b', strokeColor: '#fff', strokeWidth: 2, radius: 3 },
+                label: {
+                    text: `\u2B50 Pico: ${maxVal} ${yLabel}`,
+                    borderColor: 'transparent',
+                    offsetY: -14,
+                    style: {
+                        background: '#1e293b',
+                        color: '#f59e0b',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        fontFamily: 'Inter, sans-serif',
+                        padding: { left: 8, right: 8, top: 4, bottom: 4 }
+                    }
+                }
+            }];
+        }
+
+        // 'Ahora' vertical line — only for live (non-past) events
+        if (hours.length > 0 && !this.isEventoPasado) {
+            annotations.xaxis = [{
+                x: hours[hours.length - 1],
+                borderColor: '#818cf8',
+                borderWidth: 2,
+                strokeDashArray: 5,
+                label: {
+                    text: `\u26A1 Ahora (${hours[hours.length - 1]})`,
+                    borderColor: 'transparent',
+                    orientation: 'horizontal',
+                    position: 'top',
+                    style: {
+                        background: '#6366f1',
+                        color: '#fff',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        fontFamily: 'Inter, sans-serif',
+                        padding: { left: 8, right: 8, top: 3, bottom: 3 }
+                    }
+                }
+            }];
+        }
+
+        this.chartAsistencia = {
+            ...this.chartAsistencia,
+            series: [{ name: 'Asistieron', data: values }],
+            xaxis: { ...this.chartAsistencia.xaxis, categories: hours },
+            yaxis: {
+                ...this.chartAsistencia.yaxis,
+                labels: {
+                    style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif', fontSize: '10px' },
+                    formatter: (val: number) => `${val} ${yLabel}`
+                }
+            },
+            tooltip: {
+                ...this.chartAsistencia.tooltip,
+                y: {
+                    title: { formatter: () => tooltipLabel },
+                    formatter: (val: number) => `${val} personas`
+                }
+            },
+            annotations
         };
     }
 
     private updateCharts(metrics: DashboardMetricasDto): void {
         if (!metrics) return;
 
-        // Update attendance chart
-        const hours = metrics.historialAsistenciaTiempoReal.map(h => h.hora);
-        const values = metrics.historialAsistenciaTiempoReal.map(h => h.cantidad);
-
-        this.chartAsistencia = {
-            ...this.chartAsistencia,
-            series: [{
-                name: 'Asistieron',
-                data: values
-            }],
-            xaxis: {
-                ...this.chartAsistencia.xaxis,
-                categories: hours
-            }
-        };
+        // Store full history for filtering by view
+        this._fullHistorial = metrics.historialAsistenciaTiempoReal || [];
+        this._applyChartView();
 
         // Update diffusion channels chart
         const labels = metrics.mediosDifusion.map(m => m.medio);
         const counts = metrics.mediosDifusion.map(m => m.cantidad);
-
-        this.chartMedios = {
-            ...this.chartMedios,
-            series: counts,
-            labels: labels
-        };
+        this.chartMedios = { ...this.chartMedios, series: counts, labels };
     }
 
     private checkFullWorkshopsAlerts(metrics: ActividadMetricsDto[]): void {
