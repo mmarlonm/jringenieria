@@ -1,4 +1,4 @@
-/* Hero Slider Styles (1:1 Sierra Negra Replica - Focused Speaker Thumbnail Image Framing) */
+/* Hero Slider Styles (1:1 Sierra Negra Replica - Focused Speaker Thumbnail Image Framing & Responsive 3D Cards) */
 .container-slider {
   position: relative;
   width: 100%;
@@ -7,6 +7,10 @@
   overflow: hidden;
 
   @media (max-width: 768px) {
+    height: 600px;
+  }
+
+  @media (max-width: 480px) {
     height: 560px;
   }
 }
@@ -17,6 +21,7 @@
   position: relative;
 }
 
+/* Base 3D Floating Cards */
 .item {
   width: 200px;
   height: 300px;
@@ -24,13 +29,27 @@
   top: 50%;
   transform: translate(0, -50%);
   border-radius: 20px;
-  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.75);
   background-position: 85% center; // Focus on the speaker photo on the right side of 1200x500 banner
   background-size: cover;
   display: inline-block;
   transition: 0.5s cubic-bezier(0.25, 1, 0.5, 1);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  @media (max-width: 768px) {
+    width: 125px;
+    height: 185px;
+    top: 44%;
+    border-radius: 14px;
+  }
+
+  @media (max-width: 480px) {
+    width: 105px;
+    height: 155px;
+    top: 40%;
+    border-radius: 12px;
+  }
 }
 
 /* Base overlay for small floating cards */
@@ -39,8 +58,8 @@
   inset: 0;
   background: linear-gradient(
     to bottom,
-    transparent 50%,
-    rgba(2, 6, 23, 0.6) 100%
+    transparent 40%,
+    rgba(2, 6, 23, 0.7) 100%
   );
   pointer-events: none;
 }
@@ -57,59 +76,96 @@
   border: none;
   box-shadow: none;
   background-position: center center; // Full banner view on expanded hero slide
+  z-index: 5;
 
   .item-overlay {
     background: 
       linear-gradient(
         to right,
-        rgba(2, 6, 23, 0.92) 0%,
-        rgba(2, 6, 23, 0.7) 45%,
-        rgba(2, 6, 23, 0.2) 75%,
+        rgba(2, 6, 23, 0.95) 0%,
+        rgba(2, 6, 23, 0.82) 48%,
+        rgba(2, 6, 23, 0.25) 75%,
         transparent 100%
       ),
       linear-gradient(
         to top,
-        rgba(2, 6, 23, 0.85) 0%,
+        rgba(2, 6, 23, 0.88) 0%,
         transparent 50%
       );
+
+    @media (max-width: 768px) {
+      background: 
+        linear-gradient(
+          to right,
+          rgba(2, 6, 23, 0.96) 0%,
+          rgba(2, 6, 23, 0.9) 52%,
+          rgba(2, 6, 23, 0.2) 80%,
+          transparent 100%
+        ),
+        linear-gradient(
+          to top,
+          rgba(2, 6, 23, 0.92) 0%,
+          transparent 60%
+        );
+    }
   }
 }
 
-/* Original Sierra Negra Vertical Floating Cards (200x300 px) */
+/* 3D Floating Cards Positions (VISIBLE ON ALL SCREENS) */
 .slide .item:nth-child(3) {
-  left: 50%;
+  left: 52%;
   cursor: pointer;
+  z-index: 30;
 
-  @media (max-width: 1024px) {
-    display: none;
+  @media (max-width: 768px) {
+    left: 56%;
+  }
+
+  @media (max-width: 480px) {
+    left: 56%;
   }
 }
 
 .slide .item:nth-child(4) {
-  left: calc(50% + 220px);
+  left: calc(52% + 220px);
   cursor: pointer;
+  z-index: 29;
 
-  @media (max-width: 1024px) {
-    display: none;
+  @media (max-width: 768px) {
+    left: calc(56% + 135px);
+  }
+
+  @media (max-width: 480px) {
+    left: calc(56% + 115px);
   }
 }
 
 .slide .item:nth-child(5) {
-  left: calc(50% + 440px);
+  left: calc(52% + 440px);
   cursor: pointer;
+  z-index: 28;
 
-  @media (max-width: 1024px) {
-    display: none;
+  @media (max-width: 768px) {
+    left: calc(56% + 270px);
+  }
+
+  @media (max-width: 480px) {
+    left: calc(56% + 230px);
   }
 }
 
 .slide .item:nth-child(n + 6) {
-  left: calc(50% + 660px);
+  left: calc(52% + 660px);
   opacity: 0;
   cursor: pointer;
+  z-index: 27;
 
-  @media (max-width: 1024px) {
-    display: none;
+  @media (max-width: 768px) {
+    left: calc(56% + 405px);
+  }
+
+  @media (max-width: 480px) {
+    left: calc(56% + 345px);
   }
 }
 
@@ -124,8 +180,8 @@
   position: absolute;
   top: 50%;
   left: 70px;
-  width: 580px;
-  max-width: 85%;
+  width: 560px;
+  max-width: 44%;
   text-align: left;
   color: #eee;
   transform: translate(0, -50%);
@@ -133,8 +189,17 @@
   z-index: 20;
 
   @media (max-width: 768px) {
-    left: 40px;
-    width: calc(100% - 80px);
+    left: 14px;
+    top: 48%;
+    width: calc(54% - 18px);
+    max-width: 54%;
+  }
+
+  @media (max-width: 480px) {
+    left: 12px;
+    top: 46%;
+    width: calc(54% - 14px);
+    max-width: 54%;
   }
 }
 
@@ -154,21 +219,28 @@
   line-height: 1.1;
 
   @media (max-width: 768px) {
-    font-size: 26px;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 19px;
+    line-height: 1.25;
   }
 }
 
 .content .des {
-  margin: 12px 0 18px;
+  margin: 10px 0 14px;
   opacity: 0;
   animation: animateSlide 1s ease-in-out 0.3s forwards;
   color: #f0f0f0;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.5;
   text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.95);
 
   @media (max-width: 768px) {
-    font-size: 13px;
+    font-size: 12px;
+    margin: 6px 0 10px;
   }
 }
 
@@ -181,8 +253,8 @@
 @keyframes animateSlide {
   from {
     opacity: 0;
-    transform: translate(0, 80px);
-    filter: blur(20px);
+    transform: translate(0, 40px);
+    filter: blur(10px);
   }
   to {
     opacity: 1;
@@ -194,22 +266,27 @@
 /* Button Controls Sierra Negra Style */
 .button-controls {
   position: absolute;
-  bottom: 40px;
+  bottom: 35px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 25px;
+  gap: 20px;
   z-index: 50;
+
+  @media (max-width: 768px) {
+    bottom: 14px;
+    gap: 14px;
+  }
 }
 
 .btn-ctrl {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   color: white;
@@ -219,6 +296,12 @@
   justify-content: center;
   transition: 0.25s ease;
   cursor: pointer;
+
+  @media (max-width: 768px) {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.9);
@@ -235,6 +318,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
 }
 
 .scroll-mouse {
