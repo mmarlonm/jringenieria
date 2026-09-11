@@ -13,7 +13,7 @@
                 <h1 class="text-xs sm:text-base md:text-lg font-black tracking-tight text-white flex flex-wrap items-center gap-1.5">
                     CARTELERA <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 uppercase tracking-widest font-black">3D Showcase</span>
                 </h1>
-                <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Foro Energiza — Cartelera Oficial de Talleres y Conferencias</p>
+                <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Foro Energiza 2026 — TuzoForum Pachuca, Hidalgo | Cartelera Oficial de Talleres y Conferencias</p>
             </div>
         </div>
 
@@ -88,11 +88,11 @@
                     <div class="meta flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-slate-200 font-semibold">
                         <span class="flex items-center gap-1.5 bg-slate-950/80 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-slate-700/80 backdrop-blur-md shadow-md">
                             <mat-icon class="text-indigo-400 icon-size-3.5 sm:icon-size-4" svgIcon="heroicons_outline:map-pin"></mat-icon>
-                            <span class="truncate max-w-[140px] sm:max-w-none">{{ item.ubicacionLugar }}</span>
+                            <span class="truncate max-w-[160px] sm:max-w-none">{{ item.ubicacionLugar }}</span>
                         </span>
-                        <span class="flex items-center gap-1.5 bg-slate-950/80 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-slate-700/80 backdrop-blur-md shadow-md">
+                        <span *ngIf="item.fechaHoraInicioRaw" class="flex items-center gap-1.5 bg-slate-950/80 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-slate-700/80 backdrop-blur-md shadow-md">
                             <mat-icon class="text-emerald-400 icon-size-3.5 sm:icon-size-4" svgIcon="heroicons_outline:clock"></mat-icon>
-                            <span>{{ item.fechaHoraInicioRaw | date:'medium' }}</span>
+                            <span>{{ item.fechaHoraInicioRaw | date:'dd MMM, yyyy' }} | {{ item.fechaHoraInicioRaw | date:'HH:mm' }} - {{ item.fechaHoraFinRaw | date:'HH:mm' }} hrs</span>
                         </span>
                     </div>
 
@@ -199,13 +199,14 @@
                 
                 <div *ngFor="let taller of filteredTalleres"
                      (click)="openDetailModal(taller)"
-                     class="group cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-cyan-500/60 rounded-3xl overflow-hidden shadow-xl hover:shadow-[0_15px_35px_rgba(6,182,212,0.25)] transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between">
+                     style="will-change: box-shadow, border-color;"
+                     class="group cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-cyan-500/60 rounded-3xl overflow-hidden shadow-xl hover:shadow-[0_20px_45px_rgba(6,182,212,0.30)] transition-[box-shadow,border-color] duration-300 flex flex-col justify-between">
                     
                     <!-- Poster Image Frame -->
                     <div class="relative w-full h-44 sm:h-52 bg-slate-950 overflow-hidden border-b border-slate-800">
                         <img [src]="taller.fotoPublicidadUrl || 'assets/images/default-taller-banner.svg'" 
                              [alt]="taller.titulo"
-                             class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300">
+                             class="w-full h-full object-cover object-center transition-opacity duration-300 group-hover:opacity-90">
                         
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/30 pointer-events-none"></div>
 
@@ -240,7 +241,12 @@
 
                             <p class="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-1">
                                 <mat-icon class="icon-size-4 text-indigo-400" svgIcon="heroicons_outline:map-pin"></mat-icon>
-                                <span>{{ taller.ubicacionLugar }}</span>
+                                <span class="truncate">{{ taller.ubicacionLugar }}</span>
+                            </p>
+
+                            <p *ngIf="taller.fechaHoraInicioRaw" class="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 mt-1">
+                                <mat-icon class="icon-size-4 text-emerald-400" svgIcon="heroicons_outline:clock"></mat-icon>
+                                <span>{{ taller.fechaHoraInicioRaw | date:'dd MMM' }} | {{ taller.fechaHoraInicioRaw | date:'HH:mm' }} - {{ taller.fechaHoraFinRaw | date:'HH:mm' }} hrs</span>
                             </p>
                         </div>
 
@@ -257,7 +263,7 @@
                                 </div>
                             </div>
 
-                            <div class="mt-4 w-full py-2.5 rounded-xl bg-slate-800 group-hover:bg-cyan-500 group-hover:text-slate-950 text-slate-200 text-xs font-black text-center uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 shadow-md">
+                            <div class="mt-4 w-full py-2.5 rounded-xl bg-slate-800 group-hover:bg-cyan-500 group-hover:text-slate-950 text-slate-200 text-xs font-black text-center uppercase tracking-wider transition-colors duration-200 flex items-center justify-center gap-1.5 shadow-md">
                                 <mat-icon class="icon-size-4" svgIcon="heroicons_outline:eye"></mat-icon>
                                 <span>Ver Ficha & Reservar</span>
                             </div>
@@ -314,7 +320,7 @@
                         {{ selectedTallerModal.titulo }}
                     </h3>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs text-slate-300 font-medium bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 text-xs text-slate-300 font-medium bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80">
                         <div class="flex items-center gap-2">
                             <mat-icon class="text-cyan-400 icon-size-5" svgIcon="heroicons_outline:user"></mat-icon>
                             <div>
@@ -328,6 +334,15 @@
                             <div>
                                 <span class="block text-[9px] font-bold text-slate-500 uppercase">Lugar</span>
                                 <span class="font-bold text-white">{{ selectedTallerModal.ubicacionLugar }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2" *ngIf="selectedTallerModal.fechaHoraInicioRaw">
+                            <mat-icon class="text-emerald-400 icon-size-5" svgIcon="heroicons_outline:clock"></mat-icon>
+                            <div>
+                                <span class="block text-[9px] font-bold text-slate-500 uppercase">Horario</span>
+                                <span class="font-bold text-white block">{{ selectedTallerModal.fechaHoraInicioRaw | date:'dd MMM, yyyy' }}</span>
+                                <span class="font-bold text-emerald-400 block">{{ selectedTallerModal.fechaHoraInicioRaw | date:'HH:mm' }} - {{ selectedTallerModal.fechaHoraFinRaw | date:'HH:mm' }} hrs</span>
                             </div>
                         </div>
                     </div>

@@ -76,8 +76,9 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
         if (ediciones.length > 0) {
           if (forcedEventoId && ediciones.some(e => e.id === forcedEventoId)) {
             this.selectedEventoId = forcedEventoId;
-          } else if (!this.selectedEventoId) {
-            this.selectedEventoId = ediciones[0].id;
+          } else {
+            const target2026 = ediciones.find(e => e.id === 2026 || e.anio === 2026 || (e.nombre && e.nombre.toLowerCase().includes('2026')));
+            this.selectedEventoId = target2026 ? target2026.id : ediciones[0].id;
           }
           this.loadDataForEvent(this.selectedEventoId);
         }
@@ -124,8 +125,9 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
       return {
         ...m,
         expositor: full?.expositor || 'Ponente Especializado',
-        ubicacionLugar: full?.ubicacionLugar || 'Auditorio Principal',
-        fechaHoraInicioRaw: full?.fechaHoraInicio || m.fechaHoraInicio
+        ubicacionLugar: full?.ubicacionLugar || 'TuzoForum Pachuca',
+        fechaHoraInicioRaw: full?.fechaHoraInicio || m.fechaHoraInicio,
+        fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin
       };
     });
 
@@ -147,8 +149,9 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
       return {
         ...m,
         expositor: full?.expositor || 'Ponente Especializado',
-        ubicacionLugar: full?.ubicacionLugar || 'Auditorio Principal',
-        fechaHoraInicioRaw: full?.fechaHoraInicio || m.fechaHoraInicio
+        ubicacionLugar: full?.ubicacionLugar || 'TuzoForum Pachuca',
+        fechaHoraInicioRaw: full?.fechaHoraInicio || m.fechaHoraInicio,
+        fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin
       };
     });
 
