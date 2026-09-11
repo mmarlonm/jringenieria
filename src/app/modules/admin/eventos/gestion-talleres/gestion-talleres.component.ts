@@ -284,25 +284,65 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         });
     }
 
-    public onFotoSelected(event: Event): void {
+    private compressImage(file: File, maxWidth: number = 1200, maxHeight: number = 500, quality: number = 0.82): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event: any) => {
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressedBase64);
+                    } else {
+                        resolve(event.target.result);
+                    }
+                };
+                img.onerror = (err) => reject(err);
+                img.src = event.target.result;
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    public async onFotoSelected(event: Event): Promise<void> {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files[0]) {
             const file = input.files[0];
 
-            // Limit file size (5MB max)
-            if (file.size > 5 * 1024 * 1024) {
-                this.showToast('La imagen excede el límite permitido de 5MB.', 'warning');
+            if (file.size > 10 * 1024 * 1024) {
+                this.showToast('La imagen excede el límite máximo de 10MB.', 'warning');
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = (e: any) => {
-                const base64Url = e.target.result;
-                this.fotoPreview = base64Url;
-                this.tallerForm.patchValue({ fotoPublicidadUrl: base64Url });
+            try {
+                const compressedBase64 = await this.compressImage(file, 1200, 500, 0.82);
+                this.fotoPreview = compressedBase64;
+                this.tallerForm.patchValue({ fotoPublicidadUrl: compressedBase64 });
+                this.showToast('Imagen optimizada y cargada correctamente.', 'success');
                 this._cdr.markForCheck();
-            };
-            reader.readAsDataURL(file);
+            } catch (err) {
+                console.error('Error al optimizar imagen:', err);
+                this.showToast('No se pudo procesar la imagen.', 'error');
+            }
         }
     }
 

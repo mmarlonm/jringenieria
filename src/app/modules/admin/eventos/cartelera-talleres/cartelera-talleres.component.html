@@ -41,7 +41,7 @@
         <div class="slide" #slideRef (click)="onCardClick($event)">
             <div *ngFor="let item of sliderItems"
                  class="item"
-                 [style.backgroundImage]="'url(' + (item.fotoPublicidadUrl || 'assets/images/cards/01-340x200.jpg') + ')'">
+                 [style.backgroundImage]="'url(' + (item.fotoPublicidadUrl || 'assets/images/default-taller-banner.svg') + ')'">
                 
                 <div class="item-overlay"></div>
 
@@ -203,7 +203,7 @@
                     
                     <!-- Poster Image Frame -->
                     <div class="relative w-full h-44 sm:h-52 bg-slate-950 overflow-hidden border-b border-slate-800">
-                        <img [src]="taller.fotoPublicidadUrl || 'assets/images/cards/01-340x200.jpg'" 
+                        <img [src]="taller.fotoPublicidadUrl || 'assets/images/default-taller-banner.svg'" 
                              [alt]="taller.titulo"
                              class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300">
                         
@@ -280,7 +280,7 @@
             
             <!-- Left Side Poster Frame -->
             <div class="w-full md:w-5/12 bg-slate-950 relative flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-slate-800 overflow-hidden flex-shrink-0">
-                <img [src]="selectedTallerModal.fotoPublicidadUrl || 'assets/images/cards/01-340x200.jpg'" 
+                <img [src]="selectedTallerModal.fotoPublicidadUrl || 'assets/images/default-taller-banner.svg'" 
                      [alt]="selectedTallerModal.titulo"
                      class="w-full aspect-[12/5] object-cover object-center rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.9)] border border-slate-700/50">
 
