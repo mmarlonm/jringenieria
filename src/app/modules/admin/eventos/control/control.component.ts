@@ -120,7 +120,8 @@ export class EventosControlComponent implements OnInit, OnDestroy {
         this._eventosService.asistentes$
             .pipe(takeUntil(this.destroy$))
             .subscribe(list => {
-                this.asistentes = list;
+                this.asistentes = list || [];
+                this.updateTiposDisponibles();
                 this.filterAsistentes();
                 this._cdr.markForCheck();
             });
@@ -136,11 +137,29 @@ export class EventosControlComponent implements OnInit, OnDestroy {
         if (this.toastTimeout) clearTimeout(this.toastTimeout);
     }
 
-    // --- Search Helper ---
+    public selectedTipoFilter: string = 'TODOS';
+    public tiposDisponibles: string[] = [];
+
+    // --- Search & Filter Helper ---
+    
+    public updateTiposDisponibles(): void {
+        const tipos = new Set<string>();
+        (this.asistentes || []).forEach(a => {
+            if (a.tipo && a.tipo.trim()) {
+                tipos.add(a.tipo.trim());
+            }
+        });
+        this.tiposDisponibles = Array.from(tipos).sort();
+    }
     
     public filterAsistentes(): void {
         const query = this.searchQuery.toLowerCase().trim();
-        const baseList = this.asistentes.filter(a => a.tipo);
+        let baseList = this.asistentes.filter(a => a.tipo);
+
+        if (this.selectedTipoFilter !== 'TODOS') {
+            baseList = baseList.filter(a => a.tipo === this.selectedTipoFilter);
+        }
+
         if (!query) {
             this.filteredAsistentes = [...baseList];
         } else {
@@ -154,6 +173,67 @@ export class EventosControlComponent implements OnInit, OnDestroy {
                 (a.universidad && a.universidad.toLowerCase().includes(query))
             );
         }
+    }
+
+    // --- Export CSV Logic ---
+    public exportarCSV(list: Asistente[], nombreArchivo: string): void {
+        if (!list || list.length === 0) {
+            this.showToast('No hay datos para exportar', 'warning');
+            return;
+        }
+
+        const headers = [
+            'ID',
+            'Nombre',
+            'Apellidos',
+            'Correo',
+            'Teléfono',
+            'Tipo',
+            'Estatus QR',
+            'Asistencia',
+            'Medio Seguimiento',
+            'Dirección',
+            'Ocupación',
+            'Empresa',
+            'Universidad',
+            'Carrera',
+            'Fecha Registro',
+            'Fecha CheckIn'
+        ];
+
+        const rows = list.map(a => [
+            a.id,
+            `"${(a.nombre || '').replace(/"/g, '""')}"`,
+            `"${(a.apellidos || '').replace(/"/g, '""')}"`,
+            `"${(a.correo || '').replace(/"/g, '""')}"`,
+            `"${(a.telefono || '').replace(/"/g, '""')}"`,
+            `"${(a.tipo || '').replace(/"/g, '""')}"`,
+            `"${(a.estatusQR || '').replace(/"/g, '""')}"`,
+            `"${(a.asistencia || '').replace(/"/g, '""')}"`,
+            `"${(a.medioSeguimiento || '').replace(/"/g, '""')}"`,
+            `"${(a.direccion || '').replace(/"/g, '""')}"`,
+            `"${(a.ocupacion || '').replace(/"/g, '""')}"`,
+            `"${(a.empresa || '').replace(/"/g, '""')}"`,
+            `"${(a.universidad || '').replace(/"/g, '""')}"`,
+            `"${(a.carrera || '').replace(/"/g, '""')}"`,
+            `"${(a.fechaRegistro || '').replace(/"/g, '""')}"`,
+            `"${(a.fechaCheckIn || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${nombreArchivo}_${this.selectedEventoId}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast('Archivo CSV descargado con éxito', 'success');
+    }
+
+    public exportarTablaCSV(): void {
+        this.exportarCSV(this.filteredAsistentes, 'Asistentes_Tabla');
     }
 
     // --- Network Triggers with Loaders ---
