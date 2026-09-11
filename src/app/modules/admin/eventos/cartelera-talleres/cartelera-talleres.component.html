@@ -196,76 +196,80 @@
 
             <!-- Grid of Cinema Cards -->
             <div *ngIf="filteredTalleres.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-                
+
+                <!-- WRAPPER: handles click + glow hover (NO overflow-hidden) -->
                 <div *ngFor="let taller of filteredTalleres"
                      (click)="openDetailModal(taller)"
-                     style="will-change: box-shadow, border-color;"
-                     class="group cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-cyan-500/60 rounded-3xl overflow-hidden shadow-xl hover:shadow-[0_20px_45px_rgba(6,182,212,0.30)] transition-[box-shadow,border-color] duration-300 flex flex-col justify-between">
-                    
-                    <!-- Poster Image Frame -->
-                    <div class="relative w-full h-44 sm:h-52 bg-slate-950 overflow-hidden border-b border-slate-800">
-                        <img [src]="taller.fotoPublicidadUrl || 'assets/images/default-taller-banner.svg'" 
-                             [alt]="taller.titulo"
-                             class="w-full h-full object-cover object-center transition-opacity duration-300 group-hover:opacity-90">
-                        
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/30 pointer-events-none"></div>
+                     class="cinema-card-wrapper cursor-pointer rounded-3xl">
 
-                        <!-- Top Badges -->
-                        <div class="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2">
-                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border backdrop-blur-md"
-                                  [ngClass]="{
-                                      'bg-indigo-950/80 text-indigo-300 border-indigo-500/40': taller.tipo === 'Pago',
-                                      'bg-emerald-950/80 text-emerald-300 border-emerald-500/40': taller.tipo === 'Gratuito'
-                                  }">
-                                {{ taller.tipo === 'Pago' ? 'De Pago' : 'Gratuito' }}
-                            </span>
-                            
-                            <span *ngIf="taller.estaLleno || taller.disponibles === 0"
-                                  class="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500/90 text-white uppercase tracking-wider shadow-md">
-                                AGOTADO
-                            </span>
-                        </div>
-                    </div>
+                    <!-- INNER CARD: overflow-hidden for image clipping only -->
+                    <div class="cinema-card-inner bg-slate-900/90 border border-slate-800 rounded-3xl overflow-hidden shadow-lg flex flex-col justify-between h-full">
 
-                    <!-- Poster Card Body -->
-                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div>
-                            <h4 class="text-sm sm:text-base font-black text-white group-hover:text-cyan-400 transition-colors line-clamp-2 leading-snug">
-                                {{ taller.titulo }}
-                            </h4>
-                            
-                            <p class="text-xs text-slate-300 font-semibold flex items-center gap-1.5 mt-2">
-                                <mat-icon class="icon-size-4 text-cyan-400" svgIcon="heroicons_outline:user"></mat-icon>
-                                <span>{{ taller.expositor }}</span>
-                            </p>
+                        <!-- Poster Image Frame -->
+                        <div class="relative w-full h-44 sm:h-52 bg-slate-950 overflow-hidden border-b border-slate-800">
+                            <img [src]="taller.fotoPublicidadUrl || 'assets/images/default-taller-banner.svg'"
+                                 [alt]="taller.titulo"
+                                 class="w-full h-full object-cover object-center">
 
-                            <p class="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-1">
-                                <mat-icon class="icon-size-4 text-indigo-400" svgIcon="heroicons_outline:map-pin"></mat-icon>
-                                <span class="truncate">{{ taller.ubicacionLugar }}</span>
-                            </p>
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/30 pointer-events-none"></div>
 
-                            <p *ngIf="taller.fechaHoraInicioRaw" class="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 mt-1">
-                                <mat-icon class="icon-size-4 text-emerald-400" svgIcon="heroicons_outline:clock"></mat-icon>
-                                <span>{{ taller.fechaHoraInicioRaw | date:'dd MMM' }} | {{ taller.fechaHoraInicioRaw | date:'HH:mm' }} - {{ taller.fechaHoraFinRaw | date:'HH:mm' }} hrs</span>
-                            </p>
-                        </div>
+                            <!-- Top Badges -->
+                            <div class="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2">
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border backdrop-blur-md"
+                                      [ngClass]="{
+                                          'bg-indigo-950/80 text-indigo-300 border-indigo-500/40': taller.tipo === 'Pago',
+                                          'bg-emerald-950/80 text-emerald-300 border-emerald-500/40': taller.tipo === 'Gratuito'
+                                      }">
+                                    {{ taller.tipo === 'Pago' ? 'De Pago' : 'Gratuito' }}
+                                </span>
 
-                        <!-- Occupancy & Action Footer -->
-                        <div class="pt-3 border-t border-slate-800/80">
-                            <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-1.5">
-                                <span>Disponibilidad</span>
-                                <span class="text-white font-bold">{{ taller.registradosActuales }} / {{ taller.cupoMaximo }}</span>
+                                <span *ngIf="taller.estaLleno || taller.disponibles === 0"
+                                      class="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-500/90 text-white uppercase tracking-wider shadow-md">
+                                    AGOTADO
+                                </span>
                             </div>
-                            <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                                <div class="h-full rounded-full transition-all duration-300"
-                                     [ngClass]="getProgressBarColor(taller)"
-                                     [style.width.%]="getOccupancyPercent(taller)">
+                        </div>
+
+                        <!-- Poster Card Body -->
+                        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                            <div>
+                                <h4 class="text-sm sm:text-base font-black text-white line-clamp-2 leading-snug">
+                                    {{ taller.titulo }}
+                                </h4>
+
+                                <p class="text-xs text-slate-300 font-semibold flex items-center gap-1.5 mt-2">
+                                    <mat-icon class="icon-size-4 text-cyan-400" svgIcon="heroicons_outline:user"></mat-icon>
+                                    <span>{{ taller.expositor }}</span>
+                                </p>
+
+                                <p class="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-1">
+                                    <mat-icon class="icon-size-4 text-indigo-400" svgIcon="heroicons_outline:map-pin"></mat-icon>
+                                    <span class="truncate">{{ taller.ubicacionLugar }}</span>
+                                </p>
+
+                                <p *ngIf="taller.fechaHoraInicioRaw" class="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 mt-1">
+                                    <mat-icon class="icon-size-4 text-emerald-400" svgIcon="heroicons_outline:clock"></mat-icon>
+                                    <span>{{ taller.fechaHoraInicioRaw | date:'dd MMM' }} | {{ taller.fechaHoraInicioRaw | date:'HH:mm' }} - {{ taller.fechaHoraFinRaw | date:'HH:mm' }} hrs</span>
+                                </p>
+                            </div>
+
+                            <!-- Occupancy & Action Footer -->
+                            <div class="pt-3 border-t border-slate-800/80">
+                                <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-1.5">
+                                    <span>Disponibilidad</span>
+                                    <span class="text-white font-bold">{{ taller.registradosActuales }} / {{ taller.cupoMaximo }}</span>
                                 </div>
-                            </div>
+                                <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                                    <div class="h-full rounded-full"
+                                         [ngClass]="getProgressBarColor(taller)"
+                                         [style.width.%]="getOccupancyPercent(taller)">
+                                    </div>
+                                </div>
 
-                            <div class="mt-4 w-full py-2.5 rounded-xl bg-slate-800 group-hover:bg-cyan-500 group-hover:text-slate-950 text-slate-200 text-xs font-black text-center uppercase tracking-wider transition-colors duration-200 flex items-center justify-center gap-1.5 shadow-md">
-                                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:eye"></mat-icon>
-                                <span>Ver Ficha & Reservar</span>
+                                <div class="cinema-card-btn mt-4 w-full py-2.5 rounded-xl text-xs font-black text-center uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md">
+                                    <mat-icon class="icon-size-4" svgIcon="heroicons_outline:eye"></mat-icon>
+                                    <span>Ver Ficha & Reservar</span>
+                                </div>
                             </div>
                         </div>
                     </div>

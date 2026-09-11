@@ -169,11 +169,23 @@
   }
 }
 
-/* Hover effect on vertical floating cards */
-.slide .item:nth-child(n + 3):hover {
-  transform: translate(0, -53%) scale(1.05);
-  border-color: rgba(6, 182, 212, 0.9);
-  box-shadow: 0 0 35px rgba(6, 182, 212, 0.6);
+/* Hover effect on vertical floating cards — only opacity/transform (GPU composited) */
+.slide .item:nth-child(n + 3) {
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(6, 182, 212, 0.9);
+    box-shadow: 0 0 35px rgba(6, 182, 212, 0.6);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    z-index: 40;
+  }
+  &:hover::before {
+    opacity: 1;
+  }
 }
 
 .item .content {
@@ -373,5 +385,35 @@
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+/* =====================================================================
+   CINEMA POSTER CARD — GPU-smooth hover (pseudo-element glow trick)
+   Only `opacity` is transitioned: 100% GPU composited, zero CPU paint
+   ===================================================================== */
+.cinema-card {
+  position: relative;
+  transform: translateZ(0); /* Force own compositor layer */
+  will-change: transform;
+
+  /* Glow ring lives in ::before, always rendered, just invisible */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 1.5rem; /* rounded-3xl = 24px */
+    border: 1.5px solid rgba(6, 182, 212, 0.7);
+    box-shadow:
+      0 0 0 1px rgba(6, 182, 212, 0.15),
+      0 20px 45px rgba(6, 182, 212, 0.35);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  &:hover::before {
+    opacity: 1;
   }
 }
