@@ -97,6 +97,21 @@ export class FormularioRegistroService {
     private _http = inject(HttpClient);
     private readonly api = `${environment.apiUrl}/FormulariosRegistro`;
 
+    /** Obtiene el listado de todos los formularios configurados (Admin) */
+    getTodos(): Observable<FormularioRegistroAdminDto[]> {
+        return this._http.get<FormularioRegistroAdminDto[]>(this.api);
+    }
+
+    /** Obtiene un formulario por su ID (Admin) */
+    getPorId(id: number): Observable<FormularioRegistroAdminDto> {
+        return this._http.get<FormularioRegistroAdminDto>(`${this.api}/${id}`);
+    }
+
+    /** Elimina un formulario por su ID (Admin) */
+    eliminar(id: number): Observable<any> {
+        return this._http.delete(`${this.api}/${id}`);
+    }
+
     /** Obtiene la configuración del formulario para un evento (Admin) */
     getPorEvento(eventoId: number): Observable<FormularioRegistroAdminDto | null> {
         return this._http.get<FormularioRegistroAdminDto | null>(`${this.api}/evento/${eventoId}`);

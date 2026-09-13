@@ -1,57 +1,361 @@
 <div class="flex flex-col flex-auto min-w-0 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen">
     
-    <!-- HEADER BAR -->
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner">
-                <mat-icon class="icon-size-6">tune</mat-icon>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Configurador de Registros</h1>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          [ngClass]="activo ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'">
-                        {{ activo ? 'Activo' : 'Inactivo' }}
-                    </span>
-                    <span *ngIf="totalRespuestas > 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                        {{ totalRespuestas }} registros
-                    </span>
+    <!-- ========================================================================= -->
+    <!-- VISTA 1: LISTADO DE FORMULARIOS CONFIGURADOS                              -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="vistaActual === 'listado'">
+        <div class="flex flex-col flex-auto p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+
+            <!-- HEADER & ACCIONES PRINCIPALES -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
+                        <mat-icon class="icon-size-7">dynamic_form</mat-icon>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                Formularios de Registro
+                            </h1>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50">
+                                {{ formulariosList.length }} configurados
+                            </span>
+                        </div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            Consulta, edita y obtén los enlaces públicos de captura de asistentes para cada evento.
+                        </p>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Diseña formularios de registro dinámicos con portada, campos personalizados y previsualización en vivo.</p>
+
+                <div class="flex items-center gap-3">
+                    <button (click)="cargarListadoFormularios()"
+                            mat-stroked-button
+                            class="rounded-2xl border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 py-2"
+                            matTooltip="Actualizar listado de formularios">
+                        <mat-icon [class.animate-spin]="cargandoListado" class="text-sm mr-1.5">refresh</mat-icon>
+                        <span>Actualizar</span>
+                    </button>
+
+                    <button (click)="nuevoFormulario()"
+                            class="inline-flex items-center justify-center px-5 py-2.5 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transition-all duration-200 text-sm">
+                        <mat-icon class="mr-1.5 text-sm">add</mat-icon>
+                        <span>Nuevo Formulario</span>
+                    </button>
+                </div>
             </div>
+
+            <!-- KPI METRICS SUMMARY -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="icon-size-6">description</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ formulariosList.length }}</div>
+                        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Total de Formularios</div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="icon-size-6">how_to_reg</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ totalRegistrosGeneral }}</div>
+                        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Registros Recibidos</div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="icon-size-6">check_circle</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ totalActivosGeneral }}</div>
+                        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Formularios Activos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILTROS Y BÚSQUEDA -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <!-- Buscador de texto -->
+                <div class="relative w-full sm:w-80">
+                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</mat-icon>
+                    <input type="text"
+                           [(ngModel)]="busquedaListado"
+                           placeholder="Buscar por título, evento o slug..."
+                           class="w-full pl-9 pr-8 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                    <button *ngIf="busquedaListado"
+                            (click)="busquedaListado = ''"
+                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <mat-icon class="text-xs">close</mat-icon>
+                    </button>
+                </div>
+
+                <!-- Filtro por evento -->
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Filtrar por Evento:</span>
+                    <select [(ngModel)]="filtroEventoId"
+                            class="w-full sm:w-64 px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 cursor-pointer">
+                        <option value="todos">Todos los eventos ({{ eventos.length }})</option>
+                        <option *ngFor="let ev of eventos" [value]="ev.id">
+                            {{ ev.nombre }} ({{ ev.anio }})
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SPINNER DE CARGA -->
+            <div *ngIf="cargandoListado" class="py-20 flex flex-col items-center justify-center gap-3 text-slate-500">
+                <div class="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-sm font-medium">Cargando listado de formularios...</p>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div *ngIf="!cargandoListado && formulariosFiltrados.length === 0"
+                 class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center flex flex-col items-center justify-center space-y-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700/50 text-slate-400 flex items-center justify-center">
+                    <mat-icon class="icon-size-8">assignment_late</mat-icon>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">No se encontraron formularios</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                        {{ busquedaListado ? 'No hay formularios que coincidan con la búsqueda ingresada.' : 'Aún no has configurado ningún formulario de registro para tus eventos.' }}
+                    </p>
+                </div>
+                <button (click)="nuevoFormulario()"
+                        class="inline-flex items-center px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-md transition-colors">
+                    <mat-icon class="mr-1.5 text-sm">add</mat-icon>
+                    Configurar Formulario
+                </button>
+            </div>
+
+            <!-- GRID DE TARJETAS DE FORMULARIOS -->
+            <div *ngIf="!cargandoListado && formulariosFiltrados.length > 0"
+                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <div *ngFor="let form of formulariosFiltrados"
+                     class="group bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/90 dark:border-slate-700/80 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col">
+
+                    <!-- COVER IMAGE HEADER -->
+                    <div class="h-40 relative bg-slate-900 overflow-hidden">
+                        <img [src]="form.imagenPortadaUrl || 'assets/eventos/foro-energiza-logo.png'"
+                             alt="Portada"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                             (error)="$event.target.src = 'assets/eventos/foro-energiza-logo.png'">
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+
+                        <!-- BADGES SUPERIORES -->
+                        <div class="absolute top-3 inset-x-3 flex items-center justify-between gap-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-950/75 backdrop-blur-md text-white border border-white/20 shadow-sm truncate max-w-[200px]">
+                                <mat-icon class="text-[14px] mr-1 text-amber-400">event</mat-icon>
+                                {{ form.nombreEvento || obtenerNombreEvento(form.eventoId) }}
+                            </span>
+
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shadow-sm"
+                                  [ngClass]="form.activo ? 'bg-emerald-500/90 text-white backdrop-blur-sm' : 'bg-slate-600/90 text-slate-200 backdrop-blur-sm'">
+                                <span class="w-1.5 h-1.5 rounded-full mr-1.5" [ngClass]="form.activo ? 'bg-emerald-200 animate-pulse' : 'bg-slate-400'"></span>
+                                {{ form.activo ? 'Activo' : 'Inactivo' }}
+                            </span>
+                        </div>
+
+                        <!-- TÍTULO EN PORTADA -->
+                        <div class="absolute bottom-3 inset-x-4">
+                            <h3 class="text-base font-bold text-white drop-shadow-md truncate" [matTooltip]="form.titulo">
+                                {{ form.titulo }}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- CARD BODY -->
+                    <div class="p-5 flex-auto flex flex-col justify-between space-y-4">
+                        <!-- Descripción -->
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            {{ form.descripcion || 'Sin descripción personalizada.' }}
+                        </p>
+
+                        <!-- METRICS PILLS -->
+                        <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 font-medium">
+                                <mat-icon class="text-[14px] mr-1 text-emerald-600 dark:text-emerald-400">quiz</mat-icon>
+                                {{ contarCampos(form.camposConfigJson) }} campos
+                            </span>
+
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-medium">
+                                <mat-icon class="text-[14px] mr-1 text-blue-600 dark:text-blue-400">group</mat-icon>
+                                {{ form.totalRespuestas }} registros
+                            </span>
+
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[11px]">
+                                {{ form.fechaCreacion | date:'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+
+                        <!-- ENLACE PÚBLICO SHARE BOX -->
+                        <div class="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 overflow-hidden text-xs text-slate-600 dark:text-slate-300">
+                                <mat-icon class="text-[14px] text-slate-400 flex-shrink-0">link</mat-icon>
+                                <span class="truncate font-mono text-[11px] select-all">#/eventos/registro/{{ form.slug }}</span>
+                            </div>
+
+                            <div class="flex items-center gap-1 flex-shrink-0">
+                                <button (click)="copiarEnlaceListado(form, $event)"
+                                        mat-icon-button
+                                        class="!w-7 !h-7 text-slate-500 hover:text-emerald-600 transition-colors"
+                                        [matTooltip]="copiadoFormId === form.id ? '¡Copiado!' : 'Copiar enlace público'">
+                                    <mat-icon class="text-sm" [class.text-emerald-500]="copiadoFormId === form.id">
+                                        {{ copiadoFormId === form.id ? 'check' : 'content_copy' }}
+                                    </mat-icon>
+                                </button>
+                                <button (click)="abrirEnlaceListado(form.slug, $event)"
+                                        mat-icon-button
+                                        class="!w-7 !h-7 text-slate-500 hover:text-blue-600 transition-colors"
+                                        matTooltip="Abrir formulario en nueva pestaña">
+                                    <mat-icon class="text-sm">open_in_new</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD ACTIONS FOOTER -->
+                    <div class="px-5 py-3.5 bg-slate-50/80 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700/80 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <!-- Botón Editar -->
+                            <button (click)="editarFormulario(form)"
+                                    class="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer">
+                                <mat-icon class="text-[14px] mr-1">edit</mat-icon>
+                                <span>Editar</span>
+                            </button>
+
+                            <!-- Botón Ver Respuestas -->
+                            <button (click)="verRespuestasDesdeListado(form)"
+                                    class="inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 hover:bg-slate-200/70 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer">
+                                <mat-icon class="text-[14px] mr-1 text-blue-500">list_alt</mat-icon>
+                                <span>Respuestas</span>
+                            </button>
+                        </div>
+
+                        <!-- Botón Eliminar -->
+                        <button (click)="solicitarEliminar(form, $event)"
+                                mat-icon-button
+                                class="!w-8 !h-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                matTooltip="Eliminar formulario">
+                            <mat-icon class="text-sm">delete_outline</mat-icon>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <!-- ACCIONES Y SELECTOR DE EVENTO -->
-        <div class="flex flex-wrap items-center gap-3">
-            <!-- Selector de Evento -->
-            <div class="flex items-center bg-slate-100 dark:bg-slate-700/50 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-600">
-                <mat-icon class="text-slate-400 text-sm mr-2">event</mat-icon>
-                <select [ngModel]="selectedEventoId" (ngModelChange)="cargarFormularioPorEvento($event)"
-                        class="bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-200 outline-none cursor-pointer pr-2">
-                    <option *ngFor="let ev of eventos" [value]="ev.id" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
-                        {{ ev.nombre }} ({{ ev.anio }})
-                    </option>
-                </select>
+        <!-- MODAL CONFIRMACIÓN DE ELIMINACIÓN -->
+        <div *ngIf="formularioAEliminar"
+             class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="icon-size-6">warning</mat-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">¿Eliminar Formulario?</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Esta acción deshabilitará el registro público.</p>
+                    </div>
+                </div>
+
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 text-sm space-y-1">
+                    <div class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ formularioAEliminar.titulo }}</div>
+                    <div class="text-xs text-slate-500">Slug: #/eventos/registro/{{ formularioAEliminar.slug }}</div>
+                    <div class="text-xs text-slate-500">Evento: {{ formularioAEliminar.nombreEvento || obtenerNombreEvento(formularioAEliminar.eventoId) }}</div>
+                </div>
+
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Los asistentes que ya se hayan registrado previamente se mantendrán guardados en la base de datos de asistentes.
+                </p>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button (click)="cancelarEliminar()"
+                            class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button (click)="confirmarEliminar()"
+                            class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-600/20 transition-colors">
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- VISTA 2: EDITOR DE FORMULARIO CON PREVIEW EN VIVO                         -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="vistaActual === 'editor'">
+        <!-- HEADER BAR -->
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Botón Volver al Listado -->
+                <button (click)="volverAlListado()"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        matTooltip="Volver al listado de formularios">
+                    <mat-icon class="icon-size-4">arrow_back</mat-icon>
+                    <span>Listado</span>
+                </button>
+
+                <div class="w-10 h-10 rounded-2xl bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner flex-shrink-0">
+                    <mat-icon class="icon-size-5">tune</mat-icon>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                            {{ currentFormId > 0 ? ('Editando: ' + titulo) : 'Nuevo Formulario' }}
+                        </h1>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                              [ngClass]="activo ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'">
+                            {{ activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                        <span *ngIf="totalRespuestas > 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                            {{ totalRespuestas }} registros
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Configura preguntas, apariencia y opciones de registro con previsualización interactiva.</p>
+                </div>
             </div>
 
-            <!-- Botón Ver Link Público -->
-            <button *ngIf="slug" (click)="abrirEnlacePublico()" mat-stroked-button
-                    class="rounded-xl border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                    matTooltip="Abrir formulario público en nueva pestaña">
-                <mat-icon class="mr-1.5 text-sm">open_in_new</mat-icon>
-                Ver Enlace
-            </button>
+            <!-- ACCIONES Y SELECTOR DE EVENTO -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Selector de Evento -->
+                <div class="flex items-center bg-slate-100 dark:bg-slate-700/50 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-600">
+                    <mat-icon class="text-slate-400 text-sm mr-2">event</mat-icon>
+                    <select [ngModel]="selectedEventoId" (ngModelChange)="cargarFormularioPorEvento($event)"
+                            class="bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-200 outline-none cursor-pointer pr-2">
+                        <option *ngFor="let ev of eventos" [value]="ev.id" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
+                            {{ ev.nombre }} ({{ ev.anio }})
+                        </option>
+                    </select>
+                </div>
 
-            <!-- Botón Guardar -->
-            <button (click)="guardar()" [disabled]="saving || loading"
-                    class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white shadow-lg transition-all duration-200 disabled:opacity-50"
-                    [ngStyle]="{'background-color': diseno.colorPrimario}">
-                <mat-icon *ngIf="!saving" class="mr-1.5 text-sm">save</mat-icon>
-                <span *ngIf="saving" class="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>{{ saving ? 'Guardando...' : 'Guardar Formulario' }}</span>
-            </button>
-        </div>
-    </header>
+                <!-- Botón Ver Link Público -->
+                <button *ngIf="slug" (click)="abrirEnlacePublico()" mat-stroked-button
+                        class="rounded-xl border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        matTooltip="Abrir formulario público en nueva pestaña">
+                    <mat-icon class="mr-1.5 text-sm">open_in_new</mat-icon>
+                    Ver Enlace
+                </button>
+
+                <!-- Botón Guardar -->
+                <button (click)="guardar()" [disabled]="saving || loading"
+                        class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-semibold text-white shadow-lg transition-all duration-200 disabled:opacity-50"
+                        [ngStyle]="{'background-color': diseno.colorPrimario}">
+                    <mat-icon *ngIf="!saving" class="mr-1.5 text-sm">save</mat-icon>
+                    <span *ngIf="saving" class="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>{{ saving ? 'Guardando...' : 'Guardar Formulario' }}</span>
+                </button>
+            </div>
+        </header>
 
     <!-- CUERPO PRINCIPAL: 2 COLUMNAS (EDITOR IZQ / PREVIEW DER) -->
     <div class="flex-auto flex flex-col lg:flex-row min-h-[calc(100vh-73px)]">
@@ -707,5 +1011,7 @@
         </div>
 
     </div>
+    </ng-container>
 
 </div>
+

@@ -10,6 +10,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { EventosService, EventoEdicion } from '../eventos.service';
 import { FormularioRegistroService, CampoConfig, DisenoConfig, FormularioRegistroAdminDto } from './formulario-registro.service';
@@ -39,9 +40,21 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     private _formService = inject(FormularioRegistroService);
     private _snackBar = inject(MatSnackBar);
     private _cdr = inject(ChangeDetectorRef);
+    private _route = inject(ActivatedRoute);
     private _destroy$ = new Subject<void>();
 
-    // Estados
+    // Control de vista: 'listado' de formularios o 'editor' de un formulario
+    vistaActual: 'listado' | 'editor' = 'listado';
+
+    // Listado de Formularios
+    formulariosList: FormularioRegistroAdminDto[] = [];
+    cargandoListado = false;
+    busquedaListado = '';
+    filtroEventoId: number | 'todos' = 'todos';
+    formularioAEliminar: FormularioRegistroAdminDto | null = null;
+    copiadoFormId: number | null = null;
+
+    // Estados Editor
     loading = false;
     saving = false;
     activeTab: 'general' | 'campos' | 'diseno' | 'enlace' | 'respuestas' = 'general';
@@ -132,6 +145,26 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.cargarEventos();
+        this.cargarListadoFormularios();
+
+        // Parámetros por URL para navegación directa (ej. ?id=5 o ?eventoId=2 o ?modo=editor)
+        this._route.queryParams.pipe(takeUntil(this._destroy$)).subscribe(params => {
+            if (params['id']) {
+                const idNum = Number(params['id']);
+                if (idNum > 0) {
+                    this.cargarFormularioPorId(idNum);
+                }
+            } else if (params['eventoId']) {
+                const evId = Number(params['eventoId']);
+                if (evId > 0) {
+                    this.selectedEventoId = evId;
+                    this.cargarFormularioPorEvento(evId);
+                    this.vistaActual = 'editor';
+                }
+            } else if (params['modo'] === 'editor') {
+                this.vistaActual = 'editor';
+            }
+        });
     }
 
     ngOnDestroy(): void {
@@ -139,9 +172,216 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         this._destroy$.complete();
     }
 
+    /** Carga listado completo de todos los formularios configurados en el sistema */
+    cargarListadoFormularios(): void {
+        this.cargandoListado = true;
+        this._formService.getTodos()
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (data) => {
+                    this.formulariosList = data || [];
+                    this.cargandoListado = false;
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.cargandoListado = false;
+                    console.error('Error al cargar listado de formularios:', err);
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    /** Filtrado dinámico de formularios por texto y evento */
+    get formulariosFiltrados(): FormularioRegistroAdminDto[] {
+        let list = this.formulariosList;
+
+        if (this.filtroEventoId !== 'todos' && this.filtroEventoId !== null) {
+            list = list.filter(f => f.eventoId === Number(this.filtroEventoId));
+        }
+
+        if (this.busquedaListado && this.busquedaListado.trim() !== '') {
+            const term = this.busquedaListado.toLowerCase().trim();
+            list = list.filter(f =>
+                (f.titulo && f.titulo.toLowerCase().includes(term)) ||
+                (f.nombreEvento && f.nombreEvento.toLowerCase().includes(term)) ||
+                (f.slug && f.slug.toLowerCase().includes(term)) ||
+                (f.descripcion && f.descripcion.toLowerCase().includes(term))
+            );
+        }
+
+        return list;
+    }
+
+    /** Métricas globales para badges del listado */
+    get totalRegistrosGeneral(): number {
+        return this.formulariosList.reduce((acc, f) => acc + (f.totalRespuestas || 0), 0);
+    }
+
+    get totalActivosGeneral(): number {
+        return this.formulariosList.filter(f => f.activo).length;
+    }
+
+    /** Inicia la creación de un nuevo formulario */
+    nuevoFormulario(): void {
+        this.currentFormId = 0;
+        if (this.eventos.length > 0) {
+            const ev = this.eventos[0];
+            this.selectedEventoId = ev.id;
+            const slugSugerido = this.generarSlug(ev.nombre + ' ' + (ev.anio || ''));
+            this.inicializarPlantillaEstandar(ev.nombre, slugSugerido);
+        } else {
+            this.inicializarPlantillaEstandar('Evento', 'registro-evento');
+        }
+        this.activeTab = 'general';
+        this.vistaActual = 'editor';
+        this._cdr.markForCheck();
+    }
+
+    /** Abre un formulario existente para edición */
+    editarFormulario(form: FormularioRegistroAdminDto): void {
+        this.cargarFormularioDesdeDto(form);
+        this.activeTab = 'general';
+        this.vistaActual = 'editor';
+        this._cdr.markForCheck();
+    }
+
+    /** Carga un formulario en el editor a partir de su DTO */
+    cargarFormularioDesdeDto(form: FormularioRegistroAdminDto): void {
+        this.currentFormId = form.id;
+        this.selectedEventoId = form.eventoId;
+        this.titulo = form.titulo || 'Registro al Evento';
+        this.descripcion = form.descripcion || '';
+        this.slug = form.slug;
+        this.imagenPortadaUrl = form.imagenPortadaUrl || 'assets/eventos/foro-energiza-logo.png';
+        this.activo = form.activo;
+        this.totalRespuestas = form.totalRespuestas || 0;
+
+        try {
+            this.campos = JSON.parse(form.camposConfigJson || '[]');
+        } catch {
+            this.campos = [];
+        }
+
+        try {
+            this.diseno = { ...this.diseno, ...JSON.parse(form.disenoConfigJson || '{}') };
+        } catch {
+            // Conservar defaults
+        }
+
+        this.inicializarPreviewRespuestas();
+        this._cdr.markForCheck();
+    }
+
+    /** Carga un formulario por su ID desde el backend */
+    cargarFormularioPorId(id: number): void {
+        this.loading = true;
+        this._formService.getPorId(id)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (form) => {
+                    this.loading = false;
+                    if (form) {
+                        this.cargarFormularioDesdeDto(form);
+                        this.vistaActual = 'editor';
+                    }
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.mostrarAlerta('No se pudo encontrar el formulario especificado.');
+                    this.vistaActual = 'listado';
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    /** Ir directo a la pestaña de respuestas del formulario */
+    verRespuestasDesdeListado(form: FormularioRegistroAdminDto): void {
+        this.cargarFormularioDesdeDto(form);
+        this.activeTab = 'respuestas';
+        this.cargarRespuestas();
+        this.vistaActual = 'editor';
+        this._cdr.markForCheck();
+    }
+
+    /** Regresa a la vista del listado de formularios */
+    volverAlListado(): void {
+        this.vistaActual = 'listado';
+        this.cargarListadoFormularios();
+        this._cdr.markForCheck();
+    }
+
+    /** Prepara eliminación con confirmación */
+    solicitarEliminar(form: FormularioRegistroAdminDto, event?: MouseEvent): void {
+        if (event) event.stopPropagation();
+        this.formularioAEliminar = form;
+    }
+
+    cancelarEliminar(): void {
+        this.formularioAEliminar = null;
+    }
+
+    confirmarEliminar(): void {
+        if (!this.formularioAEliminar) return;
+        const id = this.formularioAEliminar.id;
+        const titulo = this.formularioAEliminar.titulo;
+        this._formService.eliminar(id)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: () => {
+                    this.mostrarAlerta(`Formulario «${titulo}» eliminado exitosamente.`);
+                    this.formularioAEliminar = null;
+                    this.cargarListadoFormularios();
+                },
+                error: (err) => {
+                    const msg = err?.error?.mensaje || 'Error al eliminar el formulario.';
+                    this.mostrarAlerta(msg);
+                    this.formularioAEliminar = null;
+                }
+            });
+    }
+
+    /** Copia la URL pública del formulario al portapapeles */
+    copiarEnlaceListado(form: FormularioRegistroAdminDto, event?: MouseEvent): void {
+        if (event) event.stopPropagation();
+        const base = window.location.origin + window.location.pathname;
+        const url = `${base}#/eventos/registro/${form.slug}`;
+        navigator.clipboard.writeText(url);
+        this.copiadoFormId = form.id;
+        setTimeout(() => {
+            if (this.copiadoFormId === form.id) {
+                this.copiadoFormId = null;
+                this._cdr.markForCheck();
+            }
+        }, 2500);
+        this.mostrarAlerta('¡Enlace público copiado al portapapeles!');
+    }
+
+    /** Abre la URL pública del formulario en una nueva pestaña */
+    abrirEnlaceListado(slug: string, event?: MouseEvent): void {
+        if (event) event.stopPropagation();
+        const base = window.location.origin + window.location.pathname;
+        window.open(`${base}#/eventos/registro/${slug}`, '_blank');
+    }
+
+    /** Cuenta preguntas válidas en el JSON */
+    contarCampos(jsonStr: string): number {
+        try {
+            const arr = JSON.parse(jsonStr || '[]');
+            return Array.isArray(arr) ? arr.length : 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    /** Obtiene nombre y año de un evento */
+    obtenerNombreEvento(eventoId: number): string {
+        const ev = this.eventos.find(e => e.id === eventoId);
+        return ev ? `${ev.nombre} (${ev.anio})` : `Evento #${eventoId}`;
+    }
+
     /** Carga catálogo de eventos disponibles */
     cargarEventos(): void {
-        this.loading = true;
         this._eventosService.getEventosCompletos()
             .pipe(takeUntil(this._destroy$))
             .subscribe({
@@ -152,16 +392,13 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
                         anio: e.anio || new Date().getFullYear()
                     }));
                     this.eventos = mapped;
-                    if (this.eventos.length > 0) {
+                    if (this.eventos.length > 0 && !this.selectedEventoId) {
                         this.selectedEventoId = this.eventos[0].id;
-                        this.cargarFormularioPorEvento(this.selectedEventoId);
-                    } else {
-                        this.loading = false;
                     }
+                    this._cdr.markForCheck();
                 },
                 error: (err) => {
-                    this.loading = false;
-                    this.mostrarAlerta('Error al cargar eventos: ' + (err.message || 'Error de conexión'));
+                    console.error('Error al cargar eventos:', err);
                 }
             });
     }
@@ -521,6 +758,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
                     this.currentFormId = res.id;
                     this.slug = res.slug;
                     this.mostrarAlerta('¡Formulario de registro guardado exitosamente!');
+                    this.cargarListadoFormularios();
                     this._cdr.markForCheck();
                 },
                 error: (err) => {
