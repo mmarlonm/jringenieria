@@ -52,6 +52,20 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                 {{ diseno?.mensajeExito || 'Tu registro ha sido completado exitosamente.' }}
             </p>
 
+            <!-- Notificaciones enviadas: Email y WhatsApp -->
+            <div class="mt-3 flex flex-wrap justify-center gap-2 text-xs">
+                <span *ngIf="resultadoRegistro?.emailEnviado" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800">
+                    <mat-icon class="text-[14px]">email</mat-icon>
+                    Pase enviado por correo
+                </span>
+                <span *ngIf="resultadoRegistro?.whatsappEnviado" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
+                    <mat-icon class="text-[14px]">chat</mat-icon>
+                    Pase enviado a tu WhatsApp
+                </span>
+            </div>
+
             <!-- Pase QR Digital si está activado -->
             <div *ngIf="diseno?.mostrarQrExito && qrCodeUrl" class="mt-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">Tu Pase Digital de Acceso</span>

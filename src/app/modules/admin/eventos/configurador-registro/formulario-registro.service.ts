@@ -75,6 +75,8 @@ export interface RegistroPublicoResultadoDto {
     tokenQR?: string;
     nombreCompleto?: string;
     correoElectronico?: string;
+    emailEnviado?: boolean;
+    whatsappEnviado?: boolean;
 }
 
 export interface FormularioRespuestaDetalleDto {
