@@ -1,0 +1,117 @@
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    &:hover {
+        color: #0f172a;
+    }
+
+    &.active-tab {
+        color: #059669;
+        border-bottom-color: #059669;
+    }
+}
+
+:host-context(.dark) .tab-btn {
+    color: #94a3b8;
+
+    &:hover {
+        color: #f8fafc;
+    }
+
+    &.active-tab {
+        color: #34d399;
+        border-bottom-color: #34d399;
+    }
+}
+
+.device-btn {
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.5rem;
+    color: #64748b;
+    transition: all 0.2s ease;
+
+    &:hover {
+        color: #0f172a;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    &.active-device {
+        background-color: white;
+        color: #059669;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+}
+
+:host-context(.dark) .device-btn {
+    color: #94a3b8;
+
+    &:hover {
+        color: #f8fafc;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active-device {
+        background-color: #1e293b;
+        color: #34d399;
+    }
+}
+
+.card-option-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.85rem;
+    border-radius: 0.85rem;
+    border: 1.5px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+
+    &:hover {
+        border-color: #cbd5e1;
+    }
+
+    &.selected-option {
+        border-color: #059669;
+        background-color: rgba(5, 150, 105, 0.05);
+        color: #059669;
+    }
+}
+
+:host-context(.dark) .card-option-btn {
+    background-color: #1e293b;
+    border-color: #334155;
+
+    &:hover {
+        border-color: #475569;
+    }
+
+    &.selected-option {
+        border-color: #34d399;
+        background-color: rgba(52, 211, 153, 0.1);
+        color: #34d399;
+    }
+}
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.2) transparent;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(100, 116, 139, 0.2);
+        border-radius: 9999px;
+    }
+}

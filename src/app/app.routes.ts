@@ -157,7 +157,8 @@ export const appRoutes: Route[] = [
                     { path: 'actividades', loadComponent: () => import('app/modules/admin/eventos/actividades/actividades.component').then(m => m.ActividadesComponent) },
                     { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) },
                     { path: 'reportes', loadComponent: () => import('app/modules/admin/eventos/reportes/reportes.component').then(m => m.EventosReportesComponent) },
-                    { path: 'encuestas-dashboard', loadComponent: () => import('app/modules/admin/eventos/encuestas/dashboard-encuestas.component').then(m => m.DashboardEncuestasComponent) }
+                    { path: 'encuestas-dashboard', loadComponent: () => import('app/modules/admin/eventos/encuestas/dashboard-encuestas.component').then(m => m.DashboardEncuestasComponent) },
+                    { path: 'configurador-registro', loadComponent: () => import('app/modules/admin/eventos/configurador-registro/configurador-registro.component').then(m => m.ConfiguradorRegistroComponent) }
                 ]
             }
         ]
@@ -195,5 +196,9 @@ export const appRoutes: Route[] = [
     {
         path: 'eventos/encuesta/:token',
         loadComponent: () => import('app/modules/admin/eventos/encuestas/encuesta-publica.component').then(m => m.EncuestaPublicaComponent)
+    },
+    {
+        path: 'eventos/registro/:slug',
+        loadComponent: () => import('app/modules/public/registro-evento/registro-evento-publico.component').then(m => m.RegistroEventoPublicoComponent)
     }
 ];

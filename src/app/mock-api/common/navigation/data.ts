@@ -356,7 +356,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
-            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
+            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' },
+            { id: 'eventos.configurador', title: 'Configurador de Registro', type: 'basic', icon: 'heroicons_outline:document-text', link: '/eventos/configurador-registro' }
         ]
     },
 
@@ -436,7 +437,8 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
-            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
+            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' },
+            { id: 'eventos.configurador', title: 'Configurador de Registro', type: 'basic', icon: 'heroicons_outline:document-text', link: '/eventos/configurador-registro' }
         ]
     },
     {
@@ -501,7 +503,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
-            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
+            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' },
+            { id: 'eventos.configurador', title: 'Configurador de Registro', type: 'basic', icon: 'heroicons_outline:document-text', link: '/eventos/configurador-registro' }
         ]
     },
     {
@@ -566,7 +569,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'eventos.gestion', title: 'Gestión de Eventos', type: 'basic', icon: 'heroicons_outline:cog', link: '/eventos/gestion-eventos' },
             { id: 'eventos.reportes', title: 'Reportes', type: 'basic', icon: 'heroicons_outline:chart-pie', link: '/eventos/reportes' },
             { id: 'eventos.escanear', title: 'Escáner de Acceso (Público)', type: 'basic', icon: 'heroicons_outline:qr-code', link: '/eventos/escanear-pase' },
-            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' }
+            { id: 'eventos.mapa', title: 'Mapa 3D del Evento', type: 'basic', icon: 'heroicons_outline:map', link: '/eventos/mapa' },
+            { id: 'eventos.configurador', title: 'Configurador de Registro', type: 'basic', icon: 'heroicons_outline:document-text', link: '/eventos/configurador-registro' }
         ]
     },
     {

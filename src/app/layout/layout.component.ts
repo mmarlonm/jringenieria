@@ -602,6 +602,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
             '/eventos/reportes': 'reportes',
             '/eventos/escanear-pase': 'escanear',
             '/eventos/mapa': 'mapa',
+            '/eventos/configurador-registro': 'gestion',
             '/security/users': 'users',
             '/security/roles': 'roles',
             '/security/activity-monitor': 'activity-monitor',
