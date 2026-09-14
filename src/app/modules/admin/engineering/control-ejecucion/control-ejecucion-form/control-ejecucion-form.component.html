@@ -1390,7 +1390,396 @@
         </div>
       </mat-tab>
 
-      <!-- TAB 5: SALIDAS DE ALMACÉN -->
+      <!-- TAB 5: MATERIALES, SERVICIOS Y TRAZABILIDAD -->
+      <mat-tab label="Materiales y Trazabilidad">
+        <div class="p-6 md:p-8 overflow-y-auto h-full max-h-[calc(100vh-140px)] custom-scrollbar">
+          <div class="max-w-7xl mx-auto space-y-6">
+
+            <!-- Cabecera de la Sección -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                  <mat-icon class="icon-size-7">inventory_2</mat-icon>
+                </div>
+                <div>
+                  <h2 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                    Trazabilidad de Materiales y Servicios
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      CONTPAQ + Salidas + Compras
+                    </span>
+                  </h2>
+                  <p class="text-xs text-slate-500 font-medium mt-0.5">
+                    Presupuesto cotizado base y conciliación física en tiempo real de adquisiciones y salidas de bodega.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" mat-stroked-button color="primary" class="!rounded-xl border-slate-200" (click)="loadMaterialesTrazabilidad()">
+                  <mat-icon class="icon-size-4 mr-1">refresh</mat-icon>
+                  Actualizar
+                </button>
+                <button type="button" mat-stroked-button color="accent" class="!rounded-xl border-slate-200" (click)="abrirModalNuevoMaterial(2)">
+                  <mat-icon class="icon-size-4 mr-1 text-purple-600">miscellaneous_services</mat-icon>
+                  + Servicio / Renta
+                </button>
+                <button type="button" mat-raised-button color="primary" class="!rounded-xl shadow-indigo-100 shadow-lg" (click)="abrirModalNuevoMaterial(1)">
+                  <mat-icon class="icon-size-4 mr-1">add_box</mat-icon>
+                  + Material CONTPAQ
+                </button>
+              </div>
+            </div>
+
+            <!-- KPIs de Balance y Trazabilidad -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+              <!-- KPI 1: Total Cotizado Base -->
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Presupuesto Cotizado</span>
+                  <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <mat-icon class="icon-size-5">price_check</mat-icon>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="text-2xl font-black text-slate-800 tracking-tight tabular-nums">
+                    {{ (resumenTrazabilidad?.totalCotizado || 0) | currency:'MXN':'symbol':'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] font-bold text-indigo-600 mt-1">
+                    {{ materialesProyecto.length }} ítem{{ materialesProyecto.length !== 1 ? 's' : '' }} presupuestado{{ materialesProyecto.length !== 1 ? 's' : '' }}
+                  </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500"></div>
+              </div>
+
+              <!-- KPI 2: Total Solicitado / Comprado -->
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Total Comprado (OC)</span>
+                  <div class="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                    <mat-icon class="icon-size-5">shopping_cart</mat-icon>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="text-2xl font-black text-amber-600 tracking-tight tabular-nums">
+                    {{ (resumenTrazabilidad?.totalComprado || 0) | currency:'MXN':'symbol':'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] font-semibold text-slate-500 mt-1">
+                    Vía Solicitudes de Compra vinculadas
+                  </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"></div>
+              </div>
+
+              <!-- KPI 3: Total Surtido / Salidas Almacén -->
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Entregado en Obra</span>
+                  <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <mat-icon class="icon-size-5">local_shipping</mat-icon>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="text-2xl font-black text-emerald-600 tracking-tight tabular-nums">
+                    {{ (resumenTrazabilidad?.totalSurtidoAlmacen || 0) | currency:'MXN':'symbol':'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] font-semibold text-emerald-700 mt-1">
+                    Físicamente en proyecto según almacén
+                  </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"></div>
+              </div>
+
+              <!-- KPI 4: Variación / Balance Restante -->
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Balance / Saldo</span>
+                  <div class="p-2 rounded-xl" [ngClass]="(resumenTrazabilidad?.diferenciaPresupuesto || 0) >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                    <mat-icon class="icon-size-5">{{ (resumenTrazabilidad?.diferenciaPresupuesto || 0) >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="text-2xl font-black tracking-tight tabular-nums" [ngClass]="(resumenTrazabilidad?.diferenciaPresupuesto || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                    {{ (resumenTrazabilidad?.diferenciaPresupuesto || 0) | currency:'MXN':'symbol':'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] font-bold mt-1" [ngClass]="(resumenTrazabilidad?.diferenciaPresupuesto || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'">
+                    {{ (resumenTrazabilidad?.diferenciaPresupuesto || 0) >= 0 ? 'A favor del presupuesto' : 'Alerta de sobrecosto' }}
+                  </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1" [ngClass]="(resumenTrazabilidad?.diferenciaPresupuesto || 0) >= 0 ? 'bg-emerald-500' : 'bg-rose-500'"></div>
+              </div>
+
+            </div>
+
+            <!-- Tabla de Trazabilidad y Filtros -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              
+              <!-- Barra de Búsqueda y Filtros Rápidos -->
+              <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-50/50">
+                <div class="w-full md:w-96 relative">
+                  <input type="text" [(ngModel)]="filtroMaterialesTexto" placeholder="Buscar por código, descripción, notas..."
+                    class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                  <mat-icon class="icon-size-4 text-slate-400 absolute left-3 top-2.5">search</mat-icon>
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+                  <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+                    [ngClass]="filtroMaterialesSemaforo === 'TODOS' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'"
+                    (click)="filtroMaterialesSemaforo = 'TODOS'">
+                    Todos ({{ materialesProyecto.length }})
+                  </button>
+                  <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+                    [ngClass]="filtroMaterialesSemaforo === 'Por Comprar' ? 'bg-rose-600 text-white shadow-sm' : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'"
+                    (click)="filtroMaterialesSemaforo = 'Por Comprar'">
+                    Por Comprar
+                  </button>
+                  <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+                    [ngClass]="filtroMaterialesSemaforo === 'En Proceso' ? 'bg-amber-600 text-white shadow-sm' : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50'"
+                    (click)="filtroMaterialesSemaforo = 'En Proceso'">
+                    En Compra
+                  </button>
+                  <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+                    [ngClass]="filtroMaterialesSemaforo === 'En Almacén' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'"
+                    (click)="filtroMaterialesSemaforo = 'En Almacén'">
+                    En Almacén
+                  </button>
+                  <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+                    [ngClass]="filtroMaterialesSemaforo === 'Surtido Completo' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50'"
+                    (click)="filtroMaterialesSemaforo = 'Surtido Completo'">
+                    Surtido
+                  </button>
+                </div>
+              </div>
+
+              <!-- Indicador de Carga -->
+              <div *ngIf="isLoadingMateriales" class="p-12 text-center text-slate-400">
+                <mat-icon class="animate-spin icon-size-8 text-indigo-500 mb-2">sync</mat-icon>
+                <p class="text-xs font-bold">Calculando balance y trazabilidad en tiempo real...</p>
+              </div>
+
+              <!-- Estado Vacío -->
+              <div *ngIf="!isLoadingMateriales && materialesProyecto.length === 0" class="p-12 text-center">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                  <mat-icon class="icon-size-8">playlist_add</mat-icon>
+                </div>
+                <h3 class="text-base font-bold text-slate-700">Sin materiales o servicios presupuestados</h3>
+                <p class="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-5">
+                  Agrega los materiales cotizados desde el catálogo de CONTPAQ o los servicios externos (renta de plataforma, grúas, fletes) para iniciar la trazabilidad y balance.
+                </p>
+                <div class="flex items-center justify-center gap-3">
+                  <button type="button" mat-raised-button color="primary" class="!rounded-xl" (click)="abrirModalNuevoMaterial(1)">
+                    <mat-icon class="icon-size-4 mr-1">add_box</mat-icon>
+                    Agregar Material CONTPAQ
+                  </button>
+                  <button type="button" mat-stroked-button color="accent" class="!rounded-xl" (click)="abrirModalNuevoMaterial(2)">
+                    <mat-icon class="icon-size-4 mr-1">miscellaneous_services</mat-icon>
+                    Agregar Servicio / Renta
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tabla Matriz de Trazabilidad -->
+              <div *ngIf="!isLoadingMateriales && materialesProyecto.length > 0" class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100/80 text-slate-600 uppercase text-[10px] font-black tracking-wider border-b">
+                    <tr>
+                      <th class="py-3 px-3 w-8"></th>
+                      <th class="py-3 px-3">Tipo / Código</th>
+                      <th class="py-3 px-3">Descripción</th>
+                      <th class="py-3 px-3 text-center">U.M.</th>
+                      <th class="py-3 px-3 text-right bg-slate-50 font-bold">Cant. Cotizada</th>
+                      <th class="py-3 px-3 text-right bg-slate-50 font-bold">Precio Unit. Cot.</th>
+                      <th class="py-3 px-3 text-right bg-indigo-50/60 font-black text-indigo-900">Total Cotizado</th>
+                      <th class="py-3 px-3 text-center bg-amber-50/40 text-amber-900 font-black">Comprado (OC)</th>
+                      <th class="py-3 px-3 text-center bg-emerald-50/40 text-emerald-900 font-black">Surtido (Almacén)</th>
+                      <th class="py-3 px-3 text-center font-black">Pendiente</th>
+                      <th class="py-3 px-3 text-center">Estatus</th>
+                      <th class="py-3 px-3 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <ng-container *ngFor="let item of materialesFiltrados">
+                      <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer" (click)="toggleExpandirMaterial(item)">
+                        <!-- Botón desplegable -->
+                        <td class="py-3 px-3 text-center">
+                          <button type="button" mat-icon-button class="w-6 h-6 min-h-6 p-0 text-slate-400 hover:text-indigo-600"
+                            (click)="$event.stopPropagation(); toggleExpandirMaterial(item)">
+                            <mat-icon class="icon-size-4 transition-transform duration-200" [ngClass]="{'rotate-180': item.expanded}">
+                              keyboard_arrow_down
+                            </mat-icon>
+                          </button>
+                        </td>
+
+                        <!-- Tipo y Código -->
+                        <td class="py-3 px-3">
+                          <div class="flex items-center gap-1.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold"
+                              [ngClass]="item.tipoItem === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'">
+                              {{ item.tipoItem === 1 ? 'CONTPAQ' : 'SERVICIO' }}
+                            </span>
+                            <span *ngIf="item.codigoProducto" class="font-mono text-xs font-bold text-indigo-600">
+                              {{ item.codigoProducto }}
+                            </span>
+                          </div>
+                        </td>
+
+                        <!-- Descripción -->
+                        <td class="py-3 px-3">
+                          <div class="font-bold text-slate-800">{{ item.descripcion }}</div>
+                          <div *ngIf="item.notas" class="text-[10px] text-slate-400 truncate max-w-xs">{{ item.notas }}</div>
+                        </td>
+
+                        <!-- Unidad de Medida -->
+                        <td class="py-3 px-3 text-center text-slate-500 font-bold uppercase">{{ item.unidadMedida || 'PZA' }}</td>
+
+                        <!-- Cotizado -->
+                        <td class="py-3 px-3 text-right font-extrabold text-slate-700 bg-slate-50/50 tabular-nums">
+                          {{ item.cantidadCotizada }}
+                        </td>
+                        <td class="py-3 px-3 text-right text-slate-600 bg-slate-50/50 tabular-nums">
+                          {{ item.precioUnitarioCotizado | currency:'MXN':'symbol':'1.2-2' }}
+                        </td>
+                        <td class="py-3 px-3 text-right font-black text-indigo-700 bg-indigo-50/30 tabular-nums">
+                          {{ item.importeCotizado | currency:'MXN':'symbol':'1.2-2' }}
+                        </td>
+
+                        <!-- Comprado -->
+                        <td class="py-3 px-3 text-center bg-amber-50/20 tabular-nums">
+                          <div class="font-bold text-amber-700">{{ item.cantidadComprada }}</div>
+                          <div class="text-[10px] text-slate-400" *ngIf="item.costoTotalComprado > 0">
+                            {{ item.costoTotalComprado | currency:'MXN':'symbol':'1.2-2' }}
+                          </div>
+                        </td>
+
+                        <!-- Surtido Almacén -->
+                        <td class="py-3 px-3 text-center bg-emerald-50/20 tabular-nums">
+                          <div class="font-bold text-emerald-700">{{ item.cantidadSurtida }}</div>
+                          <div class="text-[10px] text-slate-400" *ngIf="item.costoTotalSurtido > 0">
+                            {{ item.costoTotalSurtido | currency:'MXN':'symbol':'1.2-2' }}
+                          </div>
+                        </td>
+
+                        <!-- Pendiente Surtir -->
+                        <td class="py-3 px-3 text-center font-black tabular-nums" [ngClass]="item.cantidadPendienteSurtir <= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                          {{ item.cantidadPendienteSurtir }}
+                        </td>
+
+                        <!-- Semáforo -->
+                        <td class="py-3 px-3 text-center">
+                          <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-block"
+                            [ngClass]="{
+                              'bg-rose-100 text-rose-700': item.semaforo === 'Por Comprar',
+                              'bg-amber-100 text-amber-800': item.semaforo === 'En Proceso',
+                              'bg-blue-100 text-blue-800': item.semaforo === 'En Almacén',
+                              'bg-emerald-100 text-emerald-800': item.semaforo === 'Surtido Completo',
+                              'bg-purple-100 text-purple-800': item.semaforo === 'Sobrecosto'
+                            }">
+                            {{ item.semaforo }}
+                          </span>
+                        </td>
+
+                        <!-- Acciones -->
+                        <td class="py-3 px-3 text-center" (click)="$event.stopPropagation()">
+                          <div class="flex items-center justify-center gap-1">
+                            <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-indigo-600" (click)="editarMaterial(item)" matTooltip="Editar Presupuesto">
+                              <mat-icon class="icon-size-4">edit</mat-icon>
+                            </button>
+                            <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-rose-600" (click)="eliminarMaterialItem(item)" matTooltip="Eliminar">
+                              <mat-icon class="icon-size-4">delete</mat-icon>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Fila Desplegable de Trazabilidad (Detalle de OCs y Salidas) -->
+                      <tr *ngIf="item.expanded" class="bg-slate-50/90 border-t border-b border-slate-200 animate-in fade-in duration-150">
+                        <td colspan="12" class="p-4">
+                          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                            <!-- Tarjeta Órdenes de Compra vinculadas -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                              <div class="flex items-center justify-between mb-3 border-b pb-2">
+                                <div class="text-xs font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                  <mat-icon class="icon-size-4 text-amber-500">shopping_bag</mat-icon>
+                                  <span>Órdenes de Compra Vinculadas ({{ item.comprasRelacionadas?.length || 0 }})</span>
+                                </div>
+                                <span class="text-xs font-black text-amber-700">
+                                  Total: {{ item.costoTotalComprado | currency:'MXN':'symbol':'1.2-2' }}
+                                </span>
+                              </div>
+
+                              <div *ngIf="!item.comprasRelacionadas || item.comprasRelacionadas.length === 0" class="text-xs text-slate-400 italic py-2 text-center">
+                                No se registran órdenes de compra para este ítem aún.
+                              </div>
+
+                              <div *ngIf="item.comprasRelacionadas && item.comprasRelacionadas.length > 0" class="space-y-2">
+                                <div *ngFor="let c of item.comprasRelacionadas" class="p-2.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                                  <div>
+                                    <div class="font-bold text-indigo-700 flex items-center gap-1">
+                                      <span>Solicitud #{{ c.idSolicitud }}</span>
+                                      <span *ngIf="c.folioOC" class="text-amber-700 font-black">({{ c.folioOC }})</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 truncate mt-0.5">
+                                      {{ c.proveedor || 'Sin proveedor' }} &bull; {{ c.fechaSolicitud | date:'dd/MM/yyyy' }}
+                                    </div>
+                                  </div>
+                                  <div class="text-right">
+                                    <div class="font-black text-slate-800">{{ c.cantidad }} {{ item.unidadMedida }}</div>
+                                    <div class="text-[11px] text-indigo-600 font-bold">{{ c.importeTotal | currency:'MXN':'symbol':'1.2-2' }}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Tarjeta Salidas de Bodega vinculadas -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                              <div class="flex items-center justify-between mb-3 border-b pb-2">
+                                <div class="text-xs font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                  <mat-icon class="icon-size-4 text-emerald-600">warehouse</mat-icon>
+                                  <span>Salidas de Almacén Vinculadas ({{ item.salidasRelacionadas?.length || 0 }})</span>
+                                </div>
+                                <span class="text-xs font-black text-emerald-700">
+                                  Total: {{ item.costoTotalSurtido | currency:'MXN':'symbol':'1.2-2' }}
+                                </span>
+                              </div>
+
+                              <div *ngIf="!item.salidasRelacionadas || item.salidasRelacionadas.length === 0" class="text-xs text-slate-400 italic py-2 text-center">
+                                No se registran salidas de bodega vinculadas con este ítem.
+                              </div>
+
+                              <div *ngIf="item.salidasRelacionadas && item.salidasRelacionadas.length > 0" class="space-y-2">
+                                <div *ngFor="let s of item.salidasRelacionadas" class="p-2.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                                  <div>
+                                    <div class="font-bold text-emerald-800 flex items-center gap-1">
+                                      <span>Folio Salida: {{ s.folioSalida }}</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 truncate mt-0.5">
+                                      {{ s.almacen || 'Almacén Central' }} &bull; {{ s.fechaSalida }}
+                                    </div>
+                                  </div>
+                                  <div class="text-right">
+                                    <div class="font-black text-slate-800">{{ s.cantidad }} {{ item.unidadMedida }}</div>
+                                    <div class="text-[11px] text-emerald-700 font-bold">{{ s.importeTotal | currency:'MXN':'symbol':'1.2-2' }}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </td>
+                      </tr>
+                    </ng-container>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 6: SALIDAS DE ALMACÉN -->
       <mat-tab label="Salidas de Almacén">
         <div class="p-6 md:p-8 overflow-y-auto h-full max-h-[calc(100vh-140px)] custom-scrollbar">
           <div class="max-w-7xl mx-auto space-y-6">
@@ -1561,15 +1950,150 @@
   </div>
 
 
-  <!-- Modal / Diálogo Flotante para el Gantt (100% aislado del resto de los contenedores) -->
-  <ng-container *ngIf="isGanttFullscreen">
-    <!-- Backdrop del Diálogo con desenfoque de fondo -->
-    <div class="fixed inset-0 bg-slate-950/45 backdrop-blur-md z-[999998]" (click)="toggleGanttFullscreen()"></div>
-    
-    <!-- Contenedor Flotante del Diálogo -->
-    <div class="fixed inset-4 z-[999999] rounded-3xl shadow-2xl bg-white p-6 border border-slate-200 flex flex-col overflow-hidden">
-      <ng-container [ngTemplateOutlet]="ganttTemplate"></ng-container>
+  <!-- Modal / Diálogo Flotante para Agregar/Editar Material o Servicio Cotizado -->
+  <div *ngIf="showMaterialModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[999990] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl text-white" [ngClass]="materialFormTipoItem === 1 ? 'bg-indigo-600' : 'bg-purple-600'">
+            <mat-icon class="icon-size-5">{{ materialFormTipoItem === 1 ? 'inventory_2' : 'miscellaneous_services' }}</mat-icon>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-800">
+              {{ editingMaterialId ? 'Editar Ítem del Presupuesto' : (materialFormTipoItem === 1 ? 'Agregar Material de CONTPAQ' : 'Agregar Servicio / Renta Externa') }}
+            </h3>
+            <p class="text-xs text-slate-500 font-medium">Proyecto #{{ idSeguimiento }}</p>
+          </div>
+        </div>
+        <button mat-icon-button class="text-slate-400 hover:text-slate-600" (click)="cerrarModalMaterial()">
+          <mat-icon class="icon-size-5">close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-4 max-h-[calc(85vh-130px)] overflow-y-auto custom-scrollbar">
+
+        <!-- Selector Tipo de Ítem -->
+        <div class="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+          <button type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+            [ngClass]="materialFormTipoItem === 1 ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+            (click)="materialFormTipoItem = 1; materialFormUnidad = 'PZA'">
+            <mat-icon class="icon-size-4">inventory_2</mat-icon>
+            Material CONTPAQ
+          </button>
+          <button type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+            [ngClass]="materialFormTipoItem === 2 ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+            (click)="materialFormTipoItem = 2; materialFormUnidad = 'SERV'">
+            <mat-icon class="icon-size-4">miscellaneous_services</mat-icon>
+            Servicio / Renta Externa
+          </button>
+        </div>
+
+        <!-- Buscador de Producto CONTPAQ (solo si TipoItem === 1) -->
+        <div *ngIf="materialFormTipoItem === 1" class="space-y-2 bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-100/80">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-black text-indigo-900 uppercase tracking-wide flex items-center gap-1">
+              <mat-icon class="icon-size-3.5 text-indigo-600">search</mat-icon>
+              Buscar en Catálogo CONTPAQ
+            </label>
+            <span class="text-[10px] text-indigo-600 font-semibold">Teclea al menos 2 letras</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <input type="text" [(ngModel)]="busquedaProductoTexto" (keyup.enter)="buscarProductosCatalogo()"
+                placeholder="Ej. Poste concreto, Cable, Transformador..."
+                class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <button type="button" mat-raised-button color="primary" class="!rounded-xl h-9 px-3 shrink-0"
+              (click)="buscarProductosCatalogo()" [disabled]="isSearchingProductos">
+              <mat-icon class="icon-size-4" *ngIf="!isSearchingProductos">search</mat-icon>
+              <mat-icon class="icon-size-4 animate-spin" *ngIf="isSearchingProductos">sync</mat-icon>
+            </button>
+          </div>
+
+          <!-- Resultados de búsqueda -->
+          <div *ngIf="productosEncontrados.length > 0" class="max-h-40 overflow-y-auto bg-white rounded-xl border border-indigo-200 divide-y divide-slate-100 shadow-lg">
+            <div *ngFor="let prod of productosEncontrados" (click)="seleccionarProductoContpaq(prod)"
+              class="p-2.5 hover:bg-indigo-50/60 cursor-pointer flex items-center justify-between text-xs transition-colors">
+              <div>
+                <div class="font-black text-slate-800">{{ prod.nombreProducto || prod.nombre || prod.descripcion }}</div>
+                <div class="font-mono text-[10px] text-indigo-600 font-bold">Código: {{ prod.codigoProducto || prod.codigo }}</div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">{{ prod.unidadMedida || 'PZA' }}</span>
+                <div class="text-[10px] text-slate-400 mt-0.5">{{ (prod.precio || prod.costo || 0) | currency:'MXN':'symbol':'1.2-2' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos Principales -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-1">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Código (Opcional)</label>
+            <input type="text" [(ngModel)]="materialFormCodigo" placeholder="Ej. MAT-001"
+              class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Unidad de Medida</label>
+            <input type="text" [(ngModel)]="materialFormUnidad" placeholder="Ej. PZA, MTR, SERV, DIA"
+              class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs uppercase focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Descripción del Material / Servicio *</label>
+          <input type="text" [(ngModel)]="materialFormDescripcion" placeholder="Ej. Renta de plataforma elevadora articulada 15m"
+            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Cantidad Presupuestada *</label>
+            <input type="number" step="any" min="0" [(ngModel)]="materialFormCantidad"
+              class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Precio Unitario Cotizado ($)</label>
+            <input type="number" step="any" min="0" [(ngModel)]="materialFormPrecioUnitario"
+              class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Importe Total Calculado -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Importe Total Estimado:</span>
+          <span class="text-base font-black text-indigo-700">
+            {{ (materialFormCantidad * materialFormPrecioUnitario) | currency:'MXN':'symbol':'1.2-2' }}
+          </span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Notas / Especificaciones</label>
+          <textarea rows="2" [(ngModel)]="materialFormNotas" placeholder="Proveedor de referencia, tiempo de renta, condición..."
+            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+        <button type="button" mat-stroked-button class="!rounded-xl border-slate-200" (click)="cerrarModalMaterial()" [disabled]="isSavingMaterial">
+          Cancelar
+        </button>
+        <button type="button" mat-raised-button color="primary" class="!rounded-xl shadow-indigo-100 shadow-md"
+          [disabled]="isSavingMaterial || !materialFormDescripcion.trim() || materialFormCantidad <= 0"
+          (click)="guardarMaterialSubmit()">
+          <mat-icon class="icon-size-4 mr-1" *ngIf="!isSavingMaterial">check</mat-icon>
+          <mat-icon class="icon-size-4 animate-spin mr-1" *ngIf="isSavingMaterial">sync</mat-icon>
+          <span>{{ editingMaterialId ? 'Guardar Cambios' : 'Agregar al Presupuesto' }}</span>
+        </button>
+      </div>
+
     </div>
-  </ng-container>
+  </div>
 
 </div>

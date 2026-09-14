@@ -356,6 +356,25 @@ export class EngineeringService {
     eliminarSalidaAlmacen(id: number): Observable<SalidaAlmacen[]> {
         return this._http.delete<SalidaAlmacen[]>(`${this.apiSeguimientoEjecucion}/salidas-almacen/${id}`);
     }
+
+    // ==========================================
+    // 🧱 MATERIALES, SERVICIOS Y TRAZABILIDAD
+    // ==========================================
+    getMaterialesTrazabilidad(idSeguimiento: number): Observable<ResumenTrazabilidadProyecto> {
+        return this._http.get<ResumenTrazabilidadProyecto>(`${this.apiSeguimientoEjecucion}/materiales-trazabilidad/${idSeguimiento}`);
+    }
+
+    guardarMaterial(data: GuardarSeguimientoMaterial): Observable<ResumenTrazabilidadProyecto> {
+        return this._http.post<ResumenTrazabilidadProyecto>(`${this.apiSeguimientoEjecucion}/materiales`, data);
+    }
+
+    eliminarMaterial(id: number): Observable<ResumenTrazabilidadProyecto> {
+        return this._http.delete<ResumenTrazabilidadProyecto>(`${this.apiSeguimientoEjecucion}/materiales/${id}`);
+    }
+
+    buscarProductosCatalogo(filtro: string): Observable<any[]> {
+        return this._http.get<any[]>(`${environment.apiUrl}/SolicitudesCompra/buscar-productos?filtro=${encodeURIComponent(filtro)}`);
+    }
 }
 
 export interface SalidaAlmacen {
@@ -375,4 +394,84 @@ export interface SalidaAlmacen {
     estatus?: string;
     detalleRaw?: any[];
 }
+
+export interface SeguimientoMaterial {
+    idMaterial: number;
+    idSeguimiento: number;
+    tipoItem: number; // 1: CONTPAQ, 2: Servicio / Renta
+    productoId?: number;
+    codigoProducto?: string;
+    descripcion: string;
+    unidadMedida?: string;
+    cantidadCotizada: number;
+    precioUnitarioCotizado: number;
+    importeCotizado: number;
+    notas?: string;
+    fechaRegistro?: string;
+    idUsuarioRegistro?: number;
+
+    // Trazabilidad dinámica
+    cantidadComprada: number;
+    costoTotalComprado: number;
+    precioUnitarioPromedioCompra: number;
+
+    cantidadSurtida: number;
+    costoTotalSurtido: number;
+    costoUnitarioPromedioSurtido: number;
+
+    cantidadPendienteSurtir: number;
+    variacionImporte: number;
+    semaforo: string; // 'Por Comprar' | 'En Proceso' | 'En Almacén' | 'Surtido Completo' | 'Sobrecosto'
+
+    comprasRelacionadas?: MaterialDetalleCompra[];
+    salidasRelacionadas?: MaterialDetalleSalida[];
+    expanded?: boolean; // Frontend UI helper
+}
+
+export interface MaterialDetalleCompra {
+    idSolicitud: number;
+    folioOC?: string;
+    fechaSolicitud?: string;
+    proveedor?: string;
+    cantidad: number;
+    costoUnitario: number;
+    importeTotal: number;
+    estatus?: string;
+}
+
+export interface MaterialDetalleSalida {
+    folioSalida: string;
+    fechaSalida?: string;
+    cantidad: number;
+    costoUnitario: number;
+    importeTotal: number;
+    almacen?: string;
+}
+
+export interface ResumenTrazabilidadProyecto {
+    idSeguimiento: number;
+    totalCotizado: number;
+    totalComprado: number;
+    totalSurtidoAlmacen: number;
+    diferenciaPresupuesto: number;
+    itemsCompletos: number;
+    itemsEnProceso: number;
+    itemsPendientes: number;
+    materiales: SeguimientoMaterial[];
+}
+
+export interface GuardarSeguimientoMaterial {
+    idMaterial?: number;
+    idSeguimiento: number;
+    tipoItem: number;
+    productoId?: number;
+    codigoProducto?: string;
+    descripcion: string;
+    unidadMedida?: string;
+    cantidadCotizada: number;
+    precioUnitarioCotizado: number;
+    importeCotizado?: number;
+    notas?: string;
+}
+
 

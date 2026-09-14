@@ -12,7 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad, SalidaAlmacen } from '../../engineering.service';
+import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad, SalidaAlmacen, SeguimientoMaterial, ResumenTrazabilidadProyecto, GuardarSeguimientoMaterial } from '../../engineering.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejecucion-actividad-dialog.component';
 import { ConfigurarApartadosDialogComponent } from './dialogs/configurar-apartados-dialog.component';
@@ -164,6 +164,33 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   isSavingSalida: boolean = false;
   salidaPreview: SalidaAlmacen | null = null;
   salidaExpandida: { [key: number]: boolean } = {};
+
+  // ==========================================
+  // 🧱 TRAZABILIDAD Y BALANCE DE MATERIALES
+  // ==========================================
+  resumenTrazabilidad: ResumenTrazabilidadProyecto | null = null;
+  materialesProyecto: SeguimientoMaterial[] = [];
+  isLoadingMateriales: boolean = false;
+  isSavingMaterial: boolean = false;
+  filtroMaterialesTexto: string = '';
+  filtroMaterialesSemaforo: string = 'TODOS';
+
+  // Modal / Formulario Agregar Material o Servicio
+  showMaterialModal: boolean = false;
+  editingMaterialId: number | null = null;
+  materialFormTipoItem: number = 1; // 1: CONTPAQ, 2: Servicio / Renta
+  materialFormProductoId: number | null = null;
+  materialFormCodigo: string = '';
+  materialFormDescripcion: string = '';
+  materialFormUnidad: string = 'PZA';
+  materialFormCantidad: number = 1;
+  materialFormPrecioUnitario: number = 0;
+  materialFormNotas: string = '';
+
+  // Autocompletado de productos CONTPAQ
+  busquedaProductoTexto: string = '';
+  productosEncontrados: any[] = [];
+  isSearchingProductos: boolean = false;
 
   // Subfolders tracking: Key is Category (Apartado) name, Value is the active subfolder name (null or empty string means root category)
   activeSubcarpetas: { [key: string]: string } = {};
@@ -418,6 +445,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.loadEquiposDisponibles();
     this.loadApartados();
     this.loadSalidasAlmacen();
+    this.loadMaterialesTrazabilidad();
     
     // Centrar línea de tiempo al redimensionar ventana
     fromEvent(window, 'resize')
@@ -2362,4 +2390,202 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this.salidaExpandida[id] = !this.salidaExpandida[id];
     this._cdr.markForCheck();
   }
+
+  // ==========================================
+  // 🧱 MÉTODOS TRAZABILIDAD Y BALANCE DE MATERIALES
+  // ==========================================
+  loadMaterialesTrazabilidad(): void {
+    if (!this.idSeguimiento) return;
+    this.isLoadingMateriales = true;
+    this._engineeringService.getMaterialesTrazabilidad(this.idSeguimiento).subscribe({
+      next: (res) => {
+        this.resumenTrazabilidad = res;
+        this.materialesProyecto = res?.materiales || [];
+        this.isLoadingMateriales = false;
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar trazabilidad de materiales:', err);
+        this.isLoadingMateriales = false;
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  get materialesFiltrados(): SeguimientoMaterial[] {
+    return this.materialesProyecto.filter(m => {
+      const texto = this.filtroMaterialesTexto.toLowerCase().trim();
+      const coincideTexto = !texto ||
+        (m.descripcion && m.descripcion.toLowerCase().includes(texto)) ||
+        (m.codigoProducto && m.codigoProducto.toLowerCase().includes(texto)) ||
+        (m.notas && m.notas.toLowerCase().includes(texto));
+
+      let coincideSemaforo = true;
+      if (this.filtroMaterialesSemaforo !== 'TODOS') {
+        coincideSemaforo = m.semaforo === this.filtroMaterialesSemaforo;
+      }
+
+      return coincideTexto && coincideSemaforo;
+    });
+  }
+
+  toggleExpandirMaterial(m: SeguimientoMaterial): void {
+    m.expanded = !m.expanded;
+    this._cdr.markForCheck();
+  }
+
+  abrirModalNuevoMaterial(tipoItem: number = 1): void {
+    this.editingMaterialId = null;
+    this.materialFormTipoItem = tipoItem;
+    this.materialFormProductoId = null;
+    this.materialFormCodigo = '';
+    this.materialFormDescripcion = '';
+    this.materialFormUnidad = tipoItem === 2 ? 'SERV' : 'PZA';
+    this.materialFormCantidad = 1;
+    this.materialFormPrecioUnitario = 0;
+    this.materialFormNotas = '';
+    this.busquedaProductoTexto = '';
+    this.productosEncontrados = [];
+    this.showMaterialModal = true;
+    this._cdr.markForCheck();
+  }
+
+  editarMaterial(item: SeguimientoMaterial): void {
+    this.editingMaterialId = item.idMaterial;
+    this.materialFormTipoItem = item.tipoItem;
+    this.materialFormProductoId = item.productoId || null;
+    this.materialFormCodigo = item.codigoProducto || '';
+    this.materialFormDescripcion = item.descripcion || '';
+    this.materialFormUnidad = item.unidadMedida || 'PZA';
+    this.materialFormCantidad = item.cantidadCotizada || 0;
+    this.materialFormPrecioUnitario = item.precioUnitarioCotizado || 0;
+    this.materialFormNotas = item.notas || '';
+    this.busquedaProductoTexto = '';
+    this.productosEncontrados = [];
+    this.showMaterialModal = true;
+    this._cdr.markForCheck();
+  }
+
+  cerrarModalMaterial(): void {
+    this.showMaterialModal = false;
+    this.editingMaterialId = null;
+    this._cdr.markForCheck();
+  }
+
+  buscarProductosCatalogo(): void {
+    const term = (this.busquedaProductoTexto || '').trim();
+    if (term.length < 2) {
+      this.productosEncontrados = [];
+      return;
+    }
+
+    this.isSearchingProductos = true;
+    this._engineeringService.buscarProductosCatalogo(term).subscribe({
+      next: (res) => {
+        this.productosEncontrados = res || [];
+        this.isSearchingProductos = false;
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al buscar productos:', err);
+        this.isSearchingProductos = false;
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  seleccionarProductoContpaq(prod: any): void {
+    this.materialFormProductoId = prod.productoId || prod.id;
+    this.materialFormCodigo = prod.codigoProducto || prod.codigo || '';
+    this.materialFormDescripcion = prod.nombreProducto || prod.nombre || prod.descripcion || '';
+    this.materialFormUnidad = prod.unidadMedida || prod.unidad || 'PZA';
+    this.materialFormPrecioUnitario = prod.precio || prod.costo || 0;
+    this.productosEncontrados = [];
+    this.busquedaProductoTexto = '';
+    this._cdr.markForCheck();
+  }
+
+  guardarMaterialSubmit(): void {
+    if (!this.materialFormDescripcion.trim()) {
+      Swal.fire('Atención', 'Por favor ingresa la descripción del material o servicio.', 'warning');
+      return;
+    }
+
+    if (this.materialFormCantidad <= 0) {
+      Swal.fire('Atención', 'La cantidad presupuestada/cotizada debe ser mayor a cero.', 'warning');
+      return;
+    }
+
+    const payload: GuardarSeguimientoMaterial = {
+      idMaterial: this.editingMaterialId || undefined,
+      idSeguimiento: this.idSeguimiento,
+      tipoItem: this.materialFormTipoItem,
+      productoId: this.materialFormProductoId || undefined,
+      codigoProducto: this.materialFormCodigo?.trim() || undefined,
+      descripcion: this.materialFormDescripcion.trim(),
+      unidadMedida: this.materialFormUnidad.trim(),
+      cantidadCotizada: Number(this.materialFormCantidad),
+      precioUnitarioCotizado: Number(this.materialFormPrecioUnitario),
+      importeCotizado: Number(this.materialFormCantidad) * Number(this.materialFormPrecioUnitario),
+      notas: this.materialFormNotas?.trim() || undefined
+    };
+
+    this.isSavingMaterial = true;
+    this._engineeringService.guardarMaterial(payload).subscribe({
+      next: (res) => {
+        this.isSavingMaterial = false;
+        this.resumenTrazabilidad = res;
+        this.materialesProyecto = res?.materiales || [];
+        this.cerrarModalMaterial();
+        this._cdr.markForCheck();
+        Swal.fire({
+          icon: 'success',
+          title: this.editingMaterialId ? 'Ítem actualizado' : 'Ítem agregado al presupuesto',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        this.isSavingMaterial = false;
+        this._cdr.markForCheck();
+        const msg = err?.error?.mensaje || err?.error || err?.message || 'Error al guardar ítem.';
+        Swal.fire('Error', msg, 'error');
+      }
+    });
+  }
+
+  eliminarMaterialItem(item: SeguimientoMaterial): void {
+    if (!item || !item.idMaterial) return;
+
+    Swal.fire({
+      title: '¿Eliminar del presupuesto?',
+      text: `¿Deseas remover '${item.descripcion}' de los materiales presupuestados para este proyecto?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._engineeringService.eliminarMaterial(item.idMaterial).subscribe({
+          next: (res) => {
+            this.resumenTrazabilidad = res;
+            this.materialesProyecto = res?.materiales || [];
+            this._cdr.markForCheck();
+            Swal.fire({
+              icon: 'success',
+              title: 'Eliminado correctamente',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          },
+          error: (err) => {
+            Swal.fire('Error', 'No se pudo eliminar el material.', 'error');
+          }
+        });
+      }
+    });
+  }
 }
+
