@@ -12,7 +12,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { EngineeringService, SeguimientoEjecucion, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad, SalidaAlmacen, SeguimientoMaterial, ResumenTrazabilidadProyecto, GuardarSeguimientoMaterial } from '../../engineering.service';
+import { SolicitudCompraService } from 'app/modules/admin/administration/solicitudes-compra/solicitud-compra.service';
+import { ProductoBuscadorDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejecucion-actividad-dialog.component';
 import { ConfigurarApartadosDialogComponent } from './dialogs/configurar-apartados-dialog.component';
@@ -62,6 +65,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     DragDropModule,
     MatMenuModule,
     MatCheckboxModule,
+    MatAutocompleteModule,
     ImportarCronogramaDialogComponent
   ],
   templateUrl: './control-ejecucion-form.component.html',
@@ -376,6 +380,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     private _fb: FormBuilder,
     private _dialog: MatDialog,
     private _engineeringService: EngineeringService,
+    private _solicitudCompraService: SolicitudCompraService,
     private _usersService: UsersService,
     private _subcontratacionService: SubcontratacionService,
     private _cdr: ChangeDetectorRef
@@ -2480,28 +2485,28 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     }
 
     this.isSearchingProductos = true;
-    this._engineeringService.buscarProductosCatalogo(term).subscribe({
+    this._solicitudCompraService.consultarExistenciaContpaqi(term).subscribe({
       next: (res) => {
         this.productosEncontrados = res || [];
         this.isSearchingProductos = false;
         this._cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error al buscar productos:', err);
+        console.error('Error al consultar existencias en CONTPAQi:', err);
         this.isSearchingProductos = false;
         this._cdr.markForCheck();
       }
     });
   }
 
-  seleccionarProductoContpaq(prod: any): void {
-    this.materialFormProductoId = prod.productoId || prod.id;
+  seleccionarProductoContpaq(prod: ProductoBuscadorDto | any): void {
+    this.materialFormProductoId = prod.productoId || 0;
     this.materialFormCodigo = prod.codigoProducto || prod.codigo || '';
-    this.materialFormDescripcion = prod.nombreProducto || prod.nombre || prod.descripcion || '';
+    this.materialFormDescripcion = prod.nombreProducto || prod.producto || prod.descripcion || '';
     this.materialFormUnidad = prod.unidadMedida || prod.unidad || 'PZA';
-    this.materialFormPrecioUnitario = prod.precio || prod.costo || 0;
+    this.materialFormPrecioUnitario = prod.costo || prod.precio || this.materialFormPrecioUnitario || 0;
     this.productosEncontrados = [];
-    this.busquedaProductoTexto = '';
+    this.busquedaProductoTexto = `${prod.codigoProducto} - ${prod.nombreProducto}`;
     this._cdr.markForCheck();
   }
 

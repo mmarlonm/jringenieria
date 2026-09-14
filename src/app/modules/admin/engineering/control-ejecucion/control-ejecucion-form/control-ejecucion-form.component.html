@@ -1991,42 +1991,67 @@
           </button>
         </div>
 
-        <!-- Buscador de Producto CONTPAQ (solo si TipoItem === 1) -->
+        <!-- Buscador de Producto CONTPAQ (exactamente como en solicitudes-compra) -->
         <div *ngIf="materialFormTipoItem === 1" class="space-y-2 bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-100/80">
           <div class="flex items-center justify-between">
             <label class="text-xs font-black text-indigo-900 uppercase tracking-wide flex items-center gap-1">
               <mat-icon class="icon-size-3.5 text-indigo-600">search</mat-icon>
               Buscar en Catálogo CONTPAQ
             </label>
-            <span class="text-[10px] text-indigo-600 font-semibold">Teclea al menos 2 letras</span>
+            <span class="text-[10px] text-indigo-600 font-semibold">Teclea al menos 2 letras y presiona Buscar o Enter</span>
           </div>
 
           <div class="flex items-center gap-2">
             <div class="relative flex-1">
               <input type="text" [(ngModel)]="busquedaProductoTexto" (keyup.enter)="buscarProductosCatalogo()"
-                placeholder="Ej. Poste concreto, Cable, Transformador..."
-                class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                placeholder="Buscar por código o nombre (ej. Cable, Poste, Conector...)"
+                class="w-full pl-9 pr-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <mat-icon class="icon-size-4 text-indigo-400 absolute left-2.5 top-2.5">search</mat-icon>
             </div>
-            <button type="button" mat-raised-button color="primary" class="!rounded-xl h-9 px-3 shrink-0"
+            <button type="button" mat-raised-button color="primary" class="!rounded-xl h-9 px-4 shrink-0 shadow-sm"
               (click)="buscarProductosCatalogo()" [disabled]="isSearchingProductos">
               <mat-icon class="icon-size-4" *ngIf="!isSearchingProductos">search</mat-icon>
               <mat-icon class="icon-size-4 animate-spin" *ngIf="isSearchingProductos">sync</mat-icon>
+              <span class="ml-1 text-xs font-bold">Buscar</span>
             </button>
           </div>
 
-          <!-- Resultados de búsqueda -->
-          <div *ngIf="productosEncontrados.length > 0" class="max-h-40 overflow-y-auto bg-white rounded-xl border border-indigo-200 divide-y divide-slate-100 shadow-lg">
+          <!-- Resultados de búsqueda (diseño igual a solicitudes-compra) -->
+          <div *ngIf="productosEncontrados.length > 0" class="max-h-56 overflow-y-auto bg-white rounded-xl border border-indigo-200 divide-y divide-slate-100 shadow-xl custom-scrollbar">
             <div *ngFor="let prod of productosEncontrados" (click)="seleccionarProductoContpaq(prod)"
-              class="p-2.5 hover:bg-indigo-50/60 cursor-pointer flex items-center justify-between text-xs transition-colors">
-              <div>
-                <div class="font-black text-slate-800">{{ prod.nombreProducto || prod.nombre || prod.descripcion }}</div>
-                <div class="font-mono text-[10px] text-indigo-600 font-bold">Código: {{ prod.codigoProducto || prod.codigo }}</div>
+              class="p-3 hover:bg-indigo-50/60 cursor-pointer flex flex-col gap-1 transition-colors group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-indigo-600 group-hover:text-indigo-800">
+                  [{{ prod.codigoProducto }}] - {{ prod.nombreProducto }}
+                </span>
+                <span class="text-[9px] px-2 py-0.5 font-bold rounded uppercase tabular-nums"
+                  [ngClass]="(prod.existencia || 0) > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+                  {{ prod.unidadMedida }}
+                </span>
               </div>
-              <div class="text-right">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">{{ prod.unidadMedida || 'PZA' }}</span>
-                <div class="text-[10px] text-slate-400 mt-0.5">{{ (prod.precio || prod.costo || 0) | currency:'MXN':'symbol':'1.2-2' }}</div>
+
+              <!-- Existencias y Almacén -->
+              <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-1.5 h-1.5 rounded-full" [ngClass]="(prod.existencia || 0) > 0 ? 'bg-emerald-500' : 'bg-rose-500'"></div>
+                  <span class="text-[10px] text-slate-500 font-medium">
+                    Total: <strong [ngClass]="(prod.existencia || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'">{{ prod.existencia || 0 }}</strong> unidades en stock
+                  </span>
+                </div>
+
+                <div *ngIf="prod.existenciasDesglosadas && prod.existenciasDesglosadas.length > 0" class="flex flex-wrap gap-1.5 pl-2 border-l border-slate-200">
+                  <span *ngFor="let ex of prod.existenciasDesglosadas" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-[9px] text-slate-600">
+                    <span class="font-bold uppercase text-slate-400">{{ ex.almacen }}:</span>
+                    <strong [ngClass]="ex.cantidad > 0 ? 'text-emerald-700' : 'text-slate-400'">{{ ex.cantidad }}</strong>
+                  </span>
+                </div>
               </div>
             </div>
+          </div>
+
+          <!-- Mensaje cuando no hay resultados tras buscar -->
+          <div *ngIf="!isSearchingProductos && busquedaProductoTexto.length >= 2 && productosEncontrados.length === 0" class="text-xs text-slate-400 italic py-1 px-2">
+            No se encontraron productos en CONTPAQ con ese criterio. Puedes ingresar los datos manualmente en los campos inferiores.
           </div>
         </div>
 
