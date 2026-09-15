@@ -59,6 +59,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     private _prevSelectedEventoId: number = 0; // para detectar cambio real de evento
 
     private _html5QrCode: any = null;
+    private _scannerLibraryReady: boolean = false; // true once Html5Qrcode script is loaded
 
     // Quick Test Options (derived from service assistants)
     public availableTickets: { label: string; token: string; status: 'present' | 'absent' }[] = [];
@@ -110,6 +111,8 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.isLoadingAsistentes = false;
                     this.countCachedAsistentes();
                     this._cdr.markForCheck();
+                    // asistentes$ won't fire offline, so trigger camera start here
+                    this._tryCameraWhenReady();
                 }
             }
 
@@ -171,6 +174,10 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.availableTickets = [];
                 this._cdr.markForCheck();
             }
+
+            // When assistants finish loading, try to start the camera
+            // (the #reader DOM element is only visible once isLoadingAsistentes = false)
+            this._tryCameraWhenReady();
         });
     }
 
@@ -268,11 +275,14 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        // Load scanner library and initialize
+        // Only load the scanner library here. Do NOT call startCamera() yet because
+        // the #reader DOM element may not exist yet (guarded by *ngIf on isLoadingAsistentes).
+        // The camera starts via _tryCameraWhenReady() once BOTH conditions are met:
+        //   1. Html5Qrcode library loaded
+        //   2. isLoadingAsistentes === false (so #reader is in the DOM)
         this.loadScannerScript().then(() => {
-            setTimeout(() => {
-                this.startCamera();
-            }, 150);
+            this._scannerLibraryReady = true;
+            this._tryCameraWhenReady();
         }).catch(err => {
             console.error('Error loading QR Scanner library', err);
             this.cameraError = 'No se pudo cargar la librería del escáner.';
@@ -304,9 +314,38 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // --- Camera Controls ---
+
+    /** Starts the camera only when BOTH the library is loaded AND the #reader element is in the DOM.
+     *  Call this whenever either condition changes instead of calling startCamera() directly. */
+    private _tryCameraWhenReady(): void {
+        if (!this._scannerLibraryReady) return;        // library not loaded yet
+        if (this.isLoadingAsistentes) return;          // #reader is hidden by *ngIf, not in DOM yet
+        if (this._html5QrCode?.isScanning) return;    // already running
+        if (this.scanState !== 'idle') return;         // result/error screen showing
+
+        // Give Angular one tick to render the #reader element after *ngIf resolves
+        setTimeout(() => {
+            const readerEl = document.getElementById('reader');
+            if (readerEl) {
+                this.startCamera();
+            } else {
+                // DOM not ready yet — retry in 200ms
+                setTimeout(() => this.startCamera(), 200);
+            }
+        }, 100);
+    }
+
     public startCamera(): void {
         this.cameraError = '';
         this._cdr.markForCheck();
+
+        // Safety guard: don't try to init if the #reader element isn't in the DOM yet
+        // (this can happen if isLoadingAsistentes is still true and the *ngIf hides it)
+        const readerEl = document.getElementById('reader');
+        if (!readerEl) {
+            console.warn('[Scanner] #reader element not found in DOM — camera init skipped.');
+            return;
+        }
 
         const Html5Qrcode = (window as any).Html5Qrcode;
         if (!Html5Qrcode) {
