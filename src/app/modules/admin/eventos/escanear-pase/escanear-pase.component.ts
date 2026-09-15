@@ -26,7 +26,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public scanMode: 'general' | number = 'general';
     public availableTalleres: Actividad[] = [];
     public selectedTallerMetrics: ActividadMetricsDto | null = null;
-    public selectedEventoId: number = 2026;
+    public selectedEventoId: number = 0;
     public ediciones: EventoEdicion[] = [];
 
     // State Variables
@@ -138,6 +138,8 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     public onEventoChanged(eventoId: any): void {
+        this.selectedEventoId = Number(eventoId); // actualiza el modelo de forma síncrona para que el <select> no revierta
+        this._cdr.markForCheck();
         this._eventosService.setSeleccionEdicion(Number(eventoId));
     }
 

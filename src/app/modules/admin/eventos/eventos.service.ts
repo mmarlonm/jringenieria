@@ -114,7 +114,7 @@ export class EventosService implements OnDestroy {
     }
 
     // State Subjects
-    private _selectedEventoId = new BehaviorSubject<number>(2026);
+    private _selectedEventoId = new BehaviorSubject<number>(0);
     public selectedEventoId$ = this._selectedEventoId.asObservable();
 
     private _asistentes = new BehaviorSubject<Asistente[]>([]);
@@ -183,10 +183,10 @@ export class EventosService implements OnDestroy {
 
         this._signalrStatus.next('Connecting');
 
-        // Build hub connection
+        // Build hub connection (soporta acceso libre sin auth previa)
         this.hubConnection = new signalR.HubConnectionBuilder()
             .withUrl(url, {
-                accessTokenFactory: () => token || ''
+                accessTokenFactory: () => token ? token : ''
             })
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Warning)
@@ -694,11 +694,14 @@ export class EventosService implements OnDestroy {
                         }));
                         this._ediciones.next(mapped);
 
-                        // If selectedEventoId is not in the list, default to first one
-                        if (mapped.length > 0 && !mapped.some(m => m.id === this._selectedEventoId.value)) {
-                            // Find active one first
-                            const active = list.find(e => e.activo);
-                            this._selectedEventoId.next(active ? active.id : mapped[0].id);
+                        // Only set default if selectedEventoId is 0 or completely invalid
+                        if (mapped.length > 0) {
+                            const currentVal = this._selectedEventoId.value;
+                            const exists = mapped.some(m => m.id === currentVal);
+                            if (!exists) {
+                                const active = list.find(e => e.activo);
+                                this._selectedEventoId.next(active ? active.id : mapped[mapped.length - 1].id);
+                            }
                         }
                     }
                 },
