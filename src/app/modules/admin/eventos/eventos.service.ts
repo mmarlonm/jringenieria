@@ -41,6 +41,8 @@ export interface DispositivoEscanerDto {
     userAgent: string;
     eventoId: number;
     fechaConexion: string;
+    conectado: boolean;        // true = activo, false = desconectado (se conserva en lista)
+    fechaDesconexion?: string; // cuándo se desconectó
 }
 
 export interface DashboardMetricasDto {
@@ -276,6 +278,15 @@ export class EventosService implements OnDestroy {
             this.hubConnection.invoke('RegistrarEscaner', Number(eventoId), nombreTerminal, userAgent)
                 .then(() => console.log('📡 [SignalR] Registrado como terminal escáner activa.'))
                 .catch(err => console.error('📡 [SignalR] Error registrando escáner:', err));
+        }
+    }
+
+    /** Elimina permanentemente un dispositivo del registro en tiempo real (dashboard). */
+    public removerDispositivo(connectionId: string): void {
+        if (this.hubConnection && this._signalrStatus.value === 'Connected') {
+            this.hubConnection.invoke('RemoverDispositivo', connectionId)
+                .then(() => console.log(`📡 [SignalR] Dispositivo ${connectionId} removido del registro.`))
+                .catch(err => console.error('📡 [SignalR] Error removiendo dispositivo:', err));
         }
     }
 

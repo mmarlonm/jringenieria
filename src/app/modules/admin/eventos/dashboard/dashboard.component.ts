@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { NgApexchartsModule, ApexOptions } from 'ng-apexcharts';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente, ActividadMetricsDto } from '../eventos.service';
+import { EventosService, DashboardMetricasDto, EventoEdicion, Asistente, ActividadMetricsDto, DispositivoEscanerDto } from '../eventos.service';
 
 @Component({
     selector: 'eventos-dashboard',
@@ -40,7 +40,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     // State Variables
     public metricas!: DashboardMetricasDto;
     public ediciones: EventoEdicion[] = [];
-    public selectedEventoId: number = 2026;
+    public selectedEventoId: number = 0;
     public signalrStatus: string = 'Disconnected';
     public ultimosIngresos: Asistente[] = [];
     public talleresMetrics: ActividadMetricsDto[] = [];
@@ -51,7 +51,10 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     private soonAnnouncedIds = new Set<number>();
     private checkSoonInterval: any;
 
-    public dispositivosEscaneando: any[] = [];
+    public dispositivosEscaneando: DispositivoEscanerDto[] = [];
+    public get dispositivosConectados(): DispositivoEscanerDto[] {
+        return this.dispositivosEscaneando.filter(d => d.conectado);
+    }
 
     // ApexCharts Configurations
     public chartAsistencia: ApexOptions = {};
@@ -160,6 +163,24 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
 
     public onEventoChanged(eventoId: number): void {
         this._eventosService.setSeleccionEdicion(eventoId);
+    }
+
+    /** Elimina un dispositivo del listado en tiempo real vía SignalR. */
+    public removerDispositivo(dispositivo: DispositivoEscanerDto): void {
+        if (confirm(`¿Eliminar "${dispositivo.nombreTerminal}" del listado?`)) {
+            this._eventosService.removerDispositivo(dispositivo.connectionId);
+        }
+    }
+
+    /** Retorna cuánto tiempo lleva desconectado el dispositivo. */
+    public getDisconnectedTime(dispositivo: DispositivoEscanerDto): string {
+        if (!dispositivo.fechaDesconexion) return '';
+        const diff = Date.now() - new Date(dispositivo.fechaDesconexion).getTime();
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        if (mins === 0) return `hace ${secs}s`;
+        if (mins < 60) return `hace ${mins} min`;
+        return `hace ${Math.floor(mins / 60)}h ${mins % 60}min`;
     }
 
     public irAEncuestas(): void {
