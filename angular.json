@@ -100,7 +100,17 @@
                                 }
                             ],
                             "outputHashing": "all",
-                            "baseHref": "/jringenieria/"
+                            "baseHref": "/jringenieria/",
+                            "optimization": {
+                                "scripts": true,
+                                "styles": {
+                                    "minify": true,
+                                    "inlineCritical": true
+                                },
+                                "fonts": {
+                                    "inline": false
+                                }
+                            }
                         },
                         "development": {
                             "optimization": false,

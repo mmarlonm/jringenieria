@@ -12,6 +12,10 @@ import { EncuestasEventoService } from './encuestas-evento.service';
     imports: [CommonModule, FormsModule, MatIconModule, StarRatingModule],
     encapsulation: ViewEncapsulation.None,
     template: `
+<!-- Google Fonts: loaded at runtime (not inlined at build) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <div class="survey-wrapper">
   <!-- LOADING -->
   <div *ngIf="loading" class="state-container">
@@ -135,7 +139,8 @@ import { EncuestasEventoService } from './encuestas-evento.service';
 </div>
     `,
     styles: [`
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
+/* Google Fonts are loaded via <link> in the template — NOT via @import here */
+/* to avoid Angular's font-inlining plugin failing in CI environments.     */
 
 :host {
   display: block;
