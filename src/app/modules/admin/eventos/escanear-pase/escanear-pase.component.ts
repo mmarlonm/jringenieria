@@ -131,10 +131,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         // Register active scanner device via SignalR
         this._eventosService.signalrStatus$.subscribe(status => {
             if (status === 'Connected') {
-                this._eventosService.registrarEscanerTerminal(
-                    this.selectedEventoId,
-                    `${this.deviceLabel} | ${this.deviceId}`
-                );
+                this.registrarEscanerEnHub();
             }
         });
 
@@ -242,6 +239,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         this._eventosService.getTalleresPorEvento(this.selectedEventoId).subscribe({
             next: (list) => {
                 this.availableTalleres = list || [];
+                this.registrarEscanerEnHub();
                 this._cdr.markForCheck();
             },
             error: (err) => {
@@ -256,10 +254,36 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         this._eventosService.setSeleccionEdicion(Number(eventoId));
     }
 
+    public getSelectedEventoNombre(): string {
+        const ev = (this.ediciones || []).find(e => e.id === Number(this.selectedEventoId));
+        return ev ? ev.nombre : `Evento #${this.selectedEventoId}`;
+    }
+
+    public getModoEscaneoLabel(): string {
+        if (this.scanMode === 'general') {
+            return 'Entrada General';
+        }
+        const tallerId = Number(this.scanMode);
+        const taller = (this.availableTalleres || []).find(t => t.id === tallerId);
+        return taller ? taller.titulo : `Taller #${tallerId}`;
+    }
+
+    private registrarEscanerEnHub(): void {
+        this._eventosService.registrarEscanerTerminal(
+            this.selectedEventoId,
+            `${this.deviceLabel} | ${this.deviceId}`,
+            this.getSelectedEventoNombre(),
+            this.getModoEscaneoLabel()
+        );
+    }
+
     public onModeChange(): void {
         const metrics = this._eventosService.talleresMetricsValue;
         this.updateSelectedTallerMetrics(metrics);
         
+        // Notificar al hub sobre el cambio de modo de escaneo
+        this.registrarEscanerEnHub();
+
         // Reset camera scanning and restart it
         this.stopCamera().then(() => {
             this.scanState = 'idle';

@@ -40,6 +40,8 @@ export interface DispositivoEscanerDto {
     nombreTerminal: string;
     userAgent: string;
     eventoId: number;
+    nombreEvento?: string;
+    modoEscaneo?: string;
     fechaConexion: string;
     conectado: boolean;        // true = activo, false = desconectado (se conserva en lista)
     fechaDesconexion?: string; // cuándo se desconectó
@@ -272,10 +274,10 @@ export class EventosService implements OnDestroy {
             });
     }
 
-    public registrarEscanerTerminal(eventoId: number, nombreTerminal: string): void {
+    public registrarEscanerTerminal(eventoId: number, nombreTerminal: string, nombreEvento: string = '', modoEscaneo: string = ''): void {
         if (this.hubConnection && this._signalrStatus.value === 'Connected') {
             const userAgent = navigator.userAgent || 'Terminal Escáner';
-            this.hubConnection.invoke('RegistrarEscaner', Number(eventoId), nombreTerminal, userAgent)
+            this.hubConnection.invoke('RegistrarEscaner', Number(eventoId), nombreTerminal, userAgent, nombreEvento, modoEscaneo)
                 .then(() => console.log('📡 [SignalR] Registrado como terminal escáner activa.'))
                 .catch(err => console.error('📡 [SignalR] Error registrando escáner:', err));
         }

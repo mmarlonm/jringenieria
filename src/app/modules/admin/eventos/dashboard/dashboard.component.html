@@ -150,7 +150,22 @@
                                    [ngClass]="dev.conectado ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'">
                                     {{ dev.nombreTerminal || 'Terminal Escáner' }}
                                 </p>
+                                
+                                <!-- Event & Scan mode info -->
                                 <div class="flex items-center gap-1 mt-0.5 flex-wrap">
+                                    <span *ngIf="dev.nombreEvento"
+                                          class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40 truncate max-w-[140px]"
+                                          [title]="dev.nombreEvento">
+                                        📍 {{ dev.nombreEvento }}
+                                    </span>
+                                    <span *ngIf="dev.modoEscaneo"
+                                          class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 truncate max-w-[140px]"
+                                          [title]="dev.modoEscaneo">
+                                        ⚙️ {{ dev.modoEscaneo }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-1 mt-1 flex-wrap">
                                     <!-- Connected badge -->
                                     <span *ngIf="dev.conectado"
                                           class="px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
