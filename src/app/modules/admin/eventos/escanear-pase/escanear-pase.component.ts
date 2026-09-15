@@ -94,6 +94,14 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             this.selectedEventoId = id;
 
             if (isRealChange) {
+                // CRITICAL: stop the camera BEFORE setting isLoadingAsistentes=true.
+                // The *ngIf on the scanner section will remove #reader from the DOM when
+                // isLoadingAsistentes becomes true. If the camera is still running at that
+                // point, _html5QrCode.isScanning stays true and _tryCameraWhenReady()
+                // returns early when loading finishes → blank screen.
+                // Stopping here ensures a clean start when the new #reader appears.
+                this.stopCamera();
+
                 // Reset indicators so the UI doesn't show stale data from the previous event
                 this.isLoadingAsistentes = true;
                 this.totalCount = 0;
