@@ -93,25 +93,27 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             this.selectedEventoId = id;
 
             if (isRealChange) {
-                // Reset download/cache indicators so the UI doesn't show stale data
+                // Reset indicators so the UI doesn't show stale data from the previous event
                 this.isLoadingAsistentes = true;
                 this.totalCount = 0;
                 this.cachedCount = 0;
                 this.availableTickets = [];
                 this._cdr.markForCheck();
+
+                if (this.isOnline) {
+                    // Trigger the HTTP load. setSeleccionEdicion (user-click path) also calls
+                    // loadAsistentesPorEvento, so this may fire twice — that's acceptable;
+                    // the second response simply overwrites with identical data and clears the spinner.
+                    this.syncServerAsistentesToLocalDB();
+                } else {
+                    // Offline: nothing to download — show what's cached and clear the spinner
+                    this.isLoadingAsistentes = false;
+                    this.countCachedAsistentes();
+                    this._cdr.markForCheck();
+                }
             }
 
             this.loadAvailableTalleres();
-
-            // Only fetch assistants from server if online AND it's a genuine event change.
-            // setSeleccionEdicion already calls loadAsistentesPorEvento internally;
-            // we only call syncServerAsistentesToLocalDB for the initial auto-load
-            // (when _prevSelectedEventoId was 0, i.e., first emission from the service).
-            if (isRealChange && !this.isOnline) {
-                // Offline: count what's already in IndexedDB for this event
-                this.isLoadingAsistentes = false;
-                this.countCachedAsistentes();
-            }
             this._cdr.markForCheck();
         });
 
