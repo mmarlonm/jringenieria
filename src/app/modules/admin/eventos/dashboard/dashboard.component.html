@@ -98,24 +98,75 @@
                 </div>
             </div>
 
-            <!-- Time Range Selector -->
-            <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-950/60 rounded-xl p-1 flex-shrink-0 self-start sm:self-auto">
-                <button (click)="setChartView('tiempo_real')"
-                        [ngClass]="chartView === 'tiempo_real' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap flex items-center gap-1">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    ⚡ Tiempo Real
-                </button>
-                <button (click)="setChartView('15min')"
-                        [ngClass]="chartView === '15min' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
-                    ⏱️ 15 min
-                </button>
-                <button (click)="setChartView('1h')"
-                        [ngClass]="chartView === '1h' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
-                    📅 1 Hora
-                </button>
+            <!-- Active Scanning Devices & Time Range Selector -->
+            <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <!-- Connected Scanner Devices Badge / Dropdown Button -->
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+                     [matMenuTriggerFor]="devicesMenu">
+                    <span class="relative flex h-2 w-2">
+                        <span *ngIf="dispositivosEscaneando.length > 0" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span [ngClass]="dispositivosEscaneando.length > 0 ? 'bg-emerald-500' : 'bg-slate-400'"
+                              class="relative inline-flex rounded-full h-2 w-2"></span>
+                    </span>
+                    <mat-icon class="icon-size-4 text-indigo-500" svgIcon="heroicons_outline:qr-code"></mat-icon>
+                    <span class="text-[11px] font-black uppercase tracking-wider">
+                        {{ dispositivosEscaneando.length }} {{ dispositivosEscaneando.length === 1 ? 'Escáner Activo' : 'Escáneres Activos' }}
+                    </span>
+                    <mat-icon class="icon-size-3.5 text-slate-400" svgIcon="heroicons_outline:chevron-down"></mat-icon>
+                </div>
+
+                <!-- Devices Popover Menu -->
+                <mat-menu #devicesMenu="matMenu" class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl rounded-2xl p-2 min-w-[260px]">
+                    <div class="px-3 py-2 border-b border-gray-100 dark:border-slate-800/80">
+                        <p class="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <mat-icon class="icon-size-4 text-emerald-500" svgIcon="heroicons_outline:device-tablet"></mat-icon>
+                            Terminales Escaneando en Tiempo Real
+                        </p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">
+                            URL de escaneo: <code class="text-[9px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-500 font-mono">/eventos/escanear-pase</code>
+                        </p>
+                    </div>
+
+                    <div class="py-1 max-h-[200px] overflow-y-auto">
+                        <div *ngFor="let dev of dispositivosEscaneando" class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors">
+                            <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                                    {{ dev.nombreTerminal || 'Terminal Escáner' }}
+                                </p>
+                                <p class="text-[10px] text-slate-400 truncate font-mono">
+                                    Conectado: {{ dev.fechaConexion | date:'HH:mm:ss' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div *ngIf="dispositivosEscaneando.length === 0" class="px-3 py-4 text-center">
+                            <mat-icon class="icon-size-6 text-slate-400 mx-auto mb-1" svgIcon="heroicons_outline:qr-code"></mat-icon>
+                            <p class="text-xs font-medium text-slate-500">No hay escáneres activos en este momento.</p>
+                            <p class="text-[10px] text-slate-400 mt-1">Abre la pantalla de escaneo en una tablet o laptop para conectarla.</p>
+                        </div>
+                    </div>
+                </mat-menu>
+
+                <!-- Time Range Selector -->
+                <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-950/60 rounded-xl p-1">
+                    <button (click)="setChartView('tiempo_real')"
+                            [ngClass]="chartView === 'tiempo_real' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                            class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap flex items-center gap-1">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        ⚡ Tiempo Real
+                    </button>
+                    <button (click)="setChartView('15min')"
+                            [ngClass]="chartView === '15min' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                            class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
+                        ⏱️ 15 min
+                    </button>
+                    <button (click)="setChartView('1h')"
+                            [ngClass]="chartView === '1h' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                            class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 whitespace-nowrap">
+                        📅 1 Hora
+                    </button>
+                </div>
             </div>
         </div>
 

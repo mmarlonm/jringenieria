@@ -51,6 +51,8 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     private soonAnnouncedIds = new Set<number>();
     private checkSoonInterval: any;
 
+    public dispositivosEscaneando: any[] = [];
+
     // ApexCharts Configurations
     public chartAsistencia: ApexOptions = {};
     public chartMedios: ApexOptions = {};
@@ -62,6 +64,14 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(list => {
                 this.ediciones = list || [];
+                this._cdr.markForCheck();
+            });
+
+        // Subscribe to Active Scanning Devices
+        this._eventosService.dispositivosEscaneando$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(list => {
+                this.dispositivosEscaneando = list || [];
                 this._cdr.markForCheck();
             });
 
@@ -194,7 +204,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         this.chartAsistencia = {
             chart: {
                 type: 'area',
-                height: '100%',
+                height: 380,
                 toolbar: { show: false },
                 background: 'transparent',
                 animations: { enabled: true, speed: 500, dynamicAnimation: { enabled: true, speed: 300 } },
@@ -234,14 +244,14 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             yaxis: {
                 labels: {
                     style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif', fontSize: '10px' },
-                    formatter: (val: number) => `${val} pers/h`
+                    formatter: (val: number) => `${val} pers`
                 },
                 min: 0
             },
             grid: {
                 borderColor: 'rgba(148, 163, 184, 0.07)',
                 strokeDashArray: 4,
-                padding: { top: 4, right: 8, bottom: 0, left: 8 }
+                padding: { top: 40, right: 16, bottom: 5, left: 16 }
             },
             tooltip: {
                 theme: 'dark',
@@ -440,16 +450,19 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
         const maxIdx = values.indexOf(maxVal);
         const peakHora = maxIdx >= 0 ? hours[maxIdx] : null;
 
+        // Dynamic Y-axis max with 25% padding so curves and peak labels never hit top edge
+        const dynamicYMax = maxVal > 0 ? Math.ceil(maxVal * 1.3) : 10;
+
         const annotations: any = {};
         if (peakHora && maxVal > 0) {
             annotations.points = [{
                 x: peakHora,
                 y: maxVal,
-                marker: { size: 8, fillColor: '#f59e0b', strokeColor: '#fff', strokeWidth: 2, radius: 3 },
+                marker: { size: 7, fillColor: '#f59e0b', strokeColor: '#fff', strokeWidth: 2, radius: 3 },
                 label: {
                     text: `\u2B50 Pico: ${maxVal} ${yLabel}`,
                     borderColor: 'transparent',
-                    offsetY: -14,
+                    offsetY: -5,
                     style: {
                         background: '#1e293b',
                         color: '#f59e0b',
@@ -492,9 +505,11 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             xaxis: { ...this.chartAsistencia.xaxis, categories: hours },
             yaxis: {
                 ...this.chartAsistencia.yaxis,
+                min: 0,
+                max: dynamicYMax,
                 labels: {
                     style: { colors: '#94a3b8', fontFamily: 'Inter, sans-serif', fontSize: '10px' },
-                    formatter: (val: number) => `${val} ${yLabel}`
+                    formatter: (val: number) => `${Math.round(val)} ${yLabel}`
                 }
             },
             tooltip: {

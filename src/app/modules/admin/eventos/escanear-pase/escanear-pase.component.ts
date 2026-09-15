@@ -72,6 +72,14 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
             this._cdr.markForCheck();
         });
 
+        // Register active scanner device via SignalR
+        this._eventosService.signalrStatus$.subscribe(status => {
+            if (status === 'Connected') {
+                const deviceLabel = navigator.userAgent.includes('Mobile') ? 'Terminal Móvil' : 'Escáner Laptop/PC';
+                this._eventosService.registrarEscanerTerminal(this.selectedEventoId, deviceLabel);
+            }
+        });
+
         // Watch workshop metrics to keep capacity indicator updated in real-time
         this._eventosService.talleresMetrics$.subscribe(metrics => {
             this.updateSelectedTallerMetrics(metrics);

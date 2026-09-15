@@ -35,6 +35,14 @@ export interface Asistente {
     whatsappError?: string;
 }
 
+export interface DispositivoEscanerDto {
+    connectionId: string;
+    nombreTerminal: string;
+    userAgent: string;
+    eventoId: number;
+    fechaConexion: string;
+}
+
 export interface DashboardMetricasDto {
     totalRegistrados: number;
     totalAsistieron: number;
@@ -133,6 +141,9 @@ export class EventosService implements OnDestroy {
         return this._talleresMetrics.value;
     }
 
+    private _dispositivosEscaneando = new BehaviorSubject<DispositivoEscanerDto[]>([]);
+    public dispositivosEscaneando$ = this._dispositivosEscaneando.asObservable();
+
     // SignalR Variables
     private hubConnection: signalR.HubConnection | null = null;
     private _signalrStatus = new BehaviorSubject<'Connected' | 'Disconnected' | 'Reconnecting' | 'Connecting'>('Disconnected');
@@ -210,6 +221,11 @@ export class EventosService implements OnDestroy {
             }
         });
 
+        this.hubConnection.on('ReceiveDispositivosEscaneando', (res: DispositivoEscanerDto[]) => {
+            console.log('📡 [SignalR] Devices scanning update:', res);
+            this._dispositivosEscaneando.next(res || []);
+        });
+
         this.hubConnection.on('ReceiveCheckInEvent', (res: any) => {
             console.log('📡 [SignalR] Check-in event received, reloading assistants:', res);
             const activeId = this._selectedEventoId.value;
@@ -252,6 +268,15 @@ export class EventosService implements OnDestroy {
                 console.warn('📡 [SignalR] Could not connect to real hub:', err.message);
                 this._signalrStatus.next('Disconnected');
             });
+    }
+
+    public registrarEscanerTerminal(eventoId: number, nombreTerminal: string): void {
+        if (this.hubConnection && this._signalrStatus.value === 'Connected') {
+            const userAgent = navigator.userAgent || 'Terminal Escáner';
+            this.hubConnection.invoke('RegistrarEscaner', Number(eventoId), nombreTerminal, userAgent)
+                .then(() => console.log('📡 [SignalR] Registrado como terminal escáner activa.'))
+                .catch(err => console.error('📡 [SignalR] Error registrando escáner:', err));
+        }
     }
 
     public disconnectFromEventHub(eventoId: number): void {
