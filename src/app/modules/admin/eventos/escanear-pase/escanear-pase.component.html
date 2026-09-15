@@ -46,14 +46,84 @@
         <div class="w-full mt-1">
             <label class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Evento Activo</label>
             <select 
-                [ngModel]="selectedEventoId"
+                [(ngModel)]="selectedEventoId"
                 (ngModelChange)="onEventoChanged($event)"
-                class="w-full px-3.5 py-3 rounded-2xl border border-gray-250 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold focus:border-indigo-500 focus:outline-none transition-all dark:text-white focus:ring-1 focus:ring-indigo-500"
+                [disabled]="!isOnline"
+                class="w-full px-3.5 py-3 rounded-2xl border text-sm font-bold focus:outline-none transition-all focus:ring-1"
+                [ngClass]="{
+                    'border-gray-250 dark:border-slate-800 bg-white dark:bg-slate-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500': isOnline,
+                    'border-slate-300 dark:border-slate-700 bg-gray-100 dark:bg-slate-850 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-70': !isOnline
+                }"
             >
                 <option *ngFor="let ed of ediciones" [value]="ed.id">
                     {{ ed.nombre }}
                 </option>
             </select>
+
+            <!-- Offline lock notice -->
+            <div *ngIf="!isOnline" class="flex items-center gap-1.5 mt-1.5 px-1">
+                <mat-icon class="icon-size-3 text-rose-500 dark:text-rose-400" svgIcon="heroicons_outline:lock-closed"></mat-icon>
+                <span class="text-[9px] font-semibold text-rose-500 dark:text-rose-400">Sin conexión — usa el evento precargado</span>
+            </div>
+        </div>
+
+        <!-- OFFLINE CACHE INDICATOR -->
+        <div class="w-full mt-1 px-0.5">
+            <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-1.5">
+                    <mat-icon class="icon-size-3.5"
+                              [ngClass]="{
+                                  'text-emerald-600 dark:text-emerald-400': cacheReady,
+                                  'text-amber-500 dark:text-amber-400': !cacheReady && cachedCount > 0,
+                                  'text-rose-500 dark:text-rose-400': cachedCount === 0
+                              }"
+                              svgIcon="heroicons_outline:circle-stack"></mat-icon>
+                    <span class="text-[9px] font-black uppercase tracking-widest"
+                          [ngClass]="{
+                              'text-emerald-600 dark:text-emerald-400': cacheReady,
+                              'text-amber-600 dark:text-amber-400': !cacheReady && cachedCount > 0,
+                              'text-rose-600 dark:text-rose-400': cachedCount === 0
+                          }">
+                        Copia Offline
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- Ready badge -->
+                    <span *ngIf="cacheReady"
+                          class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[8px] font-black uppercase tracking-wider">
+                        ✓ Listo Offline
+                    </span>
+                    <!-- Count + % -->
+                    <span class="text-[9px] font-mono font-bold"
+                          [ngClass]="{
+                              'text-emerald-600 dark:text-emerald-400': cacheReady,
+                              'text-amber-600 dark:text-amber-400': !cacheReady && cachedCount > 0,
+                              'text-rose-500 dark:text-rose-400': cachedCount === 0
+                          }">
+                        {{ cachedCount }}<span class="text-slate-400 dark:text-slate-600 font-normal">/{{ totalCount > 0 ? totalCount : '?' }}</span>
+                        &nbsp;({{ cachePercent }}%)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700 ease-out"
+                     [ngClass]="{
+                         'bg-emerald-500': cacheReady,
+                         'bg-amber-400': !cacheReady && cachePercent > 0,
+                         'bg-rose-500': cachePercent === 0
+                     }"
+                     [style.width.%]="cachePercent">
+                </div>
+            </div>
+
+            <!-- Hint text -->
+            <p class="text-[8px] text-slate-400 dark:text-slate-600 mt-1 font-medium">
+                <span *ngIf="cachedCount === 0">Sin caché — conéctate a internet para precargar</span>
+                <span *ngIf="cachedCount > 0 && !cacheReady">Descargando asistentes… conéctate para completar</span>
+                <span *ngIf="cacheReady">Todos los pases cargados. Escaneo funciona sin internet.</span>
+            </p>
         </div>
 
         <!-- MODE SELECTOR DROPDOWN -->

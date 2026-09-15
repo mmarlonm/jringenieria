@@ -694,11 +694,12 @@ export class EventosService implements OnDestroy {
                         }));
                         this._ediciones.next(mapped);
 
-                        // Only set default if selectedEventoId is 0 or completely invalid
+                        // Only auto-select at startup (currentVal === 0).
+                        // NEVER override a manual user selection.
                         if (mapped.length > 0) {
                             const currentVal = this._selectedEventoId.value;
                             const exists = mapped.some(m => m.id === currentVal);
-                            if (!exists) {
+                            if (!exists && currentVal === 0) {
                                 const active = list.find(e => e.activo);
                                 this._selectedEventoId.next(active ? active.id : mapped[mapped.length - 1].id);
                             }

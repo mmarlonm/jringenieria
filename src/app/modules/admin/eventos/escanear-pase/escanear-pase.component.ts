@@ -41,6 +41,17 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public pendingCheckInsCount: number = 0;
     private db: IDBDatabase | null = null;
 
+    // Offline cache progress indicator
+    public cachedCount: number = 0;    // cuántos asistentes están en IndexedDB
+    public totalCount: number = 0;     // cuántos asistentes devolvió el servidor
+    public get cachePercent(): number {
+        if (this.totalCount <= 0) return 0;
+        return Math.min(100, Math.round((this.cachedCount / this.totalCount) * 100));
+    }
+    public get cacheReady(): boolean {
+        return this.cachedCount > 0 && this.cachePercent >= 100;
+    }
+
     private _html5QrCode: any = null;
 
     // Quick Test Options (derived from service assistants)
@@ -55,6 +66,7 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         // Open IndexedDB
         this.initIndexedDB().then(() => {
             this.updatePendingCount();
+            this.countCachedAsistentes(); // init: load current cached count
             this.syncOfflineCheckIns();
         });
 
@@ -87,9 +99,15 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
         // Load assistants to populate helper quick-scan buttons for the operator
         this._eventosService.asistentes$.subscribe(list => {
+            // Track total count for the progress indicator (update even when 0, to reset)
+            this.totalCount = list.length;
+            this._cdr.markForCheck();
+
             if (list.length > 0) {
                 // Cache assistants list to IndexedDB whenever it's updated from the server
-                this.saveAsistentesToLocalDB(list);
+                this.saveAsistentesToLocalDB(list).then(() => {
+                    this.countCachedAsistentes(); // refresh cached count after save
+                });
 
                 const absentList = list.filter(a => a.asistencia === 'Faltante').slice(0, 3);
                 const presentList = list.filter(a => a.asistencia === 'Presente').slice(0, 2);
@@ -523,6 +541,8 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                 console.error('📦 [IndexedDB] Error caching assistants:', event.target.error);
                 reject(event.target.error);
             };
+
+            transaction.onabort = () => reject(new Error('Transaction aborted'));
         });
     }
 
@@ -591,11 +611,26 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         };
     }
 
+    /** Counts how many assistants are stored in IndexedDB to show offline cache progress. */
+    private countCachedAsistentes(): void {
+        if (!this.db) return;
+        const transaction = this.db.transaction(['asistentes'], 'readonly');
+        const store = transaction.objectStore('asistentes');
+        const request = store.count();
+
+        request.onsuccess = (event: any) => {
+            this.cachedCount = event.target.result || 0;
+            this._cdr.markForCheck();
+        };
+    }
+
     private syncServerAsistentesToLocalDB(): void {
-        if (this.isOnline) {
-            // Service fetch logic automatically updates assistants BehaviorSubject, 
-            // triggering saveAsistentesToLocalDB cached subscription above.
-            this._eventosService.loadEventos();
+        if (this.isOnline && this.selectedEventoId) {
+            // Reload assistants for the current event into the BehaviorSubject
+            // (triggers saveAsistentesToLocalDB via the asistentes$ subscription above).
+            // NOTE: Do NOT call loadEventos() here — that re-emits ediciones$ causing Angular
+            // to re-render the <option> elements and reset the <select> control.
+            this._eventosService.loadAsistentesPorEvento(this.selectedEventoId);
         }
     }
 
