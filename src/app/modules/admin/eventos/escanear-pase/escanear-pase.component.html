@@ -17,6 +17,14 @@
                 </div>
             </div>
             
+            <!-- Device ID Badge -->
+            <div class="flex flex-col items-end gap-0.5">
+                <span class="text-[8px] font-mono font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 tracking-wide max-w-[160px] truncate" [title]="deviceId">
+                    {{ deviceId }}
+                </span>
+                <span class="text-[8px] text-slate-400 dark:text-slate-600 font-semibold tracking-wide">{{ deviceLabel }}</span>
+            </div>
+            
             <div class="flex items-center gap-2">
                 <!-- Offline pending sync count badge -->
                 <div *ngIf="pendingCheckInsCount > 0" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 animate-pulse text-[10px] font-black">
@@ -209,9 +217,41 @@
 
     <!-- MAIN VIEWPORT (MOBILE CENTERED) -->
     <main class="flex-auto flex flex-col items-center justify-center px-4 py-8 relative z-10">
-        
+
+        <!-- LOADING STATE: downloading assistants after event switch -->
+        <div *ngIf="isLoadingAsistentes && scanState === 'idle'" class="w-full max-w-sm flex flex-col items-center gap-5 animate-fade-in">
+            <div class="h-20 w-20 rounded-full bg-indigo-500/10 border-2 border-indigo-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.15)]">
+                <mat-icon class="text-indigo-500 dark:text-indigo-400 icon-size-10 animate-spin" svgIcon="heroicons_outline:arrow-path"></mat-icon>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-black text-slate-700 dark:text-slate-200 tracking-tight">Descargando asistentes...</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Sincronizando la lista del evento seleccionado</p>
+            </div>
+            <div class="w-48 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full bg-indigo-500 rounded-full animate-pulse" style="width: 60%"></div>
+            </div>
+        </div>
+
+        <!-- EMPTY STATE: event has no assistants -->
+        <div *ngIf="!isLoadingAsistentes && totalCount === 0 && selectedEventoId > 0 && scanState === 'idle'" class="w-full max-w-sm flex flex-col items-center gap-5 animate-fade-in">
+            <div class="h-20 w-20 rounded-full bg-amber-500/10 border-2 border-amber-500/20 flex items-center justify-center">
+                <mat-icon class="text-amber-500 dark:text-amber-400 icon-size-10" svgIcon="heroicons_outline:user-group"></mat-icon>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-black text-slate-700 dark:text-slate-200 tracking-tight">Sin asistentes registrados</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                    Este evento no tiene asistentes aún, o la descarga falló.
+                    <span *ngIf="!isOnline"> Conéctate a internet para descargar.</span>
+                </p>
+            </div>
+            <button *ngIf="isOnline" (click)="syncServerAsistentesToLocalDB()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black tracking-wide transition-colors">
+                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:arrow-path"></mat-icon>
+                Reintentar descarga
+            </button>
+        </div>
+
         <!-- STATUS STATE 1: IDLE / SCANNING -->
-        <div *ngIf="scanState === 'idle' || scanState === 'scanning'" class="w-full max-w-sm flex flex-col items-center gap-8">
+        <div *ngIf="!isLoadingAsistentes && (scanState === 'idle' || scanState === 'scanning')" class="w-full max-w-sm flex flex-col items-center gap-8">
             
             <!-- CAMERA SCREEN FRAME -->
             <div class="relative w-80 h-80 rounded-[2.5rem] overflow-hidden border-4 border-gray-300 dark:border-slate-800/80 shadow-2xl dark:shadow-[0_0_50px_rgba(99,102,241,0.15)] bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center transition-all duration-300">

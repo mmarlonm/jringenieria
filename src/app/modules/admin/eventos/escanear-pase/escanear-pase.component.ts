@@ -34,7 +34,8 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     public scanResult: any = null;
     public tokenInput: string = '';
     public cameraError: string = '';
-    public cupoSobrepasado: boolean = false; // bandera de advertencia sin bloquear acceso
+    public cupoSobrepasado: boolean = false;
+    public isLoadingAsistentes: boolean = false; // true mientras se descarga la lista al cambiar evento
 
     // Offline / Network variables
     public isOnline: boolean = true;
@@ -42,15 +43,20 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
     private db: IDBDatabase | null = null;
 
     // Offline cache progress indicator
-    public cachedCount: number = 0;    // cuántos asistentes están en IndexedDB
-    public totalCount: number = 0;     // cuántos asistentes devolvió el servidor
+    public cachedCount: number = 0;
+    public totalCount: number = 0;
     public get cachePercent(): number {
-        if (this.totalCount <= 0) return 0;
+        if (this.totalCount <= 0) return this.cachedCount > 0 ? 100 : 0;
         return Math.min(100, Math.round((this.cachedCount / this.totalCount) * 100));
     }
     public get cacheReady(): boolean {
-        return this.cachedCount > 0 && this.cachePercent >= 100;
+        return this.cachedCount > 0 && this.totalCount > 0 && this.cachePercent >= 100;
     }
+
+    // Device identification (persistent fingerprint stored in localStorage)
+    public deviceId: string = '';
+    public deviceLabel: string = '';
+    private _prevSelectedEventoId: number = 0; // para detectar cambio real de evento
 
     private _html5QrCode: any = null;
 
@@ -62,6 +68,10 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         this.isOnline = navigator.onLine;
         window.addEventListener('online', this.onNetworkOnline);
         window.addEventListener('offline', this.onNetworkOffline);
+
+        // Build persistent device fingerprint
+        this.deviceId = this.getOrCreateDeviceId();
+        this.deviceLabel = this.buildDeviceLabel();
 
         // Open IndexedDB
         this.initIndexedDB().then(() => {
@@ -78,17 +88,40 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
         // Subscribe to Selected Event ID
         this._eventosService.selectedEventoId$.subscribe(id => {
+            const isRealChange = id > 0 && id !== this._prevSelectedEventoId;
+            this._prevSelectedEventoId = id;
             this.selectedEventoId = id;
+
+            if (isRealChange) {
+                // Reset download/cache indicators so the UI doesn't show stale data
+                this.isLoadingAsistentes = true;
+                this.totalCount = 0;
+                this.cachedCount = 0;
+                this.availableTickets = [];
+                this._cdr.markForCheck();
+            }
+
             this.loadAvailableTalleres();
-            this.syncServerAsistentesToLocalDB();
+
+            // Only fetch assistants from server if online AND it's a genuine event change.
+            // setSeleccionEdicion already calls loadAsistentesPorEvento internally;
+            // we only call syncServerAsistentesToLocalDB for the initial auto-load
+            // (when _prevSelectedEventoId was 0, i.e., first emission from the service).
+            if (isRealChange && !this.isOnline) {
+                // Offline: count what's already in IndexedDB for this event
+                this.isLoadingAsistentes = false;
+                this.countCachedAsistentes();
+            }
             this._cdr.markForCheck();
         });
 
         // Register active scanner device via SignalR
         this._eventosService.signalrStatus$.subscribe(status => {
             if (status === 'Connected') {
-                const deviceLabel = navigator.userAgent.includes('Mobile') ? 'Terminal Móvil' : 'Escáner Laptop/PC';
-                this._eventosService.registrarEscanerTerminal(this.selectedEventoId, deviceLabel);
+                this._eventosService.registrarEscanerTerminal(
+                    this.selectedEventoId,
+                    `${this.deviceLabel} | ${this.deviceId}`
+                );
             }
         });
 
@@ -99,14 +132,15 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
         // Load assistants to populate helper quick-scan buttons for the operator
         this._eventosService.asistentes$.subscribe(list => {
-            // Track total count for the progress indicator (update even when 0, to reset)
+            // Clears the loading spinner and updates counts
+            this.isLoadingAsistentes = false;
             this.totalCount = list.length;
             this._cdr.markForCheck();
 
             if (list.length > 0) {
                 // Cache assistants list to IndexedDB whenever it's updated from the server
                 this.saveAsistentesToLocalDB(list).then(() => {
-                    this.countCachedAsistentes(); // refresh cached count after save
+                    this.countCachedAsistentes();
                 });
 
                 const absentList = list.filter(a => a.asistencia === 'Faltante').slice(0, 3);
@@ -130,6 +164,10 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                     }
                 ];
                 this._cdr.markForCheck();
+            } else {
+                // Empty event — clear quick-test tickets
+                this.availableTickets = [];
+                this._cdr.markForCheck();
             }
         });
     }
@@ -140,6 +178,46 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
 
     public getStaffPhotoUrl(id: number): string {
         return `${environment.apiUrl}/PersonalStaff/photo/${id}`;
+    }
+
+    // --- Device Fingerprint ---
+    /** Returns a persistent device ID from localStorage, generating one if absent.
+     *  Browsers block MAC address access; we combine a UUID + screen + platform
+     *  to create a stable identifier for the SignalR device registry. */
+    private getOrCreateDeviceId(): string {
+        const KEY = 'tuzoforum_scanner_device_id';
+        const stored = localStorage.getItem(KEY);
+        if (stored) return stored;
+
+        // Build a short fingerprint: PLT-WxH-UUID8
+        const platform = (navigator.platform || 'UNK').replace(/[^a-zA-Z0-9]/g, '').substring(0, 5).toUpperCase();
+        const screen = `${window.screen.width}x${window.screen.height}`;
+        const uuid = 'xxxxxxxxxxxx'.replace(/x/g, () =>
+            Math.floor(Math.random() * 16).toString(16)
+        ).toUpperCase();
+        const id = `${platform}-${screen}-${uuid}`;
+        localStorage.setItem(KEY, id);
+        return id;
+    }
+
+    /** Human-readable label for the SignalR scanner dashboard. */
+    private buildDeviceLabel(): string {
+        const ua = navigator.userAgent;
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+        const isTablet = /iPad|Tablet/i.test(ua);
+
+        let type = isTablet ? 'Tablet' : isMobile ? 'Móvil' : 'PC/Laptop';
+
+        // Detect OS
+        let os = 'Unknown OS';
+        if (/Windows NT 10/.test(ua)) os = 'Win10';
+        else if (/Windows NT 11/.test(ua)) os = 'Win11';
+        else if (/Android/.test(ua)) os = 'Android';
+        else if (/iPhone OS/.test(ua)) os = 'iOS';
+        else if (/Mac OS X/.test(ua)) os = 'macOS';
+        else if (/Linux/.test(ua)) os = 'Linux';
+
+        return `${type} (${os})`;
     }
 
     // --- Loading Workshops ---
@@ -624,12 +702,14 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         };
     }
 
-    private syncServerAsistentesToLocalDB(): void {
+    public syncServerAsistentesToLocalDB(): void {
         if (this.isOnline && this.selectedEventoId) {
             // Reload assistants for the current event into the BehaviorSubject
             // (triggers saveAsistentesToLocalDB via the asistentes$ subscription above).
             // NOTE: Do NOT call loadEventos() here — that re-emits ediciones$ causing Angular
             // to re-render the <option> elements and reset the <select> control.
+            this.isLoadingAsistentes = true;
+            this._cdr.markForCheck();
             this._eventosService.loadAsistentesPorEvento(this.selectedEventoId);
         }
     }
