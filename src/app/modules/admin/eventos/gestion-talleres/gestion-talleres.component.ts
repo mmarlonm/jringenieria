@@ -369,6 +369,14 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
 
     private formatDateTimeLocal(dateStr: string): string {
         if (!dateStr) return '';
+        // If it's already an ISO string like "2026-09-16T12:00:00" or with timezone
+        // Extract the YYYY-MM-DDTHH:mm portion using string splitting if possible to preserve local time
+        if (typeof dateStr === 'string' && dateStr.includes('T')) {
+            const parts = dateStr.split('T');
+            const datePart = parts[0];
+            const timePart = parts[1].substring(0, 5); // HH:mm
+            return `${datePart}T${timePart}`;
+        }
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return '';
         const pad = (n: number) => n.toString().padStart(2, '0');
@@ -407,6 +415,13 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
     }
 
+    private toLocalIsoString(dateTimeLocalStr: string): string {
+        if (!dateTimeLocalStr) return new Date().toISOString();
+        // datetime-local input produces "YYYY-MM-DDTHH:mm"
+        // Ensure seconds are present: "YYYY-MM-DDTHH:mm:00"
+        return dateTimeLocalStr.length === 16 ? `${dateTimeLocalStr}:00` : dateTimeLocalStr;
+    }
+
     public onSubmitTaller(): void {
         if (this.tallerForm.invalid) return;
 
@@ -422,8 +437,8 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
             cupoMaximo: Number(formValue.cupoMaximo),
             ubicacionLugar: formValue.ubicacionLugar,
             fotoPublicidadUrl: formValue.fotoPublicidadUrl || null,
-            fechaHoraInicio: new Date(formValue.fechaHoraInicio).toISOString(),
-            fechaHoraFin: new Date(formValue.fechaHoraFin).toISOString()
+            fechaHoraInicio: this.toLocalIsoString(formValue.fechaHoraInicio),
+            fechaHoraFin: this.toLocalIsoString(formValue.fechaHoraFin)
         };
 
         if (this.editingTaller) {
