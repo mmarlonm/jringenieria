@@ -661,6 +661,23 @@ export class EventosService implements OnDestroy {
         return this._http.get<Actividad[]>(`${this.apiBase}/Asistentes/talleres/${eventoId}`);
     }
 
+    // --- Módulo de Cronograma / Agenda de Actividades por Evento ---
+    public getActividadesCronograma(eventoId: number): Observable<any[]> {
+        return this._http.get<any[]>(`${this.apiBase}/Actividades?eventoId=${eventoId}`);
+    }
+
+    public guardarActividadCronograma(payload: any): Observable<any> {
+        return this._http.post<any>(`${this.apiBase}/Actividades`, payload);
+    }
+
+    public eliminarActividadCronograma(id: number): Observable<any> {
+        return this._http.delete<any>(`${this.apiBase}/Actividades/${id}`);
+    }
+
+    public getPersonalStaffList(): Observable<any[]> {
+        return this._http.get<any[]>(`${this.apiBase}/PersonalStaff`);
+    }
+
     public crearTaller(taller: any): Observable<Actividad> {
         return this._http.post<Actividad>(`${this.apiBase}/Asistentes/talleres`, taller);
     }

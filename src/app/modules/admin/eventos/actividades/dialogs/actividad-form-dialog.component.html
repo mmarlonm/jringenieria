@@ -24,21 +24,68 @@
             <mat-error *ngIf="form.get('eventoId').hasError('required')">El evento es requerido</mat-error>
         </mat-form-field>
 
-        <!-- Colaborador Selector (Staff) -->
+        <!-- Tipo / Categoría de Actividad -->
         <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Asignar a Colaborador (Staff / Expositor)</mat-label>
-            <mat-select formControlName="personalStaffId">
-                <mat-option *ngFor="let p of personalList" [value]="p.id">
-                    {{ p.nombreCompleto }} ({{ p.tipoPersonal }})
+            <mat-label>Tipo / Categoría de Actividad</mat-label>
+            <mat-select formControlName="tipoActividad">
+                <mat-option [value]="'General'">Actividad General - Protocolo</mat-option>
+                <mat-option [value]="'Ceremonia'">Ceremonia - Inauguración - Clausura</mat-option>
+                <mat-option [value]="'Conferencia'">Conferencia - Ponencia</mat-option>
+                <mat-option [value]="'Conferencia Magistral'">Conferencia Magistral</mat-option>
+                <mat-option [value]="'Panel de Discusión'">Panel de Discusión - Debate</mat-option>
+                <mat-option [value]="'Taller Práctico'">Taller Práctico</mat-option>
+                <mat-option [value]="'Taller Especializado'">Taller Especializado</mat-option>
+                <mat-option [value]="'Mesa B2B'">Mesas de Negocio B2B</mat-option>
+                <mat-option [value]="'Vinculacion'">Vinculación - Networking</mat-option>
+                <mat-option [value]="'Receso'">Receso - Comida - Break</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <!-- Vinculación con Actividad Padre (Para Crear Sub-actividades) -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Actividad Padre (Opcional - Para Sub-actividades)</mat-label>
+            <mat-select formControlName="actividadPadreId">
+                <mat-option [value]="null">-- Ninguna (Es Actividad Principal / Padre) --</mat-option>
+                <mat-option *ngFor="let pad of actividadesPadreList" [value]="pad.id">
+                    Sub-actividad de: {{ pad.titulo }} ({{ pad.tipoActividad || 'General' }})
                 </mat-option>
             </mat-select>
-            <mat-error *ngIf="form.get('personalStaffId').hasError('required')">El colaborador es requerido</mat-error>
+        </mat-form-field>
+
+        <!-- Toggle Asignación Libre -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800">
+            <div>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Asignación Nombre Libre</span>
+                <span class="text-[10px] text-slate-400">Si la persona no está en el catálogo de Staff</span>
+            </div>
+            <mat-checkbox 
+                [checked]="isAsignacionLibre" 
+                (change)="toggleAsignacionLibre($event.checked)"
+                color="primary"
+            ></mat-checkbox>
+        </div>
+
+        <!-- Colaborador Selector (Staff) -->
+        <mat-form-field *ngIf="!isAsignacionLibre" appearance="outline" class="w-full">
+            <mat-label>Asignar a Colaborador (Staff / Expositor)</mat-label>
+            <mat-select formControlName="personalStaffId">
+                <mat-option [value]="0">-- General / Sin Asignar --</mat-option>
+                <mat-option *ngFor="let p of personalList" [value]="p.id">
+                    {{ p.nombreCompleto }} ({{ p.tipoPersonal || p.cargo || 'Staff' }})
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <!-- Input Nombre Libre (Encargado o Ponente) -->
+        <mat-form-field *ngIf="isAsignacionLibre" appearance="outline" class="w-full">
+            <mat-label>Nombre del Encargado / Ponente</mat-label>
+            <input matInput formControlName="nombreAsignadoLibre" placeholder="Ej. Dr. Roberto Mendoza / Protocolo Pachuca...">
         </mat-form-field>
 
         <!-- Titulo -->
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Título de la Actividad / Tarea</mat-label>
-            <input matInput formControlName="titulo" placeholder="Ej. Registro de Asistentes, Conferencia Magistral, etc.">
+            <input matInput formControlName="titulo" placeholder="Ej. Inauguración / Registro de Staff / Conferencia...">
             <mat-error *ngIf="form.get('titulo').hasError('required')">El título es requerido</mat-error>
             <mat-error *ngIf="form.get('titulo').hasError('maxlength')">Máximo 150 caracteres</mat-error>
         </mat-form-field>
@@ -53,7 +100,7 @@
         <!-- ===== FECHA Y HORA INICIO ===== -->
         <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                📅 Inicio
+                Inicio
             </label>
             <div class="flex gap-3 items-start">
                 <!-- Date Picker -->
@@ -78,7 +125,7 @@
         <!-- ===== FECHA Y HORA FIN ===== -->
         <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                🏁 Fin
+                Fin
             </label>
             <div class="flex gap-3 items-start">
                 <!-- Date Picker -->

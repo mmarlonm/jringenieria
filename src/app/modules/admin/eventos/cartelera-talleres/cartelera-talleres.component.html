@@ -146,8 +146,32 @@
     <div class="w-full px-4 sm:px-6 lg:px-12 py-6 sm:py-8 space-y-6 sm:space-y-8">
         
         <div class="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 bg-slate-900/60 p-3 sm:p-4 rounded-2xl border border-slate-800 backdrop-blur-md shadow-xl">
-            <!-- Filter Pills -->
+            <!-- Filter Pills (Category & Day) -->
             <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <!-- Day Pills (Dynamically Detected) -->
+                <div *ngIf="availableDias.length > 0" class="flex flex-wrap items-center gap-1.5 pr-3 border-r border-slate-700/60">
+                    <button (click)="setDiaFiltro('all')"
+                            [ngClass]="{
+                                'bg-cyan-500 text-slate-950 font-black shadow-[0_0_15px_rgba(6,182,212,0.4)]': selectedDiaFiltro === 'all',
+                                'bg-slate-800/80 text-slate-300 hover:bg-slate-700': selectedDiaFiltro !== 'all'
+                            }"
+                            class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1">
+                        <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:calendar"></mat-icon>
+                        <span>Todos los Días</span>
+                    </button>
+                    <button *ngFor="let dia of availableDias; let idx = index"
+                            (click)="setDiaFiltro(dia)"
+                            [ngClass]="{
+                                'bg-cyan-500 text-slate-950 font-black shadow-[0_0_15px_rgba(6,182,212,0.4)]': selectedDiaFiltro === dia,
+                                'bg-slate-800/80 text-slate-300 hover:bg-slate-700': selectedDiaFiltro !== dia
+                            }"
+                            class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1">
+                        <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:calendar-days"></mat-icon>
+                        <span>{{ formatDiaNombre(dia, idx) }}</span>
+                    </button>
+                </div>
+
+                <!-- Category Type Pills -->
                 <button (click)="setFilter('TODOS')"
                         [ngClass]="{'bg-cyan-500 text-slate-950 font-black shadow-[0_0_15px_rgba(6,182,212,0.4)]': activeFilter === 'TODOS', 'bg-slate-800/80 text-slate-300 hover:bg-slate-700': activeFilter !== 'TODOS'}"
                         class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all">

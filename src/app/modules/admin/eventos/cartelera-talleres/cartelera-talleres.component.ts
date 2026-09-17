@@ -41,7 +41,9 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
   public talleresMetrics: ActividadMetricsDto[] = [];
   public talleresDetalle: Actividad[] = [];
   public activeFilter: 'TODOS' | 'TALLER' | 'CONFERENCIA' | 'GRATUITO' | 'PAGO' = 'TODOS';
+  public selectedDiaFiltro: string = 'all';
   public searchTerm: string = '';
+  public cronogramaList: any[] = [];
 
   // 3D Card Stack Items Array
   public sliderItems: any[] = [];
@@ -162,8 +164,42 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
     });
   }
 
+  public get availableDias(): string[] {
+    const diasSet = new Set<string>();
+    (this.talleresMetrics || []).forEach(t => {
+      const full = this.talleresDetalle.find(d => d.id === t.actividadId);
+      const raw = full?.fechaHoraInicio || t.fechaHoraInicio;
+      if (raw) {
+        const datePart = String(raw).split('T')[0];
+        if (datePart) diasSet.add(datePart);
+      }
+    });
+    return Array.from(diasSet).sort();
+  }
+
+  public formatDiaNombre(dateStr: string, index: number): string {
+    if (!dateStr) return `Día ${index + 1}`;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const day = parts[2];
+      const monthName = months[monthIdx] || '';
+      return `Día ${String(index + 1).padStart(2, '0')} (${day} ${monthName})`;
+    }
+    return `Día ${index + 1}`;
+  }
+
   public rebuildFilteredList(): void {
     let list = this.buildMergedList();
+
+    if (this.selectedDiaFiltro && this.selectedDiaFiltro !== 'all') {
+      list = list.filter(t => {
+        const raw = t.fechaHoraInicioRaw || t.fechaHoraInicio;
+        if (!raw) return false;
+        return String(raw).startsWith(this.selectedDiaFiltro);
+      });
+    }
 
     if (this.searchTerm.trim()) {
       const q = this.searchTerm.toLowerCase();
@@ -185,6 +221,12 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
 
   public setFilter(filter: 'TODOS' | 'TALLER' | 'CONFERENCIA' | 'GRATUITO' | 'PAGO'): void {
     this.activeFilter = filter;
+    this.rebuildFilteredList();
+    this._cdr.markForCheck();
+  }
+
+  public setDiaFiltro(dia: string): void {
+    this.selectedDiaFiltro = dia;
     this.rebuildFilteredList();
     this._cdr.markForCheck();
   }

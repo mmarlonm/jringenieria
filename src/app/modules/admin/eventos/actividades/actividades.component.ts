@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ActividadesService, ActividadStaff } from './actividades.service';
 import { ActividadFormDialogComponent } from './dialogs/actividad-form-dialog.component';
 import { EventosService } from '../eventos.service';
@@ -31,13 +33,15 @@ import Swal from 'sweetalert2';
         MatTooltipModule
     ]
 })
-export class ActividadesComponent implements OnInit {
+export class ActividadesComponent implements OnInit, OnDestroy {
     actividadesList: ActividadStaff[] = [];
     filteredList: ActividadStaff[] = [];
     isLoading: boolean = true;
     eventosList: any[] = [];
     selectedEventoId: number = 0;
     searchQuery: string = '';
+
+    private destroy$ = new Subject<void>();
 
     constructor(
         private _actividadesService: ActividadesService,
@@ -46,18 +50,32 @@ export class ActividadesComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this._eventosService.ediciones$.subscribe(list => {
-            this.eventosList = list || [];
-        });
-        this._eventosService.selectedEventoId$.subscribe(id => {
-            if (id && this.selectedEventoId === 0) {
-                this.selectedEventoId = id;
-                this.loadData();
-            }
-        });
-        if (this.selectedEventoId === 0) {
-            this.loadData();
-        }
+        this._eventosService.ediciones$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(list => {
+                this.eventosList = list || [];
+            });
+
+        this._eventosService.selectedEventoId$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(id => {
+                if (id) {
+                    this.selectedEventoId = id;
+                    this.loadData();
+                }
+            });
+
+        this._eventosService.loadEventos();
+    }
+
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    onEventoChange(eventoId: number): void {
+        this.selectedEventoId = eventoId;
+        this.loadData();
     }
 
     loadData(): void {
@@ -82,16 +100,27 @@ export class ActividadesComponent implements OnInit {
             return !query ||
                 a.titulo.toLowerCase().includes(query) ||
                 (a.descripcion && a.descripcion.toLowerCase().includes(query)) ||
-                (a.personalStaffNombre && a.personalStaffNombre.toLowerCase().includes(query));
+                (a.personalStaffNombre && a.personalStaffNombre.toLowerCase().includes(query)) ||
+                (a.nombreAsignadoLibre && a.nombreAsignadoLibre.toLowerCase().includes(query)) ||
+                (a.tipoActividad && a.tipoActividad.toLowerCase().includes(query));
         });
     }
 
-    openActividadDialog(actividad?: ActividadStaff): void {
+    public get rootActividades(): ActividadStaff[] {
+        return this.filteredList.filter(a => !a.actividadPadreId);
+    }
+
+    public getSubActividades(padreId: number): ActividadStaff[] {
+        return this.actividadesList.filter(a => a.actividadPadreId === padreId);
+    }
+
+    openActividadDialog(actividad?: ActividadStaff, actividadPadreId?: number): void {
         const dialogRef = this._dialog.open(ActividadFormDialogComponent, {
             width: '100%',
-            maxWidth: '550px',
+            maxWidth: '600px',
             data: { 
                 actividad,
+                actividadPadreId,
                 selectedEventoId: this.selectedEventoId 
             }
         });
@@ -100,7 +129,7 @@ export class ActividadesComponent implements OnInit {
             if (result) {
                 Swal.fire({
                     title: '¡Guardado!',
-                    text: 'La actividad ha sido asignada con éxito.',
+                    text: 'La actividad ha sido registrada con éxito.',
                     icon: 'success',
                     timer: 2000,
                     showConfirmButton: false
@@ -113,7 +142,7 @@ export class ActividadesComponent implements OnInit {
     deleteActividad(actividad: ActividadStaff): void {
         Swal.fire({
             title: '¿Eliminar actividad?',
-            text: `¿Estás seguro de eliminar la actividad "${actividad.titulo}"? Esta acción no se puede deshacer.`,
+            text: `¿Estás seguro de eliminar "${actividad.titulo}"? Si tiene subactividades asignadas, también se verán afectadas.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',

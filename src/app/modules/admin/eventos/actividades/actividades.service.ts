@@ -5,15 +5,18 @@ import { environment } from 'environments/environment';
 
 export interface ActividadStaff {
     id: number;
-    personalStaffId: number;
+    personalStaffId?: number | null;
     personalStaffNombre?: string;
+    nombreAsignadoLibre?: string;
     eventoId: number;
     eventoNombre?: string;
     titulo: string;
+    tipoActividad?: string;
     descripcion?: string;
     fechaInicio: string;
     fechaFin: string;
     fechaRegistro?: string;
+    actividadPadreId?: number | null;
 }
 
 @Injectable({

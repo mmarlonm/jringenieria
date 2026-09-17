@@ -350,6 +350,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.cronograma', title: 'Cronograma del Evento', type: 'basic', icon: 'heroicons_outline:clock', link: '/eventos/cronograma' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
@@ -431,6 +432,7 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.cronograma', title: 'Cronograma del Evento', type: 'basic', icon: 'heroicons_outline:clock', link: '/eventos/cronograma' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
@@ -497,6 +499,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.cronograma', title: 'Cronograma del Evento', type: 'basic', icon: 'heroicons_outline:clock', link: '/eventos/cronograma' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },
@@ -563,6 +566,7 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'eventos.dashboard', title: 'Dashboard en Tiempo Real', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/eventos/dashboard' },
             { id: 'eventos.control', title: 'Control de Asistentes', type: 'basic', icon: 'heroicons_outline:user-group', link: '/eventos/control' },
+            { id: 'eventos.cronograma', title: 'Cronograma del Evento', type: 'basic', icon: 'heroicons_outline:clock', link: '/eventos/cronograma' },
             { id: 'eventos.talleres', title: 'Gestión de Talleres', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/eventos/gestion-talleres' },
             { id: 'eventos.personal', title: 'Personal y Expositores', type: 'basic', icon: 'heroicons_outline:identification', link: '/eventos/personal' },
             { id: 'eventos.actividades', title: 'Asignar Actividades', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/eventos/actividades' },

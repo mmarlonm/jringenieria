@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
@@ -35,15 +35,29 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     private _eventosService = inject(EventosService);
     private _cdr = inject(ChangeDetectorRef);
     private _router = inject(Router);
+    private _route = inject(ActivatedRoute);
     private _fb = inject(FormBuilder);
 
     // State
-    public activeTab: 'metrics' | 'matrix' | 'config' | 'scanLink' | 'slider' = 'metrics';
+    public activeTab: 'metrics' | 'matrix' | 'config' | 'scanLink' | 'slider' | 'cronograma' = 'metrics';
     public selectedEventoId: number = 2026;
     public signalrStatus: string = 'Disconnected';
     
+    // Cronograma / Schedule Module
+    public cronogramaList: any[] = [];
+    public staffList: any[] = [];
+    public cronogramaForm!: FormGroup;
+    public isCreatingCronograma: boolean = false;
+    public editingCronogramaActividad: any | null = null;
+    public isAsignacionLibre: boolean = false;
+
     // Live Dashboard
     public talleresMetrics: ActividadMetricsDto[] = [];
+    
+    // Activity Modal from Workshop Card
+    public showActividadModal: boolean = false;
+    public selectedTallerForModal: Actividad | ActividadMetricsDto | null = null;
+    public isActividadGeneralModal: boolean = false;
     
     // Pre-assignment Matrix
     public asistentes: Asistente[] = [];
@@ -87,6 +101,17 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.initTallerForm();
+        this.initCronogramaForm();
+
+        if (this._router.url.includes('/eventos/cronograma')) {
+            this.setTab('cronograma');
+        }
+
+        this._route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+            if (params['tab'] === 'cronograma') {
+                this.setTab('cronograma');
+            }
+        });
 
         // Subscribe to Ediciones
         this._eventosService.ediciones$
@@ -103,6 +128,8 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
                 this.selectedEventoId = id;
                 this.loadTalleresAdminList();
                 this._eventosService.loadTalleresMetrics(id);
+                this.loadCronogramaList();
+                this.loadStaffList();
                 this.selectedAsistente = null;
                 this._cdr.markForCheck();
             });
@@ -162,9 +189,13 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     }
 
     // --- Tab Switcher ---
-    public setTab(tab: 'metrics' | 'matrix' | 'config' | 'scanLink' | 'slider'): void {
+    public setTab(tab: 'metrics' | 'matrix' | 'config' | 'scanLink' | 'slider' | 'cronograma'): void {
         this.activeTab = tab;
         if (tab === 'config' || tab === 'slider') {
+            this.loadTalleresAdminList();
+        } else if (tab === 'cronograma') {
+            this.loadCronogramaList();
+            this.loadStaffList();
             this.loadTalleresAdminList();
         }
         this._cdr.markForCheck();
@@ -278,6 +309,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         this.tallerForm = this._fb.group({
             titulo: ['', [Validators.required]],
             expositor: ['', [Validators.required]],
+            formato: ['Taller', [Validators.required]],
             tipo: ['Pago', [Validators.required]],
             cupoMaximo: [30, [Validators.required, Validators.min(1)]],
             ubicacionLugar: ['', [Validators.required]],
@@ -359,6 +391,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         this._eventosService.getTalleresPorEvento(this.selectedEventoId).subscribe({
             next: (list) => {
                 this.talleresList = list || [];
+                this.updateSelectedDiaDefault();
                 this._cdr.markForCheck();
             },
             error: (err) => {
@@ -391,9 +424,11 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     public startEditTaller(taller: Actividad): void {
         this.editingTaller = taller;
         this.fotoPreview = taller.fotoPublicidadUrl || null;
+        const tipoAct = (taller as any).tipoActividad || ((taller.titulo || '').toLowerCase().includes('especializado') ? 'Taller Especializado' : (taller.titulo || '').toLowerCase().includes('taller') ? 'Taller Práctico' : 'Conferencia');
         this.tallerForm.patchValue({
             titulo: taller.titulo,
             expositor: taller.expositor,
+            formato: tipoAct,
             tipo: taller.tipo,
             cupoMaximo: taller.cupoMaximo,
             ubicacionLugar: taller.ubicacionLugar,
@@ -408,6 +443,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         this.editingTaller = null;
         this.fotoPreview = null;
         this.tallerForm.reset({
+            formato: 'Taller Práctico',
             tipo: 'Pago',
             cupoMaximo: 30,
             fotoPublicidadUrl: ''
@@ -429,11 +465,15 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
 
         const formValue = this.tallerForm.value;
+        const finalTitulo = formValue.titulo.trim();
+        const formato = formValue.formato; // 'Taller Práctico' | 'Taller Especializado' | 'Conferencia'
+
         const payload = {
             eventoId: Number(this.selectedEventoId),
-            titulo: formValue.titulo,
+            titulo: finalTitulo,
             expositor: formValue.expositor,
             tipo: formValue.tipo,
+            tipoActividad: formato,
             cupoMaximo: Number(formValue.cupoMaximo),
             ubicacionLugar: formValue.ubicacionLugar,
             fotoPublicidadUrl: formValue.fotoPublicidadUrl || null,
@@ -618,6 +658,345 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
                 };
                 this._cdr.markForCheck();
             }
+        });
+    }
+
+    // --- Activity Modal Triggered from Workshop Cards ---
+    public openAgregarActividadModal(taller?: Actividad | ActividadMetricsDto, isGeneral: boolean = false): void {
+        this.selectedTallerForModal = taller || null;
+        this.isActividadGeneralModal = isGeneral || !taller;
+        this.editingCronogramaActividad = null;
+        this.isAsignacionLibre = false;
+        
+        let tituloPredeterminado = '';
+        let inicioPredeterminado = '';
+        let finPredeterminado = '';
+        let tipoPredeterminado = isGeneral ? 'General' : 'Taller Práctico';
+        
+        if (taller) {
+            tituloPredeterminado = taller.titulo;
+            const esEspecializado = (taller.titulo || '').toLowerCase().includes('especializado');
+            tipoPredeterminado = (taller as any).tipo === 'Pago' ? (esEspecializado ? 'Taller Especializado' : 'Taller Práctico') : ((taller as any).tipo || 'Conferencia');
+            const inicioRaw = (taller as Actividad).fechaHoraInicio || (taller as any).fechaHoraInicioRaw;
+            const finRaw = (taller as Actividad).fechaHoraFin || (taller as any).fechaHoraFinRaw;
+            if (inicioRaw) inicioPredeterminado = this.formatDateTimeLocal(String(inicioRaw));
+            if (finRaw) finPredeterminado = this.formatDateTimeLocal(String(finRaw));
+        }
+
+        const expositorNombre = (taller as any)?.expositor || '';
+
+        this.cronogramaForm.reset({
+            titulo: tituloPredeterminado,
+            tipoActividad: tipoPredeterminado,
+            descripcion: '',
+            personalStaffId: 0,
+            nombreAsignadoLibre: expositorNombre,
+            fechaInicio: inicioPredeterminado,
+            fechaFin: finPredeterminado
+        });
+        if (taller && expositorNombre) {
+            this.isAsignacionLibre = true;
+        }
+        this.showActividadModal = true;
+        this._cdr.markForCheck();
+    }
+
+    public closeActividadModal(): void {
+        this.showActividadModal = false;
+        this.selectedTallerForModal = null;
+        this.isActividadGeneralModal = false;
+        this._cdr.markForCheck();
+    }
+
+    // --- Tab E: Cronograma / Schedule Module Helpers ---
+    public selectedActividadPadre: any = null;
+
+    private initCronogramaForm(): void {
+        this.cronogramaForm = this._fb.group({
+            titulo: ['', [Validators.required]],
+            tipoActividad: ['General'], // 'Taller' | 'Conferencia' | 'Ceremonia' | 'Mesa B2B' | 'General'
+            descripcion: [''],
+            personalStaffId: [0],
+            nombreAsignadoLibre: [''],
+            actividadPadreId: [null],
+            fechaInicio: ['', [Validators.required]],
+            fechaFin: ['', [Validators.required]]
+        });
+    }
+
+    public onAsignacionLibreToggle(checked: boolean): void {
+        this.isAsignacionLibre = checked;
+        if (checked) {
+            this.cronogramaForm.patchValue({ personalStaffId: 0 });
+        } else {
+            this.cronogramaForm.patchValue({ nombreAsignadoLibre: '' });
+        }
+        this._cdr.markForCheck();
+    }
+
+    public loadCronogramaList(): void {
+        this._eventosService.getActividadesCronograma(this.selectedEventoId).subscribe({
+            next: (list) => {
+                this.cronogramaList = list || [];
+                this.updateSelectedDiaDefault();
+                this._cdr.markForCheck();
+            },
+            error: (err) => console.error('Error al cargar cronograma:', err)
+        });
+    }
+
+    public loadStaffList(): void {
+        this._eventosService.getPersonalStaffList().subscribe({
+            next: (list) => {
+                this.staffList = list || [];
+                this._cdr.markForCheck();
+            },
+            error: (err) => console.error('Error al cargar staff:', err)
+        });
+    }
+
+    public startAddSubActividad(padre: any): void {
+        this.editingCronogramaActividad = null;
+        this.selectedActividadPadre = padre;
+        this.isActividadGeneralModal = true;
+        this.isAsignacionLibre = false;
+
+        const inicioDefault = padre.fechaInicio || padre.fechaHoraInicio;
+        const finDefault = padre.fechaFin || padre.fechaHoraFin;
+
+        this.cronogramaForm.reset({
+            titulo: '',
+            tipoActividad: 'General',
+            descripcion: '',
+            personalStaffId: 0,
+            nombreAsignadoLibre: '',
+            actividadPadreId: padre.id || padre.actividadId,
+            fechaInicio: inicioDefault ? this.formatDateTimeLocal(inicioDefault) : '',
+            fechaFin: finDefault ? this.formatDateTimeLocal(finDefault) : ''
+        });
+
+        this.showActividadModal = true;
+        this._cdr.markForCheck();
+    }
+
+    public startEditCronogramaActividad(item: any): void {
+        this.editingCronogramaActividad = item;
+        this.selectedActividadPadre = null;
+        this.selectedTallerForModal = null;
+        this.isActividadGeneralModal = true;
+        this.isAsignacionLibre = !item.personalStaffId || item.personalStaffId === 0;
+        
+        const nombreLibre = item.nombreAsignadoLibre || (this.isAsignacionLibre && item.personalStaffNombre !== 'General / Sin Asignar' ? item.personalStaffNombre : '');
+
+        this.cronogramaForm.patchValue({
+            titulo: item.titulo,
+            tipoActividad: item.tipoActividad || 'General',
+            descripcion: item.descripcion || '',
+            personalStaffId: item.personalStaffId || 0,
+            nombreAsignadoLibre: nombreLibre || '',
+            actividadPadreId: item.actividadPadreId || null,
+            fechaInicio: this.formatDateTimeLocal(item.fechaInicio),
+            fechaFin: this.formatDateTimeLocal(item.fechaFin)
+        });
+        
+        this.showActividadModal = true;
+        this._cdr.markForCheck();
+    }
+
+    public cancelEditCronograma(): void {
+        this.editingCronogramaActividad = null;
+        this.selectedActividadPadre = null;
+        this.isAsignacionLibre = false;
+        this.cronogramaForm.reset({
+            tipoActividad: 'General',
+            personalStaffId: 0,
+            nombreAsignadoLibre: '',
+            actividadPadreId: null
+        });
+        this._cdr.markForCheck();
+    }
+
+    public onSubmitCronograma(): void {
+        if (this.cronogramaForm.invalid) return;
+
+        const val = this.cronogramaForm.value;
+        const staffId = Number(val.personalStaffId);
+
+        this.isCreatingCronograma = true;
+        this._cdr.markForCheck();
+
+        const payload = {
+            id: this.editingCronogramaActividad ? this.editingCronogramaActividad.id : 0,
+            eventoId: Number(this.selectedEventoId),
+            personalStaffId: this.isAsignacionLibre ? null : (staffId > 0 ? staffId : null),
+            nombreAsignadoLibre: this.isAsignacionLibre ? val.nombreAsignadoLibre.trim() : (staffId > 0 ? null : val.nombreAsignadoLibre.trim()),
+            titulo: val.titulo.trim(),
+            tipoActividad: val.tipoActividad || 'General',
+            descripcion: val.descripcion ? val.descripcion.trim() : '',
+            actividadPadreId: val.actividadPadreId ? Number(val.actividadPadreId) : null,
+            fechaInicio: this.toLocalIsoString(val.fechaInicio),
+            fechaFin: this.toLocalIsoString(val.fechaFin)
+        };
+
+        this._eventosService.guardarActividadCronograma(payload).subscribe({
+            next: () => {
+                this.isCreatingCronograma = false;
+                const activityDate = this.extractDatePart(val.fechaInicio);
+                if (activityDate) {
+                    this.selectedDiaFiltro = activityDate;
+                }
+                this.cancelEditCronograma();
+                this.closeActividadModal();
+                this.loadCronogramaList();
+                this.showToast('Actividad del cronograma guardada exitosamente.', 'success');
+                this._cdr.markForCheck();
+            },
+            error: (err) => {
+                this.isCreatingCronograma = false;
+                console.error('Error al guardar actividad en cronograma:', err);
+                this.showToast('Ocurrió un error al guardar la actividad.', 'error');
+                this._cdr.markForCheck();
+            }
+        });
+    }
+
+    public eliminarCronogramaActividad(item: any): void {
+        Swal.fire({
+            title: '¿Eliminar Actividad?',
+            text: `Se eliminará "${item.titulo}" del cronograma del evento.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, Eliminar',
+            cancelButtonText: 'Cancelar',
+            customClass: { popup: 'rounded-2xl dark:bg-slate-900 dark:text-white' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this._eventosService.eliminarActividadCronograma(item.id).subscribe({
+                    next: () => {
+                        this.loadCronogramaList();
+                        this.showToast('La actividad fue eliminada del cronograma.', 'success');
+                    },
+                    error: (err) => {
+                        console.error('Error al eliminar actividad del cronograma:', err);
+                        this.showToast('No se pudo eliminar la actividad.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // Cronograma Timeline Grouping & Day Filtering Helper
+    public selectedDiaFiltro: string = '';
+
+    public setDiaFiltro(dia: string): void {
+        this.selectedDiaFiltro = dia;
+        this._cdr.markForCheck();
+    }
+
+    private extractDatePart(dateVal: any): string {
+        if (!dateVal) return '';
+        const str = String(dateVal);
+        if (str.includes('T')) {
+            return str.split('T')[0];
+        }
+        if (str.includes(' ')) {
+            return str.split(' ')[0];
+        }
+        if (str.length >= 10) {
+            return str.substring(0, 10);
+        }
+        return '';
+    }
+
+    private extractTimePart(dateVal: any): string {
+        if (!dateVal) return '';
+        const str = String(dateVal);
+        if (str.includes('T')) {
+            const timePart = str.split('T')[1];
+            return timePart ? timePart.substring(0, 5) : '';
+        }
+        if (str.includes(' ')) {
+            const timePart = str.split(' ')[1];
+            return timePart ? timePart.substring(0, 5) : '';
+        }
+        if (str.length >= 16) {
+            return str.substring(11, 16);
+        }
+        return '';
+    }
+
+    public updateSelectedDiaDefault(): void {
+        const dias = this.availableDias;
+        if (dias.length > 0 && (!this.selectedDiaFiltro || !dias.includes(this.selectedDiaFiltro))) {
+            this.selectedDiaFiltro = dias[0];
+        }
+    }
+
+    public get availableDias(): string[] {
+        const diasSet = new Set<string>();
+        (this.cronogramaList || []).forEach(act => {
+            const fecha = this.extractDatePart(act.fechaInicio);
+            if (fecha) diasSet.add(fecha);
+        });
+        (this.talleresList || []).forEach(t => {
+            const fecha = this.extractDatePart(t.fechaHoraInicio);
+            if (fecha) diasSet.add(fecha);
+        });
+        return Array.from(diasSet).sort();
+    }
+
+    public get cronogramaHorarios(): string[] {
+        const setHoras = new Set<string>();
+        (this.cronogramaList || []).forEach(act => {
+            const fecha = this.extractDatePart(act.fechaInicio);
+            const hora = this.extractTimePart(act.fechaInicio);
+            if (hora && fecha === this.selectedDiaFiltro) {
+                setHoras.add(hora);
+            }
+        });
+        (this.talleresList || []).forEach(t => {
+            const fecha = this.extractDatePart(t.fechaHoraInicio);
+            const hora = this.extractTimePart(t.fechaHoraInicio);
+            if (hora && fecha === this.selectedDiaFiltro) {
+                setHoras.add(hora);
+            }
+        });
+        return Array.from(setHoras).sort();
+    }
+
+    public getActividadesPorHora(hora: string): any[] {
+        return (this.cronogramaList || []).filter(act => {
+            if (!act.fechaInicio) return false;
+            // Only root activities (not sub-activities) show in main timeline slots
+            if (act.actividadPadreId) return false;
+            const fecha = this.extractDatePart(act.fechaInicio);
+            const h = this.extractTimePart(act.fechaInicio);
+            return h === hora && fecha === this.selectedDiaFiltro;
+        });
+    }
+
+    public get isOnlyCronogramaView(): boolean {
+        return (this._router.url || '').includes('/eventos/cronograma');
+    }
+
+    public getSubActividades(padreId: number): any[] {
+        if (!padreId) return [];
+        return (this.cronogramaList || []).filter(act => act.actividadPadreId === padreId);
+    }
+
+    public getSubActividadesForTaller(tallerId: number): any[] {
+        if (!tallerId) return [];
+        return (this.cronogramaList || []).filter(act => act.actividadPadreId === tallerId);
+    }
+
+    public getTalleresPorHora(hora: string): Actividad[] {
+        return (this.talleresList || []).filter(t => {
+            if (!t.fechaHoraInicio) return false;
+            const fecha = this.extractDatePart(t.fechaHoraInicio);
+            const h = this.extractTimePart(t.fechaHoraInicio);
+            return h === hora && fecha === this.selectedDiaFiltro;
         });
     }
 }

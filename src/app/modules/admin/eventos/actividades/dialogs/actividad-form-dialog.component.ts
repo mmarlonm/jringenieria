@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ActividadesService } from '../actividades.service';
 import { PersonalStaffService, PersonalStaff } from '../../personal-staff/personal-staff.service';
 import { EventosService } from '../../eventos.service';
@@ -29,6 +30,7 @@ import { TimePickerComponent } from 'app/shared/time-picker/time-picker.componen
         MatSelectModule,
         MatDatepickerModule,
         MatNativeDateModule,
+        MatCheckboxModule,
         TimePickerComponent
     ]
 })
@@ -38,6 +40,8 @@ export class ActividadFormDialogComponent implements OnInit {
     isSaving: boolean = false;
     eventosList: any[] = [];
     personalList: PersonalStaff[] = [];
+    actividadesPadreList: any[] = [];
+    isAsignacionLibre: boolean = false;
 
     constructor(
         private _fb: FormBuilder,
@@ -50,6 +54,9 @@ export class ActividadFormDialogComponent implements OnInit {
 
     ngOnInit(): void {
         this.isEdit = !!this.data?.actividad;
+        const act = this.data?.actividad;
+
+        this.isAsignacionLibre = !!act?.nombreAsignadoLibre || (!act?.personalStaffId && act?.personalStaffNombre !== 'General / Sin Asignar' && !!act?.personalStaffNombre);
 
         this._eventosService.ediciones$.subscribe(list => {
             this.eventosList = list || [];
@@ -59,31 +66,66 @@ export class ActividadFormDialogComponent implements OnInit {
             this.personalList = list || [];
         });
 
+        const selectedEvId = act?.eventoId || this.data?.selectedEventoId || 0;
+        this.loadActividadesPadre(selectedEvId);
+
         let initDate = new Date();
         let initTime = '09:00';
         let endDate = new Date();
         let endTime = '18:00';
 
-        if (this.data?.actividad) {
-            const start = new Date(this.data.actividad.fechaInicio);
-            const end = new Date(this.data.actividad.fechaFin);
-            initDate = start;
-            initTime = this.formatTimeOnly(start);
-            endDate = end;
-            endTime = this.formatTimeOnly(end);
+        if (act) {
+            const start = new Date(act.fechaInicio);
+            const end = new Date(act.fechaFin);
+            if (!isNaN(start.getTime())) {
+                initDate = start;
+                initTime = this.formatTimeOnly(start);
+            }
+            if (!isNaN(end.getTime())) {
+                endDate = end;
+                endTime = this.formatTimeOnly(end);
+            }
         }
 
         this.form = this._fb.group({
-            id: [this.data?.actividad?.id || 0],
-            personalStaffId: [this.data?.actividad?.personalStaffId || '', [Validators.required]],
-            eventoId: [this.data?.actividad?.eventoId || this.data?.selectedEventoId || '', [Validators.required]],
-            titulo: [this.data?.actividad?.titulo || '', [Validators.required, Validators.maxLength(150)]],
-            descripcion: [this.data?.actividad?.descripcion || '', [Validators.maxLength(500)]],
+            id: [act?.id || 0],
+            eventoId: [selectedEvId, [Validators.required]],
+            personalStaffId: [act?.personalStaffId || 0],
+            nombreAsignadoLibre: [act?.nombreAsignadoLibre || (this.isAsignacionLibre ? act?.personalStaffNombre : '') || ''],
+            actividadPadreId: [act?.actividadPadreId || this.data?.actividadPadreId || null],
+            tipoActividad: [act?.tipoActividad || 'General', [Validators.required]],
+            titulo: [act?.titulo || '', [Validators.required, Validators.maxLength(150)]],
+            descripcion: [act?.descripcion || '', [Validators.maxLength(500)]],
             fechaInicioDate: [initDate, [Validators.required]],
             fechaInicioTime: [initTime, [Validators.required]],
             fechaFinDate: [endDate, [Validators.required]],
             fechaFinTime: [endTime, [Validators.required]]
         });
+
+        this.form.get('eventoId').valueChanges.subscribe(evId => {
+            if (evId) {
+                this.loadActividadesPadre(evId);
+            }
+        });
+    }
+
+    loadActividadesPadre(eventoId: number): void {
+        if (!eventoId) return;
+        this._actividadesService.getAll(eventoId).subscribe({
+            next: (list) => {
+                const currentId = this.data?.actividad?.id || 0;
+                this.actividadesPadreList = (list || []).filter(a => a.id !== currentId && !a.actividadPadreId);
+            }
+        });
+    }
+
+    toggleAsignacionLibre(checked: boolean): void {
+        this.isAsignacionLibre = checked;
+        if (checked) {
+            this.form.patchValue({ personalStaffId: 0 });
+        } else {
+            this.form.patchValue({ nombreAsignadoLibre: '' });
+        }
     }
 
     formatTimeOnly(d: Date): string {
@@ -94,7 +136,6 @@ export class ActividadFormDialogComponent implements OnInit {
 
     combineDateAndTime(dateObj: any, timeStr: string): string {
         if (!dateObj || !timeStr) return '';
-        // MatDatepicker can return Date | string | moment – normalize to Date
         const d = (dateObj instanceof Date) ? dateObj : new Date(dateObj);
         if (isNaN(d.getTime())) return '';
         const year = d.getFullYear();
@@ -108,12 +149,17 @@ export class ActividadFormDialogComponent implements OnInit {
 
         this.isSaving = true;
         const formVal = this.form.value;
+        const staffId = Number(formVal.personalStaffId);
+
         const payload = {
             id: formVal.id,
-            personalStaffId: formVal.personalStaffId,
-            eventoId: formVal.eventoId,
-            titulo: formVal.titulo,
-            descripcion: formVal.descripcion,
+            eventoId: Number(formVal.eventoId),
+            personalStaffId: this.isAsignacionLibre ? null : (staffId > 0 ? staffId : null),
+            nombreAsignadoLibre: this.isAsignacionLibre ? (formVal.nombreAsignadoLibre || '').trim() : (staffId > 0 ? null : (formVal.nombreAsignadoLibre || '').trim()),
+            actividadPadreId: formVal.actividadPadreId ? Number(formVal.actividadPadreId) : null,
+            tipoActividad: formVal.tipoActividad || 'General',
+            titulo: formVal.titulo.trim(),
+            descripcion: (formVal.descripcion || '').trim(),
             fechaInicio: this.combineDateAndTime(formVal.fechaInicioDate, formVal.fechaInicioTime),
             fechaFin: this.combineDateAndTime(formVal.fechaFinDate, formVal.fechaFinTime)
         };

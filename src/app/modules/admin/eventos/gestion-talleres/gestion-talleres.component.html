@@ -4,7 +4,7 @@
     <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-slate-800">
         <div>
             <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-sans flex items-center gap-3">
-                Gestión y Catálogo de Talleres
+                {{ isOnlyCronogramaView ? 'Cronograma del Evento' : 'Gestión y Catálogo de Talleres' }}
             </h1>
             <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
                 Foro Energiza Pachuca — Edición {{ selectedEventoId }}
@@ -42,6 +42,13 @@
                 </span>
             </div>
 
+            <!-- Botón abrir Modal Nueva Actividad General -->
+            <button *ngIf="!isOnlyCronogramaView" type="button" (click)="openAgregarActividadModal(undefined, true)"
+                    class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 border-0 cursor-pointer">
+                <mat-icon class="icon-size-4 text-white" svgIcon="heroicons_outline:plus-circle"></mat-icon>
+                <span>+ Nueva Actividad</span>
+            </button>
+
             <!-- Botón abrir Cartelera tipo Cine (Pública) -->
             <a routerLink="/eventos/cartelera" target="_blank"
                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 border-0">
@@ -51,8 +58,8 @@
         </div>
     </div>
 
-    <!-- TABS BAR -->
-    <div class="bg-white dark:bg-slate-850 px-6 rounded-2xl border border-gray-200 dark:border-slate-800 flex gap-2 overflow-x-auto shadow-sm">
+    <!-- TABS BAR (VISIBLE SOLO SI NO ES VISTA PURA DE CRONOGRAMA) -->
+    <div *ngIf="!isOnlyCronogramaView" class="bg-white dark:bg-slate-850 px-6 rounded-2xl border border-gray-200 dark:border-slate-800 flex gap-2 overflow-x-auto shadow-sm">
         <button 
             (click)="setTab('metrics')"
             [ngClass]="{'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold': activeTab === 'metrics'}"
@@ -83,6 +90,17 @@
             <span class="flex items-center gap-2">
                 <mat-icon class="icon-size-5" svgIcon="heroicons_outline:users"></mat-icon>
                 Matriz de Pre-asignación
+            </span>
+        </button>
+
+        <button 
+            (click)="setTab('cronograma')"
+            [ngClass]="{'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold': activeTab === 'cronograma'}"
+            class="py-4 px-4 border-b-2 border-transparent text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all font-medium whitespace-nowrap focus:outline-none"
+        >
+            <span class="flex items-center gap-2">
+                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:calendar"></mat-icon>
+                Cronograma de Evento
             </span>
         </button>
 
@@ -192,14 +210,23 @@
                         </div>
 
                         <!-- Available slots indicator & Detail Trigger -->
-                        <div class="flex items-center justify-between text-xs font-bold">
+                        <div class="flex items-center justify-between text-xs font-bold gap-2 flex-wrap">
                             <span [ngClass]="{'text-rose-500': taller.disponibles === 0, 'text-emerald-600 dark:text-emerald-400': taller.disponibles > 0}">
                                 {{ taller.disponibles === 0 ? 'Sin lugares' : taller.disponibles + ' lugares disponibles' }}
                             </span>
-                            <button (click)="openDetailModal(taller)" class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 text-[11px] font-black uppercase">
-                                Detalle
-                                <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:chevron-right"></mat-icon>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button (click)="openAgregarActividadModal(taller, false)" 
+                                        class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 border border-indigo-200 dark:border-indigo-500/30 transition-all shadow-sm"
+                                        title="Agregar actividad vinculada a este taller">
+                                    <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:plus-circle"></mat-icon>
+                                    <span>Actividad</span>
+                                </button>
+                                <button (click)="openDetailModal(taller)" class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 text-[11px] font-black uppercase">
+                                    <span>Ver Ficha</span>
+                                    <mat-icon class="icon-size-4" svgIcon="heroicons_outline:arrow-right"></mat-icon>
+                                </button>
+                            </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -434,6 +461,412 @@
         </div>
 
         <!-- ========================================== -->
+        <!-- PESTAÑA E: CRONOGRAMA Y AGENDA POR HORA     -->
+        <!-- ========================================== -->
+        <div *ngIf="activeTab === 'cronograma'" class="animate-fade-in flex flex-col space-y-6">
+            <div *ngIf="!isOnlyCronogramaView" class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <mat-icon class="icon-size-6 text-indigo-600 dark:text-indigo-400" svgIcon="heroicons_outline:calendar"></mat-icon>
+                        Cronograma General del Evento
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                        Organiza y visualiza hora por hora la agenda del evento, conferencias, talleres y actividades asignadas a personal Staff o invitados libres.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 items-start" [ngClass]="isOnlyCronogramaView ? 'lg:grid-cols-1' : 'lg:grid-cols-3'">
+                <!-- FORMULARIO NUEVA ACTIVIDAD EN CRONOGRAMA (VISIBLE SOLO SI NO ES VISTA PURA CRONOGRAMA) -->
+                <div *ngIf="!isOnlyCronogramaView" class="lg:col-span-1 bg-white/80 dark:bg-slate-855/80 backdrop-blur-xl border border-gray-200/80 dark:border-slate-800/80 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none h-fit sticky top-6 z-10 transition-all duration-300 hover:border-indigo-500/30">
+                    <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-slate-800">
+                        <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <mat-icon class="icon-size-4" svgIcon="heroicons_outline:pencil-square"></mat-icon>
+                        </div>
+                        <h3 class="text-base font-black text-slate-850 dark:text-white">
+                            {{ editingCronogramaActividad ? 'Editar Actividad' : 'Agregar al Cronograma' }}
+                        </h3>
+                    </div>
+
+                    <form [formGroup]="cronogramaForm" (ngSubmit)="onSubmitCronograma()" class="space-y-4">
+                        <!-- Titulo -->
+                        <div class="flex flex-col">
+                            <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Título de la Actividad / Evento</label>
+                            <input 
+                                type="text" 
+                                formControlName="titulo"
+                                placeholder="Ej. Inauguración / Registro de Staff / Conferencia..." 
+                                class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all dark:text-slate-100 font-medium"
+                            />
+                        </div>
+
+                        <!-- Tipo de Actividad -->
+                        <div class="flex flex-col">
+                            <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo de Actividad / Categoría</label>
+                            <select 
+                                formControlName="tipoActividad"
+                                class="px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all dark:text-slate-100 font-bold"
+                            >
+                                <option value="General">📌 Actividad General / Protocolo</option>
+                                <option value="Ceremonia">🎉 Ceremonia / Inauguración / Clausura</option>
+                                <option value="Conferencia">🎙️ Conferencia / Ponencia</option>
+                                <option value="Conferencia Magistral">🌟 Conferencia Magistral</option>
+                                <option value="Panel de Discusión">👥 Panel de Discusión / Debate</option>
+                                <option value="Taller Práctico">🛠️ Taller Práctico</option>
+                                <option value="Taller Especializado">🎓 Taller Especializado</option>
+                                <option value="Mesa B2B">💼 Mesas de Negocio / B2B</option>
+                                <option value="Vinculacion">🤝 Vinculación / Networking</option>
+                                <option value="Receso">☕ Receso / Comida / Break</option>
+                            </select>
+                        </div>
+
+                        <!-- Descripcion u Observaciones -->
+                        <div class="flex flex-col">
+                            <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Detalles / Indicaciones</label>
+                            <textarea 
+                                formControlName="descripcion"
+                                rows="2"
+                                placeholder="Ej. Presentación de presídium, entrega de gafetes en puerta A..." 
+                                class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all dark:text-slate-100 resize-none font-medium"
+                            ></textarea>
+                        </div>
+
+                        <!-- Toggle Asignacion Libre -->
+                        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-900/80 border border-gray-200/80 dark:border-slate-800/80">
+                            <div>
+                                <span class="text-xs font-black text-slate-800 dark:text-slate-200 block">Asignación Nombre Libre</span>
+                                <span class="text-[10px] text-slate-400 font-medium">Si la persona no está en el catálogo de Staff</span>
+                            </div>
+                            <mat-checkbox 
+                                [checked]="isAsignacionLibre" 
+                                (change)="onAsignacionLibreToggle($event.checked)"
+                                color="primary"
+                            ></mat-checkbox>
+                        </div>
+
+                        <!-- Select Staff (Si no es libre) -->
+                        <div *ngIf="!isAsignacionLibre" class="flex flex-col">
+                            <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Responsable Staff / Expositor</label>
+                            <select 
+                                formControlName="personalStaffId"
+                                class="px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all dark:text-slate-100 font-medium"
+                            >
+                                <option [value]="0">-- Seleccionar de Staff / Colaborador --</option>
+                                <option *ngFor="let s of staffList" [value]="s.id">
+                                    {{ s.nombreCompleto }} ({{ s.tipoPersonal || s.cargo || 'Staff' }})
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Input Nombre Libre (Si es libre o fallback) -->
+                        <div *ngIf="isAsignacionLibre" class="flex flex-col">
+                            <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nombre del Encargado / Ponente</label>
+                            <input 
+                                type="text" 
+                                formControlName="nombreAsignadoLibre"
+                                placeholder="Ej. Dr. Roberto Mendoza / Protocolo Pachuca..." 
+                                class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all dark:text-slate-100 font-medium"
+                            />
+                        </div>
+
+                        <!-- Fechas Horarios -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col">
+                                <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Hora Inicio</label>
+                                <input 
+                                    type="datetime-local" 
+                                    formControlName="fechaInicio"
+                                    class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-xs focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 font-mono font-bold"
+                                />
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Hora Fin</label>
+                                <input 
+                                    type="datetime-local" 
+                                    formControlName="fechaFin"
+                                    class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-900/80 text-xs focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 font-mono font-bold"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex flex-col gap-2 pt-2">
+                            <button 
+                                type="submit" 
+                                [disabled]="cronogramaForm.invalid || isCreatingCronograma"
+                                class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-650 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-slate-200 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-850 disabled:text-slate-400 text-white font-black text-xs shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer border-0 active:scale-[0.98]"
+                            >
+                                <mat-icon *ngIf="isCreatingCronograma" class="icon-size-4 animate-spin text-white" svgIcon="heroicons_outline:arrow-path"></mat-icon>
+                                {{ isCreatingCronograma ? 'Guardando...' : (editingCronogramaActividad ? 'Guardar Cambios' : 'Agregar al Cronograma') }}
+                            </button>
+                            <button 
+                                *ngIf="editingCronogramaActividad"
+                                type="button" 
+                                (click)="cancelEditCronograma()"
+                                class="w-full py-2.5 px-4 rounded-xl border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 uppercase tracking-wide transition-colors"
+                            >
+                                Cancelar Edición
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- CRONOGRAMA TIMELINE / AGENDA POR HORA -->
+                <div [ngClass]="isOnlyCronogramaView ? 'lg:col-span-3' : 'lg:col-span-2'" class="bg-white/80 dark:bg-slate-855/80 backdrop-blur-xl border border-gray-200/80 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-6 border-b border-gray-100 dark:border-slate-800/80 gap-4">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                                    <span class="h-3 w-3 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.8)]"></span>
+                                    Agenda Cronológica Integrada
+                                </h3>
+                                <p class="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
+                                    Explora las actividades, ponencias y sub-actividades programadas por horario
+                                </p>
+                            </div>
+                            
+                            <!-- Day Filter Selector Pills -->
+                            <div class="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-200/50 dark:border-slate-800 overflow-x-auto max-w-full">
+                                <button 
+                                    *ngFor="let dia of availableDias; let i = index"
+                                    type="button"
+                                    (click)="setDiaFiltro(dia)"
+                                    [ngClass]="selectedDiaFiltro === dia 
+                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 font-black scale-[1.02]' 
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold hover:bg-white/50 dark:hover:bg-slate-800/50'"
+                                    class="px-4 py-2 rounded-xl text-xs transition-all duration-200 whitespace-nowrap flex items-center gap-1.5"
+                                >
+                                    <span class="h-1.5 w-1.5 rounded-full" [ngClass]="selectedDiaFiltro === dia ? 'bg-white' : 'bg-slate-400'"></span>
+                                    <span>Día {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}</span>
+                                    <span class="opacity-80 text-[11px] font-mono">({{ dia | date:'dd MMM' }})</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div *ngIf="cronogramaList.length === 0 && talleresList.length === 0" class="py-20 text-center flex flex-col items-center justify-center">
+                            <div class="h-16 w-16 bg-indigo-50 dark:bg-indigo-500/10 rounded-3xl flex items-center justify-center text-indigo-500 mb-4 border border-indigo-100 dark:border-indigo-500/20">
+                                <mat-icon class="icon-size-8" svgIcon="heroicons_outline:calendar"></mat-icon>
+                            </div>
+                            <p class="text-base font-black text-slate-800 dark:text-slate-200">No hay actividades registradas en este día</p>
+                            <p class="text-xs text-slate-400 max-w-sm mt-1 font-medium">Agrega eventos, conferencias o sub-actividades para construir la agenda del evento.</p>
+                        </div>
+
+                        <!-- Timeline Rows con Scroll Integrado -->
+                        <div *ngIf="cronogramaList.length > 0 || talleresList.length > 0" class="space-y-6 max-h-[760px] overflow-y-auto pr-3 custom-scrollbar">
+                            <div *ngFor="let hora of cronogramaHorarios" class="flex gap-4 sm:gap-6 items-start group/row">
+                                <!-- Time Badge & Glowing Node -->
+                                <div class="w-24 pt-1.5 flex-shrink-0 text-right flex flex-col items-end">
+                                    <span class="inline-block font-mono font-black text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50/90 dark:bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-200/80 dark:border-indigo-500/30 shadow-sm group-hover/row:scale-105 transition-transform duration-200">
+                                        {{ hora }} hrs
+                                    </span>
+                                </div>
+
+                                <!-- Timeline Spine Line Connector -->
+                                <div class="flex-1 border-l-2 border-indigo-200/80 dark:border-indigo-900/60 pl-4 sm:pl-6 py-1 relative">
+                                    <!-- Timeline Node Circle -->
+                                    <div class="absolute -left-[9px] top-4 h-4 w-4 rounded-full bg-white dark:bg-slate-900 border-2 border-indigo-500 dark:border-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.6)] group-hover/row:scale-125 group-hover/row:bg-indigo-500 transition-all duration-300"></div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Talleres / Conferencias en esta hora -->
+                                        <div *ngFor="let taller of getTalleresPorHora(hora)" 
+                                             class="p-5 rounded-3xl bg-slate-950 text-white border border-slate-800/90 shadow-xl shadow-slate-950/20 flex flex-col justify-between hover:border-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 space-y-4 relative overflow-hidden group/card">
+                                            
+                                            <!-- Ambient Glow -->
+                                            <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none group-hover/card:bg-cyan-500/20 transition-all"></div>
+
+                                            <div>
+                                                <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                                                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 shadow-sm">
+                                                        <span>🎓</span>
+                                                        <span>Taller / Conferencia</span>
+                                                    </span>
+                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                                        Entrada libre
+                                                    </span>
+                                                </div>
+
+                                                <h4 class="text-base font-extrabold leading-snug text-white mb-2 group-hover/card:text-cyan-300 transition-colors">{{ taller.titulo }}</h4>
+                                                
+                                                <div class="flex items-center gap-3 text-xs text-slate-400 font-medium flex-wrap">
+                                                    <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-lg border border-cyan-800/40">
+                                                        {{ taller.fechaHoraInicio | date:'HH:mm' }} – {{ taller.fechaHoraFin | date:'HH:mm' }}
+                                                    </span>
+                                                    <span class="flex items-center gap-1 text-slate-300">
+                                                        <mat-icon class="icon-size-3.5 text-slate-400" svgIcon="heroicons_outline:map-pin"></mat-icon>
+                                                        {{ taller.ubicacionLugar }}
+                                                    </span>
+                                                </div>
+
+                                                <p *ngIf="taller.expositor" class="text-xs text-slate-300 font-bold mt-3 flex items-center gap-1.5">
+                                                    <mat-icon class="icon-size-4 text-cyan-400" svgIcon="heroicons_outline:user-circle"></mat-icon>
+                                                    <span>{{ taller.expositor }}</span>
+                                                </p>
+
+                                                <!-- Sub-actividades Hijas del Taller -->
+                                                <div *ngIf="getSubActividadesForTaller(taller.id).length > 0" class="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block flex items-center gap-1">
+                                                        <span>↳ Sub-actividades</span>
+                                                        <span class="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300 font-mono text-[9px] font-bold">{{ getSubActividadesForTaller(taller.id).length }}</span>
+                                                    </span>
+                                                    <div *ngFor="let sub of getSubActividadesForTaller(taller.id)" class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs hover:border-slate-700 transition-all">
+                                                        <div class="min-w-0 pr-2">
+                                                            <span class="font-extrabold text-slate-100 block truncate">{{ sub.titulo }}</span>
+                                                            <div class="flex items-center gap-2 mt-0.5">
+                                                                <span class="font-mono text-[10px] text-cyan-400 font-bold">{{ sub.fechaInicio | date:'HH:mm' }} - {{ sub.fechaFin | date:'HH:mm' }}</span>
+                                                                <span *ngIf="sub.nombreAsignadoLibre || sub.personalStaffNombre" class="text-[10px] text-slate-400 truncate">👤 {{ sub.nombreAsignadoLibre || sub.personalStaffNombre }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div *ngIf="!isOnlyCronogramaView" class="flex items-center gap-1 shrink-0">
+                                                            <button (click)="startEditCronogramaActividad(sub)" class="p-1.5 rounded-lg text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all" title="Editar Sub-actividad">
+                                                                <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:pencil"></mat-icon>
+                                                            </button>
+                                                            <button (click)="eliminarCronogramaActividad(sub)" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition-all" title="Eliminar Sub-actividad">
+                                                                <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:trash"></mat-icon>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div *ngIf="!isOnlyCronogramaView" class="flex items-center justify-between gap-1.5 pt-3 border-t border-slate-800/80">
+                                                <button 
+                                                    (click)="startAddSubActividad(taller)"
+                                                    class="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-bold transition-all flex items-center gap-1 border border-cyan-500/20"
+                                                    title="Agregar Sub-actividad al Taller"
+                                                >
+                                                    <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:plus"></mat-icon>
+                                                    <span>+ Sub-actividad</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Actividades de Staff / Cronograma en esta hora (Actividades Padre) -->
+                                        <div *ngFor="let act of getActividadesPorHora(hora)" 
+                                             class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800/90 shadow-lg shadow-slate-200/30 dark:shadow-none flex flex-col justify-between hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all duration-300 space-y-4 relative overflow-hidden group/card">
+                                            
+                                            <!-- Top Accent Color Line based on Activity Category -->
+                                            <div class="absolute top-0 left-0 right-0 h-1.5"
+                                                 [ngClass]="{
+                                                     'bg-purple-500': act.tipoActividad === 'Ceremonia',
+                                                     'bg-cyan-500': act.tipoActividad === 'Conferencia',
+                                                     'bg-amber-500': act.tipoActividad === 'Conferencia Magistral',
+                                                     'bg-blue-500': act.tipoActividad === 'Panel de Discusión',
+                                                     'bg-emerald-500': act.tipoActividad === 'Mesa B2B',
+                                                     'bg-teal-500': act.tipoActividad === 'Vinculacion' || act.tipoActividad === 'Vinculación',
+                                                     'bg-rose-500': act.tipoActividad === 'Receso',
+                                                     'bg-indigo-500': !act.tipoActividad || act.tipoActividad === 'General'
+                                                 }">
+                                            </div>
+
+                                            <div>
+                                                <!-- Top Row: Badge & Header info -->
+                                                <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                                                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm border"
+                                                          [ngClass]="{
+                                                              'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30': act.tipoActividad === 'Ceremonia',
+                                                              'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/30': act.tipoActividad === 'Conferencia',
+                                                              'bg-yellow-500/15 text-yellow-800 dark:text-yellow-300 border-yellow-500/30': act.tipoActividad === 'Conferencia Magistral',
+                                                              'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30': act.tipoActividad === 'Panel de Discusión',
+                                                              'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30': act.tipoActividad === 'Taller Práctico' || act.tipoActividad === 'Taller',
+                                                              'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30': act.tipoActividad === 'Taller Especializado',
+                                                              'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30': act.tipoActividad === 'Mesa B2B',
+                                                              'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30': act.tipoActividad === 'Vinculacion' || act.tipoActividad === 'Vinculación',
+                                                              'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30': act.tipoActividad === 'Receso',
+                                                              'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40': !act.tipoActividad || act.tipoActividad === 'General'
+                                                          }">
+                                                        {{ act.tipoActividad === 'Ceremonia' ? '🎉 Ceremonia / Evento' : act.tipoActividad === 'Conferencia' ? '🎙️ Conferencia' : act.tipoActividad === 'Conferencia Magistral' ? '🌟 Conferencia Magistral' : act.tipoActividad === 'Panel de Discusión' ? '👥 Panel de Discusión' : (act.tipoActividad === 'Taller Práctico' || act.tipoActividad === 'Taller') ? '🛠️ Taller Práctico' : (act.tipoActividad === 'Taller Especializado' || act.tipoActividad === 'Taller Práctico o Especializado') ? '🎓 Taller Especializado' : act.tipoActividad === 'Mesa B2B' ? '💼 Mesas B2B' : (act.tipoActividad === 'Vinculacion' || act.tipoActividad === 'Vinculación') ? '🤝 Vinculación' : act.tipoActividad === 'Receso' ? '☕ Receso / Comida' : '📌 Actividad General / Staff' }}
+                                                    </span>
+
+                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                                        Entrada libre
+                                                    </span>
+                                                </div>
+
+                                                <!-- Title -->
+                                                <h4 class="text-base font-extrabold text-slate-900 dark:text-white leading-snug mb-2 group-hover/card:text-indigo-600 dark:group-hover/card:text-indigo-400 transition-colors">{{ act.titulo }}</h4>
+
+                                                <!-- Time & Location -->
+                                                <div class="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
+                                                    <span class="font-mono text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/40">
+                                                        {{ act.fechaInicio | date:'HH:mm' }} – {{ act.fechaFin | date:'HH:mm' }}
+                                                    </span>
+                                                    <span *ngIf="act.descripcion" class="text-slate-600 dark:text-slate-300 font-medium">{{ act.descripcion }}</span>
+                                                </div>
+
+                                                <!-- Encargado / Ponente -->
+                                                <p *ngIf="(act.personalStaffNombre && act.personalStaffNombre !== 'General / Sin Asignar') || act.nombreAsignadoLibre" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-3 flex items-center gap-1.5">
+                                                    <mat-icon class="icon-size-4" svgIcon="heroicons_outline:user-circle"></mat-icon>
+                                                    <span>{{ act.nombreAsignadoLibre || act.personalStaffNombre }}</span>
+                                                </p>
+
+                                                <!-- Sub-actividades Hijas Integradas -->
+                                                <div *ngIf="getSubActividades(act.id).length > 0" class="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800/80 space-y-2">
+                                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block flex items-center gap-1">
+                                                        <span>↳ Sub-actividades</span>
+                                                        <span class="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-mono text-[9px] font-bold">{{ getSubActividades(act.id).length }}</span>
+                                                    </span>
+                                                    <div *ngFor="let sub of getSubActividades(act.id)" class="p-3 rounded-2xl bg-gray-50/90 dark:bg-slate-950 border border-gray-200/80 dark:border-slate-800 flex items-center justify-between text-xs hover:border-indigo-300 dark:hover:border-slate-700 transition-all">
+                                                        <div class="min-w-0 pr-2">
+                                                            <span class="font-extrabold text-slate-850 dark:text-slate-200 block truncate">{{ sub.titulo }}</span>
+                                                            <div class="flex items-center gap-2 mt-0.5">
+                                                                <span class="font-mono text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">{{ sub.fechaInicio | date:'HH:mm' }} - {{ sub.fechaFin | date:'HH:mm' }}</span>
+                                                                <span *ngIf="sub.nombreAsignadoLibre || sub.personalStaffNombre" class="text-[10px] text-slate-400 truncate">👤 {{ sub.nombreAsignadoLibre || sub.personalStaffNombre }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div *ngIf="!isOnlyCronogramaView" class="flex items-center gap-1 shrink-0">
+                                                            <button (click)="startEditCronogramaActividad(sub)" class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 transition-all" title="Editar Sub-actividad">
+                                                                <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:pencil"></mat-icon>
+                                                            </button>
+                                                            <button (click)="eliminarCronogramaActividad(sub)" class="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-all" title="Eliminar Sub-actividad">
+                                                                <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:trash"></mat-icon>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Bottom Actions (Solo si no es la vista pura del Cronograma) -->
+                                            <div *ngIf="!isOnlyCronogramaView" class="flex items-center justify-between gap-1.5 pt-3 border-t border-gray-100 dark:border-slate-800/80">
+                                                <button 
+                                                    (click)="startAddSubActividad(act)"
+                                                    class="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-xs font-bold transition-all flex items-center gap-1 border border-indigo-200/60 dark:border-indigo-500/20"
+                                                    title="Agregar Sub-actividad"
+                                                >
+                                                    <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:plus"></mat-icon>
+                                                    <span>+ Sub-actividad</span>
+                                                </button>
+
+                                                <div class="flex items-center gap-1">
+                                                    <button 
+                                                        (click)="startEditCronogramaActividad(act)"
+                                                        class="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-colors flex items-center gap-1"
+                                                        title="Editar Actividad Padre"
+                                                    >
+                                                        <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:pencil"></mat-icon>
+                                                        <span>Editar</span>
+                                                    </button>
+                                                    <button 
+                                                        (click)="eliminarCronogramaActividad(act)"
+                                                        class="px-2.5 py-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors flex items-center gap-1"
+                                                        title="Eliminar Actividad Padre"
+                                                    >
+                                                        <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:trash"></mat-icon>
+                                                        <span>Eliminar</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
         <!-- PESTAÑA C: CONFIGURACIÓN/CREACIÓN TALLERES -->
         <!-- ========================================== -->
         <div *ngIf="activeTab === 'config'" class="animate-fade-in grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -465,13 +898,24 @@
                         />
                     </div>
 
-                    <!-- Tipo y Cupo -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <!-- Formato, Acceso y Cupo -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="flex flex-col">
-                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo</label>
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Formato / Tipo</label>
+                            <select 
+                                formControlName="formato"
+                                class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
+                            >
+                                <option value="Taller Práctico">🛠️ Taller Práctico</option>
+                                <option value="Taller Especializado">🎓 Taller Especializado</option>
+                                <option value="Conferencia">🎙️ Conferencia</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Acceso</label>
                             <select 
                                 formControlName="tipo"
-                                class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
+                                class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
                             >
                                 <option value="Pago">De Pago</option>
                                 <option value="Gratuito">Gratuito</option>
@@ -482,7 +926,7 @@
                             <input 
                                 type="number" 
                                 formControlName="cupoMaximo"
-                                class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
+                                class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
                             />
                         </div>
                     </div>
@@ -596,13 +1040,27 @@
                                         </div>
                                     </td>
                                     <td class="py-3.5 px-4">
-                                        <span class="px-2 py-0.5 rounded text-[9px] font-black border"
-                                              [ngClass]="{
-                                                  'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20': t.tipo === 'Pago',
-                                                  'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700': t.tipo === 'Gratuito'
-                                              }">
-                                            {{ t.tipo === 'Pago' ? 'De Pago' : 'Gratuito' }}
-                                        </span>
+                                        <div class="flex flex-col gap-1 items-start">
+                                            <span class="px-2 py-0.5 rounded text-[9px] font-black border"
+                                                  [ngClass]="{
+                                                      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20': t.tipoActividad === 'Taller Práctico' || t.tipoActividad === 'Taller',
+                                                      'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/20': t.tipoActividad === 'Taller Especializado',
+                                                      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20': t.tipoActividad === 'Panel de Discusión',
+                                                      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20': t.tipoActividad === 'Mesa B2B',
+                                                      'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/20': t.tipoActividad === 'Ceremonia',
+                                                      'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/20': t.tipoActividad === 'Conferencia' || !t.tipoActividad
+                                                  }">
+                                                {{ t.tipoActividad === 'Taller Especializado' ? '🎓 Taller Especializado' : (t.tipoActividad === 'Taller Práctico' || t.tipoActividad === 'Taller') ? '🛠️ Taller Práctico' : t.tipoActividad === 'Panel de Discusión' ? '👥 Panel de Discusión' : t.tipoActividad === 'Mesa B2B' ? '💼 Mesas B2B' : t.tipoActividad === 'Ceremonia' ? '🎉 Ceremonia' : '🎙️ Conferencia' }}
+                                            </span>
+
+                                            <span class="px-2 py-0.5 rounded text-[9px] font-black border"
+                                                  [ngClass]="{
+                                                      'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20': t.tipo === 'Pago',
+                                                      'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700': t.tipo === 'Gratuito'
+                                                  }">
+                                                {{ t.tipo === 'Pago' ? '💳 De Pago' : '✨ Gratuito' }}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="py-3.5 px-4 font-semibold text-slate-850 dark:text-white">{{ t.cupoMaximo }}</td>
                                     <td class="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">{{ t.ubicacionLugar }}</td>
@@ -612,6 +1070,14 @@
                                     </td>
                                     <td class="py-3.5 pl-4 text-center">
                                         <div class="flex items-center justify-center gap-1">
+                                            <button 
+                                                (click)="openAgregarActividadModal(t, false)"
+                                                class="h-8 w-8 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 transition-colors"
+                                                title="Agregar Actividad a este Taller"
+                                            >
+                                                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:plus-circle"></mat-icon>
+                                            </button>
+
                                             <button 
                                                 (click)="startEditTaller(t)"
                                                 class="h-8 w-8 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors"
@@ -881,7 +1347,157 @@
             </div>
         </div>
     </div>
-</div>
+
+    <!-- ========================================== -->
+    <!-- MODAL POPUP: AGREGAR ACTIVIDAD A ACTIVIDAD/TALLER -->
+    <!-- ========================================== -->
+    <div *ngIf="showActividadModal" 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+         (click)="closeActividadModal()">
+        
+        <div class="relative w-full max-w-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-slide-in"
+             (click)="$event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-855">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
+                        <mat-icon class="icon-size-5" svgIcon="heroicons_outline:plus-circle"></mat-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 dark:text-white">
+                            {{ selectedActividadPadre ? '➕ Agregar Sub-actividad' : (isActividadGeneralModal ? (editingCronogramaActividad ? 'Editar Actividad' : 'Agregar Actividad General') : 'Agregar Actividad a Taller') }}
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            {{ selectedActividadPadre ? ('Sub-actividad vinculada a: ' + selectedActividadPadre.titulo) : (selectedTallerForModal ? selectedTallerForModal.titulo : 'Registrar en el cronograma general del evento') }}
+                        </p>
+                    </div>
+                </div>
+
+                <button (click)="closeActividadModal()" class="h-9 w-9 rounded-full bg-gray-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors">
+                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:x-mark"></mat-icon>
+                </button>
+            </div>
+
+            <!-- Modal Body Form -->
+            <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <form [formGroup]="cronogramaForm" (ngSubmit)="onSubmitCronograma()" class="space-y-4">
+                    <!-- Titulo -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Título de la Actividad</label>
+                        <input 
+                            type="text" 
+                            formControlName="titulo"
+                            placeholder="Ej. Inauguración / Registro / Conferencia..." 
+                            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 font-bold"
+                        />
+                    </div>
+
+                    <!-- Tipo de Actividad -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tipo / Categoría de Actividad</label>
+                        <select 
+                            formControlName="tipoActividad"
+                            class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 font-bold"
+                        >
+                            <option value="General">📌 Actividad General / Protocolo</option>
+                            <option value="Ceremonia">🎉 Ceremonia / Inauguración / Clausura</option>
+                            <option value="Conferencia">🎙️ Conferencia / Ponencia</option>
+                            <option value="Conferencia Magistral">🌟 Conferencia Magistral</option>
+                            <option value="Panel de Discusión">👥 Panel de Discusión / Debate</option>
+                            <option value="Taller Práctico">🛠️ Taller Práctico</option>
+                            <option value="Taller Especializado">🎓 Taller Especializado</option>
+                            <option value="Mesa B2B">💼 Mesas de Negocio / B2B</option>
+                            <option value="Vinculacion">🤝 Vinculación / Networking</option>
+                            <option value="Receso">☕ Receso / Comida / Break</option>
+                        </select>
+                    </div>
+
+                    <!-- Descripcion -->
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Detalles / Indicaciones</label>
+                        <textarea 
+                            formControlName="descripcion"
+                            rows="2"
+                            placeholder="Ej. Indicaciones de seguridad, material entregado..." 
+                            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 resize-none"
+                        ></textarea>
+                    </div>
+
+                    <!-- Toggle Asignacion Libre -->
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Asignación Nombre Libre</span>
+                            <span class="text-[10px] text-slate-400">Si el responsable no está en el catálogo Staff</span>
+                        </div>
+                        <mat-checkbox 
+                            [checked]="isAsignacionLibre" 
+                            (change)="onAsignacionLibreToggle($event.checked)"
+                            color="primary"
+                        ></mat-checkbox>
+                    </div>
+
+                    <!-- Select Staff -->
+                    <div *ngIf="!isAsignacionLibre" class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Responsable Staff / Expositor</label>
+                        <select 
+                            formControlName="personalStaffId"
+                            class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
+                        >
+                            <option [value]="0">-- Seleccionar de Staff / Colaborador --</option>
+                            <option *ngFor="let s of staffList" [value]="s.id">
+                                {{ s.nombreCompleto }} ({{ s.tipoPersonal || s.cargo || 'Staff' }})
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Input Nombre Libre -->
+                    <div *ngIf="isAsignacionLibre" class="flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nombre del Encargado / Ponente</label>
+                        <input 
+                            type="text" 
+                            formControlName="nombreAsignadoLibre"
+                            placeholder="Ej. Ing. Ponente Invitado..." 
+                            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-sm focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
+                        />
+                    </div>
+
+                    <!-- Horarios -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Hora Inicio</label>
+                            <input 
+                                type="datetime-local" 
+                                formControlName="fechaInicio"
+                                class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 font-semibold"
+                            />
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Hora Fin</label>
+                            <input 
+                                type="datetime-local" 
+                                formControlName="fechaFin"
+                                class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 text-xs focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100 font-semibold"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions Footer -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+                        <button type="button" (click)="closeActividadModal()" class="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                                [disabled]="cronogramaForm.invalid || isCreatingCronograma"
+                                class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 border-0 cursor-pointer">
+                            <mat-icon *ngIf="isCreatingCronograma" class="icon-size-4 animate-spin text-white" svgIcon="heroicons_outline:arrow-path"></mat-icon>
+                            <span>{{ isCreatingCronograma ? 'Guardando...' : 'Guardar en Cronograma' }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 <!-- Animations & Slide-in styles -->
 <style>
