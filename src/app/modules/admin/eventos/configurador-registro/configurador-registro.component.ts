@@ -344,8 +344,9 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     /** Copia la URL pública del formulario al portapapeles */
     copiarEnlaceListado(form: FormularioRegistroAdminDto, event?: MouseEvent): void {
         if (event) event.stopPropagation();
-        const base = window.location.origin + window.location.pathname;
-        const url = `${base}#/eventos/registro/${form.slug}`;
+        let pathname = window.location.pathname;
+        if (!pathname.endsWith('/')) pathname += '/';
+        const url = `${window.location.origin}${pathname}#/eventos/registro/${form.slug}`;
         navigator.clipboard.writeText(url);
         this.copiadoFormId = form.id;
         setTimeout(() => {
@@ -360,8 +361,9 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     /** Abre la URL pública del formulario en una nueva pestaña */
     abrirEnlaceListado(slug: string, event?: MouseEvent): void {
         if (event) event.stopPropagation();
-        const base = window.location.origin + window.location.pathname;
-        window.open(`${base}#/eventos/registro/${slug}`, '_blank');
+        let pathname = window.location.pathname;
+        if (!pathname.endsWith('/')) pathname += '/';
+        window.open(`${window.location.origin}${pathname}#/eventos/registro/${slug}`, '_blank');
     }
 
     /** Cuenta preguntas válidas en el JSON */
@@ -663,8 +665,9 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     /** Obtiene el enlace público absoluto */
     get enlacePublico(): string {
         if (!this.slug) return '';
-        const base = window.location.origin;
-        return `${base}/#/eventos/registro/${this.slug}`;
+        let pathname = window.location.pathname;
+        if (!pathname.endsWith('/')) pathname += '/';
+        return `${window.location.origin}${pathname}#/eventos/registro/${this.slug}`;
     }
 
     /** Copia el enlace al portapapeles */
