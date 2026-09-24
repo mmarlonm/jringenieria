@@ -670,6 +670,10 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     /** Copia el enlace al portapapeles */
     copiarEnlace(): void {
         if (!this.enlacePublico) return;
+        if (this.currentFormId === 0) {
+            this.mostrarAlerta('Debes guardar el formulario haciendo clic en "Guardar Formulario" (esquina superior derecha) antes de compartirlo.');
+            return;
+        }
         navigator.clipboard.writeText(this.enlacePublico).then(() => {
             this.mostrarAlerta('¡Enlace público copiado al portapapeles!');
         }).catch(() => {
@@ -680,6 +684,10 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     /** Abre la vista pública en nueva pestaña */
     abrirEnlacePublico(): void {
         if (!this.enlacePublico) return;
+        if (this.currentFormId === 0) {
+            this.mostrarAlerta('Debes guardar el formulario haciendo clic en "Guardar Formulario" (esquina superior derecha) antes de abrirlo.');
+            return;
+        }
         window.open(this.enlacePublico, '_blank');
     }
 
