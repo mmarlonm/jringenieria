@@ -15,10 +15,12 @@ export class TaskService {
   constructor(private http: HttpClient) { }
 
   // Obtener todas las tareas
-  getTasks(userId: number): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.apiUrl}/mis-tareas`, {
-      params: { userId: userId.toString() }
-    });
+  getTasks(userId: number, incluirTodasArea: boolean = false): Observable<Task[]> {
+    let params = new HttpParams().set('userId', userId.toString());
+    if (incluirTodasArea) {
+      params = params.set('incluirTodasArea', 'true');
+    }
+    return this.http.get<Task[]>(`${this.apiUrl}/mis-tareas`, { params });
   }
 
 
