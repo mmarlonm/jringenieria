@@ -241,6 +241,9 @@ export class EventosPersonalComponent implements OnInit {
 
     getPhotoUrl(personal: PersonalStaff): string {
         if (!personal.fotoPath) return 'assets/images/avatars/profile.jpg';
+        if (personal.fotoPath.startsWith('http://') || personal.fotoPath.startsWith('https://')) {
+            return personal.fotoPath;
+        }
         return this._personalStaffService.getPhotoUrl(personal.id);
     }
 
