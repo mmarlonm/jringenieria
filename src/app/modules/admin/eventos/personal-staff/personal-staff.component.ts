@@ -76,6 +76,7 @@ export class EventosPersonalComponent implements OnInit {
         this.isLoading = true;
         this._personalStaffService.getAll().subscribe({
             next: (data) => {
+                console.log('--- API RESPONSE PARA PERSONAL STAFF ---', data);
                 this.personalList = data || [];
                 this.applyFilters();
                 this.isLoading = false;
@@ -100,7 +101,7 @@ export class EventosPersonalComponent implements OnInit {
             const matchesTipo = this.selectedTipo === 'Todos' || p.tipoPersonal === this.selectedTipo;
 
             const matchesEvento = !this.selectedEventoId || 
-                (p.eventoIds && p.eventoIds.includes(Number(this.selectedEventoId)));
+                (p.eventoIds && p.eventoIds.some(eId => Number(eId) === Number(this.selectedEventoId)));
 
             return matchesSearch && matchesTipo && matchesEvento;
         });
