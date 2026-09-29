@@ -1024,6 +1024,8 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
 
     get qrCodeUrl(): string {
         if (!this.resultadoRegistro?.tokenQR) return '';
-        return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(this.resultadoRegistro.tokenQR)}`;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const fichaUrl = `${baseUrl}#/eventos/ficha-personal/${this.resultadoRegistro.tokenQR}`;
+        return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fichaUrl)}`;
     }
 }

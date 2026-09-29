@@ -23,6 +23,8 @@ export class RegistroStaffComponent implements OnInit {
     alergiaCual: string = '';
     fotoArchivo: File | null = null;
     fotoPreview: string | null = null;
+    qrCodeUrl: string | null = null;
+    tokenQr: string | null = null;
 
     isSubmitting: boolean = false;
     isSuccess: boolean = false;
@@ -94,9 +96,15 @@ export class RegistroStaffComponent implements OnInit {
         formData.append('Foto', this.fotoArchivo);
 
         try {
-            await this.http.post(`${environment.apiUrl}/PersonalStaff/public-register/${this.eventoId}`, formData).toPromise();
+            const response: any = await this.http.post(`${environment.apiUrl}/PersonalStaff/public-register/${this.eventoId}`, formData).toPromise();
             this.isSuccess = true;
             this.isSubmitting = false;
+            if (response && response.tokenQr) {
+                this.tokenQr = response.tokenQr;
+                const baseUrl = window.location.origin + window.location.pathname;
+                const fichaUrl = `${baseUrl}#/eventos/ficha-personal/${this.tokenQr}`;
+                this.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fichaUrl)}`;
+            }
             this.cdr.markForCheck();
             Swal.fire('¡Éxito!', 'Tu registro se ha completado correctamente.', 'success');
         } catch (error: any) {

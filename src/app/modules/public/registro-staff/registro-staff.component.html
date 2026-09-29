@@ -25,14 +25,35 @@
             <!-- Cuerpo de la Tarjeta -->
             <div class="p-6 relative flex-grow flex flex-col justify-between">
                 
-                <div *ngIf="isSuccess" class="text-center py-8">
+                <div *ngIf="isSuccess" class="text-center py-8 animate-fade-in-up">
                     <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-[#008232]/20 mb-4">
                         <svg class="h-8 w-8 text-[#008232]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">¡Registro Exitoso!</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Tu información ha sido guardada correctamente.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Tu información ha sido guardada correctamente.</p>
+                    
+                    <!-- QR Code Digital Pass -->
+                    <div *ngIf="qrCodeUrl" class="mt-4 p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center shadow-inner">
+                        <p class="text-[10px] font-black text-[#005082] dark:text-[#34d399] uppercase tracking-widest mb-3">Tu Pase de Acceso (QR)</p>
+                        
+                        <div class="bg-white p-3 rounded-2xl inline-block shadow-md border border-slate-100 dark:border-slate-600">
+                            <img [src]="qrCodeUrl" alt="Pase QR" class="w-48 h-48 object-contain mx-auto">
+                        </div>
+                        
+                        <div class="text-[10px] text-slate-400 font-mono mt-3 select-all truncate">
+                            ID: {{ tokenQr }}
+                        </div>
+                        
+                        <div class="mt-5">
+                            <a [href]="qrCodeUrl" target="_blank" download="pase-staff.png"
+                               class="inline-flex items-center justify-center px-5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-full shadow-sm text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none transition-all hover:scale-105">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Descargar QR
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <form *ngIf="!isSuccess" class="space-y-5" (ngSubmit)="submitForm()">
