@@ -333,9 +333,9 @@
                 <!-- Selector de Evento -->
                 <div class="flex items-center bg-slate-100 dark:bg-slate-700/50 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-600">
                     <mat-icon class="text-slate-400 text-sm mr-2">event</mat-icon>
-                    <select [ngModel]="selectedEventoId" (ngModelChange)="cargarFormularioPorEvento($event)"
+                    <select [(ngModel)]="selectedEventoId"
                             class="bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-200 outline-none cursor-pointer pr-2">
-                        <option *ngFor="let ev of eventos" [value]="ev.id" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
+                        <option *ngFor="let ev of eventos" [ngValue]="ev.id" class="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
                             {{ ev.nombre }} ({{ ev.anio }})
                         </option>
                     </select>

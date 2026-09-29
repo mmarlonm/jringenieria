@@ -757,7 +757,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
 
         const payload = {
             id: this.currentFormId,
-            eventoId: this.selectedEventoId,
+            eventoId: Number(this.selectedEventoId),
             slug: this.generarSlug(this.slug),
             titulo: this.titulo.trim(),
             descripcion: this.descripcion?.trim() || '',
