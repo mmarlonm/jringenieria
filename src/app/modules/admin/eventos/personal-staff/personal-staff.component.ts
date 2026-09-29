@@ -101,7 +101,8 @@ export class EventosPersonalComponent implements OnInit {
             const matchesTipo = this.selectedTipo === 'Todos' || p.tipoPersonal === this.selectedTipo;
 
             const matchesEvento = !this.selectedEventoId || 
-                (p.eventoIds && p.eventoIds.some(eId => Number(eId) === Number(this.selectedEventoId)));
+                !p.eventoIds || 
+                p.eventoIds.some(eId => Number(eId) === Number(this.selectedEventoId));
 
             return matchesSearch && matchesTipo && matchesEvento;
         });
