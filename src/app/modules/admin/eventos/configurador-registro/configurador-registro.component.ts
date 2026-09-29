@@ -836,6 +836,18 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         return valActual === valRequerido;
     }
 
+    onFileSelectedPreview(event: any, campoId: string): void {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                this.previewRespuestas[campoId] = reader.result as string; // Guardar como Base64
+                this._cdr.markForCheck();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
     /** Exporta respuestas del formulario a formato CSV */
     exportarRespuestasCsv(): void {
         if (this.respuestasEvento.length === 0) {
