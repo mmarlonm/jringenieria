@@ -92,10 +92,10 @@ export class EventosPersonalComponent implements OnInit {
         const query = this.searchQuery.trim().toLowerCase();
         this.filteredList = this.personalList.filter(p => {
             const matchesSearch = !query || 
-                p.nombreCompleto.toLowerCase().includes(query) ||
-                p.empresa.toLowerCase().includes(query) ||
-                p.cargo.toLowerCase().includes(query) ||
-                p.correoElectronico.toLowerCase().includes(query);
+                (p.nombreCompleto && p.nombreCompleto.toLowerCase().includes(query)) ||
+                (p.empresa && p.empresa.toLowerCase().includes(query)) ||
+                (p.cargo && p.cargo.toLowerCase().includes(query)) ||
+                (p.correoElectronico && p.correoElectronico.toLowerCase().includes(query));
 
             const matchesTipo = this.selectedTipo === 'Todos' || p.tipoPersonal === this.selectedTipo;
 
