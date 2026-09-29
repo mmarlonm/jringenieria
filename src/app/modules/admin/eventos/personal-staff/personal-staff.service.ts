@@ -83,4 +83,72 @@ export class PersonalStaffService {
     enviarQrMasivo(eventoId: number, personalIds?: number[]): Observable<any> {
         return this._http.post(`${this.apiBase}/PersonalStaff/masivo-manual/${eventoId}`, personalIds || null);
     }
+
+    registrarInteraccionFicha(payload: FichaInteraccionPayload): Observable<any> {
+        return this._http.post(`${this.apiBase}/PersonalStaff/public/track-interaction`, payload);
+    }
+
+    getMetricasInteracciones(eventoId: number): Observable<MetricasFichasEvento> {
+        return this._http.get<MetricasFichasEvento>(`${this.apiBase}/PersonalStaff/metricas-interacciones/${eventoId}`);
+    }
+}
+
+export interface FichaInteraccionPayload {
+    tokenQr: string;
+    tipoAccion: string; // 'Vista' | 'ClickWhatsApp' | 'ClickTelefono' | 'ClickEmail' | 'ClickWeb' | 'Compartir'
+    dispositivo?: string;
+    detalle?: string;
+}
+
+export interface InteraccionPorDia {
+    fecha: string;
+    vistas: number;
+    clicks: number;
+    compartidos: number;
+    total: number;
+}
+
+export interface RankingPersonalFicha {
+    personalStaffId: number;
+    nombreCompleto: string;
+    empresa: string;
+    cargo: string;
+    tipoPersonal: string;
+    fotoPath?: string;
+    tokenQr: string;
+    vistas: number;
+    clicksWhatsapp: number;
+    clicksTelefono: number;
+    clicksEmail: number;
+    clicksWeb: number;
+    totalClicks: number;
+    compartidos: number;
+    totalInteracciones: number;
+    ultimaInteraccion?: string;
+}
+
+export interface InteraccionHistorialItem {
+    id: number;
+    personalStaffId: number;
+    nombrePersonal: string;
+    empresa: string;
+    tipoPersonal: string;
+    tipoAccion: string;
+    fechaRegistro: string;
+    ipOrigen?: string;
+    dispositivo?: string;
+    detalle?: string;
+}
+
+export interface MetricasFichasEvento {
+    totalVistas: number;
+    totalClicksWhatsapp: number;
+    totalClicksTelefono: number;
+    totalClicksEmail: number;
+    totalClicksWeb: number;
+    totalCompartidos: number;
+    totalInteracciones: number;
+    interaccionesPorDia: InteraccionPorDia[];
+    rankingPersonal: RankingPersonalFicha[];
+    historialReciente: InteraccionHistorialItem[];
 }

@@ -47,12 +47,36 @@ export class FichaPersonalComponent implements OnInit {
                 this.personal = data;
                 this.isLoading = false;
                 this.hasError = false;
+                this.trackAction('Vista', 'Visualización de ficha');
             },
             error: (err) => {
                 console.error(err);
                 this.isLoading = false;
                 this.hasError = true;
             }
+        });
+    }
+
+    private getDispositivo(): string {
+        const ua = navigator.userAgent || '';
+        if (/tablet|ipad|playbook|silk/i.test(ua)) {
+            return 'Tablet';
+        }
+        if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) {
+            return 'Móvil';
+        }
+        return 'Escritorio';
+    }
+
+    trackAction(tipoAccion: string, detalle?: string): void {
+        if (!this.token) return;
+        this._personalStaffService.registrarInteraccionFicha({
+            tokenQr: this.token,
+            tipoAccion: tipoAccion,
+            dispositivo: this.getDispositivo(),
+            detalle: detalle || ''
+        }).subscribe({
+            error: (err) => console.debug('Tracking info:', err)
         });
     }
 
@@ -65,6 +89,7 @@ export class FichaPersonalComponent implements OnInit {
 
     openWeb(): void {
         if (this.personal && this.personal.linkWeb) {
+            this.trackAction('ClickWeb', this.personal.linkWeb);
             let url = this.personal.linkWeb.trim();
             if (!/^https?:\/\//i.test(url)) {
                 url = 'https://' + url;
@@ -75,6 +100,7 @@ export class FichaPersonalComponent implements OnInit {
 
     openWhatsapp(): void {
         if (this.personal && this.personal.telefonoWhatsapp) {
+            this.trackAction('ClickWhatsApp', this.personal.telefonoWhatsapp);
             const cleanPhone = this.personal.telefonoWhatsapp.replace(/[^\d]/g, '');
             const url = `https://wa.me/${cleanPhone}`;
             window.open(url, '_blank');
@@ -82,6 +108,7 @@ export class FichaPersonalComponent implements OnInit {
     }
 
     shareProfile(): void {
+        this.trackAction('Compartir', 'Perfil compartido / copiado');
         const shareData = {
             title: `Ficha de Contacto - ${this.personal?.nombreCompleto}`,
             text: `${this.personal?.cargo} en ${this.personal?.empresa}`,

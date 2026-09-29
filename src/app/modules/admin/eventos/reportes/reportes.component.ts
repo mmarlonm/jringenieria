@@ -6,13 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import Exporting from 'highcharts/modules/exporting';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EventosService, Asistente, EventoEdicion } from '../eventos.service';
-import { PersonalStaffService, PersonalStaff } from '../personal-staff/personal-staff.service';
+import { PersonalStaffService, PersonalStaff, MetricasFichasEvento, RankingPersonalFicha, InteraccionHistorialItem } from '../personal-staff/personal-staff.service';
 import { DashboardEncuestasComponent } from '../encuestas/dashboard-encuestas.component';
 
 Exporting(Highcharts);
@@ -39,6 +40,7 @@ Highcharts.setOptions({
     MatSelectModule,
     MatFormFieldModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     DashboardEncuestasComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -67,6 +69,15 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
   public chartTiposAsistentesOptions: any = {};
   public chartTiposPersonalOptions: any = {};
   public chartRegistrosPorDiaOptions: any = {};
+
+  // Métricas de Fichas Digitales & Códigos QR
+  public metricasFichas: MetricasFichasEvento | null = null;
+  public cargandoFichas: boolean = false;
+  public chartFichasOptions: any = {};
+  public personalSeleccionadoHistorial: RankingPersonalFicha | null = null;
+  public modalHistorialAbierto: boolean = false;
+  public filtroAccionHistorial: string = 'todas';
+  public busquedaHistorial: string = '';
 
   private baseTheme: any = {
     chart: {
@@ -129,6 +140,7 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
   loadReports(): void {
     this.isLoading = true;
     this._eventosService.loadDashboardMetrics(this.selectedEventoId);
+    this.loadMetricasFichas();
     this._eventosService.getAsistentes(this.selectedEventoId).subscribe({
       next: (asistentes) => {
         this.asistentes = asistentes || [];
@@ -426,6 +438,112 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
         }
       }
     };
+  }
+
+  public loadMetricasFichas(): void {
+    this.cargandoFichas = true;
+    this._personalStaffService.getMetricasInteracciones(this.selectedEventoId).subscribe({
+      next: (data) => {
+        this.metricasFichas = data;
+        this.cargandoFichas = false;
+        this.generarGraficoFichas();
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar métricas de fichas:', err);
+        this.cargandoFichas = false;
+        this._cdr.markForCheck();
+      }
+    });
+  }
+
+  public generarGraficoFichas(): void {
+    if (!this.metricasFichas || !this.metricasFichas.interaccionesPorDia) return;
+
+    const dias = this.metricasFichas.interaccionesPorDia;
+    const categories = dias.map(d => {
+      const parts = d.fecha.split('-');
+      if (parts.length === 3) {
+        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+      }
+      return d.fecha;
+    });
+
+    const vistasData = dias.map(d => d.vistas);
+    const clicksData = dias.map(d => d.clicks);
+    const compartidosData = dias.map(d => d.compartidos);
+
+    this.chartFichasOptions = {
+      ...this.baseTheme,
+      chart: { ...this.baseTheme.chart, type: 'column' },
+      xAxis: {
+        categories: categories,
+        title: { text: 'Fecha de Interacción' },
+        labels: { style: { fontSize: '11px', fontWeight: 'bold' } }
+      },
+      yAxis: {
+        title: { text: 'Total Interacciones' },
+        min: 0,
+        allowDecimals: false
+      },
+      plotOptions: {
+        column: {
+          borderRadius: 6,
+          stacking: 'normal',
+          dataLabels: { enabled: true, style: { fontSize: '10px' } }
+        }
+      },
+      series: [
+        { name: 'Vistas de Perfil', data: vistasData, color: '#0284c7' },
+        { name: 'Clics de Contacto', data: clicksData, color: '#10b981' },
+        { name: 'Veces Compartido', data: compartidosData, color: '#8b5cf6' }
+      ]
+    };
+  }
+
+  public abrirHistorial(personal?: RankingPersonalFicha): void {
+    this.personalSeleccionadoHistorial = personal || null;
+    this.filtroAccionHistorial = 'todas';
+    this.busquedaHistorial = '';
+    this.modalHistorialAbierto = true;
+    this._cdr.markForCheck();
+  }
+
+  public cerrarHistorial(): void {
+    this.modalHistorialAbierto = false;
+    this.personalSeleccionadoHistorial = null;
+    this._cdr.markForCheck();
+  }
+
+  public getPhotoUrl(personalId: number): string {
+    return this._personalStaffService.getPhotoUrl(personalId);
+  }
+
+  get historialFiltrado(): InteraccionHistorialItem[] {
+    if (!this.metricasFichas || !this.metricasFichas.historialReciente) return [];
+    let list = this.metricasFichas.historialReciente;
+
+    if (this.personalSeleccionadoHistorial) {
+      list = list.filter(h => h.personalStaffId === this.personalSeleccionadoHistorial?.personalStaffId);
+    }
+
+    if (this.filtroAccionHistorial !== 'todas') {
+      list = list.filter(h => h.tipoAccion === this.filtroAccionHistorial);
+    }
+
+    if (this.busquedaHistorial.trim() !== '') {
+      const q = this.busquedaHistorial.toLowerCase().trim();
+      list = list.filter(h =>
+        h.nombrePersonal.toLowerCase().includes(q) ||
+        h.empresa.toLowerCase().includes(q) ||
+        (h.ipOrigen && h.ipOrigen.toLowerCase().includes(q)) ||
+        (h.dispositivo && h.dispositivo.toLowerCase().includes(q)) ||
+        (h.detalle && h.detalle.toLowerCase().includes(q))
+      );
+    }
+
+    return list;
   }
 
   ngOnDestroy(): void {

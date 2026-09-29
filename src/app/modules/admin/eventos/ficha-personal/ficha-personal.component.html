@@ -78,6 +78,7 @@
                         
                         <!-- Phone Call (Office) -->
                         <a [href]="'tel:' + personal.telefonoOficina" *ngIf="personal.telefonoOficina" 
+                           (click)="trackAction('ClickTelefono', personal.telefonoOficina)"
                            class="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group">
                             <div class="flex items-center justify-center w-11 h-11 rounded-full bg-[#005082] text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
                                 <mat-icon class="icon-size-5">phone</mat-icon>
@@ -102,6 +103,7 @@
 
                         <!-- Email Send -->
                         <a [href]="'mailto:' + personal.correoElectronico"
+                           (click)="trackAction('ClickEmail', personal.correoElectronico)"
                            class="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group">
                             <div class="flex items-center justify-center w-11 h-11 rounded-full bg-[#005082] text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
                                 <mat-icon class="icon-size-5">email</mat-icon>

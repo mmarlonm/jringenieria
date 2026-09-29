@@ -196,6 +196,359 @@
       </div>
     </div>
 
+    <!-- SECCIÓN: ANALÍTICA DE FICHAS DIGITALES & CÓDIGOS QR -->
+    <div *ngIf="metricasFichas" class="w-full px-2 space-y-6 pt-4 border-t border-gray-200">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3 shadow-inner">
+              <mat-icon class="icon-size-5">qr_code_2</mat-icon>
+            </div>
+            Analítica de Fichas Digitales & QR
+          </h2>
+          <p class="text-xs text-gray-500 font-semibold mt-1 ml-13">
+            Métricas en tiempo real de escaneos, visitas a perfiles y clics de contacto de expositores y personal.
+          </p>
+        </div>
+
+        <button (click)="abrirHistorial()" mat-stroked-button
+                class="rounded-xl border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-1.5 text-xs font-bold py-1.5 px-4 shadow-sm">
+          <mat-icon class="text-sm mr-1">history</mat-icon>
+          Ver Historial Completo de Accesos
+        </button>
+      </div>
+
+      <!-- KPI Cards Fichas -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        
+        <!-- Vistas -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-blue-600">Vistas de Perfil</span>
+            <div class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <mat-icon class="text-sm">visibility</mat-icon>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="text-3xl font-black text-gray-900 tracking-tight">{{ metricasFichas.totalVistas }}</div>
+            <div class="text-[11px] text-gray-400 font-medium mt-0.5">Escaneos o visitas</div>
+          </div>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600">Clics WhatsApp</span>
+            <div class="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <mat-icon class="text-sm">chat</mat-icon>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="text-3xl font-black text-gray-900 tracking-tight">{{ metricasFichas.totalClicksWhatsapp }}</div>
+            <div class="text-[11px] text-gray-400 font-medium mt-0.5">Chats iniciados</div>
+          </div>
+        </div>
+
+        <!-- Teléfono -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-600">Llamadas / Tel</span>
+            <div class="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <mat-icon class="text-sm">phone</mat-icon>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="text-3xl font-black text-gray-900 tracking-tight">{{ metricasFichas.totalClicksTelefono }}</div>
+            <div class="text-[11px] text-gray-400 font-medium mt-0.5">Clics a teléfono</div>
+          </div>
+        </div>
+
+        <!-- Web / Email -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-purple-600">Web / Email</span>
+            <div class="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <mat-icon class="text-sm">language</mat-icon>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="text-3xl font-black text-gray-900 tracking-tight">{{ metricasFichas.totalClicksWeb + metricasFichas.totalClicksEmail }}</div>
+            <div class="text-[11px] text-gray-400 font-medium mt-0.5">Visitas a enlaces</div>
+          </div>
+        </div>
+
+        <!-- Compartidos -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between col-span-2 sm:col-span-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-rose-600">Compartidos</span>
+            <div class="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <mat-icon class="text-sm">share</mat-icon>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="text-3xl font-black text-gray-900 tracking-tight">{{ metricasFichas.totalCompartidos }}</div>
+            <div class="text-[11px] text-gray-400 font-medium mt-0.5">Difusiones del perfil</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Gráfico de Tendencia de Fichas (si hay datos de días) -->
+      <div *ngIf="metricasFichas.interaccionesPorDia.length > 0" class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h3 class="text-base font-black text-gray-800 flex items-center uppercase tracking-tight mb-6">
+          <mat-icon class="mr-3 text-indigo-600 bg-indigo-50 p-2 rounded-2xl">bar_chart</mat-icon>
+          Interacciones con Fichas por Día (Vistas vs Clics vs Compartidos)
+        </h3>
+        <div class="w-full h-[360px]">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="chartFichasOptions" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+        </div>
+      </div>
+
+      <!-- Tabla de Ranking por Expositor / Personal -->
+      <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-base font-black text-gray-800 flex items-center uppercase tracking-tight">
+              <mat-icon class="mr-3 text-emerald-600 bg-emerald-50 p-2 rounded-2xl">leaderboard</mat-icon>
+              Ranking de Interacción por Expositor / Personal
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">Conoce quiénes generan mayor interés, tráfico y contacto directo.</p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-600 rounded-full w-fit">
+            {{ metricasFichas.rankingPersonal.length }} perfiles analizados
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-gray-200">
+              <tr>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Expositor / Staff</th>
+                <th class="px-4 py-3 text-left font-bold text-slate-700">Empresa / Cargo</th>
+                <th class="px-4 py-3 text-center font-bold text-slate-700">Tipo</th>
+                <th class="px-4 py-3 text-center font-bold text-blue-600">Vistas</th>
+                <th class="px-4 py-3 text-center font-bold text-emerald-600">WhatsApp</th>
+                <th class="px-4 py-3 text-center font-bold text-purple-600">Otros Clics</th>
+                <th class="px-4 py-3 text-center font-bold text-rose-600">Compartidos</th>
+                <th class="px-4 py-3 text-center font-bold text-slate-800">Total</th>
+                <th class="px-4 py-3 text-center font-bold text-slate-700">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of metricasFichas.rankingPersonal" class="border-b border-gray-100 hover:bg-slate-50 transition-colors">
+                <!-- Nombre y Foto -->
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <img [src]="getPhotoUrl(p.personalStaffId)"
+                         class="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                         (error)="$event.target.src = 'assets/images/avatars/profile.jpg'">
+                    <div>
+                      <div class="font-bold text-slate-900 leading-tight">{{ p.nombreCompleto }}</div>
+                      <div class="text-[11px] text-slate-400 font-mono">Token: {{ p.tokenQr.substring(0, 8) }}...</div>
+                    </div>
+                  </div>
+                </td>
+                
+                <!-- Empresa y Cargo -->
+                <td class="px-4 py-3">
+                  <div class="font-semibold text-slate-800 text-xs">{{ p.empresa || '-' }}</div>
+                  <div class="text-[11px] text-slate-500">{{ p.cargo || '-' }}</div>
+                </td>
+
+                <!-- Tipo -->
+                <td class="px-4 py-3 text-center">
+                  <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                        [ngClass]="p.tipoPersonal === 'Expositor' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'">
+                    {{ p.tipoPersonal }}
+                  </span>
+                </td>
+
+                <!-- Vistas -->
+                <td class="px-4 py-3 text-center font-bold text-blue-600 text-base">
+                  {{ p.vistas }}
+                </td>
+
+                <!-- WhatsApp -->
+                <td class="px-4 py-3 text-center font-bold text-emerald-600 text-base">
+                  {{ p.clicksWhatsapp }}
+                </td>
+
+                <!-- Otros Clics -->
+                <td class="px-4 py-3 text-center font-semibold text-purple-600 text-sm">
+                  {{ p.clicksTelefono + p.clicksEmail + p.clicksWeb }}
+                </td>
+
+                <!-- Compartidos -->
+                <td class="px-4 py-3 text-center font-semibold text-rose-600 text-sm">
+                  {{ p.compartidos }}
+                </td>
+
+                <!-- Total -->
+                <td class="px-4 py-3 text-center">
+                  <span class="inline-block px-3 py-1 rounded-xl bg-slate-900 text-white font-extrabold text-xs">
+                    {{ p.totalInteracciones }}
+                  </span>
+                </td>
+
+                <!-- Botón Ver Historial Individual -->
+                <td class="px-4 py-3 text-center">
+                  <button (click)="abrirHistorial(p)"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                          matTooltip="Ver historial detallado de accesos">
+                    <mat-icon class="text-[14px]">visibility</mat-icon>
+                    <span>Accesos</span>
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="metricasFichas.rankingPersonal.length === 0">
+                <td colspan="9" class="py-8 text-center text-slate-400 text-xs">
+                  No se registraron interacciones en las fichas de este evento aún.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MODAL FLOTANTE DE HISTORIAL DETALLADO -->
+    <div *ngIf="modalHistorialAbierto" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Header Modal -->
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+              <mat-icon>history</mat-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-black text-slate-900 leading-tight">
+                {{ personalSeleccionadoHistorial ? ('Historial de Accesos — ' + personalSeleccionadoHistorial.nombreCompleto) : 'Historial Global de Accesos a Fichas' }}
+              </h3>
+              <p class="text-xs text-slate-500">
+                Registro detallado de fecha, hora, dirección IP, dispositivo y tipo de interacción.
+              </p>
+            </div>
+          </div>
+
+          <button (click)="cerrarHistorial()" mat-icon-button class="text-slate-400 hover:text-slate-700">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Filtros y Buscador Modal -->
+        <div class="p-4 border-b border-slate-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <span class="text-xs font-bold text-slate-500">Filtrar por Acción:</span>
+            <select [(ngModel)]="filtroAccionHistorial"
+                    class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 font-semibold outline-none cursor-pointer">
+              <option value="todas">Todas las acciones</option>
+              <option value="Vista">👁️ Vistas de Perfil</option>
+              <option value="ClickWhatsApp">💬 Clics WhatsApp</option>
+              <option value="ClickTelefono">📞 Clics Teléfono</option>
+              <option value="ClickEmail">✉️ Clics Email</option>
+              <option value="ClickWeb">🌐 Clics Web</option>
+              <option value="Compartir">🔄 Compartidos</option>
+            </select>
+          </div>
+
+          <div class="relative w-full sm:w-72">
+            <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</mat-icon>
+            <input type="text" [(ngModel)]="busquedaHistorial" placeholder="Buscar por nombre, empresa o IP..."
+                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 outline-none">
+          </div>
+        </div>
+
+        <!-- Tabla de Registros en Modal -->
+        <div class="flex-auto overflow-y-auto p-6 max-h-[500px]">
+          <table class="w-full text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+              <tr>
+                <th class="px-3 py-2 text-left">Fecha y Hora</th>
+                <th class="px-3 py-2 text-left" *ngIf="!personalSeleccionadoHistorial">Personal / Expositor</th>
+                <th class="px-3 py-2 text-left">Acción</th>
+                <th class="px-3 py-2 text-left">Dispositivo</th>
+                <th class="px-3 py-2 text-left">IP de Origen</th>
+                <th class="px-3 py-2 text-left">Detalle</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let h of historialFiltrado" class="hover:bg-slate-50 transition-colors">
+                <!-- Fecha -->
+                <td class="px-3 py-2.5 font-medium text-slate-800 whitespace-nowrap">
+                  {{ h.fechaRegistro | date:'dd/MM/yyyy HH:mm:ss' }}
+                </td>
+
+                <!-- Personal (si no está prefiltrado) -->
+                <td class="px-3 py-2.5" *ngIf="!personalSeleccionadoHistorial">
+                  <div class="font-bold text-slate-900">{{ h.nombrePersonal }}</div>
+                  <div class="text-[10px] text-slate-500">{{ h.empresa }}</div>
+                </td>
+
+                <!-- Acción Badge -->
+                <td class="px-3 py-2.5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full font-bold text-[11px]"
+                        [ngClass]="{
+                          'bg-blue-100 text-blue-800': h.tipoAccion === 'Vista',
+                          'bg-emerald-100 text-emerald-800': h.tipoAccion === 'ClickWhatsApp',
+                          'bg-amber-100 text-amber-800': h.tipoAccion === 'ClickTelefono',
+                          'bg-purple-100 text-purple-800': h.tipoAccion === 'ClickWeb' || h.tipoAccion === 'ClickEmail',
+                          'bg-rose-100 text-rose-800': h.tipoAccion === 'Compartir'
+                        }">
+                    {{ h.tipoAccion === 'Vista' ? '👁️ Vista' :
+                       h.tipoAccion === 'ClickWhatsApp' ? '💬 WhatsApp' :
+                       h.tipoAccion === 'ClickTelefono' ? '📞 Teléfono' :
+                       h.tipoAccion === 'ClickEmail' ? '✉️ Email' :
+                       h.tipoAccion === 'ClickWeb' ? '🌐 Sitio Web' :
+                       h.tipoAccion === 'Compartir' ? '🔄 Compartido' : h.tipoAccion }}
+                  </span>
+                </td>
+
+                <!-- Dispositivo -->
+                <td class="px-3 py-2.5 font-semibold text-slate-600">
+                  <span class="inline-flex items-center gap-1">
+                    <mat-icon class="text-[14px] text-slate-400">
+                      {{ h.dispositivo === 'Móvil' ? 'smartphone' : h.dispositivo === 'Tablet' ? 'tablet' : 'computer' }}
+                    </mat-icon>
+                    {{ h.dispositivo || 'Desconocido' }}
+                  </span>
+                </td>
+
+                <!-- IP -->
+                <td class="px-3 py-2.5 font-mono text-[10px] text-slate-500">
+                  {{ h.ipOrigen || '-' }}
+                </td>
+
+                <!-- Detalle -->
+                <td class="px-3 py-2.5 text-slate-500 truncate max-w-[180px]" [matTooltip]="h.detalle || ''">
+                  {{ h.detalle || '-' }}
+                </td>
+              </tr>
+
+              <tr *ngIf="historialFiltrado.length === 0">
+                <td [attr.colspan]="personalSeleccionadoHistorial ? 5 : 6" class="py-12 text-center text-slate-400">
+                  No se encontraron registros de accesos con los filtros seleccionados.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Modal -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+          <span>Mostrando {{ historialFiltrado.length }} accesos registrados</span>
+          <button (click)="cerrarHistorial()" mat-button class="rounded-xl font-bold text-slate-700 hover:bg-slate-200">
+            Cerrar
+          </button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
   <!-- Encuestas Dashboard -->
