@@ -76,7 +76,6 @@ export class EventosPersonalComponent implements OnInit {
         this.isLoading = true;
         this._personalStaffService.getAll().subscribe({
             next: (data) => {
-                console.log('--- API RESPONSE PARA PERSONAL STAFF ---', data);
                 this.personalList = data || [];
                 this.applyFilters();
                 this.isLoading = false;

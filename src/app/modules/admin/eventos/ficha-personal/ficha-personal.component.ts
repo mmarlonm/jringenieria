@@ -76,7 +76,7 @@ export class FichaPersonalComponent implements OnInit {
             dispositivo: this.getDispositivo(),
             detalle: detalle || ''
         }).subscribe({
-            error: (err) => console.debug('Tracking info:', err)
+            error: () => {}
         });
     }
 
@@ -116,7 +116,7 @@ export class FichaPersonalComponent implements OnInit {
         };
 
         if (navigator.share) {
-            navigator.share(shareData).catch(err => console.log('Error sharing:', err));
+            navigator.share(shareData).catch(() => {});
         } else {
             navigator.clipboard.writeText(window.location.href).then(() => {
                 this.copied = true;
