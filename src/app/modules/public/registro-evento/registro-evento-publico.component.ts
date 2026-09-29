@@ -633,6 +633,17 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
             background-color: #1e293b;
         }
     }
+
+    &.radio-selected,
+    &.checkbox-selected {
+        border-color: #1e8449;
+        background-color: rgba(30, 132, 73, 0.05);
+
+        .card-dark & {
+            border-color: #34d399;
+            background-color: rgba(52, 211, 153, 0.1);
+        }
+    }
 }
 
 .file-upload-box {
@@ -704,17 +715,6 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 }
 
 
-    &.radio-selected,
-    &.checkbox-selected {
-        border-color: #1e8449;
-        background-color: rgba(30, 132, 73, 0.05);
-
-        .card-dark & {
-            border-color: #34d399;
-            background-color: rgba(52, 211, 153, 0.1);
-        }
-    }
-}
 
 .radio-indicator {
     width: 18px;
