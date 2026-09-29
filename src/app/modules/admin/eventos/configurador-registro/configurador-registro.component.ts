@@ -259,7 +259,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         this.slug = form.slug;
         this.imagenPortadaUrl = form.imagenPortadaUrl || 'assets/eventos/foro-energiza-logo.png';
         this.activo = form.activo;
-        this.moduloDestino = form.moduloDestino || 'Asistentes';
+        this.moduloDestino = (form.moduloDestino || 'Asistentes').trim();
         this.totalRespuestas = form.totalRespuestas || 0;
 
         try {
