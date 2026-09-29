@@ -428,6 +428,51 @@
                         </div>
                     </div>
 
+                    <!-- SECCIÓN MÓDULO DESTINO -->
+                    <div class="bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Módulo de Destino</h3>
+                                <p class="text-xs text-slate-400">¿Hacia qué módulo del sistema se enviarán estos registros?</p>
+                            </div>
+                            <mat-icon class="text-slate-400">api</mat-icon>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Opción Asistentes -->
+                            <label class="relative flex flex-col p-4 cursor-pointer rounded-xl border-2 transition-all"
+                                   [ngClass]="moduloDestino === 'Asistentes' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'">
+                                <input type="radio" name="moduloDestino" [(ngModel)]="moduloDestino" value="Asistentes" class="hidden">
+                                <span class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">General (Asistentes)</span>
+                                <span class="text-xs text-slate-500">Público en general o estudiantes.</span>
+                                <div class="absolute top-3 right-3 text-emerald-500" *ngIf="moduloDestino === 'Asistentes'">
+                                    <mat-icon class="text-[18px]">check_circle</mat-icon>
+                                </div>
+                            </label>
+
+                            <!-- Opción Staff -->
+                            <label class="relative flex flex-col p-4 cursor-pointer rounded-xl border-2 transition-all"
+                                   [ngClass]="moduloDestino === 'Staff' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'">
+                                <input type="radio" name="moduloDestino" [(ngModel)]="moduloDestino" value="Staff" class="hidden">
+                                <span class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">Personal Staff</span>
+                                <span class="text-xs text-slate-500">Equipo de logística, apoyo.</span>
+                                <div class="absolute top-3 right-3 text-blue-500" *ngIf="moduloDestino === 'Staff'">
+                                    <mat-icon class="text-[18px]">check_circle</mat-icon>
+                                </div>
+                            </label>
+
+                            <!-- Opción Expositores -->
+                            <label class="relative flex flex-col p-4 cursor-pointer rounded-xl border-2 transition-all"
+                                   [ngClass]="moduloDestino === 'Expositores' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'">
+                                <input type="radio" name="moduloDestino" [(ngModel)]="moduloDestino" value="Expositores" class="hidden">
+                                <span class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">Expositores</span>
+                                <span class="text-xs text-slate-500">Conferencistas o ponentes.</span>
+                                <div class="absolute top-3 right-3 text-purple-500" *ngIf="moduloDestino === 'Expositores'">
+                                    <mat-icon class="text-[18px]">check_circle</mat-icon>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- SECCIÓN IMAGEN DE PORTADA -->
                     <div class="bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-4">
                         <div class="flex items-center justify-between">

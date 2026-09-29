@@ -37,6 +37,7 @@ export interface FormularioRegistroAdminDto {
     imagenPortadaUrl?: string;
     camposConfigJson: string;
     disenoConfigJson: string;
+    moduloDestino: string;
     activo: boolean;
     fechaCreacion: string;
     fechaModificacion?: string;
@@ -52,6 +53,7 @@ export interface FormularioRegistroSaveDto {
     imagenPortadaUrl?: string;
     camposConfigJson: string;
     disenoConfigJson: string;
+    moduloDestino: string;
     activo: boolean;
 }
 
@@ -65,6 +67,7 @@ export interface FormularioRegistroPublicoDto {
     imagenPortadaUrl?: string;
     camposConfigJson: string;
     disenoConfigJson: string;
+    moduloDestino: string;
     activo: boolean;
 }
 
@@ -72,6 +75,7 @@ export interface RegistroPublicoResultadoDto {
     exito: boolean;
     mensaje: string;
     asistenteId?: number;
+    personalStaffId?: number;
     tokenQR?: string;
     nombreCompleto?: string;
     correoElectronico?: string;

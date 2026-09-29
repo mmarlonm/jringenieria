@@ -70,6 +70,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     descripcion = 'Completa tus datos para confirmar tu participación y obtener tu pase de acceso.';
     slug = '';
     imagenPortadaUrl = 'assets/eventos/foro-energiza-logo.png';
+    moduloDestino = 'Asistentes';
     activo = true;
     totalRespuestas = 0;
 
@@ -85,7 +86,8 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         { value: 'select', label: 'Menú desplegable (Select)', icon: 'heroicons_outline:chevron-down' },
         { value: 'radio', label: 'Opción única (Radio)', icon: 'heroicons_outline:check-circle' },
         { value: 'checkbox', label: 'Múltiple opción (Checkbox)', icon: 'heroicons_outline:squares-2x2' },
-        { value: 'textarea', label: 'Área de texto (Párrafo)', icon: 'heroicons_outline:bars-3-bottom-left' }
+        { value: 'textarea', label: 'Área de texto (Párrafo)', icon: 'heroicons_outline:bars-3-bottom-left' },
+        { value: 'file', label: 'Subir Archivo / Fotografía', icon: 'heroicons_outline:photo' }
     ];
 
     // Campos estándar sugeridos para mapeo automático al Asistente
@@ -100,7 +102,10 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         { value: 'OcupacionCargo', label: 'Cargo / Ocupación' },
         { value: 'DireccionCiudadEstado', label: 'Ciudad / Estado de origen' },
         { value: 'UniversidadRepresentas', label: 'Universidad (Estudiantes)' },
-        { value: 'CarreraCursas', label: 'Carrera / Especialidad' }
+        { value: 'CarreraCursas', label: 'Carrera / Especialidad' },
+        { value: 'FotoPerfil', label: 'Fotografía (Staff/Expositor)' },
+        { value: 'EsAlergicoAlimento', label: '¿Alergias a alimentos?' },
+        { value: 'AlergiaCual', label: '¿Cuáles alergias?' }
     ];
 
     // Configuración de Diseño
@@ -758,6 +763,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
             imagenPortadaUrl: this.imagenPortadaUrl,
             camposConfigJson: JSON.stringify(this.campos),
             disenoConfigJson: JSON.stringify(this.diseno),
+            moduloDestino: this.moduloDestino,
             activo: this.activo
         };
 
