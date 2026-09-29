@@ -5,7 +5,7 @@ import { environment } from 'environments/environment';
 
 export interface CampoConfig {
     id: string;
-    tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel';
+    tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel' | 'file';
     etiqueta: string;
     placeholder?: string;
     requerido: boolean;
@@ -13,6 +13,8 @@ export interface CampoConfig {
     ancho?: 'full' | 'half';
     campoEstandar?: string; // Mapeo automático (Nombre, Apellidos, Correo, Telefono, Empresa, etc.)
     orden: number;
+    dependeDeCampoId?: string;
+    dependeDeValor?: string;
 }
 
 export interface DisenoConfig {

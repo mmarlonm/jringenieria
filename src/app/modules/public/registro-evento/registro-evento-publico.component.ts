@@ -137,7 +137,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
                 <!-- CAMPOS DINÁMICOS -->
                 <form (ngSubmit)="enviarRegistro()" class="fields-grid" #regForm="ngForm">
-                    <div *ngFor="let campo of campos"
+                    <ng-container *ngFor="let campo of campos">
+                    <div *ngIf="esCampoVisible(campo)"
                          class="field-col"
                          [ngClass]="{'col-full': campo.ancho === 'full', 'col-half': campo.ancho === 'half'}">
 
@@ -219,7 +220,23 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                         <span *ngIf="erroresCampos[campo.id]" class="field-error-msg">
                             Este campo es obligatorio.
                         </span>
+
+                        <!-- File / Imagen -->
+                        <div *ngIf="campo.tipo === 'file'" class="input-wrap">
+                            <label class="file-upload-box" [class.input-error]="erroresCampos[campo.id]">
+                                <input type="file" [id]="campo.id" [name]="campo.id" accept="image/*,.pdf" class="sr-only" (change)="onFileSelected($event, campo.id)">
+                                <div *ngIf="!respuestas[campo.id]" class="file-placeholder">
+                                    <mat-icon class="file-icon">cloud_upload</mat-icon>
+                                    <span class="file-text">Selecciona o arrastra tu archivo</span>
+                                </div>
+                                <div *ngIf="respuestas[campo.id]" class="file-preview-wrap">
+                                    <img *ngIf="respuestas[campo.id].startsWith('data:image')" [src]="respuestas[campo.id]" class="file-preview-img">
+                                    <span class="file-success-text">Archivo listo para subir</span>
+                                </div>
+                            </label>
+                        </div>
                     </div>
+                    </ng-container>
 
                     <!-- BOTÓN DE ENVÍO -->
                     <div class="submit-action-row">
@@ -598,6 +615,75 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     padding: 0.6rem 0.85rem;
     border-radius: 0.75rem;
     border: 1.5px solid #e2e8f0;
+}
+
+.file-upload-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #f8fafc;
+    min-height: 120px;
+}
+
+.file-upload-box:hover {
+    border-color: #1e8449;
+    background-color: #f0fdf4;
+}
+
+.file-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+}
+
+.file-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    color: #94a3b8;
+}
+
+.file-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.file-preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-preview-img {
+    max-height: 100px;
+    border-radius: 0.5rem;
+    object-fit: cover;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.file-success-text {
+    font-size: 0.75rem;
+    color: #10b981;
+    font-weight: 700;
+}
+
+.dark-theme .file-upload-box {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-theme .file-upload-box:hover {
+    border-color: #34d399;
+    background-color: rgba(52, 211, 153, 0.1);
+}
     background-color: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -851,12 +937,47 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         this.errorMessage = '';
     }
 
+    esCampoVisible(campo: CampoConfig): boolean {
+        if (!campo.dependeDeCampoId) {
+            return true;
+        }
+
+        const valorDependencia = this.respuestas[campo.dependeDeCampoId];
+        if (valorDependencia === undefined || valorDependencia === null) {
+            return false;
+        }
+
+        const valRequerido = (campo.dependeDeValor || '').toLowerCase().trim();
+        let valActual = '';
+
+        if (Array.isArray(valorDependencia)) {
+            valActual = valorDependencia.join(',').toLowerCase();
+            return valorDependencia.some(v => (v || '').toLowerCase().trim() === valRequerido);
+        } else {
+            valActual = String(valorDependencia).toLowerCase().trim();
+        }
+
+        return valActual === valRequerido;
+    }
+
+    onFileSelected(event: any, campoId: string): void {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                this.respuestas[campoId] = reader.result as string; // Guardar como Base64
+                this.limpiarError(campoId);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
     validar(): boolean {
         this.erroresCampos = {};
         let valido = true;
 
         for (const campo of this.campos) {
-            if (campo.requerido) {
+            if (campo.requerido && this.esCampoVisible(campo)) {
                 const val = this.respuestas[campo.id];
                 if (val === null || val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) {
                     this.erroresCampos[campo.id] = true;

@@ -813,6 +813,29 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
             });
     }
 
+    esCampoVisible(campo: CampoConfig): boolean {
+        if (!campo.dependeDeCampoId) {
+            return true;
+        }
+
+        const valorDependencia = this.previewRespuestas[campo.dependeDeCampoId];
+        if (valorDependencia === undefined || valorDependencia === null) {
+            return false;
+        }
+
+        const valRequerido = (campo.dependeDeValor || '').toLowerCase().trim();
+        let valActual = '';
+
+        if (Array.isArray(valorDependencia)) {
+            valActual = valorDependencia.join(',').toLowerCase();
+            return valorDependencia.some(v => (v || '').toLowerCase().trim() === valRequerido);
+        } else {
+            valActual = String(valorDependencia).toLowerCase().trim();
+        }
+
+        return valActual === valRequerido;
+    }
+
     /** Exporta respuestas del formulario a formato CSV */
     exportarRespuestasCsv(): void {
         if (this.respuestasEvento.length === 0) {
