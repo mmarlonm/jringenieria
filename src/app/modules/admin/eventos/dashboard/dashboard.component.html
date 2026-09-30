@@ -55,6 +55,28 @@
                     </mat-select>
                 </mat-form-field>
             </div>
+
+            <!-- View Mode Filter -->
+            <div class="min-w-[220px] flex-auto sm:flex-initial">
+                <mat-form-field class="fuse-mat-no-subscript w-full scale-95 origin-right" appearance="outline">
+                    <mat-select [value]="selectedViewMode" (selectionChange)="onViewModeChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        <mat-option value="general">
+                            <span class="flex items-center gap-2">
+                                <mat-icon class="icon-size-4 text-emerald-500" svgIcon="heroicons_outline:globe-alt"></mat-icon>
+                                <span>Evento General</span>
+                            </span>
+                        </mat-option>
+                        <mat-optgroup label="Sub-Eventos y Actividades" class="font-bold text-slate-400">
+                            <mat-option *ngFor="let taller of talleresMetrics" [value]="taller.actividadId">
+                                <span class="flex items-center gap-2">
+                                    <mat-icon class="icon-size-4 text-indigo-500" svgIcon="heroicons_outline:map-pin"></mat-icon>
+                                    <span class="truncate max-w-[180px]">{{ taller.titulo }}</span>
+                                </span>
+                            </mat-option>
+                        </mat-optgroup>
+                    </mat-select>
+                </mat-form-field>
+            </div>
         </div>
     </div>
 
@@ -76,6 +98,9 @@
                     <div class="flex items-center gap-2 flex-wrap">
                         <h2 class="text-sm font-black text-slate-900 dark:text-white">
                             {{ isEventoPasado ? 'Resumen Histórico de Ingresos' : 'Flujo y Transmisión de Ingresos en Vivo' }}
+                            <span *ngIf="selectedViewMode !== 'general'" class="text-indigo-600 dark:text-indigo-400 opacity-90 block sm:inline">
+                                — {{ getSelectedViewTitle() }}
+                            </span>
                         </h2>
                         <!-- LIVE badge -->
                         <span *ngIf="!isEventoPasado"

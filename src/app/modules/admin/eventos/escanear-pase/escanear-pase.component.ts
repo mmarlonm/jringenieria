@@ -248,6 +248,22 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     }
 
+    public getActividadesFiltradas(tipos: string[]): Actividad[] {
+        if (!this.availableTalleres) return [];
+        return this.availableTalleres.filter(t => {
+            const tipo = t.tipoActividad || 'General';
+            return tipos.includes(tipo);
+        });
+    }
+
+    public getActividadesGeneral(): Actividad[] {
+        if (!this.availableTalleres) return [];
+        return this.availableTalleres.filter(t => {
+            const tipo = t.tipoActividad || 'General';
+            return !['Taller', 'Conferencia'].includes(tipo);
+        });
+    }
+
     public onEventoChanged(eventoId: any): void {
         this.selectedEventoId = Number(eventoId); // actualiza el modelo de forma síncrona para que el <select> no revierta
         this._cdr.markForCheck();

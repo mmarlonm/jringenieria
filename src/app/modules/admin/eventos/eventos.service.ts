@@ -89,6 +89,7 @@ export interface Actividad {
     fechaHoraFin: string;
     fechaCreacion: string;
     registradosActuales: number;
+    tipoActividad?: string;
 }
 
 export interface AccesoTallerResultDto {
@@ -240,6 +241,11 @@ export class EventosService implements OnDestroy {
             }
         });
 
+        this.hubConnection.on('ReceiveTallerCheckInEvent', (res: any) => {
+            console.log('📡 [SignalR] Taller Check-in event received:', res);
+            // Will be handled in dashboard.component.ts if the view mode matches
+        });
+
         // Connection status triggers
         this.hubConnection.onreconnecting(() => {
             this._signalrStatus.next('Reconnecting');
@@ -337,8 +343,9 @@ export class EventosService implements OnDestroy {
 
 
     // GET api/Asistentes/dashboard-metrics/{eventoId}
-    public loadDashboardMetrics(eventoId: number): void {
-        this._http.get<any>(`${this.apiBase}/Asistentes/dashboard-metrics/${eventoId}`)
+    public loadDashboardMetrics(eventoId: number, actividadId?: number): void {
+        const queryParams = actividadId ? `?actividadId=${actividadId}` : '';
+        this._http.get<any>(`${this.apiBase}/Asistentes/dashboard-metrics/${eventoId}${queryParams}`)
             .subscribe({
                 next: (res) => {
                     if (res) {
@@ -566,8 +573,9 @@ export class EventosService implements OnDestroy {
 
     // --- State helpers ---
 
-    public loadAsistentesPorEvento(eventoId: number): void {
-        this._http.get<any[]>(`${this.apiBase}/Asistentes/evento/${eventoId}`)
+    public loadAsistentesPorEvento(eventoId: number, actividadId?: number): void {
+        const queryParams = actividadId ? `?actividadId=${actividadId}` : '';
+        this._http.get<any[]>(`${this.apiBase}/Asistentes/evento/${eventoId}${queryParams}`)
             .subscribe({
                 next: (list) => {
                     if (list) {
@@ -623,12 +631,16 @@ export class EventosService implements OnDestroy {
                     } else {
                         this._asistentes.next([]);
                     }
-                    this.loadDashboardMetrics(eventoId);
+                    if (!actividadId) {
+                        this.loadDashboardMetrics(eventoId);
+                    }
                 },
                 error: (err) => {
                     console.error(`⚠️ [API Error] GET /Asistentes/evento/${eventoId} failed:`, err);
                     this._asistentes.next([]);
-                    this.loadDashboardMetrics(eventoId);
+                    if (!actividadId) {
+                        this.loadDashboardMetrics(eventoId);
+                    }
                 }
             });
     }

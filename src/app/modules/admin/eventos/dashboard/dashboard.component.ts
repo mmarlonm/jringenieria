@@ -41,6 +41,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public metricas!: DashboardMetricasDto;
     public ediciones: EventoEdicion[] = [];
     public selectedEventoId: number = 0;
+    public selectedViewMode: 'general' | number = 'general';
     public signalrStatus: string = 'Disconnected';
     public ultimosIngresos: Asistente[] = [];
     public talleresMetrics: ActividadMetricsDto[] = [];
@@ -86,11 +87,19 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(id => {
                 this.selectedEventoId = id;
+                this.selectedViewMode = 'general';
                 this._eventosService.loadDashboardMetrics(id);
                 this._eventosService.loadAsistentesPorEvento(id);
                 this._eventosService.loadTalleresMetrics(id);
                 this._cdr.markForCheck();
             });
+
+        this._eventosService.hubConnection.on('ReceiveTallerCheckInEvent', (res: any) => {
+            if (this.selectedViewMode === res.actividadId) {
+                this._eventosService.loadDashboardMetrics(res.eventoId, res.actividadId);
+                this._eventosService.loadAsistentesPorEvento(res.eventoId, res.actividadId);
+            }
+        });
 
         // Subscribe to SignalR connection status
         this._eventosService.signalrStatus$
@@ -163,6 +172,19 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
 
     public onEventoChanged(eventoId: number): void {
         this._eventosService.setSeleccionEdicion(eventoId);
+    }
+
+    public getSelectedViewTitle(): string {
+        if (this.selectedViewMode === 'general') return 'Evento General';
+        const taller = this.talleresMetrics.find(t => t.actividadId === this.selectedViewMode);
+        return taller ? taller.titulo : 'Sub-Evento';
+    }
+
+    public onViewModeChanged(mode: 'general' | number): void {
+        this.selectedViewMode = mode;
+        const actividadId = mode === 'general' ? undefined : mode;
+        this._eventosService.loadDashboardMetrics(this.selectedEventoId, actividadId);
+        this._eventosService.loadAsistentesPorEvento(this.selectedEventoId, actividadId);
     }
 
     /** Elimina un dispositivo del listado en tiempo real vía SignalR. */
