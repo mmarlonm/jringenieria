@@ -150,7 +150,7 @@ export class EventosService implements OnDestroy {
     public dispositivosEscaneando$ = this._dispositivosEscaneando.asObservable();
 
     // SignalR Variables
-    private hubConnection: signalR.HubConnection | null = null;
+    public hubConnection: signalR.HubConnection | null = null;
     private _signalrStatus = new BehaviorSubject<'Connected' | 'Disconnected' | 'Reconnecting' | 'Connecting'>('Disconnected');
     public signalrStatus$ = this._signalrStatus.asObservable();
 

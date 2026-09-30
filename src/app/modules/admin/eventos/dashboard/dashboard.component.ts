@@ -94,7 +94,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
                 this._cdr.markForCheck();
             });
 
-        this._eventosService.hubConnection.on('ReceiveTallerCheckInEvent', (res: any) => {
+        this._eventosService.hubConnection?.on('ReceiveTallerCheckInEvent', (res: any) => {
             if (this.selectedViewMode === res.actividadId) {
                 this._eventosService.loadDashboardMetrics(res.eventoId, res.actividadId);
                 this._eventosService.loadAsistentesPorEvento(res.eventoId, res.actividadId);
