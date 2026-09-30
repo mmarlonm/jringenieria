@@ -737,7 +737,7 @@ export class GestionTalleresComponent implements OnInit, OnDestroy {
     public loadCronogramaList(): void {
         this._eventosService.getActividadesCronograma(this.selectedEventoId).subscribe({
             next: (list) => {
-                this.cronogramaList = list || [];
+                this.cronogramaList = (list || []).filter(a => a.tipoActividad !== 'General');
                 this.updateSelectedDiaDefault();
                 this._cdr.markForCheck();
             },

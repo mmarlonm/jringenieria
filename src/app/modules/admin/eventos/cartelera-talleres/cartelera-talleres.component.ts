@@ -135,9 +135,10 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
         expositor: full?.expositor || 'Ponente Especializado',
         ubicacionLugar: full?.ubicacionLugar || 'TuzoForum Pachuca',
         fechaHoraInicioRaw: full?.fechaHoraInicio || m.fechaHoraInicio,
-        fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin
+        fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin,
+        tipoActividad: full?.tipoActividad || m.tipoActividad
       };
-    });
+    }).filter(t => t.tipoActividad !== 'General');
 
     // Ensure hero slider stack has at least 6 items for full thumbnail stack queue on the right
     let expandedList = [...list];
@@ -159,9 +160,10 @@ export class CarteleraTalleresComponent implements OnInit, OnDestroy {
         expositor: full?.expositor || 'Ponente Especializado',
         ubicacionLugar: full?.ubicacionLugar || 'TuzoForum Pachuca',
         fechaHoraInicioRaw: full?.fechaHoraInicio || m.fechaHoraInicio,
-        fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin
+        fechaHoraFinRaw: full?.fechaHoraFin || m.fechaHoraFin,
+        tipoActividad: full?.tipoActividad || m.tipoActividad
       };
-    });
+    }).filter(t => t.tipoActividad !== 'General');
   }
 
   public get availableDias(): string[] {
