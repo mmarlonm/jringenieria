@@ -906,6 +906,7 @@
                                 formControlName="formato"
                                 class="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all dark:text-slate-100"
                             >
+                                <option value="General">📌 General / Evento Social</option>
                                 <option value="Taller Práctico">🛠️ Taller Práctico</option>
                                 <option value="Taller Especializado">🎓 Taller Especializado</option>
                                 <option value="Conferencia">🎙️ Conferencia</option>
@@ -1048,9 +1049,10 @@
                                                       'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20': t.tipoActividad === 'Panel de Discusión',
                                                       'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20': t.tipoActividad === 'Mesa B2B',
                                                       'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/20': t.tipoActividad === 'Ceremonia',
-                                                      'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/20': t.tipoActividad === 'Conferencia' || !t.tipoActividad
+                                                      'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-500/10 dark:text-pink-300 dark:border-pink-500/20': t.tipoActividad === 'General',
+                                                      'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/20': t.tipoActividad === 'Conferencia' || (!t.tipoActividad && t.tipoActividad !== 'General')
                                                   }">
-                                                {{ t.tipoActividad === 'Taller Especializado' ? '🎓 Taller Especializado' : (t.tipoActividad === 'Taller Práctico' || t.tipoActividad === 'Taller') ? '🛠️ Taller Práctico' : t.tipoActividad === 'Panel de Discusión' ? '👥 Panel de Discusión' : t.tipoActividad === 'Mesa B2B' ? '💼 Mesas B2B' : t.tipoActividad === 'Ceremonia' ? '🎉 Ceremonia' : '🎙️ Conferencia' }}
+                                                {{ t.tipoActividad === 'General' ? '📌 General' : t.tipoActividad === 'Taller Especializado' ? '🎓 Taller Especializado' : (t.tipoActividad === 'Taller Práctico' || t.tipoActividad === 'Taller') ? '🛠️ Taller Práctico' : t.tipoActividad === 'Panel de Discusión' ? '👥 Panel de Discusión' : t.tipoActividad === 'Mesa B2B' ? '💼 Mesas B2B' : t.tipoActividad === 'Ceremonia' ? '🎉 Ceremonia' : '🎙️ Conferencia' }}
                                             </span>
 
                                             <span class="px-2 py-0.5 rounded text-[9px] font-black border"
