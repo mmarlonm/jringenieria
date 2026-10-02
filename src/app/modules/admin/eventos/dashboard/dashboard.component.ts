@@ -47,6 +47,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public talleresMetrics: ActividadMetricsDto[] = [];
     public chartView: 'tiempo_real' | '15min' | '1h' = '15min';
     private _fullHistorial: { hora: string; cantidad: number }[] = [];
+    public tallerSortOption: 'hora' | 'capacidad' = 'hora';
 
     // Day Selection
     public availableDays: { dateStr: string; label: string }[] = [];
@@ -237,14 +238,34 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     }
 
     public get talleresDelDia(): ActividadMetricsDto[] {
-        if (!this.selectedDateStr) return this.talleresMetrics;
-        return this.talleresMetrics.filter(t => {
-            if (!t.fechaHoraInicio) return true;
-            const d = new Date(t.fechaHoraInicio);
-            if (isNaN(d.getTime())) return true;
-            const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            return dStr === this.selectedDateStr;
+        let list = this.talleresMetrics;
+        if (this.selectedDateStr) {
+            list = this.talleresMetrics.filter(t => {
+                if (!t.fechaHoraInicio) return true;
+                const d = new Date(t.fechaHoraInicio);
+                if (isNaN(d.getTime())) return true;
+                const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                return dStr === this.selectedDateStr;
+            });
+        }
+        
+        return list.sort((a, b) => {
+            if (this.tallerSortOption === 'capacidad') {
+                const percA = a.cupoMaximo > 0 ? (a.ingresaronActuales / a.cupoMaximo) : 0;
+                const percB = b.cupoMaximo > 0 ? (b.ingresaronActuales / b.cupoMaximo) : 0;
+                if (percB !== percA) return percB - percA;
+                return b.ingresaronActuales - a.ingresaronActuales;
+            } else {
+                const timeA = a.fechaHoraInicio ? new Date(a.fechaHoraInicio).getTime() : 0;
+                const timeB = b.fechaHoraInicio ? new Date(b.fechaHoraInicio).getTime() : 0;
+                return timeA - timeB;
+            }
         });
+    }
+
+    public setTallerSortOption(option: 'hora' | 'capacidad'): void {
+        this.tallerSortOption = option;
+        this._cdr.markForCheck();
     }
 
     public onEventoChanged(eventoId: number): void {
