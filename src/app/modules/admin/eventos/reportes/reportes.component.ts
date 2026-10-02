@@ -328,13 +328,25 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
   private normalizeUniversidad(name: string): string {
     if (!name) return '';
     const upper = name.trim().toUpperCase();
+    
     if (upper === 'UPMH' || upper === 'UMPH' || upper.includes('METROPOLITANA DE HIDALGO') || upper.includes('POLITÉCNICA METROPOLITANA DE HIDALGO') || upper.includes('POLITECNICA METROPOLITANA DE HIDALGO')) {
       return 'Universidad Politécnica Metropolitana de Hidalgo';
     }
     if (upper === 'ITP' || upper.includes('TECNOLÓGICO DE PACHUCA') || upper.includes('TECNOLOGICO DE PACHUCA')) {
       return 'Instituto Tecnológico de Pachuca';
     }
-    return name.trim();
+    if (upper === 'UPE' || upper.includes('POLITÉCNICA DE LA ENERGÍA') || upper.includes('POLITECNICA DE LA ENERGIA')) {
+      return 'Universidad Politécnica de la Energía';
+    }
+    if (upper === 'UPFIM' || upper.includes('FRANCISCO I MADERO') || upper.includes('FRANCISCO I. MADERO')) {
+      return 'Universidad Politécnica de Francisco I. Madero';
+    }
+
+    // Capitalize each word for remaining names to ensure "Upe" and "UPE" group together even if not mapped above
+    return name.trim().split(' ').map(word => {
+        if (word.toUpperCase() === word && word.length <= 4) return word.toUpperCase(); // Keep acronyms like UVM uppercase
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
   }
 
   private generarGraficoUniversidades(): void {
