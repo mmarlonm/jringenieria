@@ -75,6 +75,8 @@ export interface ActividadMetricsDto {
     fechaHoraFin: string;
     disponibles: number;
     estaLleno: boolean;
+    expositor?: string;
+    ubicacionLugar?: string;
 }
 
 export interface Actividad {
