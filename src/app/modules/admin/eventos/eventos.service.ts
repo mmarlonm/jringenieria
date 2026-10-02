@@ -66,6 +66,7 @@ export interface ActividadMetricsDto {
     actividadId: number;
     titulo: string;
     tipo: 'Pago' | 'Gratuito';
+    tipoActividad?: string;
     cupoMaximo: number;
     registradosActuales: number;
     ingresaronActuales: number;

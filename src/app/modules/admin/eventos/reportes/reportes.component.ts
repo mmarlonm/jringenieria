@@ -325,6 +325,15 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
     };
   }
 
+  private normalizeUniversidad(name: string): string {
+    if (!name) return '';
+    const upper = name.trim().toUpperCase();
+    if (upper === 'UPMH' || upper === 'UMPH' || upper.includes('METROPOLITANA DE HIDALGO') || upper.includes('POLITÉCNICA METROPOLITANA DE HIDALGO') || upper.includes('POLITECNICA METROPOLITANA DE HIDALGO')) {
+      return 'Universidad Politécnica Metropolitana de Hidalgo';
+    }
+    return name.trim();
+  }
+
   private generarGraficoUniversidades(): void {
     const dataMap = new Map<string, number>();
 
@@ -332,7 +341,7 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
       this.asistentes
         .filter(a => a.universidad && a.universidad.trim() !== '')
         .forEach(a => {
-          const univ = a.universidad.trim();
+          const univ = this.normalizeUniversidad(a.universidad);
           dataMap.set(univ, (dataMap.get(univ) || 0) + 1);
         });
     } else {

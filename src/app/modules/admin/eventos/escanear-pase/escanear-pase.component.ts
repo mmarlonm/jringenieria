@@ -612,9 +612,18 @@ export class EscanearPaseComponent implements OnInit, OnDestroy, AfterViewInit {
                 return;
             }
 
-            // Check if already registered offline or already marked as Presente
+            // Check if already registered offline or already marked as Presente today
             this.checkIfCheckInExistsLocal(token, this.scanMode).then((isDuplicateOffline) => {
-                const isDuplicateOnline = asistente.asistencia === 'Presente';
+                let isDuplicateOnline = false;
+                if (asistente.asistencia === 'Presente' && asistente.fechaCheckInRaw) {
+                    const checkInDate = new Date(asistente.fechaCheckInRaw);
+                    const today = new Date();
+                    if (checkInDate.getFullYear() === today.getFullYear() &&
+                        checkInDate.getMonth() === today.getMonth() &&
+                        checkInDate.getDate() === today.getDate()) {
+                        isDuplicateOnline = true;
+                    }
+                }
 
                 if (isDuplicateOffline || isDuplicateOnline) {
                     this.scanState = 'duplicate';

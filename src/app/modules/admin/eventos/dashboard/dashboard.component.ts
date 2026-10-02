@@ -48,6 +48,10 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     public chartView: 'tiempo_real' | '15min' | '1h' = '15min';
     private _fullHistorial: { hora: string; cantidad: number }[] = [];
 
+    // Day Selection
+    public availableDays: { dateStr: string; label: string }[] = [];
+    public selectedDateStr: string = '';
+
     private fullAnnouncedIds = new Set<number>();
     private soonAnnouncedIds = new Set<number>();
     private checkSoonInterval: any;
@@ -114,6 +118,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(list => {
                 if (list) {
+                    this._extractAvailableDays();
                     this.ultimosIngresos = list
                         .filter(a => (a.asistencia === 'Presente' || (a as any).asistio === 1 || (a as any).asistio === true || !!a.fechaCheckInRaw || !!a.fechaCheckIn) && (a.fechaCheckInRaw || a.fechaCheckIn))
                         .sort((a, b) => {
@@ -146,6 +151,7 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(metrics => {
                 this.talleresMetrics = metrics || [];
+                this._extractAvailableDays();
                 this.checkFullWorkshopsAlerts(this.talleresMetrics);
                 this._cdr.markForCheck();
             });
@@ -169,6 +175,77 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
     }
 
     // --- UI Interactions ---
+
+    private _extractAvailableDays(): void {
+        const daysSet = new Set<string>();
+
+        (this.talleresMetrics || []).forEach(t => {
+            if (t.fechaHoraInicio) {
+                const d = new Date(t.fechaHoraInicio);
+                if (!isNaN(d.getTime())) {
+                    daysSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+                }
+            }
+        });
+
+        const list = this._eventosService.asistentesValue || [];
+        list.forEach(a => {
+            const raw = a.fechaCheckInRaw || a.fechaCheckIn;
+            if (raw) {
+                const d = new Date(raw);
+                if (!isNaN(d.getTime())) {
+                    daysSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+                }
+            }
+        });
+
+        const sortedDays = Array.from(daysSet).sort();
+        
+        const newDays = sortedDays.map(dStr => {
+            const parts = dStr.split('-');
+            const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            return {
+                dateStr: dStr,
+                label: d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+            };
+        });
+
+        if (JSON.stringify(this.availableDays) !== JSON.stringify(newDays)) {
+            this.availableDays = newDays;
+            if (this.availableDays.length > 0) {
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                
+                if (!this.selectedDateStr || !this.availableDays.find(d => d.dateStr === this.selectedDateStr)) {
+                    if (this.availableDays.find(d => d.dateStr === todayStr)) {
+                        this.selectedDateStr = todayStr;
+                    } else {
+                        this.selectedDateStr = this.availableDays[this.availableDays.length - 1].dateStr;
+                    }
+                }
+            } else {
+                this.selectedDateStr = '';
+            }
+            this._cdr.markForCheck();
+        }
+    }
+
+    public selectDay(dayStr: string): void {
+        this.selectedDateStr = dayStr;
+        this._applyChartView();
+        this._cdr.markForCheck();
+    }
+
+    public get talleresDelDia(): ActividadMetricsDto[] {
+        if (!this.selectedDateStr) return this.talleresMetrics;
+        return this.talleresMetrics.filter(t => {
+            if (!t.fechaHoraInicio) return true;
+            const d = new Date(t.fechaHoraInicio);
+            if (isNaN(d.getTime())) return true;
+            const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return dStr === this.selectedDateStr;
+        });
+    }
 
     public onEventoChanged(eventoId: number): void {
         this._eventosService.setSeleccionEdicion(eventoId);
@@ -401,13 +478,24 @@ export class EventosDashboardComponent implements OnInit, OnDestroy {
 
     private _buildChartData(): { hora: string; cantidad: number }[] {
         const list = this._eventosService.asistentesValue || [];
-        const checkedInList = list.filter(a =>
+        let checkedInList = list.filter(a =>
             (a.asistencia === 'Presente' || (a as any).asistio === 1 || (a as any).asistio === true || !!a.fechaCheckInRaw || !!a.fechaCheckIn) &&
             (a.fechaCheckInRaw || a.fechaCheckIn)
         );
 
+        if (this.selectedDateStr) {
+            checkedInList = checkedInList.filter(a => {
+                const raw = a.fechaCheckInRaw || a.fechaCheckIn;
+                if (!raw) return false;
+                const d = new Date(raw);
+                if (isNaN(d.getTime())) return false;
+                const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                return dStr === this.selectedDateStr;
+            });
+        }
+
         if (checkedInList.length === 0) {
-            if (this._fullHistorial && this._fullHistorial.length > 0) {
+            if (this._fullHistorial && this._fullHistorial.length > 0 && !this.selectedDateStr) {
                 return this._bucketData(this._fullHistorial, this.chartView === 'tiempo_real' ? 5 : (this.chartView === '15min' ? 15 : 60));
             }
             return [];

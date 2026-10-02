@@ -45,6 +45,15 @@
                 </span>
             </div>
 
+            <!-- Day Selector -->
+            <div *ngIf="availableDays.length > 1" class="flex items-center gap-1 bg-white dark:bg-slate-900/60 backdrop-blur-md border border-gray-200 dark:border-slate-800/80 shadow-sm rounded-xl p-1">
+                <button *ngFor="let day of availableDays" (click)="selectDay(day.dateStr)"
+                        [ngClass]="selectedDateStr === day.dateStr ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 whitespace-nowrap">
+                    {{ day.label }}
+                </button>
+            </div>
+
             <!-- Multi-annual Edition Filter -->
             <div class="min-w-[180px] flex-auto sm:flex-initial">
                 <mat-form-field class="fuse-mat-no-subscript w-full scale-95 origin-right" appearance="outline">
@@ -434,8 +443,8 @@
         </div>
         
         <!-- Workshops Cards Grid -->
-        <div *ngIf="talleresMetrics.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div *ngFor="let taller of talleresMetrics" 
+        <div *ngIf="talleresDelDia.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div *ngFor="let taller of talleresDelDia" 
                  [ngClass]="{
                      'border-rose-500/80 shadow-lg shadow-rose-500/5 animate-pulse-subtle bg-rose-500/[0.02]': (taller.ingresaronActuales >= taller.cupoMaximo),
                      'bg-white dark:bg-slate-900/35 border-gray-200 dark:border-white/5': !(taller.ingresaronActuales >= taller.cupoMaximo)
