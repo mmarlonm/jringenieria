@@ -19,72 +19,78 @@
             </h1>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-            <!-- Surveys Dashboard Link Button -->
-            <button 
-                (click)="irAEncuestas()"
-                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs uppercase tracking-wider transition-all duration-200"
-            >
-                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:chat-bubble-bottom-center-text"></mat-icon>
-                Encuestas de Satisfacción
-            </button>
-
-            <!-- SignalR Connection Status Badge -->
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900/60 backdrop-blur-md border border-gray-200 dark:border-slate-800/80 shadow-sm">
-                <span class="relative flex h-2 w-2">
-                    <span *ngIf="signalrStatus === 'Connected'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
-                    <span *ngIf="signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-455 opacity-75"></span>
-                    <span [ngClass]="{
-                        'bg-emerald-500': signalrStatus === 'Connected',
-                        'bg-amber-500': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
-                        'bg-slate-400 dark:bg-slate-550': signalrStatus === 'Disconnected'
-                    }" class="relative inline-flex rounded-full h-2 w-2"></span>
-                </span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-350 ml-1.5">
-                    {{ signalrStatus === 'Connected' ? 'Conectado' : signalrStatus === 'Disconnected' ? 'Sin Red' : 'Conectando...' }}
-                </span>
-            </div>
-
-            <!-- Day Selector -->
-            <div *ngIf="availableDays.length > 1" class="flex items-center gap-1 bg-white dark:bg-slate-900/60 backdrop-blur-md border border-gray-200 dark:border-slate-800/80 shadow-sm rounded-xl p-1">
-                <button *ngFor="let day of availableDays" (click)="selectDay(day.dateStr)"
-                        [ngClass]="selectedDateStr === day.dateStr ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 whitespace-nowrap">
-                    {{ day.label }}
+        <div class="flex flex-wrap items-center justify-start xl:justify-end gap-3 w-full xl:w-auto mt-2 md:mt-0">
+            <!-- Utilities Group -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Surveys Dashboard Link Button -->
+                <button 
+                    (click)="irAEncuestas()"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs uppercase tracking-wider transition-all duration-200"
+                >
+                    <mat-icon class="icon-size-4" svgIcon="heroicons_outline:chat-bubble-bottom-center-text"></mat-icon>
+                    <span class="hidden sm:inline">Encuestas</span>
                 </button>
+
+                <!-- SignalR Connection Status Badge -->
+                <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-900/60 backdrop-blur-md border border-gray-200 dark:border-slate-800/80 shadow-sm">
+                    <span class="relative flex h-2 w-2">
+                        <span *ngIf="signalrStatus === 'Connected'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
+                        <span *ngIf="signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-455 opacity-75"></span>
+                        <span [ngClass]="{
+                            'bg-emerald-500': signalrStatus === 'Connected',
+                            'bg-amber-500': signalrStatus === 'Connecting' || signalrStatus === 'Reconnecting',
+                            'bg-slate-400 dark:bg-slate-550': signalrStatus === 'Disconnected'
+                        }" class="relative inline-flex rounded-full h-2 w-2"></span>
+                    </span>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-350 ml-1">
+                        {{ signalrStatus === 'Connected' ? 'Conectado' : signalrStatus === 'Disconnected' ? 'Sin Red' : 'Conectando...' }}
+                    </span>
+                </div>
             </div>
 
-            <!-- Multi-annual Edition Filter -->
-            <div class="min-w-[180px] flex-auto sm:flex-initial">
-                <mat-form-field class="fuse-mat-no-subscript w-full scale-95 origin-right" appearance="outline">
-                    <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
-                            {{ ed.nombre }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </div>
+            <!-- Selectors Group -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Day Selector -->
+                <div *ngIf="availableDays.length > 1" class="flex items-center gap-1 bg-white dark:bg-slate-900/60 backdrop-blur-md border border-gray-200 dark:border-slate-800/80 shadow-sm rounded-xl p-1">
+                    <button *ngFor="let day of availableDays" (click)="selectDay(day.dateStr)"
+                            [ngClass]="selectedDateStr === day.dateStr ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                            class="px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 whitespace-nowrap">
+                        {{ day.label }}
+                    </button>
+                </div>
 
-            <!-- View Mode Filter -->
-            <div class="min-w-[220px] flex-auto sm:flex-initial">
-                <mat-form-field class="fuse-mat-no-subscript w-full scale-95 origin-right" appearance="outline">
-                    <mat-select [value]="selectedViewMode" (selectionChange)="onViewModeChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        <mat-option value="general">
-                            <span class="flex items-center gap-2">
-                                <mat-icon class="icon-size-4 text-emerald-500" svgIcon="heroicons_outline:globe-alt"></mat-icon>
-                                <span>Evento General</span>
-                            </span>
-                        </mat-option>
-                        <mat-optgroup label="Sub-Eventos y Actividades" class="font-bold text-slate-400">
-                            <mat-option *ngFor="let taller of talleresMetrics" [value]="taller.actividadId">
+                <!-- Multi-annual Edition Filter -->
+                <div class="w-full sm:w-auto min-w-[160px]">
+                    <mat-form-field class="fuse-mat-no-subscript fuse-mat-dense w-full" appearance="outline">
+                        <mat-select [value]="selectedEventoId" (selectionChange)="onEventoChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                            <mat-option *ngFor="let ed of ediciones" [value]="ed.id">
+                                {{ ed.nombre }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <!-- View Mode Filter -->
+                <div class="w-full sm:w-auto min-w-[200px]">
+                    <mat-form-field class="fuse-mat-no-subscript fuse-mat-dense w-full" appearance="outline">
+                        <mat-select [value]="selectedViewMode" (selectionChange)="onViewModeChanged($event.value)" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                            <mat-option value="general">
                                 <span class="flex items-center gap-2">
-                                    <mat-icon class="icon-size-4 text-indigo-500" svgIcon="heroicons_outline:map-pin"></mat-icon>
-                                    <span class="truncate max-w-[180px]">{{ taller.titulo }}</span>
+                                    <mat-icon class="icon-size-4 text-emerald-500" svgIcon="heroicons_outline:globe-alt"></mat-icon>
+                                    <span>Evento General</span>
                                 </span>
                             </mat-option>
-                        </mat-optgroup>
-                    </mat-select>
-                </mat-form-field>
+                            <mat-optgroup label="Sub-Eventos y Actividades" class="font-bold text-slate-400">
+                                <mat-option *ngFor="let taller of talleresMetrics" [value]="taller.actividadId">
+                                    <span class="flex items-center gap-2">
+                                        <mat-icon class="icon-size-4 text-indigo-500" svgIcon="heroicons_outline:map-pin"></mat-icon>
+                                        <span class="truncate max-w-[160px]">{{ taller.titulo }}</span>
+                                    </span>
+                                </mat-option>
+                            </mat-optgroup>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
             </div>
         </div>
     </div>

@@ -331,6 +331,9 @@ export class EventosReportesComponent implements OnInit, OnDestroy {
     if (upper === 'UPMH' || upper === 'UMPH' || upper.includes('METROPOLITANA DE HIDALGO') || upper.includes('POLITÉCNICA METROPOLITANA DE HIDALGO') || upper.includes('POLITECNICA METROPOLITANA DE HIDALGO')) {
       return 'Universidad Politécnica Metropolitana de Hidalgo';
     }
+    if (upper === 'ITP' || upper.includes('TECNOLÓGICO DE PACHUCA') || upper.includes('TECNOLOGICO DE PACHUCA')) {
+      return 'Instituto Tecnológico de Pachuca';
+    }
     return name.trim();
   }
 
