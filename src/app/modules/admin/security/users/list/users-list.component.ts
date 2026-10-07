@@ -66,6 +66,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
     users$: Observable<any[]>;
 
     contactsCount: number = 0;
+    activeUsersCount: number = 0;
+    inactiveUsersCount: number = 0;
     contactsTableColumns: string[] = ['name', 'email'];
     drawerMode: 'side' | 'over';
     searchInputControl: UntypedFormControl = new UntypedFormControl();
@@ -99,6 +101,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
             .subscribe((users: any[]) => {
                 // Update the counts
                 this.contactsCount = users.length;
+                this.activeUsersCount = users.filter(u => u.activo).length;
+                this.inactiveUsersCount = users.filter(u => !u.activo).length;
 
                 // Mark for check
                 this._changeDetectorRef.markForCheck();
