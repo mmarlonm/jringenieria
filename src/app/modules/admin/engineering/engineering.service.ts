@@ -206,6 +206,10 @@ export class EngineeringService {
         return this._http.get<SeguimientoEjecucion[]>(this.apiSeguimientoEjecucion, { params });
     }
 
+    getSeguimientoEjecucionById(id: number): Observable<SeguimientoEjecucion> {
+        return this._http.get<SeguimientoEjecucion>(`${this.apiSeguimientoEjecucion}/${id}`);
+    }
+
     getListadoSeleccionProyectos(usuarioId?: number): Observable<any[]> {
         let params = new HttpParams();
         if (usuarioId) {

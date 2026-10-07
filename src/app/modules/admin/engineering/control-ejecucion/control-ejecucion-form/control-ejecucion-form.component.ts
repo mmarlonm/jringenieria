@@ -688,9 +688,8 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   loadData(): void {
     // Cargar la ejecución
-    this._engineeringService.getSeguimientosEjecucion().subscribe({
-      next: (list) => {
-        const found = list.find((x) => x.idSeguimiento === this.idSeguimiento);
+    this._engineeringService.getSeguimientoEjecucionById(this.idSeguimiento).subscribe({
+      next: (found) => {
         if (found) {
           this.ejecucion = found;
           this.form.patchValue({
@@ -709,29 +708,20 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             ordenCompraArchivo: found.ordenCompraArchivo || ''
           });
           this.ocFileName = found.ordenCompraArchivo || '';
-        } else {
-          // Si no existe, creamos un registro ficticio en memoria con idSeguimiento
-          this.ejecucion = {
-            idEjecucion: 0,
-            idSeguimiento: this.idSeguimiento,
-            estatusAst: 1,
-            estatusProgramaGantt: 1,
-            estatusImssSua: 1,
-            estatusAdquisicionMateriales: 1,
-            estatusConstruccionEntrega: 1,
-            estatusReporte: 1,
-            actividad: 'Nuevo Proyecto',
-            nombreSolicitante: 'Desconocido',
-            empresa: 'Empresa'
-          };
         }
+        
         this.loadFiles();
         this.loadGantt();
         this.loadFinanzas();
       },
       error: (err) => {
-        console.error(err);
-        Swal.fire('Error', 'No se pudo cargar el control de ejecución', 'error');
+        // Fallback or handle if not found (404)
+        if (err.status === 404) {
+           Swal.fire('Error', 'El proyecto no existe.', 'error');
+        } else {
+           console.error(err);
+           Swal.fire('Error', 'No se pudo cargar el control de ejecución', 'error');
+        }
       }
     });
   }
