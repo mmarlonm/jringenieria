@@ -51,6 +51,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip'; // Importante para la barra
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 // 🔹 Servicios y Librerías Externas
 import { ReportVentasService } from '../report-ventas.service';
@@ -81,7 +82,8 @@ import { DetalleVentaModalComponent } from './detalle-venta-modal.component';
         MatButtonModule,
         MatTooltipModule,
         MatDialogModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        MatSlideToggleModule
     ]
 })
 export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
@@ -93,6 +95,29 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
         series: [{ type: 'column', data: [] }]
     };
     public updateFlag: boolean = false;
+
+    // 🎯 NUEVO: Modo Concurso
+    public modoConcurso: boolean = false;
+    private lastResponse: any = null;
+
+    toggleModoConcurso(): void {
+        if (this.lastResponse) {
+            this.mapearKPIs(this.lastResponse);
+            this.desglosePorSucursal = [...this.lastResponse.desglosePorSucursal || []];
+            
+            setTimeout(() => {
+                this.mapearGraficas(this.lastResponse);
+                this.generarGraficaMarcas();
+                this.generarGraficaLineas(this.marcaSeleccionada || undefined);
+                this.graficaTopClientesMonto();
+
+                if (this.esMoral === '3' && this.sucursal === 'TODAS' && (this.desglosePorSucursal.length > 0 || this.detalleVentas.length > 0)) {
+                    this.graficarDesgloseConsolidado(this.segmentosSucursales);
+                    this.graficarComparativaFisicaVsMoral();
+                }
+            }, 50);
+        }
+    }
 
     // 🔹 Filtros
     public esMoral: string = '1';
@@ -263,6 +288,8 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                         this.resetDashboard();
                         return;
                     }
+
+                    this.lastResponse = resp;
 
                     // 1. Mapeo de datos (Esto no interactúa con el DOM, va directo)
                     this.mapearKPIs(resp);
@@ -548,6 +575,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
     private graficaVentasPorMes(data: any[]): void {
         const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const self = this;
 
         setTimeout(() => {
             const lineaTiempo = data
@@ -615,7 +643,8 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
                             let s = `<span style="font-size: 10px; font-weight: bold;">${this.x}</span><br/>`;
                             this.points.forEach((point: any) => {
-                                s += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>$${point.y.toLocaleString()}</b><br/>`;
+                                const valor = self.modoConcurso ? '***' : `$${point.y.toLocaleString()}`;
+                                s += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${valor}</b><br/>`;
                             });
 
                             return s + crecimientoHtml;
@@ -743,6 +772,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const borderColor = isDark ? '#334155' : '#E2E8F0';
+        const self = this;
 
         const container = document.getElementById('chartTopProductosMonto');
         if (!container) return;
@@ -770,7 +800,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 shadow: false,
                 padding: 0,
                 formatter: function (this: any) {
-                    const totalMoneda = new Intl.NumberFormat('es-MX', {
+                    const totalMoneda = self.modoConcurso ? '***' : new Intl.NumberFormat('es-MX', {
                         style: 'currency', currency: 'MXN'
                     }).format(this.point.y); // Usamos 'y' porque ahora 'y' es el dinero
 
@@ -808,7 +838,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                         enabled: true,
                         useHTML: true,
                         formatter: function (this: any) {
-                            const totalMoneda = new Intl.NumberFormat('es-MX', {
+                            const totalMoneda = self.modoConcurso ? '***' : new Intl.NumberFormat('es-MX', {
                                 style: 'currency', currency: 'MXN'
                             }).format(this.point.y);
 
@@ -856,6 +886,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
         const textColor = isDark ? '#FFFFFF' : '#333333';
         const tooltipBg = isDark ? '#0F172A' : '#FFFFFF';
         const tooltipBorder = isDark ? '#1E293B' : '#E2E8F0';
+        const self = this;
 
         const container = document.getElementById('chartTopVendedores');
         if (!container) return;
@@ -883,8 +914,11 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 style: {
                     color: textColor
                 },
-                pointFormat: '<span style="color:' + textColor + '">Monto: <b>${point.y:,.2f}</b></span><br>' +
-                    '<span style="color:' + textColor + '">Participación: <b>{point.percentage:.1f}%</b></span>'
+                formatter: function (this: any) {
+                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    return `<span style="color:${textColor}">Monto: <b>${val}</b></span><br>` +
+                           `<span style="color:${textColor}">Participación: <b>${this.point.percentage.toFixed(1)}%</b></span>`;
+                }
             },
             credits: { enabled: false },
             plotOptions: {
@@ -894,8 +928,11 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                     borderColor: isDark ? '#1E293B' : '#FFFFFF',
                     dataLabels: {
                         enabled: true,
-                        format: '<span style="color:' + textColor + '; font-weight: bold;">{point.name} ({point.percentage:.0f}%)</span><br>' +
-                            '<span style="opacity:.6; color:' + textColor + '">${point.y:,.0f}</span>',
+                        formatter: function (this: any) {
+                            const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                            return `<span style="color:${textColor}; font-weight: bold;">${this.point.name} (${this.point.percentage.toFixed(0)}%)</span><br>` +
+                                   `<span style="opacity:.6; color:${textColor}">${val}</span>`;
+                        },
                         connectorColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
                         connectorPadding: 5,
                         distance: 20,
@@ -1021,7 +1058,10 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 style: { fontSize: '11px' }
             },
             tooltip: {
-                pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
+                formatter: function (this: any) {
+                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    return `Venta: <b>${val}</b><br/>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
+                }
             },
             credits: { enabled: false },
             legend: { enabled: false },
@@ -1061,6 +1101,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
     }
 
     private generarGraficaLineas(marca?: string): void {
+        const self = this;
         let filtrados = this.datosClasificacionOriginal;
 
         if (marca) {
@@ -1094,7 +1135,10 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 style: { fontSize: '11px' }
             },
             tooltip: {
-                pointFormat: 'Venta: <b>${point.y:,.2f}</b><br/>Participación: <b>{point.percentage:.1f}%</b>'
+                formatter: function (this: any) {
+                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    return `Venta: <b>${val}</b><br/>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
+                }
             },
             credits: { enabled: false },
             legend: { enabled: false },
@@ -1179,6 +1223,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
     private graficarDesgloseConsolidado(data: any[]): void {
         const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
+        const self = this;
 
         if (!data || data.length === 0) return;
 
@@ -1194,7 +1239,12 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             Highcharts.chart(containerPastel, {
                 chart: { type: 'pie', backgroundColor: 'transparent' },
                 title: { text: '' },
-                tooltip: { pointFormat: 'Venta: <b>${point.y:,.2f}</b><br>Participación: <b>{point.percentage:.1f}%</b>' },
+                tooltip: {
+                    formatter: function (this: any) {
+                        const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        return `Venta: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
+                    }
+                },
                 plotOptions: {
                     pie: {
                         innerSize: '50%',
@@ -1234,9 +1284,14 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 },
                 tooltip: {
                     shared: true,
-                    headerFormat: '<span style="font-size: 12px"><b>{point.key}</b></span><br/>',
-                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>${point.y:,.2f}</b><br/>',
-                    valuePrefix: '$'
+                    formatter: function (this: any) {
+                        let s = `<span style="font-size: 12px"><b>${this.x}</b></span><br/>`;
+                        this.points.forEach((point: any) => {
+                            const val = self.modoConcurso ? '***' : `$${point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                            s += `<span style="color:${point.series.color}">\u25CF</span> ${point.series.name}: <b>${val}</b><br/>`;
+                        });
+                        return s;
+                    }
                 },
                 plotOptions: {
                     column: {
@@ -1244,7 +1299,9 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                         borderRadius: 4,
                         dataLabels: {
                             enabled: true,
-                            format: '${point.y:,.0f}',
+                            formatter: function (this: any) {
+                                return self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                            },
                             style: { fontSize: '10px', fontWeight: 'bold', textOutline: 'none', color: textColor }
                         }
                     }
@@ -1271,6 +1328,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
     private crearMiniDonut(containerId: string, title: string, data: any[], colorPrincipal: string): void {
         const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
+        const self = this;
 
         // 🛡️ CANDADO DE SEGURIDAD PARA EVITAR ERROR 13
         const container = document.getElementById(containerId);
@@ -1286,7 +1344,10 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 style: { fontSize: '13px', fontWeight: 'bold', color: textColor }
             },
             tooltip: {
-                pointFormat: 'Monto: <b>${point.y:,.0f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+                formatter: function (this: any) {
+                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                    return `Monto: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
+                }
             },
             credits: { enabled: false },
             plotOptions: {
@@ -1341,6 +1402,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
         const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#F1F5F9' : '#1E293B';
+        const self = this;
 
         const container = document.getElementById('chartTopClientesMonto');
         if (!container) return;
@@ -1355,7 +1417,10 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 style: { fontSize: '13px', fontWeight: 'bold', color: textColor }
             },
             tooltip: {
-                pointFormat: 'Monto: <b>${point.y:,.0f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+                formatter: function (this: any) {
+                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                    return `Monto: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
+                }
             },
             credits: { enabled: false },
             plotOptions: {
@@ -1395,6 +1460,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#F1F5F9' : '#1E293B';
             const borderColor = isDark ? '#1E293B' : '#FFFFFF';
+            const self = this;
 
             const container = document.getElementById('chartComparativoEmpresas');
             if (!container) return;
@@ -1414,7 +1480,10 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 chart: { type: 'pie', backgroundColor: 'transparent', height: 260 },
                 title: { text: null }, // Title is handled by the container itself
                 tooltip: {
-                    pointFormat: 'Venta Total: <b>${point.y:,.2f}</b><br>Participación: <b>{point.percentage:.1f}%</b>'
+                    formatter: function (this: any) {
+                        const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        return `Venta Total: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
+                    }
                 },
                 credits: { enabled: false },
                 plotOptions: {
