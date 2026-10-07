@@ -114,9 +114,9 @@
                                 Total Ventas vs Meta Global (Todas las Sucursales)
                             </h3>
                             <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-black text-gray-800">{{ modoConcurso ? '***' : (totalVentasGlobal | currency)
+                                <span class="text-2xl font-black text-gray-800">{{ modoConcurso ? getPorcentaje(totalVentasGlobal) : (totalVentasGlobal | currency)
                                     }}</span>
-                                <span class="text-sm font-medium text-gray-400">/ {{ modoConcurso ? '***' : (totalMetaGlobal | currency)
+                                <span class="text-sm font-medium text-gray-400">/ {{ modoConcurso ? getPorcentaje(totalMetaGlobal) : (totalMetaGlobal | currency)
                                     }}</span>
                             </div>
                         </div>
@@ -135,7 +135,7 @@
                         <div *ngFor="let seg of segmentosSucursales"
                             class="h-full flex items-center justify-center text-[11px] font-bold text-white transition-all duration-1000 ease-out border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
                             [style.background-color]="seg.hexColor" [style.width.%]="seg.anchoPorcentaje"
-                            [matTooltip]="seg.nombre + ' | Venta: ' + (modoConcurso ? '***' : (seg.totalVendido | currency)) + ' (' + (seg.participacion | number:'1.0-1') + '% del total)'">
+                            [matTooltip]="seg.nombre + ' | Venta: ' + (modoConcurso ? getPorcentaje(seg.totalVendido) : (seg.totalVendido | currency)) + ' (' + (seg.participacion | number:'1.0-1') + '% del total)'">
                             <span *ngIf="seg.anchoPorcentaje > 5" class="truncate px-1 drop-shadow-md">{{ seg.nombre
                                 }}</span>
                         </div>
@@ -185,7 +185,7 @@
                     </div>
                     
                     <div class="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-2">
-                        {{ modoConcurso ? '***' : (totalVentasFisica | currency:'MXN') }}
+                        {{ modoConcurso ? getPorcentaje(totalVentasFisica) : (totalVentasFisica | currency:'MXN') }}
                     </div>
                     <div class="flex items-center gap-2 text-xs font-medium mb-4">
                         <span class="px-2 py-0.5 rounded text-sky-700 dark:text-sky-200 bg-sky-100 dark:bg-sky-500/20 border border-sky-200 dark:border-sky-500/30">
@@ -199,7 +199,7 @@
                             <div *ngIf="s.ventaFisica > 0" class="flex flex-col gap-1">
                                 <div class="flex justify-between items-center text-xs text-slate-600 dark:text-slate-300">
                                     <span>{{ s.sucursal }}</span>
-                                    <span class="font-bold text-slate-900 dark:text-white">{{ modoConcurso ? '***' : (s.ventaFisica | currency:'MXN') }}</span>
+                                    <span class="font-bold text-slate-900 dark:text-white">{{ modoConcurso ? getPorcentaje(s.ventaFisica) : (s.ventaFisica | currency:'MXN') }}</span>
                                 </div>
                                 <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <div class="h-full bg-sky-500 dark:bg-sky-500/80 rounded-full duration-500" [style.width.%]="(s.ventaFisica / totalVentasFisica) * 100"></div>
@@ -230,7 +230,7 @@
                     
                     <div class="text-right">
                         <div class="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-2">
-                            {{ modoConcurso ? '***' : (totalVentasMoral | currency:'MXN') }}
+                            {{ modoConcurso ? getPorcentaje(totalVentasMoral) : (totalVentasMoral | currency:'MXN') }}
                         </div>
                         <div class="flex items-center justify-end gap-2 text-xs font-medium mb-4">
                             <span class="px-2 py-0.5 rounded text-rose-700 dark:text-rose-200 bg-rose-100 dark:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30">
@@ -244,7 +244,7 @@
                         <ng-container *ngFor="let s of desglosePorSucursal">
                             <div *ngIf="s.ventaMoral > 0" class="flex flex-col gap-1">
                                 <div class="flex justify-between items-center text-xs text-slate-600 dark:text-slate-300">
-                                    <span class="font-bold text-slate-900 dark:text-white">{{ modoConcurso ? '***' : (s.ventaMoral | currency:'MXN') }}</span>
+                                    <span class="font-bold text-slate-900 dark:text-white">{{ modoConcurso ? getPorcentaje(s.ventaMoral) : (s.ventaMoral | currency:'MXN') }}</span>
                                     <span>{{ s.sucursal }}</span>
                                 </div>
                                 <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex justify-end">
@@ -275,9 +275,9 @@
                             Progreso Meta Anual - {{ sucursal }}
                         </h3>
                         <div class="flex items-baseline gap-2">
-                            <span class="text-2xl font-black text-gray-800 dark:text-white">{{ modoConcurso ? '***' : (ventasAnual | currency)
+                            <span class="text-2xl font-black text-gray-800 dark:text-white">{{ modoConcurso ? getPorcentaje(ventasAnual) : (ventasAnual | currency)
                                 }}</span>
-                            <span class="text-sm font-medium text-gray-400">/ {{ modoConcurso ? '***' : (metaAnual | currency) }}</span>
+                            <span class="text-sm font-medium text-gray-400">/ {{ modoConcurso ? getPorcentaje(metaAnual) : (metaAnual | currency) }}</span>
                         </div>
                     </div>
                 </div>
@@ -296,7 +296,7 @@
                     <ng-container *ngFor="let seg of segmentosAgentes">
                         <div class="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000 ease-out border-r border-white/20 last:border-0 hover:opacity-90 cursor-pointer"
                             [ngClass]="seg.colorClass" [style.width.%]="seg.anchoPorcentaje"
-                            [matTooltip]="seg.nombreCompleto + ' | Venta: ' + (modoConcurso ? '***' : (seg.totalVendido | currency)) + ' (' + (seg.anchoPorcentaje | number:'1.0-1') + '% de la Meta)'">
+                            [matTooltip]="seg.nombreCompleto + ' | Venta: ' + (modoConcurso ? getPorcentaje(seg.totalVendido) : (seg.totalVendido | currency)) + ' (' + (seg.anchoPorcentaje | number:'1.0-1') + '% de la Meta)'">
                             <span *ngIf="seg.anchoPorcentaje > 4" class="truncate px-1 drop-shadow-md">{{
                                 seg.nombreCorto }}</span>
                         </div>
@@ -332,7 +332,7 @@
                     <div class="flex items-baseline gap-1.5 mb-2.5">
                         <span class="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase">Total:</span>
                         <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
-                            {{ modoConcurso ? '***' : (seg.totalVendido | currency:'MXN':'symbol':'1.0-0') }}
+                            {{ modoConcurso ? getPorcentaje(seg.totalVendido) : (seg.totalVendido | currency:'MXN':'symbol':'1.0-0') }}
                         </span>
                     </div>
 
@@ -345,7 +345,7 @@
                                     vm.mesNombre }}</span>
                                 <span
                                     class="text-[10px] text-gray-700 dark:text-gray-300 font-semibold leading-tight">{{
-                                    modoConcurso ? '***' : (vm.total | currency:'MXN':'symbol':'1.0-0') }}</span>
+                                    modoConcurso ? getPorcentaje(vm.total) : (vm.total | currency:'MXN':'symbol':'1.0-0') }}</span>
                             </div>
                         </div>
 
@@ -364,7 +364,7 @@
             <div class="bg-white rounded-xl shadow p-4">
                 <p class="text-sm text-gray-500">Ventas Totales</p>
                 <p class="text-xl sm:text-2xl font-bold text-gray-800">
-                    {{ modoConcurso ? '***' : (kpis.totalVentas | currency:'MXN') }}
+                    {{ modoConcurso ? getPorcentaje(kpis.totalVentas) : (kpis.totalVentas | currency:'MXN') }}
                 </p>
             </div>
 
@@ -385,14 +385,14 @@
             <div class="bg-white rounded-xl shadow p-4">
                 <p class="text-sm text-gray-500">Venta Promedio</p>
                 <p class="text-xl sm:text-2xl font-bold text-gray-800">
-                    {{ modoConcurso ? '***' : (kpis.ventaPromedio | currency:'MXN') }}
+                    {{ modoConcurso ? getPorcentaje(kpis.ventaPromedio) : (kpis.ventaPromedio | currency:'MXN') }}
                 </p>
             </div>
 
             <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
                 <p class="text-sm text-gray-500">Monto sin IVA</p>
                 <p class="text-xl sm:text-2xl font-bold text-green-600">
-                    {{ modoConcurso ? '***' : (kpis.utilidadBruta | currency:'MXN') }}
+                    {{ modoConcurso ? getPorcentaje(kpis.utilidadBruta) : (kpis.utilidadBruta | currency:'MXN') }}
                 </p>
             </div>
 
@@ -513,7 +513,7 @@
                                 </td>
                                 <td class="p-2 text-right whitespace-nowrap">
                                     <span [ngClass]="{'text-rose-600 font-bold': row.totalDocumento < 0}">
-                                        {{ modoConcurso ? '***' : (row.totalDocumento < 0 ? '(' : '') + ((row.totalDocumento < 0 ? -row.totalDocumento : row.totalDocumento) | currency:'MXN') + (row.totalDocumento < 0 ? ')' : '') }}
+                                        {{ modoConcurso ? getPorcentaje(row.totalDocumento < 0 ? -row.totalDocumento : row.totalDocumento) : (row.totalDocumento < 0 ? '(' : '') + ((row.totalDocumento < 0 ? -row.totalDocumento : row.totalDocumento) | currency:'MXN') + (row.totalDocumento < 0 ? ')' : '') }}
                                     </span>
                                 </td>
                                 <td class="p-2 text-center whitespace-nowrap">

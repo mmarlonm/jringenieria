@@ -730,6 +730,20 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
                     this.ubicacionNombre =
                         `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
+                        
+                    // Geocodificación inversa simple para mostrar una dirección más amigable
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=16&addressdetails=1`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                this._ngZone.run(() => {
+                                    // Tomar las primeras partes de la dirección para no hacerlo tan largo
+                                    const partes = data.display_name.split(',');
+                                    this.ubicacionNombre = partes.slice(0, 3).join(',').trim();
+                                    this.currentCoords['ubicacionNombre'] = this.ubicacionNombre;
+                                });
+                            }
+                        }).catch(e => console.log('Error reverse geocoding', e));
                 });
             },
             (error) => {
@@ -820,7 +834,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             tipo: tipo,
             latitud: coords.lat,
             longitud: coords.lng,
-            ubicacionNombre: 'Ubicación detectada por GPS' // Aquí puedes integrar Geocoding después
+            ubicacionNombre: coords.ubicacionNombre || 'Ubicación detectada por GPS'
         };
 
         this._personalManagementService.registrarAsistencia(payload).subscribe({
@@ -852,7 +866,27 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     }
 
     abrirMenuYSolicitarPermiso(event: MouseEvent): void {
-        this.solicitarPermisosUbicacion();
+        if (this.locationPermission === 'granted') {
+            this.solicitarPermisosUbicacion();
+        } else {
+            Swal.fire({
+                title: '📍 Permiso de Ubicación',
+                text: 'Para registrar tu asistencia en los proyectos, necesitamos acceder a tu ubicación GPS. Esto garantiza la validez del marcaje de tiempo. ¿Deseas continuar?',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'Sí, permitir',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.solicitarPermisosUbicacion();
+                } else {
+                    this.locationPermission = 'denied';
+                    this.ubicacionNombre = 'Permiso cancelado por el usuario';
+                }
+            });
+        }
     }
 
 }

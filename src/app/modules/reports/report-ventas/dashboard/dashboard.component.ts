@@ -178,6 +178,12 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
         private _chatIaService: ChatIaService
     ) { }
 
+    getPorcentaje(valor: number, baseTotal?: number): string {
+        const base = baseTotal || this.kpis.totalVentas;
+        if (!base || base === 0) return '0%';
+        return ((valor / base) * 100).toFixed(1) + '%';
+    }
+
 
     ngOnInit(): void {
         this.verificarRoles();
@@ -643,7 +649,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
 
                             let s = `<span style="font-size: 10px; font-weight: bold;">${this.x}</span><br/>`;
                             this.points.forEach((point: any) => {
-                                const valor = self.modoConcurso ? '***' : `$${point.y.toLocaleString()}`;
+                                const valor = self.modoConcurso ? self.getPorcentaje(point.y) : `$${point.y.toLocaleString()}`;
                                 s += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${valor}</b><br/>`;
                             });
 
@@ -800,7 +806,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 shadow: false,
                 padding: 0,
                 formatter: function (this: any) {
-                    const totalMoneda = self.modoConcurso ? '***' : new Intl.NumberFormat('es-MX', {
+                    const totalMoneda = self.modoConcurso ? self.getPorcentaje(this.y) : new Intl.NumberFormat('es-MX', {
                         style: 'currency', currency: 'MXN'
                     }).format(this.point.y); // Usamos 'y' porque ahora 'y' es el dinero
 
@@ -838,7 +844,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                         enabled: true,
                         useHTML: true,
                         formatter: function (this: any) {
-                            const totalMoneda = self.modoConcurso ? '***' : new Intl.NumberFormat('es-MX', {
+                            const totalMoneda = self.modoConcurso ? self.getPorcentaje(this.y) : new Intl.NumberFormat('es-MX', {
                                 style: 'currency', currency: 'MXN'
                             }).format(this.point.y);
 
@@ -915,7 +921,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                     color: textColor
                 },
                 formatter: function (this: any) {
-                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     return `<span style="color:${textColor}">Monto: <b>${val}</b></span><br>` +
                            `<span style="color:${textColor}">Participación: <b>${this.point.percentage.toFixed(1)}%</b></span>`;
                 }
@@ -929,7 +935,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                     dataLabels: {
                         enabled: true,
                         formatter: function (this: any) {
-                            const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                            const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                             return `<span style="color:${textColor}; font-weight: bold;">${this.point.name} (${this.point.percentage.toFixed(0)}%)</span><br>` +
                                    `<span style="opacity:.6; color:${textColor}">${val}</span>`;
                         },
@@ -1059,7 +1065,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             },
             tooltip: {
                 formatter: function (this: any) {
-                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     return `Venta: <b>${val}</b><br/>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
                 }
             },
@@ -1136,7 +1142,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             },
             tooltip: {
                 formatter: function (this: any) {
-                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     return `Venta: <b>${val}</b><br/>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
                 }
             },
@@ -1241,7 +1247,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 title: { text: '' },
                 tooltip: {
                     formatter: function (this: any) {
-                        const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                         return `Venta: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
                     }
                 },
@@ -1287,7 +1293,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                     formatter: function (this: any) {
                         let s = `<span style="font-size: 12px"><b>${this.x}</b></span><br/>`;
                         this.points.forEach((point: any) => {
-                            const val = self.modoConcurso ? '***' : `$${point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                            const val = self.modoConcurso ? self.getPorcentaje(point.y) : `$${point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                             s += `<span style="color:${point.series.color}">\u25CF</span> ${point.series.name}: <b>${val}</b><br/>`;
                         });
                         return s;
@@ -1300,7 +1306,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                         dataLabels: {
                             enabled: true,
                             formatter: function (this: any) {
-                                return self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                                return self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                             },
                             style: { fontSize: '10px', fontWeight: 'bold', textOutline: 'none', color: textColor }
                         }
@@ -1345,7 +1351,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             },
             tooltip: {
                 formatter: function (this: any) {
-                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                    const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                     return `Monto: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
                 }
             },
@@ -1418,7 +1424,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
             },
             tooltip: {
                 formatter: function (this: any) {
-                    const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                    const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                     return `Monto: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
                 }
             },
@@ -1481,7 +1487,7 @@ export class ReportVentasDashboardComponent implements OnInit, OnDestroy {
                 title: { text: null }, // Title is handled by the container itself
                 tooltip: {
                     formatter: function (this: any) {
-                        const val = self.modoConcurso ? '***' : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        const val = self.modoConcurso ? self.getPorcentaje(this.point.y) : `$${this.point.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                         return `Venta Total: <b>${val}</b><br>Participación: <b>${this.point.percentage.toFixed(1)}%</b>`;
                     }
                 },
