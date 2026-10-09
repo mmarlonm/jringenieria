@@ -164,9 +164,25 @@ export class RoleNavigationComponent implements OnInit, OnChanges {
 
     if (nodeId === 'administracion.proveedores.cuestionario') {
       return true;
-    } else {
-      return !isSectionPermiso;
     }
+    if (nodeId === 'administracion.iso-documentacion') {
+      // Para Documentación ISO solo mostramos: Ver (1), Subir Archivos (2), Eliminar (4) y Descargar (7)
+      return [1, 2, 4, 7].includes(permisoId);
+    }
+    return !isSectionPermiso;
+  }
+
+  getPermisoLabel(nodeId: string, permiso: any): string {
+    const permisoId = Number(permiso.permisoId || permiso.idPermiso || permiso.id);
+    if (nodeId === 'administracion.iso-documentacion') {
+      switch (permisoId) {
+        case 1: return 'Ver Archivos';
+        case 2: return 'Subir Archivos';
+        case 4: return 'Eliminar Archivos';
+        case 7: return 'Descargar Archivos';
+      }
+    }
+    return permiso.descripcionPermiso;
   }
 
   /**

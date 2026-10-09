@@ -78,7 +78,7 @@
                 class="text-xs text-gray-500 scale-90 origin-left"
                 [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
                 (change)="togglePermission(node.id, permiso.permisoId)">
-                {{ permiso.descripcionPermiso }}
+                {{ getPermisoLabel(node.id, permiso) }}
               </mat-checkbox>
             </ng-container>
           </div>

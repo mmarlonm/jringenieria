@@ -122,20 +122,43 @@ export class IsoDocumentacionComponent implements OnInit {
             }
 
             const userPermisosList = storedData.permisos || [];
-            const isoPermisoNode = userPermisosList.find((p: any) => {
-                const vista = p.vista?.nombreVista || p.vistaId || p.nombreVista || p.vista?.idVista || '';
-                return vista === 'administracion.iso-documentacion' || vista === 'administracion.iso9001';
+            const userVistasList = storedData.vistas || [];
+            const pIds = new Set<number>();
+
+            // 1. Filtrar de lista plana de permisos (estructura estándar en C# API)
+            userPermisosList.forEach((p: any) => {
+                const vistaName = p.vista?.nombreVista || p.vista?.vistaId || p.nombreVista || p.vistaId || '';
+                if (vistaName === 'administracion.iso-documentacion' || vistaName === 'administracion.iso9001') {
+                    const id = Number(p.permisoId || p.idPermiso || p.id);
+                    if (!isNaN(id) && id > 0) pIds.add(id);
+
+                    const subList = p.acciones || p.permisos || p.subPermisos || [];
+                    subList.forEach((sub: any) => {
+                        const subId = Number(sub.permisoId || sub.idPermiso || sub.id || sub);
+                        if (!isNaN(subId) && subId > 0) pIds.add(subId);
+                    });
+                }
             });
 
-            if (isoPermisoNode) {
-                const pList: any[] = isoPermisoNode.acciones || isoPermisoNode.permisos || isoPermisoNode.subPermisos || [];
-                const pIds = pList.map((x: any) => Number(x.permisoId || x.idPermiso || x.id || x));
+            // 2. Filtrar de lista de vistas si existen
+            userVistasList.forEach((v: any) => {
+                const vistaName = v.nombreVista || v.vistaId || v.idVista || '';
+                if (vistaName === 'administracion.iso-documentacion' || vistaName === 'administracion.iso9001') {
+                    const vPermisos = v.permisos || [];
+                    vPermisos.forEach((vp: any) => {
+                        const vpId = Number(typeof vp === 'number' ? vp : (vp.permisoId || vp.idPermiso || vp.id));
+                        if (!isNaN(vpId) && vpId > 0) pIds.add(vpId);
+                    });
+                }
+            });
 
+            // Si el usuario tiene permisos configurados
+            if (pIds.size > 0) {
                 this.permisos = {
-                    ver: true,
-                    subir: pIds.length === 0 || pIds.includes(2) || pIds.includes(102) || isoPermisoNode.canUpload === true,
-                    descargar: pIds.length === 0 || pIds.includes(5) || pIds.includes(7) || pIds.includes(105) || isoPermisoNode.canDownload === true,
-                    eliminar: pIds.length === 0 || pIds.includes(4) || pIds.includes(104) || isoPermisoNode.canDelete === true
+                    ver: pIds.has(1) || pIds.size > 0,
+                    subir: pIds.has(2) || pIds.has(102),
+                    descargar: pIds.has(7) || pIds.has(5) || pIds.has(105),
+                    eliminar: pIds.has(4) || pIds.has(104)
                 };
             }
         } catch (e) {
