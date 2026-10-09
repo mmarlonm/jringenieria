@@ -23,7 +23,7 @@
         </button>
 
         <!-- Nuevo Apartado Button -->
-        <button *ngIf="permisos.subir" mat-flat-button color="primary" type="button" (click)="crearApartado()" class="!rounded-xl shadow-md hover:shadow-lg transition-all">
+        <button *ngIf="permisos.agregarCarpetas" mat-flat-button color="primary" type="button" (click)="crearApartado()" class="!rounded-xl shadow-md hover:shadow-lg transition-all">
           <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:folder-plus'"></mat-icon>
           Nuevo Apartado
         </button>
@@ -46,7 +46,7 @@
       <p class="text-xs text-slate-400 font-semibold mt-1 max-w-sm">
         Apenas estamos empezando. Crea tu primer apartado para comenzar a organizar la documentación del sistema ISO 9001.
       </p>
-      <button *ngIf="permisos.subir" mat-flat-button color="primary" type="button" (click)="crearApartado()" class="!rounded-xl mt-5 shadow-md">
+      <button *ngIf="permisos.agregarCarpetas" mat-flat-button color="primary" type="button" (click)="crearApartado()" class="!rounded-xl mt-5 shadow-md">
         <mat-icon class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
         Crear Primer Apartado
       </button>
@@ -83,7 +83,7 @@
             </div>
             <div class="flex items-center gap-1">
               <!-- Create Subfolder button -->
-              <button *ngIf="permisos.subir" mat-icon-button type="button" (click)="crearSubcarpeta(cat.nombre)"
+              <button *ngIf="permisos.agregarCarpetas" mat-icon-button type="button" (click)="crearSubcarpeta(cat.nombre)"
                 matTooltip="Nueva subcarpeta" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
                 <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:folder-plus'"></mat-icon>
               </button>
@@ -179,8 +179,8 @@
               
               <div class="flex items-center gap-2 truncate pr-2 flex-auto min-w-0">
                 <mat-icon class="icon-size-4 text-slate-400 flex-none" [svgIcon]="file.esZip ? 'heroicons_outline:archive-box' : 'heroicons_outline:document-text'"></mat-icon>
-                <div class="truncate">
-                  <span class="text-xs font-bold text-slate-700 truncate block" [title]="file.nombreArchivo">
+                <div class="truncate cursor-pointer" (click)="canPreview(file) ? previsualizarArchivo(file) : null">
+                  <span class="text-xs font-bold text-slate-700 hover:text-indigo-600 truncate block transition-colors" [title]="file.nombreArchivo">
                     {{ getFileDisplayName(file, cat.nombre) }}
                   </span>
                   <span class="text-[9px] text-slate-400 block font-semibold mt-0.5" *ngIf="file.tamanoBytes">
@@ -190,15 +190,27 @@
               </div>
 
               <div class="flex items-center gap-1 shrink-0">
+                <!-- Preview (Ver) -->
+                <button *ngIf="permisos.ver && canPreview(file)" mat-icon-button type="button"
+                  class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center transition-colors"
+                  (click)="previsualizarArchivo(file); $event.stopPropagation()" matTooltip="Ver">
+                  <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                </button>
+                <!-- Edit (OnlyOffice / Renombrar) -->
+                <button mat-icon-button type="button"
+                  class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-blue-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center transition-colors"
+                  (click)="editarArchivo(file); $event.stopPropagation()" [matTooltip]="isOfficeDocument(file.nombreArchivo) ? 'Editar documento' : 'Editar / Renombrar archivo'">
+                  <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:pencil'"></mat-icon>
+                </button>
                 <!-- Download -->
                 <button *ngIf="permisos.descargar" mat-icon-button type="button"
-                  class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
+                  class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center transition-colors"
                   (click)="descargarArchivo(file); $event.stopPropagation()" matTooltip="Descargar">
                   <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
                 </button>
                 <!-- Delete -->
                 <button *ngIf="permisos.eliminar" mat-icon-button type="button"
-                  class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-red-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
+                  class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-red-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center transition-colors"
                   (click)="eliminarArchivo(file); $event.stopPropagation()" matTooltip="Eliminar">
                   <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:trash'"></mat-icon>
                 </button>

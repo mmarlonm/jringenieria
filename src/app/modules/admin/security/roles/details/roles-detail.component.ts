@@ -201,6 +201,41 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         // Enviar
         this._rolService.updateRoles(payload).subscribe(() => {
             this.toggleEditMode(false);
+
+            // Sincronizar en tiempo real el userInformation de la sesión actual
+            try {
+                const storedRaw = localStorage.getItem('userInformation');
+                if (storedRaw) {
+                    const info = JSON.parse(storedRaw);
+                    const currentRolId = Number(info.usuario?.rolId || info.rolId || info.usuario?.idRol || 0);
+                    const rolEditadoId = Number(payload.rolId);
+                    const currentRoles: string[] = info.roles || [];
+                    const esMismoRol = (currentRolId > 0 && currentRolId === rolEditadoId) || 
+                        currentRoles.some((r: string) => r.toLowerCase() === (payload.nombreRol || '').toLowerCase());
+
+                    if (esMismoRol) {
+                        if (!info.permisos) info.permisos = [];
+                        // Remover los permisos viejos de las vistas actualizadas
+                        const vistasIds = payload.vistas.map(v => v.vistaId);
+                        info.permisos = info.permisos.filter((p: any) => {
+                            const vId = p.vista?.nombreVista || p.vistaId || p.nombreVista;
+                            return !vistasIds.includes(vId);
+                        });
+                        // Agregar los nuevos permisos
+                        payload.vistas.forEach(v => {
+                            v.permisos.forEach((pId: number) => {
+                                info.permisos.push({
+                                    permisoId: pId,
+                                    vista: { nombreVista: v.vistaId }
+                                });
+                            });
+                        });
+                        localStorage.setItem('userInformation', JSON.stringify(info));
+                    }
+                }
+            } catch (err) {
+                console.error('Error sincronizando userInformation local:', err);
+            }
         });
     }
 

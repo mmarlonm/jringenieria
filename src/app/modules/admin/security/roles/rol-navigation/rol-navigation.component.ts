@@ -166,9 +166,14 @@ export class RoleNavigationComponent implements OnInit, OnChanges {
       return true;
     }
     if (nodeId === 'administracion.iso-documentacion') {
-      // Para Documentación ISO solo mostramos: Ver (1), Subir Archivos (2), Eliminar (4) y Descargar (7)
-      return [1, 2, 4, 7].includes(permisoId);
+      // Documentación ISO muestra exactamente: Agregar (1002), Agregar Carpetas (2), Descargar (1003), Eliminar (3) y Ver (1)
+      return [1002, 2, 1003, 3, 1].includes(permisoId);
     }
+
+    if (permisoId === 1003) {
+      return false;
+    }
+
     return !isSectionPermiso;
   }
 
@@ -176,10 +181,11 @@ export class RoleNavigationComponent implements OnInit, OnChanges {
     const permisoId = Number(permiso.permisoId || permiso.idPermiso || permiso.id);
     if (nodeId === 'administracion.iso-documentacion') {
       switch (permisoId) {
-        case 1: return 'Ver Archivos';
-        case 2: return 'Subir Archivos';
-        case 4: return 'Eliminar Archivos';
-        case 7: return 'Descargar Archivos';
+        case 1002: return 'Agregar';
+        case 2: return 'Agregar Carpetas';
+        case 1003: return 'Descargar';
+        case 3: return 'Eliminar';
+        case 1: return 'Ver';
       }
     }
     return permiso.descripcionPermiso;

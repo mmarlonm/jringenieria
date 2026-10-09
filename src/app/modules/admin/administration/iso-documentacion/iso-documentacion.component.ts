@@ -10,6 +10,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
+import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
+import { environment } from 'environments/environment';
 import { IsoDocumentacionService, IsoApartado, IsoArchivo, IsoBitacoraItem } from './iso-documentacion.service';
 import Swal from 'sweetalert2';
 
@@ -27,7 +31,8 @@ import Swal from 'sweetalert2';
         MatTooltipModule,
         MatProgressBarModule,
         MatProgressSpinnerModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        MatDialogModule
     ],
     templateUrl: './iso-documentacion.component.html',
     styleUrls: ['./iso-documentacion.component.scss']
@@ -36,6 +41,9 @@ export class IsoDocumentacionComponent implements OnInit {
     private _isoService = inject(IsoDocumentacionService);
     private _cdr = inject(ChangeDetectorRef);
     private _snackBar = inject(MatSnackBar);
+    private _dialog = inject(MatDialog);
+
+    onlyOfficeDocsUrl: string = environment.apiOnlyOffice;
 
     // Listas idénticas al modelo de Control de Ejecución (inicia en 0 apartados)
     apartados: IsoApartado[] = [];
@@ -65,6 +73,7 @@ export class IsoDocumentacionComponent implements OnInit {
     permisos = {
         ver: true,
         subir: true,
+        agregarCarpetas: true,
         descargar: true,
         eliminar: true
     };
@@ -114,21 +123,16 @@ export class IsoDocumentacionComponent implements OnInit {
     cargarPermisosUsuario(): void {
         try {
             const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const roles: string[] = storedData.roles || [];
-            
-            if (roles.some((r) => r && ['admin', 'administrador', 'pruebas', 'superadmin'].includes(r.toLowerCase()))) {
-                this.permisos = { ver: true, subir: true, descargar: true, eliminar: true };
-                return;
-            }
-
             const userPermisosList = storedData.permisos || [];
             const userVistasList = storedData.vistas || [];
             const pIds = new Set<number>();
+            let tieneVistaConfigurada = false;
 
             // 1. Filtrar de lista plana de permisos (estructura estándar en C# API)
             userPermisosList.forEach((p: any) => {
                 const vistaName = p.vista?.nombreVista || p.vista?.vistaId || p.nombreVista || p.vistaId || '';
                 if (vistaName === 'administracion.iso-documentacion' || vistaName === 'administracion.iso9001') {
+                    tieneVistaConfigurada = true;
                     const id = Number(p.permisoId || p.idPermiso || p.id);
                     if (!isNaN(id) && id > 0) pIds.add(id);
 
@@ -144,6 +148,7 @@ export class IsoDocumentacionComponent implements OnInit {
             userVistasList.forEach((v: any) => {
                 const vistaName = v.nombreVista || v.vistaId || v.idVista || '';
                 if (vistaName === 'administracion.iso-documentacion' || vistaName === 'administracion.iso9001') {
+                    tieneVistaConfigurada = true;
                     const vPermisos = v.permisos || [];
                     vPermisos.forEach((vp: any) => {
                         const vpId = Number(typeof vp === 'number' ? vp : (vp.permisoId || vp.idPermiso || vp.id));
@@ -152,15 +157,28 @@ export class IsoDocumentacionComponent implements OnInit {
                 }
             });
 
-            // Si el usuario tiene permisos configurados
-            if (pIds.size > 0) {
+            // Si el rol tiene la vista configurada (se guardaron permisos para esta pantalla):
+            // RESPETAR ESTRICTAMENTE LAS CASILLAS (1002=Agregar, 2=Agregar Carpetas, 1003=Descargar, 3=Eliminar, 1=Ver):
+            if (tieneVistaConfigurada || pIds.size > 0) {
                 this.permisos = {
-                    ver: pIds.has(1) || pIds.size > 0,
-                    subir: pIds.has(2) || pIds.has(102),
-                    descargar: pIds.has(7) || pIds.has(5) || pIds.has(105),
-                    eliminar: pIds.has(4) || pIds.has(104)
+                    ver: pIds.has(1) || pIds.has(1002) || pIds.has(2) || pIds.has(3) || pIds.has(1003) || pIds.size > 0,
+                    subir: pIds.has(1002), // 1002 = Agregar (subir archivos)
+                    agregarCarpetas: pIds.has(2), // 2 = Agregar Carpetas (crear apartados y subcarpetas)
+                    descargar: pIds.has(1003) || pIds.has(7), // 1003 = Descargar
+                    eliminar: pIds.has(3) || pIds.has(4) // 3 = Eliminar
                 };
+                return;
             }
+
+            // Si la vista aún no está configurada para el rol pero es Admin:
+            const roles: string[] = storedData.roles || [];
+            if (roles.some((r) => r && ['admin', 'administrador', 'pruebas', 'superadmin'].includes(r.toLowerCase()))) {
+                this.permisos = { ver: true, subir: true, agregarCarpetas: true, descargar: true, eliminar: true };
+                return;
+            }
+
+            // Por defecto restrictivo si no tiene permisos
+            this.permisos = { ver: true, subir: false, agregarCarpetas: false, descargar: false, eliminar: false };
         } catch (e) {
             console.error('Error procesando permisos de usuario ISO:', e);
         }
@@ -291,6 +309,15 @@ export class IsoDocumentacionComponent implements OnInit {
     }
 
     crearApartado(): void {
+        if (!this.permisos.agregarCarpetas) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para crear apartados o carpetas.'
+            });
+            return;
+        }
+
         Swal.fire({
             title: 'Nuevo Apartado ISO 9001',
             input: 'text',
@@ -327,6 +354,15 @@ export class IsoDocumentacionComponent implements OnInit {
     }
 
     eliminarApartado(categoryName: string): void {
+        if (!this.permisos.eliminar) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para eliminar apartados.'
+            });
+            return;
+        }
+
         const usuario = this.obtenerUsuarioActual();
 
         Swal.fire({
@@ -355,6 +391,14 @@ export class IsoDocumentacionComponent implements OnInit {
     }
 
     crearSubcarpeta(categoryName: string): void {
+        if (!this.permisos.agregarCarpetas) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para crear subcarpetas.'
+            });
+            return;
+        }
         Swal.fire({
             title: 'Crear nueva subcarpeta',
             input: 'text',
@@ -403,6 +447,14 @@ export class IsoDocumentacionComponent implements OnInit {
     }
 
     triggerFileInput(categoryName: string): void {
+        if (!this.permisos.subir) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para subir archivos en este apartado.'
+            });
+            return;
+        }
         const inputElement = document.getElementById('fileInput-' + categoryName) as HTMLInputElement;
         if (inputElement) {
             inputElement.click();
@@ -419,7 +471,9 @@ export class IsoDocumentacionComponent implements OnInit {
     onDragOver(event: DragEvent, categoryName: string): void {
         event.preventDefault();
         event.stopPropagation();
-        this.isDragOver[categoryName] = true;
+        if (this.permisos.subir) {
+            this.isDragOver[categoryName] = true;
+        }
     }
 
     onDragLeave(event: DragEvent, categoryName: string): void {
@@ -433,6 +487,15 @@ export class IsoDocumentacionComponent implements OnInit {
         event.stopPropagation();
         this.isDragOver[categoryName] = false;
 
+        if (!this.permisos.subir) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para subir archivos en este apartado.'
+            });
+            return;
+        }
+
         if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
             this.uploadFiles(Array.from(event.dataTransfer.files), categoryName);
         }
@@ -440,6 +503,14 @@ export class IsoDocumentacionComponent implements OnInit {
 
     // Subida masiva con seguimiento determinista de eventos HTTP (+100 archivos o ZIP)
     uploadFiles(files: File[], categoryName: string): void {
+        if (!this.permisos.subir) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para subir archivos.'
+            });
+            return;
+        }
         const activeSub = this.activeSubcarpetas[categoryName] || '';
         const usuario = this.obtenerUsuarioActual();
 
@@ -501,7 +572,184 @@ export class IsoDocumentacionComponent implements OnInit {
         });
     }
 
+    canPreview(file: any): boolean {
+        if (!file || !file.nombreArchivo) return false;
+        const ext = file.nombreArchivo.split('.').pop()?.toLowerCase() || '';
+        // Archivos ZIP o comprimidos no se previsualizan
+        if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
+            return false;
+        }
+        return true;
+    }
+
+    isImageOrPdf(fileName: string): boolean {
+        if (!fileName) return false;
+        const ext = fileName.split('.').pop()?.toLowerCase() || '';
+        return ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext);
+    }
+
+    isOfficeDocument(fileName: string): boolean {
+        if (!fileName) return false;
+        const ext = fileName.split('.').pop()?.toLowerCase() || '';
+        return [
+            'doc', 'docx', 'docm', 'dot', 'dotx', 'dotm', 'odt', 'fodt', 'ott', 'rtf', 'txt',
+            'xls', 'xlsx', 'xlsm', 'xlt', 'xltx', 'xltm', 'ods', 'fods', 'ots', 'csv',
+            'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'pot', 'potx', 'potm', 'odp', 'fodp', 'otp'
+        ].includes(ext);
+    }
+
+    previsualizarArchivo(file: any): void {
+        if (!this.permisos.ver) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para visualizar archivos.'
+            });
+            return;
+        }
+
+        if (!file || !file.tipo || !file.nombreArchivo) return;
+
+        const fileName = file.nombreArchivo.split('/').pop() || file.nombreArchivo;
+        const ext = (file.nombreArchivo.split('.').pop() || '').toLowerCase();
+
+        // 1. Archivos comprimidos no se pueden previsualizar
+        if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Archivo comprimido',
+                text: 'Los archivos comprimidos (.zip) no se pueden previsualizar directamente. Puede descargarlo para revisar su contenido.',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
+
+        // 2. Documentos de Office -> OnlyOffice en modo 'view'
+        if (this.isOfficeDocument(file.nombreArchivo)) {
+            this.abrirOnlyOffice(file, 'view');
+            return;
+        }
+
+        // 3. Imágenes o PDF -> Visor modal nativo
+        const usuario = this.obtenerUsuarioActual();
+        this._snackBar.open(`Cargando vista previa de ${fileName}...`, '', { duration: 1500 });
+
+        this._isoService.descargarArchivo(file.tipo, file.nombreArchivo, usuario).subscribe({
+            next: (res) => {
+                if (res && res.data) {
+                    const byteCharacters = atob(res.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const isPdf = ext === 'pdf';
+                    const contentType = res.contentType || (isPdf ? 'application/pdf' : 'image/png');
+                    const blob = new Blob([byteArray], { type: contentType });
+                    const fileURL = URL.createObjectURL(blob);
+
+                    this._dialog.open(ImagePreviewDialogComponent, {
+                        data: {
+                            url: fileURL,
+                            name: fileName,
+                            isPdf: isPdf
+                        }
+                    });
+                }
+            },
+            error: (err) => {
+                console.error('Error al previsualizar archivo:', err);
+                Swal.fire('Error', 'No se pudo generar la vista previa del archivo.', 'error');
+            }
+        });
+    }
+
+    abrirOnlyOffice(file: any, mode: 'edit' | 'view' = 'edit'): void {
+        const usuario = this.obtenerUsuarioActual();
+        const accionLabel = mode === 'edit' ? 'Abriendo editor' : 'Abriendo vista previa';
+        this._snackBar.open(`${accionLabel} de ${file.nombreArchivo}...`, '', { duration: 2000 });
+
+        this._isoService.getToken(file.tipo, file.nombreArchivo, mode, usuario).subscribe({
+            next: (res) => {
+                if (res && res.token) {
+                    const editorConfig = res.config || {};
+                    editorConfig.token = res.token;
+
+                    this._dialog.open(OnlyOfficeEditorComponent, {
+                        width: '95vw',
+                        height: '92vh',
+                        data: {
+                            documentServerUrl: this.onlyOfficeDocsUrl,
+                            editorConfig: editorConfig
+                        }
+                    });
+                } else {
+                    Swal.fire('Error', 'No se pudo obtener el token para el editor de OnlyOffice.', 'error');
+                }
+            },
+            error: (err) => {
+                console.error('Error al conectar con OnlyOffice:', err);
+                Swal.fire('Error', 'No se pudo iniciar el editor de OnlyOffice.', 'error');
+            }
+        });
+    }
+
+    editarArchivo(file: any): void {
+        if (this.isOfficeDocument(file.nombreArchivo)) {
+            this.abrirOnlyOffice(file, 'edit');
+        } else {
+            this.renombrarArchivoPrompt(file);
+        }
+    }
+
+    renombrarArchivoPrompt(file: any): void {
+        const displayName = file.nombreArchivo.split('/').pop() || file.nombreArchivo;
+        const usuario = this.obtenerUsuarioActual();
+
+        Swal.fire({
+            title: 'Editar / Renombrar archivo',
+            text: `Ingrese el nuevo nombre para "${displayName}":`,
+            input: 'text',
+            inputValue: displayName,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#4f46e5',
+            inputValidator: (value) => {
+                if (!value || !value.trim()) {
+                    return 'El nombre no puede estar vacío';
+                }
+                return null;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const nuevoNombre = result.value.trim();
+                if (nuevoNombre === displayName) return;
+
+                this._isoService.renombrar(file.tipo, file.nombreArchivo, nuevoNombre, usuario).subscribe({
+                    next: () => {
+                        this.loadFiles();
+                        this._snackBar.open('Archivo renombrado exitosamente.', 'OK', { duration: 3000 });
+                    },
+                    error: (err) => {
+                        console.error('Error al renombrar archivo:', err);
+                        Swal.fire('Error', err?.error || 'No se pudo renombrar el archivo.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
     descargarArchivo(file: any): void {
+        if (!this.permisos.descargar) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para descargar archivos.'
+            });
+            return;
+        }
+
         const usuario = this.obtenerUsuarioActual();
         this._snackBar.open(`Descargando ${file.nombreArchivo}...`, '', { duration: 1500 });
 
@@ -534,6 +782,15 @@ export class IsoDocumentacionComponent implements OnInit {
     }
 
     eliminarArchivo(file: any): void {
+        if (!this.permisos.eliminar) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para eliminar archivos.'
+            });
+            return;
+        }
+
         const usuario = this.obtenerUsuarioActual();
         const displayName = file.nombreArchivo.split('/').pop() || file.nombreArchivo;
 

@@ -94,6 +94,9 @@ export class NavigationMockApi {
                         return (newItem.children && newItem.children.length > 0) ? newItem : null;
                     }
                     // Lógica para ITEMS FINALES
+                    if (newItem.id === 'dashboards.identidad') {
+                        return newItem;
+                    }
                     const tienePermiso = vistasPermitidas.some(permiso => {
                         if (!permiso) return false;
                         const basePermiso = permiso.split('.').pop();

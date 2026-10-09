@@ -97,4 +97,26 @@ export class IsoDocumentacionService {
 
         return this._http.delete<any>(`${this._apiUrl}/eliminar`, { params });
     }
+
+    getToken(tipo: string, nombreArchivo: string, mode: string = 'edit', usuario?: string): Observable<any> {
+        let params = new HttpParams()
+            .set('tipo', tipo)
+            .set('nombreArchivo', nombreArchivo)
+            .set('mode', mode);
+        if (usuario) params = params.set('usuario', usuario);
+
+        return this._http.get<any>(`${this._apiUrl}/token`, { params });
+    }
+
+    renombrar(tipo: string, nombreArchivoActual: string, nuevoNombre: string, usuario?: string): Observable<any> {
+        let params = new HttpParams();
+        if (usuario) params = params.set('usuario', usuario);
+
+        return this._http.post<any>(`${this._apiUrl}/renombrar`, {
+            tipo,
+            nombreArchivoActual,
+            nuevoNombre
+        }, { params });
+    }
 }
+

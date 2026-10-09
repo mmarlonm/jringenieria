@@ -3,6 +3,17 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export const defaultNavigation: FuseNavigationItem[] = [
 
     // ==========================================================================================
+    // NUESTRA IDENTIDAD (Directo raíz)
+    // ==========================================================================================
+    {
+        id: 'dashboards.identidad',
+        title: 'Nuestra Identidad',
+        type: 'basic',
+        icon: 'heroicons_outline:sparkles',
+        link: '/dashboards/roadmap'
+    },
+
+    // ==========================================================================================
     // SECCIÓN: ADMINISTRACIÓN
     // ==========================================================================================
     {
@@ -346,7 +357,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'collapsable',
         icon: 'heroicons_outline:users',
         children: [
-            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
@@ -396,6 +406,14 @@ export const defaultNavigation: FuseNavigationItem[] = [
 
 export const compactNavigation: FuseNavigationItem[] = [
     {
+        id: 'dashboards.identidad',
+        title: 'Nuestra Identidad',
+        tooltip: 'Nuestra Identidad',
+        type: 'basic',
+        icon: 'heroicons_outline:sparkles',
+        link: '/dashboards/roadmap'
+    },
+    {
         id: 'ingenieria',
         title: 'Ingeniería',
         tooltip: 'Ingeniería',
@@ -436,7 +454,6 @@ export const compactNavigation: FuseNavigationItem[] = [
         type: 'collapsable',
         icon: 'heroicons_outline:users',
         children: [
-            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
         ]
@@ -495,6 +512,13 @@ export const compactNavigation: FuseNavigationItem[] = [
 
 export const futuristicNavigation: FuseNavigationItem[] = [
     {
+        id: 'dashboards.identidad',
+        title: 'NUESTRA IDENTIDAD',
+        type: 'basic',
+        icon: 'heroicons_outline:sparkles',
+        link: '/dashboards/roadmap'
+    },
+    {
         id: 'ingenieria',
         title: 'INGENIERIA',
         type: 'collapsable',
@@ -523,7 +547,6 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         type: 'collapsable',
         icon: 'heroicons_outline:users',
         children: [
-            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
         ]
@@ -572,6 +595,13 @@ export const futuristicNavigation: FuseNavigationItem[] = [
 
 export const horizontalNavigation: FuseNavigationItem[] = [
     {
+        id: 'dashboards.identidad',
+        title: 'Nuestra Identidad',
+        type: 'basic',
+        icon: 'heroicons_outline:sparkles',
+        link: '/dashboards/roadmap'
+    },
+    {
         id: 'ingenieria',
         title: 'Ingeniería',
         type: 'group',
@@ -602,7 +632,6 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         type: 'group',
         icon: 'heroicons_outline:users',
         children: [
-            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
         ]
