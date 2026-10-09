@@ -482,27 +482,167 @@
         <!-- MODE: ORBITAL SVG ORGANIGRAM WITH DEEP ZOOM & PAN (Fills Remaining Screen) -->
         <div *ngIf="organigramaViewMode === 'orbital'" class="relative flex-auto w-full h-full overflow-hidden select-none bg-slate-100/40 dark:bg-slate-950/40 flex items-center justify-center">
             
-            <!-- Floating Department Info Card (Top Left) -->
-            <div class="absolute top-3 left-3 z-30 max-w-xs p-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md">
-                <div class="flex items-center justify-between gap-2 mb-0.5">
-                    <div class="flex items-center gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded-full" [style.background-color]="activeDeptInfo.color"></div>
-                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                            {{ activeDeptInfo.name }}
+            <!-- Floating Dynamic Organigrama Card (Top Left) -->
+            <div class="absolute top-3 left-3 z-30 max-w-[310px] sm:max-w-xs w-full p-3 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/90 shadow-xl transition-all duration-200">
+                
+                <!-- Header: Categoría / Área Badge + Controles -->
+                <div class="flex items-center justify-between gap-1.5 mb-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <div class="w-2.5 h-2.5 rounded-full flex-none shadow-xs" 
+                             [style.background-color]="selectedRadialNode?.color || activeDeptInfo.color"></div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">
+                            {{ selectedRadialNode ? getCategoryTitle(selectedRadialNode.category) : activeDeptInfo.name }}
+                        </span>
+                        <span *ngIf="selectedRadialNode && !selectedRadialNode.isCore && !selectedRadialNode.isDepartmentHub"
+                              class="px-1.5 py-0.2 rounded-full text-[8.5px] font-black uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex-none">
+                            Colaborador
+                        </span>
+                        <span *ngIf="selectedRadialNode?.isDepartmentHub"
+                              class="px-1.5 py-0.2 rounded-full text-[8.5px] font-black uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex-none">
+                            Área
                         </span>
                     </div>
-                    <button *ngIf="selectedDepartamentoId !== 'todos'"
-                            (click)="resetOrganigramaZoom()"
-                            class="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline">
-                        Restablecer
-                    </button>
+
+                    <div class="flex items-center gap-0.5 flex-none">
+                        <button *ngIf="selectedRadialNode || selectedDepartamentoId !== 'todos'"
+                                type="button"
+                                (click)="resetOrganigramaZoom()"
+                                matTooltip="Restablecer organigrama"
+                                class="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" class="icon-size-3.5"></mat-icon>
+                        </button>
+                        <button *ngIf="selectedRadialNode"
+                                type="button"
+                                (click)="deselectRadialNode()"
+                                matTooltip="Cerrar detalle"
+                                class="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <mat-icon [svgIcon]="'heroicons_outline:x-mark'" class="icon-size-3.5"></mat-icon>
+                        </button>
+                    </div>
                 </div>
-                <div class="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                    {{ activeDeptInfo.leader }}
-                </div>
-                <div class="text-[9px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                    {{ activeDeptInfo.description }}
-                </div>
+
+                <!-- 1. CASO: BURBUJA DE COLABORADOR SELECCIONADA -->
+                <ng-container *ngIf="selectedRadialNode && !selectedRadialNode.isCore && !selectedRadialNode.isDepartmentHub">
+                    <div class="space-y-1">
+                        <div>
+                            <div class="text-[8.5px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                Encargado / Colaborador
+                            </div>
+                            <div class="text-sm font-black text-slate-900 dark:text-white leading-tight tracking-tight">
+                                {{ selectedRadialNode.person }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-[8.5px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                Puesto / Función
+                            </div>
+                            <div class="text-[11px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
+                                {{ selectedRadialNode.role }}
+                            </div>
+                        </div>
+
+                        <!-- Jerarquía y Líder de Área -->
+                        <div class="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-0.5">
+                            <div *ngIf="getParentNode(selectedRadialNode) as parent" 
+                                 class="flex items-center gap-1 text-[9px] text-slate-600 dark:text-slate-400">
+                                <mat-icon [svgIcon]="'heroicons_outline:arrow-turn-right-up'" class="icon-size-3 text-slate-400 flex-none"></mat-icon>
+                                <span class="truncate">Reporta a: <strong class="text-slate-800 dark:text-slate-200 font-bold">{{ parent.person }}</strong></span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[9px] text-slate-600 dark:text-slate-400">
+                                <mat-icon [svgIcon]="'heroicons_outline:user-group'" class="icon-size-3 text-slate-400 flex-none"></mat-icon>
+                                <span class="truncate">Líder: <strong class="text-slate-800 dark:text-slate-200 font-bold">{{ activeDeptInfo.leader }}</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="grid grid-cols-2 gap-1.5 pt-1.5">
+                            <button type="button" 
+                                    (click)="filterByDepartamento(selectedRadialNode.category)"
+                                    class="py-1 px-2 rounded-lg bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 text-[10px] font-bold transition-colors flex items-center justify-center gap-1">
+                                <mat-icon [svgIcon]="'heroicons_outline:viewfinder-circle'" class="icon-size-3.5"></mat-icon>
+                                <span>Ver Área</span>
+                            </button>
+                            <button type="button" 
+                                    (click)="resetOrganigramaZoom()"
+                                    class="py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-bold transition-colors flex items-center justify-center gap-1">
+                                <mat-icon [svgIcon]="'heroicons_outline:arrows-pointing-out'" class="icon-size-3.5"></mat-icon>
+                                <span>Ver Todo</span>
+                            </button>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- 2. CASO: HUB DE DEPARTAMENTO SELECCIONADO -->
+                <ng-container *ngIf="selectedRadialNode?.isDepartmentHub">
+                    <div class="space-y-1">
+                        <div>
+                            <div class="text-[8.5px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                Encargado / Líder de Área
+                            </div>
+                            <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-tight">
+                                {{ activeDeptInfo.leader }}
+                            </div>
+                        </div>
+
+                        <div class="text-[9px] text-slate-500 dark:text-slate-400 leading-snug">
+                            {{ activeDeptInfo.description }}
+                        </div>
+
+                        <div class="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[9px] text-slate-600 dark:text-slate-400">
+                            <span class="font-bold">{{ activeDeptInfo.teamCount }} colaboradores</span>
+                            <button type="button" 
+                                    (click)="resetOrganigramaZoom()"
+                                    class="text-sky-600 dark:text-sky-400 font-bold hover:underline">
+                                Ver Todo
+                            </button>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- 3. CASO: NÚCLEO CLIENTE -->
+                <ng-container *ngIf="selectedRadialNode?.isCore">
+                    <div class="space-y-1">
+                        <div>
+                            <div class="text-[8.5px] font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                                Núcleo Estratégico
+                            </div>
+                            <div class="text-sm font-black text-slate-900 dark:text-white leading-tight">
+                                CLIENTE
+                            </div>
+                        </div>
+                        <div class="text-[9px] text-slate-500 dark:text-slate-400 leading-snug">
+                            Eje central de todas las operaciones, decisiones técnicas y comerciales de JR Ingeniería. Cada área colabora en torno a su satisfacción y rentabilidad.
+                        </div>
+                        <div class="pt-1 border-t border-slate-100 dark:border-slate-800/80 text-right">
+                            <button type="button" (click)="resetOrganigramaZoom()" class="text-[9.5px] font-bold text-sky-600 dark:text-sky-400 hover:underline">
+                                Ver Todo el Organigrama
+                            </button>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- 4. CASO: VISTA GENERAL (SIN NODO SELECCIONADO) -->
+                <ng-container *ngIf="!selectedRadialNode">
+                    <div class="space-y-1">
+                        <div>
+                            <div class="text-[8.5px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                {{ selectedDepartamentoId === 'todos' ? 'Gobierno & Alta Dirección' : 'Encargado del Frente' }}
+                            </div>
+                            <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-tight">
+                                {{ activeDeptInfo.leader }}
+                            </div>
+                        </div>
+                        <div class="text-[9px] text-slate-500 dark:text-slate-400 leading-snug">
+                            {{ activeDeptInfo.description }}
+                        </div>
+                        <div class="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800/80 text-[8.5px] font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1">
+                            <mat-icon [svgIcon]="'heroicons_outline:cursor-arrow-rays'" class="icon-size-3"></mat-icon>
+                            <span>Toca cualquier burbuja para ver su encargado</span>
+                        </div>
+                    </div>
+                </ng-container>
+
             </div>
 
             <!-- Floating Zoom Controls (Bottom Right) -->
@@ -729,41 +869,7 @@
                 </div>
             </div>
 
-            <!-- Floating Selected Node Inspector Card (Compact & Actionable) -->
-            <div *ngIf="selectedRadialNode && !selectedRadialNode.isCore" 
-                 class="absolute bottom-3 left-3 z-40 max-w-xs w-full p-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl animate-fade-in">
-                <div class="flex items-center justify-between mb-1.5">
-                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-white shadow-xs"
-                          [style.background-color]="selectedRadialNode.color">
-                        {{ selectedRadialNode.category }}
-                    </span>
-                    <button type="button" (click)="selectedRadialNode = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <mat-icon [svgIcon]="'heroicons_outline:x-mark'" class="icon-size-3.5"></mat-icon>
-                    </button>
-                </div>
 
-                <div class="text-sm font-black text-slate-900 dark:text-white leading-tight">
-                    {{ selectedRadialNode.person }}
-                </div>
-                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-3">
-                    {{ selectedRadialNode.role }}
-                </div>
-
-                <div class="grid grid-cols-2 gap-1.5">
-                    <button type="button" 
-                            (click)="filterByDepartamento(selectedRadialNode.category)"
-                            class="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-600 dark:text-sky-400 text-[11px] font-bold transition-colors text-center flex items-center justify-center gap-1">
-                        <mat-icon [svgIcon]="'heroicons_outline:viewfinder-circle'" class="icon-size-3.5"></mat-icon>
-                        <span>Ver Área</span>
-                    </button>
-                    <button type="button" 
-                            (click)="resetOrganigramaZoom()"
-                            class="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition-colors text-center flex items-center justify-center gap-1">
-                        <mat-icon [svgIcon]="'heroicons_outline:arrows-pointing-out'" class="icon-size-3.5"></mat-icon>
-                        <span>Alejar</span>
-                    </button>
-                </div>
-            </div>
 
         </div>
 

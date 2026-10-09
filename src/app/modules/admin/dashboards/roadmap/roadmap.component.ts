@@ -330,7 +330,17 @@ export class RoadmapComponent implements OnInit {
         this.isOrganigramaTransitioning = true;
 
         if (node.isCore) {
-            this.resetOrganigramaZoom();
+            this.selectedDepartamentoId = 'todos';
+            const todosDept = this.departamentos.find(d => d.id === 'todos');
+            if (todosDept) {
+                this.activeDeptInfo = todosDept;
+            }
+            this.organigramaZoom = 1.35;
+            this.organigramaPanX = (550 - node.cx) * 1.35;
+            this.organigramaPanY = (500 - node.cy) * 1.35;
+            setTimeout(() => {
+                this.isOrganigramaTransitioning = false;
+            }, 650);
             return;
         }
 
@@ -351,6 +361,29 @@ export class RoadmapComponent implements OnInit {
         setTimeout(() => {
             this.isOrganigramaTransitioning = false;
         }, 650);
+    }
+
+    getCategoryTitle(category: string): string {
+        switch (category) {
+            case 'administracion': return 'Administración';
+            case 'ingenieria': return 'Ingeniería';
+            case 'comercial': return 'Desarrollo Comercial';
+            case 'puebla': return 'Sucursal Puebla';
+            case 'pachuca': return 'Sucursal Pachuca';
+            case 'queretaro': return 'Sucursal Querétaro';
+            case 'cliente': return 'Cliente';
+            case 'direccion': return 'Dirección General';
+            default: return category;
+        }
+    }
+
+    getParentNode(node: RadialNode | null | undefined): RadialNode | undefined {
+        if (!node || !node.parentId) return undefined;
+        return this.radialNodes.find(n => n.id === node.parentId);
+    }
+
+    deselectRadialNode(): void {
+        this.selectedRadialNode = null;
     }
 
     onNodeTouchEnd(node: RadialNode, event: TouchEvent): void {
