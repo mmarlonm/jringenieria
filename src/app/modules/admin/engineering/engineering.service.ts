@@ -338,6 +338,14 @@ export class EngineeringService {
         return this._http.get<any[]>(`${environment.apiUrl}/SolicitudesCompra/proyecto/${idSeguimiento}`);
     }
 
+    getGastosPersonal(idSeguimiento: number): Observable<any> {
+        return this._http.get<any>(`${environment.apiUrl}/SeguimientoEjecucion/${idSeguimiento}/gastos-personal`);
+    }
+
+    getViaticosProyecto(idSeguimiento: number): Observable<any> {
+        return this._http.get<any>(`${environment.apiUrl}/SeguimientoEjecucion/${idSeguimiento}/viaticos`);
+    }
+
     // ==========================================
     // 📦 SALIDAS DE ALMACÉN (SP_CRM_ObtenerSalidaAlmacenPorFolio)
     // ==========================================

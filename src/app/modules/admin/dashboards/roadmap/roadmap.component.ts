@@ -3,8 +3,30 @@ import { CommonModule } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
 import { FormsModule } from '@angular/forms';
+import {
+    MISION_DATA,
+    VISION_DATA,
+    VALORES_LIST,
+    RADIAL_DEPARTAMENTOS,
+    RADIAL_NODES,
+    RADIAL_CONNECTORS,
+    MisionVisionItem,
+    ValorItem,
+    RadialDepartmentFilter,
+    RadialNode,
+    RadialConnector
+} from './identidad.data';
+
+export interface SectorGeometry {
+    valor: ValorItem;
+    path: string;
+    textX: number;
+    textY: number;
+    badgeX: number;
+    badgeY: number;
+    rotAngle: number;
+}
 
 @Component({
     selector: 'app-roadmap',
@@ -13,37 +35,103 @@ import { FormsModule } from '@angular/forms';
     templateUrl: './roadmap.component.html',
     encapsulation: ViewEncapsulation.None,
     styles: [`
-        mat-button-toggle-group {
-            box-shadow: none !important;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
-        .mat-button-toggle-checked {
-            background-color: white !important;
-            color: #3b82f6 !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
         }
-        .dark .mat-button-toggle-checked {
-            background-color: #1e293b !important;
-            color: #60a5fa !important;
+        .nav-tab-active {
+            background: linear-gradient(135deg, #0284c7 0%, #16a34a 100%);
+            color: white !important;
+            box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.35);
         }
-        .event-node {
-            transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+        .wheel-slice {
+            cursor: pointer;
+            transition: all 0.25s ease-out;
+            transform-origin: 320px 320px;
+        }
+        .wheel-slice:hover {
+            filter: brightness(1.1) drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
+            transform: scale(1.025);
+        }
+        .radial-node-circle {
+            transition: transform 0.25s ease, filter 0.25s ease, opacity 0.3s ease;
             transform-origin: center;
             transform-box: fill-box;
+            cursor: pointer;
         }
-        .event-node:hover {
-            filter: drop-shadow(0 0 12px currentColor);
-            transform: scale(1.8);
-            z-index: 50;
+        .radial-node-circle:hover {
+            transform: scale(1.15);
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+        }
+        .outer-orbit-text {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: 3px;
+        }
+        @keyframes selection-dash-crawl {
+            from {
+                stroke-dashoffset: 0;
+            }
+            to {
+                stroke-dashoffset: -32;
+            }
+        }
+        .selection-dash-crawl {
+            animation: selection-dash-crawl 1.8s linear infinite;
         }
     `]
 })
 export class RoadmapComponent implements OnInit {
 
-    viewMode: 'image' | 'interactive' = 'image';
+    // Main Active Navigation Tab
+    activeTab: 'mision-vision' | 'valores' | 'organigrama' | 'roadmap' = 'organigrama';
+
+    // Data references
+    mision: MisionVisionItem = MISION_DATA;
+    vision: MisionVisionItem = VISION_DATA;
+    valores: ValorItem[] = VALORES_LIST;
+    departamentos: RadialDepartmentFilter[] = RADIAL_DEPARTAMENTOS;
+    radialNodes: RadialNode[] = RADIAL_NODES;
+    radialConnectors: RadialConnector[] = RADIAL_CONNECTORS;
+
+    // Sub-view modes
+    misionVisionMode: 'cards' | 'original' = 'cards';
+    valoresViewMode: 'wheel' | 'grid' | 'original' = 'wheel';
+    organigramaViewMode: 'orbital' | 'directory' | 'original' = 'orbital';
+
+    // Valores state
+    selectedValor: ValorItem = VALORES_LIST[0];
+    wheelSectors: SectorGeometry[] = [];
+
+    // Organigrama Interactive Pan & Zoom
+    selectedDepartamentoId: string = 'todos';
+    selectedRadialNode: RadialNode | null = null;
+    activeDeptInfo: RadialDepartmentFilter = RADIAL_DEPARTAMENTOS[0];
+    organigramaZoom: number = 0.95;
+    organigramaPanX: number = 0;
+    organigramaPanY: number = 0;
+    private isOrganigramaPanning: boolean = false;
+    private organigramaStartX: number = 0;
+    private organigramaStartY: number = 0;
+    private wasDraggedOrganigrama: boolean = false;
+    private organigramaDragDistance: number = 0;
+    isOrganigramaTransitioning: boolean = false;
+
+    // Search query in directory
+    organigramaSearch: string = '';
+
+    // ==========================================
+    // Existing Roadmap 2026 State
+    // ==========================================
+    viewMode: 'image' | 'interactive' = 'interactive';
     currentProgress: number = 0;
-    
-    // Zoom & Pan State
     zoom = 1;
     panX = 0;
     panY = 0;
@@ -138,13 +226,254 @@ export class RoadmapComponent implements OnInit {
         ], date: new Date(2026, 11, 15) }
     ];
 
-    constructor() { }
-
     ngOnInit(): void {
         this.calculateProgress();
+        this.computeWheelGeometry();
     }
 
-    // Zoom & Pan Methods
+    // ==========================================
+    // Rueda de Valores - Cálculo Geométrico SVG
+    // ==========================================
+    private computeWheelGeometry(): void {
+        const cx = 320;
+        const cy = 320;
+        const rInner = 108;
+        const rOuter = 245;
+        const rBadge = 282;
+
+        this.wheelSectors = this.valores.map((v, i) => {
+            const angleStart = -90 - 20 + i * 40;
+            const angleEnd = angleStart + 40;
+            const midAngle = (angleStart + angleEnd) / 2;
+
+            const radStart = ((angleStart + 1.2) * Math.PI) / 180;
+            const radEnd = ((angleEnd - 1.2) * Math.PI) / 180;
+            const radMid = (midAngle * Math.PI) / 180;
+
+            const p1x = cx + rOuter * Math.cos(radStart);
+            const p1y = cy + rOuter * Math.sin(radStart);
+            const p2x = cx + rOuter * Math.cos(radEnd);
+            const p2y = cy + rOuter * Math.sin(radEnd);
+            const p3x = cx + rInner * Math.cos(radEnd);
+            const p3y = cy + rInner * Math.sin(radEnd);
+            const p4x = cx + rInner * Math.cos(radStart);
+            const p4y = cy + rInner * Math.sin(radStart);
+
+            const path = `M ${p1x.toFixed(1)} ${p1y.toFixed(1)} A ${rOuter} ${rOuter} 0 0 1 ${p2x.toFixed(1)} ${p2y.toFixed(1)} L ${p3x.toFixed(1)} ${p3y.toFixed(1)} A ${rInner} ${rInner} 0 0 0 ${p4x.toFixed(1)} ${p4y.toFixed(1)} Z`;
+
+            const rText = (rInner + rOuter) / 2;
+            const textX = cx + rText * Math.cos(radMid);
+            const textY = cy + rText * Math.sin(radMid);
+
+            const badgeX = cx + rBadge * Math.cos(radMid);
+            const badgeY = cy + rBadge * Math.sin(radMid);
+
+            return {
+                valor: v,
+                path,
+                textX,
+                textY,
+                badgeX,
+                badgeY,
+                rotAngle: midAngle + 90
+            };
+        });
+    }
+
+    selectValor(valor: ValorItem): void {
+        this.selectedValor = valor;
+    }
+
+    // ==========================================
+    // Orbital Organigrama Zoom & Filtering
+    // ==========================================
+    filterByDepartamento(deptId: string): void {
+        this.selectedDepartamentoId = deptId;
+        const dept = this.departamentos.find(d => d.id === deptId);
+        if (!dept) return;
+
+        this.activeDeptInfo = dept;
+        this.isOrganigramaTransitioning = true;
+
+        if (deptId === 'todos') {
+            this.organigramaZoom = 0.95;
+            this.organigramaPanX = 0;
+            this.organigramaPanY = 0;
+            this.selectedRadialNode = null;
+        } else {
+            this.organigramaZoom = dept.focusZoom;
+            this.organigramaPanX = dept.focusX;
+            this.organigramaPanY = dept.focusY;
+
+            // Highlight the department hub
+            const hub = this.radialNodes.find(n => n.category === deptId && n.isDepartmentHub);
+            if (hub) {
+                this.selectedRadialNode = hub;
+            }
+        }
+
+        setTimeout(() => {
+            this.isOrganigramaTransitioning = false;
+        }, 650);
+    }
+
+    selectRadialNode(node: RadialNode, event?: MouseEvent | TouchEvent): void {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        if (this.wasDraggedOrganigrama) {
+            return;
+        }
+
+        this.selectedRadialNode = node;
+        this.isOrganigramaTransitioning = true;
+
+        if (node.isCore) {
+            this.resetOrganigramaZoom();
+            return;
+        }
+
+        // AUTO-ZOOM DIRECTLY INTO THE TOUCHED BUBBLE:
+        // Center of the 1100x1000 coordinate frame is (550, 500)
+        const targetZoom = node.isDepartmentHub ? 2.05 : 2.5;
+        this.organigramaZoom = targetZoom;
+        this.organigramaPanX = (550 - node.cx) * targetZoom;
+        this.organigramaPanY = (500 - node.cy) * targetZoom;
+
+        // Synchronize active department filter
+        const dept = this.departamentos.find(d => d.id === node.category);
+        if (dept) {
+            this.selectedDepartamentoId = dept.id;
+            this.activeDeptInfo = dept;
+        }
+
+        setTimeout(() => {
+            this.isOrganigramaTransitioning = false;
+        }, 650);
+    }
+
+    onNodeTouchEnd(node: RadialNode, event: TouchEvent): void {
+        if (!this.wasDraggedOrganigrama) {
+            event.stopPropagation();
+            this.selectRadialNode(node);
+        }
+    }
+
+    selectNodeFromDirectory(node: RadialNode): void {
+        this.organigramaViewMode = 'orbital';
+        setTimeout(() => {
+            this.selectRadialNode(node);
+        }, 150);
+    }
+
+    zoomInOrganigrama(): void {
+        this.isOrganigramaTransitioning = true;
+        this.organigramaZoom = Math.min(this.organigramaZoom + 0.3, 3.5);
+        setTimeout(() => this.isOrganigramaTransitioning = false, 300);
+    }
+
+    zoomOutOrganigrama(): void {
+        this.isOrganigramaTransitioning = true;
+        this.organigramaZoom = Math.max(this.organigramaZoom - 0.3, 0.55);
+        setTimeout(() => this.isOrganigramaTransitioning = false, 300);
+    }
+
+    resetOrganigramaZoom(): void {
+        this.filterByDepartamento('todos');
+    }
+
+    onOrganigramaMouseDown(event: MouseEvent): void {
+        this.isOrganigramaPanning = true;
+        this.wasDraggedOrganigrama = false;
+        this.organigramaDragDistance = 0;
+        this.organigramaStartX = event.clientX - this.organigramaPanX;
+        this.organigramaStartY = event.clientY - this.organigramaPanY;
+    }
+
+    onOrganigramaMouseMove(event: MouseEvent): void {
+        if (!this.isOrganigramaPanning) return;
+        const newX = event.clientX - this.organigramaStartX;
+        const newY = event.clientY - this.organigramaStartY;
+        this.organigramaDragDistance += Math.hypot(newX - this.organigramaPanX, newY - this.organigramaPanY);
+        if (this.organigramaDragDistance > 7) {
+            this.wasDraggedOrganigrama = true;
+        }
+        this.organigramaPanX = newX;
+        this.organigramaPanY = newY;
+    }
+
+    onOrganigramaMouseUp(): void {
+        this.isOrganigramaPanning = false;
+        setTimeout(() => {
+            this.wasDraggedOrganigrama = false;
+        }, 120);
+    }
+
+    onOrganigramaWheel(event: WheelEvent): void {
+        event.preventDefault();
+        const delta = event.deltaY < 0 ? 0.15 : -0.15;
+        this.organigramaZoom = Math.min(Math.max(this.organigramaZoom + delta, 0.5), 3.8);
+    }
+
+    onOrganigramaTouchStart(event: TouchEvent): void {
+        if (event.touches.length === 1) {
+            this.isOrganigramaPanning = true;
+            this.wasDraggedOrganigrama = false;
+            this.organigramaDragDistance = 0;
+            this.organigramaStartX = event.touches[0].clientX - this.organigramaPanX;
+            this.organigramaStartY = event.touches[0].clientY - this.organigramaPanY;
+        }
+    }
+
+    onOrganigramaTouchMove(event: TouchEvent): void {
+        if (!this.isOrganigramaPanning || event.touches.length !== 1) return;
+        const newX = event.touches[0].clientX - this.organigramaStartX;
+        const newY = event.touches[0].clientY - this.organigramaStartY;
+        this.organigramaDragDistance += Math.hypot(newX - this.organigramaPanX, newY - this.organigramaPanY);
+        if (this.organigramaDragDistance > 7) {
+            this.wasDraggedOrganigrama = true;
+        }
+        this.organigramaPanX = newX;
+        this.organigramaPanY = newY;
+    }
+
+    onOrganigramaTouchEnd(): void {
+        this.isOrganigramaPanning = false;
+        setTimeout(() => {
+            this.wasDraggedOrganigrama = false;
+        }, 120);
+    }
+
+    isNodeHighlighted(node: RadialNode): boolean {
+        if (this.selectedDepartamentoId === 'todos') return true;
+        if (node.category === 'cliente') return true;
+        return node.category === this.selectedDepartamentoId;
+    }
+
+    isConnectorHighlighted(conn: RadialConnector): boolean {
+        if (this.selectedDepartamentoId === 'todos') return true;
+        const toNode = this.radialNodes.find(n => n.id === conn.toId);
+        if (!toNode) return true;
+        return toNode.category === this.selectedDepartamentoId;
+    }
+
+    get filteredDirectoryNodes(): RadialNode[] {
+        const nonCore = this.radialNodes.filter(n => !n.isCore);
+        if (!this.organigramaSearch.trim()) {
+            return nonCore;
+        }
+        const q = this.organigramaSearch.toLowerCase();
+        return nonCore.filter(n =>
+            n.person.toLowerCase().includes(q) ||
+            n.role.toLowerCase().includes(q) ||
+            n.category.toLowerCase().includes(q)
+        );
+    }
+
+    // ==========================================
+    // Existing Roadmap Pan & Zoom Handlers
+    // ==========================================
     zoomIn(): void {
         this.zoom = Math.min(this.zoom + 0.2, 3);
     }
@@ -203,7 +532,7 @@ export class RoadmapComponent implements OnInit {
         const now = new Date();
         const startOfYear = new Date(2026, 0, 1);
         const endOfYear = new Date(2026, 11, 31);
-        
+
         if (now < startOfYear) {
             this.currentProgress = 0;
         } else if (now > endOfYear) {

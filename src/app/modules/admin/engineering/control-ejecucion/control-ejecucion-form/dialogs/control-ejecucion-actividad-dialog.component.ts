@@ -12,6 +12,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { CdkDrag, CdkDragHandle, CdkDragEnd } from '@angular/cdk/drag-drop';
 import Swal from 'sweetalert2';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-control-ejecucion-actividad-dialog',
@@ -27,6 +28,7 @@ import Swal from 'sweetalert2';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
+    MatTooltipModule,
     TextFieldModule,
     CdkDrag,
     CdkDragHandle
@@ -138,12 +140,19 @@ import Swal from 'sweetalert2';
           </mat-form-field>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Progreso -->
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Progreso (%)</mat-label>
             <input matInput type="number" formControlName="progreso" min="0" max="100" />
             <mat-icon matSuffix class="text-secondary">trending_up</mat-icon>
+          </mat-form-field>
+
+          <!-- Horas Trabajadas -->
+          <mat-form-field appearance="outline" class="w-full" matTooltip="Horas reales empleadas en esta actividad para costeo de personal">
+            <mat-label>Horas Trabajadas</mat-label>
+            <input matInput type="number" formControlName="horasTrabajadas" min="0" step="0.5" />
+            <mat-icon matSuffix class="text-secondary">schedule</mat-icon>
           </mat-form-field>
 
           <!-- Predecesora (Solo si hay predecesoras disponibles) -->
@@ -289,6 +298,7 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
       fechaFin: [new Date(), [Validators.required]],
       estatus: [1, [Validators.required]],
       progreso: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
+      horasTrabajadas: [0, [Validators.min(0)]],
       predecesoraId: [null],
       prioridad: ['Media'],
       color: ['Azul'],
@@ -369,7 +379,8 @@ export class ControlEjecucionActividadDialogComponent implements OnInit {
         predecesoraId: this.data.actividad.predecesoraId || null,
         responsablesIds: selectedIds,
         equipoIds: currentEquipoStrings,
-        razonDetenido: this.data.actividad.razonDetenido || ''
+        razonDetenido: this.data.actividad.razonDetenido || '',
+        horasTrabajadas: this.data.actividad.horasTrabajadas || 0
       });
     }
 

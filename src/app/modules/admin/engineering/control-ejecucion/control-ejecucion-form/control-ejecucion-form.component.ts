@@ -746,20 +746,35 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   }
 
   get balanceProyecto(): number {
-    return this.totalCotizadoSubtotal - this.totalGastosMateriales;
+    return this.totalCotizadoSubtotal - this.totalGastosMateriales - this.gastosPersonal - this.totalViaticos;
   }
 
   get porcentajeConsumidoMateriales(): number {
     if (!this.totalCotizadoSubtotal || this.totalCotizadoSubtotal === 0) return 0;
-    return Math.min(100, Math.max(0, (this.totalGastosMateriales / this.totalCotizadoSubtotal) * 100));
+    return Math.min(100, Math.max(0, ((this.totalGastosMateriales + this.gastosPersonal + this.totalViaticos) / this.totalCotizadoSubtotal) * 100));
   }
+
+  gastosPersonal: number = 0;
+  horasPersonal: number = 0;
+  totalViaticos: number = 0;
+  registrosViaticos: any[] = [];
 
   loadFinanzas(): void {
     if (!this.idSeguimiento) return;
     this.isLoadingFinanzas = true;
-    this._engineeringService.getSolicitudesCompraProyecto(this.idSeguimiento).subscribe({
-      next: (data) => {
-        this.solicitudesCompraProyecto = data || [];
+    
+    // Call endpoints
+    forkJoin({
+      materiales: this._engineeringService.getSolicitudesCompraProyecto(this.idSeguimiento),
+      personal: this._engineeringService.getGastosPersonal(this.idSeguimiento),
+      viaticos: this._engineeringService.getViaticosProyecto(this.idSeguimiento)
+    }).subscribe({
+      next: (res) => {
+        this.solicitudesCompraProyecto = res.materiales || [];
+        this.gastosPersonal = res.personal?.totalGastosPersonal || 0;
+        this.horasPersonal = res.personal?.totalHorasTrabajadas || 0;
+        this.totalViaticos = res.viaticos?.totalViaticos || 0;
+        this.registrosViaticos = res.viaticos?.registros || [];
         this.isLoadingFinanzas = false;
         this._cdr.markForCheck();
       },

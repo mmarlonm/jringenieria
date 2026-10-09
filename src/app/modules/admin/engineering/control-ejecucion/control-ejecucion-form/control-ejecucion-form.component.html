@@ -1153,7 +1153,7 @@
             </div>
 
             <!-- Panel de KPIs Financieros -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
 
               <!-- KPI 1: Total Cotizado -->
               <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
@@ -1205,17 +1205,36 @@
                   </div>
                 </div>
                 <div class="mt-3">
-                  <div class="text-2xl font-black text-slate-400 tracking-tight tabular-nums">
-                    $0.00
+                  <div class="text-2xl font-black text-sky-600 tracking-tight tabular-nums">
+                    {{ gastosPersonal | currency:'MXN':'symbol':'1.2-2' }}
                   </div>
-                  <div class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full inline-block mt-1">
-                    Fase 2 (Próximamente)
+                  <div class="text-[11px] font-semibold text-slate-500 mt-1 flex items-center gap-1">
+                    <span>{{ horasPersonal }} horas reportadas</span>
                   </div>
                 </div>
-                <div class="absolute bottom-0 left-0 right-0 h-1 bg-sky-400"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-sky-500"></div>
               </div>
 
-              <!-- KPI 4: Balance / Margen Disponible -->
+              <!-- KPI 4: Viáticos (Gastos de Viaje) -->
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Viáticos y Viajes</span>
+                  <div class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl">
+                    <mat-icon class="icon-size-5">flight_takeoff</mat-icon>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="text-2xl font-black text-fuchsia-600 tracking-tight tabular-nums">
+                    {{ totalViaticos | currency:'MXN':'symbol':'1.2-2' }}
+                  </div>
+                  <div class="text-[11px] font-semibold text-slate-500 mt-1 flex items-center gap-1">
+                    <span>{{ registrosViaticos.length }} registro{{ registrosViaticos.length !== 1 ? 's' : '' }} comprobado{{ registrosViaticos.length !== 1 ? 's' : '' }}</span>
+                  </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-fuchsia-500"></div>
+              </div>
+
+              <!-- KPI 5: Balance / Margen Disponible -->
               <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Balance Restante</span>

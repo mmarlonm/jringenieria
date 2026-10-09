@@ -151,7 +151,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
             { id: 'dashboards.prospects', title: 'Prospectos', type: 'basic', icon: 'heroicons_outline:user-group', link: '/dashboards/prospects' },
             { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
-            { id: 'dashboards.roadmap', title: 'Roadmap 2026', type: 'basic', icon: 'heroicons_outline:flag', link: '/dashboards/roadmap' },
 
             // Subgrupo: GESTION
             {
@@ -221,7 +220,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
             { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
-            { id: 'dashboards.roadmap', title: 'Roadmap 2026', type: 'basic', icon: 'heroicons_outline:flag', link: '/dashboards/roadmap' },
 
             // Subgrupo: INVENTARIO
             {
@@ -333,6 +331,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         type: 'collapsable',
         icon: 'heroicons_outline:users',
         children: [
+            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
@@ -416,6 +415,18 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: []
     },
     {
+        id: 'rrhh',
+        title: 'Recursos Humanos',
+        tooltip: 'Recursos Humanos',
+        type: 'collapsable',
+        icon: 'heroicons_outline:users',
+        children: [
+            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+        ]
+    },
+    {
         id: 'apps',
         title: 'Seguridad',
         tooltip: 'Seguridad',
@@ -490,6 +501,17 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         ]
     },
     { id: 'marketing', title: 'MARKETING', type: 'collapsable', children: [] },
+    {
+        id: 'rrhh',
+        title: 'RECURSOS HUMANOS',
+        type: 'collapsable',
+        icon: 'heroicons_outline:users',
+        children: [
+            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+        ]
+    },
     { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
     {
         id: 'eventos',
@@ -557,6 +579,17 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         ]
     },
     { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },
+    {
+        id: 'rrhh',
+        title: 'Recursos Humanos',
+        type: 'group',
+        icon: 'heroicons_outline:users',
+        children: [
+            { id: 'dashboards.identidad', title: 'Nuestra Identidad', type: 'basic', icon: 'heroicons_outline:sparkles', link: '/dashboards/roadmap' },
+            { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+        ]
+    },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
     {
         id: 'eventos',

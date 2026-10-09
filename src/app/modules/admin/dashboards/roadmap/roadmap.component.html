@@ -1,152 +1,918 @@
-<div class="flex flex-col flex-auto min-w-0 h-full overflow-hidden bg-white dark:bg-slate-900">
-    <!-- Header with Switch and Title -->
-    <div class="relative flex-none flex flex-col p-6 sm:p-10 z-10">
-        <div class="flex items-center justify-between w-full mb-6">
-            <div class="flex items-center">
-                <!-- JR Logo with Arc -->
-                <div class="relative flex items-center justify-center w-20 h-20 mr-6">
-                    <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full overflow-visible">
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#1e3a8a" stroke-width="4" />
-                        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" transform="rotate(-45 50 50)" />
-                    </svg>
-                    <span class="text-3xl font-black text-blue-900 z-10">JR</span>
+<div class="flex flex-col flex-auto min-w-0 h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
+
+    <!-- ========================================================================= -->
+    <!-- COMPACT MASTER HEADER (RESPONSIVE & ZERO WASTED SPACE)                   -->
+    <!-- ========================================================================= -->
+    <header class="relative flex-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-30 px-3 sm:px-6 py-2 shadow-xs">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+            
+            <!-- Left: Brand Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center p-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-xs flex-none">
+                    <img src="images/logo/LOGO-HORIZOLTAL-COLOR.png" alt="JR Ingeniería Eléctrica" class="h-6 sm:h-7 w-auto object-contain dark:hidden" />
+                    <img src="images/logo/logo-text-on-dark.svg" alt="JR" class="h-6 sm:h-7 w-auto object-contain hidden dark:block" />
                 </div>
-                <div class="h-12 w-0.5 bg-slate-300 mx-6"></div>
-                <h1 class="text-4xl sm:text-6xl font-black tracking-tighter text-slate-300 uppercase leading-none" style="letter-spacing: -2px;">ROADMAP 2026</h1>
+                <div class="leading-none">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                        <span class="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400">
+                            Recursos Humanos
+                        </span>
+                        <span class="text-slate-300 dark:text-slate-700 text-xs hidden sm:inline">•</span>
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase hidden sm:inline">
+                            JR Ingeniería Eléctrica
+                        </span>
+                    </div>
+                    <h1 class="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                        Nuestra Identidad
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Right: Pill Navigation Tabs -->
+            <nav class="flex items-center gap-1 overflow-x-auto no-scrollbar" aria-label="Secciones de Nuestra Identidad">
+                <!-- Tab: Misión y Visión -->
+                <button type="button"
+                        (click)="activeTab = 'mision-vision'"
+                        [ngClass]="activeTab === 'mision-vision' ? 'nav-tab-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all duration-200 flex-none border border-transparent">
+                    <mat-icon [svgIcon]="'heroicons_outline:academic-cap'" class="icon-size-4"></mat-icon>
+                    <span>Misión & Visión</span>
+                </button>
+
+                <!-- Tab: Valores -->
+                <button type="button"
+                        (click)="activeTab = 'valores'"
+                        [ngClass]="activeTab === 'valores' ? 'nav-tab-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all duration-200 flex-none border border-transparent">
+                    <mat-icon [svgIcon]="'heroicons_outline:bolt'" class="icon-size-4"></mat-icon>
+                    <span>Nuestros Valores</span>
+                    <span class="px-1.5 py-0.2 rounded-md bg-white/20 text-[9px] font-black">9</span>
+                </button>
+
+                <!-- Tab: Organigrama Radial -->
+                <button type="button"
+                        (click)="activeTab = 'organigrama'"
+                        [ngClass]="activeTab === 'organigrama' ? 'nav-tab-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all duration-200 flex-none border border-transparent">
+                    <mat-icon [svgIcon]="'heroicons_outline:user-group'" class="icon-size-4"></mat-icon>
+                    <span>Organigrama Radial</span>
+                </button>
+
+                <!-- Tab: Roadmap 2026 -->
+                <button type="button"
+                        (click)="activeTab = 'roadmap'"
+                        [ngClass]="activeTab === 'roadmap' ? 'nav-tab-active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition-all duration-200 flex-none border border-transparent">
+                    <mat-icon [svgIcon]="'heroicons_outline:flag'" class="icon-size-4"></mat-icon>
+                    <span>Roadmap 2026</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- CONTENT SECTION 1: MISIÓN & VISIÓN (Completely responsive, single screen)  -->
+    <!-- ========================================================================= -->
+    <div *ngIf="activeTab === 'mision-vision'" class="flex-auto overflow-y-auto p-3 sm:p-5 max-w-7xl mx-auto w-full flex flex-col justify-start">
+        
+        <!-- Controls Bar -->
+        <div class="flex items-center justify-between gap-3 mb-3 flex-none">
+            <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                    Propósito Trascendente & Proyección Futura
+                </h2>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    Definición estratégica aprobada por la Dirección General de JR Ingeniería Eléctrica.
+                </p>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex items-center gap-1 p-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex-none">
+                <button type="button"
+                        (click)="misionVisionMode = 'cards'"
+                        [ngClass]="misionVisionMode === 'cards' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:sparkles'" class="icon-size-3.5"></mat-icon>
+                    <span>Interactiva</span>
+                </button>
+                <button type="button"
+                        (click)="misionVisionMode = 'original'"
+                        [ngClass]="misionVisionMode === 'original' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:photo'" class="icon-size-3.5"></mat-icon>
+                    <span>Infografía Original</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mode: Interactive Cards (2-Columns Side by Side) -->
+        <div *ngIf="misionVisionMode === 'cards'" class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 flex-auto">
+            
+            <!-- CARD: MISIÓN -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border-t-4 border-t-emerald-500 flex flex-col justify-between">
+                <div class="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Header Badge -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-md shadow-emerald-600/20">
+                        <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-trending-up'" class="icon-size-4 text-white"></mat-icon>
+                        </div>
+                        <span class="text-base sm:text-lg font-black uppercase tracking-wider text-white">
+                            MISIÓN
+                        </span>
+                    </div>
+
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                        Razón de Ser
+                    </span>
+                </div>
+
+                <!-- Statement Paragraph -->
+                <div class="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-slate-900/60 border border-emerald-100 dark:border-slate-800 mb-3 flex-auto">
+                    <p class="text-xs sm:text-[13px] text-slate-800 dark:text-slate-100 font-medium leading-relaxed text-justify sm:text-left">
+                        {{ mision.text }}
+                    </p>
+                </div>
+
+                <!-- Strategic Pillars Chips (Compact 2x2 Grid) -->
+                <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-1">
+                        <mat-icon [svgIcon]="'heroicons_outline:check-circle'" class="icon-size-3.5"></mat-icon>
+                        <span>Ejes Clave de Nuestra Misión</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div *ngFor="let pillar of mision.pillars" 
+                             class="p-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+                            <div class="flex items-start gap-2">
+                                <div class="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-none mt-0.5">
+                                    <mat-icon [svgIcon]="pillar.icon" class="icon-size-3.5"></mat-icon>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] font-bold text-slate-900 dark:text-white leading-tight">{{ pillar.title }}</div>
+                                    <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">{{ pillar.desc }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD: VISIÓN -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border-t-4 border-t-sky-500 flex flex-col justify-between">
+                <div class="absolute top-0 right-0 w-48 h-48 bg-sky-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Header Badge -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-600/20">
+                        <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                            <mat-icon [svgIcon]="'heroicons_outline:check-badge'" class="icon-size-4 text-white"></mat-icon>
+                        </div>
+                        <span class="text-base sm:text-lg font-black uppercase tracking-wider text-white">
+                            VISIÓN
+                        </span>
+                    </div>
+
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 border border-sky-300 dark:border-sky-800">
+                        Meta 2026+
+                    </span>
+                </div>
+
+                <!-- Statement Paragraph -->
+                <div class="p-3.5 rounded-xl bg-sky-50/50 dark:bg-slate-900/60 border border-sky-100 dark:border-slate-800 mb-3 flex-auto">
+                    <p class="text-xs sm:text-[13px] text-slate-800 dark:text-slate-100 font-medium leading-relaxed text-justify sm:text-left">
+                        {{ vision.text }}
+                    </p>
+                </div>
+
+                <!-- Strategic Pillars Chips (Compact 2x2 Grid) -->
+                <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-2 flex items-center gap-1">
+                        <mat-icon [svgIcon]="'heroicons_outline:star'" class="icon-size-3.5"></mat-icon>
+                        <span>Ejes Clave de Nuestra Visión</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div *ngFor="let pillar of vision.pillars" 
+                             class="p-2.5 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+                            <div class="flex items-start gap-2">
+                                <div class="w-6 h-6 rounded-md bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center flex-none mt-0.5">
+                                    <mat-icon [svgIcon]="pillar.icon" class="icon-size-3.5"></mat-icon>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] font-bold text-slate-900 dark:text-white leading-tight">{{ pillar.title }}</div>
+                                    <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">{{ pillar.desc }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Mode: Original Infographic View -->
+        <div *ngIf="misionVisionMode === 'original'" class="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 max-w-4xl mx-auto flex-auto">
+            <div class="w-full overflow-hidden rounded-xl">
+                <img src="images/identidad/mision-vision.png" alt="Misión y Visión JR Ingeniería Eléctrica" class="w-full h-auto max-h-[75vh] object-contain">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CONTENT SECTION 2: NUESTROS VALORES (Side by Side, Screen Fitted)         -->
+    <!-- ========================================================================= -->
+    <div *ngIf="activeTab === 'valores'" class="flex-auto overflow-y-auto p-3 sm:p-5 max-w-7xl mx-auto w-full flex flex-col justify-start">
+        
+        <!-- Controls Bar -->
+        <div class="flex items-center justify-between gap-3 mb-3 flex-none">
+            <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                    Nuestros 9 Valores Corporativos
+                </h2>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    Interactúa con la rueda o explora las tarjetas de principio ético.
+                </p>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex items-center gap-1 p-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex-none">
+                <button type="button"
+                        (click)="valoresViewMode = 'wheel'"
+                        [ngClass]="valoresViewMode === 'wheel' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" class="icon-size-3.5"></mat-icon>
+                    <span>Rueda</span>
+                </button>
+                <button type="button"
+                        (click)="valoresViewMode = 'grid'"
+                        [ngClass]="valoresViewMode === 'grid' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:squares-2x2'" class="icon-size-3.5"></mat-icon>
+                    <span>Cuadrícula</span>
+                </button>
+                <button type="button"
+                        (click)="valoresViewMode = 'original'"
+                        [ngClass]="valoresViewMode === 'original' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:photo'" class="icon-size-3.5"></mat-icon>
+                    <span>Infografía</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mode: Interactive Wheel (Side-by-side fitting cleanly on screen) -->
+        <div *ngIf="valoresViewMode === 'wheel'" class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-center flex-auto">
+            
+            <!-- LEFT COLUMN: SVG WHEEL (Scaled perfectly) -->
+            <div class="lg:col-span-7 glass-panel rounded-2xl p-3 sm:p-5 flex flex-col items-center justify-center relative overflow-hidden shadow-md border-slate-200 dark:border-slate-800">
+                <div class="w-full flex items-center justify-between mb-1.5 px-2">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        Toca un valor en la rueda
+                    </span>
+                    <span class="text-[11px] font-bold text-sky-600 dark:text-sky-400 uppercase">
+                        {{ selectedValor.title }}
+                    </span>
+                </div>
+
+                <div class="w-full max-w-[390px] xl:max-w-[430px] aspect-square relative select-none">
+                    <svg viewBox="0 0 640 640" class="w-full h-full drop-shadow-xl overflow-visible">
+                        <defs>
+                            <filter id="shadowFilter" x="-10%" y="-10%" width="120%" height="120%">
+                                <feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.22"/>
+                            </filter>
+                        </defs>
+
+                        <!-- Outer orbit -->
+                        <circle cx="320" cy="320" r="305" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,6" class="dark:stroke-slate-800" />
+
+                        <!-- Wheel Slices (9 Segments) -->
+                        <g *ngFor="let s of wheelSectors" 
+                           class="wheel-slice cursor-pointer"
+                           (click)="selectValor(s.valor)">
+                            
+                            <!-- Wedge Sector -->
+                            <path [attr.d]="s.path" 
+                                  [attr.fill]="s.valor.color"
+                                  [attr.stroke]="selectedValor.id === s.valor.id ? '#ffffff' : '#ffffff'"
+                                  [attr.stroke-width]="selectedValor.id === s.valor.id ? 4 : 2"
+                                  [style.opacity]="selectedValor.id === s.valor.id ? '1' : '0.92'"
+                                  class="transition-all duration-300" />
+
+                            <!-- Radial Title Text -->
+                            <text [attr.x]="s.textX" 
+                                  [attr.y]="s.textY" 
+                                  [attr.transform]="'rotate(' + s.rotAngle + ', ' + s.textX + ', ' + s.textY + ')'"
+                                  text-anchor="middle"
+                                  alignment-baseline="middle"
+                                  fill="#ffffff"
+                                  class="text-[12px] sm:text-[13px] font-black tracking-wider uppercase pointer-events-none drop-shadow">
+                                {{ s.valor.title }}
+                            </text>
+
+                            <!-- Outer Lightning Badge Node -->
+                            <g [attr.transform]="'translate(' + s.badgeX + ', ' + s.badgeY + ')'">
+                                <circle cx="0" cy="0" r="18" 
+                                        fill="#ffffff" 
+                                        [attr.stroke]="s.valor.color" 
+                                        stroke-width="2.5" 
+                                        filter="url(#shadowFilter)" />
+                                <path d="M 0,-8 L -4,0.5 L 1,0.5 L -1,8 L 4,-0.5 L -1,-0.5 Z" 
+                                      [attr.fill]="s.valor.color" />
+                            </g>
+                        </g>
+
+                        <!-- Center Hub: Logo Oficial JR (Exacto del Menú Lateral) -->
+                        <g transform="translate(320, 320)" class="pointer-events-none">
+                            <circle cx="0" cy="0" r="95" fill="#ffffff" stroke="#e2e8f0" stroke-width="4" filter="url(#shadowFilter)" />
+                            
+                            <image href="images/logo/LOGO-HORIZOLTAL-COLOR.png" 
+                                   x="-76" y="-62" width="152" height="124" 
+                                   preserveAspectRatio="xMidYMid meet" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: SELECTED VALUE DETAILS (Crisp & Informative) -->
+            <div class="lg:col-span-5">
+                <div class="glass-panel rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-md border-l-4 transition-all duration-300"
+                     [style.border-left-color]="selectedValor.color">
+                    
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white"
+                              [style.background-color]="selectedValor.color">
+                            Valor #{{ selectedValor.id }} de 9
+                        </span>
+                        <div class="flex items-center gap-1 text-slate-400 text-[11px]">
+                            <mat-icon [svgIcon]="'heroicons_outline:bolt'" class="icon-size-3.5 text-amber-500"></mat-icon>
+                            <span>Principio Activo</span>
+                        </div>
+                    </div>
+
+                    <!-- Title & Subtitle from Image 2 -->
+                    <h3 class="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-none mb-0.5">
+                        {{ selectedValor.title }}
+                    </h3>
+                    <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
+                        "{{ selectedValor.subtitle }}"
+                    </div>
+
+                    <!-- Quote -->
+                    <div class="p-3 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-200 italic text-xs mb-3 flex items-start gap-2">
+                        <span class="text-xl leading-none font-serif text-slate-400">“</span>
+                        <p class="font-medium">{{ selectedValor.quote }}</p>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                        {{ selectedValor.description }}
+                    </p>
+
+                    <!-- Behaviors List -->
+                    <div class="border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                        <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                            Conductas en el día a día:
+                        </div>
+                        <ul class="space-y-1.5">
+                            <li *ngFor="let b of selectedValor.behaviors" class="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                                <div class="w-1.5 h-1.5 rounded-full mt-1.5 flex-none" [style.background-color]="selectedValor.color"></div>
+                                <span class="leading-snug">{{ b }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Mode: Grid of 9 Values -->
+        <div *ngIf="valoresViewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div *ngFor="let v of valores" 
+                 (click)="selectValor(v); valoresViewMode = 'wheel'"
+                 class="glass-panel rounded-2xl p-4 relative overflow-hidden shadow-sm border-t-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
+                 [style.border-t-color]="v.color">
+                
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm"
+                         [style.background-color]="v.color">
+                        {{ v.id }}
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-slate-500 bg-slate-100 dark:bg-slate-800">
+                        Valor JR
+                    </span>
+                </div>
+
+                <h3 class="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                    {{ v.title }}
+                </h3>
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
+                    {{ v.subtitle }}
+                </div>
+
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-snug mb-3 line-clamp-3">
+                    {{ v.description }}
+                </p>
+
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-sky-600 dark:text-sky-400">
+                    <span>Ver en la rueda</span>
+                    <mat-icon [svgIcon]="'heroicons_outline:arrow-right'" class="icon-size-3.5 group-hover:translate-x-1 transition-transform"></mat-icon>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode: Original Infographic View -->
+        <div *ngIf="valoresViewMode === 'original'" class="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 max-w-4xl mx-auto flex-auto">
+            <div class="w-full overflow-hidden rounded-xl">
+                <img src="images/identidad/nuestros-valores.png" alt="Nuestros Valores JR Ingeniería Eléctrica" class="w-full h-auto max-h-[75vh] object-contain">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CONTENT SECTION 3: ORGANIGRAMA RADIAL (Full Viewport, Auto-Zoom & Safe Text)-->
+    <!-- ========================================================================= -->
+    <div *ngIf="activeTab === 'organigrama'" class="flex-auto flex flex-col h-[calc(100vh-52px)] overflow-hidden relative w-full">
+        
+        <!-- Compact Control Bar: Department Focus Chips + View Mode Switcher -->
+        <div class="flex-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-1.5 flex flex-wrap items-center justify-between gap-2 z-20">
+            
+            <!-- Quick Department Filter Buttons -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-auto">
+                <button *ngFor="let dep of departamentos"
+                        type="button"
+                        (click)="filterByDepartamento(dep.id)"
+                        [ngClass]="selectedDepartamentoId === dep.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs ring-1 ring-sky-500 scale-[1.02]' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700/80'"
+                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex-none">
+                    <div class="w-2 h-2 rounded-full" [style.background-color]="dep.color"></div>
+                    <span>{{ dep.name }}</span>
+                    <span *ngIf="dep.id !== 'todos'" class="px-1 rounded bg-black/10 dark:bg-white/10 text-[9px] font-black">
+                        {{ dep.teamCount }}
+                    </span>
+                </button>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex items-center gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 flex-none">
+                <button type="button"
+                        (click)="organigramaViewMode = 'orbital'"
+                        [ngClass]="organigramaViewMode === 'orbital' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                        class="px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:globe-alt'" class="icon-size-3.5"></mat-icon>
+                    <span class="hidden sm:inline">Orbital</span>
+                </button>
+                <button type="button"
+                        (click)="organigramaViewMode = 'directory'"
+                        [ngClass]="organigramaViewMode === 'directory' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                        class="px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:squares-2x2'" class="icon-size-3.5"></mat-icon>
+                    <span class="hidden sm:inline">Directorio</span>
+                </button>
+                <button type="button"
+                        (click)="organigramaViewMode = 'original'"
+                        [ngClass]="organigramaViewMode === 'original' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                        class="px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1">
+                    <mat-icon [svgIcon]="'heroicons_outline:photo'" class="icon-size-3.5"></mat-icon>
+                    <span class="hidden sm:inline">Original (Img 3)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODE: ORBITAL SVG ORGANIGRAM WITH DEEP ZOOM & PAN (Fills Remaining Screen) -->
+        <div *ngIf="organigramaViewMode === 'orbital'" class="relative flex-auto w-full h-full overflow-hidden select-none bg-slate-100/40 dark:bg-slate-950/40 flex items-center justify-center">
+            
+            <!-- Floating Department Info Card (Top Left) -->
+            <div class="absolute top-3 left-3 z-30 max-w-xs p-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md">
+                <div class="flex items-center justify-between gap-2 mb-0.5">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full" [style.background-color]="activeDeptInfo.color"></div>
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            {{ activeDeptInfo.name }}
+                        </span>
+                    </div>
+                    <button *ngIf="selectedDepartamentoId !== 'todos'"
+                            (click)="resetOrganigramaZoom()"
+                            class="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline">
+                        Restablecer
+                    </button>
+                </div>
+                <div class="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                    {{ activeDeptInfo.leader }}
+                </div>
+                <div class="text-[9px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                    {{ activeDeptInfo.description }}
+                </div>
+            </div>
+
+            <!-- Floating Zoom Controls (Bottom Right) -->
+            <div class="absolute bottom-4 right-4 z-30 flex flex-col gap-1.5 p-1 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg">
+                <button type="button" (click)="zoomInOrganigrama()" matTooltip="Acercar (+)"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <mat-icon [svgIcon]="'heroicons_outline:plus'" class="icon-size-4"></mat-icon>
+                </button>
+                <button type="button" (click)="zoomOutOrganigrama()" matTooltip="Alejar (-)"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <mat-icon [svgIcon]="'heroicons_outline:minus'" class="icon-size-4"></mat-icon>
+                </button>
+                <div class="h-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
+                <button type="button" (click)="resetOrganigramaZoom()" matTooltip="Restablecer Vista"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" class="icon-size-4"></mat-icon>
+                </button>
+            </div>
+
+            <!-- Zoom Indicator Badge (Bottom Left) -->
+            <div class="absolute bottom-4 left-4 z-30 px-2.5 py-1 rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-[10px] font-extrabold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 shadow-xs pointer-events-none">
+                <mat-icon [svgIcon]="'heroicons_outline:magnifying-glass'" class="icon-size-3.5"></mat-icon>
+                <span>Zoom: {{ (organigramaZoom * 100).toFixed(0) }}%</span>
+                <span class="text-slate-400 hidden sm:inline">• Toca una burbuja</span>
+            </div>
+
+            <!-- Interactive Pan & Zoom Canvas Container -->
+            <div class="w-full h-full flex-auto relative overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center"
+                 (mousedown)="onOrganigramaMouseDown($event)"
+                 (mousemove)="onOrganigramaMouseMove($event)"
+                 (mouseup)="onOrganigramaMouseUp()"
+                 (mouseleave)="onOrganigramaMouseUp()"
+                 (wheel)="onOrganigramaWheel($event)"
+                 (touchstart)="onOrganigramaTouchStart($event)"
+                 (touchmove)="onOrganigramaTouchMove($event)"
+                 (touchend)="onOrganigramaTouchEnd()">
+
+                <!-- Transformed SVG Plane with butter-smooth transition -->
+                <div class="w-[1100px] h-[1000px] relative flex-none"
+                     [style.transform]="'translate(' + organigramaPanX + 'px, ' + organigramaPanY + 'px) scale(' + organigramaZoom + ')'"
+                     [style.transition]="isOrganigramaTransitioning ? 'transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)' : 'none'"
+                     style="transform-origin: center center;">
+
+                    <svg viewBox="0 0 1100 1000" class="w-full h-full overflow-visible">
+                        <defs>
+                            <!-- Ambient Glow for Cliente -->
+                            <radialGradient id="clienteGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#0284c7" />
+                                <stop offset="70%" stop-color="#0369a1" />
+                                <stop offset="100%" stop-color="#0c4a6e" />
+                            </radialGradient>
+
+                            <radialGradient id="outerSphereGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="60%" stop-color="#f8fafc" stop-opacity="0" />
+                                <stop offset="92%" stop-color="#bae6fd" stop-opacity="0.35" />
+                                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.65" />
+                            </radialGradient>
+
+                            <filter id="orbitalDropShadow" x="-15%" y="-15%" width="130%" height="130%">
+                                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.22" />
+                            </filter>
+                        </defs>
+
+                        <!-- ======================================================= -->
+                        <!-- 1. ENCOMPASSING OUTER ORBIT: DIRECTOR GENERAL          -->
+                        <!-- ======================================================= -->
+                        <g class="outer-orbit-layer pointer-events-none">
+                            <ellipse cx="540" cy="500" rx="490" ry="460" 
+                                     fill="url(#outerSphereGrad)" />
+                            
+                            <ellipse cx="540" cy="500" rx="490" ry="460" 
+                                     fill="none" 
+                                     stroke="#0284c7" 
+                                     stroke-width="3.5" 
+                                     stroke-opacity="0.75" />
+                            
+                            <ellipse cx="540" cy="500" rx="482" ry="452" 
+                                     fill="none" 
+                                     stroke="#38bdf8" 
+                                     stroke-width="1.5" 
+                                     stroke-opacity="0.4"
+                                     stroke-dasharray="8,6" />
+
+                            <!-- Repeated "Director General" Text along the Perimeter -->
+                            <text x="540" y="32" text-anchor="middle" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                            <text x="940" y="190" text-anchor="middle" transform="rotate(35, 940, 190)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                            <text x="1035" y="520" text-anchor="middle" transform="rotate(90, 1035, 520)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                            <text x="900" y="860" text-anchor="middle" transform="rotate(145, 900, 860)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                            <text x="540" y="990" text-anchor="middle" transform="rotate(180, 540, 990)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                            <text x="150" y="790" text-anchor="middle" transform="rotate(225, 150, 790)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                            <text x="120" y="270" text-anchor="middle" transform="rotate(295, 120, 270)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
+                                Director General
+                            </text>
+                        </g>
+
+                        <!-- ======================================================= -->
+                        <!-- 2. CONNECTORS LAYER (EDGES LINKING CLIENTE & NODES)     -->
+                        <!-- ======================================================= -->
+                        <g class="connectors-layer">
+                            <line *ngFor="let conn of radialConnectors"
+                                  [attr.x1]="conn.x1"
+                                  [attr.y1]="conn.y1"
+                                  [attr.x2]="conn.x2"
+                                  [attr.y2]="conn.y2"
+                                  [attr.stroke]="conn.color"
+                                  [attr.stroke-width]="isConnectorHighlighted(conn) ? 2.5 : 1"
+                                  [attr.stroke-opacity]="isConnectorHighlighted(conn) ? 0.85 : 0.2"
+                                  stroke-linecap="round"
+                                  class="transition-all duration-300" />
+                        </g>
+
+                        <!-- ======================================================= -->
+                        <!-- 3. RADIAL NODES LAYER                                   -->
+                        <!-- ======================================================= -->
+                        <g *ngFor="let node of radialNodes"
+                           class="radial-node-circle cursor-pointer"
+                           [style.opacity]="isNodeHighlighted(node) ? '1' : '0.22'"
+                           (click)="selectRadialNode(node, $event)"
+                           (touchend)="onNodeTouchEnd(node, $event)">
+                            
+                            <!-- A. CORE NODE: CLIENTE -->
+                            <ng-container *ngIf="node.isCore">
+                                <circle [attr.cx]="node.cx" 
+                                        [attr.cy]="node.cy" 
+                                        [attr.r]="node.r" 
+                                        fill="url(#clienteGrad)" 
+                                        stroke="#ffffff" 
+                                        stroke-width="5" 
+                                        filter="url(#orbitalDropShadow)" />
+                                
+                                <circle [attr.cx]="node.cx" 
+                                        [attr.cy]="node.cy" 
+                                        [attr.r]="node.r + 9" 
+                                        fill="none" 
+                                        stroke="#38bdf8" 
+                                        stroke-width="2" 
+                                        stroke-dasharray="6,4" 
+                                        class="selection-dash-crawl pointer-events-none" />
+
+                                <text [attr.cx]="node.cx" 
+                                      [attr.cy]="node.cy + 6" 
+                                      text-anchor="middle" 
+                                      fill="#ffffff" 
+                                      class="text-2xl font-black uppercase tracking-wider drop-shadow-md select-none pointer-events-none">
+                                    Cliente
+                                </text>
+                            </ng-container>
+
+                            <!-- B. PRIMARY DEPARTMENT HUBS (ADMIN, ING, COMERCIAL, SUCURSALES) -->
+                            <ng-container *ngIf="node.isDepartmentHub">
+                                <circle [attr.cx]="node.cx" 
+                                        [attr.cy]="node.cy" 
+                                        [attr.r]="node.r" 
+                                        [attr.fill]="node.fillColor" 
+                                        [attr.stroke]="node.borderColor" 
+                                        [attr.stroke-width]="selectedRadialNode?.id === node.id ? 5 : 3" 
+                                        filter="url(#orbitalDropShadow)" />
+
+                                <!-- Selected highlight concentric ring -->
+                                <circle *ngIf="selectedRadialNode?.id === node.id"
+                                        [attr.cx]="node.cx" [attr.cy]="node.cy" [attr.r]="node.r + 6"
+                                        fill="none" [attr.stroke]="node.borderColor" stroke-width="2.5"
+                                        stroke-dasharray="5,4" class="selection-dash-crawl pointer-events-none" />
+
+                                <!-- Clean, precomputed non-colliding text lines -->
+                                <text *ngFor="let line of node.textLines"
+                                      [attr.x]="node.cx" 
+                                      [attr.y]="line.y" 
+                                      text-anchor="middle" 
+                                      [attr.fill]="line.fill || node.textColor" 
+                                      [attr.font-size]="line.fontSize"
+                                      [attr.font-weight]="line.fontWeight"
+                                      class="uppercase tracking-tight pointer-events-none select-none">
+                                    {{ line.text }}
+                                </text>
+                            </ng-container>
+
+                            <!-- C. SATELLITE ROLES & COLLABORATORS (ZERO COLLISION GUARANTEED) -->
+                            <ng-container *ngIf="!node.isCore && !node.isDepartmentHub">
+                                <!-- Node Circle -->
+                                <circle [attr.cx]="node.cx" 
+                                        [attr.cy]="node.cy" 
+                                        [attr.r]="node.r" 
+                                        fill="#ffffff" 
+                                        [attr.stroke]="node.borderColor" 
+                                        [attr.stroke-width]="selectedRadialNode?.id === node.id ? 4.5 : 2" 
+                                        filter="url(#orbitalDropShadow)" />
+
+                                <!-- Selected highlight concentric ring -->
+                                <circle *ngIf="selectedRadialNode?.id === node.id"
+                                        [attr.cx]="node.cx" [attr.cy]="node.cy" [attr.r]="node.r + 5"
+                                        fill="none" [attr.stroke]="node.color" stroke-width="2.5"
+                                        stroke-dasharray="4,4" class="selection-dash-crawl pointer-events-none" />
+
+                                <!-- Perfectly spaced text lines: Role in dark slate + Person in bold team color -->
+                                <text *ngFor="let line of node.textLines"
+                                      [attr.x]="node.cx" 
+                                      [attr.y]="line.y" 
+                                      text-anchor="middle" 
+                                      [attr.fill]="line.fill || (line.isPerson ? node.color : '#334155')" 
+                                      [attr.font-size]="line.fontSize"
+                                      [attr.font-weight]="line.fontWeight"
+                                      class="pointer-events-none select-none tracking-tight"
+                                      [ngClass]="line.isPerson ? 'uppercase font-black' : 'font-bold'">
+                                    {{ line.text }}
+                                </text>
+                            </ng-container>
+
+                        </g>
+
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Floating Selected Node Inspector Card (Compact & Actionable) -->
+            <div *ngIf="selectedRadialNode && !selectedRadialNode.isCore" 
+                 class="absolute bottom-3 left-3 z-40 max-w-xs w-full p-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl animate-fade-in">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-white shadow-xs"
+                          [style.background-color]="selectedRadialNode.color">
+                        {{ selectedRadialNode.category }}
+                    </span>
+                    <button type="button" (click)="selectedRadialNode = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <mat-icon [svgIcon]="'heroicons_outline:x-mark'" class="icon-size-3.5"></mat-icon>
+                    </button>
+                </div>
+
+                <div class="text-sm font-black text-slate-900 dark:text-white leading-tight">
+                    {{ selectedRadialNode.person }}
+                </div>
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-3">
+                    {{ selectedRadialNode.role }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button type="button" 
+                            (click)="filterByDepartamento(selectedRadialNode.category)"
+                            class="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-600 dark:text-sky-400 text-[11px] font-bold transition-colors text-center flex items-center justify-center gap-1">
+                        <mat-icon [svgIcon]="'heroicons_outline:viewfinder-circle'" class="icon-size-3.5"></mat-icon>
+                        <span>Ver Área</span>
+                    </button>
+                    <button type="button" 
+                            (click)="resetOrganigramaZoom()"
+                            class="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition-colors text-center flex items-center justify-center gap-1">
+                        <mat-icon [svgIcon]="'heroicons_outline:arrows-pointing-out'" class="icon-size-3.5"></mat-icon>
+                        <span>Alejar</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MODE: DIRECTORY VIEW -->
+        <div *ngIf="organigramaViewMode === 'directory'" class="flex-auto overflow-y-auto p-4 max-w-7xl mx-auto w-full space-y-4">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                <div class="relative w-full sm:w-80">
+                    <mat-icon [svgIcon]="'heroicons_outline:magnifying-glass'" class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-4 text-slate-400"></mat-icon>
+                    <input type="text" 
+                            [(ngModel)]="organigramaSearch"
+                            placeholder="Buscar colaborador o puesto..."
+                            class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border-none text-xs font-medium focus:ring-1 focus:ring-sky-500 text-slate-900 dark:text-white">
+                </div>
+
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    {{ filteredDirectoryNodes.length }} colaboradores registrados
+                </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div *ngFor="let n of filteredDirectoryNodes" 
+                     (click)="selectNodeFromDirectory(n)"
+                     class="glass-panel rounded-xl p-3.5 relative overflow-hidden shadow-xs border-l-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                     [style.border-left-color]="n.color">
+                    
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-white"
+                              [style.background-color]="n.color">
+                            {{ n.category }}
+                        </span>
+                        <div class="text-[10px] font-bold text-sky-600 dark:text-sky-400">
+                            Ver en órbita →
+                        </div>
+                    </div>
+
+                    <h4 class="text-sm font-black text-slate-900 dark:text-white uppercase leading-snug">
+                        {{ n.person }}
+                    </h4>
+                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        {{ n.role }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODE: ORIGINAL GRAPHIC PREVIEW (IMAGE 3) -->
+        <div *ngIf="organigramaViewMode === 'original'" class="flex-auto overflow-y-auto p-4 flex flex-col items-center justify-center bg-white dark:bg-slate-900 max-w-5xl mx-auto w-full">
+            <div class="w-full overflow-hidden rounded-xl shadow-md border border-slate-100 dark:border-slate-800">
+                <img src="images/identidad/organigrama-actual.png" alt="Organigrama Actual JR Ingeniería Eléctrica" class="w-full h-auto max-h-[80vh] object-contain mx-auto">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CONTENT SECTION 4: ROADMAP ESTRATÉGICO 2026 (Preserved & Compact Toolbar) -->
+    <!-- ========================================================================= -->
+    <div *ngIf="activeTab === 'roadmap'" class="flex-auto flex flex-col h-[calc(100vh-52px)] overflow-hidden relative w-full">
+        <div class="flex-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 z-10">
+            <div class="flex items-center gap-3">
+                <h2 class="text-xs sm:text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                    Plan Estratégico Anual 2026
+                </h2>
+                <div class="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+                <!-- Categories Legend -->
+                <div class="hidden md:flex items-center gap-3">
+                    <div *ngFor="let cat of categories" class="flex items-center gap-1.5">
+                        <div class="w-2 h-2 rounded-full" [style.background-color]="cat.color"></div>
+                        <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{{cat.name}}</span>
+                    </div>
+                </div>
             </div>
             
-            <mat-button-toggle-group [(ngModel)]="viewMode" appearance="standard" class="border-none bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
-                <mat-button-toggle value="interactive" class="rounded-lg border-none px-4">Interactivo</mat-button-toggle>
-                <mat-button-toggle value="image" class="rounded-lg border-none px-4">Imagen</mat-button-toggle>
+            <mat-button-toggle-group [(ngModel)]="viewMode" appearance="standard" class="border-none bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 scale-90">
+                <mat-button-toggle value="interactive" class="rounded-md border-none px-2.5 text-xs">Interactivo</mat-button-toggle>
+                <mat-button-toggle value="image" class="rounded-md border-none px-2.5 text-xs">Imagen</mat-button-toggle>
             </mat-button-toggle-group>
         </div>
 
-        <!-- Legend (Inline for better space) -->
-        <div class="flex flex-wrap gap-x-6 gap-y-2">
-            <div *ngFor="let cat of categories" class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full" [style.background-color]="cat.color"></div>
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{{cat.name}}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content Area -->
-    <div class="flex-auto overflow-hidden relative bg-slate-50 dark:bg-slate-950">
-        
-        <!-- View: Image -->
-        <div *ngIf="viewMode === 'image'" class="w-full h-full p-4 sm:p-10 flex items-center justify-center overflow-auto">
-            <img src="images/pages/road-map2.png" alt="Roadmap 2026" class="max-w-full max-h-full object-contain shadow-2xl rounded-2xl">
-        </div>
-
-        <!-- View: Interactive SVG -->
-        <div *ngIf="viewMode === 'interactive'" 
-             class="w-full h-full relative overflow-hidden flex flex-col items-center cursor-move"
-             (mousedown)="onMouseDown($event)"
-             (mousemove)="onMouseMove($event)"
-             (mouseup)="onMouseUp()"
-             (mouseleave)="onMouseUp()"
-             (wheel)="onWheel($event)"
-             (touchstart)="onTouchStart($event)"
-             (touchmove)="onTouchMove($event)"
-             (touchend)="onTouchEnd()">
-            
-            <!-- Zoom Controls (Bottom Right) -->
-            <div class="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
-                <button mat-mini-fab color="white" (click)="zoomIn()" matTooltip="Acercar">
-                    <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-                </button>
-                <button mat-mini-fab color="white" (click)="zoomOut()" matTooltip="Alejar">
-                    <mat-icon [svgIcon]="'heroicons_outline:minus'"></mat-icon>
-                </button>
-                <button mat-mini-fab color="white" (click)="resetZoom()" matTooltip="Restablecer">
-                    <mat-icon [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
-                </button>
+        <!-- Roadmap Content Area -->
+        <div class="flex-auto overflow-hidden relative bg-slate-50 dark:bg-slate-950">
+            <!-- View: Image -->
+            <div *ngIf="viewMode === 'image'" class="w-full h-full p-4 flex items-center justify-center overflow-auto">
+                <img src="images/pages/road-map2.png" alt="Roadmap 2026" class="max-w-full max-h-full object-contain shadow-xl rounded-xl">
             </div>
 
-            <!-- Green Wave Decoration (Static background) -->
-            <div class="absolute bottom-0 left-0 w-full pointer-events-none opacity-10">
-                <svg viewBox="0 0 1440 320" class="w-full h-auto">
-                    <path fill="#16a34a" d="M0,224L120,213.3C240,203,480,181,720,186.7C960,192,1200,224,1320,240L1440,256L1440,320L1320,320C1200,320,960,320,720,320C480,320,240,320,120,320L0,320Z"></path>
-                </svg>
-            </div>
+            <!-- View: Interactive SVG -->
+            <div *ngIf="viewMode === 'interactive'" 
+                 class="w-full h-full relative overflow-hidden flex flex-col items-center cursor-move"
+                 (mousedown)="onMouseDown($event)"
+                 (mousemove)="onMouseMove($event)"
+                 (mouseup)="onMouseUp()"
+                 (mouseleave)="onMouseUp()"
+                 (wheel)="onWheel($event)"
+                 (touchstart)="onTouchStart($event)"
+                 (touchmove)="onTouchMove($event)"
+                 (touchend)="onTouchEnd()">
+                
+                <!-- Zoom Controls -->
+                <div class="absolute bottom-4 right-4 flex flex-col gap-1.5 z-50">
+                    <button type="button" (click)="zoomIn()" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100">
+                        <mat-icon [svgIcon]="'heroicons_outline:plus'" class="icon-size-4"></mat-icon>
+                    </button>
+                    <button type="button" (click)="zoomOut()" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100">
+                        <mat-icon [svgIcon]="'heroicons_outline:minus'" class="icon-size-4"></mat-icon>
+                    </button>
+                    <button type="button" (click)="resetZoom()" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100">
+                        <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" class="icon-size-4"></mat-icon>
+                    </button>
+                </div>
 
-            <!-- Roadmap SVG Wrapper (Transformed) -->
-            <div class="w-full max-w-[1400px] overflow-visible px-10 py-10 relative z-10 transition-transform duration-75 ease-out"
-                 [style.transform]="'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')'"
-                 style="transform-origin: center center;">
-                <!-- Background SVG for Roadmap -->
-                <svg viewBox="0 0 1450 1100" class="w-full h-auto drop-shadow-2xl">
-                    <defs>
-                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feGaussianBlur stdDeviation="3" result="blur" />
-                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                        </filter>
-                    </defs>
+                <!-- SVG Roadmap Plane -->
+                <div class="w-[1400px] h-[1100px] relative origin-center"
+                     [style.transform]="'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')'">
+                    <svg viewBox="0 0 1400 1100" class="w-full h-full overflow-visible">
+                        <path d="M 80 220 L 1200 220 Q 1280 220 1280 360 L 1280 410 Q 1280 550 1200 550 L 300 550 Q 200 550 200 710 L 200 720 Q 200 880 300 880 L 1300 880"
+                              fill="none" stroke="#cbd5e1" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"
+                              class="dark:stroke-slate-800 transition-colors" />
 
-                    <!-- Main Path -->
-                    <path id="roadmapPath" 
-                          d="M 80,220 L 1200,220 
-                             C 1450,220 1450,550 1200,550 
-                             L 300,550 
-                             C 50,550 50,880 200,880 
-                             L 1250,880"
-                          fill="none" stroke="#e2e8f0" stroke-width="40" stroke-linecap="round" />
-                    
-                    <!-- Progress Path (Dynamic) -->
-                    <path id="progressPath" 
-                          d="M 80,220 L 1200,220 
-                             C 1450,220 1450,550 1200,550 
-                             L 300,550 
-                             C 50,550 50,880 200,880 
-                             L 1250,880"
-                          fill="none" stroke="#10b981" stroke-width="40" stroke-linecap="round"
-                          [attr.stroke-dasharray]="100"
-                          [attr.stroke-dashoffset]="100 - currentProgress"
-                          pathLength="100"
-                          class="transition-all duration-1000 ease-in-out" />
+                        <path d="M 80 220 L 1200 220 Q 1280 220 1280 360 L 1280 410 Q 1280 550 1200 550 L 300 550 Q 200 550 200 710 L 200 720 Q 200 880 300 880 L 1300 880"
+                              fill="none" stroke="#0ea5e9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"
+                              class="transition-colors" />
 
-                    <!-- Milestones -->
-                    <g *ngFor="let m of milestones; let mi = index" class="milestone-group">
-                        <!-- Main Milestone Circle (Solid Black) -->
-                        <circle [attr.cx]="m.x" [attr.cy]="m.y" r="22" 
-                                fill="#0f172a" 
-                                stroke="white" stroke-width="4"
-                                class="milestone-node drop-shadow-lg" />
-                        
-                        <!-- Month Label -->
-                        <text [attr.x]="m.x" [attr.y]="m.y - 45" 
-                              text-anchor="middle"
-                              class="text-xl font-black fill-slate-900 dark:fill-white uppercase tracking-tight">{{m.month}}</text>
+                        <g *ngFor="let m of milestones" class="transition-transform duration-300">
+                            <line *ngFor="let ev of m.events" 
+                                  [attr.x1]="m.x" [attr.y1]="m.y" 
+                                  [attr.x2]="ev.x" [attr.y2]="ev.y" 
+                                  stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,3" 
+                                  class="dark:stroke-slate-700" />
 
-                        <!-- Events -->
-                        <g *ngFor="let ev of m.events">
-                            <!-- Thin connector -->
-                            <line [attr.x1]="ev.x" [attr.y1]="m.y"
-                                  [attr.x2]="ev.x" [attr.y2]="ev.y"
-                                  stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,3" />
+                            <g *ngFor="let ev of m.events" [attr.transform]="'translate(' + ev.x + ',' + ev.y + ')'"
+                               class="transition-transform duration-200 hover:scale-110 cursor-pointer">
+                                <circle cx="0" cy="0" r="16" [attr.fill]="ev.cat" class="shadow-sm" />
+                                <rect x="-65" y="-30" width="130" height="20" rx="4" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" class="dark:fill-slate-800 dark:stroke-slate-700 shadow-sm" />
+                                <text x="0" y="-16" text-anchor="middle" font-size="8" font-weight="bold" fill="#334155" class="dark:fill-slate-200 pointer-events-none">
+                                    {{ ev.title.length > 20 ? (ev.title | slice:0:18) + '...' : ev.title }}
+                                </text>
+                            </g>
 
-                            <!-- Event Dot with Hover Effect -->
-                            <circle [attr.cx]="ev.x" 
-                                    [attr.cy]="ev.y" 
-                                    r="11" [attr.fill]="ev.cat" 
-                                    class="event-node cursor-pointer filter drop-shadow-md transition-all duration-300"
-                                    [style.color]="ev.cat"
-                                    [matTooltip]="ev.title" />
-
-                            <!-- Label -->
-                            <text [attr.x]="ev.x" 
-                                  [attr.y]="ev.y < m.y ? ev.y - 30 : ev.y + 40"
-                                  [attr.text-anchor]="'middle'"
-                                  [attr.fill]="ev.cat"
-                                  class="text-[10px] font-bold uppercase pointer-events-none tracking-tight">
-                                <tspan [attr.x]="ev.x" dy="0">{{ev.title.split(' ')[0]}}</tspan>
-                                <tspan [attr.x]="ev.x" dy="12" *ngIf="ev.title.split(' ').length > 1">{{ev.title.split(' ').slice(1).join(' ')}}</tspan>
+                            <circle [attr.cx]="m.x" [attr.cy]="m.y" r="20" fill="#0ea5e9" stroke="#ffffff" stroke-width="4" class="dark:stroke-slate-900 shadow-md" />
+                            <text [attr.x]="m.x" [attr.y]="m.y + 35" text-anchor="middle" font-size="12" font-weight="900" fill="#0f172a" class="dark:fill-white uppercase tracking-wider">
+                                {{ m.month }}
                             </text>
                         </g>
-                    </g>
-                </svg>
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
+
 </div>
-
