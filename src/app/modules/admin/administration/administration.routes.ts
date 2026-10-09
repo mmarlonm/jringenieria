@@ -42,6 +42,10 @@ export default [
         loadComponent: () => import('./calidad/calidad.component').then(m => m.CalidadComponent)
     },
     {
+        path: 'iso-documentacion',
+        loadComponent: () => import('./iso-documentacion/iso-documentacion.component').then(m => m.IsoDocumentacionComponent)
+    },
+    {
         path: 'tickets',
         loadChildren: () => import('./tickets/tickets.routes').then(m => m.ticketsRoutes)
     },

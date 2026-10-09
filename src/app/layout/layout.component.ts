@@ -560,6 +560,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
             '/administration/proveedores/maestro': 'maestro',
             '/administration/proveedores/reportes/resumen': 'resumen',
             '/administration/calidad': 'calidad',
+            '/administration/iso-documentacion': 'iso-documentacion',
             '/engineering/solicitantes': 'solicitantes',
             '/engineering/tablero-proyectos': 'tablero-proyectos',
             '/engineering/control-ejecucion': 'control-ejecucion',
