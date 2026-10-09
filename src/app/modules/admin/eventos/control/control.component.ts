@@ -38,7 +38,7 @@ export class EventosControlComponent implements OnInit, OnDestroy {
     public asistentes: Asistente[] = [];
     public filteredAsistentes: Asistente[] = [];
     public searchQuery: string = '';
-    public selectedEventoId: number = 2026;
+    public selectedEventoId: number = 0;
 
     // Action loaders
     public bulkResending: boolean = false;
@@ -114,6 +114,9 @@ export class EventosControlComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(id => {
                 this.selectedEventoId = id;
+                if (id > 0) {
+                    this._eventosService.loadAsistentesPorEvento(id);
+                }
                 this._cdr.markForCheck();
             });
 
@@ -154,20 +157,20 @@ export class EventosControlComponent implements OnInit, OnDestroy {
     
     public filterAsistentes(): void {
         const query = this.searchQuery.toLowerCase().trim();
-        let baseList = this.asistentes.filter(a => a.tipo);
+        let baseList = this.asistentes || [];
 
         if (this.selectedTipoFilter !== 'TODOS') {
-            baseList = baseList.filter(a => a.tipo === this.selectedTipoFilter);
+            baseList = baseList.filter(a => (a.tipo || '').trim() === this.selectedTipoFilter);
         }
 
         if (!query) {
             this.filteredAsistentes = [...baseList];
         } else {
             this.filteredAsistentes = baseList.filter(a => 
-                a.nombre.toLowerCase().includes(query) ||
-                a.apellidos.toLowerCase().includes(query) ||
-                a.correo.toLowerCase().includes(query) ||
-                String(a.id).toLowerCase().includes(query) ||
+                (a.nombre || '').toLowerCase().includes(query) ||
+                (a.apellidos || '').toLowerCase().includes(query) ||
+                (a.correo || '').toLowerCase().includes(query) ||
+                String(a.id || '').toLowerCase().includes(query) ||
                 (a.fechaRegistro && a.fechaRegistro.toLowerCase().includes(query)) ||
                 (a.empresa && a.empresa.toLowerCase().includes(query)) ||
                 (a.universidad && a.universidad.toLowerCase().includes(query))

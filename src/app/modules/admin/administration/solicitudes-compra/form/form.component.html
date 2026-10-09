@@ -971,11 +971,12 @@
 
     <!-- Botones Flotantes (btn-float) -->
     <div class="flex justify-end gap-2 mb-4 px-4 sm:px-0 btn-float z-99">
-        <button mat-raised-button color="warn" type="button" (click)="cancelar()">
+        <button mat-raised-button color="warn" type="button" [disabled]="isSaving" (click)="cancelar()">
             Cancelar
         </button>
-        <button mat-raised-button color="primary" type="submit" (click)="save()">
-            {{ isEdit ? 'Actualizar' : 'Guardar' }}
+        <button mat-raised-button color="primary" type="button" [disabled]="isSaving" (click)="save()">
+            <mat-icon *ngIf="isSaving" class="animate-spin icon-size-5 mr-2" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+            {{ isSaving ? (isEdit ? 'Actualizando...' : 'Guardando...') : (isEdit ? 'Actualizar' : 'Guardar') }}
         </button>
     </div>
 </div>

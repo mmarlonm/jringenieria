@@ -746,7 +746,8 @@ export class EventosService implements OnDestroy {
                             const exists = mapped.some(m => m.id === currentVal);
                             if (!exists && currentVal === 0) {
                                 const active = list.find(e => e.activo);
-                                this._selectedEventoId.next(active ? active.id : mapped[mapped.length - 1].id);
+                                const targetId = active ? active.id : mapped[mapped.length - 1].id;
+                                this.setSeleccionEdicion(targetId);
                             }
                         }
                     }

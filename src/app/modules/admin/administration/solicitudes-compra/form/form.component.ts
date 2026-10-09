@@ -57,6 +57,7 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
 export class SolicitudCompraFormComponent implements OnInit {
     solicitudForm: FormGroup;
     isEdit: boolean = false;
+    isSaving: boolean = false;
     solicitudId: number;
     selectedFiles: File[] = [];
     archivos: any[] = [];
@@ -871,6 +872,8 @@ export class SolicitudCompraFormComponent implements OnInit {
     }
 
     save(): void {
+        if (this.isSaving) return;
+
         this.solicitudForm.markAllAsTouched();
         if (this.solicitudForm.invalid) {
             const invalidFields = [];
@@ -905,6 +908,8 @@ export class SolicitudCompraFormComponent implements OnInit {
             return;
         }
 
+        this.isSaving = true;
+
         const data = {
             ...this.solicitudForm.value,
             IdUsuarioLogueado: this.currentUserId
@@ -924,21 +929,25 @@ export class SolicitudCompraFormComponent implements OnInit {
                         const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(this.solicitudId, file));
                         forkJoin(uploads).subscribe({
                             next: () => {
+                                this.isSaving = false;
                                 this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente con nuevos archivos');
                                 this._router.navigate(['../../'], { relativeTo: this._route });
                             },
                             error: (err) => {
+                                this.isSaving = false;
                                 console.error('Error uploading files:', err);
                                 this._chatNotificationService.showError('Error', 'La solicitud se guardó pero hubo un error al subir algunos archivos');
                                 this._router.navigate(['../../'], { relativeTo: this._route });
                             }
                         });
                     } else {
+                        this.isSaving = false;
                         this._chatNotificationService.showSuccess('Éxito', 'Solicitud actualizada correctamente');
                         this._router.navigate(['../../'], { relativeTo: this._route });
                     }
                 },
                 error: (err) => {
+                    this.isSaving = false;
                     console.error('Error updating:', err);
                     const msg = err.error?.message || err.message || 'Error interno del servidor';
                     this._chatNotificationService.showError('Error al actualizar', msg);
@@ -952,21 +961,25 @@ export class SolicitudCompraFormComponent implements OnInit {
                         const uploads = this.selectedFiles.map(file => this._solicitudCompraService.subirArchivo(newId, file));
                         forkJoin(uploads).subscribe({
                             next: () => {
+                                this.isSaving = false;
                                 this._chatNotificationService.showSuccess('Éxito', 'Solicitud y archivos guardados correctamente');
                                 this._router.navigate(['../'], { relativeTo: this._route });
                             },
                             error: (err) => {
+                                this.isSaving = false;
                                 console.error('Error uploading files:', err);
                                 this._chatNotificationService.showError('Error', 'La solicitud se creó pero hubo un error al subir algunos archivos');
                                 this._router.navigate(['../'], { relativeTo: this._route });
                             }
                         });
                     } else {
+                        this.isSaving = false;
                         this._chatNotificationService.showSuccess('Éxito', 'Solicitud de compra guardada correctamente');
                         this._router.navigate(['../'], { relativeTo: this._route });
                     }
                 },
                 error: (err) => {
+                    this.isSaving = false;
                     console.error('Error creating:', err);
                     const msg = err.error?.message || err.message || 'Error interno del servidor';
                     this._chatNotificationService.showError('Error al crear', msg);
