@@ -75,13 +75,13 @@
 
           <!-- Category Header -->
           <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2 flex-none">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+              <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600 flex-none">
                 <mat-icon class="icon-size-5" [svgIcon]="cat.icon || 'heroicons_outline:folder'"></mat-icon>
               </div>
-              <span class="text-xs font-black text-slate-800 uppercase tracking-wider truncate" [title]="cat.label">{{ cat.label }}</span>
+              <span class="text-xs font-black text-slate-800 uppercase tracking-wider truncate block min-w-0 flex-1" [title]="cat.label">{{ cat.label }}</span>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1 flex-none">
               <!-- Create Subfolder button -->
               <button *ngIf="permisos.agregarCarpetas" mat-icon-button type="button" (click)="crearSubcarpeta(cat.nombre)"
                 matTooltip="Nueva subcarpeta" class="text-indigo-600 hover:bg-indigo-50 rounded-lg">
@@ -147,11 +147,11 @@
               <div *ngFor="let folder of getSubcarpetasByCategory(cat.nombre); trackBy: trackBySubcarpeta"
                 (click)="navegarSubcarpeta(cat.nombre, folder)"
                 class="flex items-center justify-between p-3 bg-indigo-50/30 hover:bg-indigo-50 border border-indigo-100 rounded-xl transition-all cursor-pointer group select-none">
-                <div class="flex items-center gap-2 truncate">
-                  <mat-icon class="icon-size-5 text-indigo-500" [svgIcon]="'heroicons_solid:folder'"></mat-icon>
-                  <span class="text-xs font-black text-indigo-950 truncate">{{ folder }}</span>
+                <div class="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                  <mat-icon class="icon-size-5 text-indigo-500 flex-none" [svgIcon]="'heroicons_solid:folder'"></mat-icon>
+                  <span class="text-xs font-black text-indigo-950 truncate block min-w-0" [title]="folder">{{ folder }}</span>
                 </div>
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 flex-none">
                   <button *ngIf="permisos.eliminar" mat-icon-button type="button" (click)="$event.stopPropagation(); eliminarSubcarpeta(cat.nombre, folder)"
                     matTooltip="Eliminar subcarpeta" class="opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-50 rounded-lg w-6 h-6 flex items-center justify-center">
                     <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
