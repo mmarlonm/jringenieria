@@ -794,9 +794,10 @@
                                         stroke-dasharray="6,4" 
                                         class="selection-dash-crawl pointer-events-none" />
 
-                                <text [attr.cx]="node.cx" 
-                                      [attr.cy]="node.cy + 6" 
+                                <text [attr.x]="node.cx" 
+                                      [attr.y]="node.cy" 
                                       text-anchor="middle" 
+                                      dominant-baseline="middle"
                                       fill="#ffffff" 
                                       class="text-2xl font-black uppercase tracking-wider drop-shadow-md select-none pointer-events-none">
                                     Cliente
