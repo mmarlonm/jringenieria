@@ -142,8 +142,8 @@
               </div>
             </div>
 
-            <!-- List Subfolders (Only visible when no active subfolder is selected) -->
-            <ng-container *ngIf="!activeSubcarpetas[cat.nombre]">
+            <!-- List Subfolders (Visible when current level has subfolders) -->
+            <ng-container *ngIf="getSubcarpetasByCategory(cat.nombre).length > 0">
               <div *ngFor="let folder of getSubcarpetasByCategory(cat.nombre); trackBy: trackBySubcarpeta"
                 (click)="navegarSubcarpeta(cat.nombre, folder)"
                 class="flex items-center justify-between p-3 bg-indigo-50/30 hover:bg-indigo-50 border border-indigo-100 rounded-xl transition-all cursor-pointer group select-none">
@@ -162,7 +162,7 @@
             </ng-container>
 
             <!-- Empty state -->
-            <div *ngIf="getFilesByCategory(cat.nombre).length === 0 && (!activeSubcarpetas[cat.nombre] ? getSubcarpetasByCategory(cat.nombre).length === 0 : true) && !isUploading[cat.nombre]"
+            <div *ngIf="getFilesByCategory(cat.nombre).length === 0 && getSubcarpetasByCategory(cat.nombre).length === 0 && !isUploading[cat.nombre]"
               (click)="permisos.subir ? triggerFileInput(cat.nombre) : null"
               class="flex flex-col items-center justify-center py-8 text-slate-400 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:text-indigo-600 rounded-xl cursor-pointer transition-all bg-slate-50/50 hover:bg-indigo-50/20 group select-none">
               <mat-icon

@@ -14,7 +14,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { environment } from 'environments/environment';
-import { IsoDocumentacionService, IsoApartado, IsoArchivo, IsoBitacoraItem } from './iso-documentacion.service';
+import { IsoDocumentacionService, IsoApartado, IsoSubcarpeta, IsoArchivo, IsoBitacoraItem } from './iso-documentacion.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -47,6 +47,7 @@ export class IsoDocumentacionComponent implements OnInit {
 
     // Listas idénticas al modelo de Control de Ejecución (inicia en 0 apartados)
     apartados: IsoApartado[] = [];
+    subcarpetas: IsoSubcarpeta[] = [];
     archivos: IsoArchivo[] = [];
 
     // Control de navegación y estados idénticos a Control de Ejecución
@@ -189,6 +190,7 @@ export class IsoDocumentacionComponent implements OnInit {
         this._isoService.obtenerArchivos().subscribe({
             next: (res) => {
                 this.apartados = res?.apartados || [];
+                this.subcarpetas = res?.subcarpetas || [];
                 this.archivos = res?.archivos || [];
                 this.reindexarArchivos();
                 this.isLoading = false;
@@ -212,20 +214,50 @@ export class IsoDocumentacionComponent implements OnInit {
         this.cachedFiles = {};
 
         for (const cat of this.apartados) {
-            // Indexar subcarpetas
+            // Indexar subcarpetas (tanto de carpetas en disco vacías como de archivos)
             const subSet = new Set<string>();
+            const activeSub = this.activeSubcarpetas[cat.nombre];
+
+            // 1. De la lista de subcarpetas creadas físicamente en disco (incluso vacías)
+            if (this.subcarpetas && this.subcarpetas.length > 0) {
+                for (const s of this.subcarpetas) {
+                    if (s.tipo === cat.nombre && s.nombreSubcarpeta) {
+                        if (activeSub) {
+                            if (s.nombreSubcarpeta.startsWith(activeSub + '/')) {
+                                const rest = s.nombreSubcarpeta.substring(activeSub.length + 1);
+                                const firstLevel = rest.split('/')[0];
+                                if (firstLevel) subSet.add(firstLevel);
+                            }
+                        } else {
+                            const firstLevel = s.nombreSubcarpeta.split('/')[0];
+                            if (firstLevel) subSet.add(firstLevel);
+                        }
+                    }
+                }
+            }
+
+            // 2. De la lista de archivos (para carpetas con archivos)
             for (const a of this.archivos) {
                 if (a.tipo === cat.nombre && a.nombreArchivo && a.nombreArchivo.includes('/')) {
-                    const parts = a.nombreArchivo.split('/');
-                    if (parts.length > 1 && parts[0]) {
-                        subSet.add(parts[0]);
+                    if (activeSub) {
+                        if (a.nombreArchivo.startsWith(activeSub + '/')) {
+                            const rest = a.nombreArchivo.substring(activeSub.length + 1);
+                            if (rest.includes('/')) {
+                                const firstLevel = rest.split('/')[0];
+                                if (firstLevel) subSet.add(firstLevel);
+                            }
+                        }
+                    } else {
+                        const parts = a.nombreArchivo.split('/');
+                        if (parts.length > 1 && parts[0]) {
+                            subSet.add(parts[0]);
+                        }
                     }
                 }
             }
             this.cachedSubcarpetas[cat.nombre] = Array.from(subSet).sort();
 
             // Indexar archivos según subcarpeta activa y filtro rápido
-            const activeSub = this.activeSubcarpetas[cat.nombre];
             const query = (this.searchQuery[cat.nombre] || '').trim().toLowerCase();
 
             const allFiles = this.archivos.filter((a) => {
@@ -420,10 +452,14 @@ export class IsoDocumentacionComponent implements OnInit {
                 const folderName = result.value.trim();
                 const usuario = this.obtenerUsuarioActual();
 
-                this._isoService.crearSubcarpeta(categoryName, folderName, usuario).subscribe({
+                const activeSub = this.activeSubcarpetas[categoryName];
+                const fullFolderPath = activeSub ? `${activeSub}/${folderName}` : folderName;
+
+                this._isoService.crearSubcarpeta(categoryName, fullFolderPath, usuario).subscribe({
                     next: () => {
-                        this.activeSubcarpetas[categoryName] = folderName;
+                        this.activeSubcarpetas[categoryName] = fullFolderPath;
                         this.loadFiles();
+                        this._snackBar.open(`Subcarpeta "${folderName}" creada exitosamente.`, 'OK', { duration: 3000 });
                         this._cdr.markForCheck();
                     },
                     error: (err) => {
@@ -437,7 +473,12 @@ export class IsoDocumentacionComponent implements OnInit {
 
     navegarSubcarpeta(categoryName: string, subcarpeta: string | null): void {
         if (subcarpeta) {
-            this.activeSubcarpetas[categoryName] = subcarpeta;
+            const current = this.activeSubcarpetas[categoryName];
+            if (current && !subcarpeta.startsWith(current)) {
+                this.activeSubcarpetas[categoryName] = `${current}/${subcarpeta}`;
+            } else {
+                this.activeSubcarpetas[categoryName] = subcarpeta;
+            }
         } else {
             delete this.activeSubcarpetas[categoryName];
         }
@@ -820,6 +861,8 @@ export class IsoDocumentacionComponent implements OnInit {
 
     eliminarSubcarpeta(categoryName: string, folderName: string): void {
         const usuario = this.obtenerUsuarioActual();
+        const activeSub = this.activeSubcarpetas[categoryName];
+        const fullSubPath = activeSub ? `${activeSub}/${folderName}` : folderName;
 
         Swal.fire({
             title: '¿Eliminar subcarpeta completa?',
@@ -831,9 +874,9 @@ export class IsoDocumentacionComponent implements OnInit {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                this._isoService.eliminar(categoryName, undefined, folderName, usuario).subscribe({
+                this._isoService.eliminar(categoryName, undefined, fullSubPath, usuario).subscribe({
                     next: () => {
-                        if (this.activeSubcarpetas[categoryName] === folderName) {
+                        if (this.activeSubcarpetas[categoryName] === fullSubPath) {
                             delete this.activeSubcarpetas[categoryName];
                         }
                         this.loadFiles();

@@ -17,8 +17,14 @@ export interface IsoArchivo {
     esZip?: boolean;
 }
 
+export interface IsoSubcarpeta {
+    tipo: string;
+    nombreSubcarpeta: string;
+}
+
 export interface IsoRespuestaArchivos {
     apartados: IsoApartado[];
+    subcarpetas?: IsoSubcarpeta[];
     archivos: IsoArchivo[];
 }
 
