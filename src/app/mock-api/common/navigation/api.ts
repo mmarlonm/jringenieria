@@ -94,7 +94,7 @@ export class NavigationMockApi {
                         return (newItem.children && newItem.children.length > 0) ? newItem : null;
                     }
                     // Lógica para ITEMS FINALES
-                    if (newItem.id === 'dashboards.identidad') {
+                    if (newItem.id === 'dashboards.identidad' || newItem.id === 'dashboards.neural-graph') {
                         return newItem;
                     }
                     const tienePermiso = vistasPermitidas.some(permiso => {

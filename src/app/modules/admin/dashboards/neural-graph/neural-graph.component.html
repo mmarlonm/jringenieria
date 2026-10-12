@@ -1,0 +1,182 @@
+<div class="neural-graph-container">
+    <!-- CONTENEDOR 3D PRINCIPAL (THREE.JS) -->
+    <div #canvas3dContainer class="canvas-3d-wrap">
+        <!-- PANTALLA DE CARGA -->
+        <div *ngIf="isLoading" class="loading-overlay">
+            <div class="spinner"></div>
+            <div class="loading-text">{{ loadingProgress }}</div>
+            <div class="loading-sub">Preparando 8,345 nodos y 15,182 conexiones sinápticas en 3D...</div>
+        </div>
+
+        <!-- BARRA SUPERIOR FLOTANTE CON CONTROLES HUD -->
+        <header class="hud-topbar" *ngIf="!isLoading">
+            <div class="hud-left">
+                <div class="hud-title-wrap">
+                    <span class="live-dot animate-ping"></span>
+                    <span class="hud-title">Red Neuronal 3D — JR Ingeniería</span>
+                    <span class="live-badge">SignalR Conectado</span>
+                </div>
+                <!-- SELECTOR DE ALCANCE (SCOPE) -->
+                <div class="scope-selector">
+                    <button [class.active]="activeScope === 'all'" (click)="filterScope('all')">
+                        🧠 Cerebro Completo
+                    </button>
+                    <button [class.active]="activeScope === 'frontend'" (click)="filterScope('frontend')">
+                        🎨 Corteza (Front)
+                    </button>
+                    <button [class.active]="activeScope === 'backend'" (click)="filterScope('backend')">
+                        ⚙️ Núcleo (API)
+                    </button>
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <button class="btn-action" [class.btn-demo-active]="showModuleLabels" (click)="toggleModuleLabels()" matTooltip="Mostrar u ocultar nombres de módulos en los círculos">
+                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
+                    <span>{{ showModuleLabels ? 'Módulos ON' : 'Módulos OFF' }}</span>
+                </button>
+                <button class="btn-action btn-spike" (click)="triggerRandomSpike()" matTooltip="Dispara un impulso sináptico 3D hacia el núcleo API">
+                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:bolt'"></mat-icon>
+                    <span>Disparo 3D</span>
+                </button>
+                <button class="btn-action" [class.btn-demo-active]="isAutoDemo" (click)="toggleAutoDemo()" matTooltip="Simulación continua de actividad neural">
+                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:play'"></mat-icon>
+                    <span>{{ isAutoDemo ? 'Demo Activa' : 'Modo Demo' }}</span>
+                </button>
+                <button class="btn-icon" (click)="resetCamera()" matTooltip="Restablecer vista del cerebro">
+                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:arrows-pointing-in'"></mat-icon>
+                </button>
+            </div>
+        </header>
+
+        <!-- INDICADOR INFERIOR DE ORIENTACIÓN 3D -->
+        <div class="hud-footer-hint" *ngIf="!isLoading">
+            <span>🖱️ Clic izquierdo + arrastrar: <b>Rotar en 3D</b></span>
+            <span>&middot;</span>
+            <span>🖱️ Rueda: <b>Zoom orbital</b></span>
+            <span>&middot;</span>
+            <span>🖱️ Clic derecho: <b>Pan 3D</b></span>
+            <span>&middot;</span>
+            <span>🎯 Clic en esfera: <b>Inspeccionar neurona</b></span>
+        </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────────────── -->
+    <!-- BARRA LATERAL DERECHA (DISEÑO EXACTO DE GRAPHIFY) -->
+    <!-- ───────────────────────────────────────────────────────────── -->
+    <aside id="sidebar">
+        <!-- BÚSQUEDA DE NODOS -->
+        <div id="search-wrap">
+            <input id="search"
+                   type="text"
+                   placeholder="Search nodes..."
+                   autocomplete="off"
+                   [(ngModel)]="searchQuery"
+                   (input)="onSearchInput()">
+            <div id="search-results" *ngIf="searchResults.length > 0">
+                <div *ngFor="let node of searchResults"
+                     class="search-item"
+                     [style.border-left]="'3px solid ' + node.color"
+                     (click)="selectSearchResult(node)">
+                    {{ node.label }} <small style="color: #64748b; margin-left: 4px;">({{ node.scope === 'frontend' ? 'Corteza' : 'Núcleo' }})</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL DE INFORMACIÓN DEL NODO (NODE INFO) -->
+        <div id="info-panel">
+            <h3>NODE INFO</h3>
+            <div id="info-content">
+                <ng-container *ngIf="!selectedNode">
+                    <span class="empty">Click a node to inspect it</span>
+                </ng-container>
+
+                <ng-container *ngIf="selectedNode">
+                    <div class="field">
+                        <b>{{ selectedNode.label }}</b>
+                        <span class="scope-pill" [class.fe]="selectedNode.scope === 'frontend'" [class.be]="selectedNode.scope === 'backend'">
+                            {{ selectedNode.scope === 'frontend' ? 'Corteza Frontend' : 'Núcleo API' }}
+                        </span>
+                    </div>
+                    <div class="field">Type: {{ selectedNode.fileType || 'code' }}</div>
+                    <div class="field">
+                        Community:
+                        <span class="community-tag">
+                            <span class="comm-dot" [style.background]="selectedNode.color"></span>
+                            {{ selectedNode.communityName }}
+                        </span>
+                    </div>
+                    <div class="field" *ngIf="selectedNode.sourceFile">
+                        Source: <span class="file-path">{{ selectedNode.sourceFile }}</span>
+                    </div>
+                    <div class="field">Degree: {{ selectedNode.degree }}</div>
+
+                    <!-- VÍA SINÁPTICA CORTEZA <-> NÚCLEO API -->
+                    <div class="bridge-box" *ngIf="getBridgeForNode(selectedNode.id) as bridgeTarget">
+                        <div class="bridge-header">🧠 Vía Sináptica hacia {{ bridgeTarget.scope === 'backend' ? 'Núcleo API' : 'Corteza Front' }}:</div>
+                        <div class="bridge-link" (click)="selectNode(bridgeTarget)">
+                            <span>{{ bridgeTarget.label }}</span>
+                            <small class="bridge-badge">{{ bridgeTarget.scope === 'backend' ? 'Controller API' : 'Módulo Front' }}</small>
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN ESTIMULAR NEURONA -->
+                    <div style="margin-top: 10px;">
+                        <button class="btn-stimulate" (click)="triggerSynapticCascade(selectedNode)">
+                            ⚡ Disparar Impulso 3D
+                        </button>
+                    </div>
+
+                    <!-- LISTA DE VECINOS CONECTADOS -->
+                    <div class="field" style="margin-top: 12px; color: #aaa; font-size: 11px;">
+                        Neighbors ({{ getConnectedNeighbors(selectedNode.id).length }})
+                    </div>
+                    <div id="neighbors-list">
+                        <div *ngFor="let neighbor of getConnectedNeighbors(selectedNode.id)"
+                             class="neighbor-link"
+                             [style.border-left-color]="neighbor.color"
+                             (click)="selectNode(neighbor)">
+                            {{ neighbor.label }}
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+
+        <!-- PANEL DE COMUNIDADES (COMMUNITIES LEGEND) -->
+        <div id="legend-wrap">
+            <h3>COMMUNITIES</h3>
+            <div id="legend-controls">
+                <label>
+                    <input type="checkbox"
+                           id="select-all-cb"
+                           [checked]="selectAllCommunities"
+                           [indeterminate]="isIndeterminateCommunities"
+                           (change)="toggleAllCommunities()">
+                    Select All
+                </label>
+            </div>
+
+            <div id="legend">
+                <div *ngFor="let c of communities"
+                     class="legend-item"
+                     [class.dimmed]="!c.visible"
+                     (click)="toggleCommunity(c)">
+                    <input type="checkbox"
+                           class="legend-cb"
+                           [checked]="c.visible"
+                           (click)="$event.stopPropagation()"
+                           (change)="toggleCommunity(c)">
+                    <div class="legend-dot" [style.background]="c.color"></div>
+                    <span class="legend-label">{{ c.label }}</span>
+                    <span class="legend-count">{{ c.count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PIE DE PÁGINA CON ESTADÍSTICAS -->
+        <div id="stats">
+            {{ stats.feNodes }} Corteza &middot; {{ stats.beNodes }} Núcleo &middot; {{ stats.totalEdges }} sinapsis &middot; {{ stats.communitiesCount }} áreas
+        </div>
+    </aside>
+</div>

@@ -10,7 +10,8 @@
         "start": "ng serve",
         "build": "ng build",
         "watch": "ng build --watch --configuration development",
-        "test": "ng test"
+        "test": "ng test",
+        "graphify:build": "node scripts/build-graphify-3d.js"
     },
     "dependencies": {
         "@angular-material-components/datetime-picker": "^16.0.1",

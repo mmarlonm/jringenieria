@@ -12,6 +12,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:sparkles',
         link: '/dashboards/roadmap'
     },
+    {
+        id: 'dashboards.neural-graph',
+        title: 'Red Neuronal del Sistema',
+        type: 'basic',
+        icon: 'heroicons_outline:cpu-chip',
+        link: '/dashboards/neural-graph'
+    },
 
     // ==========================================================================================
     // SECCIÓN: ADMINISTRACIÓN

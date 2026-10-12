@@ -23,3 +23,5 @@ yarn-error.log*
 
 # Misc
 /tmp/
+public/graphify-*
+src/assets/graphify-*

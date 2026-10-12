@@ -95,6 +95,7 @@ export const appRoutes: Route[] = [
                     { path: 'transfer-management', loadChildren: () => import('app/modules/admin/dashboards/transfer-management/transfer-management.routes') },
                     { path: 'expenses', loadChildren: () => import('app/modules/admin/dashboards/expenses/expenses.routes') },
                     { path: 'roadmap', loadChildren: () => import('app/modules/admin/dashboards/roadmap/roadmap.routes') },
+                    { path: 'neural-graph', loadChildren: () => import('app/modules/admin/dashboards/neural-graph/neural-graph.routes') },
                 ]
             },
             {
