@@ -20,6 +20,7 @@ import { Subscription } from 'rxjs';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ActivitySignalRService, ActivityLog } from '../../../../core/signalr/activity-signalr.service';
+import { SignalRService } from '../../../../core/signalr/signalr.service';
 
 export interface Graph3DNode {
     id: string;
@@ -98,7 +99,17 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
 
     private _http = inject(HttpClient);
     private _activitySignalR = inject(ActivitySignalRService);
+    private _signalRService = inject(SignalRService);
     private _cdr = inject(ChangeDetectorRef);
+
+    // Telemetría en tiempo real (SignalR)
+    public isSignalRConnected: boolean = false;
+    public lastActiveUser: string = '';
+    public lastActiveModule: string = '';
+    public lastActiveTime: string = '';
+    public showActivityBanner: boolean = false;
+    private bannerTimeout: any = null;
+    private processedEvents = new Set<string>();
 
     // Estado del Grafo 3D
     public nodes: Graph3DNode[] = [];
@@ -150,8 +161,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     private instancedNodes!: THREE.InstancedMesh;
     private nodeDummy = new THREE.Object3D();
     private linesMesh!: THREE.LineSegments;
+    private bridgeLinesMesh?: THREE.LineSegments;
     private selectedConnectionsMesh?: THREE.LineSegments;
     private labelsGroup = new THREE.Group();
+    private layerRingsGroup = new THREE.Group();
     private nodeIndexMap: Map<string, number> = new Map();
     private indexToNodeMap: Map<number, Graph3DNode> = new Map();
 
@@ -198,10 +211,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         // 1. Escena con niebla espacial sutil
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color('#0a0a14');
-        this.scene.fog = new THREE.FogExp2('#0a0a14', 0.00045);
+        this.scene.fog = new THREE.FogExp2('#0a0a14', 0.00032);
 
-        // 2. Cámara de Perspectiva centrada en la esfera unificada
-        this.camera = new THREE.PerspectiveCamera(55, width / height, 1, 10000);
+        // 2. Cámara de Perspectiva centrada en el sistema de dos esferas concéntricas
+        this.camera = new THREE.PerspectiveCamera(52, width / height, 1, 10000);
         this.camera.position.set(0, 30, 620);
 
         // 3. Renderer WebGL optimizado (alta fluidez 60 FPS)
@@ -219,30 +232,32 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         this.controls.panSpeed = 0.8;
         this.controls.minDistance = 50;
         this.controls.maxDistance = 3500;
+        this.controls.target.set(0, 0, 0);
 
-        // 5. Iluminación volumétrica del cerebro
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+        // 5. Iluminación volumétrica para el núcleo interior y la corteza exterior
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
         this.scene.add(ambientLight);
 
-        // Luz radiante del núcleo central (API Core)
-        const coreLight = new THREE.PointLight(0x38bdf8, 3.2, 550);
+        // Luz radiante del núcleo interior (Esfera API)
+        const coreLight = new THREE.PointLight(0x38bdf8, 3.5, 650);
         coreLight.position.set(0, 0, 0);
         this.scene.add(coreLight);
 
-        // Luces para acentuar los hemisferios de la corteza
-        const leftLight = new THREE.PointLight(0x6366f1, 2.0, 800);
-        leftLight.position.set(-250, 150, 200);
+        // Luces para acentuar la capa esférica exterior (Frontend)
+        const leftLight = new THREE.PointLight(0x00f0ff, 2.2, 800);
+        leftLight.position.set(-260, 160, 200);
         this.scene.add(leftLight);
 
-        const rightLight = new THREE.PointLight(0xec4899, 2.0, 800);
-        rightLight.position.set(250, -150, 200);
+        const rightLight = new THREE.PointLight(0x818cf8, 2.2, 800);
+        rightLight.position.set(260, -160, 200);
         this.scene.add(rightLight);
 
         // 6. Texturas de resplandor para impulsos de luz pura
         this.glowTextureCyan = this.createGlowTexture('#00F0FF', '#0284c7');
         this.glowTextureGreen = this.createGlowTexture('#00FF88', '#059669');
 
-        // Contenedor de nombres de módulos
+        // Grupos 3D
+        this.scene.add(this.layerRingsGroup);
         this.scene.add(this.labelsGroup);
 
         // Configurar observador de redimensionamiento automático
@@ -343,8 +358,42 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     }
 
     private processLoadedData(data: any): void {
-        this.loadingProgress = 'Organizando corteza cerebral y módulos...';
-        this.nodes = (data.nodes || []).map((n: Graph3DNode) => ({ ...n, visible: true }));
+        this.loadingProgress = 'Construyendo esferas concéntricas (API interior y Frontend envolvente)...';
+
+        // Estructura de dos esferas concéntricas:
+        // 1. Esfera Interior (Backend API): R = 74 a 90 (Núcleo central compacto)
+        // 2. Esfera Exterior (Frontend envolvente como segunda capa): R = 248 a 272
+        // Separación radial limpia de ~158 unidades para que nunca se mezclen
+        this.nodes = (data.nodes || []).map((n: Graph3DNode) => {
+            const copy = { ...n, visible: true };
+            let vx = copy.x || 0;
+            let vy = copy.y || 0;
+            let vz = copy.z || 0;
+            let len = Math.sqrt(vx * vx + vy * vy + vz * vz);
+            if (len < 0.001) {
+                vx = Math.random() - 0.5;
+                vy = Math.random() - 0.5;
+                vz = Math.random() - 0.5;
+                len = Math.sqrt(vx * vx + vy * vy + vz * vz);
+            }
+            const dx = vx / len;
+            const dy = vy / len;
+            const dz = vz / len;
+
+            if (copy.scope === 'frontend') {
+                const r_fe = 248 + ((copy.community || 0) % 7) * 3 + (Math.abs(copy.degree || 1) % 4) * 2;
+                copy.x = dx * r_fe;
+                copy.y = dy * r_fe;
+                copy.z = dz * r_fe;
+            } else {
+                const r_be = 74 + ((copy.community || 0) % 5) * 3 + (Math.abs(copy.degree || 1) % 4) * 1.5;
+                copy.x = dx * r_be;
+                copy.y = dy * r_be;
+                copy.z = dz * r_be;
+            }
+            return copy;
+        });
+
         this.edges = data.edges || [];
         this.communities = (data.legend || []).map((c: Graph3DCommunity) => ({ ...c, visible: true }));
 
@@ -390,9 +439,15 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             this.linesMesh.geometry.dispose();
             (this.linesMesh.material as THREE.Material).dispose();
         }
+        if (this.bridgeLinesMesh) {
+            this.scene.remove(this.bridgeLinesMesh);
+            this.bridgeLinesMesh.geometry.dispose();
+            (this.bridgeLinesMesh.material as THREE.Material).dispose();
+            this.bridgeLinesMesh = undefined;
+        }
 
         const count = this.nodes.length;
-        const sphereGeo = new THREE.SphereGeometry(1, 6, 6); // Geometría ligera ultra-optimizada
+        const sphereGeo = new THREE.SphereGeometry(1, 6, 6);
         const nodeMat = new THREE.MeshLambertMaterial({
             emissive: 0x111827,
             emissiveIntensity: 0.45
@@ -407,7 +462,6 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             this.nodeIndexMap.set(node.id, i);
             this.indexToNodeMap.set(i, node);
 
-            // Escala refinada: los módulos destacados tienen tamaño óptimo, no gigante
             const isLeader = node.isLeader || (node.scope === 'frontend' && (node.degree > 3 || /component|service/i.test(node.moduleName || '')));
             const baseScale = isLeader ? 2.2 : Math.max(0.75, Math.min(1.8, (node.size || 10) * 0.12));
 
@@ -426,7 +480,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         }
         this.scene.add(this.instancedNodes);
 
-        // 2. Líneas intra-cerebro sutiles (filamentos delicados de alta velocidad)
+        // 2. Líneas intra-capa (horizontales dentro de Front y dentro de Back)
         const linePositions: number[] = [];
         const lineColors: number[] = [];
 
@@ -455,8 +509,131 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         this.linesMesh = new THREE.LineSegments(lineGeo, lineMat);
         this.scene.add(this.linesMesh);
 
-        // 3. Construir etiquetas 3D de nombres de módulo en los círculos clave del Front
+        // 3. Vías sinápticas puente (verticales entre la capa Front arriba y la capa Back abajo)
+        const bridgePositions: number[] = [];
+        const bridgeColors: number[] = [];
+        const colCyan = new THREE.Color('#00f0ff');
+        const colIndigo = new THREE.Color('#818cf8');
+
+        for (const edge of this.edges) {
+            if (!edge.isBridge) continue;
+
+            const src = this.nodeMap.get(edge.from);
+            const tgt = this.nodeMap.get(edge.to);
+            if (!src || !tgt) continue;
+
+            bridgePositions.push(src.x, src.y, src.z, tgt.x, tgt.y, tgt.z);
+            const c1 = src.scope === 'frontend' ? colCyan : colIndigo;
+            const c2 = tgt.scope === 'frontend' ? colCyan : colIndigo;
+            bridgeColors.push(c1.r, c1.g, c1.b);
+            bridgeColors.push(c2.r, c2.g, c2.b);
+        }
+
+        if (bridgePositions.length > 0) {
+            const bridgeGeo = new THREE.BufferGeometry();
+            bridgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(bridgePositions, 3));
+            bridgeGeo.setAttribute('color', new THREE.Float32BufferAttribute(bridgeColors, 3));
+            const bridgeMat = new THREE.LineBasicMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.12,
+                blending: THREE.AdditiveBlending
+            });
+            this.bridgeLinesMesh = new THREE.LineSegments(bridgeGeo, bridgeMat);
+            this.scene.add(this.bridgeLinesMesh);
+        }
+
+        // 4. Anillos de delimitación de esferas concéntricas y cabeceras holográficas
+        this.buildLayerRings();
+
+        // 5. Construir etiquetas 3D de nombres de módulo en la Esfera Exterior Frontend
         this.buildModuleLabels();
+    }
+
+    private buildLayerRings(): void {
+        while (this.layerRingsGroup.children.length > 0) {
+            const obj = this.layerRingsGroup.children[0];
+            this.layerRingsGroup.remove(obj);
+            if ((obj as any).geometry) (obj as any).geometry.dispose();
+            if ((obj as any).material) {
+                if ((obj as any).material.map) (obj as any).material.map.dispose();
+                (obj as any).material.dispose();
+            }
+        }
+
+        // Anillo Ecuatorial 1: Esfera Exterior Frontend (R = 260)
+        const ringGeoFE = new THREE.RingGeometry(258, 262, 64);
+        const ringMatFE = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff,
+            transparent: true,
+            opacity: 0.22,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
+        });
+        const ringFE = new THREE.Mesh(ringGeoFE, ringMatFE);
+        ringFE.rotation.x = Math.PI / 2;
+        ringFE.position.set(0, 0, 0);
+        this.layerRingsGroup.add(ringFE);
+
+        // Anillo Ecuatorial 2: Esfera Interior API Core (R = 86)
+        const ringGeoBE = new THREE.RingGeometry(84, 88, 64);
+        const ringMatBE = new THREE.MeshBasicMaterial({
+            color: 0x818cf8,
+            transparent: true,
+            opacity: 0.26,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
+        });
+        const ringBE = new THREE.Mesh(ringGeoBE, ringMatBE);
+        ringBE.rotation.x = Math.PI / 2;
+        ringBE.position.set(0, 0, 0);
+        this.layerRingsGroup.add(ringBE);
+
+        // Badges 3D flotantes en el zenit de cada esfera concéntrica
+        const labelFE = this.createLayerHeaderSprite('🎨 ESFERA EXTERIOR (Frontend)', '#38bdf8');
+        labelFE.position.set(0, 288, 0);
+        labelFE.scale.set(40, 7.5, 1);
+        this.layerRingsGroup.add(labelFE);
+
+        const labelBE = this.createLayerHeaderSprite('⚙️ ESFERA INTERIOR (API Core)', '#a78bfa');
+        labelBE.position.set(0, 104, 0);
+        labelBE.scale.set(40, 7, 1);
+        this.layerRingsGroup.add(labelBE);
+    }
+
+    private createLayerHeaderSprite(text: string, colorHex: string): THREE.Sprite {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 96;
+        const ctx = canvas.getContext('2d')!;
+
+        ctx.clearRect(0, 0, 512, 96);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.strokeStyle = colorHex;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(16, 16, 480, 64, 32);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 256, 48);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.generateMipmaps = false;
+        texture.minFilter = THREE.LinearFilter;
+
+        const mat = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.85,
+            depthWrite: false
+        });
+
+        return new THREE.Sprite(mat);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -473,7 +650,6 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         }
 
         // Seleccionar los ~30 módulos y comunidades principales del Frontend
-        // Esto mantiene la visualización limpia, informativa y a 60 FPS fijos sin saturación de sprites
         const topCommunities = [...this.communities]
             .filter(c => c.scope === 'frontend' && c.count >= 8)
             .sort((a, b) => b.count - a.count)
@@ -490,8 +666,9 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
 
             if (!name || name === 'General' || name.length <= 2) continue;
 
+            const dir = new THREE.Vector3(leader.x, leader.y, leader.z).normalize();
             const sprite = this.createLabelSprite(name);
-            sprite.position.set(leader.x, leader.y + 4.2, leader.z);
+            sprite.position.set(leader.x + dir.x * 6.5, leader.y + dir.y * 6.5, leader.z + dir.z * 6.5);
             sprite.scale.set(16, 4, 1);
             this.labelsGroup.add(sprite);
         }
@@ -720,12 +897,12 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         const start = new THREE.Vector3(sourceNode.x, sourceNode.y, sourceNode.z);
         const end = new THREE.Vector3(targetNode.x, targetNode.y, targetNode.z);
 
-        // Curva arqueada sináptica en el espacio 3D
+        // Curva arqueada sináptica radial en el espacio 3D
         const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
         const diff = new THREE.Vector3().subVectors(end, start);
         let normal = new THREE.Vector3(-diff.y, diff.x, diff.z * 0.3).normalize();
         if (normal.lengthSq() < 0.01) normal = new THREE.Vector3(0, 1, 0);
-        mid.addScaledVector(normal, 28);
+        mid.addScaledVector(normal, 22);
 
         const isCyan = colorHex.toUpperCase().includes('00F0FF') || colorHex.toUpperCase().includes('CYAN');
         const tex = isCyan ? this.glowTextureCyan : this.glowTextureGreen;
@@ -781,6 +958,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
      * Dispara una cascada completa a través de la vía sináptica:
      * Corteza Frontend -> Núcleo API Controller -> Retorno 200 OK
      */
+    /**
+     * Dispara una cascada completa a través de la vía sináptica:
+     * Corteza Frontend -> Núcleo API Controller -> Retorno 200 OK
+     */
     public triggerSynapticCascade(sourceNode: Graph3DNode): void {
         const bridgeEdges = this.edges.filter(e => e.isBridge && (e.from === sourceNode.id || e.to === sourceNode.id));
         let targetNode: Graph3DNode | undefined;
@@ -789,55 +970,192 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             const targetId = bridgeEdges[0].from === sourceNode.id ? bridgeEdges[0].to : bridgeEdges[0].from;
             targetNode = this.nodeMap.get(targetId);
         } else {
-            // Buscar controlador en el núcleo API
+            // Buscar controlador en el núcleo API más representativo
             const controllers = this.nodes.filter(n => n.scope === 'backend' && /controller/i.test(n.label));
             targetNode = controllers[Math.floor(Math.random() * controllers.length)];
         }
 
         if (!targetNode) return;
 
+        // 1. Destello sináptico inmediato en la neurona emisora
+        this.spawnSynapticBurst(new THREE.Vector3(sourceNode.x, sourceNode.y, sourceNode.z), new THREE.Color('#00F0FF'));
+
         this.highlightNodeConnections(sourceNode);
 
-        // 1. Impulso eléctrico de ida (Corteza ➔ Núcleo API): Cyan neón
+        // 2. Impulso eléctrico de ida (Corteza ➔ Núcleo API): Cyan neón
         this.emitPulse3D(sourceNode, targetNode, '#00F0FF', 0.022);
 
-        // 2. Impulso eléctrico de retorno (Núcleo API ➔ Corteza): Verde esmeralda tras 650ms
+        // 3. Impulso eléctrico de retorno (Núcleo API ➔ Corteza): Verde esmeralda tras 650ms
         setTimeout(() => {
             this.emitPulse3D(targetNode!, sourceNode, '#00FF88', 0.028);
         }, 650);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // INTEGRACIÓN CON SIGNALR (EVENTOS EN TIEMPO REAL)
+    // INTEGRACIÓN CON SIGNALR (TELEMETRÍA EN TIEMPO REAL)
     // ─────────────────────────────────────────────────────────────
+    private readonly moduleDictionary: Record<string, string[]> = {
+        'cotiz': ['quote', 'cotiz', 'presupuesto'],
+        'quote': ['quote', 'cotiz'],
+        'presupuesto': ['quote', 'cotiz'],
+        'tarea': ['task', 'tarea'],
+        'task': ['task', 'tarea'],
+        'usuario': ['user', 'usuario', 'security'],
+        'user': ['user', 'usuario'],
+        'compra': ['compra', 'purchase', 'proveedor'],
+        'solicitud': ['solicitud', 'compra'],
+        'proveedor': ['proveedor', 'supplier'],
+        'proyecto': ['project', 'proyecto', 'engineering'],
+        'project': ['project', 'proyecto'],
+        'gasto': ['expense', 'gasto', 'finance'],
+        'expense': ['expense', 'gasto'],
+        'rol': ['role', 'rol', 'permission'],
+        'role': ['role', 'rol'],
+        'cliente': ['client', 'cliente', 'customer', 'lead'],
+        'client': ['client', 'cliente'],
+        'producto': ['product', 'producto', 'catalog'],
+        'product': ['product', 'producto'],
+        'ingenier': ['engineering', 'ingenieria', 'obra'],
+        'monitor': ['activity', 'monitor', 'feed'],
+        'actividad': ['activity', 'monitor'],
+        'chat': ['chat', 'rayito'],
+        'terminal': ['cierre_terminal', 'terminal'],
+        'entrega': ['control_entregas', 'entrega'],
+        'rrhh': ['personal_management', 'personal', 'rrhh'],
+        'personal': ['personal_management', 'personal'],
+        'ticket': ['ticket', 'soporte'],
+        'report': ['report', 'reporte', 'kardex', 'venta'],
+        'kardex': ['kardex', 'product_kardex'],
+        'dashboard': ['dashboard', 'analytic', 'analytics'],
+        'analitica': ['analytic', 'analytics', 'dashboard'],
+        'encuesta': ['survey', 'encuesta']
+    };
+
     private initSignalRListener(): void {
         this._activitySignalR.startConnection();
+        this._signalRService.startConnection();
+
+        // Monitorear estado de conexión
+        this.subscriptions.add(
+            this._activitySignalR.connectionStatus$.subscribe(connected => {
+                this.isSignalRConnected = connected;
+                this._cdr.markForCheck();
+            })
+        );
+
+        // Suscripción al stream principal de navegación
         this.subscriptions.add(
             this._activitySignalR.movimientos$.subscribe((mov: ActivityLog) => {
                 if (!mov || this.nodes.length === 0) return;
                 this.handleSignalREvent(mov);
             })
         );
+
+        // Suscripción al stream redundante
+        this.subscriptions.add(
+            this._signalRService.movimiento$.subscribe((mov: any) => {
+                if (!mov || this.nodes.length === 0) return;
+                this.handleSignalREvent(mov);
+            })
+        );
     }
 
-    private handleSignalREvent(mov: ActivityLog): void {
-        const modulo = (mov.modulo || '').toLowerCase();
-        // Buscar nodo en el Frontend correspondiente
-        const matchingNode = this.nodes.find(n =>
-            n.scope === 'frontend' && (
-                (n.moduleName && n.moduleName.toLowerCase().includes(modulo)) ||
-                n.label.toLowerCase().includes(modulo) ||
-                n.communityName.toLowerCase().includes(modulo)
-            )
-        );
+    private resolveNodeForActivity(rawMod: string, rawUrl: string): Graph3DNode {
+        const feNodes = this.nodes.filter(n => n.scope === 'frontend');
+        if (feNodes.length === 0) return this.nodes[0];
 
-        if (matchingNode) {
-            // Disparar impulso 3D sin mover ni hacer zoom con la cámara
-            this.triggerSynapticCascade(matchingNode);
-            this.selectedNode = matchingNode;
-            this.highlightNodeConnections(matchingNode);
-            this._cdr.markForCheck();
+        const cleanMod = (rawMod || '').toLowerCase().trim();
+        const cleanUrl = (rawUrl || '').toLowerCase().trim();
+
+        // 1. Alta precisión: Segmentos limpios de la URL (/admin/dashboards/quotes -> 'quotes')
+        if (cleanUrl) {
+            const stripped = cleanUrl.replace(/^\/|\/$/g, '');
+            const segments = stripped
+                .split('/')
+                .filter(s => s && !['admin', 'app', 'apps', 'dashboards', 'modules', 'pages'].includes(s));
+
+            for (let i = segments.length - 1; i >= 0; i--) {
+                const seg = segments[i].replace(/-/g, '_');
+                const candidate = feNodes.find(n => 
+                    (n.id.toLowerCase().includes(seg) || n.label.toLowerCase().includes(seg)) &&
+                    (/component/i.test(n.id) || n.isLeader)
+                );
+                if (candidate) return candidate;
+            }
         }
+
+        // 2. Diccionario semántico (Español <-> Nombres técnicos de Angular)
+        const combinedText = `${cleanMod} ${cleanUrl}`.toLowerCase();
+        for (const [key, tokens] of Object.entries(this.moduleDictionary)) {
+            if (combinedText.includes(key)) {
+                for (const tok of tokens) {
+                    const candidate = feNodes.find(n =>
+                        (n.id.toLowerCase().includes(tok) || n.label.toLowerCase().includes(tok) || n.communityName.toLowerCase().includes(tok)) &&
+                        (/component/i.test(n.id) || n.isLeader || n.degree > 2)
+                    );
+                    if (candidate) return candidate;
+                }
+            }
+        }
+
+        // 3. Coincidencia por palabras clave del nombre del módulo (> 3 letras)
+        const words = cleanMod.split(/\s+/).filter(w => w.length > 3);
+        for (const w of words) {
+            const candidate = feNodes.find(n =>
+                (n.id.toLowerCase().includes(w) || n.label.toLowerCase().includes(w) || n.communityName.toLowerCase().includes(w))
+            );
+            if (candidate) return candidate;
+        }
+
+        // 4. Coincidencia por comunidad Frontend
+        if (cleanMod) {
+            const commMatch = feNodes.find(n => n.communityName.toLowerCase().includes(cleanMod));
+            if (commMatch) return commMatch;
+        }
+
+        // 5. Fallback representativo para que NUNCA se descarte un evento
+        const leaderFallback = feNodes.find(n => n.isLeader && n.degree > 3);
+        return leaderFallback || feNodes[0];
+    }
+
+    private handleSignalREvent(mov: any): void {
+        const rawMod = ((mov.modulo || mov.Modulo || mov.componente || '') as string).trim();
+        const rawUrl = ((mov.urlPath || mov.UrlPath || mov.url || '') as string).trim();
+        const userName = mov.nombreUsuario || mov.Usuario || mov.nombre || 'Usuario';
+        const action = mov.accion || mov.Accion || 'Acceso al módulo';
+        const fecha = mov.fecha || mov.Fecha || new Date().toLocaleTimeString();
+
+        // Evitar disparos duplicados si ambos servicios emiten el mismo evento
+        const dedupeKey = `${mov.idLog || ''}_${rawMod}_${rawUrl}_${userName}_${fecha}`;
+        if (this.processedEvents.has(dedupeKey)) return;
+        this.processedEvents.add(dedupeKey);
+        setTimeout(() => this.processedEvents.delete(dedupeKey), 2500);
+
+        // Encontrar neurona correspondiente de forma infalible
+        const matchingNode = this.resolveNodeForActivity(rawMod, rawUrl);
+        if (!matchingNode) return;
+
+        // Actualizar datos del HUD y activar toast de actividad
+        this.lastActiveUser = userName;
+        this.lastActiveModule = rawMod || matchingNode.communityName || matchingNode.label;
+        this.lastActiveTime = typeof fecha === 'string' && fecha.length <= 8 ? fecha : new Date().toLocaleTimeString();
+        this.showActivityBanner = true;
+
+        if (this.bannerTimeout) {
+            clearTimeout(this.bannerTimeout);
+        }
+        this.bannerTimeout = setTimeout(() => {
+            this.showActivityBanner = false;
+            this._cdr.markForCheck();
+        }, 5000);
+
+        // Disparar destello sináptico inmediato e impulsos hacia el núcleo API (sin zoom brusco)
+        this.triggerSynapticCascade(matchingNode);
+        this.selectedNode = matchingNode;
+        this.highlightNodeConnections(matchingNode);
+
+        console.log(`🧠 [Red Neuronal] Actividad detectada: ${userName} en "${this.lastActiveModule}" -> Neurona ${matchingNode.label}`);
+        this._cdr.markForCheck();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -1002,7 +1320,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         this.activeScope = scope;
         if (scope === 'backend') {
             this.controls.target.set(0, 0, 0);
-            this.camera.position.set(0, 20, 280);
+            this.camera.position.set(0, 20, 240);
+        } else if (scope === 'frontend') {
+            this.controls.target.set(0, 0, 0);
+            this.camera.position.set(0, 30, 520);
         } else {
             this.controls.target.set(0, 0, 0);
             this.camera.position.set(0, 30, 620);
@@ -1056,6 +1377,12 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         if (this.resizeObserver) {
             this.resizeObserver.disconnect();
             this.resizeObserver = undefined;
+        }
+        if (this.bridgeLinesMesh) {
+            this.scene.remove(this.bridgeLinesMesh);
+            this.bridgeLinesMesh.geometry.dispose();
+            (this.bridgeLinesMesh.material as THREE.Material).dispose();
+            this.bridgeLinesMesh = undefined;
         }
         if (this.selectedConnectionsMesh) {
             this.scene.remove(this.selectedConnectionsMesh);

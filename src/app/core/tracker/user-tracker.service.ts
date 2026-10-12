@@ -30,7 +30,7 @@ export class UserTrackerService {
 
     private initBuffer(): void {
         this._eventBuffer.pipe(
-            bufferTime(10000),
+            bufferTime(2000),
             filter(events => events.length > 0)
         ).subscribe(events => {
             this.sendBatch(events);
@@ -64,7 +64,23 @@ export class UserTrackerService {
             Dispositivo: dispositivo
         };
 
-        this._eventBuffer.next(dto);
+        // Si es cambio de ruta/navegación a un módulo, enviar inmediatamente para telemetría en tiempo real
+        if (accion === 'Acceso al módulo' || componente === 'Router') {
+            this.sendSingle(dto);
+        } else {
+            this._eventBuffer.next(dto);
+        }
+    }
+
+    private sendSingle(event: LogNavegacionDto): void {
+        const token = this._authService.accessToken || localStorage.getItem('accessToken');
+        if (!token) return;
+
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        this._httpClient.post(this.apiRestUrl, event, { headers }).subscribe({
+            next: () => { },
+            error: (err) => { }
+        });
     }
 
     private sendBatch(events: LogNavegacionDto[]): void {

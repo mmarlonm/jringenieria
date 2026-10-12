@@ -39,10 +39,11 @@ export class ActivitySignalRService {
      * Inicia la conexión con el Hub de Navegación si el usuario tiene el rol requerido.
      */
     public startConnection(): void {
-        if (this.hubConnection?.state === HubConnectionState.Connected) return;
+        if (this.hubConnection?.state === HubConnectionState.Connected || this.hubConnection?.state === HubConnectionState.Connecting) {
+            return;
+        }
 
-        const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        const token = localStorage.getItem('accessToken') || '';
 
         // Construir la conexión
         // Según requerimiento: ${apiUrl}/navegacionHub
@@ -51,11 +52,12 @@ export class ActivitySignalRService {
                 accessTokenFactory: () => token
             })
             .withAutomaticReconnect()
-            .configureLogging(LogLevel.None)
+            .configureLogging(LogLevel.Warning)
             .build();
 
         // Registrar manejadores
         this.hubConnection.on('RecibirMovimiento', (movimiento: ActivityLog) => {
+            console.log('⚡ [ActivitySignalR] Movimiento recibido:', movimiento);
             this._movimientos.next(movimiento);
         });
 
@@ -63,12 +65,11 @@ export class ActivitySignalRService {
         this.hubConnection
             .start()
             .then(() => {
-//                 console.log('✅ [ActivitySignalR] Conectado a /navegacionHub');
+                console.log('✅ [ActivitySignalR] Conectado exitosamente a /navegacionHub');
                 this._connectionStatus.next(true);
                 
                 // Enviar mensajes encolados
                 if (this._messageQueue.length > 0) {
-                    // console.log(`📤 [ActivitySignalR] Enviando ${this._messageQueue.length} mensajes encolados...`);
                     while (this._messageQueue.length > 0) {
                         const queuedLog = this._messageQueue.shift();
                         if (queuedLog) this.sendLog(queuedLog);
@@ -76,11 +77,24 @@ export class ActivitySignalRService {
                 }
             })
             .catch(err => {
-                // console.error('❌ [ActivitySignalR] Error al conectar:', err);
+                console.warn('⚠️ [ActivitySignalR] Error al conectar a /navegacionHub:', err);
                 this._connectionStatus.next(false);
             });
 
-        this.hubConnection.onclose(() => this._connectionStatus.next(false));
+        this.hubConnection.onreconnecting(() => {
+            console.warn('🔄 [ActivitySignalR] Reconectando a /navegacionHub...');
+            this._connectionStatus.next(false);
+        });
+
+        this.hubConnection.onreconnected(() => {
+            console.log('✅ [ActivitySignalR] Reconexión exitosa a /navegacionHub');
+            this._connectionStatus.next(true);
+        });
+
+        this.hubConnection.onclose(() => {
+            console.warn('🛑 [ActivitySignalR] Conexión cerrada a /navegacionHub');
+            this._connectionStatus.next(false);
+        });
     }
 
     /**

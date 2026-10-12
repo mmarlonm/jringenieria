@@ -12,25 +12,43 @@
         <header class="hud-topbar" *ngIf="!isLoading">
             <div class="hud-left">
                 <div class="hud-title-wrap">
-                    <span class="live-dot animate-ping"></span>
+                    <span class="live-dot" [class.live-dot-pulse]="showActivityBanner"></span>
                     <span class="hud-title">Red Neuronal 3D — JR Ingeniería</span>
-                    <span class="live-badge">SignalR Conectado</span>
+                    <span class="live-badge" [class.live-badge-active]="isSignalRConnected">
+                        {{ isSignalRConnected ? 'SignalR En Vivo' : 'SignalR Conectado' }}
+                    </span>
                 </div>
                 <!-- SELECTOR DE ALCANCE (SCOPE) -->
                 <div class="scope-selector">
                     <button [class.active]="activeScope === 'all'" (click)="filterScope('all')">
-                        🧠 Cerebro Completo
+                        🧠 Ambas Esferas
                     </button>
                     <button [class.active]="activeScope === 'frontend'" (click)="filterScope('frontend')">
-                        🎨 Corteza (Front)
+                        🎨 Capa Front (Esfera Exterior)
                     </button>
                     <button [class.active]="activeScope === 'backend'" (click)="filterScope('backend')">
-                        ⚙️ Núcleo (API)
+                        ⚙️ Capa API (Esfera Interior)
                     </button>
                 </div>
             </div>
 
+            <!-- TOAST CENTRAL DE ACTIVIDAD DE USUARIOS EN TIEMPO REAL -->
+            <div class="hud-center" *ngIf="showActivityBanner">
+                <div class="hud-activity-banner">
+                    <span class="activity-lightning">⚡</span>
+                    <strong class="activity-user">{{ lastActiveUser }}</strong>
+                    <span class="activity-action">accedió a</span>
+                    <span class="activity-target">{{ lastActiveModule }}</span>
+                    <span class="activity-time">{{ lastActiveTime }}</span>
+                </div>
+            </div>
+
             <div class="hud-right">
+                <div class="synapse-counter-chip" matTooltip="Total de impulsos sinápticos disparados">
+                    <span class="chip-dot"></span>
+                    <span class="chip-val">{{ recentSynapsesCount }}</span>
+                    <span class="chip-label">sinapsis</span>
+                </div>
                 <button class="btn-action" [class.btn-demo-active]="showModuleLabels" (click)="toggleModuleLabels()" matTooltip="Mostrar u ocultar nombres de módulos en los círculos">
                     <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
                     <span>{{ showModuleLabels ? 'Módulos ON' : 'Módulos OFF' }}</span>
@@ -78,7 +96,7 @@
                      class="search-item"
                      [style.border-left]="'3px solid ' + node.color"
                      (click)="selectSearchResult(node)">
-                    {{ node.label }} <small style="color: #64748b; margin-left: 4px;">({{ node.scope === 'frontend' ? 'Corteza' : 'Núcleo' }})</small>
+                    {{ node.label }} <small style="color: #64748b; margin-left: 4px;">({{ node.scope === 'frontend' ? 'Front Exterior' : 'API Interior' }})</small>
                 </div>
             </div>
         </div>
@@ -95,7 +113,7 @@
                     <div class="field">
                         <b>{{ selectedNode.label }}</b>
                         <span class="scope-pill" [class.fe]="selectedNode.scope === 'frontend'" [class.be]="selectedNode.scope === 'backend'">
-                            {{ selectedNode.scope === 'frontend' ? 'Corteza Frontend' : 'Núcleo API' }}
+                            {{ selectedNode.scope === 'frontend' ? 'Esfera Exterior (Frontend)' : 'Esfera Interior (API Core)' }}
                         </span>
                     </div>
                     <div class="field">Type: {{ selectedNode.fileType || 'code' }}</div>
@@ -113,7 +131,7 @@
 
                     <!-- VÍA SINÁPTICA CORTEZA <-> NÚCLEO API -->
                     <div class="bridge-box" *ngIf="getBridgeForNode(selectedNode.id) as bridgeTarget">
-                        <div class="bridge-header">🧠 Vía Sináptica hacia {{ bridgeTarget.scope === 'backend' ? 'Núcleo API' : 'Corteza Front' }}:</div>
+                        <div class="bridge-header">🧠 Vía Sináptica hacia {{ bridgeTarget.scope === 'backend' ? 'Esfera Interior (API Core)' : 'Esfera Exterior (Frontend)' }}:</div>
                         <div class="bridge-link" (click)="selectNode(bridgeTarget)">
                             <span>{{ bridgeTarget.label }}</span>
                             <small class="bridge-badge">{{ bridgeTarget.scope === 'backend' ? 'Controller API' : 'Módulo Front' }}</small>

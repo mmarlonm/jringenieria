@@ -90,6 +90,124 @@
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
+    transition: all 0.3s ease;
+
+    &.live-badge-active {
+        background: rgba(16, 185, 129, 0.28);
+        border-color: rgba(52, 211, 153, 0.7);
+        color: #6ee7b7;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+}
+
+.live-dot-pulse {
+    background: #00f0ff !important;
+    box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff !important;
+    animation: livePulseGlow 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes livePulseGlow {
+    from { transform: scale(1); opacity: 0.8; }
+    to { transform: scale(1.6); opacity: 1; }
+}
+
+.hud-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    margin: 0 12px;
+}
+
+.hud-activity-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(0, 240, 255, 0.6);
+    border-radius: 9999px;
+    box-shadow: 0 0 22px rgba(0, 240, 255, 0.35), 0 4px 14px rgba(0, 0, 0, 0.7);
+    animation: toastSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+    .activity-lightning {
+        font-size: 14px;
+        color: #facc15;
+        animation: sparkFlicker 0.4s infinite alternate;
+    }
+
+    .activity-user {
+        font-size: 12px;
+        font-weight: 700;
+        color: #38bdf8;
+    }
+
+    .activity-action {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+
+    .activity-target {
+        font-size: 12px;
+        font-weight: 600;
+        color: #34d399;
+        text-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    }
+
+    .activity-time {
+        font-size: 10px;
+        color: #64748b;
+        margin-left: 4px;
+    }
+}
+
+@keyframes toastSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes sparkFlicker {
+    from { opacity: 0.7; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.2); }
+}
+
+.synapse-counter-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 8px;
+    color: #e2e8f0;
+
+    .chip-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #a855f7;
+        box-shadow: 0 0 6px #a855f7;
+    }
+
+    .chip-val {
+        font-size: 12px;
+        font-weight: 700;
+        color: #c084fc;
+    }
+
+    .chip-label {
+        font-size: 10px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
 }
 
 .scope-selector {
