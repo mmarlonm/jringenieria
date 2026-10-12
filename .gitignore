@@ -24,4 +24,6 @@ yarn-error.log*
 # Misc
 /tmp/
 public/graphify-*
-src/assets/graphify-*
+src/assets/graphify-frontend
+src/assets/graphify-api
+!src/assets/graphify-3d.json

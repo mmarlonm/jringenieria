@@ -168,7 +168,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
 
     ngAfterViewInit(): void {
         this.initThreeScene();
-        this.loadGraphData();
+        // Carga asíncrona desacoplada del ciclo de detección para evitar NG0100
+        setTimeout(() => {
+            this.loadGraphData();
+        }, 0);
     }
 
     ngOnDestroy(): void {
@@ -217,7 +220,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         this.controls.maxDistance = 3500;
 
         // 5. Iluminación volumétrica del cerebro
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
         this.scene.add(ambientLight);
 
         // Luz radiante del núcleo central (API Core)
@@ -266,29 +269,43 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         return texture;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // CARGA DE DATOS DE GRAPHIFY
-    // ─────────────────────────────────────────────────────────────
     private loadGraphData(): void {
         this.loadingProgress = 'Cargando cerebro 3D (Frontend y API en núcleo)...';
+        this._cdr.detectChanges();
 
-        this._http.get<any>('assets/graphify-3d.json').subscribe({
-            next: (data) => {
-                this.processLoadedData(data);
-            },
-            error: (err) => {
-                console.warn('Cargando con ruta alternativa /jringenieria/assets/graphify-3d.json...', err);
-                this._http.get<any>('/jringenieria/assets/graphify-3d.json').subscribe({
-                    next: (data2) => this.processLoadedData(data2),
-                    error: (err2) => {
-                        console.error('No se pudo cargar graphify-3d.json.', err2);
-                        this.loadingProgress = 'Error al cargar datos del cerebro 3D.';
-                        this.isLoading = false;
-                        this._cdr.markForCheck();
-                    }
-                });
+        const base = (typeof document !== 'undefined' && document.baseURI) ? document.baseURI.replace(/\/$/, '') : '';
+        const candidateUrls = [
+            'assets/graphify-3d.json',
+            base ? `${base}/assets/graphify-3d.json` : '',
+            '/jringenieria/assets/graphify-3d.json',
+            '/assets/graphify-3d.json',
+            './assets/graphify-3d.json'
+        ].filter(u => !!u);
+
+        const uniqueUrls = Array.from(new Set(candidateUrls));
+
+        const tryFetch = (index: number) => {
+            if (index >= uniqueUrls.length) {
+                console.error('No se pudo cargar graphify-3d.json desde ninguna de las rutas intentadas:', uniqueUrls);
+                this.loadingProgress = 'Error al cargar datos del cerebro 3D. Verifica que graphify-3d.json exista en assets.';
+                this.isLoading = false;
+                this._cdr.detectChanges();
+                return;
             }
-        });
+
+            const url = uniqueUrls[index];
+            this._http.get<any>(url).subscribe({
+                next: (data) => {
+                    this.processLoadedData(data);
+                },
+                error: (err) => {
+                    console.warn(`Ruta ${url} no disponible (${err.status || 'error'}), probando siguiente alternativa...`);
+                    tryFetch(index + 1);
+                }
+            });
+        };
+
+        tryFetch(0);
     }
 
     private processLoadedData(data: any): void {
@@ -321,16 +338,31 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
 
         this.buildThreeMeshes();
         this.isLoading = false;
-        this._cdr.markForCheck();
+        this._cdr.detectChanges();
     }
 
     // ─────────────────────────────────────────────────────────────
     // CONSTRUCCIÓN DE MESHES THREE.JS (ALTO RENDIMIENTO Y FLUIDEZ 60 FPS)
     // ─────────────────────────────────────────────────────────────
     private buildThreeMeshes(): void {
+        // Limpiar mallas anteriores si existían
+        if (this.instancedNodes) {
+            this.scene.remove(this.instancedNodes);
+            this.instancedNodes.geometry.dispose();
+            (this.instancedNodes.material as THREE.Material).dispose();
+        }
+        if (this.linesMesh) {
+            this.scene.remove(this.linesMesh);
+            this.linesMesh.geometry.dispose();
+            (this.linesMesh.material as THREE.Material).dispose();
+        }
+
         const count = this.nodes.length;
         const sphereGeo = new THREE.SphereGeometry(1, 6, 6); // Geometría ligera ultra-optimizada
-        const nodeMat = new THREE.MeshBasicMaterial(); // Cero sobrecarga de cálculo de luces por fragmento (60+ FPS puros)
+        const nodeMat = new THREE.MeshLambertMaterial({
+            emissive: 0x111827,
+            emissiveIntensity: 0.45
+        });
 
         this.instancedNodes = new THREE.InstancedMesh(sphereGeo, nodeMat, count);
         this.nodeIndexMap.clear();
@@ -383,9 +415,8 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         const lineMat = new THREE.LineBasicMaterial({
             vertexColors: true,
             transparent: true,
-            opacity: 0.12,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
+            opacity: 0.18,
+            blending: THREE.AdditiveBlending
         });
         this.linesMesh = new THREE.LineSegments(lineGeo, lineMat);
         this.scene.add(this.linesMesh);
