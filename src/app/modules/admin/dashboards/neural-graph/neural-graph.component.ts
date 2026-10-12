@@ -144,6 +144,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     private frameCount: number = 0;
     private animFrameId: number = 0;
     private isRunning: boolean = true;
+    private resizeObserver?: ResizeObserver;
 
     // Meshes Three.js
     private instancedNodes!: THREE.InstancedMesh;
@@ -244,8 +245,41 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         // Contenedor de nombres de módulos
         this.scene.add(this.labelsGroup);
 
+        // Configurar observador de redimensionamiento automático
+        this.setupResizeObserver();
+
         // Iniciar loop de render
         this.startLoop();
+    }
+
+    @HostListener('window:resize')
+    onWindowResize(): void {
+        if (!this.containerRef?.nativeElement) return;
+        const rect = this.containerRef.nativeElement.getBoundingClientRect();
+        this.handleResize(rect.width, rect.height);
+    }
+
+    private setupResizeObserver(): void {
+        const container = this.containerRef?.nativeElement;
+        if (!container || typeof ResizeObserver === 'undefined') return;
+
+        this.resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect;
+                this.handleResize(width, height);
+            }
+        });
+        this.resizeObserver.observe(container);
+    }
+
+    private handleResize(width: number, height: number): void {
+        if (!this.renderer || !this.camera || width <= 0 || height <= 0) return;
+
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+
+        this.renderer.setSize(width, height, true);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     }
 
     private createGlowTexture(coreColor: string, haloColor: string): THREE.Texture {
@@ -817,8 +851,8 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             return;
         }
 
-        this.mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
-        this.mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         this.mouseMoved = true;
     }
 
@@ -1019,6 +1053,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     }
 
     private disposeThree(): void {
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = undefined;
+        }
         if (this.selectedConnectionsMesh) {
             this.scene.remove(this.selectedConnectionsMesh);
             this.selectedConnectionsMesh.geometry.dispose();
