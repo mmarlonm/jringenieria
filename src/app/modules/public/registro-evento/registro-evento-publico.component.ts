@@ -374,8 +374,11 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 :host {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 100%;
     width: 100%;
+    min-width: 100%;
     min-height: 100vh;
     margin: 0;
     padding: 0;
@@ -704,6 +707,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
 .public-registration-root {
     width: 100%;
+    min-width: 100%;
+    flex: 1 1 auto;
     min-height: 100vh;
     background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 50%, #e2e8f0 100%);
     display: flex;
