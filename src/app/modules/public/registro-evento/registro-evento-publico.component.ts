@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
-import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, DisenoConfig } from '../../admin/eventos/configurador-registro/formulario-registro.service';
+import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, DisenoConfig, PasoFormularioConfig } from '../../admin/eventos/configurador-registro/formulario-registro.service';
 
 @Component({
     selector: 'app-registro-evento-publico',
@@ -44,16 +44,18 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                 <mat-icon class="text-3xl">check_circle</mat-icon>
             </div>
             
-            <h2 class="text-xl font-black text-slate-900 dark:text-white">¡Registro Confirmado!</h2>
+            <h2 class="text-xl font-black text-slate-900 dark:text-white">
+                {{ diseno?.tipoFormulario === 'Satisfaccion' ? '¡Gracias por tus Respuestas!' : '¡Registro Confirmado!' }}
+            </h2>
             <p class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
-                {{ resultadoRegistro?.nombreCompleto || 'Bienvenido(a)' }}
+                {{ resultadoRegistro?.nombreCompleto || 'Estimado(a) Participante' }}
             </p>
             <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                {{ diseno?.mensajeExito || 'Tu registro ha sido completado exitosamente.' }}
+                {{ diseno?.mensajeExito || (diseno?.tipoFormulario === 'Satisfaccion' ? 'Tu encuesta ha sido recibida exitosamente. Tu opinión nos ayuda a mejorar.' : 'Tu registro ha sido completado exitosamente.') }}
             </p>
 
-            <!-- Notificaciones enviadas: Email y WhatsApp -->
-            <div class="mt-3 flex flex-wrap justify-center gap-2 text-xs">
+            <!-- Notificaciones enviadas: Email y WhatsApp (Solo para registros de acceso con pase) -->
+            <div *ngIf="diseno?.tipoFormulario !== 'Satisfaccion'" class="mt-3 flex flex-wrap justify-center gap-2 text-xs">
                 <span *ngIf="resultadoRegistro?.emailEnviado" 
                       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800">
                     <mat-icon class="text-[14px]">email</mat-icon>
@@ -124,8 +126,34 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
             <!-- 2. BODY DEL CUESTIONARIO CON SCROLL INTERNO LIMPIO -->
             <div class="public-card-body">
                 
-                <!-- Descripción / Intro -->
-                <div *ngIf="formPublico.descripcion" class="intro-description">
+                <!-- STEPPER / INDICADOR DE PROGRESO (WIZARD MULTI-PASO) -->
+                <div *ngIf="diseno?.modoPasos" class="wizard-stepper-container animate-fade-in">
+                    <div class="stepper-header-row">
+                        <span class="stepper-step-badge" [ngStyle]="{'background-color': (diseno?.colorPrimario || '#1e8449') + '20', 'color': diseno?.colorPrimario || '#1e8449'}">
+                            Paso {{ pasoActual }} de {{ totalPasos }}
+                        </span>
+                        <span class="stepper-step-title">
+                            {{ pasoActualConfig?.titulo || ('Paso ' + pasoActual) }}
+                        </span>
+                    </div>
+
+                    <!-- Barra de progreso continua -->
+                    <div class="stepper-progress-track">
+                        <div class="stepper-progress-fill"
+                             [ngStyle]="{
+                                 'width': ((pasoActual / totalPasos) * 100) + '%',
+                                 'background-color': diseno?.colorPrimario || '#1e8449'
+                             }"></div>
+                    </div>
+
+                    <!-- Subtítulo o descripción del paso -->
+                    <p *ngIf="pasoActualConfig?.descripcion" class="stepper-step-desc">
+                        {{ pasoActualConfig?.descripcion }}
+                    </p>
+                </div>
+
+                <!-- Descripción general (Solo en paso 1 o formulario sin pasos) -->
+                <div *ngIf="formPublico.descripcion && (!diseno?.modoPasos || pasoActual === 1)" class="intro-description">
                     <p>{{ formPublico.descripcion }}</p>
                 </div>
 
@@ -138,15 +166,70 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                 <!-- CAMPOS DINÁMICOS -->
                 <form (ngSubmit)="enviarRegistro()" class="fields-grid" #regForm="ngForm">
                     <ng-container *ngFor="let campo of campos">
-                    <div *ngIf="esCampoVisible(campo)"
+                    <div *ngIf="esCampoVisible(campo) && esCampoDePasoActual(campo)"
                          class="field-col"
-                         [ngClass]="{'col-full': campo.ancho === 'full', 'col-half': campo.ancho === 'half'}">
+                         [ngClass]="{'col-full': campo.ancho === 'full' || campo.tipo === 'matrix' || campo.tipo === 'section', 'col-half': campo.ancho === 'half'}">
 
-                        <!-- Etiqueta del campo -->
-                        <label class="field-label" [for]="campo.id">
+                        <!-- COMPONENTE: BLOQUE / SEPARADOR DE SECCIÓN -->
+                        <div *ngIf="campo.tipo === 'section'" class="section-block-container animate-fade-in">
+                            <div class="section-accent-bar" [ngStyle]="{'background-color': diseno?.colorPrimario || '#1e8449'}"></div>
+                            <div class="section-header-content">
+                                <h2 class="section-title-text">{{ campo.etiqueta }}</h2>
+                                <p *ngIf="campo.placeholder" class="section-desc-text">{{ campo.placeholder }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Etiqueta del campo (si no es bloque de sección) -->
+                        <label *ngIf="campo.tipo !== 'section'" class="field-label" [for]="campo.id">
                             {{ campo.etiqueta }}
                             <span *ngIf="campo.requerido" class="required-star">*</span>
                         </label>
+
+                        <!-- COMPONENTE: MATRIZ / TABLA DE EVALUACIÓN LIKERT (1 AL 5) -->
+                        <div *ngIf="campo.tipo === 'matrix'" class="matrix-card-wrapper" [class.matrix-has-error]="erroresCampos[campo.id]">
+                            <p *ngIf="campo.placeholder" class="matrix-instruction-text">{{ campo.placeholder }}</p>
+
+                            <div class="matrix-table-scroll">
+                                <table class="matrix-evaluation-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="matrix-th-aspect">Aspecto</th>
+                                            <th *ngFor="let col of campo.columnasMatriz" class="matrix-th-score">
+                                                {{ col.etiqueta }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let fila of campo.filasMatriz">
+                                            <td class="matrix-td-aspect">
+                                                <span class="aspect-main-text">{{ fila.texto }}</span>
+                                                <span *ngIf="fila.subtexto" class="aspect-sub-text">{{ fila.subtexto }}</span>
+                                            </td>
+                                            <td *ngFor="let col of campo.columnasMatriz" class="matrix-td-score">
+                                                <label class="matrix-score-option"
+                                                       [class.score-checked]="respuestas[campo.id]?.[fila.id] === col.valor"
+                                                       (click)="seleccionarMatriz(campo.id, fila.id, col.valor)">
+                                                    <input type="radio"
+                                                           [name]="'matrix_' + campo.id + '_' + fila.id"
+                                                           [value]="col.valor"
+                                                           [checked]="respuestas[campo.id]?.[fila.id] === col.valor"
+                                                           class="sr-only">
+                                                    <span class="matrix-radio-disc"
+                                                          [ngStyle]="{'background-color': respuestas[campo.id]?.[fila.id] === col.valor ? (diseno?.colorPrimario || '#1e8449') : undefined}">
+                                                    </span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Leyenda de Escala al pie de la tabla -->
+                            <div class="matrix-footer-legend" *ngIf="campo.escalaNotaInferior || campo.escalaNotaSuperior">
+                                <span *ngIf="campo.escalaNotaInferior"><strong>Escala:</strong> {{ campo.escalaNotaInferior }}</span>
+                                <span *ngIf="campo.escalaNotaSuperior">{{ campo.escalaNotaSuperior }}</span>
+                            </div>
+                        </div>
 
                         <!-- Input texto / email / tel / number -->
                         <div *ngIf="campo.tipo === 'input' || campo.tipo === 'email' || campo.tipo === 'tel' || campo.tipo === 'number'" class="input-wrap">
@@ -201,7 +284,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                             </label>
                         </div>
 
-                        <!-- Checkboxes (Multiple) -->
+                        <!-- Checkboxes (Multiple / Barras Horizontales) -->
                         <div *ngIf="campo.tipo === 'checkbox'" class="options-group">
                             <label *ngFor="let opt of campo.opciones"
                                    class="checkbox-pill"
@@ -238,17 +321,46 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                     </div>
                     </ng-container>
 
-                    <!-- BOTÓN DE ENVÍO -->
+                    <!-- ACCIONES DE NAVEGACIÓN Y ENVÍO -->
                     <div class="submit-action-row">
-                        <button type="submit"
-                                [disabled]="enviando"
-                                class="btn-primary-submit"
-                                [ngStyle]="{'background-color': diseno?.colorPrimario || '#1e8449'}">
-                            <span *ngIf="enviando" class="submit-spinner"></span>
-                            <span>{{ enviando ? 'Registrando...' : (diseno?.botonTexto || 'Completar Registro') }}</span>
-                            <mat-icon *ngIf="!enviando" class="btn-arrow">arrow_forward</mat-icon>
-                        </button>
-                        <p class="terms-note">Al registrarte aceptas las políticas de acceso y aviso de privacidad de JR Ingeniería.</p>
+                        <!-- Navegación si está en Modo Pasos y no es el último paso -->
+                        <div *ngIf="diseno?.modoPasos && pasoActual < totalPasos" class="wizard-nav-actions">
+                            <button *ngIf="pasoActual > 1"
+                                    type="button"
+                                    (click)="retrocederPaso()"
+                                    class="btn-nav-prev">
+                                <mat-icon class="btn-arrow">arrow_back</mat-icon>
+                                <span>Anterior</span>
+                            </button>
+                            <button type="button"
+                                    (click)="avanzarPaso()"
+                                    class="btn-primary-submit"
+                                    [ngStyle]="{'background-color': diseno?.colorPrimario || '#1e8449'}">
+                                <span>Siguiente Paso</span>
+                                <mat-icon class="btn-arrow">arrow_forward</mat-icon>
+                            </button>
+                        </div>
+
+                        <!-- Último paso o modo normal -->
+                        <div *ngIf="!diseno?.modoPasos || pasoActual === totalPasos" class="wizard-nav-actions">
+                            <button *ngIf="diseno?.modoPasos && pasoActual > 1"
+                                    type="button"
+                                    (click)="retrocederPaso()"
+                                    class="btn-nav-prev">
+                                <mat-icon class="btn-arrow">arrow_back</mat-icon>
+                                <span>Anterior</span>
+                            </button>
+                            <button type="submit"
+                                    [disabled]="enviando"
+                                    class="btn-primary-submit flex-1"
+                                    [ngStyle]="{'background-color': diseno?.colorPrimario || '#1e8449'}">
+                                <span *ngIf="enviando" class="submit-spinner"></span>
+                                <span>{{ enviando ? 'Enviando...' : (diseno?.botonTexto || (diseno?.tipoFormulario === 'Satisfaccion' ? 'Enviar Encuesta' : 'Completar Registro')) }}</span>
+                                <mat-icon *ngIf="!enviando" class="btn-arrow">send</mat-icon>
+                            </button>
+                        </div>
+
+                        <p class="terms-note">JR Ingeniería garantiza el tratamiento confidencial y seguro de tus datos.</p>
                     </div>
                 </form>
 
@@ -271,6 +383,324 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     box-sizing: border-box;
+}
+
+/* === ESTILOS DEL WIZARD / STEPPER === */
+.wizard-stepper-container {
+    padding: 0.85rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+
+    .card-dark & {
+        background: #1e293b;
+        border-color: #334155;
+    }
+}
+
+.stepper-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.stepper-step-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.stepper-step-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+
+    .card-dark & {
+        color: #f8fafc;
+    }
+}
+
+.stepper-progress-track {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+
+    .card-dark & {
+        background: #334155;
+    }
+}
+
+.stepper-progress-fill {
+    height: 100%;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 9999px;
+}
+
+.stepper-step-desc {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 0.4rem;
+    margin-bottom: 0;
+}
+
+/* === ESTILOS DEL BLOQUE / SEPARADOR DE SECCIÓN === */
+.section-block-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 0 0.5rem 0;
+    margin-top: 0.5rem;
+    border-top: 2px dashed #e2e8f0;
+
+    .card-dark & {
+        border-top-color: #334155;
+    }
+}
+
+.section-accent-bar {
+    width: 4px;
+    height: 36px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+}
+
+.section-header-content {
+    flex: 1;
+}
+
+.section-title-text {
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: #0f172a;
+    margin: 0;
+    text-transform: uppercase;
+
+    .card-dark & {
+        color: #f8fafc;
+    }
+}
+
+.section-desc-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0.15rem 0 0 0;
+    line-height: 1.4;
+
+    .card-dark & {
+        color: #94a3b8;
+    }
+}
+
+/* === ESTILOS DE LA TABLA / MATRIZ LIKERT (1 AL 5) === */
+.matrix-card-wrapper {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1.25rem;
+    padding: 1rem;
+    margin-top: 0.35rem;
+
+    .card-dark & {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    &.matrix-has-error {
+        border-color: #ef4444;
+    }
+}
+
+.matrix-instruction-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+    font-style: italic;
+
+    .card-dark & {
+        color: #94a3b8;
+    }
+}
+
+.matrix-table-scroll {
+    overflow-x: auto;
+    border-radius: 0.85rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+
+    .card-dark & {
+        border-color: #334155;
+        background: #0f172a;
+    }
+}
+
+.matrix-evaluation-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+
+.matrix-th-aspect {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 800;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    min-width: 180px;
+
+    .card-dark & {
+        background: #1e293b;
+        color: #94a3b8;
+    }
+}
+
+.matrix-th-score {
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-weight: 800;
+    font-size: 0.75rem;
+    min-width: 44px;
+
+    .card-dark & {
+        background: #1e293b;
+        color: #f8fafc;
+    }
+}
+
+.matrix-td-aspect {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #f1f5f9;
+    vertical-align: middle;
+
+    .card-dark & {
+        border-top-color: #334155;
+    }
+}
+
+.aspect-main-text {
+    display: block;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.35;
+
+    .card-dark & {
+        color: #f8fafc;
+    }
+}
+
+.aspect-sub-text {
+    display: block;
+    font-size: 0.65rem;
+    color: #64748b;
+    margin-top: 0.2rem;
+}
+
+.matrix-td-score {
+    text-align: center;
+    padding: 0.5rem;
+    border-top: 1px solid #f1f5f9;
+    vertical-align: middle;
+
+    .card-dark & {
+        border-top-color: #334155;
+    }
+}
+
+.matrix-score-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: #f1f5f9;
+
+        .card-dark & {
+            background-color: #334155;
+        }
+    }
+}
+
+.matrix-radio-disc {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    display: inline-block;
+    transition: all 0.2s ease;
+
+    .score-checked & {
+        border-color: transparent !important;
+        transform: scale(1.15);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.matrix-footer-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    font-size: 0.7rem;
+    color: #64748b;
+
+    .card-dark & {
+        color: #94a3b8;
+    }
+}
+
+/* === ACCIONES DE NAVEGACIÓN WIZARD === */
+.wizard-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.btn-nav-prev {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.85rem 1.25rem;
+    border-radius: 0.85rem;
+    border: 1.5px solid #cbd5e1;
+    background: transparent;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+    }
+
+    .card-dark & {
+        border-color: #475569;
+        color: #cbd5e1;
+
+        &:hover {
+            background: #334155;
+        }
+    }
 }
 
 .public-registration-root {
@@ -855,12 +1285,31 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
     campos: CampoConfig[] = [];
     diseno: DisenoConfig | null = null;
 
+    // Control de Wizard Multi-Paso
+    pasoActual = 1;
+
     // Respuestas del usuario
     respuestas: { [key: string]: any } = {};
     erroresCampos: { [key: string]: boolean } = {};
 
     // Resultado de registro
     resultadoRegistro: any = null;
+
+    /** Pasos configurados en el formulario */
+    get pasos(): PasoFormularioConfig[] {
+        if (this.diseno?.modoPasos && this.diseno.pasos && this.diseno.pasos.length > 0) {
+            return this.diseno.pasos;
+        }
+        return [{ numero: 1, titulo: 'Datos Generales' }];
+    }
+
+    get totalPasos(): number {
+        return this.pasos.length;
+    }
+
+    get pasoActualConfig(): PasoFormularioConfig | undefined {
+        return this.pasos.find(p => p.numero === this.pasoActual) || this.pasos[0];
+    }
 
     ngOnInit(): void {
         this.slug = this._route.snapshot.paramMap.get('slug') || '';
@@ -898,6 +1347,7 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
                     }
 
                     this.inicializarRespuestas();
+                    this.pasoActual = 1;
                     this._cdr.markForCheck();
                 },
                 error: () => {
@@ -914,10 +1364,54 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         this.campos.forEach(c => {
             if (c.tipo === 'checkbox') {
                 this.respuestas[c.id] = [];
+            } else if (c.tipo === 'matrix') {
+                this.respuestas[c.id] = {};
             } else {
                 this.respuestas[c.id] = '';
             }
         });
+    }
+
+    /** Navegación Wizard: Avanza validando solo los campos del paso actual */
+    avanzarPaso(): void {
+        if (!this.validarPaso(this.pasoActual)) {
+            return;
+        }
+        if (this.pasoActual < this.totalPasos) {
+            this.pasoActual++;
+            this.errorMessage = '';
+            const scrollEl = document.querySelector('.public-card-body');
+            if (scrollEl) scrollEl.scrollTop = 0;
+            this._cdr.markForCheck();
+        }
+    }
+
+    /** Navegación Wizard: Regresa al paso anterior */
+    retrocederPaso(): void {
+        if (this.pasoActual > 1) {
+            this.pasoActual--;
+            this.errorMessage = '';
+            const scrollEl = document.querySelector('.public-card-body');
+            if (scrollEl) scrollEl.scrollTop = 0;
+            this._cdr.markForCheck();
+        }
+    }
+
+    /** Determina si un campo pertenece al paso visible en pantalla */
+    esCampoDePasoActual(campo: CampoConfig): boolean {
+        if (!this.diseno?.modoPasos) return true;
+        const pasoCampo = campo.paso || 1;
+        return pasoCampo === this.pasoActual;
+    }
+
+    /** Seleccionar opción en la tabla de evaluación Matriz (Likert 1 al 5) */
+    seleccionarMatriz(campoId: string, filaId: string, valor: string): void {
+        if (!this.respuestas[campoId] || typeof this.respuestas[campoId] !== 'object' || Array.isArray(this.respuestas[campoId])) {
+            this.respuestas[campoId] = {};
+        }
+        this.respuestas[campoId][filaId] = valor;
+        this.limpiarError(campoId);
+        this._cdr.markForCheck();
     }
 
     toggleCheckbox(campoId: string, opcion: string): void {
@@ -929,9 +1423,10 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         if (idx >= 0) {
             arr.splice(idx, 1);
         } else {
-            arr.push(optcionValida(opcion));
+            arr.push(opcion);
         }
-        function optcionValida(o: string) { return o; }
+        this.limpiarError(campoId);
+        this._cdr.markForCheck();
     }
 
     limpiarError(campoId: string): void {
@@ -939,27 +1434,37 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         this.errorMessage = '';
     }
 
+    /** Evalúa si el campo o bloque debe ser visible según la respuesta del campo dependiente */
     esCampoVisible(campo: CampoConfig): boolean {
         if (!campo.dependeDeCampoId) {
             return true;
         }
 
         const valorDependencia = this.respuestas[campo.dependeDeCampoId];
-        if (valorDependencia === undefined || valorDependencia === null) {
+        if (valorDependencia === undefined || valorDependencia === null || valorDependencia === '') {
             return false;
         }
 
         const valRequerido = (campo.dependeDeValor || '').toLowerCase().trim();
-        let valActual = '';
-
-        if (Array.isArray(valorDependencia)) {
-            valActual = valorDependencia.join(',').toLowerCase();
-            return valorDependencia.some(v => (v || '').toLowerCase().trim() === valRequerido);
-        } else {
-            valActual = String(valorDependencia).toLowerCase().trim();
+        if (!valRequerido) {
+            return true;
         }
 
-        return valActual === valRequerido;
+        // Si el campo padre es selección múltiple (checkbox / array)
+        if (Array.isArray(valorDependencia)) {
+            if (valorDependencia.length === 0) return false;
+            return valorDependencia.some(v => {
+                const item = (v || '').toLowerCase().trim();
+                return item === valRequerido || item.includes(valRequerido) || valRequerido.includes(item);
+            });
+        }
+
+        const valActual = String(valorDependencia).toLowerCase().trim();
+        if (campo.dependeDeOperador === 'contains') {
+            return valActual.includes(valRequerido) || valRequerido.includes(valActual);
+        }
+
+        return valActual === valRequerido || valActual.includes(valRequerido);
     }
 
     onFileSelected(event: any, campoId: string): void {
@@ -974,12 +1479,33 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         }
     }
 
-    validar(): boolean {
+    /** Valida campos requeridos del paso especificado */
+    validarPaso(pasoNum: number): boolean {
         this.erroresCampos = {};
         let valido = true;
 
-        for (const campo of this.campos) {
-            if (campo.requerido && this.esCampoVisible(campo)) {
+        const camposDelPaso = this.campos.filter(c => {
+            if (!this.esCampoVisible(c)) return false;
+            if (!this.diseno?.modoPasos) return true;
+            return (c.paso || 1) === pasoNum;
+        });
+
+        for (const campo of camposDelPaso) {
+            if (campo.tipo === 'section') continue; // Los bloques no requieren valor
+
+            if (campo.tipo === 'matrix') {
+                if (campo.requerido && campo.filasMatriz && campo.filasMatriz.length > 0) {
+                    const respMatriz = this.respuestas[campo.id] || {};
+                    const faltaAlgunaFila = campo.filasMatriz.some(f => !respMatriz[f.id]);
+                    if (faltaAlgunaFila) {
+                        this.erroresCampos[campo.id] = true;
+                        valido = false;
+                    }
+                }
+                continue;
+            }
+
+            if (campo.requerido) {
                 const val = this.respuestas[campo.id];
                 if (val === null || val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) {
                     this.erroresCampos[campo.id] = true;
@@ -989,10 +1515,24 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         }
 
         if (!valido) {
-            this.errorMessage = 'Por favor completa todos los campos obligatorios marcados con asterisco (*).';
+            this.errorMessage = 'Por favor completa todos los campos obligatorios del paso actual marcados con asterisco (*).';
+        } else {
+            this.errorMessage = '';
         }
 
+        this._cdr.markForCheck();
         return valido;
+    }
+
+    /** Valida la totalidad de los pasos del formulario antes de enviar */
+    validar(): boolean {
+        for (let p = 1; p <= this.totalPasos; p++) {
+            if (!this.validarPaso(p)) {
+                this.pasoActual = p;
+                return false;
+            }
+        }
+        return true;
     }
 
     enviarRegistro(): void {
@@ -1016,7 +1556,7 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
                 },
                 error: (err) => {
                     this.enviando = false;
-                    this.errorMessage = err?.error?.mensaje || 'Ocurrió un error al procesar tu registro. Por favor intenta de nuevo.';
+                    this.errorMessage = err?.error?.mensaje || 'Ocurrió un error al procesar tu respuesta. Por favor intenta de nuevo.';
                     this._cdr.markForCheck();
                 }
             });

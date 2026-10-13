@@ -3,9 +3,26 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
 
+export interface FilaMatrizConfig {
+    id: string;
+    texto: string;
+    subtexto?: string;
+}
+
+export interface ColumnaMatrizConfig {
+    valor: string;
+    etiqueta: string;
+}
+
+export interface PasoFormularioConfig {
+    numero: number;
+    titulo: string;
+    descripcion?: string;
+}
+
 export interface CampoConfig {
     id: string;
-    tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel' | 'file';
+    tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel' | 'file' | 'matrix' | 'section';
     etiqueta: string;
     placeholder?: string;
     requerido: boolean;
@@ -13,11 +30,21 @@ export interface CampoConfig {
     ancho?: 'full' | 'half';
     campoEstandar?: string; // Mapeo automático (Nombre, Apellidos, Correo, Telefono, Empresa, etc.)
     orden: number;
+    paso?: number; // Número de paso en el wizard (1, 2, 3...)
     dependeDeCampoId?: string;
     dependeDeValor?: string;
+    dependeDeOperador?: 'equals' | 'contains'; // Si el campo padre es selección múltiple (checkbox) o texto
+    // Configuración para tipo 'matrix' (Matriz de Escala Likert 1 al 5)
+    filasMatriz?: FilaMatrizConfig[];
+    columnasMatriz?: ColumnaMatrizConfig[];
+    escalaNotaInferior?: string; // Ej: "1 = Muy insatisfecho(a)"
+    escalaNotaSuperior?: string; // Ej: "5 = Muy satisfecho(a)"
 }
 
 export interface DisenoConfig {
+    tipoFormulario?: 'Registro' | 'Satisfaccion'; // Tipo de formulario: Registro (con QR) o Satisfacción (sin QR)
+    modoPasos?: boolean; // Habilitar formulario por pasos / wizard
+    pasos?: PasoFormularioConfig[]; // Lista de pasos configurados
     colorPrimario: string; // ej. '#1e8449'
     colorFondo: string;    // ej. '#0f172a' o '#f8fafc'
     estiloCard: 'solid' | 'glassmorphism' | 'bordered';
@@ -150,4 +177,75 @@ export class FormularioRegistroService {
         const params = formularioId ? `?slug=${encodeURIComponent(slug)}&formularioId=${formularioId}` : `?slug=${encodeURIComponent(slug)}`;
         return this._http.get<{ disponible: boolean; slug: string }>(`${this.api}/validar-slug${params}`);
     }
+
+    /** Envía el formulario masivamente a los destinatarios seleccionados */
+    enviarMasivo(formularioId: number, dto: EnvioMasivoFormularioRequestDto): Observable<EnvioMasivoResultadoDto> {
+        return this._http.post<EnvioMasivoResultadoDto>(`${this.api}/${formularioId}/enviar-masivo`, dto);
+    }
+
+    /** Obtiene el historial de envíos de un formulario */
+    getHistorialEnvios(formularioId: number): Observable<FormularioEnvioHistorialDto[]> {
+        return this._http.get<FormularioEnvioHistorialDto[]>(`${this.api}/${formularioId}/envios-historial`);
+    }
+
+    /** Descarga el texto de un documento público por URL (Google Docs o web) */
+    descargarContenidoUrl(url: string): Observable<{ contenido: string; urlProcesada: string }> {
+        return this._http.post<{ contenido: string; urlProcesada: string }>(`${this.api}/descargar-contenido-url`, { url });
+    }
+
+    /** Extrae el texto estructurado de un archivo subido (.docx o .txt) */
+    extraerContenidoArchivo(archivo: File): Observable<{ contenido: string; nombreArchivo: string }> {
+        const formData = new FormData();
+        formData.append('archivo', archivo, archivo.name);
+        return this._http.post<{ contenido: string; nombreArchivo: string }>(`${this.api}/extraer-contenido-archivo`, formData);
+    }
 }
+
+export interface DestinatarioItemEnvioDto {
+    asistenteId?: number;
+    personalStaffId?: number;
+    usuarioId?: number;
+    nombre: string;
+    email: string;
+    telefono?: string;
+    rolCargo?: string;
+    organizacion?: string;
+}
+
+export interface EnvioMasivoFormularioRequestDto {
+    asunto?: string;
+    mensajeAdicional?: string;
+    urlBase?: string;
+    destinatarios: DestinatarioItemEnvioDto[];
+}
+
+export interface EnvioMasivoResultadoDto {
+    totalProcesados: number;
+    enviadosExitosos: number;
+    whatsappExitosos: number;
+    fallidos: number;
+    detalleErrores: string[];
+}
+
+export interface FormularioEnvioHistorialDto {
+    id: number;
+    formularioId: number;
+    eventoId: number;
+    moduloDestino: string;
+    asistenteId?: number;
+    personalStaffId?: number;
+    usuarioId?: number;
+    nombreDestinatario: string;
+    emailDestinatario: string;
+    telefonoDestinatario?: string;
+    canal: string;
+    estadoEnvio: string;
+    whatsappEnviado?: boolean;
+    whatsappError?: string;
+    errorMensaje?: string;
+    fechaEnvio: string;
+    respondio: boolean;
+    fechaRespuesta?: string;
+    reenvios: number;
+}
+
