@@ -130,10 +130,10 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                 <div *ngIf="diseno?.modoPasos" class="wizard-stepper-container animate-fade-in">
                     <div class="stepper-header-row">
                         <span class="stepper-step-badge" [ngStyle]="{'background-color': (diseno?.colorPrimario || '#1e8449') + '20', 'color': diseno?.colorPrimario || '#1e8449'}">
-                            Paso {{ pasoActual }} de {{ totalPasos }}
+                            Paso {{ indicePasoActualVisible + 1 }} de {{ totalPasosVisibles }}
                         </span>
                         <span class="stepper-step-title">
-                            {{ pasoActualConfig?.titulo || ('Paso ' + pasoActual) }}
+                            {{ pasoActualConfig?.titulo || ('Paso ' + (indicePasoActualVisible + 1)) }}
                         </span>
                     </div>
 
@@ -141,7 +141,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                     <div class="stepper-progress-track">
                         <div class="stepper-progress-fill"
                              [ngStyle]="{
-                                 'width': ((pasoActual / totalPasos) * 100) + '%',
+                                 'width': totalPasosVisibles > 0 ? (((indicePasoActualVisible + 1) / totalPasosVisibles) * 100) + '%' : '100%',
                                  'background-color': diseno?.colorPrimario || '#1e8449'
                              }"></div>
                     </div>
@@ -153,7 +153,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                 </div>
 
                 <!-- Descripción general (Solo en paso 1 o formulario sin pasos) -->
-                <div *ngIf="formPublico.descripcion && (!diseno?.modoPasos || pasoActual === 1)" class="intro-description">
+                <div *ngIf="formPublico.descripcion && (!diseno?.modoPasos || indicePasoActualVisible === 0)" class="intro-description">
                     <p>{{ formPublico.descripcion }}</p>
                 </div>
 
@@ -323,9 +323,9 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
                     <!-- ACCIONES DE NAVEGACIÓN Y ENVÍO -->
                     <div class="submit-action-row">
-                        <!-- Navegación si está en Modo Pasos y no es el último paso -->
-                        <div *ngIf="diseno?.modoPasos && pasoActual < totalPasos" class="wizard-nav-actions">
-                            <button *ngIf="pasoActual > 1"
+                        <!-- Navegación si está en Modo Pasos y no es el último paso visible -->
+                        <div *ngIf="diseno?.modoPasos && !esUltimoPaso" class="wizard-nav-actions">
+                            <button *ngIf="indicePasoActualVisible > 0"
                                     type="button"
                                     (click)="retrocederPaso()"
                                     class="btn-nav-prev">
@@ -341,9 +341,9 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                             </button>
                         </div>
 
-                        <!-- Último paso o modo normal -->
-                        <div *ngIf="!diseno?.modoPasos || pasoActual === totalPasos" class="wizard-nav-actions">
-                            <button *ngIf="diseno?.modoPasos && pasoActual > 1"
+                        <!-- Último paso visible o modo normal -->
+                        <div *ngIf="!diseno?.modoPasos || esUltimoPaso" class="wizard-nav-actions">
+                            <button *ngIf="diseno?.modoPasos && indicePasoActualVisible > 0"
                                     type="button"
                                     (click)="retrocederPaso()"
                                     class="btn-nav-prev">
@@ -1303,12 +1303,39 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         return [{ numero: 1, titulo: 'Datos Generales' }];
     }
 
+    /** Pasos activos y visibles según las respuestas del usuario */
+    get pasosVisibles(): PasoFormularioConfig[] {
+        if (!this.diseno?.modoPasos) return [];
+        return this.pasos.filter(p => this.esPasoVisible(p));
+    }
+
+    /** Posición ordinal del paso actual dentro de los pasos visibles */
+    get indicePasoActualVisible(): number {
+        const visibles = this.pasosVisibles;
+        if (visibles.length === 0) return 0;
+        const idx = visibles.findIndex(p => p.numero === this.pasoActual);
+        return idx !== -1 ? idx : 0;
+    }
+
     get totalPasos(): number {
-        return this.pasos.length;
+        return this.diseno?.modoPasos ? this.pasosVisibles.length : this.pasos.length;
+    }
+
+    get totalPasosVisibles(): number {
+        return this.pasosVisibles.length;
     }
 
     get pasoActualConfig(): PasoFormularioConfig | undefined {
-        return this.pasos.find(p => p.numero === this.pasoActual) || this.pasos[0];
+        const visibles = this.pasosVisibles;
+        if (visibles.length === 0) return this.pasos[0];
+        return visibles[this.indicePasoActualVisible] || this.pasos[0];
+    }
+
+    get esUltimoPaso(): boolean {
+        if (!this.diseno?.modoPasos) return true;
+        const visibles = this.pasosVisibles;
+        if (visibles.length === 0) return true;
+        return this.indicePasoActualVisible >= visibles.length - 1;
     }
 
     ngOnInit(): void {
@@ -1372,13 +1399,15 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Navegación Wizard: Avanza validando solo los campos del paso actual */
+    /** Navegación Wizard: Avanza validando solo los campos del paso actual visible */
     avanzarPaso(): void {
         if (!this.validarPaso(this.pasoActual)) {
             return;
         }
-        if (this.pasoActual < this.totalPasos) {
-            this.pasoActual++;
+        const visibles = this.pasosVisibles;
+        const idx = visibles.findIndex(p => p.numero === this.pasoActual);
+        if (idx !== -1 && idx < visibles.length - 1) {
+            this.pasoActual = visibles[idx + 1].numero;
             this.errorMessage = '';
             const scrollEl = document.querySelector('.public-card-body');
             if (scrollEl) scrollEl.scrollTop = 0;
@@ -1386,15 +1415,54 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** Navegación Wizard: Regresa al paso anterior */
+    /** Navegación Wizard: Regresa al paso anterior visible */
     retrocederPaso(): void {
-        if (this.pasoActual > 1) {
-            this.pasoActual--;
+        const visibles = this.pasosVisibles;
+        const idx = visibles.findIndex(p => p.numero === this.pasoActual);
+        if (idx > 0) {
+            this.pasoActual = visibles[idx - 1].numero;
             this.errorMessage = '';
             const scrollEl = document.querySelector('.public-card-body');
             if (scrollEl) scrollEl.scrollTop = 0;
             this._cdr.markForCheck();
         }
+    }
+
+    /** Evalúa si un paso completo debe ser visible según sus dependencias o campos visibles */
+    esPasoVisible(paso: PasoFormularioConfig): boolean {
+        if (!paso) return false;
+        if (paso.dependeDeCampoId) {
+            const cumple = this.evaluarCondicionPaso(paso.dependeDeCampoId, paso.dependeDeValor, paso.dependeDeOperador);
+            if (!cumple) return false;
+        }
+        const camposDelPaso = this.campos.filter(c => (c.paso || 1) === paso.numero);
+        if (camposDelPaso.length === 0) {
+            return paso.numero === 1;
+        }
+        return camposDelPaso.some(c => this.esCampoVisible(c));
+    }
+
+    evaluarCondicionPaso(campoId: string, valEsperado?: string, operador?: string): boolean {
+        const valorDependencia = this.respuestas[campoId];
+        if (valorDependencia === undefined || valorDependencia === null || valorDependencia === '') {
+            return false;
+        }
+        const valRequerido = (valEsperado || '').toLowerCase().trim();
+        if (!valRequerido) return true;
+
+        if (Array.isArray(valorDependencia)) {
+            if (valorDependencia.length === 0) return false;
+            return valorDependencia.some(v => {
+                const item = (v || '').toLowerCase().trim();
+                return item === valRequerido || item.includes(valRequerido) || valRequerido.includes(item);
+            });
+        }
+
+        const valActual = String(valorDependencia).toLowerCase().trim();
+        if (operador === 'contains') {
+            return valActual.includes(valRequerido) || valRequerido.includes(valActual);
+        }
+        return valActual === valRequerido || valActual.includes(valRequerido);
     }
 
     /** Determina si un campo pertenece al paso visible en pantalla */
@@ -1425,6 +1493,13 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         } else {
             arr.push(opcion);
         }
+
+        // Si el paso actual dejó de ser visible tras el cambio, ajustar al primer paso visible
+        const visibles = this.pasosVisibles;
+        if (visibles.length > 0 && !visibles.some(p => p.numero === this.pasoActual)) {
+            this.pasoActual = visibles[0].numero;
+        }
+
         this.limpiarError(campoId);
         this._cdr.markForCheck();
     }
@@ -1524,11 +1599,11 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         return valido;
     }
 
-    /** Valida la totalidad de los pasos del formulario antes de enviar */
+    /** Valida la totalidad de los pasos visibles del formulario antes de enviar */
     validar(): boolean {
-        for (let p = 1; p <= this.totalPasos; p++) {
-            if (!this.validarPaso(p)) {
-                this.pasoActual = p;
+        for (const paso of this.pasosVisibles) {
+            if (!this.validarPaso(paso.numero)) {
+                this.pasoActual = paso.numero;
                 return false;
             }
         }

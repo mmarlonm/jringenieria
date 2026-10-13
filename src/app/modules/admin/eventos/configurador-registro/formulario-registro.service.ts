@@ -18,6 +18,9 @@ export interface PasoFormularioConfig {
     numero: number;
     titulo: string;
     descripcion?: string;
+    dependeDeCampoId?: string;
+    dependeDeValor?: string;
+    dependeDeOperador?: 'equals' | 'contains';
 }
 
 export interface CampoConfig {

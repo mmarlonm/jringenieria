@@ -1502,10 +1502,10 @@
                             <div *ngIf="diseno.modoPasos" class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="font-bold text-slate-800 dark:text-slate-200">
-                                        Paso {{ pasoSimuladorActual }} de {{ pasosDisponibles.length }}
+                                        Paso {{ indicePasoActualSimulador + 1 }} de {{ pasosVisiblesSimulador.length }}
                                     </span>
                                     <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                        {{ pasosDisponibles[pasoSimuladorActual - 1]?.titulo }}
+                                        {{ pasoActualConfigSimulador?.titulo }}
                                     </span>
                                 </div>
 
@@ -1513,24 +1513,25 @@
                                 <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                                     <div class="h-full transition-all duration-300 rounded-full"
                                          [ngStyle]="{
-                                             'width': ((pasoSimuladorActual / pasosDisponibles.length) * 100) + '%',
+                                             'width': pasosVisiblesSimulador.length > 0 ? (((indicePasoActualSimulador + 1) / pasosVisiblesSimulador.length) * 100) + '%' : '100%',
                                              'background-color': diseno.colorPrimario
                                          }"></div>
                                 </div>
 
                                 <!-- Pills interactivos para saltar de paso en el simulador -->
                                 <div class="flex items-center gap-1.5 pt-1 overflow-x-auto">
-                                    <button *ngFor="let p of pasosDisponibles" type="button"
+                                    <button *ngFor="let p of pasosVisiblesSimulador; let pIdx = index" type="button"
                                             (click)="cambiarPasoSimulador(p.numero)"
+                                            [title]="p.titulo"
                                             class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer whitespace-nowrap"
                                             [ngClass]="pasoSimuladorActual === p.numero ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300'">
-                                        Paso {{ p.numero }}
+                                        Paso {{ pIdx + 1 }}
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Descripción si existe -->
-                            <p *ngIf="descripcion && (!diseno.modoPasos || pasoSimuladorActual === 1)" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <p *ngIf="descripcion && (!diseno.modoPasos || indicePasoActualSimulador === 0)" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-b border-slate-100 dark:border-slate-800 pb-3">
                                 {{ descripcion }}
                             </p>
 
@@ -1684,10 +1685,10 @@
                             <!-- NAVEGACIÓN Y BOTONES DE ACCIÓN (PASOS O SUBMIT) -->
                             <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
                                 
-                                <!-- Si está en Modo Pasos y no es el último paso -->
-                                <div *ngIf="diseno.modoPasos && pasoSimuladorActual < pasosDisponibles.length"
+                                <!-- Si está en Modo Pasos y no es el último paso visible -->
+                                <div *ngIf="diseno.modoPasos && !esUltimoPasoSimulador"
                                      class="flex items-center gap-2">
-                                    <button *ngIf="pasoSimuladorActual > 1"
+                                    <button *ngIf="indicePasoActualSimulador > 0"
                                             (click)="retrocederPasoSimulador()"
                                             type="button"
                                             class="py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
@@ -1702,10 +1703,10 @@
                                     </button>
                                 </div>
 
-                                <!-- Si es modo regular o es el último paso -->
-                                <div *ngIf="!diseno.modoPasos || pasoSimuladorActual === pasosDisponibles.length" class="space-y-2">
+                                <!-- Si es modo regular o es el último paso visible -->
+                                <div *ngIf="!diseno.modoPasos || esUltimoPasoSimulador" class="space-y-2">
                                     <div class="flex items-center gap-2">
-                                        <button *ngIf="diseno.modoPasos && pasoSimuladorActual > 1"
+                                        <button *ngIf="diseno.modoPasos && indicePasoActualSimulador > 0"
                                                 (click)="retrocederPasoSimulador()"
                                                 type="button"
                                                 class="py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
@@ -2324,8 +2325,8 @@ Marca una opción por cada aspecto: 1 a 5
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
                                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">Paso {{ c.paso || 1 }}</span>
-                                <span *ngIf="c.dependeDeCampoId" class="text-[10px] text-amber-600 font-bold flex items-center gap-0.5">
-                                    <mat-icon class="text-[12px]">alt_route</mat-icon> Condicional
+                                <span *ngIf="c.dependeDeCampoId" class="text-[10px] text-amber-600 font-bold flex items-center gap-0.5 truncate max-w-[200px]" [title]="'Condicional si seleccionó: ' + (c.dependeDeValor || '')">
+                                    <mat-icon class="text-[12px]">alt_route</mat-icon> Si: {{ c.dependeDeValor }}
                                 </span>
                             </div>
                         </div>

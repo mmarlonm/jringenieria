@@ -680,7 +680,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Lista segura de pasos disponibles */
+    /** Lista segura de pasos disponibles configurados en el diseño */
     get pasosDisponibles(): PasoFormularioConfig[] {
         if (!this.diseno.pasos || this.diseno.pasos.length === 0) {
             this.diseno.pasos = [
@@ -689,6 +689,35 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
             ];
         }
         return this.diseno.pasos;
+    }
+
+    /** Lista de pasos que cumplen sus condiciones y tienen campos visibles en el simulador */
+    get pasosVisiblesSimulador(): PasoFormularioConfig[] {
+        if (!this.diseno.modoPasos) return [];
+        return this.pasosDisponibles.filter(p => this.esPasoVisibleSimulador(p));
+    }
+
+    /** Índice ordinal del paso actual dentro de la lista de pasos visibles */
+    get indicePasoActualSimulador(): number {
+        const visibles = this.pasosVisiblesSimulador;
+        if (visibles.length === 0) return 0;
+        const idx = visibles.findIndex(p => p.numero === this.pasoSimuladorActual);
+        return idx !== -1 ? idx : 0;
+    }
+
+    /** Configuración del paso actualmente visible en el simulador */
+    get pasoActualConfigSimulador(): PasoFormularioConfig | undefined {
+        const visibles = this.pasosVisiblesSimulador;
+        if (visibles.length === 0) return this.pasosDisponibles[0];
+        return visibles[this.indicePasoActualSimulador] || visibles[0];
+    }
+
+    /** Determina si el simulador está en el último paso visible disponible */
+    get esUltimoPasoSimulador(): boolean {
+        if (!this.diseno.modoPasos) return true;
+        const visibles = this.pasosVisiblesSimulador;
+        if (visibles.length === 0) return true;
+        return this.indicePasoActualSimulador >= visibles.length - 1;
     }
 
     /** Activa o desactiva la navegación por pasos */
@@ -755,18 +784,62 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
     }
 
+    /** Avanza al siguiente paso visible en el simulador */
     avanzarPasoSimulador(): void {
-        if (this.pasoSimuladorActual < this.pasosDisponibles.length) {
-            this.pasoSimuladorActual++;
+        const visibles = this.pasosVisiblesSimulador;
+        const idx = visibles.findIndex(p => p.numero === this.pasoSimuladorActual);
+        if (idx !== -1 && idx < visibles.length - 1) {
+            this.pasoSimuladorActual = visibles[idx + 1].numero;
             this._cdr.markForCheck();
         }
     }
 
+    /** Retrocede al paso visible anterior en el simulador */
     retrocederPasoSimulador(): void {
-        if (this.pasoSimuladorActual > 1) {
-            this.pasoSimuladorActual--;
+        const visibles = this.pasosVisiblesSimulador;
+        const idx = visibles.findIndex(p => p.numero === this.pasoSimuladorActual);
+        if (idx > 0) {
+            this.pasoSimuladorActual = visibles[idx - 1].numero;
             this._cdr.markForCheck();
         }
+    }
+
+    /** Evalúa si un paso completo es visible en el simulador según condiciones y campos visibles */
+    esPasoVisibleSimulador(paso: PasoFormularioConfig): boolean {
+        if (!paso) return false;
+        if (paso.dependeDeCampoId) {
+            const cumple = this.evaluarCondicionPasoSimulador(paso.dependeDeCampoId, paso.dependeDeValor, paso.dependeDeOperador);
+            if (!cumple) return false;
+        }
+        const camposDelPaso = this.campos.filter(c => (c.paso || 1) === paso.numero);
+        if (camposDelPaso.length === 0) {
+            return paso.numero === 1;
+        }
+        return camposDelPaso.some(c => this.esCampoVisible(c));
+    }
+
+    /** Evalúa la condición requerida para un campo o paso en el simulador */
+    evaluarCondicionPasoSimulador(campoId: string, valEsperado?: string, operador?: string): boolean {
+        const valorDependencia = this.previewRespuestas[campoId];
+        if (valorDependencia === undefined || valorDependencia === null || valorDependencia === '') {
+            return false;
+        }
+        const valRequerido = (valEsperado || '').toLowerCase().trim();
+        if (!valRequerido) return true;
+
+        if (Array.isArray(valorDependencia)) {
+            if (valorDependencia.length === 0) return false;
+            return valorDependencia.some(v => {
+                const item = (v || '').toLowerCase().trim();
+                return item === valRequerido || item.includes(valRequerido) || valRequerido.includes(item);
+            });
+        }
+
+        const valActual = String(valorDependencia).toLowerCase().trim();
+        if (operador === 'contains') {
+            return valActual.includes(valRequerido) || valRequerido.includes(valActual);
+        }
+        return valActual === valRequerido || valActual.includes(valRequerido);
     }
 
     /** Verifica si un campo pertenece al paso visible en el simulador */
@@ -1032,6 +1105,7 @@ PARTICIPACIÓN FUTURA
         let pasoActualNum = 1;
         let primerPreguntaEtapasId = '';
         let etapasOpciones: string[] = [];
+        let bloqueCondicionActual: { id: string; valor: string; operador: 'contains' } | null = null;
         let seccionesCount = 0;
         let matricesCount = 0;
         let opcionesCount = 0;
@@ -1052,6 +1126,39 @@ PARTICIPACIÓN FUTURA
                 .replace(/^Otro:\s*_{2,}/i, 'Otro')
                 .replace(/:\s*$/, '')
                 .trim();
+        };
+
+        const formatearTituloPaso = (raw: string): string => {
+            let t = raw
+                .replace(/^BLOQUE\s+\d+[\.:\s]*/i, '')
+                .replace(/^SECCI[OÓ]N\s+\d+[\.:\s]*/i, '')
+                .replace(/^\d+\.\s*/, '')
+                .trim();
+
+            const siglas: { [k: string]: string } = {
+                'unce': 'UNCE',
+                'ciat': 'CIAT',
+                'nps': 'NPS',
+                'b2b': 'B2B',
+                'crm': 'CRM',
+                'erp': 'ERP',
+                'tuzoforum': 'Tuzoforum'
+            };
+
+            if (t === t.toUpperCase()) {
+                t = t.toLowerCase().replace(/(^|\s|\-|\/)[a-záéíóúñ]/g, letter => letter.toUpperCase());
+                t = t.replace(/\bDe\b/g, 'de').replace(/\bEn\b/g, 'en').replace(/\bY\b/g, 'y').replace(/\bO\b/g, 'o').replace(/\bLa\b/g, 'la').replace(/\bEl\b/g, 'el');
+                t = t.charAt(0).toUpperCase() + t.slice(1);
+            } else {
+                t = t.charAt(0).toUpperCase() + t.slice(1);
+            }
+
+            Object.keys(siglas).forEach(k => {
+                const reg = new RegExp(`\\b${k}\\b`, 'gi');
+                t = t.replace(reg, siglas[k]);
+            });
+
+            return t;
         };
 
         // Algoritmo inteligente para relacionar bloques con la etapa seleccionada en la encuesta
@@ -1133,18 +1240,12 @@ PARTICIPACIÓN FUTURA
             if (esEncabezadoBloque) {
                 seccionesCount++;
                 const titSeccion = limpiarNotas(linea);
+                const nombreLimpioPaso = formatearTituloPaso(titSeccion);
 
-                if (camposGenerados.length > 0 && this.generarPasosWord) {
+                if (camposGenerados.length === 0) {
+                    pasosGenerados[0].titulo = `Paso 1: ${nombreLimpioPaso}`;
+                } else if (this.generarPasosWord) {
                     pasoActualNum++;
-                    const pasoTitulo = titSeccion
-                        .replace(/^BLOQUE\s+\d+[\.:\s]*/i, '')
-                        .replace(/^\d+\.\s*/, '')
-                        .trim();
-                    pasosGenerados.push({
-                        numero: pasoActualNum,
-                        titulo: `Paso ${pasoActualNum}: ${pasoTitulo.charAt(0).toUpperCase() + pasoTitulo.slice(1).toLowerCase()}`,
-                        descripcion: 'Sección del cuestionario'
-                    });
                 }
 
                 const secCampo: CampoConfig = {
@@ -1162,14 +1263,34 @@ PARTICIPACIÓN FUTURA
                 if (primerPreguntaEtapasId && etapasOpciones.length > 0) {
                     const etapaMatch = encontrarMejorEtapaMatch(titSeccion, etapasOpciones);
                     if (etapaMatch) {
-                        secCampo.dependeDeCampoId = primerPreguntaEtapasId;
-                        if (/^BLOQUE\s+\d+\.\s+FORO ENERGIZA$/i.test(titSeccion.trim())) {
-                            secCampo.dependeDeValor = 'Foro Energiza';
-                        } else {
-                            secCampo.dependeDeValor = etapaMatch;
-                        }
+                        const valCond = /^BLOQUE\s+\d+\.\s+FORO ENERGIZA$/i.test(titSeccion.trim()) ? 'Foro Energiza' : etapaMatch;
+                        bloqueCondicionActual = {
+                            id: primerPreguntaEtapasId,
+                            valor: valCond,
+                            operador: 'contains'
+                        };
+                        secCampo.dependeDeCampoId = bloqueCondicionActual.id;
+                        secCampo.dependeDeValor = bloqueCondicionActual.valor;
                         secCampo.dependeDeOperador = 'contains';
+                    } else {
+                        bloqueCondicionActual = null;
                     }
+                } else {
+                    bloqueCondicionActual = null;
+                }
+
+                if (camposGenerados.length > 0 && this.generarPasosWord) {
+                    const nuevoPaso: PasoFormularioConfig = {
+                        numero: pasoActualNum,
+                        titulo: `Paso ${pasoActualNum}: ${nombreLimpioPaso}`,
+                        descripcion: 'Sección del cuestionario'
+                    };
+                    if (bloqueCondicionActual) {
+                        nuevoPaso.dependeDeCampoId = bloqueCondicionActual.id;
+                        nuevoPaso.dependeDeValor = bloqueCondicionActual.valor;
+                        nuevoPaso.dependeDeOperador = 'contains';
+                    }
+                    pasosGenerados.push(nuevoPaso);
                 }
 
                 camposGenerados.push(secCampo);
@@ -1184,7 +1305,7 @@ PARTICIPACIÓN FUTURA
                 // Si es bloque de comentarios sin preguntas explícitas debajo
                 if (/COMENTARIOS|SUGERENCIAS/i.test(titSeccion) && (i >= rawLines.length || /^¡GRACIAS/i.test(rawLines[i]))) {
                     preguntasCount++;
-                    camposGenerados.push({
+                    const cpComentarios: CampoConfig = {
                         id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                         tipo: 'textarea',
                         etiqueta: 'Comentarios o sugerencias adicionales',
@@ -1193,7 +1314,13 @@ PARTICIPACIÓN FUTURA
                         ancho: 'full',
                         paso: pasoActualNum,
                         orden: camposGenerados.length + 1
-                    });
+                    };
+                    if (bloqueCondicionActual) {
+                        cpComentarios.dependeDeCampoId = bloqueCondicionActual.id;
+                        cpComentarios.dependeDeValor = bloqueCondicionActual.valor;
+                        cpComentarios.dependeDeOperador = 'contains';
+                    }
+                    camposGenerados.push(cpComentarios);
                 }
 
                 continue;
@@ -1287,6 +1414,12 @@ PARTICIPACIÓN FUTURA
                     orden: camposGenerados.length + 1
                 };
 
+                if (bloqueCondicionActual) {
+                    matrizCampo.dependeDeCampoId = bloqueCondicionActual.id;
+                    matrizCampo.dependeDeValor = bloqueCondicionActual.valor;
+                    matrizCampo.dependeDeOperador = 'contains';
+                }
+
                 camposGenerados.push(matrizCampo);
                 continue;
             }
@@ -1304,7 +1437,7 @@ PARTICIPACIÓN FUTURA
                 const opcionesEscala = ['1 | Muy mala', '2 | Mala', '3 | Regular', '4 | Buena', '5 | Excelente'];
                 opcionesCount += opcionesEscala.length;
 
-                camposGenerados.push({
+                const campoEscalaC1: CampoConfig = {
                     id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                     tipo: 'radio',
                     etiqueta: etiquetaPregunta,
@@ -1314,7 +1447,15 @@ PARTICIPACIÓN FUTURA
                     paso: pasoActualNum,
                     opciones: opcionesEscala,
                     orden: camposGenerados.length + 1
-                });
+                };
+
+                if (bloqueCondicionActual) {
+                    campoEscalaC1.dependeDeCampoId = bloqueCondicionActual.id;
+                    campoEscalaC1.dependeDeValor = bloqueCondicionActual.valor;
+                    campoEscalaC1.dependeDeOperador = 'contains';
+                }
+
+                camposGenerados.push(campoEscalaC1);
                 continue;
             }
 
@@ -1331,7 +1472,7 @@ PARTICIPACIÓN FUTURA
                 const opcionesEscala = ['1 (Muy bajo)', '2 (Bajo)', '3 (Medio)', '4 (Bueno)', '5 (Excelente)'];
                 opcionesCount += opcionesEscala.length;
 
-                camposGenerados.push({
+                const campoEscalaC2: CampoConfig = {
                     id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                     tipo: 'radio',
                     etiqueta: etiquetaPregunta,
@@ -1341,7 +1482,15 @@ PARTICIPACIÓN FUTURA
                     paso: pasoActualNum,
                     opciones: opcionesEscala,
                     orden: camposGenerados.length + 1
-                });
+                };
+
+                if (bloqueCondicionActual) {
+                    campoEscalaC2.dependeDeCampoId = bloqueCondicionActual.id;
+                    campoEscalaC2.dependeDeValor = bloqueCondicionActual.valor;
+                    campoEscalaC2.dependeDeOperador = 'contains';
+                }
+
+                camposGenerados.push(campoEscalaC2);
                 continue;
             }
 
@@ -1359,7 +1508,7 @@ PARTICIPACIÓN FUTURA
                 const opcionesNps = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
                 opcionesCount += opcionesNps.length;
 
-                camposGenerados.push({
+                const campoNps: CampoConfig = {
                     id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                     tipo: 'radio',
                     etiqueta: etiquetaPregunta,
@@ -1369,7 +1518,15 @@ PARTICIPACIÓN FUTURA
                     paso: pasoActualNum,
                     opciones: opcionesNps,
                     orden: camposGenerados.length + 1
-                });
+                };
+
+                if (bloqueCondicionActual) {
+                    campoNps.dependeDeCampoId = bloqueCondicionActual.id;
+                    campoNps.dependeDeValor = bloqueCondicionActual.valor;
+                    campoNps.dependeDeOperador = 'contains';
+                }
+
+                camposGenerados.push(campoNps);
                 continue;
             }
 
@@ -1398,7 +1555,7 @@ PARTICIPACIÓN FUTURA
 
                 if (esAbiertaExplicita) {
                     if (i < rawLines.length && /^Respuesta abierta/i.test(rawLines[i])) i++;
-                    camposGenerados.push({
+                    const cpArea: CampoConfig = {
                         id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                         tipo: 'textarea',
                         etiqueta: etiquetaPregunta,
@@ -1407,7 +1564,15 @@ PARTICIPACIÓN FUTURA
                         ancho: 'full',
                         paso: pasoActualNum,
                         orden: camposGenerados.length + 1
-                    });
+                    };
+
+                    if (bloqueCondicionActual) {
+                        cpArea.dependeDeCampoId = bloqueCondicionActual.id;
+                        cpArea.dependeDeValor = bloqueCondicionActual.valor;
+                        cpArea.dependeDeOperador = 'contains';
+                    }
+
+                    camposGenerados.push(cpArea);
                     continue;
                 }
 
@@ -1486,6 +1651,12 @@ PARTICIPACIÓN FUTURA
                 if (/etapas\s+participaste/i.test(etiquetaPregunta) && !primerPreguntaEtapasId) {
                     primerPreguntaEtapasId = campoNuevo.id;
                     etapasOpciones = opciones.slice();
+                }
+
+                if (bloqueCondicionActual) {
+                    campoNuevo.dependeDeCampoId = bloqueCondicionActual.id;
+                    campoNuevo.dependeDeValor = bloqueCondicionActual.valor;
+                    campoNuevo.dependeDeOperador = 'contains';
                 }
 
                 camposGenerados.push(campoNuevo);
@@ -2157,6 +2328,14 @@ PARTICIPACIÓN FUTURA
         } else {
             arr.push(opcion);
         }
+
+        // Si el paso actual en el simulador dejó de ser visible tras el cambio, ajustar al más cercano
+        const visibles = this.pasosVisiblesSimulador;
+        if (visibles.length > 0 && !visibles.some(p => p.numero === this.pasoSimuladorActual)) {
+            this.pasoSimuladorActual = visibles[0].numero;
+        }
+
+        this._cdr.markForCheck();
     }
 
     /** Helper para trackBy en ngFor */
