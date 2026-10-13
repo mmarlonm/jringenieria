@@ -206,18 +206,15 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                                                 <span *ngIf="fila.subtexto" class="aspect-sub-text">{{ fila.subtexto }}</span>
                                             </td>
                                             <td *ngFor="let col of campo.columnasMatriz" class="matrix-td-score">
-                                                <label class="matrix-score-option"
-                                                       [class.score-checked]="respuestas[campo.id]?.[fila.id] === col.valor"
-                                                       (click)="seleccionarMatriz(campo.id, fila.id, col.valor)">
-                                                    <input type="radio"
-                                                           [name]="'matrix_' + campo.id + '_' + fila.id"
-                                                           [value]="col.valor"
-                                                           [checked]="respuestas[campo.id]?.[fila.id] === col.valor"
-                                                           class="sr-only">
+                                                <div class="matrix-score-option cursor-pointer select-none"
+                                                     role="radio"
+                                                     [attr.aria-checked]="respuestas[campo.id]?.[fila.id] === col.valor"
+                                                     [class.score-checked]="respuestas[campo.id]?.[fila.id] === col.valor"
+                                                     (click)="seleccionarMatriz(campo.id, fila.id, col.valor)">
                                                     <span class="matrix-radio-disc"
                                                           [ngStyle]="{'background-color': respuestas[campo.id]?.[fila.id] === col.valor ? (diseno?.colorPrimario || '#1e8449') : undefined}">
                                                     </span>
-                                                </label>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -273,30 +270,32 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
                         <!-- Radio Buttons -->
                         <div *ngIf="campo.tipo === 'radio'" class="options-group">
-                            <label *ngFor="let opt of campo.opciones"
-                                   class="radio-pill"
-                                   [class.radio-selected]="respuestas[campo.id] === opt"
-                                   (click)="respuestas[campo.id] = opt; limpiarError(campo.id)">
-                                <input type="radio" [name]="campo.id" [value]="opt" [(ngModel)]="respuestas[campo.id]" class="sr-only">
+                            <div *ngFor="let opt of campo.opciones"
+                                 class="radio-pill cursor-pointer select-none"
+                                 role="radio"
+                                 [attr.aria-checked]="respuestas[campo.id] === opt"
+                                 [class.radio-selected]="respuestas[campo.id] === opt"
+                                 (click)="seleccionarRadio(campo.id, opt)">
                                 <span class="radio-indicator" [class.indicator-checked]="respuestas[campo.id] === opt"
                                       [ngStyle]="{'background-color': respuestas[campo.id] === opt ? (diseno?.colorPrimario || '#1e8449') : undefined}"></span>
-                                <span class="option-text">{{ opt }}</span>
-                            </label>
+                                <span class="option-text flex-1">{{ opt }}</span>
+                            </div>
                         </div>
 
                         <!-- Checkboxes (Multiple / Barras Horizontales) -->
                         <div *ngIf="campo.tipo === 'checkbox'" class="options-group">
-                            <label *ngFor="let opt of campo.opciones"
-                                   class="checkbox-pill"
-                                   [class.checkbox-selected]="respuestas[campo.id]?.includes(opt)"
-                                   (click)="toggleCheckbox(campo.id, opt); limpiarError(campo.id)">
-                                <input type="checkbox" [checked]="respuestas[campo.id]?.includes(opt)" class="sr-only">
-                                <span class="checkbox-indicator" [class.checkbox-checked]="respuestas[campo.id]?.includes(opt)"
-                                      [ngStyle]="{'background-color': respuestas[campo.id]?.includes(opt) ? (diseno?.colorPrimario || '#1e8449') : undefined}">
-                                    <mat-icon *ngIf="respuestas[campo.id]?.includes(opt)" class="check-icon">check</mat-icon>
+                            <div *ngFor="let opt of campo.opciones"
+                                 class="checkbox-pill cursor-pointer select-none"
+                                 role="checkbox"
+                                 [attr.aria-checked]="isCheckboxChecked(campo.id, opt)"
+                                 [class.checkbox-selected]="isCheckboxChecked(campo.id, opt)"
+                                 (click)="toggleCheckbox(campo.id, opt)">
+                                <span class="checkbox-indicator" [class.checkbox-checked]="isCheckboxChecked(campo.id, opt)"
+                                      [ngStyle]="{'background-color': isCheckboxChecked(campo.id, opt) ? (diseno?.colorPrimario || '#1e8449') : undefined}">
+                                    <mat-icon *ngIf="isCheckboxChecked(campo.id, opt)" class="check-icon">check</mat-icon>
                                 </span>
-                                <span class="option-text">{{ opt }}</span>
-                            </label>
+                                <span class="option-text flex-1">{{ opt }}</span>
+                            </div>
                         </div>
 
                         <!-- Error individual de campo requerido -->
@@ -376,8 +375,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
 :host {
     display: block;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: 100vh;
     margin: 0;
     padding: 0;
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -704,30 +703,34 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 }
 
 .public-registration-root {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+    width: 100%;
+    min-height: 100vh;
     background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 50%, #e2e8f0 100%);
-    position: fixed;
-    top: 0;
-    left: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 2.5rem 1rem 4rem 1rem;
+    box-sizing: border-box;
 
     &.dark-theme {
         background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e293b 100%);
+    }
+
+    @media (max-width: 640px) {
+        padding: 1.25rem 0.75rem 3rem 0.75rem;
     }
 }
 
 /* === ESTADOS DE CARGA Y MENSAJES === */
 .state-card-wrapper {
     width: 100%;
-    height: 100%;
+    min-height: calc(100vh - 5rem);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
+    margin: auto 0;
 }
 
 .state-box {
@@ -759,35 +762,28 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     to { transform: rotate(360deg); }
 }
 
-/* === CONTENEDOR VIEWPORT CARD (EXACTO: CENTRADA, TOPE VERTICAL CONTENIDO) === */
+/* === CONTENEDOR VIEWPORT CARD === */
 .form-viewport-container {
     width: 100%;
-    height: 100vh;
+    max-width: 680px;
+    margin: 0 auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    justify-content: flex-start;
+    padding: 0;
     box-sizing: border-box;
-
-    @media (min-width: 640px) {
-        padding: 1.5rem 2rem;
-    }
 }
 
 .public-card {
     width: 100%;
-    max-width: 640px;
-    /* La card se adapta pero nunca excede la altura de la ventana (tope abajo) */
-    max-height: calc(100vh - 2rem);
+    max-width: 680px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    @media (min-width: 640px) {
-        max-height: calc(100vh - 3rem);
-    }
+    margin: 0 auto;
 }
 
 /* Temas de Card */
@@ -885,25 +881,14 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     }
 }
 
-/* === 2. BODY CON SCROLL INTERNO LIMPIO === */
+/* === 2. BODY CON SCROLL NATURAL Y ESPACIOSO === */
 .public-card-body {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    padding: 1.25rem 1.5rem 1.75rem;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(100, 116, 139, 0.25) transparent;
+    width: 100%;
+    padding: 1.5rem 2rem 2.25rem;
+    box-sizing: border-box;
 
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background-color: rgba(100, 116, 139, 0.25);
-        border-radius: 9999px;
-    }
-
-    @media (min-width: 640px) {
-        padding: 1.5rem 2rem 2rem;
+    @media (max-width: 640px) {
+        padding: 1.25rem 1.15rem 1.75rem;
     }
 }
 
@@ -1409,8 +1394,9 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         if (idx !== -1 && idx < visibles.length - 1) {
             this.pasoActual = visibles[idx + 1].numero;
             this.errorMessage = '';
-            const scrollEl = document.querySelector('.public-card-body');
-            if (scrollEl) scrollEl.scrollTop = 0;
+            if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
             this._cdr.markForCheck();
         }
     }
@@ -1422,8 +1408,9 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         if (idx > 0) {
             this.pasoActual = visibles[idx - 1].numero;
             this.errorMessage = '';
-            const scrollEl = document.querySelector('.public-card-body');
-            if (scrollEl) scrollEl.scrollTop = 0;
+            if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
             this._cdr.markForCheck();
         }
     }
@@ -1482,9 +1469,33 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
     }
 
+    /** Seleccionar opción en botones de radio */
+    seleccionarRadio(campoId: string, opt: string): void {
+        this.respuestas[campoId] = opt;
+        this.limpiarError(campoId);
+        this._cdr.markForCheck();
+    }
+
+    /** Comprueba si una opción de checkbox está seleccionada */
+    isCheckboxChecked(campoId: string, opt: string): boolean {
+        const val = this.respuestas[campoId];
+        if (Array.isArray(val)) {
+            return val.includes(opt);
+        }
+        if (typeof val === 'string' && val.length > 0) {
+            return val.split(',').map(s => s.trim()).includes(opt);
+        }
+        return false;
+    }
+
+    /** Alternar selección de checkbox múltiple de forma segura y reactiva */
     toggleCheckbox(campoId: string, opcion: string): void {
-        if (!this.respuestas[campoId]) {
-            this.respuestas[campoId] = [];
+        if (!this.respuestas[campoId] || !Array.isArray(this.respuestas[campoId])) {
+            if (typeof this.respuestas[campoId] === 'string' && this.respuestas[campoId]) {
+                this.respuestas[campoId] = (this.respuestas[campoId] as string).split(',').map(s => s.trim());
+            } else {
+                this.respuestas[campoId] = [];
+            }
         }
         const arr = this.respuestas[campoId] as string[];
         const idx = arr.indexOf(opcion);
