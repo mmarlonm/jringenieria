@@ -1031,19 +1031,21 @@ PARTICIPACIÓN FUTURA
 
         let pasoActualNum = 1;
         let primerPreguntaEtapasId = '';
+        let etapasOpciones: string[] = [];
         let seccionesCount = 0;
         let matricesCount = 0;
         let opcionesCount = 0;
         let preguntasCount = 0;
 
-        const limpiarNotas = (txt: string) => {
+        const limpiarNotas = (txt: string): string => {
             return txt
-                .replace(/\s*(Gr[aá]fico de barras.*|Barras horizontales.*|Mapa de calor.*|barra apilada.*)\s*$/gi, '')
+                .replace(/\s*(Gr[aá]fico de barras.*|Gráfica de barras.*|Barras horizontales.*|Barras por.*|Barras comparativas.*|Mapa de calor.*|barra apilada.*|Barra apilada.*|Clasificaci[oó]n tem[aá]tica.*|Comparaci[oó]n de temas.*|Resumen tem[aá]tico.*)\s*$/gi, '')
+                .replace(/(\s*(Respuesta\s+(corta|abierta)\.?|Opcional\.?))+$/gi, '')
                 .replace(/_{3,}/g, '')
                 .trim();
         };
 
-        const limpiarOpcion = (opt: string) => {
+        const limpiarOpcion = (opt: string): string => {
             return opt
                 .replace(/_{3,}/g, '')
                 .replace(/^Otro:\s*$/i, 'Otro')
@@ -1052,14 +1054,53 @@ PARTICIPACIÓN FUTURA
                 .trim();
         };
 
-        // 1. Detectar si el texto inicia con Título y Descripción
+        // Algoritmo inteligente para relacionar bloques con la etapa seleccionada en la encuesta
+        const encontrarMejorEtapaMatch = (titSeccion: string, etapas: string[]): string | null => {
+            if (!etapas || etapas.length === 0) return null;
+            const limTit = titSeccion.replace(/^BLOQUE\s+\d+[\.:\s]*/i, '').toLowerCase().trim();
+            const palabrasTit = limTit.split(/[^a-záéíóú0-9]+/).filter(w => w.length > 2);
+            const esPrevia = limTit.includes('previa') || limTit.includes('preparaci');
+
+            let mejorMatch: string | null = null;
+            let mejorScore = -999;
+
+            for (const etapa of etapas) {
+                const limEtapa = etapa.toLowerCase();
+                const etapaEsPrevia = limEtapa.includes('previa') || limEtapa.includes('organizaci');
+
+                if (esPrevia && !etapaEsPrevia) continue;
+                if (!esPrevia && etapaEsPrevia) continue;
+
+                const palabrasEtapa = limEtapa.split(/[^a-záéíóú0-9]+/).filter(w => w.length > 2);
+                let score = 0;
+                for (const p of palabrasTit) {
+                    if (palabrasEtapa.includes(p)) score += 10;
+                }
+                if (score > mejorScore && score > 0) {
+                    mejorScore = score;
+                    mejorMatch = etapa;
+                }
+            }
+
+            if (mejorMatch) return mejorMatch;
+
+            for (const etapa of etapas) {
+                const limEtapa = etapa.toLowerCase();
+                if (limEtapa.includes(limTit) || limTit.includes(limEtapa)) {
+                    return etapa;
+                }
+            }
+            return null;
+        };
+
+        // 1. Título y Descripción inicial del Formulario
         let i = 0;
-        if (rawLines.length > 2 && /ENCUESTA|REGISTRO|CUESTIONARIO/i.test(rawLines[0])) {
-            const tit = rawLines[0] + (rawLines[1] && !/^(\d+\.|Estimado)/i.test(rawLines[1]) ? ' - ' + rawLines[1] : '');
+        if (rawLines.length > 2 && /ENCUESTA|REGISTRO|CUESTIONARIO|EVALUACI[OÓ]N/i.test(rawLines[0])) {
+            const tit = rawLines[0] + (rawLines[1] && !/^(\d+\.|Estimado|BLOQUE|Esta evaluaci)/i.test(rawLines[1]) ? ' - ' + rawLines[1] : '');
             this.titulo = tit;
             const descParts: string[] = [];
-            let j = (rawLines[1] && !/^(\d+\.|Estimado)/i.test(rawLines[1])) ? 2 : 1;
-            while (j < rawLines.length && !/^(\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|BLOQUE|SECCI[OÓ]N)/i.test(rawLines[j])) {
+            let j = (rawLines[1] && !/^(\d+\.|Estimado|BLOQUE|Esta evaluaci)/i.test(rawLines[1])) ? 2 : 1;
+            while (j < rawLines.length && !/^(\d+\.\s+[A-ZÁÉÍÓÚÑ]|BLOQUE|SECCI[OÓ]N|PARTICIPACI[OÓ]N)/i.test(rawLines[j])) {
                 descParts.push(rawLines[j]);
                 j++;
             }
@@ -1071,21 +1112,24 @@ PARTICIPACIÓN FUTURA
 
         pasosGenerados.push({
             numero: 1,
-            titulo: 'Paso 1: Datos Generales',
+            titulo: 'Paso 1: Inicio',
             descripcion: 'Información inicial del formulario'
         });
 
         while (i < rawLines.length) {
             const linea = rawLines[i];
 
-            // Omitir firmas o textos de agradecimiento de cierre
-            if (/^¡GRACIAS|FORO ENERGIZA 2026$|Conectando industria/i.test(linea)) {
+            // Omitir texto de cierre / agradecimiento final
+            if (/^¡GRACIAS|FORO ENERGIZA 2026$|Conectando industria|Tu opini[oó]n nos ayuda a construir/i.test(linea)) {
                 i++;
                 continue;
             }
 
-            // A. Detección de Bloque / Separador de Sección
-            const esEncabezadoBloque = /^(\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|BLOQUE\s+\d+|SECCI[OÓ]N\s+\d+|PARTICIPACI[OÓ]N FUTURA)/i.test(linea) && !linea.startsWith('☐') && !linea.startsWith('•');
+            // A. DETECCIÓN DE BLOQUE / SECCIÓN
+            const esBloqueExplicit = /^(BLOQUE\s+\d+|SECCI[OÓ]N\s+\d+|PARTICIPACI[OÓ]N FUTURA)/i.test(linea);
+            const esTituloEnMayusculas = /^\d+\.\s+[A-ZÁÉÍÓÚÑ\s]{4,}$/.test(linea) && !linea.includes('?') && !linea.includes('¿');
+            const esEncabezadoBloque = (esBloqueExplicit || esTituloEnMayusculas) && !linea.startsWith('☐') && !linea.startsWith('•') && !linea.startsWith('○');
+
             if (esEncabezadoBloque) {
                 seccionesCount++;
                 const titSeccion = limpiarNotas(linea);
@@ -1093,9 +1137,8 @@ PARTICIPACIÓN FUTURA
                 if (camposGenerados.length > 0 && this.generarPasosWord) {
                     pasoActualNum++;
                     const pasoTitulo = titSeccion
+                        .replace(/^BLOQUE\s+\d+[\.:\s]*/i, '')
                         .replace(/^\d+\.\s*/, '')
-                        .replace(/^[¿\?¡\!]/, '')
-                        .replace(/[¿\?¡\!]$/, '')
                         .trim();
                     pasosGenerados.push({
                         numero: pasoActualNum,
@@ -1104,67 +1147,42 @@ PARTICIPACIÓN FUTURA
                     });
                 }
 
-                const seccionCampo: CampoConfig = {
+                const secCampo: CampoConfig = {
                     id: 'sec_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                     tipo: 'section',
                     etiqueta: titSeccion,
-                    placeholder: 'Por favor completa la información correspondiente a esta sección.',
+                    placeholder: 'Completa la información correspondiente a este paso.',
                     requerido: false,
                     ancho: 'full',
                     paso: pasoActualNum,
                     orden: camposGenerados.length + 1
                 };
 
-                if (/FORO\s+ENERGIZA/i.test(titSeccion) && primerPreguntaEtapasId) {
-                    seccionCampo.dependeDeCampoId = primerPreguntaEtapasId;
-                    seccionCampo.dependeDeValor = 'Foro Energiza';
-                    seccionCampo.dependeDeOperador = 'contains';
-                }
-
-                camposGenerados.push(seccionCampo);
-
-                // Caso especial 1: Si el bloque mismo es una pregunta con opciones (ej: "2. ¿CÓMO TE ENTERASTE...")
-                if (linea.includes('?') || linea.includes('¿')) {
-                    preguntasCount++;
-                    const preguntaEtiqueta = titSeccion.replace(/^\d+\.\s*/, '');
-                    i++;
-
-                    const opcionesPreg: string[] = [];
-                    while (i < rawLines.length) {
-                        const lOpt = rawLines[i];
-                        if (/^(\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|BLOQUE|SECCI[OÓ]N|PARTICIPACI[OÓ]N)/i.test(lOpt)) break;
-                        if (lOpt.includes('?') || lOpt.includes('¿') || lOpt.endsWith(':')) break;
-
-                        if (lOpt.includes('☐')) {
-                            const splitted = lOpt.split('☐').map(limpiarOpcion).filter(o => o.length > 0);
-                            opcionesPreg.push(...splitted);
-                            i++;
-                        } else if (/^(\•|\-|\*|\d+\))\s*/.test(lOpt)) {
-                            opcionesPreg.push(lOpt.replace(/^(\•|\-|\*|\d+\))\s*/, '').trim());
-                            i++;
+                // Condicionalidad automática si corresponde a una etapa seleccionada
+                if (primerPreguntaEtapasId && etapasOpciones.length > 0) {
+                    const etapaMatch = encontrarMejorEtapaMatch(titSeccion, etapasOpciones);
+                    if (etapaMatch) {
+                        secCampo.dependeDeCampoId = primerPreguntaEtapasId;
+                        if (/^BLOQUE\s+\d+\.\s+FORO ENERGIZA$/i.test(titSeccion.trim())) {
+                            secCampo.dependeDeValor = 'Foro Energiza';
                         } else {
-                            break;
+                            secCampo.dependeDeValor = etapaMatch;
                         }
+                        secCampo.dependeDeOperador = 'contains';
                     }
-
-                    if (opcionesPreg.length > 0) opcionesCount += opcionesPreg.length;
-
-                    camposGenerados.push({
-                        id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
-                        tipo: 'checkbox',
-                        etiqueta: preguntaEtiqueta,
-                        placeholder: 'Selecciona las opciones correspondientes',
-                        requerido: false,
-                        ancho: 'full',
-                        paso: pasoActualNum,
-                        opciones: opcionesPreg,
-                        orden: camposGenerados.length + 1
-                    });
-                    continue;
                 }
 
-                // Caso especial 2: Si el bloque es "7. COMENTARIOS O SUGERENCIAS ADICIONALES"
-                if (/COMENTARIOS|SUGERENCIAS/i.test(titSeccion)) {
+                camposGenerados.push(secCampo);
+
+                // Saltar nota informativa debajo del bloque si existe
+                i++;
+                if (i < rawLines.length && /^Este bloque se responde|Solo aparece si|Responde únicamente/i.test(rawLines[i])) {
+                    secCampo.placeholder = rawLines[i];
+                    i++;
+                }
+
+                // Si es bloque de comentarios sin preguntas explícitas debajo
+                if (/COMENTARIOS|SUGERENCIAS/i.test(titSeccion) && (i >= rawLines.length || /^¡GRACIAS/i.test(rawLines[i]))) {
                     preguntasCount++;
                     camposGenerados.push({
                         id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
@@ -1176,50 +1194,62 @@ PARTICIPACIÓN FUTURA
                         paso: pasoActualNum,
                         orden: camposGenerados.length + 1
                     });
-                    i++;
-                    continue;
                 }
 
-                i++;
                 continue;
             }
 
-            // B. Detección de Matriz Likert / Tabla de Satisfacción
-            if (/SATISFACCI[OÓ]N|EVALUACI[OÓ]N\s+CON|CALIFICACI[OÓ]N/i.test(linea) || /Marca una opci[oó]n por cada aspecto/i.test(linea)) {
-                matricesCount++;
-                let etiquetaMatriz = limpiarNotas(linea);
-                let placeholderMatriz = '';
+            // B. DETECCIÓN DE MATRIZ LIKERT / TABLA DE EVALUACIÓN
+            const esMatrizInicio = /SATISFACCI[OÓ]N|EVALUACI[OÓ]N\s+(DE\s+LA|COMPARATIVA|GENERAL|CON)|¿C[oó]mo evaluar[ií]as la (organizaci[oó]n|claridad|comunicaci[oó]n)|¿Cómo evaluarías (la organización|la claridad|la comunicación)/i.test(linea) ||
+                /Marca una opci[oó]n por cada aspecto|¿Qu[ée] tan satisfecho/i.test(linea);
 
-                if (/Marca una opci/i.test(etiquetaMatriz)) {
-                    placeholderMatriz = etiquetaMatriz;
-                    etiquetaMatriz = 'Evaluación y Satisfacción con el Evento';
-                }
+            if (esMatrizInicio && (i + 1 < rawLines.length && (/Aspecto|Actividad|Qué evaluar|1\s*=\s*Muy|1\s*–\s*5|[1-5]/i.test(rawLines[i + 1]) || /Aspecto|Actividad/i.test(rawLines[i + 2] || '')))) {
+                matricesCount++;
+                let etiquetaMatriz = limpiarNotas(linea).replace(/^\d+\.\s*/, '');
+                let placeholderMatriz = '';
                 i++;
+
+                let tieneNA = false;
+                let tieneNoParticipe = false;
 
                 if (i < rawLines.length && (/Marca una opci|1\s*=\s*Muy|Escala:/i.test(rawLines[i]))) {
                     placeholderMatriz = rawLines[i];
                     i++;
                 }
 
-                // Saltar cabeceras de tabla tipo "Aspecto 1 2 3 4 5"
-                while (i < rawLines.length && /^(Aspecto|[1-5]|\t)+$/.test(rawLines[i])) {
+                // Detectar columnas y saltar cabeceras de tabla
+                while (i < rawLines.length && /^(Aspecto|Actividad|Qué evaluar|[1-5]|N\/A|No participé|\t)+$/i.test(rawLines[i])) {
+                    if (/N\/A/i.test(rawLines[i])) tieneNA = true;
+                    if (/No participé/i.test(rawLines[i])) tieneNoParticipe = true;
                     i++;
                 }
 
                 const filasMatriz: FilaMatrizConfig[] = [];
                 while (i < rawLines.length) {
                     const lFila = rawLines[i];
-                    if (/^(\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|BLOQUE|SECCI[OÓ]N|PARTICIPACI[OÓ]N)/i.test(lFila)) break;
-                    if (/^(Aspecto|[1-5]|☐|\t)+$/.test(lFila.trim())) {
+                    if (/^(BLOQUE|\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|SECCI[OÓ]N|PARTICIPACI[OÓ]N)/i.test(lFila) && !/^[○☐]/.test(lFila)) break;
+                    if (/^(Aspecto|Actividad|Qué evaluar|[1-5]|N\/A|No participé|☐|○|\t)+$/i.test(lFila.trim())) {
+                        if (/N\/A/i.test(lFila)) tieneNA = true;
+                        if (/No participé/i.test(lFila)) tieneNoParticipe = true;
                         i++;
                         continue;
                     }
+                    if (/^Escala:/i.test(lFila)) {
+                        placeholderMatriz = lFila;
+                        i++;
+                        break;
+                    }
 
                     const textoLimpio = lFila.replace(/^(\d+[\.\-\|\)]|\•|\-|\*)\s*/, '').trim();
-                    if (textoLimpio.length > 2 && !textoLimpio.startsWith('☐')) {
+                    if (textoLimpio.length > 2 && !textoLimpio.startsWith('☐') && !textoLimpio.startsWith('○')) {
+                        let descFila = '';
+                        if (i + 1 < rawLines.length && !/^[☐○\d]/.test(rawLines[i + 1]) && !/^(BLOQUE|\d+\.)/i.test(rawLines[i + 1])) {
+                            descFila = ' (' + rawLines[i + 1] + ')';
+                            i++;
+                        }
                         filasMatriz.push({
                             id: 'f_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 4) + filasMatriz.length,
-                            texto: textoLimpio
+                            texto: textoLimpio + descFila
                         });
                     }
                     i++;
@@ -1229,52 +1259,47 @@ PARTICIPACIÓN FUTURA
                     filasMatriz.push(...this.crearFilasDefaultMatriz());
                 }
 
+                const columnasMatriz: ColumnaMatrizConfig[] = [
+                    { valor: '1', etiqueta: '1' },
+                    { valor: '2', etiqueta: '2' },
+                    { valor: '3', etiqueta: '3' },
+                    { valor: '4', etiqueta: '4' },
+                    { valor: '5', etiqueta: '5' }
+                ];
+                if (tieneNA) {
+                    columnasMatriz.push({ valor: 'NA', etiqueta: 'N/A' });
+                } else if (tieneNoParticipe) {
+                    columnasMatriz.push({ valor: 'No participe', etiqueta: 'No participé' });
+                }
+
                 const matrizCampo: CampoConfig = {
                     id: 'matriz_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
                     tipo: 'matrix',
                     etiqueta: etiquetaMatriz,
-                    placeholder: placeholderMatriz || 'Marca una opción por cada aspecto: 1 = Muy insatisfecho(a) · 2 = Insatisfecho(a) · 3 = Neutral · 4 = Satisfecho(a) · 5 = Muy satisfecho(a)',
+                    placeholder: placeholderMatriz || 'Marca una opción por cada aspecto evaluado.',
                     requerido: false,
                     ancho: 'full',
                     paso: pasoActualNum,
-                    escalaNotaInferior: '1 = Muy insatisfecho(a)',
-                    escalaNotaSuperior: '5 = Muy satisfecho(a)',
-                    columnasMatriz: [
-                        { valor: '1', etiqueta: '1' },
-                        { valor: '2', etiqueta: '2' },
-                        { valor: '3', etiqueta: '3' },
-                        { valor: '4', etiqueta: '4' },
-                        { valor: '5', etiqueta: '5' }
-                    ],
+                    escalaNotaInferior: '1 = Muy insatisfecho(a) / deficiente',
+                    escalaNotaSuperior: '5 = Muy satisfecho(a) / excelente',
+                    columnasMatriz: columnasMatriz,
                     filasMatriz: filasMatriz,
                     orden: camposGenerados.length + 1
                 };
-
-                if (primerPreguntaEtapasId && pasoActualNum > 1) {
-                    matrizCampo.dependeDeCampoId = primerPreguntaEtapasId;
-                    matrizCampo.dependeDeValor = 'Foro Energiza';
-                    matrizCampo.dependeDeOperador = 'contains';
-                }
 
                 camposGenerados.push(matrizCampo);
                 continue;
             }
 
-            // C. Detección de pregunta con escala numérica 1 a 5 con etiquetas (Ej: "¿Cómo calificas tu experiencia general...?")
+            // C. DETECCIÓN DE PREGUNTA CON ESCALA NUMÉRICA O NPS
+            // Caso C1: 1 a 5 con opciones en líneas
             if ((linea.includes('?') || linea.includes('¿')) && i + 1 < rawLines.length && /^[1-5]$/.test(rawLines[i + 1])) {
                 preguntasCount++;
-                const etiquetaPregunta = limpiarNotas(linea);
+                const etiquetaPregunta = limpiarNotas(linea).replace(/^\d+\.\s*/, '');
                 i++;
-
-                while (i < rawLines.length && /^[1-5]$/.test(rawLines[i])) {
-                    i++;
-                }
-                while (i < rawLines.length && /^☐+$/.test(rawLines[i])) {
-                    i++;
-                }
-                if (i < rawLines.length && /Muy mala.*Excelente/i.test(rawLines[i])) {
-                    i++;
-                }
+                while (i < rawLines.length && /^[1-5]$/.test(rawLines[i])) i++;
+                while (i < rawLines.length && /^[☐○]+$/.test(rawLines[i])) i++;
+                if (i < rawLines.length && /Muy mala.*Excelente/i.test(rawLines[i])) i++;
 
                 const opcionesEscala = ['1 | Muy mala', '2 | Mala', '3 | Regular', '4 | Buena', '5 | Excelente'];
                 opcionesCount += opcionesEscala.length;
@@ -1293,30 +1318,117 @@ PARTICIPACIÓN FUTURA
                 continue;
             }
 
-            // D. Preguntas estándar con opciones, textarea o input
-            if (linea.includes('?') || linea.includes('¿') || linea.endsWith(':') || /^[A-ZÁÉÍÓÚÑ]/.test(linea)) {
+            // Caso C2: Pregunta seguida de "1–5", "Escala 1–5." o "Barras comparativas1–5"
+            const tieneEscalaSiguiente = i + 1 < rawLines.length && /^(\s*1\s*–\s*5\.?|Escala\s*1[–-]5\.?)/i.test(rawLines[i + 1]);
+            const tieneEscalaEnLinea = /1\s*–\s*5$/i.test(linea);
+
+            if ((linea.includes('?') || linea.includes('¿') || /^\d+\.\s+/.test(linea)) && (tieneEscalaSiguiente || tieneEscalaEnLinea)) {
                 preguntasCount++;
-                const etiquetaPregunta = limpiarNotas(linea);
+                const etiquetaPregunta = limpiarNotas(linea).replace(/^\d+\.\s*/, '').replace(/1\s*–\s*5$/i, '').trim();
+                if (tieneEscalaSiguiente) i++;
+                i++;
+
+                const opcionesEscala = ['1 (Muy bajo)', '2 (Bajo)', '3 (Medio)', '4 (Bueno)', '5 (Excelente)'];
+                opcionesCount += opcionesEscala.length;
+
+                camposGenerados.push({
+                    id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
+                    tipo: 'radio',
+                    etiqueta: etiquetaPregunta,
+                    placeholder: 'Selecciona tu nivel de calificación del 1 al 5',
+                    requerido: true,
+                    ancho: 'full',
+                    paso: pasoActualNum,
+                    opciones: opcionesEscala,
+                    orden: camposGenerados.length + 1
+                });
+                continue;
+            }
+
+            // Caso C3: Pregunta de NPS 0 a 10
+            if (/escala del 0 al 10|recomiendes Foro Energiza/i.test(linea)) {
+                preguntasCount++;
+                const etiquetaPregunta = limpiarNotas(linea).replace(/^\d+\.\s*/, '');
+                i++;
+                if (i < rawLines.length && /0 significa|Selecciona un solo número/i.test(rawLines[i])) {
+                    i++;
+                }
+                while (i < rawLines.length && /^(☐\s*)?([0-9]|10)$/.test(rawLines[i])) {
+                    i++;
+                }
+                const opcionesNps = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+                opcionesCount += opcionesNps.length;
+
+                camposGenerados.push({
+                    id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
+                    tipo: 'radio',
+                    etiqueta: etiquetaPregunta,
+                    placeholder: 'Selecciona una puntuación del 0 al 10',
+                    requerido: true,
+                    ancho: 'full',
+                    paso: pasoActualNum,
+                    opciones: opcionesNps,
+                    orden: camposGenerados.length + 1
+                });
+                continue;
+            }
+
+            // D. PREGUNTAS ESTÁNDAR
+            const lineaLimpiaNotas = limpiarNotas(linea);
+            const esPregunta = (linea.includes('?') || linea.includes('¿') || /^\d+\.\s+[A-ZÁÉÍÓÚÑ]/.test(linea) ||
+                (lineaLimpiaNotas.endsWith(':') && !linea.startsWith('☐') && !linea.startsWith('○') && !/^Otro:/i.test(lineaLimpiaNotas)));
+
+            if (esPregunta) {
+                preguntasCount++;
+                const etiquetaPregunta = lineaLimpiaNotas.replace(/^\d+\.\s*/, '');
                 i++;
 
                 let subinstruccion = '';
-                if (i < rawLines.length && !rawLines[i].includes('?') && !rawLines[i].includes('¿') && !rawLines[i].endsWith(':') &&
-                    /Selecciona|Marca|Puedes seleccionar|todas las que correspondan/i.test(rawLines[i]) && !/^(\•|\-|\*|☐)/.test(rawLines[i])) {
+                if (i < rawLines.length && !rawLines[i].includes('?') && !rawLines[i].includes('¿') &&
+                    !(limpiarNotas(rawLines[i]).endsWith(':') && !rawLines[i].startsWith('☐') && !rawLines[i].startsWith('○') && !/^Otro:/i.test(rawLines[i])) &&
+                    !/^\d+\.\s+/.test(rawLines[i]) &&
+                    /Selecciona|Marca|Puedes seleccionar|hasta tres|todas las que correspondan|Respuesta abierta|Esta pregunta es fundamental/i.test(rawLines[i]) &&
+                    !/^(\•|\-|\*|☐|○)/.test(rawLines[i])) {
                     subinstruccion = rawLines[i];
                     i++;
                 }
 
+                const esAbiertaExplicita = /Respuesta abierta|Clasificaci[oó]n tem[aá]tica|Gráfica de temas|Comparación de temas/i.test(linea + ' ' + subinstruccion) ||
+                    (i < rawLines.length && /^Respuesta abierta/i.test(rawLines[i]));
+
+                if (esAbiertaExplicita) {
+                    if (i < rawLines.length && /^Respuesta abierta/i.test(rawLines[i])) i++;
+                    camposGenerados.push({
+                        id: 'cp_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
+                        tipo: 'textarea',
+                        etiqueta: etiquetaPregunta,
+                        placeholder: subinstruccion || 'Escribe tu respuesta aquí...',
+                        requerido: false,
+                        ancho: 'full',
+                        paso: pasoActualNum,
+                        orden: camposGenerados.length + 1
+                    });
+                    continue;
+                }
+
+                // Recopilar opciones (con checkboxes ☐/○ o líneas de texto plano)
                 const opciones: string[] = [];
                 while (i < rawLines.length) {
                     const lOpt = rawLines[i];
+                    const lOptLimpia = limpiarNotas(lOpt);
 
-                    // Ruptura estricta ante nuevas preguntas o bloques
-                    if (/^(\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|BLOQUE|SECCI[OÓ]N|PARTICIPACI[OÓ]N)/i.test(lOpt)) break;
-                    if (lOpt.includes('?') || lOpt.includes('¿') || lOpt.endsWith(':')) break;
-                    if (/^SATISFACCI/i.test(lOpt)) break;
+                    if (/^(BLOQUE|\d+\.\s+[A-ZÁÉÍÓÚÑ¿¡]|SECCI[OÓ]N|PARTICIPACI[OÓ]N)/i.test(lOpt)) break;
+                    if (lOpt.includes('?') || lOpt.includes('¿')) break;
+                    if (/^SATISFACCI|^\s*1\s*–\s*5/i.test(lOpt)) break;
+                    if (/^Respuesta abierta/i.test(lOpt)) break;
 
-                    if (lOpt.includes('☐')) {
-                        const splitted = lOpt.split('☐').map(limpiarOpcion).filter(o => o.length > 0);
+                    // Si es el inicio de otra pregunta que termina en ':'
+                    if (!lOpt.includes('☐') && !lOpt.includes('○') && !/^Otro:/i.test(lOptLimpia) && lOptLimpia.endsWith(':')) {
+                        break;
+                    }
+
+                    if (lOpt.includes('☐') || lOpt.includes('○')) {
+                        const splitted = lOpt.split(/[☐○]/).map(limpiarOpcion).filter(o => o.length > 0);
                         opciones.push(...splitted);
                         i++;
                     } else if (/^(\•|\-|\*|\d+\))\s*/.test(lOpt)) {
@@ -1328,16 +1440,26 @@ PARTICIPACIÓN FUTURA
                         if (optTexto.length > 0) opciones.push(limpiarOpcion(optTexto));
                         i++;
                     } else {
-                        break;
+                        // Opciones de texto plano (ej: Sí, No, opciones sin checkboxes)
+                        const esOpcionPlano = lOpt.length >= 2 && lOpt.length < 90 &&
+                            !/^(Este bloque|Solo aparece|Responde únicamente|Opcional\.)/i.test(lOpt) &&
+                            !/^(1\s*=\s*Muy|[1-5]\s*\|\s*)/i.test(lOpt);
+
+                        if (esOpcionPlano) {
+                            opciones.push(limpiarOpcion(lOpt));
+                            i++;
+                        } else {
+                            break;
+                        }
                     }
                 }
 
-                const esSeleccionMultiple = /todas las que correspondan|checkbox|m[uú]ltiple|etapas|puedes seleccionar m[aá]s|beneficios/i.test(etiquetaPregunta + ' ' + subinstruccion);
-                const esTextArea = /sugerencia|comentario|mejorar|valoraste|gustar[ií]a encontrar|actividades que/i.test(etiquetaPregunta);
-                const esInput = etiquetaPregunta.endsWith(':') || /Nombre de|Nombre del/i.test(etiquetaPregunta);
+                const esSeleccionMultiple = /todas las que correspondan|hasta tres|checkbox|m[uú]ltiple|etapas|puedes seleccionar|beneficios/i.test(etiquetaPregunta + ' ' + subinstruccion);
+                const esTextArea = /sugerencia|comentario|mejorar|valoraste|gustar[ií]a encontrar|actividades que|hizo falta|funcion[oó] bien|deber[ií]amos|raz[oó]n de la calificaci[oó]n|dificultades/i.test(etiquetaPregunta);
+                const esInput = etiquetaPregunta.endsWith(':') || /Nombre completo|representas\?|Nombre de|Nombre del/i.test(etiquetaPregunta);
 
                 let tipoFinal: CampoConfig['tipo'] = 'radio';
-                if (esTextArea) {
+                if (esTextArea && opciones.length === 0) {
                     tipoFinal = 'textarea';
                 } else if (esInput && opciones.length === 0) {
                     tipoFinal = 'input';
@@ -1363,10 +1485,7 @@ PARTICIPACIÓN FUTURA
 
                 if (/etapas\s+participaste/i.test(etiquetaPregunta) && !primerPreguntaEtapasId) {
                     primerPreguntaEtapasId = campoNuevo.id;
-                } else if (primerPreguntaEtapasId && pasoActualNum > 1 && /foro\s+energiza/i.test(etiquetaPregunta)) {
-                    campoNuevo.dependeDeCampoId = primerPreguntaEtapasId;
-                    campoNuevo.dependeDeValor = 'Foro Energiza';
-                    campoNuevo.dependeDeOperador = 'contains';
+                    etapasOpciones = opciones.slice();
                 }
 
                 camposGenerados.push(campoNuevo);
@@ -1378,8 +1497,8 @@ PARTICIPACIÓN FUTURA
 
         this.camposWordPrevisualizados = camposGenerados;
         this.pasosWordDetectados = pasosGenerados.length > 1 ? pasosGenerados : [
-            { numero: 1, titulo: 'Paso 1: Participación y Etapas' },
-            { numero: 2, titulo: 'Paso 2: Evaluación Detallada' }
+            { numero: 1, titulo: 'Paso 1: Inicio y Registro' },
+            { numero: 2, titulo: 'Paso 2: Evaluación' }
         ];
 
         this.resumenWordDetectado = {
