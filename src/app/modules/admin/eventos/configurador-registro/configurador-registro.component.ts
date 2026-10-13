@@ -2774,7 +2774,10 @@ PARTICIPACIÓN FUTURA
         if (event) event.stopPropagation();
         this.formularioParaEnvio = form;
         this.modalEnvioMasivoAbierto = true;
-        this.asuntoEnvio = `Invitación: Formulario de Registro - ${form.titulo}`;
+        const esSatisfaccion = this.obtenerTipoFormulario(form) === 'Satisfaccion';
+        this.asuntoEnvio = esSatisfaccion
+            ? `Encuesta de Satisfacción: ${form.titulo}`
+            : `Invitación: Formulario de Registro - ${form.titulo}`;
         this.mensajeAdicionalEnvio = '';
         this.resultadoEnvio = null;
         this.busquedaDestinatariosEnvio = '';
