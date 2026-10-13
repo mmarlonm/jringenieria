@@ -1810,10 +1810,17 @@ PARTICIPACIÓN FUTURA
     }
 
     /** Añade un nuevo campo dinámico al formulario */
-    agregarCampo(tipo: CampoConfig['tipo'] = 'input'): void {
+    agregarCampo(tipo: CampoConfig['tipo'] = 'input', insertarDespuesDeId?: string): void {
         const nuevoId = 'campo_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
         const orden = this.campos.length + 1;
-        const pasoAsignado = this.diseno.modoPasos ? (this.pasoSimuladorActual || 1) : 1;
+        let pasoAsignado = this.diseno.modoPasos ? (this.pasoSimuladorActual || 1) : 1;
+
+        if (insertarDespuesDeId) {
+            const padre = this.campos.find(c => c.id === insertarDespuesDeId);
+            if (padre && padre.paso) {
+                pasoAsignado = padre.paso;
+            }
+        }
 
         let opcionesDefault: string[] | undefined;
         let filasMatriz: FilaMatrizConfig[] | undefined;
@@ -1859,7 +1866,17 @@ PARTICIPACIÓN FUTURA
             orden: orden
         };
 
-        this.campos.push(nuevoCampo);
+        if (insertarDespuesDeId) {
+            const idx = this.campos.findIndex(c => c.id === insertarDespuesDeId);
+            if (idx !== -1) {
+                this.campos.splice(idx + 1, 0, nuevoCampo);
+            } else {
+                this.campos.push(nuevoCampo);
+            }
+        } else {
+            this.campos.push(nuevoCampo);
+        }
+
         if (tipo === 'checkbox') {
             this.previewRespuestas[nuevoId] = [];
         } else if (tipo === 'matrix') {
@@ -2041,6 +2058,184 @@ PARTICIPACIÓN FUTURA
     eliminarOpcion(campo: CampoConfig, optIndex: number): void {
         if (!campo.opciones) return;
         campo.opciones.splice(optIndex, 1);
+    }
+
+    /**
+     * Agrega la opción 'Otro' a las opciones de un campo y genera automáticamente
+     * un campo de texto ('¿Cuál? / Especifique otro...') posicionado INMEDIATAMENTE
+     * debajo de esta pregunta padre.
+     */
+    agregarOpcionOtroConCampo(campo: CampoConfig): void {
+        if (!campo.opciones) campo.opciones = [];
+
+        // 1. Verificar si ya existe opción 'Otro' o 'Otros'
+        let nombreOpcion = 'Otro';
+        const yaExiste = campo.opciones.find(o => /^otro/i.test(o.trim()));
+        if (yaExiste) {
+            nombreOpcion = yaExiste;
+        } else {
+            campo.opciones.push('Otro');
+        }
+
+        // 2. Si ya hay un campo hijo vinculado a esta opción, ubicarlo debajo
+        const hijoExistente = this.campos.find(c => c.dependeDeCampoId === campo.id && c.dependeDeValor === nombreOpcion);
+        if (hijoExistente) {
+            this.moverCampoDebajoDePadre(hijoExistente, true);
+            return;
+        }
+
+        // 3. Crear nuevo campo dependiente
+        const nuevoId = 'campo_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+        const parentIdx = this.campos.indexOf(campo);
+
+        const nuevoCampo: CampoConfig = {
+            id: nuevoId,
+            tipo: 'input',
+            etiqueta: '¿Cuál? / Especifique otro...',
+            placeholder: 'Escribe aquí tu respuesta...',
+            requerido: false,
+            ancho: 'full',
+            campoEstandar: '',
+            paso: campo.paso || 1,
+            dependeDeCampoId: campo.id,
+            dependeDeOperador: campo.tipo === 'checkbox' ? 'contains' : 'equals',
+            dependeDeValor: nombreOpcion,
+            orden: parentIdx + 2
+        };
+
+        // 4. Ubicar inmediatamente debajo del padre (o después de sus otros hijos)
+        let targetIdx = parentIdx + 1;
+        while (targetIdx < this.campos.length && this.campos[targetIdx].dependeDeCampoId === campo.id) {
+            targetIdx++;
+        }
+
+        this.campos.splice(targetIdx, 0, nuevoCampo);
+        this.previewRespuestas[nuevoId] = '';
+        this.reordenarCampos();
+        this.mostrarAlerta(`¡Opción "${nombreOpcion}" agregada! Se creó el campo condicional "¿Cuál? / Especifique..." posicionado justo debajo.`);
+        this._cdr.markForCheck();
+    }
+
+    /**
+     * Crea un campo condicional para una opción específica
+     * y lo posiciona inmediatamente debajo de la pregunta padre.
+     */
+    crearCampoCondicionalParaOpcion(campo: CampoConfig, opcion: string, tipo: CampoConfig['tipo'] = 'input'): void {
+        const hijoExistente = this.campos.find(c => c.dependeDeCampoId === campo.id && c.dependeDeValor === opcion);
+        if (hijoExistente) {
+            this.moverCampoDebajoDePadre(hijoExistente, true);
+            return;
+        }
+
+        const nuevoId = 'campo_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+        const parentIdx = this.campos.indexOf(campo);
+
+        const etiquetaDefault = /^otro/i.test(opcion.trim())
+            ? '¿Cuál? / Especifique otro...'
+            : `Especifique o detalle sobre: ${opcion}`;
+
+        const nuevoCampo: CampoConfig = {
+            id: nuevoId,
+            tipo: tipo,
+            etiqueta: etiquetaDefault,
+            placeholder: 'Ingresa la información...',
+            requerido: false,
+            ancho: 'full',
+            campoEstandar: '',
+            paso: campo.paso || 1,
+            dependeDeCampoId: campo.id,
+            dependeDeOperador: campo.tipo === 'checkbox' ? 'contains' : 'equals',
+            dependeDeValor: opcion,
+            orden: parentIdx + 2
+        };
+
+        let targetIdx = parentIdx + 1;
+        while (targetIdx < this.campos.length && this.campos[targetIdx].dependeDeCampoId === campo.id) {
+            targetIdx++;
+        }
+
+        this.campos.splice(targetIdx, 0, nuevoCampo);
+        this.previewRespuestas[nuevoId] = '';
+        this.reordenarCampos();
+        this.mostrarAlerta(`Pregunta condicional creada para "${opcion}", ubicada inmediatamente debajo.`);
+        this._cdr.markForCheck();
+    }
+
+    /**
+     * Reubica automáticamente un campo condicional inmediatamente debajo de su pregunta padre
+     * y sincroniza su número de paso wizard y operador.
+     */
+    moverCampoDebajoDePadre(campo: CampoConfig, mostrarMensaje: boolean = false): void {
+        if (!campo.dependeDeCampoId) return;
+        const parentIdx = this.campos.findIndex(c => c.id === campo.dependeDeCampoId);
+        if (parentIdx === -1) return;
+
+        const padre = this.campos[parentIdx];
+        campo.paso = padre.paso; // Sincroniza al mismo paso wizard si está en modo pasos
+
+        // Configura operador automático según el tipo del padre
+        if (padre.tipo === 'checkbox') {
+            campo.dependeDeOperador = 'contains';
+        } else if (!campo.dependeDeOperador) {
+            campo.dependeDeOperador = 'equals';
+        }
+
+        // Si no tiene valor esperado pero el padre tiene opciones, sugerir 'Otro' si existe
+        if (!campo.dependeDeValor && padre.opciones && padre.opciones.length > 0) {
+            const opcionOtro = padre.opciones.find(o => /^otro/i.test(o.trim())) || padre.opciones[padre.opciones.length - 1];
+            campo.dependeDeValor = opcionOtro;
+        }
+
+        const currIdx = this.campos.indexOf(campo);
+        if (currIdx === -1) return;
+
+        // Encontrar posición destino: después del padre y de cualquier otro hijo que ya dependa de él
+        let targetIdx = parentIdx + 1;
+        while (targetIdx < this.campos.length && this.campos[targetIdx].dependeDeCampoId === padre.id && this.campos[targetIdx].id !== campo.id) {
+            targetIdx++;
+        }
+
+        if (currIdx !== targetIdx && currIdx !== targetIdx - 1) {
+            this.campos.splice(currIdx, 1);
+            const finalIdx = currIdx < targetIdx ? targetIdx - 1 : targetIdx;
+            this.campos.splice(finalIdx, 0, campo);
+            this.reordenarCampos();
+            if (mostrarMensaje) {
+                this.mostrarAlerta(`El campo "${campo.etiqueta}" se reubicó automáticamente justo debajo de "${padre.etiqueta}".`);
+            }
+            this._cdr.markForCheck();
+        } else if (mostrarMensaje) {
+            this.mostrarAlerta(`El campo ya se encuentra ubicado justo debajo de "${padre.etiqueta}".`);
+        }
+    }
+
+    /** Evento al cambiar la dependencia en el selector de Visibilidad Condicional */
+    onCambioDependencia(campo: CampoConfig): void {
+        if (!campo.dependeDeCampoId) return;
+        this.moverCampoDebajoDePadre(campo, true);
+    }
+
+    /** Obtiene la lista de opciones de un campo por ID */
+    obtenerOpcionesDeCampo(campoId?: string): string[] {
+        if (!campoId) return [];
+        const c = this.campos.find(x => x.id === campoId);
+        return c?.opciones || [];
+    }
+
+    /** Obtiene un campo por su ID */
+    obtenerCampoPorId(campoId?: string): CampoConfig | undefined {
+        if (!campoId) return undefined;
+        return this.campos.find(c => c.id === campoId);
+    }
+
+    /** Obtiene los campos hijos que dependen de un padre dado */
+    obtenerCamposHijos(padreId: string): CampoConfig[] {
+        return this.campos.filter(c => c.dependeDeCampoId === padreId);
+    }
+
+    /** Obtiene el campo hijo condicionado a un valor de opción específico */
+    obtenerCampoHijo(padreId: string, valorOpcion: string): CampoConfig | undefined {
+        return this.campos.find(c => c.dependeDeCampoId === padreId && c.dependeDeValor === valorOpcion);
     }
 
     /** Manejo de cambio de imagen de portada por archivo local */

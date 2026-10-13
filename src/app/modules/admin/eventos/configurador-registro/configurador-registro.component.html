@@ -990,22 +990,30 @@
                                                    class="flex-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400"
                                                    placeholder="Qué evaluar (opcional, ej. Claridad de fechas, ubicación y registro)">
                                         </div>
-                                    </div>
+                             <!-- LÓGICA CONDICIONAL: APARECER SEGÚN RESPUESTA ANTERIOR (EJ. ETAPAS) -->
+                            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl"
+                                 [ngClass]="{'ring-1 ring-amber-400 bg-amber-50/40 dark:bg-amber-950/30': campo.dependeDeCampoId}">
+                                <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                        <mat-icon class="text-[14px] text-amber-500">alt_route</mat-icon>
+                                        Visibilidad Condicional (Mostrar sólo si se cumple una respuesta):
+                                    </span>
+                                    <button *ngIf="campo.dependeDeCampoId"
+                                            (click)="moverCampoDebajoDePadre(campo, true)"
+                                            type="button"
+                                            class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-900 px-2 py-0.5 rounded-lg border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer transition-colors"
+                                            matTooltip="Reubicar inmediatamente debajo de la pregunta padre">
+                                        <mat-icon class="text-[12px] text-amber-600">vertical_align_bottom</mat-icon>
+                                        Reubicar debajo de la pregunta padre
+                                    </button>
                                 </div>
-                            </div>
-
-                            <!-- LÓGICA CONDICIONAL: APARECER SEGÚN RESPUESTA ANTERIOR (EJ. ETAPAS) -->
-                            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl">
-                                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-2">
-                                    <mat-icon class="text-[14px] text-amber-500">alt_route</mat-icon>
-                                    Visibilidad Condicional (Mostrar sólo si se cumple una respuesta):
-                                </span>
 
                                 <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end text-xs">
                                     <div class="md:col-span-5">
                                         <label class="block text-[10px] font-semibold text-slate-500 mb-1">Mostrar solo si el campo:</label>
                                         <select [(ngModel)]="campo.dependeDeCampoId"
-                                                class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none">
+                                                (ngModelChange)="onCambioDependencia(campo)"
+                                                class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none font-medium">
                                             <option [ngValue]="undefined">Sin condición (Siempre visible)</option>
                                             <ng-container *ngFor="let otro of campos">
                                                 <option *ngIf="otro.id !== campo.id" [value]="otro.id">{{ otro.etiqueta || 'Campo #' + otro.orden }}</option>
@@ -1023,35 +1031,100 @@
                                     </div>
 
                                     <div class="md:col-span-4" *ngIf="campo.dependeDeCampoId">
-                                        <label class="block text-[10px] font-semibold text-slate-500 mb-1">Texto u opción esperada:</label>
-                                        <input [(ngModel)]="campo.dependeDeValor" type="text"
+                                        <label class="block text-[10px] font-semibold text-slate-500 mb-1">Opción o valor esperado:</label>
+                                        <!-- Selector rápido si el campo padre cuenta con opciones definidas -->
+                                        <div *ngIf="obtenerOpcionesDeCampo(campo.dependeDeCampoId).length > 0" class="flex gap-1.5">
+                                            <select [(ngModel)]="campo.dependeDeValor"
+                                                    class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none font-medium">
+                                                <option value="" disabled>Selecciona una opción...</option>
+                                                <option *ngFor="let opt of obtenerOpcionesDeCampo(campo.dependeDeCampoId)" [value]="opt">{{ opt }}</option>
+                                            </select>
+                                            <input [(ngModel)]="campo.dependeDeValor" type="text"
+                                                   class="w-24 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none"
+                                                   placeholder="O escribe...">
+                                        </div>
+                                        <!-- Input libre si el padre es de texto o sin opciones -->
+                                        <input *ngIf="obtenerOpcionesDeCampo(campo.dependeDeCampoId).length === 0"
+                                               [(ngModel)]="campo.dependeDeValor" type="text"
                                                class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none"
-                                               placeholder="Ej: Foro Energiza – Día 2">
+                                               placeholder="Ej: Otro">
                                     </div>
+                                </div>
+
+                                <!-- Aviso visual de vinculación y posición automática -->
+                                <div *ngIf="campo.dependeDeCampoId" class="mt-2 text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-1.5 flex-wrap">
+                                    <mat-icon class="text-xs text-amber-500">info</mat-icon>
+                                    <span>
+                                        Este campo está condicionado a <strong>{{ obtenerCampoPorId(campo.dependeDeCampoId)?.etiqueta }}</strong> y se posiciona automáticamente justo debajo de esa pregunta.
+                                    </span>
                                 </div>
                             </div>
 
                             <!-- Opciones para Select / Radio / Checkbox -->
                             <div *ngIf="campo.tipo === 'select' || campo.tipo === 'radio' || campo.tipo === 'checkbox'"
                                  class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400">Opciones de respuesta:</span>
-                                    <button (click)="agregarOpcion(campo)" mat-button class="text-xs text-emerald-600 py-0.5 px-2">
-                                        <mat-icon class="text-xs mr-1">add_circle</mat-icon> Agregar Opción
-                                    </button>
+                                <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                    <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                                        <mat-icon class="text-[14px] text-emerald-600">checklist</mat-icon>
+                                        Opciones de respuesta:
+                                    </span>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <button (click)="agregarOpcion(campo)" mat-button class="text-xs text-emerald-600 py-0.5 px-2">
+                                            <mat-icon class="text-xs mr-1">add_circle</mat-icon> Agregar Opción
+                                        </button>
+                                        <!-- BOTÓN INTUITIVO PARA AGREGAR 'OTRO' CON CAMPO CONDICIONAL DEBAJO -->
+                                        <button (click)="agregarOpcionOtroConCampo(campo)"
+                                                type="button"
+                                                class="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 py-1 px-2.5 rounded-xl border border-amber-300 dark:border-amber-700 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                                                matTooltip="Agrega la opción 'Otro' y genera automáticamente un campo de texto ('¿Cuál? / Especifique...') colocado justo debajo de esta pregunta">
+                                            <mat-icon class="text-xs text-amber-600">playlist_add</mat-icon>
+                                            <span>+ Opción "Otro" con campo condicional</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="space-y-1.5">
                                     <div *ngFor="let opt of campo.opciones; let optIdx = index; trackBy: trackByIndex"
-                                         class="flex items-center gap-2">
+                                         class="flex items-center gap-2 bg-white dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
                                         <mat-icon class="text-slate-400 text-xs">drag_handle</mat-icon>
                                         <input [(ngModel)]="campo.opciones![optIdx]" type="text"
-                                               class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                               class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-1 focus:ring-emerald-500 outline-none font-medium"
                                                [placeholder]="'Opción ' + (optIdx + 1)">
+
+                                        <!-- BOTÓN / BADGE PARA VINCULAR O VER PREGUNTA CONDICIONAL PARA ESTA OPCIÓN -->
+                                        <ng-container *ngIf="obtenerCampoHijo(campo.id, opt) as hijoVinculado; else sinHijo">
+                                            <span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center gap-1"
+                                                  [matTooltip]="'Campo condicional vinculado: ' + hijoVinculado.etiqueta + ' (ubicado justo debajo)'">
+                                                <mat-icon class="text-[12px] text-emerald-600">check_circle</mat-icon>
+                                                <span>{{ hijoVinculado.etiqueta }}</span>
+                                            </span>
+                                        </ng-container>
+                                        <ng-template #sinHijo>
+                                            <button (click)="crearCampoCondicionalParaOpcion(campo, opt)"
+                                                    type="button"
+                                                    class="text-[10px] font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 px-2 py-1 rounded-lg border border-dashed border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer transition-colors"
+                                                    [matTooltip]="'Crear una pregunta que solo aparezca si eligen \"' + opt + '\" (se colocará justo debajo)'">
+                                                <mat-icon class="text-[11px] text-amber-500">add</mat-icon>
+                                                <span>+ Pregunta si eligen "{{ opt }}"</span>
+                                            </button>
+                                        </ng-template>
+
                                         <button (click)="eliminarOpcion(campo, optIdx)" [disabled]="campo.opciones!.length <= 1"
-                                                mat-icon-button class="text-slate-400 hover:text-rose-500 disabled:opacity-20 !w-7 !h-7">
+                                                mat-icon-button class="text-slate-400 hover:text-rose-500 disabled:opacity-20 !w-7 !h-7"
+                                                matTooltip="Eliminar opción">
                                             <mat-icon class="text-xs">close</mat-icon>
                                         </button>
                                     </div>
+                                </div>
+
+                                <!-- Resumen de preguntas condicionales hijas colocadas debajo -->
+                                <div *ngIf="obtenerCamposHijos(campo.id).length > 0"
+                                     class="mt-2.5 p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5 flex-wrap">
+                                    <mat-icon class="text-xs text-amber-600">low_priority</mat-icon>
+                                    <span class="font-bold">Preguntas condicionales ubicadas inmediatamente debajo de esta:</span>
+                                    <span *ngFor="let h of obtenerCamposHijos(campo.id)"
+                                          class="px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-200 border border-amber-200 font-semibold shadow-xs">
+                                        {{ h.etiqueta }} (si eligen "{{ h.dependeDeValor }}")
+                                    </span>
                                 </div>
                             </div>
                         </div>
