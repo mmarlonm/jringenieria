@@ -1,4 +1,4 @@
-<div class="neural-graph-container">
+<div class="neural-graph-container" [class.is-mobile]="isMobileView" [class.sidebar-hidden]="!isSidebarOpen">
     <!-- CONTENEDOR 3D PRINCIPAL (THREE.JS) -->
     <div #canvas3dContainer class="canvas-3d-wrap">
         <!-- PANTALLA DE CARGA -->
@@ -32,30 +32,44 @@
                 </div>
             </div>
 
-            <!-- TOAST CENTRAL DE ACTIVIDAD DE USUARIOS EN TIEMPO REAL -->
-            <div class="hud-center" *ngIf="showActivityBanner">
-                <div class="hud-activity-banner">
-                    <span class="activity-lightning">⚡</span>
-                    <strong class="activity-user">{{ lastActiveUser }}</strong>
-                    <span class="activity-action">accedió a</span>
-                    <span class="activity-target">{{ lastActiveModule }}</span>
-                    <span class="activity-time">{{ lastActiveTime }}</span>
+            <!-- TOAST CENTRAL: QUIÉN ENTRÓ / ACTIVIDAD DE USUARIO (SIN MOSTRAR EL RECORRIDO EN TEXTO) -->
+            <div class="hud-center" *ngIf="showActivityBanner || isFailureActive">
+                <div class="hud-activity-banner" [class.banner-failure]="isFailureActive">
+                    <span class="activity-lightning">{{ isFailureActive ? '🚨' : '👤' }}</span>
+                    <strong class="activity-user" [class.text-red-400]="isFailureActive">{{ lastActiveUser || 'Usuario' }}</strong>
+                    <span class="activity-action">{{ isFailureActive ? 'en' : 'entró a' }}</span>
+                    <span class="activity-target" [class.text-red-200]="isFailureActive">{{ lastActiveModule || 'Sistema' }}</span>
+                    <span class="activity-time" [class.text-red-300]="isFailureActive">{{ lastActiveTime }}</span>
                 </div>
             </div>
 
             <div class="hud-right">
                 <div class="synapse-counter-chip" matTooltip="Total de impulsos sinápticos disparados">
-                    <span class="chip-dot"></span>
+                    <span class="chip-dot" [class.chip-dot-red]="isFailureActive"></span>
                     <span class="chip-val">{{ recentSynapsesCount }}</span>
                     <span class="chip-label">sinapsis</span>
                 </div>
-                <button class="btn-action" [class.btn-demo-active]="showModuleLabels" (click)="toggleModuleLabels()" matTooltip="Mostrar u ocultar nombres de módulos en los círculos">
+                <button class="btn-action" [class.btn-demo-active]="showModuleLabels" (click)="toggleModuleLabels()" matTooltip="Mostrar u ocultar nombres de componentes de Front y Back">
                     <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
-                    <span>{{ showModuleLabels ? 'Módulos ON' : 'Módulos OFF' }}</span>
+                    <span>{{ showModuleLabels ? 'Nombres ON' : 'Nombres OFF' }}</span>
                 </button>
-                <button class="btn-action btn-spike" (click)="triggerRandomSpike()" matTooltip="Dispara un impulso sináptico 3D hacia el núcleo API">
-                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:bolt'"></mat-icon>
-                    <span>Disparo 3D</span>
+                <!-- BOTÓN FLUJO COMPLETO DE GUARDAR (HTML ➔ TS ➔ SERVICE ➔ API ➔ SERVICE ➔ BD CORE ➔ UI) -->
+                <button class="btn-action btn-save-flow"
+                        [class.btn-demo-active]="isPipelineRunning && !isFailureActive"
+                        (click)="executeFullClickPipeline(selectedNode, false)"
+                        [disabled]="isPipelineRunning"
+                        matTooltip="Recorre toda la red que lleva un click de Guardar: HTML ➔ TS ➔ Service ➔ API ➔ Service ➔ BD Núcleo ➔ Retorno a UI">
+                    <mat-icon class="icon-size-4 text-emerald-400" [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
+                    <span>Guardar (Flujo 3D)</span>
+                </button>
+                <!-- BOTÓN SIMULACIÓN DE FALLA EN BD (RUTA ROJA) -->
+                <button class="btn-action btn-fail"
+                        [class.btn-demo-active]="isPipelineRunning && isFailureActive"
+                        (click)="executeFullClickPipeline(selectedNode, true)"
+                        [disabled]="isPipelineRunning"
+                        matTooltip="Simula un error al guardar en BD y enciende toda la ruta seguida en rojo neón">
+                    <mat-icon class="icon-size-4 text-red-400" [svgIcon]="'heroicons_outline:bolt'"></mat-icon>
+                    <span>Falla en BD</span>
                 </button>
                 <button class="btn-action" [class.btn-demo-active]="isAutoDemo" (click)="toggleAutoDemo()" matTooltip="Simulación continua de actividad neural">
                     <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:play'"></mat-icon>
@@ -64,25 +78,100 @@
                 <button class="btn-icon" (click)="resetCamera()" matTooltip="Restablecer vista del cerebro">
                     <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:arrows-pointing-in'"></mat-icon>
                 </button>
+                <!-- BOTÓN TOGGLE SIDEBAR EN EL HUD -->
+                <button class="btn-action btn-sidebar-toggle"
+                        [class.btn-demo-active]="isSidebarOpen"
+                        (click)="toggleSidebar()"
+                        [matTooltip]="isSidebarOpen ? 'Ocultar panel lateral (Graphify)' : 'Mostrar panel lateral (Graphify)'">
+                    <mat-icon class="icon-size-4" [svgIcon]="isSidebarOpen ? 'heroicons_outline:chevron-right' : 'heroicons_outline:bars-3'"></mat-icon>
+                    <span class="btn-text-desktop">{{ isSidebarOpen ? 'Ocultar' : 'Panel' }}</span>
+                </button>
             </div>
         </header>
 
+        <!-- PESTAÑA LATERAL EN DESKTOP CUANDO EL SIDEBAR ESTÁ OCULTO -->
+        <button *ngIf="!isSidebarOpen && !isMobileView"
+                class="sidebar-edge-toggle"
+                (click)="toggleSidebar()"
+                matTooltip="Mostrar panel lateral (Graphify)">
+            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:chevron-left'"></mat-icon>
+            <span class="edge-text">Panel</span>
+        </button>
+
+        <!-- BOTÓN FLOTANTE (FAB) EN MOBILE CUANDO EL SIDEBAR ESTÁ OCULTO -->
+        <button *ngIf="!isSidebarOpen && isMobileView"
+                class="floating-sidebar-btn"
+                (click)="toggleSidebar()"
+                matTooltip="Abrir explorador de nodos">
+            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
+            <span>Explorador</span>
+            <span class="floating-badge" *ngIf="selectedNode" matTooltip="Nodo seleccionado">●</span>
+        </button>
+
+        <!-- TOOLTIP FLOTANTE HUD DEL NODO EN HOVER (NOMBRE DE COMPONENTE FRONT / BACK) -->
+        <div class="hud-node-tooltip" *ngIf="hoveredNode">
+            <div class="tooltip-badge" [class.fe]="hoveredNode.scope === 'frontend'" [class.be]="hoveredNode.scope === 'backend'">
+                {{ hoveredNode.scope === 'frontend' ? '🎨 COMPONENTE FRONTEND' : '⚙️ CONTROLADOR / SERVICIO API' }}
+            </div>
+            <div class="tooltip-title">{{ hoveredNode.label }}</div>
+            <div class="tooltip-details">
+                <span class="tooltip-community" [style.color]="hoveredNode.color">● {{ hoveredNode.communityName }}</span>
+                <span class="tooltip-sep">&middot;</span>
+                <span class="tooltip-degree">{{ hoveredNode.degree }} conexiones</span>
+                <ng-container *ngIf="hoveredNode.sourceFile">
+                    <span class="tooltip-sep">&middot;</span>
+                    <span class="tooltip-file">{{ hoveredNode.sourceFile }}</span>
+                </ng-container>
+            </div>
+        </div>
+
         <!-- INDICADOR INFERIOR DE ORIENTACIÓN 3D -->
         <div class="hud-footer-hint" *ngIf="!isLoading">
-            <span>🖱️ Clic izquierdo + arrastrar: <b>Rotar en 3D</b></span>
-            <span>&middot;</span>
-            <span>🖱️ Rueda: <b>Zoom orbital</b></span>
-            <span>&middot;</span>
-            <span>🖱️ Clic derecho: <b>Pan 3D</b></span>
-            <span>&middot;</span>
-            <span>🎯 Clic en esfera: <b>Inspeccionar neurona</b></span>
+            <div class="hint-desktop">
+                <span>🖱️ Clic izquierdo: <b>Rotar en 3D</b></span>
+                <span>&middot;</span>
+                <span>🖱️ Rueda: <b>Zoom orbital</b></span>
+                <span>&middot;</span>
+                <span>🖱️ Clic derecho: <b>Pan 3D</b></span>
+                <span>&middot;</span>
+                <span>🎯 Clic: <b>Inspeccionar neurona</b></span>
+            </div>
+            <div class="hint-mobile">
+                <span>👆 Arrastrar: <b>Rotar 3D</b></span>
+                <span>&middot;</span>
+                <span>✌️ Pellizcar: <b>Zoom</b></span>
+                <span>&middot;</span>
+                <span>🎯 Tap esfera: <b>Ver datos</b></span>
+            </div>
         </div>
+    </div>
+
+    <!-- BACKDROP SEMITRANSPARENTE PARA MOBILE CUANDO EL SIDEBAR ESTÁ ABIERTO -->
+    <div class="sidebar-backdrop"
+         *ngIf="isMobileView && isSidebarOpen"
+         (click)="closeSidebar()">
     </div>
 
     <!-- ───────────────────────────────────────────────────────────── -->
     <!-- BARRA LATERAL DERECHA (DISEÑO EXACTO DE GRAPHIFY) -->
     <!-- ───────────────────────────────────────────────────────────── -->
-    <aside id="sidebar">
+    <aside id="sidebar"
+           [class.sidebar-open]="isSidebarOpen"
+           [class.sidebar-collapsed]="!isSidebarOpen"
+           [class.sidebar-floating]="isMobileView">
+
+        <!-- CABECERA DE CONTROL DEL PANEL -->
+        <div class="sidebar-header">
+            <div class="sidebar-header-title">
+                <mat-icon class="icon-size-4 text-cyan-400" [svgIcon]="'heroicons_outline:sparkles'"></mat-icon>
+                <span>Explorador Graphify</span>
+            </div>
+            <button class="btn-sidebar-close"
+                    (click)="toggleSidebar()"
+                    [matTooltip]="isMobileView ? 'Cerrar panel flotante' : 'Ocultar panel'">
+                <mat-icon class="icon-size-4" [svgIcon]="isMobileView ? 'heroicons_outline:x-mark' : 'heroicons_outline:chevron-right'"></mat-icon>
+            </button>
+        </div>
         <!-- BÚSQUEDA DE NODOS -->
         <div id="search-wrap">
             <input id="search"
@@ -138,10 +227,13 @@
                         </div>
                     </div>
 
-                    <!-- BOTÓN ESTIMULAR NEURONA -->
-                    <div style="margin-top: 10px;">
-                        <button class="btn-stimulate" (click)="triggerSynapticCascade(selectedNode)">
-                            ⚡ Disparar Impulso 3D
+                    <!-- BOTONES RECORRIDO ARQUITECTÓNICO COMPLETO -->
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+                        <button class="btn-stimulate btn-stimulate-save" (click)="executeFullClickPipeline(selectedNode, false)" [disabled]="isPipelineRunning">
+                            💾 Recorrer Guardado (HTML ➔ BD ➔ UI)
+                        </button>
+                        <button class="btn-stimulate btn-stimulate-fail" (click)="executeFullClickPipeline(selectedNode, true)" [disabled]="isPipelineRunning">
+                            🚨 Recorrer con Falla en BD (Ruta Roja)
                         </button>
                     </div>
 

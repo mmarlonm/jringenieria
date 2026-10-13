@@ -80,6 +80,116 @@ export interface SynapticBurst {
     maxScale: number;
 }
 
+export interface PipelineStepInfo {
+    stepNumber: number;
+    totalSteps: number;
+    icon: string;
+    phase: 'forward' | 'database' | 'return';
+    title: string;
+    description: string;
+    isFailure?: boolean;
+}
+
+export interface DbTableSpec {
+    name: string;
+    domain: string;
+    foreignKeys: string[];
+}
+
+export const APPLICATION_DB_TABLES: DbTableSpec[] = [
+    // Seguridad y Usuarios
+    { name: 'Usuarios', domain: 'Seguridad', foreignKeys: ['Roles', 'UsuarioInformacion', 'LoginLogs', 'Departamentos'] },
+    { name: 'Roles', domain: 'Seguridad', foreignKeys: ['Permisos', 'RolPermisos', 'RolVistas'] },
+    { name: 'Permisos', domain: 'Seguridad', foreignKeys: ['RolPermisos'] },
+    { name: 'UsuarioRoles', domain: 'Seguridad', foreignKeys: ['Usuarios', 'Roles'] },
+    { name: 'RolPermisos', domain: 'Seguridad', foreignKeys: ['Roles', 'Permisos'] },
+    { name: 'Vistas', domain: 'Seguridad', foreignKeys: ['RolVistas'] },
+    { name: 'RolVistas', domain: 'Seguridad', foreignKeys: ['Roles', 'Vistas'] },
+    { name: 'UsuarioInformacion', domain: 'Seguridad', foreignKeys: ['Usuarios'] },
+    { name: 'LoginLogs', domain: 'Seguridad', foreignKeys: ['Usuarios'] },
+
+    // CRM, Ventas y Cotizaciones
+    { name: 'Clientes', domain: 'Ventas', foreignKeys: ['Cotizaciones', 'Proyectos', 'Ventas', 'Prospectos'] },
+    { name: 'Cotizaciones', domain: 'Ventas', foreignKeys: ['Clientes', 'CotizacionProductos', 'EstatusCotizacion', 'Usuarios'] },
+    { name: 'CotizacionProductos', domain: 'Ventas', foreignKeys: ['Cotizaciones', 'Productos', 'CotizacionProductoDetalle'] },
+    { name: 'CotizacionProductoDetalle', domain: 'Ventas', foreignKeys: ['CotizacionProductos'] },
+    { name: 'EstatusCotizacion', domain: 'Ventas', foreignKeys: ['Cotizaciones'] },
+    { name: 'CotizacionesEstatusHistorial', domain: 'Ventas', foreignKeys: ['Cotizaciones', 'Usuarios'] },
+    { name: 'CotizacionArchivo', domain: 'Ventas', foreignKeys: ['Cotizaciones'] },
+    { name: 'Prospectos', domain: 'Ventas', foreignKeys: ['SeguimientoProspectos', 'NotasProspecto', 'Clientes'] },
+    { name: 'SeguimientoProspectos', domain: 'Ventas', foreignKeys: ['Prospectos', 'Usuarios'] },
+    { name: 'NotasProspecto', domain: 'Ventas', foreignKeys: ['Prospectos', 'Usuarios'] },
+    { name: 'Ventas', domain: 'Ventas', foreignKeys: ['Clientes', 'FormasDePago', 'Usuarios'] },
+    { name: 'FormasDePago', domain: 'Ventas', foreignKeys: ['Ventas'] },
+    { name: 'Leads', domain: 'Ventas', foreignKeys: ['LeadSeguimientos', 'Clientes'] },
+    { name: 'LeadSeguimientos', domain: 'Ventas', foreignKeys: ['Leads', 'Usuarios'] },
+
+    // Proyectos e Ingeniería
+    { name: 'Proyectos', domain: 'Proyectos', foreignKeys: ['Clientes', 'EstatusProyecto', 'ProyectoArchivo', 'AvanceProyecto', 'Usuarios'] },
+    { name: 'EstatusProyecto', domain: 'Proyectos', foreignKeys: ['Proyectos'] },
+    { name: 'ProyectoArchivo', domain: 'Proyectos', foreignKeys: ['Proyectos'] },
+    { name: 'ProyectoEstatusHistorial', domain: 'Proyectos', foreignKeys: ['Proyectos', 'Usuarios'] },
+    { name: 'AvanceProyecto', domain: 'Proyectos', foreignKeys: ['Proyectos'] },
+    { name: 'SeguimientoProyectos', domain: 'Proyectos', foreignKeys: ['Proyectos', 'SeguimientoEjecuciones'] },
+    { name: 'SeguimientoEjecuciones', domain: 'Proyectos', foreignKeys: ['SeguimientoProyectos', 'SeguimientoEjecucionActividadesMaestras'] },
+    { name: 'SeguimientoEjecucionActividadesMaestras', domain: 'Proyectos', foreignKeys: ['SeguimientoEjecuciones'] },
+    { name: 'GanttTasks', domain: 'Proyectos', foreignKeys: ['Proyectos', 'Usuarios'] },
+    { name: 'UnidadDeNegocio', domain: 'Proyectos', foreignKeys: ['Proyectos', 'Cotizaciones'] },
+    { name: 'Categorias', domain: 'Proyectos', foreignKeys: ['Proyectos', 'Productos'] },
+
+    // Compras y Proveedores
+    { name: 'SolicitudesCompra', domain: 'Compras', foreignKeys: ['ProveedoresMaestro', 'SolicitudesCompra_Proveedores', 'SolicitudesCompra_Detalle', 'Cat_EstatusCompra', 'Usuarios'] },
+    { name: 'SolicitudesCompra_Proveedores', domain: 'Compras', foreignKeys: ['SolicitudesCompra', 'ProveedoresMaestro'] },
+    { name: 'SolicitudesCompra_Detalle', domain: 'Compras', foreignKeys: ['SolicitudesCompra', 'Productos'] },
+    { name: 'SolicitudesCompra_Historial', domain: 'Compras', foreignKeys: ['SolicitudesCompra', 'Usuarios'] },
+    { name: 'SolicitudesCompra_Anticipos', domain: 'Compras', foreignKeys: ['SolicitudesCompra'] },
+    { name: 'Cat_EstatusCompra', domain: 'Compras', foreignKeys: ['SolicitudesCompra'] },
+    { name: 'ProveedoresMaestro', domain: 'Compras', foreignKeys: ['SolicitudesCompra', 'GastoProveedores'] },
+    { name: 'Compras_Recepciones', domain: 'Compras', foreignKeys: ['SolicitudesCompra', 'Compras_Recepciones_Facturas'] },
+    { name: 'Compras_Recepciones_Facturas', domain: 'Compras', foreignKeys: ['Compras_Recepciones'] },
+    { name: 'CatalogoSolicitantes', domain: 'Compras', foreignKeys: ['SolicitudesCompra'] },
+
+    // Inventarios y Almacenes
+    { name: 'Productos', domain: 'Inventario', foreignKeys: ['Almacenes', 'ExistenciaCosto', 'Categorias'] },
+    { name: 'Almacenes', domain: 'Inventario', foreignKeys: ['Productos', 'ExistenciaCosto', 'Traspasos'] },
+    { name: 'ExistenciaCosto', domain: 'Inventario', foreignKeys: ['Productos', 'Almacenes'] },
+    { name: 'Traspasos', domain: 'Inventario', foreignKeys: ['Almacenes', 'TraspasosDetalle', 'CatEstadosTraspaso'] },
+    { name: 'TraspasosDetalle', domain: 'Inventario', foreignKeys: ['Traspasos', 'Productos'] },
+    { name: 'CatEstadosTraspaso', domain: 'Inventario', foreignKeys: ['Traspasos'] },
+
+    // Finanzas y Gastos
+    { name: 'Gastos', domain: 'Finanzas', foreignKeys: ['GastoTipos', 'GastoConceptos', 'GastoAreas', 'GastoProveedores', 'GastoCuentas', 'Proyectos'] },
+    { name: 'GastoTipos', domain: 'Finanzas', foreignKeys: ['Gastos'] },
+    { name: 'GastoConceptos', domain: 'Finanzas', foreignKeys: ['Gastos', 'GastoTipos'] },
+    { name: 'GastoAreas', domain: 'Finanzas', foreignKeys: ['Gastos', 'Departamentos'] },
+    { name: 'GastoProveedores', domain: 'Finanzas', foreignKeys: ['Gastos', 'ProveedoresMaestro'] },
+    { name: 'GastoCuentas', domain: 'Finanzas', foreignKeys: ['Gastos'] },
+    { name: 'ControlFacturas_Maestro', domain: 'Finanzas', foreignKeys: ['ControlFacturas_Partidas', 'ProveedoresMaestro'] },
+    { name: 'ControlFacturas_Partidas', domain: 'Finanzas', foreignKeys: ['ControlFacturas_Maestro'] },
+
+    // Recursos Humanos y Operaciones
+    { name: 'Departamentos', domain: 'RRHH', foreignKeys: ['Usuarios', 'GastoAreas'] },
+    { name: 'Horarios', domain: 'RRHH', foreignKeys: ['Asistencias', 'Usuarios'] },
+    { name: 'Asistencias', domain: 'RRHH', foreignKeys: ['Usuarios', 'Horarios'] },
+    { name: 'RecursosTarifas', domain: 'RRHH', foreignKeys: ['Usuarios', 'Proyectos'] },
+    { name: 'RegistrosViaticos', domain: 'RRHH', foreignKeys: ['Usuarios', 'Proyectos'] },
+    { name: 'MetasUsuario', domain: 'RRHH', foreignKeys: ['Usuarios'] },
+    { name: 'SubcontratistasEmpresas', domain: 'RRHH', foreignKeys: ['SubcontratistasPersonal', 'Proyectos'] },
+    { name: 'SubcontratistasPersonal', domain: 'RRHH', foreignKeys: ['SubcontratistasEmpresas'] },
+
+    // Tareas, ISO 9001 y Comunicación
+    { name: 'Tareas', domain: 'Tareas', foreignKeys: ['TareaUsuario', 'Tareas_Comentarios', 'Usuarios', 'Proyectos'] },
+    { name: 'TareaUsuario', domain: 'Tareas', foreignKeys: ['Tareas', 'Usuarios'] },
+    { name: 'Tareas_Comentarios', domain: 'Tareas', foreignKeys: ['Tareas', 'Usuarios'] },
+    { name: 'IsoDocumentacionBitacoras', domain: 'Calidad', foreignKeys: ['Usuarios', 'Proyectos'] },
+    { name: 'Eventos', domain: 'Eventos', foreignKeys: ['Asistentes', 'Usuarios'] },
+    { name: 'Asistentes', domain: 'Eventos', foreignKeys: ['Eventos'] },
+    { name: 'Chats', domain: 'Comunicacion', foreignKeys: ['Mensajes', 'Usuarios'] },
+    { name: 'Mensajes', domain: 'Comunicacion', foreignKeys: ['Chats', 'Usuarios'] },
+    { name: 'Notificaciones', domain: 'Comunicacion', foreignKeys: ['Usuarios'] },
+    { name: 'Encuestas', domain: 'Calidad', foreignKeys: ['Clientes', 'Usuarios'] }
+];
+
 @Component({
     selector: 'app-system-neural-graph',
     standalone: true,
@@ -128,6 +238,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     public isIndeterminateCommunities: boolean = false;
     public showModuleLabels: boolean = true;
 
+    // Estado Responsivo y Visibilidad de Barra Lateral (Graphify)
+    public isMobileView: boolean = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
+    public isSidebarOpen: boolean = typeof window !== 'undefined' ? window.innerWidth >= 1024 : true;
+
     // Métricas
     public isLoading: boolean = true;
     public loadingProgress: string = 'Cargando constelaciones 3D de Graphify...';
@@ -173,11 +287,72 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     private activeBursts: SynapticBurst[] = [];
     private glowTextureCyan!: THREE.Texture;
     private glowTextureGreen!: THREE.Texture;
+    private glowTextureRed!: THREE.Texture;
+
+    // Manejo de Caminos de Falla 3D (Ruta Roja)
+    public isFailureActive: boolean = false;
+    public lastFailureMessage: string = '';
+    private failurePathMesh?: THREE.LineSegments;
+    private failureTimeout: any = null;
+
+    // Núcleo de Base de Datos 3D (SQL Server en el centro 0,0,0)
+    private dbCoreGroup = new THREE.Group();
+    private dbCoreMesh!: THREE.Mesh;
+    private dbCoreWireMesh!: THREE.Mesh;
+    private dbCoreRings: THREE.Mesh[] = [];
+    private dbCoreLight!: THREE.PointLight;
+
+    // Ejecución Secuencial del Pipeline Arquitectónico Completo (Click Guardar ➔ BD ➔ UI)
+    public isPipelineRunning: boolean = false;
+    public activePipelineStep: PipelineStepInfo | null = null;
 
     private subscriptions: Subscription = new Subscription();
 
     ngOnInit(): void {
+        this.checkViewport();
         this.initSignalRListener();
+    }
+
+    public checkViewport(): void {
+        const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
+        if (this.isMobileView !== isMobile) {
+            this.isMobileView = isMobile;
+            this.isSidebarOpen = !isMobile;
+            this._cdr.markForCheck();
+        }
+    }
+
+    public toggleSidebar(): void {
+        this.isSidebarOpen = !this.isSidebarOpen;
+        this._cdr.markForCheck();
+        setTimeout(() => {
+            if (this.containerRef?.nativeElement) {
+                const rect = this.containerRef.nativeElement.getBoundingClientRect();
+                this.handleResize(rect.width, rect.height);
+            }
+        }, 320);
+    }
+
+    public closeSidebar(): void {
+        this.isSidebarOpen = false;
+        this._cdr.markForCheck();
+        setTimeout(() => {
+            if (this.containerRef?.nativeElement) {
+                const rect = this.containerRef.nativeElement.getBoundingClientRect();
+                this.handleResize(rect.width, rect.height);
+            }
+        }, 320);
+    }
+
+    public openSidebar(): void {
+        this.isSidebarOpen = true;
+        this._cdr.markForCheck();
+        setTimeout(() => {
+            if (this.containerRef?.nativeElement) {
+                const rect = this.containerRef.nativeElement.getBoundingClientRect();
+                this.handleResize(rect.width, rect.height);
+            }
+        }, 320);
     }
 
     ngAfterViewInit(): void {
@@ -255,10 +430,14 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         // 6. Texturas de resplandor para impulsos de luz pura
         this.glowTextureCyan = this.createGlowTexture('#00F0FF', '#0284c7');
         this.glowTextureGreen = this.createGlowTexture('#00FF88', '#059669');
+        this.glowTextureRed = this.createGlowTexture('#FF1E56', '#DC2626');
 
         // Grupos 3D
         this.scene.add(this.layerRingsGroup);
         this.scene.add(this.labelsGroup);
+
+        // 7. Crear e inicializar el Núcleo central de Base de Datos (SQL Server en 0,0,0)
+        this.createDatabaseCore();
 
         // Configurar observador de redimensionamiento automático
         this.setupResizeObserver();
@@ -269,6 +448,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
 
     @HostListener('window:resize')
     onWindowResize(): void {
+        this.checkViewport();
         if (!this.containerRef?.nativeElement) return;
         const rect = this.containerRef.nativeElement.getBoundingClientRect();
         this.handleResize(rect.width, rect.height);
@@ -395,6 +575,133 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         });
 
         this.edges = data.edges || [];
+
+        // 3. Crear e inyectar el SUBGRAFO COMPLETO DE TABLAS DE BASE DE DATOS en el Núcleo central (R ~ 14 a 28)
+        const tableDomainColors: Record<string, string> = {
+            'Seguridad': '#38bdf8',
+            'Ventas': '#10b981',
+            'Proyectos': '#f59e0b',
+            'Compras': '#c084fc',
+            'Inventario': '#06b6d4',
+            'Finanzas': '#34d399',
+            'RRHH': '#f472b6',
+            'Tareas': '#818cf8',
+            'Calidad': '#a78bfa',
+            'Comunicacion': '#38bdf8',
+            'Eventos': '#fbbf24'
+        };
+
+        const totalTables = APPLICATION_DB_TABLES.length;
+        const dbTableNodes: Graph3DNode[] = APPLICATION_DB_TABLES.map((t, idx) => {
+            const phi = Math.acos(-1 + (2 * idx) / totalTables);
+            const theta = Math.sqrt(totalTables * Math.PI) * phi;
+            const r = 15 + (idx % 5) * 2.6; // Radio compacto de 15 a 26 en el núcleo interior
+            const x = r * Math.sin(phi) * Math.cos(theta);
+            const y = r * Math.sin(phi) * Math.sin(theta);
+            const z = r * Math.cos(phi);
+
+            const color = tableDomainColors[t.domain] || '#10b981';
+            const isLeader = t.foreignKeys.length >= 3;
+
+            return {
+                id: `table_${t.name.toLowerCase()}`,
+                label: `🗄️ ${t.name}`,
+                moduleName: `Tabla SQL Server (${t.domain})`,
+                isLeader,
+                color,
+                borderColor: '#ffffff',
+                size: isLeader ? 15 : 10.5,
+                community: 999,
+                communityName: `SQL Server (${t.domain})`,
+                sourceFile: 'Data/ApplicationDbContext.cs',
+                fileType: 'database_table',
+                degree: t.foreignKeys.length,
+                scope: 'backend',
+                x, y, z,
+                visible: true
+            };
+        });
+
+        // Nodo central del sistema de base de datos db_jr en (0, 0, 0)
+        const dbCoreNode: Graph3DNode = {
+            id: 'core_sql_database',
+            label: '🗄️ SQL Server Core (db_jr)',
+            moduleName: 'Database / SQL Server Core',
+            isLeader: true,
+            color: '#10b981',
+            borderColor: '#34d399',
+            size: 26,
+            community: 999,
+            communityName: 'SQL Server Core',
+            sourceFile: 'Data/ApplicationDbContext.cs',
+            fileType: 'database',
+            degree: 99,
+            scope: 'backend',
+            x: 0,
+            y: 0,
+            z: 0,
+            visible: true
+        };
+
+        this.nodes.unshift(dbCoreNode, ...dbTableNodes);
+
+        // Conectar Foreign Keys y relaciones entre tablas dentro del núcleo
+        for (const t of APPLICATION_DB_TABLES) {
+            const fromId = `table_${t.name.toLowerCase()}`;
+            for (const fk of t.foreignKeys) {
+                const toId = `table_${fk.toLowerCase()}`;
+                this.edges.push({
+                    from: fromId,
+                    to: toId,
+                    scope: 'backend',
+                    isBridge: false,
+                    label: 'FK'
+                });
+            }
+            // Enlace de cada tabla al centro del motor SQL
+            this.edges.push({
+                from: fromId,
+                to: 'core_sql_database',
+                scope: 'backend',
+                isBridge: false
+            });
+        }
+
+        // Conectar Controladores y Servicios de Backend directamente con sus tablas en el núcleo
+        const beControllersAndServices = this.nodes.filter(n => n.scope === 'backend' && n.fileType !== 'database_table' && n.id !== 'core_sql_database');
+        for (const be of beControllersAndServices) {
+            const beLower = (be.label + ' ' + (be.moduleName || '')).toLowerCase();
+            let matchedTable = APPLICATION_DB_TABLES.find(t => beLower.includes(t.name.toLowerCase()));
+            if (!matchedTable) {
+                if (beLower.includes('cotiz')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Cotizaciones');
+                else if (beLower.includes('compra') || beLower.includes('solicitud')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'SolicitudesCompra');
+                else if (beLower.includes('user') || beLower.includes('usuario') || beLower.includes('auth')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Usuarios');
+                else if (beLower.includes('proyect')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Proyectos');
+                else if (beLower.includes('gasto')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Gastos');
+                else if (beLower.includes('inventario') || beLower.includes('producto')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Productos');
+                else if (beLower.includes('tarea') || beLower.includes('task')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Tareas');
+                else if (beLower.includes('iso')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'IsoDocumentacionBitacoras');
+                else if (beLower.includes('evento')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Eventos');
+                else if (beLower.includes('chat')) matchedTable = APPLICATION_DB_TABLES.find(t => t.name === 'Chats');
+            }
+
+            if (matchedTable) {
+                this.edges.push({
+                    from: be.id,
+                    to: `table_${matchedTable.name.toLowerCase()}`,
+                    scope: 'backend',
+                    isBridge: false
+                });
+            } else {
+                this.edges.push({
+                    from: be.id,
+                    to: 'core_sql_database',
+                    scope: 'backend',
+                    isBridge: false
+                });
+            }
+        }
+
         this.communities = (data.legend || []).map((c: Graph3DCommunity) => ({ ...c, visible: true }));
 
         // Mapas rápidos
@@ -599,6 +906,11 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         labelBE.position.set(0, 104, 0);
         labelBE.scale.set(40, 7, 1);
         this.layerRingsGroup.add(labelBE);
+
+        const labelDB = this.createLayerHeaderSprite('🗄️ NÚCLEO BD (SQL Server)', '#10b981');
+        labelDB.position.set(0, 24, 0);
+        labelDB.scale.set(36, 6.5, 1);
+        this.layerRingsGroup.add(labelDB);
     }
 
     private createLayerHeaderSprite(text: string, colorHex: string): THREE.Sprite {
@@ -637,7 +949,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     }
 
     // ─────────────────────────────────────────────────────────────
-    // ETIQUETAS 3D FLOTANTES (NOMBRES DE MÓDULOS SUTILES SIN RECUADRO)
+    // ETIQUETAS 3D FLOTANTES (NOMBRES DE COMPONENTES FRONT Y BACKEND)
     // ─────────────────────────────────────────────────────────────
     private buildModuleLabels(): void {
         while (this.labelsGroup.children.length > 0) {
@@ -649,56 +961,95 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             }
         }
 
-        // Seleccionar los ~30 módulos y comunidades principales del Frontend
-        const topCommunities = [...this.communities]
-            .filter(c => c.scope === 'frontend' && c.count >= 8)
+        // 1. Componentes y Módulos de FRONTEND (Esfera Exterior)
+        const topFeCommunities = [...this.communities]
+            .filter(c => c.scope === 'frontend' && c.count >= 6)
             .sort((a, b) => b.count - a.count)
-            .slice(0, 32);
+            .slice(0, 36);
 
-        for (const comm of topCommunities) {
+        for (const comm of topFeCommunities) {
             const commNodes = this.nodes.filter(n => n.scope === 'frontend' && n.community === comm.cid);
             if (commNodes.length === 0) continue;
 
             const leader = commNodes.find(n => n.isLeader) || commNodes[0];
-            let name = (leader.moduleName || comm.label || leader.label || '')
-                .replace(/^\[Corteza Front\]\s*/i, '')
-                .replace(/Component$|Service$|FormComponent$|DialogComponent$/i, '');
+            let name = (leader.label || leader.moduleName || comm.label || '')
+                .replace(/^\[Corteza Front\]\s*/i, '');
 
             if (!name || name === 'General' || name.length <= 2) continue;
 
             const dir = new THREE.Vector3(leader.x, leader.y, leader.z).normalize();
-            const sprite = this.createLabelSprite(name);
-            sprite.position.set(leader.x + dir.x * 6.5, leader.y + dir.y * 6.5, leader.z + dir.z * 6.5);
-            sprite.scale.set(16, 4, 1);
+            const sprite = this.createLabelSprite(name, '#f8fafc', '🎨 FRONT', '#38bdf8');
+            sprite.position.set(leader.x + dir.x * 7, leader.y + dir.y * 7, leader.z + dir.z * 7);
+            sprite.scale.set(16, 4.2, 1);
+            this.labelsGroup.add(sprite);
+        }
+
+        // 2. Controladores y Servicios de BACKEND API (Esfera Interior / Núcleo)
+        const beControllersAndServices = this.nodes
+            .filter(n => n.scope === 'backend' && (/controller/i.test(n.label) || /service/i.test(n.label) || n.isLeader))
+            .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+            .slice(0, 28);
+
+        for (const beNode of beControllersAndServices) {
+            let name = (beNode.label || '')
+                .replace(/^\[Núcleo API\]\s*/i, '');
+
+            if (!name || name === 'General' || name.length <= 2) continue;
+
+            const dir = new THREE.Vector3(beNode.x, beNode.y, beNode.z).normalize();
+            const sprite = this.createLabelSprite(name, '#fef08a', '⚙️ API CORE', '#f59e0b');
+            sprite.position.set(beNode.x + dir.x * 5, beNode.y + dir.y * 5, beNode.z + dir.z * 5);
+            sprite.scale.set(15, 3.8, 1);
+            this.labelsGroup.add(sprite);
+        }
+
+        // 3. Tablas principales de BASE DE DATOS en el Núcleo central (R ~ 18)
+        const keyTables = this.nodes
+            .filter(n => n.fileType === 'database_table' && n.isLeader)
+            .slice(0, 16);
+
+        for (const tbl of keyTables) {
+            const dir = new THREE.Vector3(tbl.x, tbl.y, tbl.z).normalize();
+            const sprite = this.createLabelSprite(tbl.label.replace(/^🗄️\s*/, ''), tbl.color || '#34d399', '🗄️ TABLA SQL', '#10b981');
+            sprite.position.set(tbl.x + dir.x * 3.5, tbl.y + dir.y * 3.5, tbl.z + dir.z * 3.5);
+            sprite.scale.set(12, 3.2, 1);
             this.labelsGroup.add(sprite);
         }
 
         this.labelsGroup.visible = this.showModuleLabels;
     }
 
-    private createLabelSprite(text: string): THREE.Sprite {
+    private createLabelSprite(text: string, color: string = '#f1f5f9', badgeText?: string, badgeColor?: string): THREE.Sprite {
         const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 64;
+        canvas.width = 280;
+        canvas.height = 70;
         const ctx = canvas.getContext('2d')!;
 
-        // Fondo 100% transparente (sin recuadro ni marcos)
-        ctx.clearRect(0, 0, 256, 64);
+        // Fondo transparente con sombra para legibilidad superior
+        ctx.clearRect(0, 0, 280, 70);
 
-        // Sombra suave para que el texto sea perfectamente legible sin recuadro
         ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 8;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 1;
 
-        // Tipografía sutil, limpia y moderna
-        ctx.fillStyle = '#f1f5f9';
-        ctx.font = '500 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        if (badgeText) {
+            ctx.fillStyle = badgeColor || '#38bdf8';
+            ctx.font = '700 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(badgeText, 140, 8);
+        }
 
-        const displayText = text.length > 18 ? text.substring(0, 16) + '…' : text;
-        ctx.fillText(displayText, 128, 32);
+        // Nombre del componente / controlador
+        ctx.fillStyle = color;
+        ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = badgeText ? 'bottom' : 'middle';
+
+        const yPos = badgeText ? 58 : 35;
+        const displayText = text.length > 20 ? text.substring(0, 18) + '…' : text;
+        ctx.fillText(displayText, 140, yPos);
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.generateMipmaps = false;
@@ -707,7 +1058,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         const mat = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.72,
+            opacity: 0.85,
             depthWrite: false
         });
 
@@ -786,6 +1137,24 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             this.updatePulses3D();
             this.updateBursts3D();
 
+            // Rotación viva del Núcleo de Base de Datos y sus anillos orbitales (0, 0, 0)
+            if (this.dbCoreMesh) {
+                this.dbCoreMesh.rotation.y += 0.007;
+                this.dbCoreWireMesh.rotation.x -= 0.01;
+                this.dbCoreWireMesh.rotation.y += 0.006;
+                if (this.dbCoreRings.length >= 3) {
+                    this.dbCoreRings[0].rotation.x += 0.012;
+                    this.dbCoreRings[1].rotation.y += 0.015;
+                    this.dbCoreRings[2].rotation.z += 0.01;
+                }
+            }
+
+            // Pulso dinámico en el camino rojo de falla
+            if (this.failurePathMesh && this.failurePathMesh.material) {
+                const pulse = 0.55 + 0.45 * Math.sin(this.frameCount * 0.12);
+                (this.failurePathMesh.material as THREE.LineBasicMaterial).opacity = pulse;
+            }
+
             // Raycasting optimizado: sólo cada 3 frames si el mouse se movió (0 lag)
             if (this.frameCount % 3 === 0 && this.mouseMoved) {
                 this.checkRaycastHover();
@@ -852,8 +1221,9 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     }
 
     private spawnSynapticBurst(pos: THREE.Vector3, color: THREE.Color): void {
+        const isRed = color.r > 0.7 && color.g < 0.4;
         const isCyan = color.b > 0.6;
-        const tex = isCyan ? this.glowTextureCyan : this.glowTextureGreen;
+        const tex = isRed ? this.glowTextureRed : (isCyan ? this.glowTextureCyan : this.glowTextureGreen);
         const mat = new THREE.SpriteMaterial({
             map: tex,
             blending: THREE.AdditiveBlending,
@@ -863,13 +1233,13 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         });
         const sprite = new THREE.Sprite(mat);
         sprite.position.copy(pos);
-        sprite.scale.set(4, 4, 1);
+        sprite.scale.set(isRed ? 6 : 4, isRed ? 6 : 4, 1);
         this.scene.add(sprite);
 
         this.activeBursts.push({
             sprite,
             progress: 0,
-            maxScale: 22
+            maxScale: isRed ? 32 : 22
         });
     }
 
@@ -904,8 +1274,10 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         if (normal.lengthSq() < 0.01) normal = new THREE.Vector3(0, 1, 0);
         mid.addScaledVector(normal, 22);
 
-        const isCyan = colorHex.toUpperCase().includes('00F0FF') || colorHex.toUpperCase().includes('CYAN');
-        const tex = isCyan ? this.glowTextureCyan : this.glowTextureGreen;
+        const upperColor = colorHex.toUpperCase();
+        const isRed = upperColor.includes('FF0055') || upperColor.includes('EF4444') || upperColor.includes('FF1E56') || upperColor.includes('RED');
+        const isCyan = upperColor.includes('00F0FF') || upperColor.includes('CYAN');
+        const tex = isRed ? this.glowTextureRed : (isCyan ? this.glowTextureCyan : this.glowTextureGreen);
 
         // 1. Chispa de luz pura con resplandor aditivo
         const sparkMat = new THREE.SpriteMaterial({
@@ -915,7 +1287,7 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             depthWrite: false
         });
         const sparkSprite = new THREE.Sprite(sparkMat);
-        sparkSprite.scale.set(13, 13, 1);
+        sparkSprite.scale.set(isRed ? 16 : 13, isRed ? 16 : 13, 1);
         sparkSprite.position.copy(start);
         this.scene.add(sparkSprite);
 
@@ -928,9 +1300,9 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
         const trailMat = new THREE.LineBasicMaterial({
             color: new THREE.Color(colorHex),
             transparent: true,
-            opacity: 0.88,
+            opacity: 0.92,
             blending: THREE.AdditiveBlending,
-            linewidth: 2
+            linewidth: isRed ? 3 : 2
         });
         const trailLine = new THREE.Line(trailGeo, trailMat);
         this.scene.add(trailLine);
@@ -955,40 +1327,539 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
     }
 
     /**
-     * Dispara una cascada completa a través de la vía sináptica:
-     * Corteza Frontend -> Núcleo API Controller -> Retorno 200 OK
+     * Resalta en ROJO CARMESÍ NEÓN el camino sináptico directo entre dos nodos.
      */
-    /**
-     * Dispara una cascada completa a través de la vía sináptica:
-     * Corteza Frontend -> Núcleo API Controller -> Retorno 200 OK
-     */
-    public triggerSynapticCascade(sourceNode: Graph3DNode): void {
-        const bridgeEdges = this.edges.filter(e => e.isBridge && (e.from === sourceNode.id || e.to === sourceNode.id));
-        let targetNode: Graph3DNode | undefined;
+    public highlightFailurePath(sourceNode: Graph3DNode, targetNode: Graph3DNode): void {
+        this.highlightFailurePathMultiHop([sourceNode, targetNode]);
+    }
 
-        if (bridgeEdges.length > 0) {
-            const targetId = bridgeEdges[0].from === sourceNode.id ? bridgeEdges[0].to : bridgeEdges[0].from;
-            targetNode = this.nodeMap.get(targetId);
-        } else {
-            // Buscar controlador en el núcleo API más representativo
-            const controllers = this.nodes.filter(n => n.scope === 'backend' && /controller/i.test(n.label));
-            targetNode = controllers[Math.floor(Math.random() * controllers.length)];
+    /**
+     * Resalta en ROJO CARMESÍ NEÓN el camino multicapa completo:
+     * (HTML ➔ TS ➔ Frontend Service ➔ Gateway ➔ API Controller ➔ BE Service ➔ Base de Datos SQL Server)
+     * cuando ocurre una falla en el flujo.
+     */
+    public highlightFailurePathMultiHop(chain: Graph3DNode[]): void {
+        if (this.failurePathMesh) {
+            this.scene.remove(this.failurePathMesh);
+            this.failurePathMesh.geometry.dispose();
+            (this.failurePathMesh.material as THREE.Material).dispose();
+            this.failurePathMesh = undefined;
         }
 
-        if (!targetNode) return;
+        const positions: number[] = [];
+        const colors: number[] = [];
+        const failColor = new THREE.Color('#FF0055');
 
-        // 1. Destello sináptico inmediato en la neurona emisora
-        this.spawnSynapticBurst(new THREE.Vector3(sourceNode.x, sourceNode.y, sourceNode.z), new THREE.Color('#00F0FF'));
+        // Trazar línea continua entre todos los eslabones de la arquitectura
+        for (let i = 0; i < chain.length - 1; i++) {
+            const a = chain[i];
+            const b = chain[i + 1];
+            positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+            colors.push(failColor.r, failColor.g, failColor.b, failColor.r, failColor.g, failColor.b);
+        }
 
-        this.highlightNodeConnections(sourceNode);
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
-        // 2. Impulso eléctrico de ida (Corteza ➔ Núcleo API): Cyan neón
-        this.emitPulse3D(sourceNode, targetNode, '#00F0FF', 0.022);
+        const mat = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending,
+            linewidth: 3
+        });
 
-        // 3. Impulso eléctrico de retorno (Núcleo API ➔ Corteza): Verde esmeralda tras 650ms
+        this.failurePathMesh = new THREE.LineSegments(geo, mat);
+        this.scene.add(this.failurePathMesh);
+
+        this.isFailureActive = true;
+        this.lastFailureMessage = 'Error 500';
+        this._cdr.markForCheck();
+
+        if (this.failureTimeout) {
+            clearTimeout(this.failureTimeout);
+        }
+
+        this.failureTimeout = setTimeout(() => {
+            if (this.failurePathMesh) {
+                this.scene.remove(this.failurePathMesh);
+                this.failurePathMesh.geometry.dispose();
+                (this.failurePathMesh.material as THREE.Material).dispose();
+                this.failurePathMesh = undefined;
+            }
+            this.isFailureActive = false;
+            this._cdr.markForCheck();
+        }, 9000);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // NÚCLEO CENTRAL DE BASE DE DATOS 3D (SQL SERVER / DB_JR EN 0,0,0)
+    // ─────────────────────────────────────────────────────────────
+    private createDatabaseCore(): void {
+        this.scene.add(this.dbCoreGroup);
+
+        // 1. Núcleo central de base de datos (Esfera facetada con alto brillo emisivo esmeralda)
+        const coreGeo = new THREE.IcosahedronGeometry(13, 2);
+        const coreMat = new THREE.MeshStandardMaterial({
+            color: 0x059669,
+            emissive: 0x10b981,
+            emissiveIntensity: 0.9,
+            roughness: 0.15,
+            metalness: 0.85
+        });
+        this.dbCoreMesh = new THREE.Mesh(coreGeo, coreMat);
+        this.dbCoreGroup.add(this.dbCoreMesh);
+
+        // 2. Jaula holográfica exterior que rota en sentido opuesto
+        const wireGeo = new THREE.IcosahedronGeometry(17, 1);
+        const wireMat = new THREE.MeshBasicMaterial({
+            color: 0x34d399,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.65,
+            blending: THREE.AdditiveBlending
+        });
+        this.dbCoreWireMesh = new THREE.Mesh(wireGeo, wireMat);
+        this.dbCoreGroup.add(this.dbCoreWireMesh);
+
+        // 3. Anillos giroscópicos orbitales de datos (Tablas / Shards de SQL Server)
+        const ringDefs = [
+            { radius: 22, tube: 0.45, color: 0x10b981, rotAxis: 'x' },
+            { radius: 26, tube: 0.4, color: 0x38bdf8, rotAxis: 'y' },
+            { radius: 30, tube: 0.35, color: 0xa78bfa, rotAxis: 'z' }
+        ];
+
+        this.dbCoreRings = [];
+        for (const def of ringDefs) {
+            const rGeo = new THREE.TorusGeometry(def.radius, def.tube, 8, 48);
+            const rMat = new THREE.MeshBasicMaterial({
+                color: def.color,
+                transparent: true,
+                opacity: 0.55,
+                blending: THREE.AdditiveBlending
+            });
+            const rMesh = new THREE.Mesh(rGeo, rMat);
+            if (def.rotAxis === 'x') rMesh.rotation.x = Math.PI / 3;
+            if (def.rotAxis === 'y') rMesh.rotation.y = Math.PI / 4;
+            if (def.rotAxis === 'z') rMesh.rotation.z = Math.PI / 6;
+            this.dbCoreGroup.add(rMesh);
+            this.dbCoreRings.push(rMesh);
+        }
+
+        // 4. Luz puntual de radiación del núcleo central
+        this.dbCoreLight = new THREE.PointLight(0x10b981, 4.0, 320);
+        this.dbCoreLight.position.set(0, 0, 0);
+        this.dbCoreGroup.add(this.dbCoreLight);
+    }
+
+    public pulseDatabaseCore(isFailure: boolean = false): void {
+        if (!this.dbCoreLight || !this.dbCoreMesh) return;
+
+        const pulseColor = isFailure ? new THREE.Color('#FF0055') : new THREE.Color('#10B981');
+        this.dbCoreLight.color.copy(pulseColor);
+        this.dbCoreLight.intensity = 9.0;
+
+        const mat = this.dbCoreMesh.material as THREE.MeshStandardMaterial;
+        mat.emissive.copy(pulseColor);
+        mat.emissiveIntensity = 2.5;
+        this.dbCoreMesh.scale.set(1.4, 1.4, 1.4);
+
+        this.spawnSynapticBurst(new THREE.Vector3(0, 0, 0), pulseColor);
+
         setTimeout(() => {
-            this.emitPulse3D(targetNode!, sourceNode, '#00FF88', 0.028);
-        }, 650);
+            if (this.dbCoreLight && this.dbCoreMesh) {
+                this.dbCoreLight.color.setHex(0x10b981);
+                this.dbCoreLight.intensity = 4.0;
+                mat.emissive.setHex(0x10b981);
+                mat.emissiveIntensity = 0.9;
+                this.dbCoreMesh.scale.set(1, 1, 1);
+            }
+        }, 550);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // CADENA ARQUITECTÓNICA COMPLETA DE 7 ESLABONES
+    // (HTML ➔ TS ➔ FE Service ➔ Gateway ➔ Controller ➔ BE Service ➔ Base de Datos)
+    // ─────────────────────────────────────────────────────────────
+    public resolveArchitecturalChain(startNode?: Graph3DNode): Graph3DNode[] {
+        let feNode = startNode;
+        if (!feNode || feNode.scope !== 'frontend') {
+            feNode = this.nodes.find(n => n.scope === 'frontend' && (n.isLeader || /component/i.test(n.label))) || this.nodes[0];
+        }
+
+        const baseLabel = (feNode.label || 'App').replace(/Component$/i, '');
+
+        // 1. Nodo HTML (Vista del template con el botón click) en R ~ 286
+        const dirFE = new THREE.Vector3(feNode.x, feNode.y, feNode.z).normalize();
+        const htmlPos = dirFE.clone().multiplyScalar(286);
+        const htmlNode: Graph3DNode = {
+            id: `html_${feNode.id}`,
+            label: `📄 [HTML] ${baseLabel}.component.html <button (click)="guardar()">`,
+            moduleName: feNode.moduleName || 'Template HTML',
+            color: '#38bdf8',
+            borderColor: '#0284c7',
+            size: 13,
+            community: feNode.community,
+            communityName: feNode.communityName,
+            sourceFile: `${baseLabel}.component.html`,
+            fileType: 'html',
+            degree: 1,
+            scope: 'frontend',
+            x: htmlPos.x,
+            y: htmlPos.y,
+            z: htmlPos.z,
+            visible: true
+        };
+
+        // 2. Nodo TypeScript (Componente Angular con método guardar())
+        const tsNode: Graph3DNode = feNode;
+
+        // 3. Nodo Servicio Frontend (Angular HttpClient Service)
+        const feServices = this.nodes.filter(n => n.scope === 'frontend' && /service/i.test(n.label));
+        let feServiceNode = feServices.find(s => s.community === feNode.community) ||
+            feServices.find(s => s.label.toLowerCase().includes(baseLabel.toLowerCase())) ||
+            feServices[0] ||
+            feNode;
+
+        // 4. Gateway / Red / Interceptor HTTP (cruza el vacío entre ambas esferas en R ~ 165)
+        const beController = this.findMatchingBackendController(feNode);
+        const posFE = new THREE.Vector3(feServiceNode.x, feServiceNode.y, feServiceNode.z);
+        const posBE = new THREE.Vector3(beController.x, beController.y, beController.z);
+        const midPos = new THREE.Vector3().addVectors(posFE, posBE).multiplyScalar(0.5).normalize().multiplyScalar(165);
+        const gatewayNode: Graph3DNode = {
+            id: `gateway_${feNode.id}`,
+            label: `🌐 [Gateway] AuthInterceptor & Red HTTP`,
+            moduleName: 'HTTP Transport Gateway',
+            color: '#f59e0b',
+            borderColor: '#d97706',
+            size: 15,
+            community: 998,
+            communityName: 'HTTP Wire Transport',
+            sourceFile: 'core/interceptors/auth.interceptor.ts',
+            fileType: 'gateway',
+            degree: 8,
+            scope: 'frontend',
+            x: midPos.x,
+            y: midPos.y,
+            z: midPos.z,
+            visible: true
+        };
+
+        // 5. Controlador ASP.NET Core API
+        const controllerNode = beController;
+
+        // 6. Servicio de Negocio en Backend (.NET Business Logic)
+        const beServices = this.nodes.filter(n => n.scope === 'backend' && n.id !== 'core_sql_database' && /service/i.test(n.label));
+        const beServiceNode = beServices.find(s => s.community === controllerNode.community) ||
+            beServices.find(s => s.label.toLowerCase().includes(controllerNode.label.replace(/Controller$/i, '').toLowerCase())) ||
+            beServices[0] ||
+            controllerNode;
+
+        // 7. Base de Datos Núcleo: Encontrar la tabla específica en el subgrafo del Núcleo de Base de Datos
+        const targetTable = this.findMatchingDatabaseTable(feNode, controllerNode);
+
+        return [htmlNode, tsNode, feServiceNode, gatewayNode, controllerNode, beServiceNode, targetTable];
+    }
+
+    private findMatchingDatabaseTable(feNode: Graph3DNode, beController: Graph3DNode): Graph3DNode {
+        const text = `${feNode.label} ${feNode.moduleName || ''} ${beController.label}`.toLowerCase();
+
+        // 1. Coincidencia directa por nombre de tabla
+        for (const t of APPLICATION_DB_TABLES) {
+            if (text.includes(t.name.toLowerCase())) {
+                const tableNode = this.nodeMap.get(`table_${t.name.toLowerCase()}`);
+                if (tableNode) return tableNode;
+            }
+        }
+
+        // 2. Mapeo semántico por dominio de negocio
+        let targetName = 'Cotizaciones';
+        if (text.includes('compra') || text.includes('solicitud') || text.includes('proveedor')) targetName = 'SolicitudesCompra';
+        else if (text.includes('user') || text.includes('usuario') || text.includes('auth') || text.includes('login') || text.includes('rol')) targetName = 'Usuarios';
+        else if (text.includes('proyect') || text.includes('obra')) targetName = 'Proyectos';
+        else if (text.includes('gasto') || text.includes('factura') || text.includes('cuenta')) targetName = 'Gastos';
+        else if (text.includes('producto') || text.includes('almacen') || text.includes('inventario') || text.includes('kardex')) targetName = 'Productos';
+        else if (text.includes('venta') || text.includes('pago')) targetName = 'Ventas';
+        else if (text.includes('tarea') || text.includes('task') || text.includes('gantt')) targetName = 'Tareas';
+        else if (text.includes('iso') || text.includes('calidad') || text.includes('doc')) targetName = 'IsoDocumentacionBitacoras';
+        else if (text.includes('evento') || text.includes('asisten')) targetName = 'Eventos';
+        else if (text.includes('chat') || text.includes('mensaje')) targetName = 'Chats';
+        else if (text.includes('cliente') || text.includes('lead') || text.includes('prospecto')) targetName = 'Clientes';
+
+        return this.nodeMap.get(`table_${targetName.toLowerCase()}`) || this.nodeMap.get('core_sql_database') || this.nodes[0];
+    }
+
+    private findMatchingBackendController(sourceNode: Graph3DNode): Graph3DNode {
+        const bridge = this.edges.find(e => e.isBridge && (e.from === sourceNode.id || e.to === sourceNode.id));
+        if (bridge) {
+            const otherId = bridge.from === sourceNode.id ? bridge.to : bridge.from;
+            const target = this.nodeMap.get(otherId);
+            if (target && target.scope === 'backend') return target;
+        }
+
+        const cleanName = (sourceNode.label || '').replace(/Component$/i, '').toLowerCase();
+        const beControllers = this.nodes.filter(n => n.scope === 'backend' && n.id !== 'core_sql_database' && /controller/i.test(n.label));
+
+        const matched = beControllers.find(c => c.label.toLowerCase().includes(cleanName) || cleanName.includes(c.label.replace(/Controller$/i, '').toLowerCase()));
+        if (matched) return matched;
+
+        return beControllers.find(c => c.isLeader) || beControllers[0] || this.nodes.find(n => n.scope === 'backend' && n.id !== 'core_sql_database')!;
+    }
+
+    /**
+     * Recorre TODA la red arquitectónica de un click paso a paso secuencial:
+     * HTML ➔ TS ➔ Service ➔ Gateway ➔ API Controller ➔ Service ➔ BD Núcleo (0,0,0) ➔ Retorno a la UI.
+     * Si algo falla, se enciende en ROJO carmesí toda la ruta seguida.
+     */
+    public async executeFullClickPipeline(sourceNode?: Graph3DNode, isFailure: boolean = false): Promise<void> {
+        if (this.isPipelineRunning) return;
+        this.isPipelineRunning = true;
+
+        const node = sourceNode || this.selectedNode || this.nodes.find(n => n.scope === 'frontend' && (n.isLeader || /component/i.test(n.label))) || this.nodes[0];
+        const chain = this.resolveArchitecturalChain(node);
+        const [htmlNode, tsNode, feServiceNode, gatewayNode, controllerNode, beServiceNode, dbNode] = chain;
+
+        this.selectNode(tsNode);
+
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        const pulseColorForward = '#00F0FF';
+        const pulseColorReturn = isFailure ? '#FF0055' : '#00FF88';
+
+        const cleanModuleName = (node.communityName || node.label || 'Cotizaciones')
+            .replace(/^📄\s*\[HTML\]\s*/i, '')
+            .replace(/Component$/i, '')
+            .replace(/Controller$/i, '');
+
+        if (!this.lastActiveUser || this.lastActiveUser === 'Usuario' || this.lastActiveUser === 'Error 500' || this.lastActiveUser === 'Guardado Exitoso') {
+            this.lastActiveUser = 'Juan Pérez';
+        }
+        this.lastActiveModule = cleanModuleName;
+        this.lastActiveTime = new Date().toLocaleTimeString();
+        this.showActivityBanner = true;
+
+        try {
+            // ─────────────────────────────────────────────────────────────
+            // ETAPA DE ENVÍO (FORWARD JOURNEY): DE LA VISTA AL NÚCLEO BD
+            // ─────────────────────────────────────────────────────────────
+
+            // PASO 1/11: HTML ➔ TS Component
+            this.activePipelineStep = {
+                stepNumber: 1,
+                totalSteps: 11,
+                icon: '🖱️',
+                phase: 'forward',
+                title: 'Evento (Click) en HTML',
+                description: `${htmlNode.label} ➔ Invoca método guardar() en ${tsNode.label}`
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(htmlNode.x, htmlNode.y, htmlNode.z), new THREE.Color(pulseColorForward));
+            this.emitPulse3D(htmlNode, tsNode, pulseColorForward, 0.038);
+            await delay(280);
+
+            // PASO 2/11: TS Component ➔ Angular Service
+            this.activePipelineStep = {
+                stepNumber: 2,
+                totalSteps: 11,
+                icon: '⚡',
+                phase: 'forward',
+                title: 'Lógica en TypeScript',
+                description: `${tsNode.label} valida formulario y llama a ${feServiceNode.label}`
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(tsNode.x, tsNode.y, tsNode.z), new THREE.Color(pulseColorForward));
+            this.emitPulse3D(tsNode, feServiceNode, pulseColorForward, 0.034);
+            await delay(280);
+
+            // PASO 3/11: Angular Service ➔ HTTP Gateway / Red
+            this.activePipelineStep = {
+                stepNumber: 3,
+                totalSteps: 11,
+                icon: '🛠️',
+                phase: 'forward',
+                title: 'Llamada HTTP en Service',
+                description: `${feServiceNode.label} genera petición POST y pasa por ${gatewayNode.label}`
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(feServiceNode.x, feServiceNode.y, feServiceNode.z), new THREE.Color(pulseColorForward));
+            this.emitPulse3D(feServiceNode, gatewayNode, pulseColorForward, 0.032);
+            await delay(320);
+
+            // PASO 4/11: HTTP Gateway ➔ ASP.NET Core API Controller
+            this.activePipelineStep = {
+                stepNumber: 4,
+                totalSteps: 11,
+                icon: '🌐',
+                phase: 'forward',
+                title: 'Cruce de Esferas (Red HTTP)',
+                description: `Petición cruza hacia la Esfera Interior API ➔ ${controllerNode.label}`
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(gatewayNode.x, gatewayNode.y, gatewayNode.z), new THREE.Color(pulseColorForward));
+            this.emitPulse3D(gatewayNode, controllerNode, pulseColorForward, 0.032);
+            await delay(320);
+
+            // PASO 5/11: API Controller ➔ Backend Service
+            this.activePipelineStep = {
+                stepNumber: 5,
+                totalSteps: 11,
+                icon: '⚙️',
+                phase: 'forward',
+                title: 'Controlador ASP.NET Core',
+                description: `${controllerNode.label} procesa [HttpPost] y delega a ${beServiceNode.label}`
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(controllerNode.x, controllerNode.y, controllerNode.z), new THREE.Color(pulseColorForward));
+            this.emitPulse3D(controllerNode, beServiceNode, pulseColorForward, 0.034);
+            await delay(280);
+
+            // PASO 6/11: Backend Service ➔ SQL Server Núcleo (0, 0, 0)
+            this.activePipelineStep = {
+                stepNumber: 6,
+                totalSteps: 11,
+                icon: '🧩',
+                phase: 'forward',
+                title: 'Servicio de Negocio C#',
+                description: `${beServiceNode.label} ejecuta SaveChangesAsync() hacia el Núcleo de Base de Datos`
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(beServiceNode.x, beServiceNode.y, beServiceNode.z), new THREE.Color(pulseColorForward));
+            this.emitPulse3D(beServiceNode, dbNode, pulseColorForward, 0.036);
+            await delay(320);
+
+            // ─────────────────────────────────────────────────────────────
+            // ETAPA CENTRAL: NÚCLEO DE BASE DE DATOS (PROCESAMIENTO SQL)
+            // ─────────────────────────────────────────────────────────────
+            this.activePipelineStep = {
+                stepNumber: 7,
+                totalSteps: 11,
+                icon: '🗄️',
+                phase: 'database',
+                title: isFailure ? 'Transacción SQL Fallida (Error 500)' : 'Transacción SQL en Núcleo (Commit)',
+                description: isFailure
+                    ? 'SQL Server detecta violación de restricción / Error de inserción ➔ Rollback y fallo'
+                    : 'SQL Server ejecuta INSERT/UPDATE y confirma transacción exitosa',
+                isFailure
+            };
+            this._cdr.markForCheck();
+
+            // Pulso espectacular en el Núcleo 3D
+            this.pulseDatabaseCore(isFailure);
+
+            // Destello en la tabla específica del núcleo y sinapsis a tablas con foreign keys
+            this.spawnSynapticBurst(new THREE.Vector3(dbNode.x, dbNode.y, dbNode.z), new THREE.Color(isFailure ? '#FF0055' : '#10B981'));
+            const fkNeighbors = this.getConnectedNeighbors(dbNode.id)
+                .filter(n => n.fileType === 'database_table')
+                .slice(0, 3);
+            for (const fkn of fkNeighbors) {
+                this.emitPulse3D(dbNode, fkn, isFailure ? '#FF0055' : '#10B981', 0.04);
+            }
+
+            if (isFailure) {
+                // ILUMINAR EN ROJO CARMESÍ TODA LA RUTA SEGUIDA
+                this.highlightFailurePathMultiHop(chain);
+            }
+
+            await delay(550);
+
+            // ─────────────────────────────────────────────────────────────
+            // ETAPA DE RETORNO (RETURN JOURNEY): DEL NÚCLEO A LA UI
+            // ─────────────────────────────────────────────────────────────
+
+            // PASO 8/11: Base de Datos ➔ Backend Service
+            this.activePipelineStep = {
+                stepNumber: 8,
+                totalSteps: 11,
+                icon: isFailure ? '🚨' : '📦',
+                phase: 'return',
+                title: isFailure ? 'Retorno de Excepción C#' : 'Retorno de Datos Persistidos',
+                description: `${dbNode.label} responde con ${isFailure ? 'DbUpdateException' : 'Entidad persistida con ID'} ➔ ${beServiceNode.label}`,
+                isFailure
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(dbNode.x, dbNode.y, dbNode.z), new THREE.Color(pulseColorReturn));
+            this.emitPulse3D(dbNode, beServiceNode, pulseColorReturn, 0.036);
+            await delay(300);
+
+            // PASO 9/11: Backend Service ➔ API Controller
+            this.activePipelineStep = {
+                stepNumber: 9,
+                totalSteps: 11,
+                icon: isFailure ? '🚨' : '⚙️',
+                phase: 'return',
+                title: isFailure ? 'Código HTTP 500' : 'Código HTTP 200 OK',
+                description: `${beServiceNode.label} ➔ ${controllerNode.label} empaqueta respuesta ${isFailure ? 'InternalServerError' : 'Ok(resultado)'}`,
+                isFailure
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(beServiceNode.x, beServiceNode.y, beServiceNode.z), new THREE.Color(pulseColorReturn));
+            this.emitPulse3D(beServiceNode, controllerNode, pulseColorReturn, 0.034);
+            await delay(280);
+
+            // PASO 10/11: API Controller ➔ HTTP Gateway ➔ Frontend Service
+            this.activePipelineStep = {
+                stepNumber: 10,
+                totalSteps: 11,
+                icon: isFailure ? '🚨' : '🌐',
+                phase: 'return',
+                title: 'Retorno por Red a Esfera Front',
+                description: `Pasa por ${gatewayNode.label} ➔ Resuelve Observable en ${feServiceNode.label}`,
+                isFailure
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(controllerNode.x, controllerNode.y, controllerNode.z), new THREE.Color(pulseColorReturn));
+            this.emitPulse3D(controllerNode, gatewayNode, pulseColorReturn, 0.032);
+            await delay(220);
+            this.emitPulse3D(gatewayNode, feServiceNode, pulseColorReturn, 0.034);
+            await delay(280);
+
+            // PASO 11/11: Frontend Service ➔ TypeScript ➔ HTML UI
+            this.activePipelineStep = {
+                stepNumber: 11,
+                totalSteps: 11,
+                icon: isFailure ? '❌' : '✅',
+                phase: 'return',
+                title: isFailure ? 'Falla Reflejada en Pantalla' : 'Respuesta Final en Interfaz',
+                description: `${feServiceNode.label} ➔ ${tsNode.label} ➔ ${htmlNode.label} (Notificación y actualización de la vista)`,
+                isFailure
+            };
+            this._cdr.markForCheck();
+            this.spawnSynapticBurst(new THREE.Vector3(feServiceNode.x, feServiceNode.y, feServiceNode.z), new THREE.Color(pulseColorReturn));
+            this.emitPulse3D(feServiceNode, tsNode, pulseColorReturn, 0.036);
+            await delay(200);
+            this.emitPulse3D(tsNode, htmlNode, pulseColorReturn, 0.04);
+            this.spawnSynapticBurst(new THREE.Vector3(htmlNode.x, htmlNode.y, htmlNode.z), new THREE.Color(pulseColorReturn));
+
+            // Finalizar pipeline manteniendo la identidad del usuario sin mostrar recorrido de texto
+            await delay(1200);
+
+            this.lastActiveTime = new Date().toLocaleTimeString();
+            this.showActivityBanner = true;
+
+            setTimeout(() => {
+                if (this.activePipelineStep && !this.isPipelineRunning) {
+                    this.activePipelineStep = null;
+                    this._cdr.markForCheck();
+                }
+            }, 3500);
+
+        } finally {
+            this.isPipelineRunning = false;
+            this._cdr.markForCheck();
+        }
+    }
+
+    public triggerSynapticCascade(sourceNode: Graph3DNode, isFailure: boolean = false): void {
+        this.executeFullClickPipeline(sourceNode, isFailure);
+    }
+
+    public triggerFailureSimulation(): void {
+        const feNodes = this.nodes.filter(n => n.scope === 'frontend');
+        const node = this.selectedNode || feNodes[Math.floor(Math.random() * feNodes.length)] || this.nodes[0];
+        if (node) {
+            this.selectedNode = node;
+            this.executeFullClickPipeline(node, true);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -1149,12 +2020,13 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             this._cdr.markForCheck();
         }, 5000);
 
-        // Disparar destello sináptico inmediato e impulsos hacia el núcleo API (sin zoom brusco)
-        this.triggerSynapticCascade(matchingNode);
-        this.selectedNode = matchingNode;
-        this.highlightNodeConnections(matchingNode);
+        // Detectar si el evento de navegación o telemetría corresponde a un fallo o error
+        const isErrorEvent = /error|fall|fail|excep|500|400|404|rechaz|denied|unauthor/i.test(`${action} ${rawMod} ${rawUrl}`);
 
-        console.log(`🧠 [Red Neuronal] Actividad detectada: ${userName} en "${this.lastActiveModule}" -> Neurona ${matchingNode.label}`);
+        this.selectedNode = matchingNode;
+        this.triggerSynapticCascade(matchingNode, isErrorEvent);
+
+        console.log(`🧠 [Red Neuronal] Actividad detectada: ${userName} en "${this.lastActiveModule}" -> Neurona ${matchingNode.label} (Falla: ${isErrorEvent})`);
         this._cdr.markForCheck();
     }
 
@@ -1200,16 +2072,38 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
 
     @HostListener('click', ['$event'])
     onClick(event: MouseEvent): void {
-        // Ignorar clics dentro del sidebar
-        if ((event.target as HTMLElement).closest('#sidebar')) return;
+        // Ignorar clics dentro del sidebar, botones flotantes, backdrop o HUD
+        if ((event.target as HTMLElement).closest('#sidebar, .floating-sidebar-btn, .sidebar-edge-toggle, .sidebar-backdrop, .hud-topbar')) return;
 
         if (this.hoveredNode) {
             this.selectNode(this.hoveredNode, false);
+            return;
+        }
+
+        // Detección directa por tap/click para móviles o dispositivos táctiles
+        if (this.containerRef?.nativeElement && this.instancedNodes) {
+            const rect = this.containerRef.nativeElement.getBoundingClientRect();
+            const clickX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const clickY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            const clickMouse = new THREE.Vector2(clickX, clickY);
+            this.raycaster.setFromCamera(clickMouse, this.camera);
+            const intersects = this.raycaster.intersectObject(this.instancedNodes);
+            if (intersects.length > 0 && intersects[0].instanceId !== undefined) {
+                const node = this.indexToNodeMap.get(intersects[0].instanceId);
+                if (node) {
+                    this.selectNode(node, false);
+                }
+            }
         }
     }
 
     public selectNode(node: Graph3DNode, focusCamera: boolean = false): void {
         this.selectedNode = node;
+
+        // En pantallas móviles, si se selecciona un nodo, abrimos el panel flotante para inspección
+        if (this.isMobileView) {
+            this.isSidebarOpen = true;
+        }
 
         // Solo mover cámara si se solicita explícitamente (sin zoom automático por actividad)
         if (focusCamera) {
@@ -1378,6 +2272,16 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             this.resizeObserver.disconnect();
             this.resizeObserver = undefined;
         }
+        if (this.failureTimeout) {
+            clearTimeout(this.failureTimeout);
+            this.failureTimeout = null;
+        }
+        if (this.failurePathMesh) {
+            this.scene.remove(this.failurePathMesh);
+            this.failurePathMesh.geometry.dispose();
+            (this.failurePathMesh.material as THREE.Material).dispose();
+            this.failurePathMesh = undefined;
+        }
         if (this.bridgeLinesMesh) {
             this.scene.remove(this.bridgeLinesMesh);
             this.bridgeLinesMesh.geometry.dispose();
@@ -1389,6 +2293,23 @@ export class SystemNeuralGraphComponent implements OnInit, AfterViewInit, OnDest
             this.selectedConnectionsMesh.geometry.dispose();
             (this.selectedConnectionsMesh.material as THREE.Material).dispose();
         }
+        if (this.dbCoreGroup) {
+            this.scene.remove(this.dbCoreGroup);
+            this.dbCoreGroup.traverse((child) => {
+                if ((child as any).geometry) (child as any).geometry.dispose();
+                if ((child as any).material) {
+                    if (Array.isArray((child as any).material)) {
+                        (child as any).material.forEach((m: any) => m.dispose());
+                    } else {
+                        (child as any).material.dispose();
+                    }
+                }
+            });
+        }
+        if (this.glowTextureCyan) this.glowTextureCyan.dispose();
+        if (this.glowTextureGreen) this.glowTextureGreen.dispose();
+        if (this.glowTextureRed) this.glowTextureRed.dispose();
+
         if (this.renderer) {
             this.renderer.dispose();
             if (this.containerRef?.nativeElement && this.renderer.domElement) {
