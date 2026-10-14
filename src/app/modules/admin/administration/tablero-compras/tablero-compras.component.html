@@ -4,16 +4,32 @@
     <div class="flex-none flex flex-col p-2 sm:px-4 sm:py-2 border-b bg-white dark:bg-transparent">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex-auto min-w-0">
-                <div class="flex items-center gap-3">
-                    <div class="text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none text-gray-900 dark:text-gray-100 italic">
                         Tablero de Compras
                     </div>
-                    <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
-                        {{ dataSource.data.length }} solicitudes
-                    </span>
+                    
+                    <!-- Tabs Navigation: Compras vs Salidas Almacén -->
+                    <div class="inline-flex items-center p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 ml-2">
+                        <button (click)="setActiveTab('compras')"
+                                [ngClass]="activeTab === 'compras' ? '!bg-white dark:!bg-gray-700 !text-teal-800 dark:!text-teal-200 shadow-sm font-bold' : '!text-gray-500 hover:!text-gray-800 font-medium'"
+                                class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-all border-0 bg-transparent cursor-pointer">
+                            <mat-icon class="icon-size-4 text-teal-600" [svgIcon]="'heroicons_outline:shopping-cart'"></mat-icon>
+                            <span>Compras & Semáforo</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-100 text-teal-800 font-bold ml-1">{{ dataSource.data.length }}</span>
+                        </button>
+
+                        <button (click)="setActiveTab('salidas')"
+                                [ngClass]="activeTab === 'salidas' ? '!bg-white dark:!bg-gray-700 !text-teal-800 dark:!text-teal-200 shadow-sm font-bold' : '!text-gray-500 hover:!text-gray-800 font-medium'"
+                                class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs transition-all border-0 bg-transparent cursor-pointer">
+                            <mat-icon class="icon-size-4 text-emerald-600" [svgIcon]="'heroicons_outline:clipboard-document-list'"></mat-icon>
+                            <span>Vales de Salida de Almacén</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold ml-1">Notas ISO</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-6 mt-3 flex-wrap pb-1">
+                <div *ngIf="activeTab === 'compras'" class="flex items-center gap-6 mt-3 flex-wrap pb-1">
                     <div *ngFor="let entry of totalsByCurrency | keyvalue" class="flex flex-col border-r border-gray-200 last:border-0 pr-6 last:pr-0">
                         <span class="text-[10px] font-bold text-secondary uppercase leading-none tracking-wider mb-2">{{ entry.key }}</span>
                         <div class="flex items-center gap-6">
@@ -30,7 +46,7 @@
                 </div>
 
                 <!-- Active Filter Badge -->
-                <div class="flex flex-wrap gap-2 mt-2">
+                <div *ngIf="activeTab === 'compras'" class="flex flex-wrap gap-2 mt-2">
                     <div *ngIf="selectedStatusId"
                         class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
                         <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:funnel"></mat-icon>
@@ -53,7 +69,7 @@
                 </div>
 
                 <!-- Report Quick Filters Buttons Row -->
-                <div class="flex flex-wrap gap-2 mt-3 pb-1">
+                <div *ngIf="activeTab === 'compras'" class="flex flex-wrap gap-2 mt-3 pb-1">
                     <button mat-stroked-button
                             [ngClass]="selectedReportFilter === 'pendiente_pago' ? '!bg-indigo-600 !text-white' : '!bg-white text-gray-700'"
                             class="!rounded-lg !text-xs !font-bold transition-all"
@@ -78,8 +94,8 @@
                 </div>
             </div>
 
-            <!-- Actions in Header -->
-            <div class="flex items-center gap-2">
+            <!-- Actions in Header (Compras) -->
+            <div *ngIf="activeTab === 'compras'" class="flex items-center gap-2">
                 <button mat-flat-button color="primary"
                     class="!bg-emerald-600 hover:!bg-emerald-700 !text-white !rounded-lg !px-4 shadow-sm"
                     (click)="exportToCSV()">
@@ -102,7 +118,7 @@
         </div>
 
         <!-- Compact Filters Row -->
-        <div *ngIf="showFilters" class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 pt-1 items-end animate-in fade-in slide-in-from-top-2 duration-300">
+        <div *ngIf="showFilters && activeTab === 'compras'" class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 pt-1 items-end animate-in fade-in slide-in-from-top-2 duration-300">
             <!-- Search -->
             <div class="lg:col-span-4">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
@@ -124,12 +140,12 @@
                 </mat-form-field>
             </div>
 
-            <!-- Matrix -->
+            <!-- Semáforo de Compras -->
             <div class="lg:col-span-2">
                 <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                    <mat-label>Matriz Eisenhower</mat-label>
+                    <mat-label>Semáforo de Compras</mat-label>
                     <mat-select [(ngModel)]="filtroCuadrante" (selectionChange)="onFilterChange()">
-                        <mat-option [value]="''">Todas</mat-option>
+                        <mat-option [value]="''">Todos</mat-option>
                         <mat-option *ngFor="let c of cuadrantesList" [value]="c.id">
                             <div class="flex items-center gap-2">
                                 <div class="w-2 h-2 rounded-full" [style.background-color]="getCuadranteColor(c.id)"></div>
@@ -162,8 +178,8 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="flex flex-col flex-auto p-3 sm:p-5 md:overflow-y-auto overflow-visible min-h-0">
+    <!-- Main Content: Compras -->
+    <div *ngIf="activeTab === 'compras'" class="flex flex-col flex-auto p-3 sm:p-5 md:overflow-y-auto overflow-visible min-h-0">
 
         <!-- Reference Design: Process Arrow Flow -->
         <div *ngIf="showFilters" class="flex-none process-container shadow-sm border border-gray-100 bg-white">
@@ -954,20 +970,19 @@
                         <ng-container matColumnDef="cuadranteId">
                             <th mat-header-cell *matHeaderCellDef>
                                 <div class="flex items-center justify-center gap-2">
-                                    <span mat-sort-header>Matriz Eisenhower</span>
+                                    <span mat-sort-header>Semáforo</span>
                                     <button mat-icon-button class="w-6 h-6 min-h-6 p-0" [matMenuTriggerFor]="filterMenuCuad" (click)="$event.stopPropagation()">
                                         <mat-icon class="icon-size-3.5" [ngClass]="{'text-primary': filterValues.cuadranteId}" [svgIcon]="'heroicons_solid:funnel'"></mat-icon>
                                     </button>
                                     <mat-menu #filterMenuCuad="matMenu" class="p-4 !min-w-64">
                                         <div (click)="$event.stopPropagation()">
                                             <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" subscriptSizing="dynamic">
-                                                <mat-label>Cuadrante</mat-label>
+                                                <mat-label>Semáforo</mat-label>
                                                 <mat-select [(ngModel)]="filterValues.cuadranteId" (selectionChange)="onFilterChange()">
                                                     <mat-option [value]="''">Todos</mat-option>
-                                                    <mat-option [value]="'Importante y Urgente'">Importante y Urgente</mat-option>
-                                                    <mat-option [value]="'Importante, No Urgente'">Importante, No Urgente</mat-option>
-                                                    <mat-option [value]="'No Importante, Urgente'">No Importante, Urgente</mat-option>
-                                                    <mat-option [value]="'No Importante, No Urgente'">No Importante, No Urgente</mat-option>
+                                                    <mat-option [value]="'Rojo (Urgente / Mismo día)'">🔴 Rojo (Urgente / Mismo día)</mat-option>
+                                                    <mat-option [value]="'Amarillo (Medio 1-3 días)'">🟡 Amarillo (Medio 1-3 días)</mat-option>
+                                                    <mat-option [value]="'Verde (Programado > 3 días)'">🟢 Verde (Programado > 3 días)</mat-option>
                                                 </mat-select>
                                             </mat-form-field>
                                         </div>
@@ -976,14 +991,14 @@
                             </th>
                             <td mat-cell *matCellDef="let s"
                                 class="text-center p-0 whitespace-nowrap border-r border-b dark:border-gray-800"
-                                [style.background-color]="getCuadranteColor(s.cuadranteId) + '20'" translate="no">
+                                [style.background-color]="getCuadranteColor(s.cuadranteId, s) + '20'" translate="no">
                                 <div class="flex items-center justify-center h-full gap-2 px-2 py-3 min-w-40 min-h-[48px]">
                                     <div class="w-3 h-3 rounded-full"
-                                        [style.background-color]="getCuadranteColor(s.cuadranteId)">
+                                        [style.background-color]="getCuadranteColor(s.cuadranteId, s)">
                                     </div>
                                     <span class="text-[10px] font-extrabold uppercase tracking-wider"
-                                        [style.color]="getCuadranteColor(s.cuadranteId)">
-                                        {{ getCuadranteName(s.cuadranteId) }}
+                                        [style.color]="getCuadranteColor(s.cuadranteId, s)">
+                                        {{ getCuadranteName(s.cuadranteId, s) }}
                                     </span>
                                 </div>
                             </td>
@@ -1085,11 +1100,11 @@
                                 </div>
                             </div>
                             
-                            <!-- Eisenhower Matrix Accent -->
+                            <!-- Semáforo Accent -->
                             <div class="pt-2 flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full" [style.background-color]="getCuadranteColor(s.cuadranteId)"></div>
-                                <span class="text-[9px] font-bold uppercase tracking-tighter" [style.color]="getCuadranteColor(s.cuadranteId)">
-                                    {{ getCuadranteName(s.cuadranteId) }}
+                                <div class="w-2 h-2 rounded-full" [style.background-color]="getCuadranteColor(s.cuadranteId, s)"></div>
+                                <span class="text-[9px] font-bold uppercase tracking-tighter" [style.color]="getCuadranteColor(s.cuadranteId, s)">
+                                    {{ getCuadranteName(s.cuadranteId, s) }}
                                 </span>
                                 <span *ngIf="s.folioOC" class="ml-auto text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
                                     OC: {{ s.folioOC }}
@@ -1105,4 +1120,7 @@
             </div>
         </div>
     </div>
+
+    <!-- Tab 2: Vales de Salida de Almacén (Notas de Campo & Comparativo) -->
+    <app-salidas-almacen-tab *ngIf="activeTab === 'salidas'" class="flex-1 overflow-y-auto"></app-salidas-almacen-tab>
 </div>

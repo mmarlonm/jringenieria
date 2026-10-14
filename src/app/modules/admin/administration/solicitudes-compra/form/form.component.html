@@ -171,34 +171,28 @@
                             <mat-form-field appearance="fill" class="w-full" [hideRequiredMarker]="true">
                                 <mat-label>
                                     <span class="flex items-center gap-1">
-                                        Matriz Eisenhower
+                                        Semáforo de Compra
                                         <span class="text-rose-500 font-bold">*</span>
-                                        <mat-icon class="icon-size-3.5 text-indigo-400 cursor-pointer hover:text-indigo-600 transition-colors ml-0.5" 
+                                        <mat-icon class="icon-size-3.5 text-teal-600 cursor-pointer hover:text-teal-700 transition-colors ml-0.5" 
                                                   [svgIcon]="'heroicons_outline:question-mark-circle'"
-                                                  matTooltip="Ver guía de prioridades"
-                                                  (click)="$event.stopPropagation(); openEisenhowerInfo()"></mat-icon>
+                                                  matTooltip="Ver guía de semáforo (ISO)"
+                                                  (click)="$event.stopPropagation(); openSemaforoInfo()"></mat-icon>
                                     </span>
                                 </mat-label>
                                 <mat-select formControlName="cuadranteId">
-                                    <mat-option [value]="null">Sin asignar</mat-option>
-                                    <mat-option [value]="1" matTooltip="Hacer ahora: Tareas críticas que requieren atención inmediata.">
+                                    <mat-option [value]="1" matTooltip="Urgente: Compra que debe surtirse hoy mismo o de atención inmediata.">
                                         <span class="flex items-center gap-2">
-                                            <div class="w-3 h-3 rounded-full bg-rose-500"></div>Impt. y Urgente
+                                            <div class="w-3 h-3 rounded-full bg-rose-500"></div>Rojo - Urgente (Mismo día / Vencida)
                                         </span>
                                     </mat-option>
-                                    <mat-option [value]="2" matTooltip="Planificar: Tareas importantes para objetivos a largo plazo.">
+                                    <mat-option [value]="2" matTooltip="Medio: Compra con margen de 1 a 3 días hábiles.">
                                         <span class="flex items-center gap-2">
-                                            <div class="w-3 h-3 rounded-full bg-amber-400"></div>Impt., No Urgente
+                                            <div class="w-3 h-3 rounded-full bg-amber-400"></div>Amarillo - Medio (Planeado 1 a 3 días)
                                         </span>
                                     </mat-option>
-                                    <mat-option [value]="3" matTooltip="Delegar: Tareas urgentes pero que no requieren tus habilidades específicas.">
+                                    <mat-option [value]="3" matTooltip="Programado: Compra con tiempo holgado (> 3 días).">
                                         <span class="flex items-center gap-2">
-                                            <div class="w-3 h-3 rounded-full bg-emerald-400"></div>No Impt., Urgente
-                                        </span>
-                                    </mat-option>
-                                    <mat-option [value]="4" matTooltip="Eliminar/Minimizar: Tareas que no aportan valor y distraen.">
-                                        <span class="flex items-center gap-2">
-                                            <div class="w-3 h-3 rounded-full bg-sky-400"></div>No Impt., No Urg.
+                                            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>Verde - Programado (> 3 días)
                                         </span>
                                     </mat-option>
                                 </mat-select>

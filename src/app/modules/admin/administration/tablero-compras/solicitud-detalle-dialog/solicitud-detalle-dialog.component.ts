@@ -169,12 +169,12 @@ import Swal from 'sweetalert2';
                         <span class="font-medium italic">{{ solicitud.tipoCompra }}</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Matriz Eisenhower</span>
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Semáforo de Compra</span>
                         <div class="mt-1 px-3 py-1.5 rounded-full text-[11px] font-bold inline-flex items-center gap-2 whitespace-nowrap shadow-sm border border-black/5 w-fit"
-                             [style.background-color]="getCuadranteColor(solicitud.cuadranteId) + '20'">
-                            <div class="w-3 h-3 rounded-full" [style.background-color]="getCuadranteColor(solicitud.cuadranteId)"></div>
-                            <span class="leading-none pt-px" [style.color]="getCuadranteColor(solicitud.cuadranteId)">
-                                {{ getCuadranteName(solicitud.cuadranteId) }}
+                             [style.background-color]="getCuadranteColor(solicitud.cuadranteId, solicitud) + '20'">
+                            <div class="w-3 h-3 rounded-full" [style.background-color]="getCuadranteColor(solicitud.cuadranteId, solicitud)"></div>
+                            <span class="leading-none pt-px" [style.color]="getCuadranteColor(solicitud.cuadranteId, solicitud)">
+                                {{ getCuadranteName(solicitud.cuadranteId, solicitud) }}
                             </span>
                         </div>
                     </div>
@@ -743,23 +743,43 @@ export class SolicitudDetalleDialogComponent implements OnInit {
         return colors[id] || '#64748b';
     }
 
-    getCuadranteName(id: number | null | undefined): string {
-        switch (id) {
-            case 1: return 'Importante y Urgente';
-            case 2: return 'Importante, No Urgente';
-            case 3: return 'No Importante, Urgente';
-            case 4: return 'No Importante, No Urgente';
-            default: return 'Sin asignar';
+    getSemaforoNivel(s: any): number {
+        if (!s) return 3;
+        if (s.cuadranteId === 1) return 1;
+        if (s.fechaRequerida) {
+            const fechaReq = new Date(s.fechaRequerida);
+            if (!isNaN(fechaReq.getTime())) {
+                const hoy = new Date();
+                fechaReq.setHours(0, 0, 0, 0);
+                hoy.setHours(0, 0, 0, 0);
+                const diffDays = Math.ceil((fechaReq.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffDays <= 0) return 1;
+                if (diffDays <= 3) return 2;
+                return 3;
+            }
+        }
+        if (s.cuadranteId === 2) return 2;
+        if (s.cuadranteId === 3) return 3;
+        return 3;
+    }
+
+    getCuadranteName(id: number | null | undefined, s?: any): string {
+        const nivel = s ? this.getSemaforoNivel(s) : (id || 3);
+        switch (nivel) {
+            case 1: return 'Rojo (Urgente / Mismo día)';
+            case 2: return 'Amarillo (Medio 1-3 días)';
+            case 3: return 'Verde (Programado > 3 días)';
+            default: return 'Verde (Programado > 3 días)';
         }
     }
 
-    getCuadranteColor(id: number | null | undefined): string {
-        switch (id) {
-            case 1: return '#f43f5e'; // bg-rose-500
-            case 2: return '#fbbf24'; // bg-amber-400
-            case 3: return '#34d399'; // bg-emerald-400
-            case 4: return '#38bdf8'; // bg-sky-400
-            default: return '#94a3b8'; // gray-400
+    getCuadranteColor(id: number | null | undefined, s?: any): string {
+        const nivel = s ? this.getSemaforoNivel(s) : (id || 3);
+        switch (nivel) {
+            case 1: return '#ef4444';
+            case 2: return '#f59e0b';
+            case 3: return '#10b981';
+            default: return '#10b981';
         }
     }
 

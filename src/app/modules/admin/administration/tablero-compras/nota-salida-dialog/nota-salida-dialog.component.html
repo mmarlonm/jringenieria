@@ -1,0 +1,217 @@
+<div class="flex flex-col max-w-5xl w-full h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-teal-700 via-teal-800 to-emerald-900 text-white shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-white/10 rounded-xl backdrop-blur-md">
+                <mat-icon class="icon-size-6 text-emerald-300" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold tracking-tight">Nueva Solicitud de Salida de Almacén</h2>
+                <p class="text-xs text-emerald-100/80">Bloc de notas de campo para requisición de material físico</p>
+            </div>
+        </div>
+        <button mat-icon-button (click)="cerrar()" class="text-white/80 hover:text-white">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Modal Content: Two columns (Left: Note & Items | Right: Warehouse catalog search & quick manual entry) -->
+    <div class="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-0">
+        
+        <!-- Left Side: Bloc de Notas (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col h-full border-r border-gray-200 dark:border-gray-800 p-6 overflow-y-auto bg-slate-50/50 dark:bg-gray-900">
+            
+            <form [formGroup]="form" class="space-y-4">
+                <!-- Info de Obra / Solicitante -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <mat-form-field appearance="fill" class="w-full fuse-mat-dense">
+                        <mat-label>Proyecto / Obra / Cuadrilla</mat-label>
+                        <input matInput formControlName="nombreProyecto" placeholder="Ej: Obra Parque Solar / Mantenimiento">
+                        <mat-error *ngIf="form.get('nombreProyecto').invalid">Requerido</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="fill" class="w-full fuse-mat-dense">
+                        <mat-label>Persona que Solicita</mat-label>
+                        <input matInput formControlName="nombreSolicitante" placeholder="Ej: Ing. Juan Pérez / Residente">
+                        <mat-error *ngIf="form.get('nombreSolicitante').invalid">Requerido</mat-error>
+                    </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="fill" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                    <mat-label>Observaciones de la Nota</mat-label>
+                    <textarea matInput formControlName="observacionesNotas" rows="2" placeholder="Comentarios generales, lugar de entrega en obra, urgencia..."></textarea>
+                </mat-form-field>
+            </form>
+
+            <!-- Partidas en la Nota (Drop Zone) -->
+            <div class="mt-4 flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Materiales en esta Nota ({{ detalles.length }})
+                    </span>
+                    <span class="text-[11px] text-teal-600 font-semibold bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded-full border border-teal-200/50">
+                        Arrastra o presiona + para agregar
+                    </span>
+                </div>
+
+                <!-- Drop Target Area -->
+                <div (dragover)="onDragOver($event)" (drop)="onDrop($event)"
+                     class="flex-1 min-h-[220px] rounded-xl border-2 border-dashed border-teal-200 dark:border-teal-900/50 p-3 bg-white dark:bg-gray-800/80 transition-all overflow-y-auto space-y-2">
+                    
+                    <div *ngIf="detalles.length === 0" class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                        <mat-icon class="icon-size-10 mb-2 text-slate-300" [svgIcon]="'heroicons_outline:inbox-arrow-down'"></mat-icon>
+                        <p class="text-sm font-medium">La nota está vacía</p>
+                        <p class="text-xs text-slate-400 max-w-xs mt-1">Busca materiales en el catálogo de almacén a la derecha o escribe material libre para añadirlo aquí.</p>
+                    </div>
+
+                    <!-- Items rows -->
+                    <div *ngFor="let control of detalles.controls; let i = index" 
+                         class="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl group hover:border-teal-400 transition-colors shadow-sm">
+                        
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                             [ngClass]="control.value.esManual ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-teal-100 text-teal-700 border border-teal-300'">
+                            {{ i + 1 }}
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span *ngIf="control.value.codigoProducto" class="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                                    {{ control.value.codigoProducto }}
+                                </span>
+                                <span *ngIf="control.value.esManual" class="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                    ✍️ Captura Libre
+                                </span>
+                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                    {{ control.value.descripcion }}
+                                </span>
+                            </div>
+                            <div *ngIf="control.value.notas" class="text-[11px] text-gray-500 italic mt-0.5">
+                                {{ control.value.notas }}
+                            </div>
+                        </div>
+
+                        <!-- Editable Quantity -->
+                        <div class="flex items-center gap-1 shrink-0 bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="text-[10px] font-semibold text-gray-400 uppercase">Cant:</span>
+                            <input type="number" [value]="control.value.cantidadSolicitada" 
+                                   (input)="control.patchValue({ cantidadSolicitada: +$any($event.target).value })"
+                                   min="0.01" step="any"
+                                   class="w-14 text-xs font-bold text-center bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-teal-500 rounded">
+                            <span class="text-[10px] font-bold text-gray-500">{{ control.value.unidadMedida }}</span>
+                        </div>
+
+                        <!-- Delete button -->
+                        <button mat-icon-button class="w-8 h-8 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0"
+                                (click)="eliminarPartida(i)" matTooltip="Quitar de la nota">
+                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Warehouse Search & Manual Entry (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col h-full p-6 overflow-y-auto bg-white dark:bg-gray-800 space-y-5">
+            
+            <!-- Warehouse Search Card -->
+            <div class="flex flex-col space-y-3 p-4 bg-teal-50/50 dark:bg-teal-950/20 rounded-2xl border border-teal-100 dark:border-teal-900/50">
+                <div class="flex items-center gap-2">
+                    <mat-icon class="icon-size-4 text-teal-600" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                    <span class="text-xs font-bold uppercase tracking-wider text-teal-900 dark:text-teal-200">
+                        Existencias en Almacén
+                    </span>
+                </div>
+
+                <div class="relative">
+                    <input type="text" [(ngModel)]="busquedaMaterial" (input)="onSearchMaterial($event)"
+                           placeholder="Buscar por código o descripción..."
+                           class="w-full px-3 py-2 text-xs rounded-xl border border-teal-200 dark:border-teal-800 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <mat-icon *ngIf="cargandoBusqueda" class="icon-size-4 absolute right-3 top-2.5 animate-spin text-teal-600">sync</mat-icon>
+                </div>
+
+                <!-- Results List -->
+                <div class="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                    <div *ngFor="let m of materialesEncontrados" draggable="true" (dragstart)="onDragStart($event, m)"
+                         class="flex items-center justify-between p-2 bg-white dark:bg-gray-900 rounded-xl border border-slate-200/80 hover:border-teal-500 cursor-grab active:cursor-grabbing transition-all shadow-xs group">
+                        
+                        <div class="min-w-0 flex-1 pr-2">
+                            <div class="text-[10px] font-mono font-bold text-teal-600">{{ m.codigo }}</div>
+                            <div class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{{ m.nombre }}</div>
+                            <div class="text-[10px] text-gray-500">
+                                Stock: <b class="text-emerald-600">{{ m.existencia }} {{ m.unidad }}</b> (Alm: {{ m.almacen }})
+                            </div>
+                        </div>
+
+                        <button mat-icon-button class="w-7 h-7 bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white rounded-lg shrink-0 transition-colors"
+                                (click)="agregarMaterialCatalogo(m)" matTooltip="Agregar a la nota">
+                            <mat-icon class="icon-size-3.5" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        </button>
+                    </div>
+
+                    <div *ngIf="materialesEncontrados.length === 0 && busquedaMaterial.length >= 2 && !cargandoBusqueda" 
+                         class="text-center py-4 text-xs text-gray-400">
+                        No se encontraron materiales con "{{ busquedaMaterial }}"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Entry Card (If item is not in warehouse) -->
+            <div class="flex flex-col space-y-3 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl border border-amber-100 dark:border-amber-900/50">
+                <div class="flex items-center gap-2">
+                    <mat-icon class="icon-size-4 text-amber-600" [svgIcon]="'heroicons_solid:pencil-square'"></mat-icon>
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                        Material No Encontrado (Captura Libre)
+                    </span>
+                </div>
+                <p class="text-[11px] text-amber-700/80">Escribe cualquier material o consumible que se requiera y no esté en el catálogo:</p>
+
+                <input type="text" [(ngModel)]="manualDescripcion" placeholder="Descripción del material solicitado..."
+                       class="w-full px-3 py-2 text-xs rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500">
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="flex items-center gap-1 bg-white dark:bg-gray-900 px-2 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Cant:</span>
+                        <input type="number" [(ngModel)]="manualCantidad" min="0.01" step="any"
+                               class="w-full text-xs font-bold bg-transparent border-0 focus:outline-none">
+                    </div>
+                    <select [(ngModel)]="manualUnidad" 
+                            class="px-2 py-1.5 text-xs rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-gray-900 focus:outline-none">
+                        <option value="PZA">PZA</option>
+                        <option value="MTO">METRO</option>
+                        <option value="KG">KILO</option>
+                        <option value="LT">LITRO</option>
+                        <option value="TRAMO">TRAMO</option>
+                        <option value="ROLLO">ROLLO</option>
+                        <option value="CAJA">CAJA</option>
+                    </select>
+                </div>
+
+                <input type="text" [(ngModel)]="manualNotas" placeholder="Notas adicionales (opcional)..."
+                       class="w-full px-3 py-1.5 text-xs rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-gray-900 focus:outline-none">
+
+                <button mat-stroked-button class="!border-amber-500 !text-amber-700 !bg-white hover:!bg-amber-100 !rounded-xl !text-xs !font-bold"
+                        (click)="agregarMaterialManual()" [disabled]="!manualDescripcion.trim()">
+                    <mat-icon class="icon-size-4 mr-1 text-amber-600" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                    Añadir Material a la Nota
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shrink-0">
+        <div class="text-xs text-gray-500">
+            Total de partidas en la solicitud: <b class="text-teal-700">{{ detalles.length }}</b>
+        </div>
+        <div class="flex items-center gap-3">
+            <button mat-button (click)="cerrar()" class="rounded-xl px-5 text-gray-600">Cancelar</button>
+            <button mat-flat-button color="primary" (click)="guardarNota()" 
+                    [disabled]="form.invalid || detalles.length === 0"
+                    class="!bg-teal-700 hover:!bg-teal-800 !text-white !rounded-xl px-6 py-2 shadow-md">
+                <mat-icon class="mr-2" [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                Guardar Solicitud de Salida
+            </button>
+        </div>
+    </div>
+</div>

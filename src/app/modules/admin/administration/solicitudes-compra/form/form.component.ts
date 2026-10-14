@@ -81,10 +81,9 @@ export class SolicitudCompraFormComponent implements OnInit {
     formasPago = ['CONTADO (PUE)', 'CREDITO (PPD)'];
     razonesSociales = ['Jesus Ricardo Mendez Arrillaga', 'JR Ingenieria Electrica'];
     cuadrantes = [
-        { id: 1, nombre: 'Hacer (Urg. / Imp.)' },
-        { id: 2, nombre: 'Planificar (No Urg. / Imp.)' },
-        { id: 3, nombre: 'Delegar (Urg. / No Imp.)' },
-        { id: 4, nombre: 'Eliminar (No Urg. / No Imp.)' }
+        { id: 1, nombre: 'Rojo - Urgente (Mismo día / Vencida)' },
+        { id: 2, nombre: 'Amarillo - Medio (Planeado 1 a 3 días)' },
+        { id: 3, nombre: 'Verde - Programado (> 3 días)' }
     ];
     sucursales: any[] = [];
     usuarios: any[] = [];
@@ -248,6 +247,29 @@ export class SolicitudCompraFormComponent implements OnInit {
 
         this._setupCalculationListener();
         this._setupFormaPagoListener();
+        this._setupFechaRequeridaListener();
+    }
+
+    private _setupFechaRequeridaListener(): void {
+        this.solicitudForm.get('fechaRequerida').valueChanges.pipe(
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(fecha => {
+            if (fecha && !this.isEdit) {
+                const reqDate = new Date(fecha);
+                if (!isNaN(reqDate.getTime())) {
+                    const hoy = new Date();
+                    reqDate.setHours(0, 0, 0, 0);
+                    hoy.setHours(0, 0, 0, 0);
+                    const diffDays = Math.ceil((reqDate.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                    let autoNivel = 3;
+                    if (diffDays <= 0) autoNivel = 1;
+                    else if (diffDays <= 3) autoNivel = 2;
+                    else autoNivel = 3;
+
+                    this.solicitudForm.get('cuadranteId').setValue(autoNivel, { emitEvent: false });
+                }
+            }
+        });
     }
 
     private _setupFormaPagoListener(): void {
@@ -741,43 +763,39 @@ export class SolicitudCompraFormComponent implements OnInit {
         });
     }
 
-    openEisenhowerInfo(): void {
+    openSemaforoInfo(): void {
         Swal.fire({
-            title: 'Guía: Matriz de Eisenhower',
+            title: 'Guía: Semáforo de Compras (ISO 50001 / ISO 9001)',
             html: `
-                <div class="flex flex-col gap-4 text-left p-2">
+                <div class="flex flex-col gap-3 text-left p-2">
                     <div class="flex gap-3 items-start p-3 bg-rose-50 rounded-xl border border-rose-100">
-                        <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white font-bold shrink-0">Q1</div>
+                        <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white font-bold shrink-0">🔴</div>
                         <div>
-                            <div class="font-bold text-rose-700">Importante y Urgente (Hacer ahora)</div>
-                            <div class="text-xs text-rose-600/80">Tareas críticas que requieren atención inmediata. Ej: Crisis, problemas apremiantes o plazos límite.</div>
+                            <div class="font-bold text-rose-700">Rojo: Urgente (Mismo día / Vencida)</div>
+                            <div class="text-xs text-rose-600/80">Compras que requieren atención inmediata en el día o con fecha comprometida vencida.</div>
                         </div>
                     </div>
                     <div class="flex gap-3 items-start p-3 bg-amber-50 rounded-xl border border-amber-100">
-                        <div class="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold shrink-0">Q2</div>
+                        <div class="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold shrink-0">🟡</div>
                         <div>
-                            <div class="font-bold text-amber-700">Importante, No Urgente (Planificar)</div>
-                            <div class="text-xs text-amber-600/80">Tareas para objetivos a largo plazo. Ej: Prevención, planificación y nuevas oportunidades.</div>
+                            <div class="font-bold text-amber-700">Amarillo: Medio (Planeado 1 a 3 días)</div>
+                            <div class="text-xs text-amber-600/80">Compras de margen moderado programadas a corto plazo (1 a 3 días hábiles).</div>
                         </div>
                     </div>
                     <div class="flex gap-3 items-start p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <div class="w-8 h-8 rounded-full bg-emerald-400 flex items-center justify-center text-white font-bold shrink-0">Q3</div>
+                        <div class="w-8 h-8 rounded-full bg-emerald-400 flex items-center justify-center text-white font-bold shrink-0">🟢</div>
                         <div>
-                            <div class="font-bold text-emerald-700">No Importante, Urgente (Delegar)</div>
-                            <div class="text-xs text-emerald-600/80">Tareas que deben hacerse pronto pero no por ti. Ej: Algunas llamadas o interrupciones.</div>
+                            <div class="font-bold text-emerald-700">Verde: Programado (> 3 días)</div>
+                            <div class="text-xs text-emerald-600/80">Compras con tiempo holgado y suficiente margen de gestión anticipada.</div>
                         </div>
                     </div>
-                    <div class="flex gap-3 items-start p-3 bg-sky-50 rounded-xl border border-sky-100">
-                        <div class="w-8 h-8 rounded-full bg-sky-400 flex items-center justify-center text-white font-bold shrink-0">Q4</div>
-                        <div>
-                            <div class="font-bold text-sky-700">No Importante, No Urgente (Eliminar)</div>
-                            <div class="text-xs text-sky-600/80">Actividades que consumen tiempo sin aportar valor. Ej: Tareas triviales o distracciones.</div>
-                        </div>
+                    <div class="p-2.5 bg-slate-50 rounded-lg text-xs text-slate-500 border border-slate-200">
+                        ℹ️ <b>Dinamismo automático:</b> El semáforo se calcula en función de la Fecha Requerida, pero puedes forzarlo a Rojo manualmente si la operación lo requiere.
                     </div>
                 </div>
             `,
             confirmButtonText: 'Entendido',
-            confirmButtonColor: '#6366f1',
+            confirmButtonColor: '#2c7c6e',
             customClass: {
                 container: 'z-[99999]'
             }
@@ -888,7 +906,7 @@ export class SolicitudCompraFormComponent implements OnInit {
                 formaPago: 'Forma de Pago',
                 razonSocial: 'Razón Social',
                 monto: 'Total',
-                cuadranteId: 'Matriz Eisenhower',
+                cuadranteId: 'Semáforo de Compra',
                 detalles: 'Partidas (Detalle de materiales)'
             };
             for (const name in controls) {

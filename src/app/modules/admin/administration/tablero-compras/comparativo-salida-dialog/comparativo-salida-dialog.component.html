@@ -1,0 +1,197 @@
+<div class="flex flex-col max-w-5xl w-full h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-800 via-slate-900 to-indigo-950 text-white shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-white/10 rounded-xl backdrop-blur-md">
+                <mat-icon class="icon-size-6 text-indigo-300" [svgIcon]="'heroicons_outline:scale'"></mat-icon>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold tracking-tight">Comparativo: Solicitado vs. Entregado</h2>
+                    <span *ngIf="solicitud" class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                        {{ solicitud.folio }}
+                    </span>
+                </div>
+                <p class="text-xs text-slate-300">Control de surtimiento de almacén para auditoría ISO 9001 / ISO 50001</p>
+            </div>
+        </div>
+        <button mat-icon-button (click)="cerrar()" class="text-white/80 hover:text-white">
+            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div *ngIf="solicitud" class="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50 dark:bg-gray-900">
+        
+        <!-- Summary Cards Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs">
+                <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Proyecto / Obra</span>
+                <div class="text-sm font-bold text-gray-800 dark:text-gray-100 truncate mt-1">
+                    {{ solicitud.nombreProyecto || 'Sin asignar' }}
+                </div>
+                <div class="text-[11px] text-gray-500 mt-0.5">
+                    Solicita: <b>{{ solicitud.nombreSolicitante || 'N/A' }}</b>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs">
+                <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Fecha Solicitud</span>
+                <div class="text-sm font-bold text-gray-800 dark:text-gray-100 mt-1">
+                    {{ solicitud.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+                <div class="text-[11px] text-gray-500 mt-0.5">
+                    Partidas: <b>{{ partidasEditables.length }}</b>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs">
+                <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">% Surtimiento Global</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xl font-extrabold"
+                          [ngClass]="porcentajeCalculado >= 100 ? 'text-emerald-600' : (porcentajeCalculado > 0 ? 'text-amber-600' : 'text-rose-600')">
+                        {{ porcentajeCalculado }}%
+                    </span>
+                    <div class="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-500"
+                             [ngClass]="porcentajeCalculado >= 100 ? 'bg-emerald-500' : (porcentajeCalculado > 0 ? 'bg-amber-500' : 'bg-rose-500')"
+                             [style.width.%]="porcentajeCalculado"></div>
+                    </div>
+                </div>
+                <div class="text-[10px] text-gray-500 mt-1">
+                    Estatus: <b class="uppercase">{{ solicitud.estatus }}</b>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs flex flex-col justify-between">
+                <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Acción Rápida</span>
+                <button mat-stroked-button color="primary" (click)="surtirTodo()"
+                        class="!rounded-xl !text-xs !font-bold !border-emerald-500 !text-emerald-700 !bg-emerald-50 hover:!bg-emerald-100 mt-1">
+                    <mat-icon class="icon-size-4 mr-1 text-emerald-600" [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                    Surtir Todo al 100%
+                </button>
+            </div>
+        </div>
+
+        <!-- Observaciones de la nota original si existen -->
+        <div *ngIf="solicitud.observacionesNotas" class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-900">
+            <b>Notas de campo:</b> {{ solicitud.observacionesNotas }}
+        </div>
+
+        <!-- Comparative Table Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xs">
+            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                    Desglose Comparativo por Partida
+                </h3>
+                <span class="text-[11px] text-gray-400">
+                    Edita la columna <b>"Cant. Entregada"</b> para actualizar el surtimiento físico
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-50/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+                            <th class="py-3 px-4">#</th>
+                            <th class="py-3 px-4">Origen</th>
+                            <th class="py-3 px-4">Código / Mat.</th>
+                            <th class="py-3 px-4 text-center">Cant. Solicitada</th>
+                            <th class="py-3 px-4 text-center">Cant. Entregada</th>
+                            <th class="py-3 px-4 text-center">Diferencia</th>
+                            <th class="py-3 px-4 text-center">Semáforo Surtido</th>
+                            <th class="py-3 px-4">Notas / Justificación</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        <tr *ngFor="let p of partidasEditables; let idx = index" class="hover:bg-slate-50/70 transition-colors">
+                            
+                            <!-- Index -->
+                            <td class="py-3 px-4 font-bold text-gray-400">{{ idx + 1 }}</td>
+
+                            <!-- Origen -->
+                            <td class="py-3 px-4">
+                                <span *ngIf="!p.esManual" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                                    📦 Almacén
+                                </span>
+                                <span *ngIf="p.esManual" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    ✍️ Captura Libre
+                                </span>
+                            </td>
+
+                            <!-- Descripción -->
+                            <td class="py-3 px-4">
+                                <div *ngIf="p.codigoProducto" class="font-mono text-[10px] font-bold text-teal-700">{{ p.codigoProducto }}</div>
+                                <div class="font-medium text-gray-800 dark:text-gray-200">{{ p.descripcion }}</div>
+                            </td>
+
+                            <!-- Solicitada -->
+                            <td class="py-3 px-4 text-center font-bold text-gray-700 dark:text-gray-300">
+                                {{ p.cantidadSolicitada }} <span class="text-[10px] text-gray-400 font-normal">{{ p.unidadMedida }}</span>
+                            </td>
+
+                            <!-- Entregada (Editable input) -->
+                            <td class="py-3 px-4 text-center">
+                                <div class="inline-flex items-center gap-1 bg-white dark:bg-gray-900 px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 shadow-2xs">
+                                    <input type="number" [(ngModel)]="p.cantidadEntregada" min="0" step="any"
+                                           class="w-16 text-center text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-transparent border-0 focus:outline-none">
+                                    <span class="text-[10px] font-medium text-gray-400">{{ p.unidadMedida }}</span>
+                                </div>
+                            </td>
+
+                            <!-- Diferencia -->
+                            <td class="py-3 px-4 text-center font-bold"
+                                [ngClass]="(p.cantidadSolicitada - p.cantidadEntregada) <= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                                {{ (p.cantidadSolicitada - p.cantidadEntregada) | number:'1.0-2' }}
+                                <span *ngIf="(p.cantidadSolicitada - p.cantidadEntregada) > 0" class="text-[9px] block text-rose-500 font-normal">Faltante</span>
+                                <span *ngIf="(p.cantidadSolicitada - p.cantidadEntregada) === 0" class="text-[9px] block text-emerald-500 font-normal">Completo</span>
+                            </td>
+
+                            <!-- Semáforo Surtido -->
+                            <td class="py-3 px-4 text-center">
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border"
+                                     [style.color]="getEstatusPartida(p.cantidadSolicitada, p.cantidadEntregada).color"
+                                     [style.background-color]="getEstatusPartida(p.cantidadSolicitada, p.cantidadEntregada).bg"
+                                     [style.border-color]="getEstatusPartida(p.cantidadSolicitada, p.cantidadEntregada).color + '40'">
+                                    <div class="w-2 h-2 rounded-full" [style.background-color]="getEstatusPartida(p.cantidadSolicitada, p.cantidadEntregada).color"></div>
+                                    {{ getEstatusPartida(p.cantidadSolicitada, p.cantidadEntregada).label }}
+                                </div>
+                            </td>
+
+                            <!-- Notas -->
+                            <td class="py-3 px-4">
+                                <input type="text" [(ngModel)]="p.notas" placeholder="Motivo o detalle de entrega..."
+                                       class="w-full text-[11px] px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Warehouse sign-off fields -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <mat-form-field appearance="fill" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Folio de Salida ContPAQi / Vale Físico</mat-label>
+                <input matInput [(ngModel)]="folioSalidaContpaq" placeholder="Ej: REM-2026-891 o Folio de Almacén">
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="w-full fuse-mat-dense" subscriptSizing="dynamic">
+                <mat-label>Encargado de Almacén que Entrega</mat-label>
+                <input matInput [(ngModel)]="nombreUsuarioEntrega" placeholder="Nombre de quien surtió el material">
+            </mat-form-field>
+        </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shrink-0">
+        <button mat-button (click)="cerrar()" class="rounded-xl px-5 text-gray-600">Cerrar</button>
+        <button mat-flat-button color="primary" (click)="guardarEntrega()" [disabled]="guardando"
+                class="!bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-xl px-6 py-2 shadow-md">
+            <mat-icon class="mr-2" [svgIcon]="'heroicons_outline:check'"></mat-icon>
+            {{ guardando ? 'Guardando...' : 'Guardar Surtimiento y Entrega' }}
+        </button>
+    </div>
+</div>

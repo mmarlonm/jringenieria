@@ -1,0 +1,201 @@
+<div class="flex flex-col flex-auto min-w-0 p-4 sm:p-6 space-y-5">
+    
+    <!-- KPI Summary Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Total de Solicitudes</span>
+                <div class="text-2xl font-black text-gray-800 dark:text-gray-100 mt-1">{{ totalNotas }}</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold uppercase text-rose-500 tracking-wider">Pendientes de Surtir</span>
+                <div class="text-2xl font-black text-rose-600 mt-1">{{ pendientesCount }}</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:clock'"></mat-icon>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold uppercase text-amber-500 tracking-wider">Surtido Parcial</span>
+                <div class="text-2xl font-black text-amber-600 mt-1">{{ parcialesCount }}</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold uppercase text-emerald-500 tracking-wider">Surtido Completo</span>
+                <div class="text-2xl font-black text-emerald-600 mt-1">{{ completadasCount }}</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center">
+                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:check-badge'"></mat-icon>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Action Row -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs">
+        
+        <div class="flex items-center gap-3 flex-1">
+            <!-- Search input -->
+            <div class="relative flex-1 max-w-md">
+                <mat-icon class="icon-size-4 absolute left-3 top-3 text-gray-400" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                <input type="text" [(ngModel)]="filtroBusqueda" (input)="aplicarFiltros()"
+                       placeholder="Buscar por folio, proyecto, solicitante o material..."
+                       class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+
+            <!-- Status filter select -->
+            <select [(ngModel)]="filtroEstatus" (change)="aplicarFiltros()"
+                    class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 focus:outline-none text-gray-700 dark:text-gray-200">
+                <option value="">Todos los Estatus</option>
+                <option value="Pendiente">🔴 Pendiente</option>
+                <option value="Surtido Parcial">🟡 Surtido Parcial</option>
+                <option value="Surtido Completo">🟢 Surtido Completo</option>
+                <option value="Cancelada">⚪ Cancelada</option>
+            </select>
+        </div>
+
+        <button mat-flat-button color="primary" (click)="abrirNuevaNota()"
+                class="!bg-teal-700 hover:!bg-teal-800 !text-white !rounded-xl !px-5 !py-2.5 shadow-md flex items-center shrink-0">
+            <mat-icon class="mr-2" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+            <span class="font-bold text-xs uppercase tracking-wider">Nueva Nota de Salida (Campo)</span>
+        </button>
+    </div>
+
+    <!-- Table of Solicitudes de Salida -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-gray-50/80 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 text-gray-500 font-semibold uppercase text-[10px] tracking-wider">
+                        <th class="py-3 px-4">Folio</th>
+                        <th class="py-3 px-4">Fecha</th>
+                        <th class="py-3 px-4">Proyecto / Obra</th>
+                        <th class="py-3 px-4">Solicitante</th>
+                        <th class="py-3 px-4 text-center">Partidas</th>
+                        <th class="py-3 px-4 text-center">Surtimiento</th>
+                        <th class="py-3 px-4 text-center">Estatus</th>
+                        <th class="py-3 px-4">Salida Almacén</th>
+                        <th class="py-3 px-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <tr *ngFor="let s of salidasFiltradas" class="hover:bg-slate-50/70 dark:hover:bg-gray-900/40 transition-colors">
+                        
+                        <!-- Folio -->
+                        <td class="py-3 px-4">
+                            <span class="font-mono font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded-md border border-teal-200/60">
+                                {{ s.folio }}
+                            </span>
+                        </td>
+
+                        <!-- Fecha -->
+                        <td class="py-3 px-4 text-gray-500">
+                            {{ s.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}
+                        </td>
+
+                        <!-- Proyecto -->
+                        <td class="py-3 px-4">
+                            <div class="font-bold text-gray-800 dark:text-gray-200 truncate max-w-xs">
+                                {{ s.nombreProyecto || 'Sin especificar' }}
+                            </div>
+                            <div *ngIf="s.observacionesNotas" class="text-[10px] text-gray-400 truncate max-w-xs italic">
+                                {{ s.observacionesNotas }}
+                            </div>
+                        </td>
+
+                        <!-- Solicitante -->
+                        <td class="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+                            {{ s.nombreSolicitante || 'N/A' }}
+                        </td>
+
+                        <!-- Partidas -->
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-bold text-gray-700 dark:text-gray-200">{{ s.totalPartidas }}</span>
+                            <span *ngIf="s.detalles" class="text-[10px] text-gray-400 block">
+                                ({{ s.partidasCompletas }} completas)
+                            </span>
+                        </td>
+
+                        <!-- Barra de Surtimiento -->
+                        <td class="py-3 px-4 text-center">
+                            <div class="inline-flex flex-col items-center w-24">
+                                <span class="text-[10px] font-bold mb-1"
+                                      [ngClass]="s.porcentajeSurtido >= 100 ? 'text-emerald-600' : (s.porcentajeSurtido > 0 ? 'text-amber-600' : 'text-rose-600')">
+                                    {{ s.porcentajeSurtido }}%
+                                </span>
+                                <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-300"
+                                         [ngClass]="s.porcentajeSurtido >= 100 ? 'bg-emerald-500' : (s.porcentajeSurtido > 0 ? 'bg-amber-500' : 'bg-rose-500')"
+                                         [style.width.%]="s.porcentajeSurtido"></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Estatus Badge -->
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="s.estatus === 'Surtido Completo'" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                🟢 Surtido Completo
+                            </span>
+                            <span *ngIf="s.estatus === 'Surtido Parcial'" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                🟡 Surtido Parcial
+                            </span>
+                            <span *ngIf="s.estatus === 'Pendiente'" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                🔴 Pendiente
+                            </span>
+                            <span *ngIf="s.estatus === 'Cancelada'" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200">
+                                ⚪ Cancelada
+                            </span>
+                        </td>
+
+                        <!-- Salida ContPAQi / Remisión -->
+                        <td class="py-3 px-4">
+                            <span *ngIf="s.folioSalidaContpaq" class="font-mono text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                                {{ s.folioSalidaContpaq }}
+                            </span>
+                            <span *ngIf="!s.folioSalidaContpaq" class="text-[11px] text-gray-400 italic">
+                                Sin folio
+                            </span>
+                        </td>
+
+                        <!-- Acciones -->
+                        <td class="py-3 px-4 text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <button mat-stroked-button color="primary" (click)="abrirComparativo(s)"
+                                        class="!rounded-lg !text-xs !font-bold !py-1 !px-3 !border-indigo-300 !text-indigo-700 hover:!bg-indigo-50"
+                                        matTooltip="Ver comparativo Solicitado vs Entregado">
+                                    <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="'heroicons_outline:scale'"></mat-icon>
+                                    Comparativo
+                                </button>
+
+                                <button *ngIf="s.estatus !== 'Cancelada'" mat-icon-button class="w-8 h-8 text-gray-400 hover:text-rose-600 rounded-lg"
+                                        (click)="cancelarSalida(s)" matTooltip="Cancelar salida">
+                                    <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Empty state -->
+            <div *ngIf="salidasFiltradas.length === 0 && !cargando" class="text-center py-12 text-gray-400">
+                <mat-icon class="icon-size-10 mb-2 text-gray-300" [svgIcon]="'heroicons_outline:document-magnifying-glass'"></mat-icon>
+                <div class="text-sm font-medium">No se encontraron solicitudes de salida de almacén</div>
+                <div class="text-xs text-gray-400 mt-1">Crea una nueva nota de salida para empezar a registrar vales de material.</div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -94,7 +94,7 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
                     sucursal: sol.sucursal,
                     area: sol.areaSolicitante,
                     prioridad: sol.prioridad,
-                    cuadrante: this.getCuadranteName(sol.cuadranteId),
+                    cuadrante: this.getCuadranteName(sol.cuadranteId, sol),
                     proveedor: this.getSelectedProvider(sol),
                     estatus: sol.nombreEstatus || 'Creada'
                 }))
@@ -179,24 +179,44 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
         });
     }
 
-    // Helper methods for Eisenhower Matrix styling
-    getCuadranteName(id: number): string {
-        switch (id) {
-            case 1: return 'Impt. y Urgente';
-            case 2: return 'Impt., No Urgente';
-            case 3: return 'No Impt., Urgente';
-            case 4: return 'No Impt., No Urg.';
-            default: return 'No asignado';
+    // Helper methods for Semáforo Tricolor (ISO)
+    getSemaforoNivel(s: any): number {
+        if (!s) return 3;
+        if (s.cuadranteId === 1) return 1;
+        if (s.fechaRequerida) {
+            const fechaReq = new Date(s.fechaRequerida);
+            if (!isNaN(fechaReq.getTime())) {
+                const hoy = new Date();
+                fechaReq.setHours(0, 0, 0, 0);
+                hoy.setHours(0, 0, 0, 0);
+                const diffDays = Math.ceil((fechaReq.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffDays <= 0) return 1;
+                if (diffDays <= 3) return 2;
+                return 3;
+            }
+        }
+        if (s.cuadranteId === 2) return 2;
+        if (s.cuadranteId === 3) return 3;
+        return 3;
+    }
+
+    getCuadranteName(id: number | null | undefined, s?: any): string {
+        const nivel = s ? this.getSemaforoNivel(s) : (id || 3);
+        switch (nivel) {
+            case 1: return 'Rojo (Urgente / Mismo día)';
+            case 2: return 'Amarillo (Medio 1-3 días)';
+            case 3: return 'Verde (Programado > 3 días)';
+            default: return 'Verde (Programado > 3 días)';
         }
     }
 
-    getCuadranteColor(id: number): string {
-        switch (id) {
-            case 1: return '#f43f5e'; // rose-500
-            case 2: return '#fbbf24'; // amber-400
-            case 3: return '#34d399'; // emerald-400
-            case 4: return '#38bdf8'; // sky-400
-            default: return '#9ca3af'; // gray-400
+    getCuadranteColor(id: number | null | undefined, s?: any): string {
+        const nivel = s ? this.getSemaforoNivel(s) : (id || 3);
+        switch (nivel) {
+            case 1: return '#ef4444'; // rose-500
+            case 2: return '#f59e0b'; // amber-500
+            case 3: return '#10b981'; // emerald-500
+            default: return '#10b981';
         }
     }
 
@@ -360,7 +380,7 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
                 'Sucursal',
                 'Área',
                 'Prioridad',
-                'Matriz Eisenhower',
+                'Semáforo',
                 'Proveedor Seleccionado'
             ];
 
@@ -377,7 +397,7 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
                 s.sucursal || '',
                 s.areaSolicitante || '',
                 s.prioridad || '',
-                this.getCuadranteName(s.cuadranteId),
+                this.getCuadranteName(s.cuadranteId, s),
                 this.getSelectedProvider(s)
             ]);
 

@@ -23,6 +23,7 @@ import { HistorialDialogComponent } from './historial-dialog/historial-dialog.co
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { ExchangeRateService } from 'app/core/services/exchange-rate.service';
 import { AnticipoDialogComponent } from './anticipo-dialog/anticipo-dialog.component';
+import { SalidasAlmacenTabComponent } from './salidas-almacen-tab/salidas-almacen-tab.component';
 import Swal from 'sweetalert2';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 
@@ -52,10 +53,12 @@ import { ApexOptions, NgApexchartsModule } from 'ng-apexcharts';
         MatNativeDateModule,
         MatSelectModule,
         AnticipoDialogComponent,
-        NgApexchartsModule
+        NgApexchartsModule,
+        SalidasAlmacenTabComponent
     ]
 })
 export class TableroComprasComponent implements OnInit, OnDestroy {
+    activeTab: 'compras' | 'salidas' = 'compras';
     displayedColumns: string[] = [
         'folio',
         'tipoOperacion',
@@ -110,6 +113,10 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
     toggleFilters(): void {
         this.showFilters = !this.showFilters;
+    }
+
+    setActiveTab(tab: 'compras' | 'salidas'): void {
+        this.activeTab = tab;
     }
 
     filterByReport(reportType: string | null): void {
@@ -168,10 +175,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
     prioridadesList = ['Urgente', 'Alta', 'Normal', 'Venta Confirmada'];
     cuadrantesList = [
-        { id: 1, nombre: 'Importante y Urgente' },
-        { id: 2, nombre: 'Importante, No Urgente' },
-        { id: 3, nombre: 'No Importante, Urgente' },
-        { id: 4, nombre: 'No Importante, No Urgente' }
+        { id: 1, nombre: 'Rojo - Urgente (Mismo día / Vencida)' },
+        { id: 2, nombre: 'Amarillo - Medio (Planeado 1 a 3 días)' },
+        { id: 3, nombre: 'Verde - Programado (> 3 días)' }
     ];
 
     @ViewChild(MatSort) sort: MatSort;
@@ -870,7 +876,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     const solicitante = this.getUserLabel(data.idPersonaSolicitante);
                     const estatusNom = data.nombreEstatus || '';
                     const pagoStatus = this.getEstadoLiquidacionLabel(data.estadoLiquidacion).toLowerCase();
-                    const cuadranteNom = this.getCuadranteName(data.cuadranteId);
+                    const cuadranteNom = this.getCuadranteName(data.cuadranteId, data);
                     
                     const searchableValues = [
                         data.idSolicitud,
@@ -902,7 +908,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
                 // 3. Compact Filters (Priority, Cuadrante)
                 const passPriorityProcess = filterObj.prioridad ? data.prioridad === filterObj.prioridad : true;
-                const passCuadranteProcess = filterObj.cuadranteId !== '' ? data.cuadranteId === Number(filterObj.cuadranteId) : true;
+                const semaforoNivel = this.getSemaforoNivel(data);
+                const passCuadranteProcess = filterObj.cuadranteId !== '' ? semaforoNivel === Number(filterObj.cuadranteId) : true;
 
                 // 4. Advanced Column Filters
                 const adv = filterObj.advanced || {};
@@ -927,7 +934,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 const passCentroCosto = !adv.centroCosto || (data.centroCosto || '').toLowerCase().includes(adv.centroCosto.toLowerCase());
                 const passEstatus = !adv.nombreEstatus || data.nombreEstatus === adv.nombreEstatus;
                 const passPago = !adv.estadoLiquidacion || this.getEstadoLiquidacionLabel(data.estadoLiquidacion) === adv.estadoLiquidacion;
-                const passCuadrante = !adv.cuadranteId || this.getCuadranteName(data.cuadranteId) === adv.cuadranteId;
+                const passCuadrante = !adv.cuadranteId || this.getCuadranteName(data.cuadranteId, data) === adv.cuadranteId;
                 const passMonto = !adv.monto || String(data.monto).toLowerCase().includes(adv.monto.toLowerCase());
                 const passTipo = !adv.tipoCompra || data.tipoCompra === adv.tipoCompra;
                 const passBanco = !adv.banco || (data.banco || '').toLowerCase().includes(adv.banco.toLowerCase());
@@ -1067,23 +1074,48 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         return 0; // Or whatever calculation is needed
     }
 
-    getCuadranteName(id: number | null | undefined): string {
-        switch (id) {
-            case 1: return 'Importante y Urgente';
-            case 2: return 'Importante, No Urgente';
-            case 3: return 'No Importante, Urgente';
-            case 4: return 'No Importante, No Urgente';
-            default: return 'Sin asignar';
+    getSemaforoNivel(s: any): number {
+        if (!s) return 3;
+        // Si el usuario forzó explícitamente a Rojo (Urgente)
+        if (s.cuadranteId === 1) return 1;
+
+        // Dinamismo por tiempo con base en fecha requerida
+        if (s.fechaRequerida) {
+            const fechaReq = new Date(s.fechaRequerida);
+            if (!isNaN(fechaReq.getTime())) {
+                const hoy = new Date();
+                fechaReq.setHours(0, 0, 0, 0);
+                hoy.setHours(0, 0, 0, 0);
+                const diffDays = Math.ceil((fechaReq.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 0) return 1; // Rojo: Mismo día o vencida
+                if (diffDays <= 3) return 2; // Amarillo: Planeado 1 a 3 días
+                return 3; // Verde: Más de 3 días
+            }
+        }
+
+        if (s.cuadranteId === 2) return 2;
+        if (s.cuadranteId === 3) return 3;
+        return 3;
+    }
+
+    getCuadranteName(id: number | null | undefined, s?: any): string {
+        const nivel = s ? this.getSemaforoNivel(s) : (id || 3);
+        switch (nivel) {
+            case 1: return 'Rojo (Urgente / Mismo día)';
+            case 2: return 'Amarillo (Medio 1-3 días)';
+            case 3: return 'Verde (Programado > 3 días)';
+            default: return 'Verde (Programado > 3 días)';
         }
     }
 
-    getCuadranteColor(id: number | null | undefined): string {
-        switch (id) {
-            case 1: return '#f43f5e'; // bg-rose-500
-            case 2: return '#fbbf24'; // bg-amber-400
-            case 3: return '#34d399'; // bg-emerald-400
-            case 4: return '#38bdf8'; // bg-sky-400
-            default: return '#94a3b8'; // gray-400
+    getCuadranteColor(id: number | null | undefined, s?: any): string {
+        const nivel = s ? this.getSemaforoNivel(s) : (id || 3);
+        switch (nivel) {
+            case 1: return '#ef4444'; // Red-500
+            case 2: return '#f59e0b'; // Amber-500
+            case 3: return '#10b981'; // Emerald-500
+            default: return '#10b981';
         }
     }
 
