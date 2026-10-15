@@ -18,6 +18,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ReportCustomersSegmentationService } from '../report-customers-segmentation.service';
 import { EMISORES, EmisorEstadoCuenta, agruparPorEmpresa, cuentaHtml, cuentasParaMonedas, tipoEmpresaDe } from '../emisores';
 import { construirHtmlCuentasClave, formatearFecha } from '../cuentas-clave-pdf';
+import { generarPdfPaginado } from '../pdf-paginado';
 
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -1289,45 +1290,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
             const canvas = await html2canvas(container, { scale: 2, useCORS: true });
             const footerCanvas = await html2canvas(footerWrapper, { scale: 2, useCORS: true });
 
-            const imgData = canvas.toDataURL('image/png');
-            const footerImgData = footerCanvas.toDataURL('image/png');
-
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-
-            const footerHeight = (footerCanvas.height * pdfWidth) / footerCanvas.width;
-            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            // Función para añadir el footer a la página actual con una máscara blanca para evitar superposiciones
-            const addFooter = () => {
-                // Dibujar un rectángulo blanco que cubra el área del footer (un poco más alto para seguridad)
-                pdf.setFillColor(255, 255, 255);
-                pdf.rect(0, pdfHeight - footerHeight - 2, pdfWidth, footerHeight + 2, 'F');
-                // Añadir la imagen del footer encima
-                pdf.addImage(footerImgData, 'PNG', 0, pdfHeight - footerHeight, pdfWidth, footerHeight);
-            };
-
-            // Altura disponible para el contenido en cada página (restando el footer y un margen de seguridad mayor)
-            const marginContent = 10; // 10mm de margen de seguridad
-            const availableHeight = pdfHeight - footerHeight - marginContent;
-
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            // Primera página
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            addFooter();
-            heightLeft -= availableHeight;
-
-            while (heightLeft > 0) {
-                pdf.addPage();
-                position -= (availableHeight); // Desplazamos la imagen hacia arriba para mostrar la siguiente porción
-                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-                addFooter();
-                heightLeft -= availableHeight;
-            }
-
+            // Cada hoja se corta solo entre filas/bloques y lleva el pie al final (ver pdf-paginado.ts)
+            const pdf = generarPdfPaginado(container, canvas, footerCanvas);
             pdf.save(`Estado_Cuenta_${emisor.archivo}_${new Date().getTime()}.pdf`);
         } catch (e) {
             console.error("Error al exportar PDF: ", e);
@@ -1395,26 +1359,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
                 backgroundColor: '#ffffff'
             });
 
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            // La tabla puede ser más larga que una hoja: la imagen se reparte en varias páginas
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
+            // La tabla puede ser más larga que una hoja: se corta solo entre filas/bloques (ver pdf-paginado.ts)
+            const pdf = generarPdfPaginado(container, canvas);
             pdf.save(`Cuentas_Clave_${this.sucursal}_${new Date().getTime()}.pdf`);
 
         } catch (error) {
