@@ -1081,18 +1081,21 @@ export class ReportCustomersDashboardComponent implements OnInit {
             return `(${resultado}${sufijo} ${centavos.toString().padStart(2, '0')}/100 ${mnc})`.toUpperCase();
         };
 
-        const totalCargos = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
-        
-        // Pagos Brutos = Suma de montos de facturas positivas ya pagadas
-        const grossPayments = data
-            .filter(item => (item.montoDocumento || 0) > 0 && item.estatusPago === 'PAGADA')
-            .reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
+        // Redondeo a centavos; `|| 0` evita mostrar "-$0.00" por -0
+        const r2 = (n: number): number => (Math.round(n * 100) / 100) || 0;
 
-        // Saldo Final = Monto Neto (Facturas - Notas Credito) menos Pagos Brutos.
-        // Si el resultado es negativo pero hay facturas pagadas, limitamos el saldo a 0 (caso GASPE).
-        // Si el monto total es realmente negativo (saldo a favor), se mantiene (caso sobrepago real).
-        const totalSaldos = (totalCargos > 0) ? Math.max(0, totalCargos - grossPayments) : totalCargos;
-        const totalAbonos = totalCargos - totalSaldos;
+        // Saldo real del documento (CPENDIENTE de CONTPAQi, en MXN, calculado por el SP).
+        // Si el API aún no lo manda, se usa el cálculo anterior (todo o nada según el estatus).
+        const getSaldo = (item: any): number =>
+            typeof item.saldoPendiente === 'number'
+                ? item.saldoPendiente
+                : (item.estatusPago === 'PAGADA' ? 0 : (item.montoDocumento || 0));
+
+        const totalCargos = r2(data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0));
+        // Con saldos reales ya no hace falta limitar a 0: las notas de crédito aplicadas tienen saldo 0
+        // y las no aplicadas restan (saldo a favor del cliente).
+        const totalSaldos = r2(data.reduce((acc, curr) => acc + getSaldo(curr), 0));
+        const totalAbonos = r2(totalCargos - totalSaldos);
 
         const cliente = data[0].nombreCliente || '';
         const rfc = data[0].rfc || '';
@@ -1105,10 +1108,9 @@ export class ReportCustomersDashboardComponent implements OnInit {
         data.forEach((item, i) => {
             const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
             const cargo = (item.montoDocumento || 0);
-            // El saldo individual es 0 si está pagada, de lo contrario es el monto.
-            // (El ajuste de las Notas de Crédito se refleja en el Saldo Final del reporte).
-            const saldo = (item.estatusPago === 'PAGADA' ? 0 : cargo);
-            const abono = cargo - saldo;
+            // Saldo real del documento; el abono es lo ya cobrado (puede ser parcial).
+            const saldo = r2(getSaldo(item));
+            const abono = r2(cargo - saldo);
             const estatus = item.estatusPago || '';
             const diasVencidos = calculateDiasVencidos(item.fechaVencimiento, estatus);
 
@@ -1363,13 +1365,14 @@ export class ReportCustomersDashboardComponent implements OnInit {
         const data = this.listaClientesFiltrada || [];
         if (data.length === 0) return;
 
-        const headers = ['Cliente', 'RFC', 'Folio', 'Importe', 'Estatus', 'Fecha Emisión', 'Fecha Vencimiento'];
+        const headers = ['Cliente', 'RFC', 'Folio', 'Importe', 'Saldo Pendiente', 'Estatus', 'Fecha Emisión', 'Fecha Vencimiento'];
 
         const rows = data.map(r => [
             r.nombreCliente || '',
             r.rfc || '',
             r.folioCompleto || '',
             r.montoDocumento || 0,
+            typeof r.saldoPendiente === 'number' ? r.saldoPendiente : (r.estatusPago === 'PAGADA' ? 0 : (r.montoDocumento || 0)),
             r.estatusPago || '',
             r.fechaDocumento || '',
             r.fechaVencimiento || ''

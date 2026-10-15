@@ -352,6 +352,10 @@
 
                             <td class="px-6 py-4 text-right font-black text-gray-700 dark:text-gray-200 text-base">
                                 {{ cli.montoDocumento | currency }}
+                                <div *ngIf="cli.estatusPago !== 'PAGADA' && cli.saldoPendiente > 0 && cli.saldoPendiente < cli.montoDocumento"
+                                    class="text-[10px] font-semibold text-amber-600 mt-0.5">
+                                    Saldo: {{ cli.saldoPendiente | currency }}
+                                </div>
                             </td>
 
                             <td class="px-6 py-4 text-center">
