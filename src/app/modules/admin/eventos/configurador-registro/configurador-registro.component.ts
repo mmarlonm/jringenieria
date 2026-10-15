@@ -3101,8 +3101,9 @@ PARTICIPACIÓN FUTURA
                 asistenteId: d.asistenteId,
                 personalStaffId: d.personalStaffId,
                 usuarioId: d.usuarioId,
-                nombre: d.nombre,
-                email: d.correo,
+                // Nunca se manda `null`: hay expositores/staff sin correo o nombre capturado y el API rechazaba todo el envío
+                nombre: d.nombre || '',
+                email: (d.correo || '').trim(),
                 telefono: d.telefono,
                 rolCargo: d.rol,
                 organizacion: d.organizacion
@@ -3120,7 +3121,14 @@ PARTICIPACIÓN FUTURA
                     this.enviandoMasivo = false;
                     this.resultadoEnvio = res;
                     const waExitosos = res.whatsappExitosos || 0;
-                    this.mostrarAlerta(`¡Envío finalizado! ${res.enviadosExitosos} correos y ${waExitosos} mensajes de WhatsApp enviados (${res.fallidos} fallidos).`);
+                    const conProblemas = this.totalConProblemasEnvio;
+                    this.mostrarAlerta(
+                        `¡Envío finalizado! ${res.enviadosExitosos} correos y ${waExitosos} mensajes de WhatsApp enviados` +
+                        (conProblemas > 0 ? `. ${conProblemas} destinatario(s) con problemas: revisa el detalle.` : '.')
+                    );
+
+                    // El resumen está arriba de la lista y el usuario suele estar abajo: se le lleva a verlo
+                    setTimeout(() => document.getElementById('resultadoEnvioMasivo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
                     // Actualizar mapa de historial en tiempo real
                     this._formService.getHistorialEnvios(formId)
@@ -3136,10 +3144,40 @@ PARTICIPACIÓN FUTURA
                 },
                 error: (err) => {
                     this.enviandoMasivo = false;
-                    const msg = err?.error?.mensaje || 'Error al procesar el envío masivo.';
-                    this.mostrarAlerta(msg);
+                    this.mostrarAlerta(this._mensajeErrorEnvio(err));
                     this._cdr.markForCheck();
                 }
             });
+    }
+
+    /**
+     * Destinatarios a los que no se pudo notificar. Con el API anterior (sin `fallos`) se cae al conteo de correos fallidos.
+     */
+    get totalConProblemasEnvio(): number {
+        const r = this.resultadoEnvio;
+        if (!r) return 0;
+        return r.fallos ? r.fallos.length : (r.fallidos || 0);
+    }
+
+    /**
+     * Texto para el usuario a partir del error del API. El API responde `mensaje` en sus errores controlados, pero la
+     * validación automática de ASP.NET (400) usa `errors`/`title`, y una sesión vencida o una caída de red no traen cuerpo.
+     */
+    private _mensajeErrorEnvio(err: any): string {
+        const cuerpo = err?.error;
+        if (cuerpo?.mensaje) return cuerpo.mensaje;
+
+        if (cuerpo?.errors && typeof cuerpo.errors === 'object') {
+            const detalle = (Object.values(cuerpo.errors) as any[])
+                .reduce((acc: string[], v) => acc.concat(v), [])
+                .filter((v: any) => typeof v === 'string')
+                .slice(0, 2)
+                .join(' ');
+            if (detalle) return `El envío no se pudo procesar: ${detalle}`;
+        }
+
+        if (err?.status === 401) return 'Tu sesión expiró. Vuelve a iniciar sesión e intenta el envío de nuevo.';
+        if (err?.status === 0) return 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+        return `Error al procesar el envío masivo (HTTP ${err?.status ?? 'desconocido'}).`;
     }
 }

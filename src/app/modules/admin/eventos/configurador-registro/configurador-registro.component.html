@@ -1856,13 +1856,13 @@
             <div class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 min-h-0 bg-slate-50/50 dark:bg-slate-900/50">
 
                 <!-- ALERTA DE RESULTADO SI YA SE ENVIÓ -->
-                <div *ngIf="resultadoEnvio"
+                <div *ngIf="resultadoEnvio" id="resultadoEnvioMasivo"
                      class="p-4 rounded-2xl border flex items-start gap-3 animate-fade-in"
-                     [ngClass]="resultadoEnvio.fallidos === 0 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100' : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100'">
-                    <mat-icon class="text-2xl flex-shrink-0" [ngClass]="resultadoEnvio.fallidos === 0 ? 'text-emerald-500' : 'text-amber-500'">
-                        {{ resultadoEnvio.fallidos === 0 ? 'check_circle' : 'warning' }}
+                     [ngClass]="totalConProblemasEnvio === 0 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100' : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100'">
+                    <mat-icon class="text-2xl flex-shrink-0" [ngClass]="totalConProblemasEnvio === 0 ? 'text-emerald-500' : 'text-amber-500'">
+                        {{ totalConProblemasEnvio === 0 ? 'check_circle' : 'warning' }}
                     </mat-icon>
-                    <div class="flex-1 text-xs space-y-1.5">
+                    <div class="flex-1 min-w-0 text-xs space-y-1.5">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="font-bold text-sm">
                                 Resumen del Envío Masivo:
@@ -1874,13 +1874,50 @@
                                 💬 {{ resultadoEnvio.whatsappExitosos || 0 }} WhatsApps enviados
                             </span>
                             <span *ngIf="resultadoEnvio.fallidos > 0" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-700">
-                                ⚠️ {{ resultadoEnvio.fallidos }} Fallidos
+                                ⚠️ {{ resultadoEnvio.fallidos }} {{ resultadoEnvio.fallidos === 1 ? 'Correo fallido' : 'Correos fallidos' }}
+                            </span>
+                            <span *ngIf="(resultadoEnvio.whatsappFallidos || 0) > 0" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-700">
+                                ⚠️ {{ resultadoEnvio.whatsappFallidos }} {{ resultadoEnvio.whatsappFallidos === 1 ? 'WhatsApp fallido' : 'WhatsApps fallidos' }}
                             </span>
                         </div>
                         <p class="text-slate-600 dark:text-slate-300 text-[11px]">
                             Total procesados: {{ resultadoEnvio.totalProcesados }} destinatario(s).
                         </p>
-                        <div *ngIf="resultadoEnvio.detalleErrores && resultadoEnvio.detalleErrores.length > 0" class="mt-2 max-h-24 overflow-y-auto text-[11px] font-mono bg-white/70 dark:bg-slate-950/70 p-2 rounded-lg">
+
+                        <!-- DESTINATARIOS A LOS QUE NO SE PUDO NOTIFICAR, CON EL MOTIVO POR CANAL -->
+                        <div *ngIf="resultadoEnvio.fallos && resultadoEnvio.fallos.length > 0" class="mt-2 space-y-1.5">
+                            <p class="font-bold text-[11px] uppercase tracking-wide">
+                                No se pudo notificar a {{ resultadoEnvio.fallos.length }} destinatario(s)
+                            </p>
+                            <div class="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+                                <div *ngFor="let f of resultadoEnvio.fallos"
+                                     class="bg-white/80 dark:bg-slate-950/60 border border-amber-200/70 dark:border-amber-800/60 rounded-lg p-2.5">
+                                    <div class="flex flex-wrap items-baseline gap-x-2">
+                                        <span class="font-bold text-[12px] text-slate-800 dark:text-slate-100">{{ f.nombre }}</span>
+                                        <span class="text-[11px] text-slate-500 dark:text-slate-400 break-all">
+                                            {{ f.email || 'Sin correo' }}<ng-container *ngIf="f.telefono"> · {{ f.telefono }}</ng-container>
+                                        </span>
+                                    </div>
+                                    <div *ngIf="f.motivoCorreo" class="mt-1 flex items-start gap-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                                        <mat-icon class="icon-size-4 flex-shrink-0">mail_outline</mat-icon>
+                                        <span><b>Correo:</b> {{ f.motivoCorreo }}</span>
+                                    </div>
+                                    <div *ngIf="f.motivoWhatsapp" class="mt-1 flex items-start gap-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                                        <mat-icon class="icon-size-4 flex-shrink-0">chat_bubble_outline</mat-icon>
+                                        <span><b>WhatsApp:</b> {{ f.motivoWhatsapp }}</span>
+                                    </div>
+                                    <div *ngIf="f.correoEnviado && f.motivoWhatsapp" class="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                        ✓ El correo sí se envió
+                                    </div>
+                                    <div *ngIf="f.whatsappEnviado && f.motivoCorreo" class="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                        ✓ El WhatsApp sí se envió
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API anterior: solo traía el texto de los correos fallidos -->
+                        <div *ngIf="!resultadoEnvio.fallos && resultadoEnvio.detalleErrores && resultadoEnvio.detalleErrores.length > 0" class="mt-2 max-h-24 overflow-y-auto text-[11px] font-mono bg-white/70 dark:bg-slate-950/70 p-2 rounded-lg">
                             <div *ngFor="let err of resultadoEnvio.detalleErrores">• {{ err }}</div>
                         </div>
                     </div>

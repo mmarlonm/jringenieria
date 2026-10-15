@@ -222,12 +222,30 @@ export interface EnvioMasivoFormularioRequestDto {
     destinatarios: DestinatarioItemEnvioDto[];
 }
 
+/** Destinatario al que no se pudo notificar por correo o WhatsApp, con el motivo de cada canal */
+export interface EnvioMasivoFalloDto {
+    nombre: string;
+    email?: string | null;
+    telefono?: string | null;
+    /** Por qué no se envió el correo; null si salió bien */
+    motivoCorreo?: string | null;
+    /** Por qué no se envió el WhatsApp; null si salió bien o no hacía falta intentarlo */
+    motivoWhatsapp?: string | null;
+    correoEnviado: boolean;
+    whatsappEnviado: boolean;
+}
+
 export interface EnvioMasivoResultadoDto {
     totalProcesados: number;
     enviadosExitosos: number;
     whatsappExitosos: number;
+    /** Correos que no se pudieron enviar */
     fallidos: number;
+    /** WhatsApps que se intentaron y fallaron (el API anterior no lo enviaba) */
+    whatsappFallidos?: number;
     detalleErrores: string[];
+    /** Detalle por destinatario (el API anterior no lo enviaba) */
+    fallos?: EnvioMasivoFalloDto[];
 }
 
 export interface FormularioEnvioHistorialDto {
