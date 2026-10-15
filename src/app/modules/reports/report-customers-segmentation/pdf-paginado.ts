@@ -12,7 +12,7 @@ export interface UnidadPagina {
     top: number;
     bottom: number;
     fila: boolean;
-    /** Si no cabe en la hoja, se lleva consigo al bloque anterior para no quedar sola al inicio de una hoja (p. ej. el aviso legal) */
+    /** Va siempre en la misma hoja que el bloque anterior: si no caben juntos, ambos pasan a la hoja siguiente (cierre del documento) */
     unirConAnterior?: boolean;
 }
 
@@ -58,7 +58,7 @@ export function planificarPaginas(p: ParametrosPlan): PaginaPlan[] {
             i++;
         }
 
-        // Una pieza "unida" no puede abrir una hoja: se corta antes de la pieza a la que va pegada
+        // Una pieza "unida" no puede abrir una hoja: se retrocede el corte hasta el inicio de su cadena
         // (siempre que la hoja conserve al menos una pieza)
         while (i < unidades.length && unidades[i].unirConAnterior && i > inicio + 1) {
             i--;
@@ -123,8 +123,9 @@ export function medirContenedor(contenedor: HTMLElement, footerCanvas?: HTMLCanv
             // El espacio entre piezas (márgenes) viaja con la pieza de arriba
             bottom: siguiente ? medir(siguiente.el).top : r.bottom,
             fila: pieza.fila,
-            // La última pieza (aviso legal) va pegada a la anterior si esa también es un bloque (no una fila)
-            unirConAnterior: !siguiente && !pieza.fila && !!anterior && !anterior.fila
+            // Todo lo que va después de la tabla (totales, montos, cuentas, aviso) es un solo cierre: si no cabe
+            // completo en la hoja, pasa completo a la siguiente en vez de partirse entre dos hojas
+            unirConAnterior: !pieza.fila && !!anterior && !anterior.fila
         };
     });
 
