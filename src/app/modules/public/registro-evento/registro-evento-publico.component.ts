@@ -185,11 +185,17 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                             <span *ngIf="campo.requerido" class="required-star">*</span>
                         </label>
 
-                        <!-- COMPONENTE: MATRIZ / TABLA DE EVALUACIÓN LIKERT (1 AL 5) -->
+                        <!-- COMPONENTE: MATRIZ / TABLA DE EVALUACIÓN LIKERT (1 AL 5 o 1 AL 10) -->
                         <div *ngIf="campo.tipo === 'matrix'" class="matrix-card-wrapper" [class.matrix-has-error]="erroresCampos[campo.id]">
-                            <p *ngIf="campo.placeholder" class="matrix-instruction-text">{{ campo.placeholder }}</p>
+                            <div class="matrix-header-info">
+                                <p *ngIf="campo.placeholder" class="matrix-instruction-text">{{ campo.placeholder }}</p>
+                                <span *ngIf="campo.columnasMatriz && campo.columnasMatriz.length > 4" class="matrix-scroll-hint">
+                                    <mat-icon class="hint-icon">swipe</mat-icon>
+                                    <span>Desliza para ver escala completa (1 al {{ campo.columnasMatriz.length }})</span>
+                                </span>
+                            </div>
 
-                            <div class="matrix-table-scroll">
+                            <div class="matrix-table-scroll" tabindex="0">
                                 <table class="matrix-evaluation-table">
                                     <thead>
                                         <tr>
@@ -333,7 +339,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                             </button>
                             <button type="button"
                                     (click)="avanzarPaso()"
-                                    class="btn-primary-submit"
+                                    class="btn-primary-submit flex-1"
                                     [ngStyle]="{'background-color': diseno?.colorPrimario || '#1e8449'}">
                                 <span>Siguiente Paso</span>
                                 <mat-icon class="btn-arrow">arrow_forward</mat-icon>
@@ -378,13 +384,15 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     flex-direction: column;
     flex: 1 1 100%;
     width: 100%;
-    min-width: 100%;
+    max-width: 100%;
+    min-width: 0;
     min-height: 100vh;
     margin: 0;
     padding: 0;
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* === ESTILOS DEL WIZARD / STEPPER === */
@@ -394,6 +402,10 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     border: 1px solid #e2e8f0;
     border-radius: 1rem;
     margin-bottom: 1rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 
     .card-dark & {
         background: #1e293b;
@@ -404,8 +416,10 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 .stepper-header-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
+    min-width: 0;
 }
 
 .stepper-step-badge {
@@ -415,12 +429,17 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-weight: 800;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    flex-shrink: 0;
 }
 
 .stepper-step-title {
     font-size: 0.85rem;
     font-weight: 700;
     color: #1e293b;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    flex: 1 1 auto;
 
     .card-dark & {
         color: #f8fafc;
@@ -450,6 +469,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     color: #64748b;
     margin-top: 0.4rem;
     margin-bottom: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* === ESTILOS DEL BLOQUE / SEPARADOR DE SECCIÓN === */
@@ -460,6 +481,10 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     padding: 1rem 0 0.5rem 0;
     margin-top: 0.5rem;
     border-top: 2px dashed #e2e8f0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 
     .card-dark & {
         border-top-color: #334155;
@@ -468,13 +493,14 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
 .section-accent-bar {
     width: 4px;
-    height: 36px;
+    min-height: 36px;
     border-radius: 9999px;
     flex-shrink: 0;
 }
 
 .section-header-content {
-    flex: 1;
+    flex: 1 1 0%;
+    min-width: 0;
 }
 
 .section-title-text {
@@ -484,6 +510,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     color: #0f172a;
     margin: 0;
     text-transform: uppercase;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         color: #f8fafc;
@@ -495,19 +523,25 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     color: #64748b;
     margin: 0.15rem 0 0 0;
     line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         color: #94a3b8;
     }
 }
 
-/* === ESTILOS DE LA TABLA / MATRIZ LIKERT (1 AL 5) === */
+/* === ESTILOS DE LA TABLA / MATRIZ LIKERT (1 AL 5 o 1 AL 10) === */
 .matrix-card-wrapper {
     background: #f8fafc;
     border: 1.5px solid #e2e8f0;
     border-radius: 1.25rem;
-    padding: 1rem;
+    padding: 0.85rem;
     margin-top: 0.35rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 
     .card-dark & {
         background: #1e293b;
@@ -517,38 +551,114 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     &.matrix-has-error {
         border-color: #ef4444;
     }
+
+    @media (max-width: 640px) {
+        padding: 0.65rem 0.5rem;
+        border-radius: 1rem;
+    }
+}
+
+.matrix-header-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
 }
 
 .matrix-instruction-text {
     font-size: 0.75rem;
     color: #64748b;
-    margin-bottom: 0.75rem;
+    margin: 0;
     font-style: italic;
+    flex: 1 1 auto;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         color: #94a3b8;
     }
 }
 
+.matrix-scroll-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    white-space: nowrap;
+
+    .hint-icon {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+    }
+
+    .card-dark & {
+        background: rgba(30, 58, 138, 0.4);
+        color: #93c5fd;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+}
+
 .matrix-table-scroll {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
     border-radius: 0.85rem;
     border: 1px solid #e2e8f0;
     background: #ffffff;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 9999px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 9999px;
+    }
 
     .card-dark & {
         border-color: #334155;
         background: #0f172a;
+        scrollbar-color: #475569 #1e293b;
+
+        &::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
     }
 }
 
 .matrix-evaluation-table {
     width: 100%;
-    border-collapse: collapse;
+    min-width: max-content;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.75rem;
 }
 
 .matrix-th-aspect {
+    position: sticky;
+    left: 0;
+    z-index: 3;
     text-align: left;
     padding: 0.75rem 1rem;
     background: #f1f5f9;
@@ -557,11 +667,22 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    min-width: 180px;
+    min-width: 140px;
+    max-width: 220px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 
     .card-dark & {
         background: #1e293b;
         color: #94a3b8;
+        border-bottom-color: #334155;
+    }
+
+    @media (max-width: 640px) {
+        min-width: 105px;
+        max-width: 125px;
+        padding: 0.6rem 0.55rem;
+        font-size: 0.65rem;
     }
 }
 
@@ -573,20 +694,40 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-weight: 800;
     font-size: 0.75rem;
     min-width: 44px;
+    border-bottom: 1px solid #e2e8f0;
 
     .card-dark & {
         background: #1e293b;
         color: #f8fafc;
+        border-bottom-color: #334155;
+    }
+
+    @media (max-width: 640px) {
+        min-width: 38px;
+        padding: 0.5rem 0.2rem;
+        font-size: 0.7rem;
     }
 }
 
 .matrix-td-aspect {
+    position: sticky;
+    left: 0;
+    z-index: 2;
     padding: 0.75rem 1rem;
+    background: #ffffff;
     border-top: 1px solid #f1f5f9;
     vertical-align: middle;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 
     .card-dark & {
+        background: #0f172a;
         border-top-color: #334155;
+    }
+
+    @media (max-width: 640px) {
+        min-width: 105px;
+        max-width: 125px;
+        padding: 0.6rem 0.55rem;
     }
 }
 
@@ -595,9 +736,15 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-weight: 600;
     color: #1e293b;
     line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         color: #f8fafc;
+    }
+
+    @media (max-width: 640px) {
+        font-size: 0.72rem;
     }
 }
 
@@ -606,6 +753,13 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-size: 0.65rem;
     color: #64748b;
     margin-top: 0.2rem;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: break-word;
+
+    @media (max-width: 640px) {
+        font-size: 0.6rem;
+    }
 }
 
 .matrix-td-score {
@@ -617,17 +771,22 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     .card-dark & {
         border-top-color: #334155;
     }
+
+    @media (max-width: 640px) {
+        padding: 0.4rem 0.15rem;
+    }
 }
 
 .matrix-score-option {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
 
     &:hover {
         background-color: #f1f5f9;
@@ -635,6 +794,11 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
         .card-dark & {
             background-color: #334155;
         }
+    }
+
+    @media (max-width: 640px) {
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -651,6 +815,11 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
         transform: scale(1.15);
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
+
+    @media (max-width: 640px) {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 .matrix-footer-legend {
@@ -662,6 +831,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     padding-top: 0.5rem;
     font-size: 0.7rem;
     color: #64748b;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         color: #94a3b8;
@@ -672,23 +843,38 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 .wizard-nav-actions {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    @media (max-width: 380px) {
+        gap: 0.35rem;
+    }
 }
 
 .btn-nav-prev {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.85rem 1.25rem;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.75rem 1rem;
     border-radius: 0.85rem;
     border: 1.5px solid #cbd5e1;
     background: transparent;
     color: #475569;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
     transition: all 0.2s;
+    box-sizing: border-box;
+
+    @media (max-width: 480px) {
+        padding: 0.7rem 0.75rem;
+        font-size: 0.75rem;
+    }
 
     &:hover {
         background: #f1f5f9;
@@ -707,7 +893,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
 .public-registration-root {
     width: 100%;
-    min-width: 100%;
+    max-width: 100vw;
+    min-width: 0;
     flex: 1 1 auto;
     min-height: 100vh;
     background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 50%, #e2e8f0 100%);
@@ -717,13 +904,14 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     justify-content: flex-start;
     padding: 2.5rem 1rem 4rem 1rem;
     box-sizing: border-box;
+    overflow-x: hidden;
 
     &.dark-theme {
         background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e293b 100%);
     }
 
     @media (max-width: 640px) {
-        padding: 1.25rem 0.75rem 3rem 0.75rem;
+        padding: 0.75rem 0.5rem 2.5rem 0.5rem;
     }
 }
 
@@ -771,6 +959,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 .form-viewport-container {
     width: 100%;
     max-width: 680px;
+    min-width: 0;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -783,12 +972,14 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 .public-card {
     width: 100%;
     max-width: 680px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 /* Temas de Card */
@@ -880,6 +1071,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     line-height: 1.25;
     margin: 0;
     letter-spacing: -0.02em;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     @media (min-width: 640px) {
         font-size: 1.45rem;
@@ -889,11 +1082,13 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 /* === 2. BODY CON SCROLL NATURAL Y ESPACIOSO === */
 .public-card-body {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: 1.5rem 2rem 2.25rem;
     box-sizing: border-box;
 
     @media (max-width: 640px) {
-        padding: 1.25rem 1.15rem 1.75rem;
+        padding: 1.15rem 0.85rem 1.6rem;
     }
 }
 
@@ -904,6 +1099,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #f1f5f9;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         color: #94a3b8;
@@ -923,6 +1120,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-size: 0.75rem;
     font-weight: 600;
     margin-bottom: 1.25rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     .card-dark & {
         background-color: rgba(127, 29, 29, 0.25);
@@ -933,17 +1132,25 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 /* GRID DE CAMPOS */
 .fields-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     gap: 1.15rem;
+    box-sizing: border-box;
 
     @media (min-width: 640px) {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 .field-col {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
 
     &.col-full {
         grid-column: 1 / -1;
@@ -959,10 +1166,14 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 }
 
 .field-label {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
     letter-spacing: -0.01em;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 .required-star {
@@ -973,6 +1184,9 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 .input-wrap {
     position: relative;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .custom-input,
@@ -1025,19 +1239,27 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     flex-direction: column;
     gap: 0.5rem;
     margin-top: 0.2rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .radio-pill,
 .checkbox-pill {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.65rem;
-    padding: 0.6rem 0.85rem;
+    padding: 0.65rem 0.85rem;
     border-radius: 0.75rem;
     border: 1.5px solid #e2e8f0;
     background-color: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 
     &:hover {
         border-color: #cbd5e1;
@@ -1077,6 +1299,10 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     transition: all 0.2s;
     background-color: #f8fafc;
     min-height: 120px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .file-upload-box:hover {
@@ -1134,8 +1360,6 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     background-color: rgba(52, 211, 153, 0.1);
 }
 
-
-
 .radio-indicator {
     width: 18px;
     height: 18px;
@@ -1143,6 +1367,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     border: 2px solid #cbd5e1;
     display: inline-block;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-top: 1px;
 }
 
 .indicator-checked {
@@ -1159,6 +1385,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     justify-content: center;
     transition: all 0.2s ease;
     color: white;
+    flex-shrink: 0;
+    margin-top: 1px;
 
     .check-icon {
         font-size: 14px;
@@ -1172,8 +1400,13 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 }
 
 .option-text {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 500;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+    flex: 1 1 0%;
 }
 
 .field-error-msg {
@@ -1181,6 +1414,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     color: #ef4444;
     margin-top: 0.25rem;
     font-weight: 600;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* BOTÓN DE SUBMIT */
@@ -1189,6 +1424,10 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     margin-top: 0.75rem;
     padding-top: 1rem;
     border-top: 1px solid #f1f5f9;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 
     .card-dark & {
         border-top-color: #1e293b;
@@ -1196,21 +1435,31 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 }
 
 .btn-primary-submit {
-    width: 100%;
-    padding: 0.85rem 1.25rem;
+    flex: 1 1 0%;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+    padding: 0.75rem 1rem;
     border-radius: 0.85rem;
     border: none;
     color: white;
     font-size: 0.85rem;
     font-weight: 800;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     cursor: pointer;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    box-sizing: border-box;
+    white-space: nowrap;
+
+    @media (max-width: 480px) {
+        padding: 0.7rem 0.75rem;
+        font-size: 0.75rem;
+    }
 
     &:hover:not(:disabled) {
         transform: translateY(-2px);
@@ -1230,6 +1479,13 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
         font-size: 18px;
         width: 18px;
         height: 18px;
+        flex-shrink: 0;
+    }
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 
@@ -1247,6 +1503,9 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     color: #94a3b8;
     text-align: center;
     margin-top: 0.65rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    padding: 0 0.5rem;
 }
 
 .animate-fade-in {
