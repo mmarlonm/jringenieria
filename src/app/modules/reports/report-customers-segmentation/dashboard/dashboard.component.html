@@ -40,11 +40,11 @@
             </mat-form-field>
 
             <mat-form-field class="w-full sm:w-48" subscriptSizing="dynamic">
-                <mat-label>Tipo Cliente</mat-label>
+                <mat-label>Empresa</mat-label>
                 <mat-select [(ngModel)]="esMoral">
-                    <mat-option [value]="0">Todos</mat-option>
-                    <mat-option [value]="1">Física</mat-option>
-                    <mat-option [value]="2">Moral</mat-option>
+                    <mat-option [value]="0">Todas</mat-option>
+                    <mat-option [value]="1">Jesús Ricardo (Física)</mat-option>
+                    <mat-option [value]="2">JR Ingeniería (Moral)</mat-option>
                 </mat-select>
             </mat-form-field>
 
@@ -308,6 +308,7 @@
                         <tr>
                             <th class="px-6 py-4">Cliente</th>
                             <th class="px-6 py-4 text-center">Folio</th>
+                            <th class="px-6 py-4 text-center">Empresa</th>
                             <th class="px-6 py-4">Clasificación</th>
                             <th class="px-6 py-4 text-center">Mejor Cat. Histórica</th>
                             <th class="px-6 py-4 text-right">Importe</th>
@@ -332,6 +333,14 @@
                                     <mat-icon class="text-[12px] h-[12px] w-[12px]">receipt</mat-icon>
                                     {{ cli.folioCompleto }}
                                 </div>
+                            </td>
+
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap border"
+                                    [style.color]="getEmisor(cli).color"
+                                    [style.border-color]="getEmisor(cli).color">
+                                    {{ getEmisor(cli).nombreCorto }}
+                                </span>
                             </td>
 
                             <td class="px-6 py-4">

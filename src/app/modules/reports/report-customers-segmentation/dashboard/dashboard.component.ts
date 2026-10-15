@@ -16,6 +16,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 import { ReportCustomersSegmentationService } from '../report-customers-segmentation.service';
+import { EMISORES, EmisorEstadoCuenta, agruparPorEmpresa, cuentaHtml, cuentasParaMonedas, tipoEmpresaDe } from '../emisores';
+import { construirHtmlCuentasClave, formatearFecha } from '../cuentas-clave-pdf';
 
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -989,17 +991,39 @@ export class ReportCustomersDashboardComponent implements OnInit {
         return info[clasificacion] || '';
     }
 
+    /** Empresa que se asume cuando el API no manda `tipoEmpresa`: lo que hacía el reporte antes (solo "Física" era Jesús Ricardo). */
+    private get _empresaPorDefecto(): 1 | 2 {
+        return this.esMoral === 1 ? 1 : 2;
+    }
+
+    /** Empresa emisora de un documento, para la columna "Empresa" de la tabla. */
+    getEmisor(item: any): EmisorEstadoCuenta {
+        return EMISORES[tipoEmpresaDe(item, this._empresaPorDefecto)];
+    }
+
     /* * Nombre: exportarPDFEstadoSegmentacion
-     * Descripción: Genera un PDF de Estado de Cuenta para el cliente filtrado.
+     * Descripción: Genera el PDF de Estado de Cuenta del cliente filtrado, un archivo por empresa emisora:
+     *              cada empresa (Jesús Ricardo / JR Ingeniería) cobra en su propia cuenta, así que sus
+     *              facturas no se mezclan en un mismo estado de cuenta.
      */
     async exportarPDFEstadoSegmentacion(): Promise<void> {
-        this.loading = true;
         const data = this.listaClientesFiltrada || [];
-        if (data.length === 0) {
-            this.loading = false;
-            return;
-        }
+        if (data.length === 0) return;
 
+        this.loading = true;
+        try {
+            for (const grupo of agruparPorEmpresa(data, this._empresaPorDefecto)) {
+                await this._generarPDFEstadoCuenta(grupo.data, EMISORES[grupo.tipoEmpresa]);
+            }
+        } finally {
+            this.loading = false;
+        }
+    }
+
+    /* * Nombre: _generarPDFEstadoCuenta
+     * Descripción: Arma y descarga un estado de cuenta con los documentos de una sola empresa emisora.
+     */
+    private async _generarPDFEstadoCuenta(data: any[], emisor: EmisorEstadoCuenta): Promise<void> {
         const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
         const formatDate = (dateStr: string) => {
             if (!dateStr) return '-';
@@ -1141,54 +1165,10 @@ export class ReportCustomersDashboardComponent implements OnInit {
             .reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
 
 
-        let bankAccountsRows = '';
-        // 🔹 Lógica condicional según Tipo de Cliente (Física vs Moral)
-        if (this.esMoral === 1) {
-            // PERSONA FÍSICA: Jesus Ricardo Mendez Arrillaga (Solo MXN según requerimiento)
-            if (totalMXN > 0) {
-                bankAccountsRows += `
-            <div style="flex: 1; min-width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <div style="background-color: #004481; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 900; font-size: 10px; letter-spacing: 0.5px;">BBVA</div>
-                <div style="flex: 1; border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.3px;">Cuenta MXN</div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">Titular: <span style="font-family: monospace;">JESUS RICARDO MENDEZ ARRILLAGA</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">RFC: <span style="font-family: monospace;">MEAJ730516T86</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. Cuenta: <span style="font-family: monospace;">0478628203</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">CLABE: <span style="font-family: monospace;">012290004786282030</span></div>
-                </div>
-            </div>`;
-            }
-        } else {
-            // PERSONA MORAL: JR Ingenieria Electrica
-            if (totalMXN > 0) {
-                bankAccountsRows += `
-            <div style="flex: 1; min-width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <div style="background-color: #004481; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 900; font-size: 10px; letter-spacing: 0.5px;">BBVA</div>
-                <div style="flex: 1; border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.3px;">Cuenta MXN</div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">Titular: <span style="font-family: monospace;">JR INGENIERIA ELECTRICA</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. de Cliente BBVA: <span style="font-family: monospace;">E3477448</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">RFC: <span style="font-family: monospace;">JIE250214R69</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. Cuenta: <span style="font-family: monospace;">0124948939</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">CLABE: <span style="font-family: monospace;">012290001249489399</span></div>
-                </div>
-            </div>`;
-            }
-            if (totalUSD > 0) {
-                bankAccountsRows += `
-            <div style="flex: 1; min-width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <div style="background-color: #004481; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 900; font-size: 10px; letter-spacing: 0.5px;">BBVA</div>
-                <div style="flex: 1; border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.3px;">Cuenta USD</div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">Titular: <span style="font-family: monospace;">JR INGENIERIA ELECTRICA</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. de Cliente BBVA: <span style="font-family: monospace;">E3477448</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">RFC: <span style="font-family: monospace;">JIE250214R69</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">No. Cuenta: <span style="font-family: monospace;">0124949706</span></div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: bold;">CLABE: <span style="font-family: monospace;">012290001249497064</span></div>
-                </div>
-            </div>`;
-            }
-        }
+        // 🔹 Cuentas de pago de la empresa que emitió los documentos (no según el filtro de la pantalla),
+        //    solo en las monedas en las que hay documentos.
+        const monedasConDocs = (['MXN', 'USD'] as const).filter(m => (m === 'MXN' ? totalMXN : totalUSD) > 0);
+        const bankAccountsRows = cuentasParaMonedas(emisor, [...monedasConDocs]).map(cuentaHtml).join('');
 
         const container = document.createElement('div');
         container.id = 'temp-pdf-seg-container';
@@ -1206,8 +1186,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
                 <img src="images/logo/logo-new-jrbk.png" alt="Logo JR" style="max-height: 130px; max-width: 150px; object-fit: contain;">
-                <h1 style="text-align: center; color: #1e4b8a; font-size: 26px; font-weight: bold; margin: 0; letter-spacing: 1px; flex: 1;">
-                JR INGENIERÍA ELÉCTRICA
+                <h1 style="text-align: center; color: #1e4b8a; font-size: ${emisor.nombre.length > 26 ? 22 : 26}px; font-weight: bold; margin: 0; letter-spacing: 1px; flex: 1;">
+                ${emisor.nombre}
             </h1>
             </div>
         </div>
@@ -1348,13 +1328,12 @@ export class ReportCustomersDashboardComponent implements OnInit {
                 heightLeft -= availableHeight;
             }
 
-            pdf.save(`Estado_Cuenta_JR_${new Date().getTime()}.pdf`);
+            pdf.save(`Estado_Cuenta_${emisor.archivo}_${new Date().getTime()}.pdf`);
         } catch (e) {
             console.error("Error al exportar PDF: ", e);
         } finally {
             document.body.removeChild(container);
             document.body.removeChild(footerWrapper);
-            this.loading = false;
         }
     }
 
@@ -1365,12 +1344,13 @@ export class ReportCustomersDashboardComponent implements OnInit {
         const data = this.listaClientesFiltrada || [];
         if (data.length === 0) return;
 
-        const headers = ['Cliente', 'RFC', 'Folio', 'Importe', 'Saldo Pendiente', 'Estatus', 'Fecha Emisión', 'Fecha Vencimiento'];
+        const headers = ['Cliente', 'RFC', 'Folio', 'Empresa', 'Importe', 'Saldo Pendiente', 'Estatus', 'Fecha Emisión', 'Fecha Vencimiento'];
 
         const rows = data.map(r => [
             r.nombreCliente || '',
             r.rfc || '',
             r.folioCompleto || '',
+            this.getEmisor(r).nombreCorto,
             r.montoDocumento || 0,
             typeof r.saldoPendiente === 'number' ? r.saldoPendiente : (r.estatusPago === 'PAGADA' ? 0 : (r.montoDocumento || 0)),
             r.estatusPago || '',
@@ -1386,7 +1366,8 @@ export class ReportCustomersDashboardComponent implements OnInit {
     }
 
     /* * Nombre: exportarPDFTabla
-     * Descripción: Exporta la tabla de Cuentas Clave (sin columna Clasificación) al mismo formato PDF.
+     * Descripción: Exporta la tabla de Cuentas Clave a PDF. Cada documento indica la empresa emisora (según la base de
+     *              CONTPAQi de la que viene) y el PDF incluye las cuentas de pago de cada empresa presente.
      */
     async exportarPDFTabla(): Promise<void> {
         const data = this.listaClientesFiltrada || [];
@@ -1394,90 +1375,15 @@ export class ReportCustomersDashboardComponent implements OnInit {
 
         this.loading = true;
 
-        const formatCurrency = (val: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
-        const formatDate = (dateStr: string) => {
-            if (!dateStr) return '-';
-            const d = new Date(dateStr);
-            return `${d.getDate().toString().padStart(2, '0')} /${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} `;
-        };
-
-        const fInicio = formatDate(this.fechaInicio.toISOString());
-        const fFin = formatDate(this.fechaFin.toISOString());
-        const sucursal = this.sucursal || 'TODAS';
-        const totalImporte = data.reduce((acc, curr) => acc + (curr.montoDocumento || 0), 0);
-
-        let tableRows = '';
-        data.forEach((item, i) => {
-            const bgColor = i % 2 === 0 ? '#ffffff' : '#f9fafb';
-            const estatus = item.estatusPago || '';
-            const colorEstatus = estatus === 'VENCIDA' ? '#dc2626' : estatus === 'PAGADA' ? '#16a34a' : '#d97706';
-
-            tableRows += `
-            < tr style = "background-color: ${bgColor}; color: #374151; font-size: 11px;" >
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;" >
-                    <div style="font-weight: bold;" > ${item.nombreCliente || ''} </div>
-                        < div style = "font-size: 9px; color: #9ca3af; font-family: monospace;" > ${item.rfc || ''} </div>
-                            </td>
-                            < td style = "padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: bold; font-family: monospace;" > ${item.folioCompleto || '-'} </td>
-                                < td style = "padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;" > ${formatCurrency(item.montoDocumento || 0)} </td>
-                                    < td style = "padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;" >
-                                        <span style="font-weight: bold; color: ${colorEstatus};" > ${estatus} </span>
-                                            < div style = "font-size: 9px; color: #9ca3af; margin-top: 2px;" > Emisión: ${formatDate(item.fechaDocumento)} </div>
-                                                < div style = "font-size: 9px; color: ${estatus === 'VENCIDA' ? '#dc2626' : '#9ca3af'}; font-weight: ${estatus === 'VENCIDA' ? 'bold' : 'normal'};" > Vence: ${item.fechaVencimiento || '-'} </div>
-                                                    </td>
-                                                    </tr>
-                                                        `;
-        });
-
         const container = document.createElement('div');
         container.id = 'temp-pdf-tabla-container';
         container.setAttribute('style', 'width: 800px; padding: 40px; background-color: #ffffff; font-family: Arial, sans-serif; position: absolute; left: -9999px; top: 0; z-index: -1000;');
-
-        container.innerHTML = `
-                                                    < div style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" >
-                                                        <div style="display: flex; align-items: center; gap: 15px;" >
-                                                            <img src="images/logo/logo-new-jr.png" alt = "Logo JR" style = "max-height: 100px; max-width: 200px; object-fit: contain;" >
-                                                                <div>
-                                                                <h2 style="margin: 0; color: #1e3a8a; font-size: 16px;" > JR INGENIERÍA ELÉCTRICA </h2>
-                                                                    < p style = "margin: 2px 0; font-size: 10px; color: #4b5563;" > RFC: JRI - XXXXXX - XXX </p>
-                                                                        < p style = "margin: 2px 0; font-size: 10px; color: #4b5563;" > Dir: Calle Falsa 123, Pachuca, Hgo.</p>
-                                                                            < a href = "http://www.jringenieriaelectrica.com" style = "margin: 2px 0; font-size: 10px; color: #2563eb; text-decoration: none;" > www.jringenieriaelectrica.com </a>
-                                                                                </div>
-                                                                                </div>
-                                                                                < h1 style = "margin: 0; font-size: 20px; color: #1f2937; text-transform: uppercase;" > Cuentas Clave </h1>
-                                                                                    </div>
-
-                                                                                    < div style = "background-color: #e0f2fe; padding: 15px; border-radius: 6px; margin-bottom: 20px;" >
-                                                                                        <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;" > <strong>SUCURSAL: </strong> ${sucursal}</p >
-                                                                                            <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;" > <strong>FILTRADO POR FECHAS: </strong> ${fInicio} - ${fFin}</p >
-                                                                                                <p style="margin: 4px 0; font-size: 13px; color: #1e3a8a;" > <strong>TOTAL REGISTROS: </strong> ${data.length}</p >
-                                                                                                    </div>
-
-                                                                                                    < table style = "width: 100%; border-collapse: collapse; margin-bottom: 20px;" >
-                                                                                                        <thead>
-                                                                                                        <tr style="background-color: #d1d5db; color: #374151; font-size: 11px;" >
-                                                                                                            <th style="padding: 10px; text-align: left;" > CLIENTE / RFC </th>
-                                                                                                                < th style = "padding: 10px; text-align: center;" > FOLIO </th>
-                                                                                                                    < th style = "padding: 10px; text-align: right;" > IMPORTE </th>
-                                                                                                                        < th style = "padding: 10px; text-align: center;" > ESTATUS Y VENCIMIENTO </th>
-                                                                                                                            </tr>
-                                                                                                                            </thead>
-                                                                                                                            <tbody>
-                ${tableRows}
-        </tbody>
-            </table>
-
-            < div style = "display: flex; justify-content: flex-end; margin-bottom: 40px;" >
-                <div style="background-color: #4f46e5; padding: 15px; border-radius: 6px; min-width: 200px; text-align: center; color: white;" >
-                    <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px;" > TOTAL IMPORTE </div>
-                        < div style = "font-size: 22px; font-weight: 900;" > ${formatCurrency(totalImporte)} </div>
-                            </div>
-                            </div>
-
-                            < div style = "border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #6b7280;" >
-                                Este documento es informativo y no constituye comprobante fiscal.Para cualquier aclaración contacte a su departamento de cobranza, email: cobranza @jringenieriaelectrica.com
-        </div>
-            `;
+        container.innerHTML = construirHtmlCuentasClave(data, {
+            sucursal: this.sucursal || 'TODAS',
+            fechaInicio: formatearFecha(this.fechaInicio),
+            fechaFin: formatearFecha(this.fechaFin),
+            empresaPorDefecto: this._empresaPorDefecto
+        });
 
         document.body.appendChild(container);
 
@@ -1492,9 +1398,23 @@ export class ReportCustomersDashboardComponent implements OnInit {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            // La tabla puede ser más larga que una hoja: la imagen se reparte en varias páginas
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position -= pageHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
             pdf.save(`Cuentas_Clave_${this.sucursal}_${new Date().getTime()}.pdf`);
 
         } catch (error) {
