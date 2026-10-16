@@ -8,10 +8,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento } from '../requerimientos.service';
+import {
+  CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, iconoArchivo, temaArchivo, validarArchivos
+} from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
+
+type Pestana = 'clasificacion' | 'checklist' | 'seguimiento' | 'archivos';
 
 @Component({
   selector: 'app-requerimiento-calificar-dialog',
@@ -27,32 +33,38 @@ import Swal from 'sweetalert2';
     MatSelectModule,
     MatCheckboxModule,
     MatIconModule,
-    MatTabsModule,
-    MatDividerModule
+    MatTooltipModule,
+    MatProgressBarModule
   ],
-  templateUrl: './requerimiento-calificar-dialog.component.html',
-  styles: [`
-    .checklist-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-    }
-  `]
+  templateUrl: './requerimiento-calificar-dialog.component.html'
 })
 export class RequerimientoCalificarDialogComponent implements OnInit {
   requerimiento: Requerimiento;
   calificarForm: FormGroup;
   currentUser: any;
 
+  pestana: Pestana = 'clasificacion';
+  guardando = false;
+
   // Colecciones asociadas
   archivos: RequerimientoArchivo[] = [];
   seguimientos: RequerimientoSeguimiento[] = [];
+  cargandoArchivos = false;
+  /** Archivos en subida: por categoría (opción del checklist) o `CATEGORIA_GENERAL`. */
+  subiendo: Record<string, boolean> = {};
 
   // Datos para listas
   estatusList = ['Pendiente', 'Calificado Comercial', 'Calificado Técnico', 'No Viable'];
   naturalezas = ['Producto', 'Servicio', 'Proyecto', 'Tablero', 'Prueba / estudio', 'Mantenimiento', 'Diagnóstico / asesoría', 'Mixto'];
   rutas = ['Comercial directa', 'Sucursal', 'Ingeniería', 'Ingeniería + Comercial', 'Dirección / escalamiento'];
   viabilidades = ['Viable', 'Viable con información adicional', 'Viable con visita / levantamiento', 'No viable'];
+
+  readonly checklist = CHECKLIST;
+  readonly categoriaGeneral = CATEGORIA_GENERAL;
+  readonly etiquetaCategoria = etiquetaCategoria;
+  readonly iconoArchivo = iconoArchivo;
+  readonly temaArchivo = temaArchivo;
+  readonly tamano = formatearTamano;
 
   // Formulario de nuevo seguimiento
   medioSeguimiento: string = 'WhatsApp';
@@ -98,54 +110,118 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.loadSeguimientos();
   }
 
+  // ------------------------------------------------------------------ pestañas
+
+  get pestanas(): { id: Pestana; titulo: string; icono: string; contador: number | null }[] {
+    return [
+      { id: 'clasificacion', titulo: 'Clasificación SGC', icono: 'heroicons_outline:tag', contador: null },
+      { id: 'checklist', titulo: 'Información faltante', icono: 'heroicons_outline:clipboard-document-check', contador: this.totalFaltantes },
+      { id: 'seguimiento', titulo: 'Seguimiento', icono: 'heroicons_outline:chat-bubble-left-right', contador: this.seguimientos.length },
+      { id: 'archivos', titulo: 'Archivos y planos', icono: 'heroicons_outline:paper-clip', contador: this.archivos.length },
+    ];
+  }
+
+  get esDescarte(): boolean {
+    return this.calificarForm.get('estatus')?.value === 'No Viable' || this.calificarForm.get('viabilidad')?.value === 'No viable';
+  }
+
+  // ------------------------------------------------------------------ checklist
+
+  /** La opción está marcada como información que falta. */
+  falta(item: ItemChecklist): boolean {
+    return this.calificarForm.get(item.control)?.value === true;
+  }
+
+  get totalFaltantes(): number {
+    return this.checklist.filter(i => this.falta(i)).length;
+  }
+
+  archivosDe(item: ItemChecklist): RequerimientoArchivo[] {
+    return archivosDeCategoria(this.archivos, item.categoria);
+  }
+
+  /** Adjunta documentos a una opción del checklist (se guardan al instante con la categoría de esa opción). */
+  onChecklistFiles(item: ItemChecklist, event: Event): void {
+    this.subirArchivos(item.categoria, event, `«${item.etiqueta}»`);
+  }
+
+  /** Adjunta archivos generales del requerimiento (pestaña «Archivos y planos»). */
+  onFileSelected(event: Event): void {
+    this.subirArchivos(CATEGORIA_GENERAL, event, 'el requerimiento');
+  }
+
+  private subirArchivos(categoria: string, event: Event, destino: string): void {
+    const input = event.target as HTMLInputElement;
+    const elegidos = Array.from(input.files ?? []);
+    input.value = ''; // permite volver a elegir el mismo archivo
+    if (elegidos.length === 0) return;
+
+    const { validos, rechazados } = validarArchivos(elegidos);
+    if (rechazados.length > 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Algunos archivos no se subieron',
+        html: rechazados.map(r => `<div><b>${this.escapar(r.nombre)}</b> ${this.escapar(r.motivo)}</div>`).join(''),
+      });
+    }
+    if (validos.length === 0) return;
+
+    this.subiendo[categoria] = true;
+    this.reqService.subirArchivos(this.requerimiento.id, categoria, validos).subscribe({
+      next: () => {
+        this.subiendo[categoria] = false;
+        this.avisar(`${validos.length === 1 ? 'Archivo subido' : validos.length + ' archivos subidos'} a ${destino}.`);
+        this.loadArchivos();
+      },
+      error: (err) => {
+        this.subiendo[categoria] = false;
+        Swal.fire('No se pudo subir', this.mensajeDe(err), 'error');
+      }
+    });
+  }
+
+  // ------------------------------------------------------------------ archivos
+
   loadArchivos(): void {
-    this.reqService.getArchivos(this.requerimiento.id).subscribe(res => this.archivos = res);
+    this.cargandoArchivos = true;
+    this.reqService.getArchivos(this.requerimiento.id).subscribe({
+      next: res => { this.archivos = res; this.cargandoArchivos = false; },
+      error: () => { this.cargandoArchivos = false; }
+    });
   }
 
   loadSeguimientos(): void {
     this.reqService.getSeguimientos(this.requerimiento.id).subscribe(res => this.seguimientos = res);
   }
 
-  onFileSelected(event: any): void {
-    const files: FileList = event.target.files;
-    if (files.length === 0) return;
-
-    const fileList: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      fileList.push(files[i]);
-    }
-
-    this.reqService.subirArchivos(this.requerimiento.id, 'Evidencia Requerimiento', fileList).subscribe({
-      next: () => {
-        Swal.fire('Subido', 'Evidencias de requerimiento subidas correctamente.', 'success');
-        this.loadArchivos();
-      },
-      error: (err) => Swal.fire('Error', 'No se pudo subir los archivos: ' + err.message, 'error')
-    });
-  }
-
   descargarArchivo(file: RequerimientoArchivo): void {
-    const url = this.reqService.descargarArchivoUrl(this.requerimiento.id, file.id);
-    window.open(url, '_blank');
+    const a = document.createElement('a');
+    a.href = this.reqService.descargarArchivoUrl(this.requerimiento.id, file.id);
+    a.download = file.nombreArchivo;
+    a.click();
   }
 
   eliminarArchivo(file: RequerimientoArchivo): void {
     Swal.fire({
       title: '¿Eliminar archivo?',
-      text: 'Esta acción no se puede deshacer.',
+      text: `Se eliminará «${file.nombreArchivo}». Esta acción no se puede deshacer.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar'
     }).then(result => {
-      if (result.isConfirmed) {
-        this.reqService.eliminarArchivo(this.requerimiento.id, file.id).subscribe(() => {
-          Swal.fire('Eliminado', 'El archivo ha sido borrado.', 'success');
+      if (!result.isConfirmed) return;
+      this.reqService.eliminarArchivo(this.requerimiento.id, file.id).subscribe({
+        next: () => {
+          this.avisar('Archivo eliminado.');
           this.loadArchivos();
-        });
-      }
+        },
+        error: (err) => Swal.fire('No se pudo eliminar', this.mensajeDe(err), 'error')
+      });
     });
   }
+
+  // ------------------------------------------------------------------ seguimiento
 
   addSeguimiento(): void {
     if (!this.detalleSeguimiento.trim()) return;
@@ -159,9 +235,9 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       next: () => {
         this.detalleSeguimiento = '';
         this.loadSeguimientos();
-        Swal.fire('Contacto Registrado', 'Trazabilidad guardada correctamente en el CRM.', 'success');
+        this.avisar('Seguimiento registrado en el CRM.');
       },
-      error: (err) => Swal.fire('Error', 'No se pudo guardar la nota de seguimiento.', 'error')
+      error: () => Swal.fire('Error', 'No se pudo guardar la nota de seguimiento.', 'error')
     });
   }
 
@@ -171,17 +247,37 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     });
   }
 
-  onSubmit(): void {
-    if (this.calificarForm.invalid) return;
+  // ------------------------------------------------------------------ guardar
 
-    const val = this.calificarForm.value;
-    this.reqService.calificarRequerimiento(this.requerimiento.id, val).subscribe({
+  onSubmit(): void {
+    if (this.calificarForm.invalid || this.guardando) return;
+
+    this.guardando = true;
+    this.reqService.calificarRequerimiento(this.requerimiento.id, this.calificarForm.value).subscribe({
       next: () => this.dialogRef.close(true),
-      error: (err) => console.error(err)
+      error: (err) => {
+        this.guardando = false;
+        Swal.fire('No se pudo guardar la calificación', this.mensajeDe(err), 'error');
+      }
     });
   }
 
   onCancel(): void {
     this.dialogRef.close(false);
+  }
+
+  // ------------------------------------------------------------------ utilidades
+
+  private avisar(titulo: string): void {
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: titulo, showConfirmButton: false, timer: 2500 });
+  }
+
+  /** El API responde con texto plano en los errores de archivos. */
+  private mensajeDe(err: any): string {
+    return typeof err?.error === 'string' && err.error ? err.error : (err?.error?.mensaje || 'Inténtalo de nuevo.');
+  }
+
+  private escapar(texto: string): string {
+    return texto.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
   }
 }
