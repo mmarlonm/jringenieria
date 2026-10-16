@@ -126,7 +126,8 @@ export const appRoutes: Route[] = [
             {
                 path: 'rrhh', children: [
                     { path: 'personal-management', loadChildren: () => import('app/modules/rrhh/personal-management/personal-management.routes') },
-                    { path: 'report-entrada-salida', loadChildren: () => import('app/modules/rrhh/reports/report-entrada-salida/report-entrada-salida.routes') }
+                    { path: 'report-entrada-salida', loadChildren: () => import('app/modules/rrhh/reports/report-entrada-salida/report-entrada-salida.routes') },
+                    { path: 'colaboradores', loadChildren: () => import('app/modules/rrhh/colaboradores/colaboradores.routes') }
                 ]
             },
             {

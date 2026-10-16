@@ -366,7 +366,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
-            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' }
         ]
     },
     // ==========================================================================================
@@ -463,7 +464,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:users',
         children: [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
-            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' }
         ]
     },
     {
@@ -556,7 +558,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:users',
         children: [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
-            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' }
         ]
     },
     { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
@@ -641,7 +644,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:users',
         children: [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
-            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' }
+            { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' }
         ]
     },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
