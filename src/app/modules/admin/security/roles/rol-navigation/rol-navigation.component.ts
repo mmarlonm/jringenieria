@@ -1,250 +1,168 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, ChangeDetectorRef, SimpleChanges, OnChanges, ChangeDetectionStrategy } from '@angular/core';
+import {
+    ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FuseNavigationItem } from '@fuse/components/navigation';
-import { RolService } from 'app/modules/admin/security/roles/roles.service'; // 👈 IMPORTANTE RESTAURAR ESTO
+import { RolService } from 'app/modules/admin/security/roles/roles.service';
+import {
+    ModuloRol, PermisoCatalogo, Seleccion, VistaRol, alternarPermiso, construirModulos, etiquetaPermiso, filtrarModulos,
+    permisosVisibles, resumenModulo, seleccionarModulo, seleccionarVista
+} from '../roles-permisos.utils';
 
+type Estado = 'todo' | 'parcial' | 'nada';
+
+/**
+ * Permisos de un rol: una tarjeta por módulo del menú y, dentro, cada vista con sus permisos como botones.
+ * Es solo la parte visual: recibe la selección y emite la nueva (sin modificarla).
+ */
 @Component({
-  selector: 'app-role-navigation',
-  templateUrl: './rol-navigation.component.html',
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatCheckboxModule,
-    MatButtonModule
-  ]
+    selector: 'app-role-navigation',
+    templateUrl: './rol-navigation.component.html',
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [CommonModule, FormsModule, MatIconModule, MatCheckboxModule, MatButtonModule, MatTooltipModule, MatProgressSpinnerModule]
 })
 export class RoleNavigationComponent implements OnInit, OnChanges {
+    /** Menú de la aplicación (de él salen los módulos y sus vistas). */
+    @Input() navigation: FuseNavigationItem[] = [];
+    /** Permisos elegidos por vista. */
+    @Input() seleccion: Seleccion = {};
+    @Output() seleccionChange = new EventEmitter<Seleccion>();
 
-  @Input() navigation: FuseNavigationItem[] = [];
+    modulos: ModuloRol[] = [];
+    /** Módulos tal como se muestran (según búsqueda y filtro). */
+    visibles: ModuloRol[] = [];
+    resumenes: { [moduloId: string]: { activas: number; total: number; estado: Estado } } = {};
+    permisosPorVista: { [vistaId: string]: PermisoCatalogo[] } = {};
 
-  // 🔹 1. RESTAURADO: Volvemos al formato de arreglos numéricos { 'dashboards': [1, 2, 3, 4] }
-  @Input() selectedPermissions: { [id: string]: number[] } = {};
+    catalogo: PermisoCatalogo[] = [];
+    cargando = true;
+    error: string | null = null;
 
-  // 🔹 2. RESTAURADO: El emisor vuelve a enviar un arreglo para no romper al componente padre
-  @Output() permisosSeleccionados = new EventEmitter<any[]>();
-  @Output() permisosLoadError = new EventEmitter<string>();
+    busqueda = '';
+    soloAsignadas = false;
+    private expandidos = new Set<string>();
 
-  // 🔹 3. RESTAURADO: La variable que guarda los catálogos (Agregar, Editar, etc.)
-  permisos: any[] = [];
-  loadError: string | null = null;
+    constructor(private _rolService: RolService, private _cdr: ChangeDetectorRef) { }
 
-  constructor(
-    private rolService: RolService,
-    private _changeDetectorRef: ChangeDetectorRef
-  ) { }
-
-  ngOnInit(): void {
-    console.log("[RoleNavigation] ngOnInit - navigation:", this.navigation);
-    this.obtenerPermisos();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['navigation'] && !changes['navigation'].firstChange) {
-      console.log("[RoleNavigation] Navigation input cambió:", changes['navigation'].currentValue);
-      this._changeDetectorRef.markForCheck();
+    ngOnInit(): void {
+        this.cargarCatalogo();
     }
-  }
 
-  obtenerPermisos(): void {
-    this.loadError = null;
-    console.log("[RoleNavigation] Iniciando carga de permisos...");
-
-    this.rolService.getPermisos().subscribe({
-      next: (data: any) => {
-        console.log("[RoleNavigation] Permisos recibidos:", data);
-        const rawPermisos = Array.isArray(data) ? data : (data.data || data.result || []);
-
-        console.log("[RoleNavigation] Permisos procesados:", rawPermisos);
-
-        if (!rawPermisos || rawPermisos.length === 0) {
-          console.warn("[RoleNavigation] ⚠️ No hay permisos en la BD. Intentando inicializar...");
-          this.inicializarPermisosEnServidor();
-          return;
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['navigation']) {
+            this.modulos = construirModulos(this.navigation);
+            this.calcularPermisosPorVista();
         }
+        this.actualizar();
+    }
 
-        this.procesarPermisos(rawPermisos);
-      },
-      error: (err) => {
-        console.error("[RoleNavigation] Error al cargar permisos:", err);
-        console.error("[RoleNavigation] Status:", err.status);
-        console.error("[RoleNavigation] Mensaje:", err.message);
+    cargarCatalogo(): void {
+        this.cargando = true;
+        this.error = null;
+        this._rolService.getCatalogoPermisos().subscribe({
+            next: (catalogo) => {
+                this.catalogo = catalogo;
+                this.cargando = false;
+                this.calcularPermisosPorVista();
+                this.actualizar();
+            },
+            error: (err) => {
+                this.cargando = false;
+                this.error = `No se pudieron cargar los permisos (${err?.status || 'sin conexión'}). Inténtalo de nuevo.`;
+                this._cdr.markForCheck();
+            }
+        });
+    }
 
-        this.loadError = `Error al cargar permisos: ${err.status || 'Error de conexión'}. ${err.message || 'Intenta recargar la página.'}`;
-        this.permisos = [];
-        this.permisosLoadError.emit(this.loadError);
-        this._changeDetectorRef.detectChanges();
-      }
-    });
-  }
-
-  private inicializarPermisosEnServidor(): void {
-    console.log("[RoleNavigation] 🔄 Llamando endpoint de inicialización...");
-    this.rolService.inicializarPermisos().subscribe({
-      next: (response: any) => {
-        console.log("[RoleNavigation] ✅ Permisos inicializados exitosamente:", response);
-        if (response.permisos && Array.isArray(response.permisos)) {
-          this.procesarPermisos(response.permisos);
-        } else {
-          this.obtenerPermisos(); // Reintentar la carga normal
+    private calcularPermisosPorVista(): void {
+        this.permisosPorVista = {};
+        for (const m of this.modulos) {
+            for (const v of m.vistas) this.permisosPorVista[v.id] = permisosVisibles(v.id, this.catalogo);
         }
-      },
-      error: (err) => {
-        console.error("[RoleNavigation] ❌ Error al inicializar permisos:", err);
-        this.loadError = "La tabla de permisos está vacía y no se pudo inicializar automáticamente. Contacta al administrador.";
-        this.permisos = [];
-        this.permisosLoadError.emit(this.loadError);
-        this._changeDetectorRef.detectChanges();
-      }
-    });
-  }
+    }
 
-  private procesarPermisos(rawPermisos: any[]): void {
-    this.permisos = rawPermisos.map((p: any) => {
-      const permisoId = Number(p.permisoId || p.PermisoId || p.idPermiso || p.id);
-      const descripcion = p.descripcionPermiso || p.DescripcionPermiso || '';
+    /** Recalcula lo que se muestra: aplica la búsqueda y el filtro «solo con acceso» y los totales de cada módulo. */
+    actualizar(): void {
+        this.resumenes = {};
+        for (const m of this.modulos) this.resumenes[m.id] = resumenModulo(m, this.seleccion);
 
-      return {
-        ...p,
-        permisoId,
-        descripcionPermiso: descripcion
-      };
-    });
-
-    console.log("[RoleNavigation] ✅ Permisos mapeados:", this.permisos);
-    console.log("[RoleNavigation] Navigation disponible:", this.navigation);
-    this.loadError = null;
-    this.initializePermissions();
-    this._changeDetectorRef.markForCheck();
-  }
-
-  /**
-   * Inicializa los permisos con valores predeterminados (desmarcados)
-   */
-  /**
-   * Inicializa el diccionario de permisos recorriendo el árbol de navegación de forma recursiva.
-   * Si una vista no tiene permisos asignados previamente, se le asigna un arreglo vacío.
-   */
-  initializePermissions(): void {
-    if (!this.navigation || this.navigation.length === 0) return;
-
-    // Función recursiva interna para recorrer cualquier nivel de profundidad
-    const recorrerNodos = (nodos: any[]) => {
-      if (!nodos) return;
-
-      nodos.forEach(nodo => {
-        // 1. Si el nodo tiene un ID (es una vista/pantalla) y no existe en el diccionario
-        if (nodo.id && !this.selectedPermissions[nodo.id]) {
-          this.selectedPermissions[nodo.id] = []; // Inicializamos el array vacío
+        let lista = filtrarModulos(this.modulos, this.busqueda);
+        if (this.soloAsignadas) {
+            lista = lista
+                .map(m => ({ ...m, vistas: m.vistas.filter(v => (this.seleccion[v.id]?.length ?? 0) > 0) }))
+                .filter(m => m.vistas.length > 0);
         }
-
-        // 2. Si el nodo tiene hijos (es un grupo o carpeta colapsable), entra recursivamente
-        if (nodo.children && nodo.children.length > 0) {
-          recorrerNodos(nodo.children);
-        }
-      });
-    };
-
-    // Iniciamos el recorrido desde la raíz del menú
-    console.log(this.navigation);
-    recorrerNodos(this.navigation);
-    console.log(this.selectedPermissions);
-
-    this._changeDetectorRef.detectChanges();
-  }
-
-  isPermisoVisibleForNode(nodeId: string, permiso: any): boolean {
-    const permisoId = Number(permiso.permisoId || permiso.idPermiso || permiso.id);
-    const isSectionPermiso = permisoId >= 101 && permisoId <= 108;
-
-    if (nodeId === 'administracion.proveedores.cuestionario') {
-      return true;
-    }
-    if (nodeId === 'administracion.iso-documentacion') {
-      // Documentación ISO muestra exactamente: Agregar (1002), Agregar Carpetas (2), Descargar (1003), Eliminar (3) y Ver (1)
-      return [1002, 2, 1003, 3, 1].includes(permisoId);
+        this.visibles = lista;
+        this._cdr.markForCheck();
     }
 
-    if (permisoId === 1003) {
-      return false;
+    // ------------------------------------------------------------------ módulos plegables
+
+    estaExpandido(m: ModuloRol): boolean {
+        return this.busqueda.trim() !== '' || this.soloAsignadas || this.expandidos.has(m.id);
     }
 
-    return !isSectionPermiso;
-  }
-
-  getPermisoLabel(nodeId: string, permiso: any): string {
-    const permisoId = Number(permiso.permisoId || permiso.idPermiso || permiso.id);
-    if (nodeId === 'administracion.iso-documentacion') {
-      switch (permisoId) {
-        case 1002: return 'Agregar';
-        case 2: return 'Agregar Carpetas';
-        case 1003: return 'Descargar';
-        case 3: return 'Eliminar';
-        case 1: return 'Ver';
-      }
-    }
-    return permiso.descripcionPermiso;
-  }
-
-  /**
-   * Checkbox Principal de la Vista (Marca o desmarca todos los sub-permisos)
-   */
-  onPermissionChange(itemId: string, isChecked: boolean): void {
-    if (!this.selectedPermissions) this.selectedPermissions = {};
-
-    if (isChecked) {
-      // Si marca la vista, le asignamos solo los permisos visibles para este nodo
-      this.selectedPermissions[itemId] = this.permisos
-        .filter(p => this.isPermisoVisibleForNode(itemId, p))
-        .map(p => Number(p.permisoId || p.idPermiso || p.id));
-    } else {
-      // Si la desmarca, vaciamos el arreglo
-      this.selectedPermissions[itemId] = [];
+    alternarModulo(m: ModuloRol): void {
+        if (this.expandidos.has(m.id)) this.expandidos.delete(m.id);
+        else this.expandidos.add(m.id);
     }
 
-    this.emitirPermisos();
-  }
-
-  /**
-   * Checkbox Individual (Agregar, Editar, Eliminar, Ver)
-   */
-  togglePermission(vistaId: string, permisoId: number | string): void {
-    const pId = Number(permisoId);
-    if (!this.selectedPermissions[vistaId]) {
-      this.selectedPermissions[vistaId] = [];
+    expandirTodo(): void {
+        this.modulos.forEach(m => this.expandidos.add(m.id));
     }
 
-    // Aseguramos que la lista actual sean números
-    const permisosVista = this.selectedPermissions[vistaId].map(id => Number(id));
-
-    if (permisosVista.includes(pId)) {
-      // Quitar permiso
-      this.selectedPermissions[vistaId] = permisosVista.filter(id => id !== pId);
-    } else {
-      // Agregar permiso
-      permisosVista.push(pId);
-      this.selectedPermissions[vistaId] = permisosVista;
+    contraerTodo(): void {
+        this.expandidos.clear();
     }
 
-    this.emitirPermisos();
-  }
+    // ------------------------------------------------------------------ estado de cada casilla
 
-  /**
-   * Formatea los datos y los envía al componente padre
-   */
-  emitirPermisos(): void {
-    const payload = Object.keys(this.selectedPermissions)
-      .filter(key => this.selectedPermissions[key] && this.selectedPermissions[key].length > 0)
-      .map(key => ({
-        vistaId: key,
-        permisos: this.selectedPermissions[key]
-      }));
+    /** Estado de la casilla de un módulo según las vistas que se están mostrando. */
+    estadoModulo(m: ModuloRol): Estado {
+        return resumenModulo(m, this.seleccion).estado;
+    }
 
-    this.permisosSeleccionados.emit(payload);
-  }
+    estadoVista(v: VistaRol): Estado {
+        const total = this.permisosPorVista[v.id]?.length ?? 0;
+        const elegidos = (this.seleccion[v.id] ?? []).length;
+        return elegidos === 0 ? 'nada' : elegidos >= total ? 'todo' : 'parcial';
+    }
+
+    tienePermiso(v: VistaRol, p: PermisoCatalogo): boolean {
+        return (this.seleccion[v.id] ?? []).includes(p.permisoId);
+    }
+
+    etiqueta(v: VistaRol, p: PermisoCatalogo): string {
+        return etiquetaPermiso(v.id, p);
+    }
+
+    porcentaje(m: ModuloRol): number {
+        const r = this.resumenes[m.id];
+        return r && r.total > 0 ? Math.round((r.activas / r.total) * 100) : 0;
+    }
+
+    // ------------------------------------------------------------------ cambios (se emite una selección nueva)
+
+    onModulo(m: ModuloRol, marcado: boolean): void {
+        this.seleccionChange.emit(seleccionarModulo(this.seleccion, m, marcado, this.catalogo));
+    }
+
+    onVista(v: VistaRol, marcado: boolean): void {
+        this.seleccionChange.emit(seleccionarVista(this.seleccion, v.id, marcado, this.catalogo));
+    }
+
+    onPermiso(v: VistaRol, p: PermisoCatalogo): void {
+        this.seleccionChange.emit(alternarPermiso(this.seleccion, v.id, p.permisoId));
+    }
+
+    trackPorId = (_: number, item: { id: string }) => item.id;
+    trackPorPermiso = (_: number, p: PermisoCatalogo) => p.permisoId;
 }

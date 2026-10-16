@@ -1,104 +1,102 @@
-<div class="flex flex-col w-full">
-  <!-- DEBUG: Mostrar si navigation está vacío -->
-  @if (!navigation || navigation.length === 0) {
-    <div class="p-4 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded text-sm">
-      <strong>⚠️ Debug:</strong> La navegación está vacía ({{ navigation?.length || 0 }} elementos)
+<div class="flex flex-col gap-4">
+
+    <!-- Barra de herramientas -->
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="relative flex-1">
+            <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-5 text-slate-400" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+            <input type="text" [(ngModel)]="busqueda" (ngModelChange)="actualizar()" placeholder="Buscar módulo o vista…" autocomplete="off"
+                   class="w-full h-10 pl-10 pr-9 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <button *ngIf="busqueda" type="button" (click)="busqueda = ''; actualizar()" aria-label="Limpiar búsqueda"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:x-mark"></mat-icon>
+            </button>
+        </div>
+
+        <mat-checkbox color="primary" [(ngModel)]="soloAsignadas" (ngModelChange)="actualizar()">Solo con acceso</mat-checkbox>
+
+        <div class="flex items-center gap-1">
+            <button mat-stroked-button type="button" class="!h-10 !rounded-xl" (click)="expandirTodo()">Expandir todo</button>
+            <button mat-stroked-button type="button" class="!h-10 !rounded-xl" (click)="contraerTodo()">Contraer</button>
+        </div>
     </div>
-  } @else {
-    <!-- Mostrar estructura de navegación -->
-    <ng-container *ngFor="let group of navigation">
 
-      <!-- Soportar type 'group' o 'collapsable' como grupo principal -->
-      <div *ngIf="group.type === 'group' || group.type === 'collapsable'"
-        class="mb-6 rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
+    <!-- Cargando / error -->
+    <div *ngIf="cargando" class="flex flex-col items-center justify-center py-12 text-slate-400">
+        <mat-spinner [diameter]="32"></mat-spinner>
+        <span class="mt-3 text-sm">Cargando permisos…</span>
+    </div>
 
-        <div
-          class="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-transparent">
-          <mat-icon class="icon-size-5 text-primary" [svgIcon]="group.icon"></mat-icon>
-          <div class="ml-3">
-            <div class="text-md font-bold uppercase tracking-wider text-gray-800 dark:text-gray-100">
-              {{ group.title }}
+    <div *ngIf="error" class="flex flex-col items-center justify-center gap-3 py-10 text-center">
+        <mat-icon class="icon-size-8 text-red-400" svgIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+        <span class="text-sm font-medium text-red-600">{{ error }}</span>
+        <button mat-stroked-button type="button" (click)="cargarCatalogo()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!cargando && !error && modulos.length === 0" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+        El menú no tiene módulos para asignar.
+    </div>
+
+    <div *ngIf="!cargando && !error && modulos.length > 0 && visibles.length === 0"
+         class="flex flex-col items-center justify-center py-12 text-center text-slate-400">
+        <mat-icon class="icon-size-10 opacity-40" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">Nada coincide</p>
+        <p class="text-xs">{{ soloAsignadas && !busqueda ? 'Este rol todavía no tiene acceso a ninguna vista.' : 'Prueba con otra búsqueda.' }}</p>
+    </div>
+
+    <!-- Módulos -->
+    <ng-container *ngIf="!cargando && !error">
+        <div *ngFor="let m of visibles; trackBy: trackPorId"
+             class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 overflow-hidden">
+
+            <div class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                 (click)="alternarModulo(m)" role="button" [attr.aria-expanded]="estaExpandido(m)">
+                <mat-icon class="icon-size-4 text-slate-400 transition-transform" [class.rotate-90]="estaExpandido(m)" svgIcon="heroicons_outline:chevron-right"></mat-icon>
+                <div class="w-9 h-9 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <mat-icon *ngIf="m.icono" class="icon-size-5 text-primary" [svgIcon]="m.icono"></mat-icon>
+                </div>
+                <div class="min-w-0 flex-auto">
+                    <div class="text-sm font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100 truncate">{{ m.titulo }}</div>
+                    <div class="text-xs text-slate-500">
+                        {{ resumenes[m.id].activas }} de {{ resumenes[m.id].total }} {{ resumenes[m.id].total === 1 ? 'vista' : 'vistas' }} con acceso
+                    </div>
+                </div>
+                <div class="hidden sm:block w-24 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden" aria-hidden="true">
+                    <div class="h-full rounded-full bg-primary transition-all" [style.width.%]="porcentaje(m)"></div>
+                </div>
+                <mat-checkbox color="primary" (click)="$event.stopPropagation()"
+                              [checked]="estadoModulo(m) === 'todo'" [indeterminate]="estadoModulo(m) === 'parcial'"
+                              (change)="onModulo(m, $event.checked)"
+                              matTooltip="Dar o quitar todo el módulo" aria-label="Dar o quitar todo el módulo"></mat-checkbox>
             </div>
-            <div *ngIf="group.subtitle" class="text-xs text-secondary mt-0.5">{{ group.subtitle }}</div>
-          </div>
-        </div>
 
-        <div class="p-4 flex flex-col gap-1">
-          <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: group.children }"></ng-container>
-        </div>
+            <div *ngIf="estaExpandido(m)" class="border-t border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+                <div *ngFor="let v of m.vistas; trackBy: trackPorId"
+                     class="px-4 py-3 flex flex-col gap-2 transition-colors"
+                     [ngClass]="estadoVista(v) !== 'nada' ? 'bg-primary/5' : ''">
 
-      </div>
+                    <div class="flex items-center gap-3 min-w-0">
+                        <mat-checkbox color="primary" [checked]="estadoVista(v) === 'todo'" [indeterminate]="estadoVista(v) === 'parcial'"
+                                      (change)="onVista(v, $event.checked)" [attr.aria-label]="'Acceso a ' + v.titulo"></mat-checkbox>
+                        <mat-icon *ngIf="v.icono" class="icon-size-4 shrink-0 text-slate-400" [svgIcon]="v.icono"></mat-icon>
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" [matTooltip]="v.id">{{ v.titulo }}</div>
+                            <div *ngIf="v.grupo" class="text-[11px] text-slate-400 truncate">{{ v.grupo }}</div>
+                        </div>
+                    </div>
 
-      <!-- Soportar type 'basic' como elemento directo en la raíz -->
-      <div *ngIf="group.type === 'basic'"
-        class="mb-6 rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 overflow-hidden">
-        <div class="p-4 flex flex-col gap-1">
-          <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: [group] }"></ng-container>
+                    <div class="flex flex-wrap gap-1.5 pl-[3.25rem]">
+                        <button *ngFor="let p of permisosPorVista[v.id]; trackBy: trackPorPermiso" type="button"
+                                (click)="onPermiso(v, p)" [attr.aria-pressed]="tienePermiso(v, p)"
+                                class="px-2.5 py-1 rounded-full border text-xs font-semibold transition-colors"
+                                [ngClass]="tienePermiso(v, p)
+                                    ? 'bg-primary border-primary text-on-primary shadow-sm'
+                                    : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-500 hover:border-primary hover:text-primary'">
+                            {{ etiqueta(v, p) }}
+                        </button>
+                        <span *ngIf="!permisosPorVista[v.id]?.length" class="text-xs italic text-amber-600">Sin permisos configurados</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </ng-container>
-  }
-
 </div>
-
-<ng-template #recursiveTree let-nodes>
-  <div class="flex flex-col w-full">
-    <ng-container *ngFor="let node of nodes">
-
-      <div *ngIf="node.type === 'collapsable'" class="mt-2 mb-2">
-        <div class="flex items-center px-2 py-1 text-secondary select-none">
-          <mat-icon class="icon-size-4 mr-2" [svgIcon]="node.icon"></mat-icon>
-          <span class="text-sm font-semibold italic">{{ node.title }}</span>
-        </div>
-        <div class="ml-3 pl-3 border-l-2 border-gray-300 dark:border-gray-600 space-y-1">
-          <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: node.children }"></ng-container>
-        </div>
-      </div>
-
-      <div *ngIf="node.type === 'basic'" class="flex flex-col mb-3">
-
-        <div
-          class="group flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
-          <div class="flex items-center">
-            <mat-icon class="icon-size-4 mr-3 text-secondary group-hover:text-primary transition-colors"
-              [svgIcon]="node.icon"></mat-icon>
-            <span
-              class="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white leading-none">
-              {{ node.title }}
-            </span>
-          </div>
-
-          <mat-checkbox [color]="'primary'"
-            [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].length > 0"
-            (change)="onPermissionChange(node.id, $event.checked)">
-          </mat-checkbox>
-        </div>
-
-        @if (loadError) {
-          <div class="ml-10 mt-1 mb-2 p-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded text-xs">
-            <mat-icon class="icon-size-3 inline mr-1">error</mat-icon>
-            Error al cargar permisos
-          </div>
-        } @else if (permisos && permisos.length > 0) {
-          <div class="ml-10 mt-1 mb-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <ng-container *ngFor="let permiso of permisos">
-              <mat-checkbox *ngIf="isPermisoVisibleForNode(node.id, permiso)" [color]="'accent'"
-                class="text-xs text-gray-500 scale-90 origin-left"
-                [checked]="selectedPermissions[node.id] && selectedPermissions[node.id].includes(permiso.permisoId)"
-                (change)="togglePermission(node.id, permiso.permisoId)">
-                {{ getPermisoLabel(node.id, permiso) }}
-              </mat-checkbox>
-            </ng-container>
-          </div>
-        } @else {
-          <div class="ml-10 mt-1 mb-2 p-2 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded text-xs">
-            <mat-icon class="icon-size-3 inline mr-1">info</mat-icon>
-            Sin permisos configurados
-          </div>
-        }
-
-      </div>
-
-    </ng-container>
-  </div>
-</ng-template>
