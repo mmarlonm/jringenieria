@@ -4,7 +4,7 @@ import { environment } from 'environments/environment';
 import { Observable } from 'rxjs';
 import {
     Beneficiario, BitacoraItem, Catalogos, ColaboradorDetalle, ColaboradorGuardar, ColaboradorLista,
-    ColaboradorNomina, ColaboradorSalud, Contrato, ContratoGuardar, Parametro
+    ColaboradorNomina, ColaboradorSalud, Contrato, ContratoGuardar, Parametro, ResultadoImportacion, UsuarioDisponible
 } from './colaboradores.types';
 
 /** Acceso al API de RRHH ET1 (colaboradores, contratos, datos sensibles y parámetros). */
@@ -24,6 +24,15 @@ export class ColaboradoresService {
 
     catalogos(): Observable<Catalogos> {
         return this._http.get<Catalogos>(`${this._api}/catalogos`);
+    }
+
+    usuariosDisponibles(): Observable<UsuarioDisponible[]> {
+        return this._http.get<UsuarioDisponible[]>(`${this._api}/usuarios-disponibles`);
+    }
+
+    /** Crea colaboradores INACTIVOS desde usuarios del sistema (idempotente: los que ya lo son se omiten). */
+    importarUsuarios(usuarioIds: number[]): Observable<ResultadoImportacion> {
+        return this._http.post<ResultadoImportacion>(`${this._api}/importar-usuarios`, { usuarioIds });
     }
 
     obtener(id: number): Observable<ColaboradorDetalle> {

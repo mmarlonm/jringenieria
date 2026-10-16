@@ -128,6 +128,21 @@ export interface BitacoraItem {
     nuevo: string | null;
 }
 
+/** Usuario activo del sistema que todavía no es colaborador (candidato a importar). */
+export interface UsuarioDisponible {
+    usuarioId: number;
+    nombre: string;
+    email: string | null;
+    puesto: string | null;
+    departamento: string | null;
+}
+
+/** Importados = colaboradores creados; omitidos = ids pedidos que no se importaron. */
+export interface ResultadoImportacion {
+    importados: number;
+    omitidos: number;
+}
+
 export interface Parametro {
     clave: string;
     valor: string;

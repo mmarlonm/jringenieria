@@ -1,0 +1,51 @@
+<h2 mat-dialog-title>Importar usuarios del sistema</h2>
+
+<mat-dialog-content class="!max-h-[60vh]">
+    @if (usuarios.length === 0) {
+        <div class="text-secondary">Todos los usuarios activos del sistema ya son colaboradores.</div>
+    } @else {
+        <p class="text-secondary mb-3">
+            Se crea un colaborador <b>INACTIVO</b> por cada usuario marcado, con su nombre, correo, puesto, área, fecha de ingreso,
+            domicilio y contacto de emergencia. El sueldo no se copia. Desmarca las cuentas que no sean personal.
+            Después ajusta el código JR de cada uno en su ficha.
+        </p>
+
+        <div class="overflow-auto rounded-2xl border">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b">
+                        <th class="p-3 w-12">
+                            <mat-checkbox [checked]="todosMarcados" [indeterminate]="algunoMarcado"
+                                (change)="alternarTodos($event.checked)" aria-label="Marcar todos"></mat-checkbox>
+                        </th>
+                        <th class="p-3">Nombre</th>
+                        <th class="p-3">Correo</th>
+                        <th class="p-3">Puesto</th>
+                        <th class="p-3">Área</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (u of usuarios; track u.usuarioId) {
+                        <tr class="border-b last:border-b-0">
+                            <td class="p-3">
+                                <mat-checkbox [checked]="seleccionados.has(u.usuarioId)"
+                                    (change)="alternar(u.usuarioId, $event.checked)" [attr.aria-label]="'Importar a ' + u.nombre"></mat-checkbox>
+                            </td>
+                            <td class="p-3 font-medium">{{ u.nombre }}</td>
+                            <td class="p-3">{{ u.email || '—' }}</td>
+                            <td class="p-3">{{ u.puesto || '—' }}</td>
+                            <td class="p-3">{{ u.departamento || '—' }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" type="button" [disabled]="seleccionados.size === 0 || importando" (click)="importar()">
+        Importar {{ seleccionados.size }} {{ seleccionados.size === 1 ? 'usuario' : 'usuarios' }}
+    </button>
+</mat-dialog-actions>
