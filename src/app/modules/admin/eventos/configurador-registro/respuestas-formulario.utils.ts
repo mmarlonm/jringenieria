@@ -100,3 +100,50 @@ export function fechaDesdeApi(iso: string): Date {
     const conZona = /(Z|[+-]\d{2}:?\d{2})$/i.test(iso);
     return new Date(conZona ? iso : iso + 'Z');
 }
+
+export interface IdentidadRespuesta {
+    nombre: string;
+    /** El nombre mostrado es el de la empresa (el formulario no pregunta el nombre de la persona). */
+    esEmpresa: boolean;
+    correo: string | null;
+    telefono: string | null;
+}
+
+const NOMBRES_DE_RELLENO = ['invitado', 'anonimo', ''];
+const CORREO_DE_RELLENO = /^invitado_[0-9a-f]+@registro\.jringenieria\.com$/i;
+// Se comparan etiquetas completas (sin acentos, signos ni mayúsculas): «¿A qué área de la empresa perteneces?» no pide el nombre de nadie.
+const PREGUNTA_NOMBRE_PERSONA = /^(cual es )?(tu |su )?nombre( completo| y apellidos?| de quien responde| del (encuestado|participante)| de la persona que responde)?$/;
+const PREGUNTA_EMPRESA = /^(nombre de( la| tu| su)? )?(empresa|compania|razon social|organizacion|institucion)( (u|o|y|\/) (empresa|organizacion|institucion))?$/;
+const normalizarEtiqueta = (e: string) => sinAcentos(e).replace(/[¿?¡!:.,;]/g, '').replace(/\s+/g, ' ').trim();
+
+/**
+ * Cuando un formulario no pide nombre ni correo (p. ej. una encuesta de satisfacción) el API registra a la persona como
+ * «Invitado» con un correo y un teléfono inventados. Aquí se descartan esos datos de relleno y, si hace falta, se
+ * identifica a la persona por lo que contestó: primero una pregunta con su nombre y, si no hay, la empresa.
+ */
+export function resolverIdentidad(
+    r: { nombreAsistente?: string | null; correoAsistente?: string | null; telefonoAsistente?: string | null },
+    campos: CampoConfig[], respuestas: Record<string, any>
+): IdentidadRespuesta {
+    const correo = (r.correoAsistente || '').trim();
+    const telefono = (r.telefonoAsistente || '').trim();
+    const datos = {
+        correo: correo && !CORREO_DE_RELLENO.test(correo) ? correo : null,
+        telefono: telefono && !/^0+$/.test(telefono) ? telefono : null,
+    };
+
+    const nombreReal = (r.nombreAsistente || '').trim();
+    if (!NOMBRES_DE_RELLENO.includes(sinAcentos(nombreReal))) return { nombre: nombreReal, esEmpresa: false, ...datos };
+
+    const contestadas = [...campos]
+        .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+        .filter(c => c.tipo !== 'section' && c.tipo !== 'matrix' && c.tipo !== 'file' && c.tipo !== 'checkbox')
+        .map(c => ({ etiqueta: c.etiqueta || '', valor: typeof respuestas[c.id] === 'string' ? respuestas[c.id].trim() : '' }))
+        .filter(c => c.valor !== '' && !c.valor.startsWith('data:'));
+
+    const persona = contestadas.find(c => PREGUNTA_NOMBRE_PERSONA.test(normalizarEtiqueta(c.etiqueta)));
+    if (persona) return { nombre: persona.valor, esEmpresa: false, ...datos };
+    const empresa = contestadas.find(c => PREGUNTA_EMPRESA.test(normalizarEtiqueta(c.etiqueta)));
+    if (empresa) return { nombre: empresa.valor, esEmpresa: true, ...datos };
+    return { nombre: 'Invitado', esEmpresa: false, ...datos };
+}
