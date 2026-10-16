@@ -53,6 +53,66 @@ th.mat-column-folio {
     z-index: 110 !important; // Above other headers
 }
 
+// ---- Tabla de solicitudes: encabezado, hover de fila y columnas fijas (Folio y Acciones) ----
+// Fuse quita el fondo de la fila al pasar el mouse (background: none !important), así que el hover se pinta en las
+// celdas. Las columnas fijas llevan fondo propio (sin él se veía «Fecha Creación» pasando bajo los botones).
+solicitud-compra-list {
+    table.mat-mdc-table {
+        th.mat-mdc-header-cell {
+            background-color: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        td.mat-mdc-cell {
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        tr.mat-mdc-row:hover td.mat-mdc-cell {
+            background-color: #f8fafc;
+        }
+    }
+
+    td.mat-column-folio,
+    td.mat-column-acciones {
+        background-color: #ffffff;
+        z-index: 20 !important;
+    }
+
+    td.mat-column-acciones {
+        box-shadow: -2px 0 6px -2px rgba(0, 0, 0, 0.06);
+        width: 150px;
+        min-width: 150px;
+    }
+}
+
+.dark solicitud-compra-list {
+    table.mat-mdc-table {
+        th.mat-mdc-header-cell {
+            background-color: #1e293b !important;
+            border-bottom-color: #334155;
+            color: #94a3b8;
+        }
+
+        td.mat-mdc-cell {
+            border-bottom-color: #1e293b;
+        }
+
+        tr.mat-mdc-row:hover td.mat-mdc-cell {
+            background-color: #1e293b;
+        }
+    }
+
+    td.mat-column-folio,
+    td.mat-column-acciones {
+        background-color: #111827;
+    }
+}
+
 tr.mat-header-row {
     background-color: white !important;
 }

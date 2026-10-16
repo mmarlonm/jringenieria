@@ -1,0 +1,151 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 sm:p-10 bg-card dark:bg-transparent">
+    <div class="mb-6">
+        <h2 class="text-3xl font-extrabold tracking-tight">Permisos especiales</h2>
+        <p class="text-secondary mt-1">
+            Acciones sensibles que solo pueden hacer los usuarios a los que se les concede. Se asignan a personas, no a roles.
+        </p>
+    </div>
+
+    <div class="flex gap-2 mb-6">
+        <button mat-flat-button [color]="vista === 'permiso' ? 'primary' : undefined" (click)="vista = 'permiso'">
+            Por permiso
+        </button>
+        <button mat-flat-button [color]="vista === 'usuario' ? 'primary' : undefined" (click)="vista = 'usuario'">
+            Por usuario
+        </button>
+    </div>
+
+    <div *ngIf="cargando" class="text-secondary">Cargando…</div>
+    <div *ngIf="errorCarga" class="p-4 rounded-xl bg-rose-50 text-rose-700 border border-rose-200">{{ errorCarga }}</div>
+
+    <!-- ===================== POR PERMISO ===================== -->
+    <div *ngIf="!cargando && !errorCarga && vista === 'permiso'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Lista de permisos -->
+        <div class="lg:col-span-1 space-y-4">
+            <input type="text" [(ngModel)]="busquedaPermiso" (ngModelChange)="aplicarBusquedaPermiso()"
+                   placeholder="Buscar permiso…"
+                   class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent">
+
+            <div *ngFor="let grupo of grupos">
+                <div class="text-xs font-bold uppercase tracking-wider text-secondary mb-2">{{ grupo.modulo }}</div>
+                <button *ngFor="let p of grupo.permisos" type="button" (click)="seleccionar(p)"
+                        class="w-full text-left p-3 mb-2 rounded-xl border transition-colors"
+                        [ngClass]="seleccionado?.id === p.id
+                            ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40'
+                            : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-semibold text-sm">{{ p.nombre }}</span>
+                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">
+                            {{ p.totalAsignados }} {{ p.totalAsignados === 1 ? 'usuario' : 'usuarios' }}
+                        </span>
+                    </div>
+                    <div class="text-[11px] font-mono text-secondary mt-0.5">{{ p.codigo }}</div>
+                    <div *ngIf="!p.activo" class="text-[11px] text-amber-600 mt-0.5">Desactivado</div>
+                </button>
+            </div>
+            <div *ngIf="grupos.length === 0" class="text-secondary text-sm">No hay permisos que coincidan.</div>
+        </div>
+
+        <!-- Detalle -->
+        <div class="lg:col-span-2">
+            <div *ngIf="!seleccionado" class="text-secondary p-6 border border-dashed rounded-2xl text-center">
+                Elige un permiso de la lista para ver y asignar usuarios.
+            </div>
+
+            <div *ngIf="seleccionado" class="space-y-6">
+                <div class="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-4">
+                    <div class="text-[11px] font-mono text-secondary">{{ seleccionado.codigo }}</div>
+
+                    <label class="block">
+                        <span class="text-xs font-bold uppercase tracking-wider text-secondary">Nombre</span>
+                        <input type="text" [(ngModel)]="edicion.nombre" maxlength="200"
+                               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent">
+                    </label>
+
+                    <label class="block">
+                        <span class="text-xs font-bold uppercase tracking-wider text-secondary">Descripción</span>
+                        <textarea [(ngModel)]="edicion.descripcion" rows="2" maxlength="500"
+                                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"></textarea>
+                    </label>
+
+                    <div class="flex items-center justify-between">
+                        <mat-slide-toggle [(ngModel)]="edicion.activo">
+                            {{ edicion.activo ? 'Activo' : 'Desactivado: nadie lo tiene mientras esté así' }}
+                        </mat-slide-toggle>
+                        <button mat-flat-button color="primary" [disabled]="!hayCambios || !edicion.nombre.trim()"
+                                (click)="guardarCambios()">
+                            Guardar cambios
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-secondary">Usuarios con este permiso</div>
+
+                    <div *ngIf="cargandoAsignaciones" class="text-secondary text-sm">Cargando…</div>
+                    <div *ngIf="!cargandoAsignaciones && asignaciones.length === 0" class="text-secondary text-sm">
+                        Nadie lo tiene todavía.
+                    </div>
+
+                    <div *ngFor="let a of asignaciones"
+                         class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+                        <div>
+                            <div class="font-semibold text-sm">{{ a.nombreUsuario }}</div>
+                            <div class="text-[11px] text-secondary">{{ a.email }} · desde {{ a.fechaAsignacion | date:'dd/MM/yyyy' }}</div>
+                        </div>
+                        <button mat-icon-button type="button" (click)="quitar(a)" title="Quitar permiso">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input type="text" [(ngModel)]="busquedaUsuario" (ngModelChange)="buscarUsuario()"
+                               placeholder="Agregar usuario: escribe su nombre o correo…"
+                               class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent">
+                        <div *ngIf="sugerencias.length > 0"
+                             class="absolute z-10 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+                            <button *ngFor="let u of sugerencias" type="button" (click)="asignar(u)"
+                                    class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+                                <div class="text-sm font-semibold">{{ u.nombreUsuario }}</div>
+                                <div class="text-[11px] text-secondary">{{ u.email }}</div>
+                            </button>
+                        </div>
+                        <div *ngIf="busquedaUsuario && sugerencias.length === 0" class="text-[11px] text-secondary mt-1">
+                            Sin coincidencias (o ya tiene el permiso).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== POR USUARIO ===================== -->
+    <div *ngIf="!cargando && !errorCarga && vista === 'usuario'" class="max-w-2xl space-y-6">
+        <div class="relative">
+            <input type="text" [(ngModel)]="busquedaUsuarioVista" (ngModelChange)="buscarUsuarioVista()"
+                   placeholder="Busca un usuario por nombre o correo…"
+                   class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent">
+            <div *ngIf="sugerenciasVista.length > 0"
+                 class="absolute z-10 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+                <button *ngFor="let u of sugerenciasVista" type="button" (click)="elegirUsuario(u)"
+                        class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <div class="text-sm font-semibold">{{ u.nombreUsuario }}</div>
+                    <div class="text-[11px] text-secondary">{{ u.email }}</div>
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="usuarioElegido" class="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
+            <div class="font-bold">{{ usuarioElegido.nombreUsuario }}</div>
+            <div *ngIf="permisosDelUsuario.length === 0" class="text-secondary text-sm">
+                No tiene permisos especiales.
+            </div>
+            <div *ngFor="let p of permisosDelUsuario" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+                <div class="font-semibold text-sm">{{ p.nombre }}</div>
+                <div class="text-[11px] text-secondary">{{ p.modulo }} · <span class="font-mono">{{ p.codigo }}</span></div>
+                <div *ngIf="!p.activo" class="text-[11px] text-amber-600">El permiso está desactivado: no le aplica.</div>
+            </div>
+        </div>
+    </div>
+</div>

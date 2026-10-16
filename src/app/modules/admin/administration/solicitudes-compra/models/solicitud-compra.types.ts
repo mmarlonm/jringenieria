@@ -38,6 +38,7 @@ export interface SolicitudCompra {
     idEstatus: number;
     nombreEstatus: string;
     datosFacturaContpaqi?: any;
+    documentacion?: import('app/core/documentos-requisicion/documentos-requisicion.types').ResumenDocumentacion | null;
     estadoLiquidacion: number;
     tipoOperacion?: number; // 1: Compra, 2: Gasto
 

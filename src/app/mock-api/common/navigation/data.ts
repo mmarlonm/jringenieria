@@ -406,6 +406,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'apps.contacts', title: 'Usuarios', type: 'basic', icon: 'heroicons_outline:user-group', link: '/security/users' },
             { id: 'apps.roles', title: 'Roles', type: 'basic', icon: 'heroicons_outline:lock-closed', link: '/security/roles' },
             { id: 'apps.activity-monitor', title: 'Monitor de Actividad', type: 'basic', icon: 'heroicons_outline:eye', link: '/security/activity-monitor' },
+            { id: 'apps.permisos-especiales', title: 'Permisos especiales', type: 'basic', icon: 'heroicons_outline:key', link: '/security/permisos-especiales' },
             { id: 'reports.login-logs', title: 'Historial de Inicios de Sesión', type: 'basic', icon: 'heroicons_outline:finger-print', link: '/reports/login-logs' }
         ]
     }

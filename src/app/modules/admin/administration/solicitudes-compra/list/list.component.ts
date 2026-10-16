@@ -22,6 +22,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
 import { ChatIaService } from 'app/core/services/chat-ia.service';
+import { DocumentosRequisicionDialogComponent } from '../../documentos-requisicion/documentos-requisicion-dialog.component';
+import { chipDocumentacion } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 
 @Component({
     selector: 'solicitud-compra-list',
@@ -40,6 +42,8 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
     sucursales: any[] = [];
     usuarios: any[] = [];
     count: number = 0;
+    cargando = true;
+    readonly chipDocumentos = chipDocumentacion;
 
     constructor(
         private _solicitudCompraService: SolicitudCompraService,
@@ -50,6 +54,21 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
         private _dialog: MatDialog,
         private _chatIaService: ChatIaService
     ) { }
+
+    /** Texto del botón «Documentos»: cuántos de los documentos requeridos están completos. */
+    textoDocumentos(s: SolicitudCompra): string {
+        const d = s.documentacion;
+        return d?.aplica ? `Documentos: ${d.requeridosCompletos} de ${d.requeridosTotal} completos` : 'Documentos';
+    }
+
+    abrirDocumentos(solicitud: SolicitudCompra): void {
+        this._dialog.open(DocumentosRequisicionDialogComponent, {
+            data: { idSolicitud: solicitud.idSolicitud, folio: solicitud.idSolicitud },
+            width: '100%',
+            maxWidth: '720px',
+            autoFocus: false
+        });
+    }
 
     ngOnInit(): void {
         this.solicitudes$ = this._solicitudCompraService.solicitudes$;
@@ -68,7 +87,10 @@ export class SolicitudCompraListComponent implements OnInit, OnDestroy {
         // Better way: use a trigger for filtering
         this._setupFiltering();
 
-        this._solicitudCompraService.getTodas().subscribe();
+        this._solicitudCompraService.getTodas().subscribe({
+            next: () => (this.cargando = false),
+            error: () => (this.cargando = false)
+        });
     }
 
     private _setupFiltering(): void {

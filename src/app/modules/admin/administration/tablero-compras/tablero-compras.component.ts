@@ -26,6 +26,8 @@ import { AnticipoDialogComponent } from './anticipo-dialog/anticipo-dialog.compo
 import { SalidasAlmacenTabComponent } from './salidas-almacen-tab/salidas-almacen-tab.component';
 import Swal from 'sweetalert2';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
+import { DocumentosRequisicionService } from 'app/core/documentos-requisicion/documentos-requisicion.service';
+import { chipDocumentacion, esPagadaSinDocumentos, estadoTipo, tipoIncompleto } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 
 import { ApexOptions, NgApexchartsModule } from 'ng-apexcharts';
 
@@ -88,8 +90,10 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         'cuadranteId',
         'estatus',
         'estadoLiquidacion',
+        'documentos',
         'acciones'
     ];
+    readonly chipDocumentos = chipDocumentacion;
     dataSource: MatTableDataSource<SolicitudCompra> = new MatTableDataSource();
     estatus: CatEstatusCompra[] = [];
 
@@ -108,7 +112,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
 
     usuarios: any[] = [];
     selectedStatusId: number | null = null;
-    selectedReportFilter: string | null = null; // 'pendiente_pago' | 'pendiente_factura' | 'pendiente_evidencia' | null
+    selectedReportFilter: string | null = null; // 'pendiente_pago' | 'pendiente_factura' | 'pendiente_evidencia' | 'pagadas_sin_documentos' | null
     showFilters: boolean = true;
 
     toggleFilters(): void {
@@ -191,7 +195,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         private _dialog: MatDialog,
         private _purchaseReceptionService: PurchaseReceptionService,
         private _router: Router,
-        private _excelService: CommonExcelExportService
+        private _excelService: CommonExcelExportService,
+        private _documentosService: DocumentosRequisicionService
     ) {
     }
 
@@ -285,6 +290,10 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         dialogRef.afterClosed().subscribe((res) => {
             if (res?.convertirRecepcion) {
                 this.crearRecepcionAutomatica(row);
+            }
+            // Cambiaron documentos: la requisición pudo cerrarse y la columna «Documentos» debe actualizarse
+            if (res?.huboCambios) {
+                this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
             }
         });
     }
@@ -799,6 +808,11 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** Vuelve a pedir la lista: un cambio de pago o de documentos puede cerrar la requisición o cambiar su chip. */
+    private _refrescarLista(): void {
+        this._solicitudCompraService.getTodas(this.fechaInicio, this.fechaFin).subscribe();
+    }
+
     private _ejecutarEstadoLiquidacion(row: any, estadoFinal: number, textoEstado: string, archivos?: File[], anticipos?: any[]): void {
         const userObjStr = localStorage.getItem('userInformation');
         let idUsuario = 0;
@@ -822,9 +836,11 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 next: () => {
                     row.estadoLiquidacion = estadoFinal;
                     if (archivos && archivos.length > 0) {
-                        const uploads = archivos.map(file => this._solicitudCompraService.subirArchivo(row.idSolicitud, file, 'Pagos'));
+                        // El comprobante es un documento de tipo «Pago»: pasa por revisión y puede cerrar la requisición
+                        const uploads = archivos.map(file => this._documentosService.subir(row.idSolicitud, 'Pago', file));
                         forkJoin(uploads).subscribe({
                             next: () => {
+                                this._refrescarLista();
                                 Swal.fire({
                                     title: '¡Éxito!',
                                     text: `Estado actualizado a ${textoEstado} con ${archivos.length} comprobante(s)`,
@@ -833,11 +849,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                                     showConfirmButton: false
                                 });
                             },
-                            error: () => {
-                                Swal.fire('Atención', 'Se cambió el estado pero el archivo no se pudo subir', 'warning');
+                            error: (err) => {
+                                this._refrescarLista();
+                                Swal.fire('Atención', `Se cambió el estado de pago, pero el comprobante no se pudo subir: ${err?.error?.mensaje || 'inténtalo de nuevo desde el detalle de la requisición.'}`, 'warning');
                             }
                         });
                     } else {
+                        this._refrescarLista();
                         Swal.fire({
                             title: '¡Éxito!',
                             text: `Estado de liquidación actualizado a: ${textoEstado}`,
@@ -950,16 +968,13 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                     // Solicitudes that are NOT fully paid (Liquidado = 1)
                     passReportFilters = data.estadoLiquidacion !== 1;
                 } else if (filterObj.reportFilter === 'pendiente_factura') {
-                    // Solicitudes with NO invoices registered in contpaqi AND no files uploaded containing "factura" in their name
-                    const hasContpaqiFact = !!(data.datosFacturaContpaqi?.folioInternoFactura || data.datosFacturaContpaqi?.folioFacturaProveedor);
-                    passReportFilters = !hasContpaqiFact;
+                    // Requisiciones en etapa documental cuya factura aún no está completa (falta, en revisión o rechazada)
+                    passReportFilters = tipoIncompleto(data, 'Factura');
                 } else if (filterObj.reportFilter === 'pendiente_evidencia') {
-                    // Estatus is Recibido (7) or Cerrada (8) but has no files uploaded containing "evidencia" in their name
-                    // In this local filter context, we'll check if they are in status >= 5 (since OC onwards can have reception)
-                    // and doesn't have a reception registered or no evidence uploaded
-                    // Estatus >= 5 means Orden Compra, Transito, Recibido, Cerrada
-                    const hasOcOrMore = data.idEstatus >= 5;
-                    passReportFilters = hasOcOrMore; // In detail dialog we can check files
+                    passReportFilters = tipoIncompleto(data, 'Evidencia');
+                } else if (filterObj.reportFilter === 'pagadas_sin_documentos') {
+                    // Liquidadas a las que solo les falta documentación para cerrarse
+                    passReportFilters = esPagadaSinDocumentos(data);
                 }
 
                 return passGlobal && passStatusProcess && passPriorityProcess && passCuadranteProcess &&
@@ -1208,13 +1223,14 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
             'Pago',
             'Factura CONTPAQi',
             'Pendiente Pago',
-            'Soporte Evidencia'
+            'Factura (documento)',
+            'Evidencia (documento)',
+            'Comprobante de pago (documento)'
         ];
 
         const rows = solicitudes.map(s => {
             const hasFactura = !!(s.datosFacturaContpaqi?.folioInternoFactura || s.datosFacturaContpaqi?.folioFacturaProveedor);
             const isPendientePago = s.estadoLiquidacion !== 1;
-            const hasEvidence = s.idEstatus >= 7; // Estatus Recibido / Cerrada implies evidence loaded or pending closed
 
             return [
                 s.idSolicitud,
@@ -1241,7 +1257,9 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 this.getEstadoLiquidacionLabel(s.estadoLiquidacion),
                 hasFactura ? 'SI VINCULADA' : 'NO SUBIDA / PENDIENTE',
                 isPendientePago ? 'PENDIENTE DE PAGO' : 'PAGADO/LIQUIDADO',
-                hasEvidence ? 'ENTREGADO (EVIDENCIA REQUERIDA)' : 'NO ENTREGADO'
+                estadoTipo(s.documentacion, 'Factura'),
+                estadoTipo(s.documentacion, 'Evidencia'),
+                estadoTipo(s.documentacion, 'Pago')
             ];
         });
 

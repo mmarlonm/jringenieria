@@ -1,0 +1,100 @@
+<div class="flex flex-col gap-3">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <mat-icon class="mr-2 text-primary">fact_check</mat-icon>
+            <span class="text-base font-bold text-gray-800 dark:text-gray-100">Documentación</span>
+        </div>
+        <span *ngIf="datos" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase"
+              [ngClass]="datos.cerrada ? 'bg-slate-200 text-slate-700' : (datos.completa ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')">
+            {{ datos.cerrada ? 'Requisición cerrada' : (datos.completa ? 'Documentación completa' : 'Documentación incompleta') }}
+        </span>
+    </div>
+
+    <div *ngIf="cargando && !datos" class="text-xs text-secondary">Cargando…</div>
+    <div *ngIf="error" class="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">{{ error }}</div>
+
+    <div *ngIf="datos && !datos.aplica && !datos.cerrada"
+         class="text-[11px] text-secondary italic p-3 border border-dashed rounded-xl">
+        Esta requisición todavía no pide documentos (se piden cuando se aprueba o se registra un pago). Puedes adelantar los que ya tengas.
+    </div>
+
+    <div *ngIf="datos && datos.motivoNoCierre && datos.aplica && !datos.cerrada"
+         class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">
+        {{ datos.motivoNoCierre }}
+    </div>
+
+    <div *ngFor="let t of datos?.requeridos" class="rounded-2xl border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+            <div>
+                <div class="text-sm font-bold">{{ t.nombre }}</div>
+                <div class="text-[10px] text-secondary uppercase">{{ t.extensiones.join(' · ') }} · máx. 10 MB</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase" [ngClass]="claseEstado(t.estado)">
+                    {{ etiquetaEstado(t) }}
+                </span>
+                <label *ngIf="!datos?.cerrada"
+                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer border border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                       [class.opacity-50]="subiendo[t.tipo]" [class.pointer-events-none]="subiendo[t.tipo]">
+                    <mat-icon class="icon-size-4">upload_file</mat-icon>
+                    {{ subiendo[t.tipo] ? 'Subiendo…' : 'Subir' }}
+                    <input type="file" class="hidden" [accept]="aceptar(t)" (change)="elegirArchivo(t, $event)">
+                </label>
+            </div>
+        </div>
+
+        <div *ngIf="documentosDe(t.tipo).length === 0" class="text-[11px] text-secondary italic">Sin archivos todavía.</div>
+
+        <div *ngFor="let d of documentosDe(t.tipo)" class="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 space-y-1">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <div class="text-xs font-semibold truncate" [title]="d.nombreOriginal">{{ d.nombreOriginal }}</div>
+                    <div class="text-[10px] text-secondary">
+                        {{ tamano(d.tamanoBytes) }} · {{ d.nombreSubidoPor || 'Usuario ' + d.subidoPor }} · {{ d.fechaSubida | date:'dd/MM/yyyy HH:mm' }}
+                    </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase flex-shrink-0" [ngClass]="claseEstado(d.estatus)">
+                    {{ d.estatus }}{{ d.aprobadoAutomaticamente ? ' (auto)' : '' }}
+                </span>
+            </div>
+
+            <div *ngIf="d.estatus === 'Rechazado' && d.comentarioRevision"
+                 class="text-[11px] text-rose-700 bg-rose-50 border border-rose-100 rounded-lg p-2">
+                <b>Motivo del rechazo:</b> {{ d.comentarioRevision }}
+                <span *ngIf="d.nombreRevisor" class="text-secondary"> — {{ d.nombreRevisor }}</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <button type="button" (click)="ver(d)" class="text-[10px] font-bold uppercase text-indigo-600 hover:underline flex items-center gap-1">
+                    <mat-icon class="icon-size-4">visibility</mat-icon> Ver
+                </button>
+                <button type="button" (click)="descargar(d)" class="text-[10px] font-bold uppercase text-slate-500 hover:text-emerald-600 hover:underline flex items-center gap-1">
+                    <mat-icon class="icon-size-4">download</mat-icon> Descargar
+                </button>
+                <button *ngIf="puedeBorrar(d)" type="button" (click)="eliminar(d)" class="text-[10px] font-bold uppercase text-red-500 hover:underline flex items-center gap-1">
+                    <mat-icon class="icon-size-4">delete</mat-icon> Eliminar
+                </button>
+
+                <ng-container *ngIf="puedeRevisar && !datos?.cerrada">
+                    <button *ngIf="d.estatus !== 'Aprobado'" type="button" (click)="aprobar(d)"
+                            class="text-[10px] font-bold uppercase text-emerald-700 hover:underline flex items-center gap-1">
+                        <mat-icon class="icon-size-4">check_circle</mat-icon> Aprobar
+                    </button>
+                    <button *ngIf="d.estatus !== 'Rechazado'" type="button" (click)="iniciarRechazo(d)"
+                            class="text-[10px] font-bold uppercase text-rose-700 hover:underline flex items-center gap-1">
+                        <mat-icon class="icon-size-4">cancel</mat-icon> Rechazar
+                    </button>
+                </ng-container>
+            </div>
+
+            <div *ngIf="rechazando?.idDocumento === d.idDocumento" class="space-y-2 pt-1">
+                <textarea [(ngModel)]="motivoRechazo" rows="2" maxlength="500" placeholder="Motivo del rechazo (obligatorio)"
+                          class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-xs"></textarea>
+                <div class="flex gap-2 justify-end">
+                    <button mat-button type="button" (click)="cancelarRechazo()">Cancelar</button>
+                    <button mat-flat-button color="warn" type="button" [disabled]="!motivoRechazo.trim()" (click)="confirmarRechazo()">Rechazar documento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

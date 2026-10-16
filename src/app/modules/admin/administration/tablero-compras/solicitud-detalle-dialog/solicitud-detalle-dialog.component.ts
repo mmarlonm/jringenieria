@@ -12,6 +12,7 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
+import { DocumentosRequisicionComponent } from '../../documentos-requisicion/documentos-requisicion.component';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -444,6 +445,9 @@ import Swal from 'sweetalert2';
                         </p>
                     </div>
 
+                    <!-- Documentación (factura, evidencia, comprobante de pago) -->
+                    <documentos-requisicion [idSolicitud]="data.idSolicitud" (cambio)="documentosCambiaron()"></documentos-requisicion>
+
                     <!-- Files -->
                     <div class="flex flex-col">
                         <div class="flex items-center mb-3">
@@ -513,7 +517,8 @@ import Swal from 'sweetalert2';
         MatIconModule,
         MatDividerModule,
         MatTableModule,
-        MatTooltipModule
+        MatTooltipModule,
+        DocumentosRequisicionComponent
     ],
     styles: [`
         .custom-scrollbar::-webkit-scrollbar {
@@ -537,6 +542,8 @@ export class SolicitudDetalleDialogComponent implements OnInit {
     archivos: any[] = [];
     usuarios: any[] = [];
     currentUserId: number = 0;
+    /** Se subió, borró, aprobó o rechazó un documento (la requisición pudo cerrarse): el tablero debe refrescar al cerrar. */
+    private huboCambiosEnDocumentos = false;
 
     constructor(
         public dialogRef: MatDialogRef<SolicitudDetalleDialogComponent>,
@@ -787,7 +794,12 @@ export class SolicitudDetalleDialogComponent implements OnInit {
         this.dialogRef.close({ convertirRecepcion: true });
     }
 
+    documentosCambiaron(): void {
+        this.huboCambiosEnDocumentos = true;
+        this.loadDetail();
+    }
+
     close(): void {
-        this.dialogRef.close();
+        this.dialogRef.close(this.huboCambiosEnDocumentos ? { huboCambios: true } : undefined);
     }
 }

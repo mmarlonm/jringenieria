@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ChatIaService } from 'app/core/services/chat-ia.service';
+import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TextFieldModule } from '@angular/cdk/text-field';
@@ -105,7 +106,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
         private _http: HttpClient,
         private _chatIaService: ChatIaService,
         private _userService: UserService,
-        private _taskService: TaskService
+        private _taskService: TaskService,
+        private _permisosEspeciales: PermisosEspecialesService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -116,6 +118,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
      * On init
      */
     ngOnInit(): void {
+        // Permisos especiales del usuario (para mostrar u ocultar botones); si falla, simplemente no se muestran
+        this._permisosEspeciales.cargar().subscribe({ error: () => { /* sin permisos especiales hasta recargar */ } });
+
         // Set the theme and scheme based on the configuration
         combineLatest([
             this._fuseConfigService.config$,

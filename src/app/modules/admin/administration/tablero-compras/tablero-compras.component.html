@@ -60,7 +60,7 @@
                     <div *ngIf="selectedReportFilter"
                         class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 text-xs font-bold border border-indigo-200">
                         <mat-icon class="icon-size-4 mr-2" svgIcon="heroicons_solid:presentation-chart-line"></mat-icon>
-                        Reporte: {{ selectedReportFilter === 'pendiente_pago' ? 'PENDIENTES DE PAGO' : (selectedReportFilter === 'pendiente_factura' ? 'PENDIENTES DE FACTURA' : 'PENDIENTES DE EVIDENCIA') }}
+                        Reporte: {{ selectedReportFilter === 'pendiente_pago' ? 'PENDIENTES DE PAGO' : (selectedReportFilter === 'pendiente_factura' ? 'PENDIENTES DE FACTURA' : (selectedReportFilter === 'pagadas_sin_documentos' ? 'PAGADAS SIN DOCUMENTACIÓN' : 'PENDIENTES DE EVIDENCIA')) }}
                         <button mat-icon-button class="icon-size-4 ml-2" (click)="filterByReport(null)"
                             matTooltip="Quitar reporte">
                             <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
@@ -90,6 +90,13 @@
                             (click)="filterByReport('pendiente_evidencia')">
                         <mat-icon class="icon-size-4 mr-1.5" [ngClass]="selectedReportFilter === 'pendiente_evidencia' ? 'text-white' : 'text-indigo-600'">archive</mat-icon>
                         PENDIENTES EVIDENCIA ALMACÉN
+                    </button>
+                    <button mat-stroked-button
+                            [ngClass]="selectedReportFilter === 'pagadas_sin_documentos' ? '!bg-rose-600 !text-white' : '!bg-white text-gray-700'"
+                            class="!rounded-lg !text-xs !font-bold transition-all"
+                            (click)="filterByReport('pagadas_sin_documentos')">
+                        <mat-icon class="icon-size-4 mr-1.5" [ngClass]="selectedReportFilter === 'pagadas_sin_documentos' ? 'text-white' : 'text-rose-600'">fact_check</mat-icon>
+                        PAGADAS SIN DOCUMENTACIÓN
                     </button>
                 </div>
             </div>
@@ -928,6 +935,24 @@
                                         </div>
                                     </button>
                                 </mat-menu>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="documentos">
+                            <th mat-header-cell *matHeaderCellDef class="text-center">Documentos</th>
+                            <td mat-cell *matCellDef="let s" class="px-2 py-3 text-center">
+                                <ng-container *ngIf="chipDocumentos(s.documentacion, s.estadoLiquidacion) as chip; else sinChip">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider shadow-sm"
+                                          [ngClass]="{
+                                              'bg-emerald-100 text-emerald-700': chip.color === 'verde',
+                                              'bg-amber-100 text-amber-700': chip.color === 'ambar',
+                                              'bg-rose-100 text-rose-700': chip.color === 'rojo'
+                                          }"
+                                          [matTooltip]="chip.color === 'rojo' ? 'Liquidada y con documentación pendiente' : (chip.color === 'verde' ? 'Documentación completa' : 'Faltan documentos')">
+                                        {{ chip.texto }}
+                                    </span>
+                                </ng-container>
+                                <ng-template #sinChip><span class="text-gray-300">—</span></ng-template>
                             </td>
                         </ng-container>
 

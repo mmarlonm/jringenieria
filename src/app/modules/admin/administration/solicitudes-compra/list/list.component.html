@@ -1,17 +1,17 @@
 <div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-card">
     <!-- Header -->
-    <div class="flex-none flex flex-col p-6 sm:py-6 sm:px-10 border-b bg-white dark:bg-transparent">
-        <div>
-            <div class="text-4xl font-extrabold leading-none tracking-tight">
+    <div class="flex-none flex flex-col px-6 py-5 sm:px-10 border-b bg-white dark:bg-transparent">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="text-3xl font-extrabold leading-none tracking-tight">
                 Solicitudes de Compra
             </div>
-            <div class="text-secondary ml-0.5 font-medium">
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
                 {{ count }} {{ count === 1 ? 'solicitud' : 'solicitudes' }}
-            </div>
+            </span>
         </div>
 
         <!-- Main actions -->
-        <div class="mt-4 flex flex-col sm:flex-row items-center sm:mt-6 gap-4">
+        <div class="mt-4 flex flex-col sm:flex-row items-center gap-4">
             <!-- Search -->
             <div class="flex-auto w-full sm:max-w-xs md:max-w-sm">
                 <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded w-full" [subscriptSizing]="'dynamic'">
@@ -34,14 +34,20 @@
                     </mat-form-field>
                 </div>
 
-                <button mat-flat-button color="primary" class="!bg-emerald-600 hover:!bg-emerald-700 !text-white h-10 rounded-lg px-4 flex items-center shadow-sm" (click)="exportarCSV()">
-                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
-                    <span class="ml-2 text-sm font-bold uppercase tracking-wider hidden sm:inline">Exportar Excel</span>
+                <button mat-stroked-button type="button" (click)="exportarCSV()" matTooltip="Exportar a Excel"
+                        class="!h-10 !rounded-xl !px-4 !border-emerald-600 !text-emerald-700 hover:!bg-emerald-50">
+                    <span class="flex items-center">
+                        <mat-icon class="icon-size-5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                        <span class="ml-2 text-sm font-bold uppercase tracking-wider hidden sm:inline">Exportar Excel</span>
+                    </span>
                 </button>
 
-                <button mat-flat-button color="primary" [routerLink]="['./new']" class="h-10 rounded-lg px-4 sm:px-6 shadow-sm shadow-primary/20 flex items-center">
-                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:plus"></mat-icon>
-                    <span class="ml-2 text-sm font-bold uppercase tracking-wider">Nueva</span>
+                <button mat-flat-button color="primary" type="button" [routerLink]="['./new']"
+                        class="!h-10 !rounded-xl !px-5 shadow-sm shadow-primary/20">
+                    <span class="flex items-center">
+                        <mat-icon class="icon-size-5" svgIcon="heroicons_outline:plus"></mat-icon>
+                        <span class="ml-2 text-sm font-bold uppercase tracking-wider">Nueva</span>
+                    </span>
                 </button>
             </div>
         </div>
@@ -49,7 +55,7 @@
 
     <!-- Main Content -->
     <div class="flex flex-col flex-auto overflow-hidden p-3 sm:p-5">
-        <div class="flex flex-col flex-auto mat-elevation-z8 bg-card rounded-2xl overflow-hidden border min-h-0">
+        <div class="flex flex-col flex-auto shadow-sm bg-card rounded-2xl overflow-hidden border min-h-0">
             <div class="flex-auto overflow-y-auto overflow-x-auto">
             <table mat-table [dataSource]="filteredSolicitudes$ | async" matSort class="w-full">
                 <!-- Creado Por -->
@@ -203,19 +209,51 @@
 
                 <!-- Acciones -->
                 <ng-container matColumnDef="acciones" stickyEnd>
-                    <th mat-header-cell *matHeaderCellDef class="text-center w-32">Acciones</th>
+                    <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
                     <td mat-cell *matCellDef="let s" class="text-center">
-                        <button mat-icon-button color="accent" class="small-icon-button" [routerLink]="['edit', s.idSolicitud]" matTooltip="Editar">
-                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
-                        </button>
-                        <button mat-icon-button color="warn" class="small-icon-button" (click)="deleteSolicitud(s.idSolicitud)" matTooltip="Eliminar">
-                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
-                        </button>
+                        <div class="flex flex-nowrap items-center justify-center gap-1">
+                            <button type="button" [routerLink]="['edit', s.idSolicitud]" matTooltip="Editar" aria-label="Editar solicitud"
+                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:pencil-square"></mat-icon>
+                            </button>
+
+                            <button type="button" (click)="abrirDocumentos(s)" [matTooltip]="textoDocumentos(s)" aria-label="Documentos de la solicitud"
+                                    class="inline-flex items-center justify-center gap-1 h-8 min-w-[4.25rem] rounded-lg px-2 text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:document-check"></mat-icon>
+                                <ng-container *ngIf="chipDocumentos(s.documentacion, s.estadoLiquidacion) as chip">
+                                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold leading-none"
+                                          [ngClass]="{
+                                              'bg-emerald-100 text-emerald-700': chip.color === 'verde',
+                                              'bg-amber-100 text-amber-700': chip.color === 'ambar',
+                                              'bg-rose-100 text-rose-700': chip.color === 'rojo'
+                                          }">{{ chip.texto }}</span>
+                                </ng-container>
+                            </button>
+
+                            <button type="button" (click)="deleteSolicitud(s.idSolicitud)" matTooltip="Eliminar" aria-label="Eliminar solicitud"
+                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:trash"></mat-icon>
+                            </button>
+                        </div>
                     </td>
                 </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="bg-gray-50 uppercase text-xs font-semibold text-secondary"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors"></tr>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                <tr class="mat-mdc-row" *matNoDataRow>
+                    <td class="mat-mdc-cell !border-0" [attr.colspan]="displayedColumns.length">
+                        <div class="flex flex-col items-center justify-center gap-2 py-16 text-center text-secondary">
+                            <mat-icon class="icon-size-10 text-slate-300"
+                                      [svgIcon]="cargando ? 'heroicons_outline:arrow-path' : 'heroicons_outline:inbox'"
+                                      [class.animate-spin]="cargando"></mat-icon>
+                            <div class="text-base font-bold text-slate-600">
+                                {{ cargando ? 'Cargando solicitudes…' : 'No hay solicitudes para mostrar' }}
+                            </div>
+                            <div *ngIf="!cargando" class="text-sm">Prueba con otra búsqueda o cambia la sucursal.</div>
+                        </div>
+                    </td>
+                </tr>
             </table>
             </div>
         </div>
