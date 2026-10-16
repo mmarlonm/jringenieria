@@ -1,0 +1,195 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <div class="flex flex-col shadow bg-card">
+        <div class="flex flex-col p-6 sm:p-10 border-b">
+            <a class="text-secondary text-sm flex items-center" [routerLink]="['/rrhh/colaboradores']">
+                <mat-icon class="icon-size-4 mr-1" [svgIcon]="'heroicons_outline:arrow-left'"></mat-icon>
+                Colaboradores
+            </a>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+                <div class="text-3xl font-bold tracking-tight">
+                    {{ colaborador ? colaborador.codigo + ' · ' + colaborador.nombre : 'Nuevo colaborador' }}
+                </div>
+                @if (colaborador) {
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold"
+                        [ngClass]="estatus === 'ACTIVO' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'">
+                        {{ estatus }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                        Contrato: {{ colaborador.estatusContrato }}
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 sm:p-10">
+        @if (colaborador && estatus === 'INACTIVO') {
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 p-4 text-amber-900">
+                <div>
+                    @if (faltantes.length) {
+                        Para activar al colaborador falta: <b>{{ faltantes.join(', ') }}</b>.
+                    } @else {
+                        El expediente está completo: se puede activar.
+                    }
+                </div>
+                <button mat-flat-button color="primary" [disabled]="faltantes.length > 0 || guardando" (click)="activar()">
+                    Activar colaborador
+                </button>
+            </div>
+        }
+
+        <mat-tab-group animationDuration="0ms">
+            <mat-tab label="Datos generales">
+                <form class="pt-6" [formGroup]="form" (ngSubmit)="guardar()">
+                    <div class="text-lg font-semibold mb-2">Identificación y contratación</div>
+                    <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <mat-form-field>
+                            <mat-label>Código</mat-label>
+                            <input matInput formControlName="codigo" maxlength="20"
+                                [readonly]="id !== null" placeholder="JR-01 (se asigna solo si se deja vacío)">
+                        </mat-form-field>
+                        <mat-form-field class="sm:col-span-2">
+                            <mat-label>Nombre</mat-label>
+                            <input matInput formControlName="nombre" maxlength="200" required>
+                            <mat-error>El nombre es obligatorio.</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field>
+                            <mat-label>Sucursal</mat-label>
+                            <mat-select formControlName="sucursalId">
+                                <mat-option [value]="null">Sin asignar</mat-option>
+                                @for (s of catalogos?.sucursales ?? []; track s.id) {
+                                    <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Área</mat-label>
+                            <mat-select formControlName="departamentoId">
+                                <mat-option [value]="null">Sin asignar</mat-option>
+                                @for (d of catalogos?.departamentos ?? []; track d.id) {
+                                    <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Puesto</mat-label>
+                            <input matInput formControlName="puesto" maxlength="150">
+                        </mat-form-field>
+
+                        <mat-form-field class="sm:col-span-2">
+                            <mat-label>Jefe inmediato</mat-label>
+                            <mat-select formControlName="jefeInmediatoId">
+                                <mat-option [value]="null">Sin asignar</mat-option>
+                                @for (j of jefes; track j.colaboradorId) {
+                                    <mat-option [value]="j.colaboradorId">{{ j.codigo }} · {{ j.nombre }}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <mat-form-field>
+                            <mat-label>Alta IMSS</mat-label>
+                            <input matInput [matDatepicker]="pAlta" formControlName="fechaAltaImss">
+                            <mat-datepicker-toggle matIconSuffix [for]="pAlta"></mat-datepicker-toggle>
+                            <mat-datepicker #pAlta></mat-datepicker>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Baja IMSS</mat-label>
+                            <input matInput [matDatepicker]="pBaja" formControlName="fechaBajaImss">
+                            <mat-datepicker-toggle matIconSuffix [for]="pBaja"></mat-datepicker-toggle>
+                            <mat-datepicker #pBaja></mat-datepicker>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Ingreso real</mat-label>
+                            <input matInput [matDatepicker]="pIngreso" formControlName="fechaIngresoReal">
+                            <mat-datepicker-toggle matIconSuffix [for]="pIngreso"></mat-datepicker-toggle>
+                            <mat-datepicker #pIngreso></mat-datepicker>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Antigüedad reconocida</mat-label>
+                            <input matInput [matDatepicker]="pAntig" formControlName="fechaAntiguedadReconocida">
+                            <mat-datepicker-toggle matIconSuffix [for]="pAntig"></mat-datepicker-toggle>
+                            <mat-datepicker #pAntig></mat-datepicker>
+                        </mat-form-field>
+                    </div>
+
+                    @for (grupo of gruposTexto; track grupo.titulo) {
+                        <div class="text-lg font-semibold mt-4 mb-2">{{ grupo.titulo }}</div>
+                        <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
+                            @for (c of grupo.campos; track c.nombre) {
+                                <mat-form-field [class.sm:col-span-2]="c.ancho" [class.lg:col-span-3]="c.ancho">
+                                    <mat-label>{{ c.etiqueta }}</mat-label>
+                                    @if (c.ancho) {
+                                        <textarea matInput rows="2" [formControlName]="c.nombre" [maxlength]="c.max"></textarea>
+                                    } @else {
+                                        <input matInput [formControlName]="c.nombre" [maxlength]="c.max">
+                                    }
+                                </mat-form-field>
+                            }
+                        </div>
+                    }
+
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
+                        <button mat-flat-button color="primary" type="submit" [disabled]="guardando">
+                            {{ id ? 'Guardar cambios' : 'Crear colaborador' }}
+                        </button>
+                        @if (colaborador && estatus === 'ACTIVO') {
+                            <button mat-stroked-button color="warn" type="button" [disabled]="guardando" (click)="marcarInactivo()">
+                                Marcar como inactivo
+                            </button>
+                        }
+                    </div>
+                </form>
+            </mat-tab>
+
+            @if (colaborador) {
+                <mat-tab label="Beneficiarios">
+                    <div class="pt-6">
+                        @for (g of beneficiarios.controls; track $index) {
+                            <div class="grid grid-cols-1 items-start gap-x-4 sm:grid-cols-12" [formGroup]="g">
+                                <mat-form-field class="sm:col-span-4">
+                                    <mat-label>Nombre</mat-label>
+                                    <input matInput formControlName="nombre" maxlength="200">
+                                </mat-form-field>
+                                <mat-form-field class="sm:col-span-3">
+                                    <mat-label>CURP</mat-label>
+                                    <input matInput formControlName="curp" maxlength="18">
+                                </mat-form-field>
+                                <mat-form-field class="sm:col-span-2">
+                                    <mat-label>Porcentaje</mat-label>
+                                    <input matInput type="number" step="0.01" min="0.01" formControlName="porcentaje">
+                                </mat-form-field>
+                                <mat-form-field class="sm:col-span-2">
+                                    <mat-label>Parentesco</mat-label>
+                                    <input matInput formControlName="parentesco" maxlength="50">
+                                </mat-form-field>
+                                <button mat-icon-button class="sm:col-span-1" type="button" aria-label="Quitar beneficiario" (click)="quitarBeneficiario($index)">
+                                    <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                </button>
+                            </div>
+                        } @empty {
+                            <div class="text-secondary mb-4">Sin beneficiarios registrados.</div>
+                        }
+
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button mat-stroked-button type="button" (click)="agregarBeneficiario()">
+                                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                <span class="ml-2">Agregar beneficiario</span>
+                            </button>
+                            <button mat-flat-button color="primary" type="button" [disabled]="!beneficiariosValidos" (click)="guardarBeneficiarios()">
+                                Guardar beneficiarios
+                            </button>
+                            @if (beneficiarios.length > 0) {
+                                <span [class]="totalBeneficiarios === 100 ? 'text-green-700' : 'text-red-700'">
+                                    Total: {{ totalBeneficiarios }}% (debe ser 100%)
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </mat-tab>
+            }
+        </mat-tab-group>
+    </div>
+</div>
