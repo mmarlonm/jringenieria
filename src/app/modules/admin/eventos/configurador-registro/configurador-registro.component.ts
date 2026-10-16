@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -30,6 +31,7 @@ import {
 } from './formulario-registro.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { PersonalStaffService, PersonalStaff } from '../personal-staff/personal-staff.service';
+import { RespuestasFormularioDialogComponent } from './respuestas-formulario-dialog.component';
 
 @Component({
     selector: 'app-configurador-registro',
@@ -58,6 +60,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     private _usersService = inject(UsersService);
     private _staffService = inject(PersonalStaffService);
     private _snackBar = inject(MatSnackBar);
+    private _dialog = inject(MatDialog);
     private _cdr = inject(ChangeDetectorRef);
     private _route = inject(ActivatedRoute);
     private _destroy$ = new Subject<void>();
@@ -419,13 +422,25 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Ir directo a la pestaña de respuestas del formulario */
-    verRespuestasDesdeListado(form: FormularioRegistroAdminDto): void {
-        this.cargarFormularioDesdeDto(form);
-        this.activeTab = 'respuestas';
-        this.cargarRespuestas();
-        this.vistaActual = 'editor';
-        this._cdr.markForCheck();
+    /** Abre la ventana con quiénes respondieron el formulario y qué contestó cada uno */
+    verRespuestas(form: FormularioRegistroAdminDto): void {
+        this._dialog.open(RespuestasFormularioDialogComponent, {
+            data: { formulario: form },
+            width: '1000px',
+            maxWidth: '95vw',
+            autoFocus: false,
+        });
+    }
+
+    /** Lo mismo, desde el editor del formulario abierto */
+    verRespuestasEnVentana(): void {
+        const guardado = this.formulariosList.find(f => f.id === this.currentFormId);
+        this.verRespuestas(guardado ?? {
+            id: this.currentFormId,
+            eventoId: Number(this.selectedEventoId),
+            titulo: this.titulo,
+            camposConfigJson: JSON.stringify(this.campos),
+        } as FormularioRegistroAdminDto);
     }
 
     /** Regresa a la vista del listado de formularios */

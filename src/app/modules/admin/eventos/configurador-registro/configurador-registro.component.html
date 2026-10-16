@@ -255,8 +255,9 @@
                             </button>
 
                             <!-- Botón Ver Respuestas -->
-                            <button (click)="verRespuestasDesdeListado(form)"
-                                    class="inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 hover:bg-slate-200/70 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer">
+                            <button (click)="verRespuestas(form)"
+                                    class="inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 hover:bg-slate-200/70 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+                                    matTooltip="Ver quiénes respondieron y qué contestaron">
                                 <mat-icon class="text-[14px] mr-1 text-blue-500">list_alt</mat-icon>
                                 <span>Respuestas</span>
                             </button>
@@ -1443,6 +1444,9 @@
                                 <p class="text-xs text-slate-500 dark:text-slate-400">Respuestas individuales capturadas desde el enlace público de registro.</p>
                             </div>
                             <div class="flex items-center gap-2">
+                                <button (click)="verRespuestasEnVentana()" [disabled]="!currentFormId" mat-stroked-button class="rounded-xl text-xs py-1 px-3">
+                                    <mat-icon class="text-xs mr-1">open_in_new</mat-icon> Ver en ventana
+                                </button>
                                 <button (click)="cargarRespuestas()" [disabled]="cargandoRespuestas" mat-stroked-button class="rounded-xl text-xs py-1 px-3">
                                     <mat-icon class="text-xs mr-1">refresh</mat-icon> Refrescar
                                 </button>
