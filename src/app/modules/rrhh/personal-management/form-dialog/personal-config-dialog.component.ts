@@ -148,12 +148,12 @@ export class PersonalConfigDialogComponent implements OnInit {
 
         // 2. Definimos la jornada estándar
         const jornadaEstandar = [
-            { dia: 1, entrada: '08:00', salida: '18:00' }, // Lun
-            { dia: 2, entrada: '08:00', salida: '18:00' }, // Mar
-            { dia: 3, entrada: '08:00', salida: '18:00' }, // Mie
-            { dia: 4, entrada: '08:00', salida: '18:00' }, // Jue
-            { dia: 5, entrada: '08:00', salida: '18:00' }, // Vie
-            { dia: 6, entrada: '08:00', salida: '14:00' }, // Sab
+            { dia: 1, entrada: '09:00', salida: '18:00' }, // Lun
+            { dia: 2, entrada: '09:00', salida: '18:00' }, // Mar
+            { dia: 3, entrada: '09:00', salida: '18:00' }, // Mie
+            { dia: 4, entrada: '09:00', salida: '18:00' }, // Jue
+            { dia: 5, entrada: '09:00', salida: '18:00' }, // Vie
+            { dia: 6, entrada: '09:00', salida: '14:00' }, // Sab
         ];
 
         // 3. Insertamos en el FormArray
