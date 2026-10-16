@@ -13,10 +13,16 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ColaboradoresService } from '../colaboradores.service';
+import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import {
-    Beneficiario, Catalogos, ColaboradorDetalle, ColaboradorGuardar, ColaboradorLista, Contrato, EstatusColaborador
+    Beneficiario, Catalogos, ColaboradorDetalle, ColaboradorGuardar, ColaboradorLista, Contrato, EstatusColaborador,
+    PERMISO_NOMINA, PERMISO_SALUD
 } from '../colaboradores.types';
 import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.utils';
+import { TabContratosComponent } from './tab-contratos.component';
+import { TabHistorialComponent } from './tab-historial.component';
+import { TabNominaComponent } from './tab-nomina.component';
+import { TabSaludComponent } from './tab-salud.component';
 
 const TEXTOS = [
     'codigo', 'puesto', 'rfc', 'curp', 'nss', 'correoPersonal', 'correoEmpresa', 'direccionHogar',
@@ -27,7 +33,7 @@ const TEXTOS = [
 const FECHAS = ['fechaAltaImss', 'fechaBajaImss', 'fechaIngresoReal', 'fechaAntiguedadReconocida'] as const;
 const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
 
-/** Ficha del colaborador: alta/edición de datos generales y beneficiarios (las demás pestañas se agregan en la Tarea 11). */
+/** Ficha del colaborador: datos generales, beneficiarios, contratos, nómina y salud (estas dos con permiso especial) e historial. */
 @Component({
     selector: 'rrhh-colaborador-ficha',
     standalone: true,
@@ -35,7 +41,8 @@ const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
     imports: [
         CommonModule, ReactiveFormsModule, RouterLink,
         MatTabsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
-        MatDatepickerModule, MatNativeDateModule
+        MatDatepickerModule, MatNativeDateModule,
+        TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent
     ]
 })
 export class ColaboradorFichaComponent implements OnInit {
@@ -44,6 +51,7 @@ export class ColaboradorFichaComponent implements OnInit {
     private readonly _route = inject(ActivatedRoute);
     private readonly _router = inject(Router);
     private readonly _snackBar = inject(MatSnackBar);
+    private readonly _permisos = inject(PermisosEspecialesService);
 
     /** null = alta de un colaborador nuevo. */
     id: number | null = null;
@@ -123,6 +131,15 @@ export class ColaboradorFichaComponent implements OnInit {
         return this.colaborador?.estatus ?? 'INACTIVO';
     }
 
+    /** Solo oculta las pestañas; el API es quien realmente niega (403) sin el permiso especial. */
+    get puedeVerNomina(): boolean {
+        return this._permisos.tiene(PERMISO_NOMINA);
+    }
+
+    get puedeVerSalud(): boolean {
+        return this._permisos.tiene(PERMISO_SALUD);
+    }
+
     /** Lo que falta para activar, con los datos que hay hoy en el formulario (igual que la regla del API). */
     get faltantes(): string[] {
         const v = this.form.getRawValue();
@@ -190,6 +207,25 @@ export class ColaboradorFichaComponent implements OnInit {
                 this.guardando = false;
                 this.avisar(mensajeError(e, 'No se pudo guardar el colaborador.'));
             }
+        });
+    }
+
+    /** Tras agregar o editar un contrato: refresca la lista, el estatus de contrato y el historial (sin tocar lo que se esté editando en el formulario). */
+    recargarContratos(): void {
+        if (!this.id) return;
+        forkJoin({ detalle: this._service.obtener(this.id), contratos: this._service.listarContratos(this.id) }).subscribe({
+            next: ({ detalle, contratos }) => {
+                this.contratos = contratos;
+                if (this.colaborador) {
+                    this.colaborador = {
+                        ...this.colaborador,
+                        estatusContrato: detalle.estatusContrato,
+                        fechaVencimientoContrato: detalle.fechaVencimientoContrato
+                    };
+                }
+                this.version++;
+            },
+            error: (e) => this.avisar(mensajeError(e, 'No se pudo actualizar la lista de contratos.'))
         });
     }
 

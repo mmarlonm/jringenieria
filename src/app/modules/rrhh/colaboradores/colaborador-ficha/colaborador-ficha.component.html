@@ -189,6 +189,33 @@
                         </div>
                     </div>
                 </mat-tab>
+
+                <mat-tab label="Contratos">
+                    <rrhh-tab-contratos [colaboradorId]="colaborador.colaboradorId" [catalogos]="catalogos"
+                        [contratos]="contratos" (cambio)="recargarContratos()"></rrhh-tab-contratos>
+                </mat-tab>
+
+                @if (puedeVerNomina) {
+                    <mat-tab label="Nómina">
+                        <ng-template matTabContent>
+                            <rrhh-tab-nomina [colaboradorId]="colaborador.colaboradorId" (guardado)="version = version + 1"></rrhh-tab-nomina>
+                        </ng-template>
+                    </mat-tab>
+                }
+
+                @if (puedeVerSalud) {
+                    <mat-tab label="Salud">
+                        <ng-template matTabContent>
+                            <rrhh-tab-salud [colaboradorId]="colaborador.colaboradorId" (guardado)="version = version + 1"></rrhh-tab-salud>
+                        </ng-template>
+                    </mat-tab>
+                }
+
+                <mat-tab label="Historial">
+                    <ng-template matTabContent>
+                        <rrhh-tab-historial [colaboradorId]="colaborador.colaboradorId" [version]="version"></rrhh-tab-historial>
+                    </ng-template>
+                </mat-tab>
             }
         </mat-tab-group>
     </div>
