@@ -43,42 +43,9 @@ const contactResolver = (
 };
 
 /**
- * Can deactivate contacts details
- *
- * @param component
- * @param currentRoute
- * @param currentState
- * @param nextState
+ * Antes de salir del rol abierto (a otro rol, a la lista o a otra pantalla) avisa si hay cambios sin guardar.
  */
-const canDeactivateContactsDetails = (
-    component: RolesDetailsComponent,
-    currentRoute: ActivatedRouteSnapshot,
-    currentState: RouterStateSnapshot,
-    nextState: RouterStateSnapshot
-) => {
-    // Get the next route
-    let nextRoute: ActivatedRouteSnapshot = nextState.root;
-    while (nextRoute.firstChild) {
-        nextRoute = nextRoute.firstChild;
-    }
-
-    // If the next state doesn't contain '/contacts'
-    // it means we are navigating away from the
-    // contacts app
-    if (!nextState.url.includes('/roles')) {
-        // Let it navigate
-        return true;
-    }
-
-    // If we are navigating to another contact...
-    if (nextRoute.paramMap.get('id')) {
-        // Just navigate
-        return true;
-    }
-
-    // Otherwise, close the drawer first, and then navigate
-    return component.closeDrawer().then(() => true);
-};
+const puedeSalirDelRol = (component: RolesDetailsComponent) => component.puedeSalir();
 
 export default [
     {
@@ -98,7 +65,7 @@ export default [
                         resolve: {
                             rol: contactResolver
                         },
-                        canDeactivate: [canDeactivateContactsDetails],
+                        canDeactivate: [puedeSalirDelRol],
                     },
                 ],
             },

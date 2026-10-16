@@ -1,146 +1,76 @@
-<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
-    <mat-drawer-container
-        class="bg-card h-full flex-auto dark:bg-transparent"
-        (backdropClick)="onBackdropClicked()"
-    >
-        <!-- Drawer -->
-        <mat-drawer
-            class="w-full dark:bg-gray-900 md:w-160"
-            [mode]="drawerMode"
-            [opened]="false"
-            [position]="'end'"
-            [disableClose]="true"
-            #matDrawer
-        >
-            <router-outlet></router-outlet>
-        </mat-drawer>
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-slate-50 dark:bg-transparent">
 
-        <mat-drawer-content class="flex flex-col">
-            <!-- Main -->
-            <div class="flex-auto">
-                <!-- Header -->
-                <div
-                    class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8"
-                >
-                    <!-- Title -->
-                    <div>
-                        <div
-                            class="text-4xl font-extrabold leading-none tracking-tight"
-                        >
-                            Roles
-                        </div>
-                        <div class="text-secondary ml-0.5 font-medium">
-                            @if (contactsCount > 0) {
-                                {{ contactsCount }}
-                            }
-                            {{
-                                contactsCount
-                                    | i18nPlural
-                                        : {
-                                              '=0': 'No roles',
-                                              '=1': 'rol',
-                                              other: 'roles',
-                                          }
-                            }}
-                        </div>
-                    </div>
+    <!-- Encabezado -->
+    <div class="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b bg-white dark:bg-transparent px-6 py-5">
+        <div>
+            <div class="text-3xl font-extrabold leading-none tracking-tight">Roles y permisos</div>
+            <div class="mt-1 font-medium text-secondary">
+                {{ roles.length }} {{ roles.length === 1 ? 'rol' : 'roles' }} · elige uno para ver y editar lo que puede hacer
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button mat-stroked-button type="button" class="!h-10 !rounded-xl" (click)="abrirAsignacionMasiva()"
+                    matTooltip="Da o quita los permisos de un módulo a varios roles a la vez">
+                <mat-icon class="icon-size-5 mr-1" svgIcon="heroicons_outline:users"></mat-icon>
+                Asignar a varios roles
+            </button>
+            <button mat-flat-button color="primary" type="button" class="!h-10 !rounded-xl" (click)="crearRol()">
+                <mat-icon class="icon-size-5 mr-1" svgIcon="heroicons_outline:plus"></mat-icon>
+                Nuevo rol
+            </button>
+        </div>
+    </div>
 
-                    <!-- Main actions -->
-                    <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
-                        <!-- Search -->
-                        <div class="flex-auto">
-                            <mat-form-field
-                                class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
-                                subscriptSizing="dynamic"
-                            >
-                                <mat-icon
-                                    class="icon-size-5"
-                                    matPrefix
-                                ></mat-icon>
-                                <input
-                                    matInput
-                                    [formControl]="searchInputControl"
-                                    [autocomplete]="'off'"
-                                    [placeholder]="'Search roles'"
-                                />
-                            </mat-form-field>
-                        </div>
-                        <!-- Add rol button -->
-                        <button
-                            class="ml-4"
-                            mat-flat-button
-                            [color]="'primary'"
-                            (click)="createContact()"
-                        >
-                            <mat-icon
-                                [svgIcon]="'heroicons_outline:plus'"
-                            ></mat-icon>
-                            <span class="ml-2 mr-1">Add</span>
-                        </button>
-                    </div>
-                </div>
+    <div class="flex-auto min-h-0 flex">
 
-                <!-- Contacts list -->
+        <!-- Lista de roles -->
+        <aside class="flex-none w-full md:w-80 lg:w-96 flex-col border-r bg-white dark:bg-transparent"
+               [ngClass]="selectedId !== null ? 'hidden md:flex' : 'flex'">
+            <div class="flex-none p-4 border-b border-slate-100 dark:border-slate-800">
                 <div class="relative">
-                    @if (roles$ | async; as roles) {
-                        @if (roles.length) {
-                            <div
-                                        class="text-secondary sticky top-0 z-10 -mt-px border-b border-t bg-gray-50 px-6 py-1 font-medium uppercase dark:bg-gray-900 md:px-8"
-                                    >
-                                        Roles
-                                    </div>
-                            @for (
-                                rol of roles;
-                                track trackByFn(i, rol);
-                                let i = $index
-                            ) {
-                                <!-- Contact -->
-                                <a
-                                    class="z-20 flex cursor-pointer items-center border-b px-6 py-4 md:px-8"
-                                    [ngClass]="{
-                                        'dark:hover:bg-hover hover:bg-gray-100':
-                                            !selectedContact ||
-                                            selectedContact.rolId !== rol.rolId,
-                                        'bg-primary-50 dark:bg-hover':
-                                            selectedContact &&
-                                            selectedContact.rolId === rol.rolId,
-                                    }"
-                                    [routerLink]="['./', rol.rolId]"
-                                >
-
-                                <div
-                                        class="flex h-10 w-10 flex-0 items-center justify-center overflow-hidden rounded-full"
-                                    >
-                                    <mat-icon
-                                    class="icon-size-5"
-                                    matPrefix
-                                    [svgIcon]="
-                                        'heroicons_solid:user-circle'
-                                    "
-                                ></mat-icon>
-                                    </div>
-
-                                    <div class="ml-4 min-w-0">
-                                        <div
-                                            class="truncate font-medium leading-5"
-                                        >
-                                            {{ rol.nombreRol }}
-                                        </div>
-                                    </div>
-                                </a>
-                            }
-                        } @else {
-                            <div
-                                class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16"
-                            >
-                                There are no roles!
-                            </div>
-                        }
-                    }
-
-                    <!-- No roles -->
+                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-5 text-slate-400" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+                    <input type="text" [(ngModel)]="busqueda" (ngModelChange)="filtrar()" placeholder="Buscar rol…" autocomplete="off"
+                           class="w-full h-10 pl-10 pr-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 </div>
             </div>
-        </mat-drawer-content>
-    </mat-drawer-container>
+
+            <div class="flex-auto overflow-y-auto">
+                <a *ngFor="let rol of filtrados; trackBy: trackByFn" [routerLink]="['./', rol.rolId]"
+                   class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 cursor-pointer transition-colors"
+                   [ngClass]="selectedId === '' + rol.rolId ? 'bg-primary/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                    <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
+                         [ngClass]="selectedId === '' + rol.rolId ? 'bg-primary text-on-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'">
+                        <mat-icon class="icon-size-5" svgIcon="heroicons_outline:user-group"></mat-icon>
+                    </div>
+                    <div class="min-w-0 flex-auto">
+                        <div class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {{ rol.rolId === 0 ? (rol.nombreRol || 'Rol nuevo') : rol.nombreRol }}
+                        </div>
+                        <div class="text-xs"
+                             [ngClass]="rol.rolId === 0 ? 'text-amber-600' : (totalVistas(rol) ? 'text-slate-500' : 'text-slate-400')">
+                            {{ rol.rolId === 0 ? 'Sin guardar' : (totalVistas(rol) ? totalVistas(rol) + (totalVistas(rol) === 1 ? ' vista' : ' vistas') : 'Sin permisos') }}
+                        </div>
+                    </div>
+                    <mat-icon class="icon-size-4 shrink-0 text-slate-300" svgIcon="heroicons_outline:chevron-right"></mat-icon>
+                </a>
+
+                <div *ngIf="filtrados.length === 0" class="p-8 text-center text-sm text-slate-400">
+                    {{ roles.length === 0 ? 'Todavía no hay roles.' : 'Ningún rol coincide con la búsqueda.' }}
+                </div>
+            </div>
+        </aside>
+
+        <!-- Detalle del rol -->
+        <section class="flex-auto min-w-0 min-h-0 flex-col" [ngClass]="selectedId !== null ? 'flex' : 'hidden md:flex'">
+            <router-outlet></router-outlet>
+
+            <div *ngIf="selectedId === null" class="flex-auto flex flex-col items-center justify-center gap-3 p-8 text-center text-slate-400">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <mat-icon class="icon-size-8" svgIcon="heroicons_outline:lock-closed"></mat-icon>
+                </div>
+                <div class="text-lg font-bold text-slate-600 dark:text-slate-300">Selecciona un rol</div>
+                <p class="max-w-sm text-sm">Verás los módulos y vistas a los que tiene acceso y podrás cambiarlos. Para dar un módulo a varios roles a la vez usa «Asignar a varios roles».</p>
+            </div>
+        </section>
+    </div>
 </div>

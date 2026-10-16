@@ -1,24 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRippleModule } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDrawerToggleResult } from '@angular/material/sidenav';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import { FuseNavigationItem } from '@fuse/components/navigation';
-import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { defaultNavigation } from 'app/mock-api/common/navigation/data';
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
-import { RolesListComponent } from 'app/modules/admin/security/roles/list/roles-list.component';
 import { RoleNavigationModule } from '../rol-navigation/rol-navigation.module';
+import { Seleccion, contarCambios, seleccionDeRol, vistasParaGuardar } from '../roles-permisos.utils';
 
 @Component({
     selector: 'roles-details',
@@ -26,110 +20,49 @@ import { RoleNavigationModule } from '../rol-navigation/rol-navigation.module';
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [
-        CommonModule, FormsModule, ReactiveFormsModule, MatButtonModule, MatTooltipModule,
-        RouterLink, MatIconModule, MatRippleModule, MatFormFieldModule, MatInputModule,
-        MatCheckboxModule, MatProgressSpinnerModule, RoleNavigationModule
-    ],
+    // La app convierte todo lo que sigue a un <router-outlet> en un contenedor flex en columna: el detalle debe llenar el alto
+    // que le deja la lista y poder encogerse (min-h-0), o su contenido se desborda y no hay forma de bajar.
+    host: { class: 'flex flex-col flex-auto min-h-0 min-w-0' },
+    imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, RouterLink, RoleNavigationModule],
 })
 export class RolesDetailsComponent implements OnInit, OnDestroy {
 
-    editMode: boolean = false;
     rol: any;
-    contactForm: UntypedFormGroup;
     navigation: FuseNavigationItem[] = [];
     loadError: string | null = null;
+    guardando = false;
 
-    // 🔹 1. CORRECCIÓN: Ahora es un diccionario de arreglos numéricos { 'dashboards.quote': [1, 2, 3] }
-    selectedPermissions: { [id: string]: number[] } = {};
+    nombre = '';
+    private nombreOriginal = '';
+
+    /** Permisos como están guardados y como se están editando. */
+    seleccionOriginal: Seleccion = {};
+    seleccion: Seleccion = {};
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
-        private _rolListComponent: RolesListComponent,
         private _rolService: RolService,
-        private _formBuilder: UntypedFormBuilder,
-        private _fuseConfirmationService: FuseConfirmationService,
         private _router: Router,
         private _activatedRoute: ActivatedRoute
     ) { }
 
     ngOnInit(): void {
-        if (this._rolListComponent.matDrawer) {
-            this._rolListComponent.matDrawer.open();
-        }
-
-        this.contactForm = this._formBuilder.group({
-            rolId: [''],
-            nombreRol: ['', [Validators.required]],
-        });
-
-        // 1. OBTENER ROL Y MAPEAR PERMISOS
+        // El rol abierto (y de nuevo cada vez que se guarda o se vuelve a pedir la lista)
         this._rolService.rol$
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe({
-                next: (rol: any) => {
-                    if (!rol) return;
-                    console.log("JSON DEL ROL DESDE C#:", rol);
-                    this.rol = rol;
-                    this.selectedPermissions = {};
-
-                    // 🔹 PROCESAR PERMISOS (Soportando la estructura de userInformation proporcionada)
-
-                    // 1. Procesar array 'permisos' (Estructura: { permisoId, vista: { nombreVista } })
-                    if (rol.permisos && Array.isArray(rol.permisos)) {
-                        rol.permisos.forEach((p: any) => {
-                            const idVista = p.vista?.nombreVista || p.vista?.vistaId || p.nombreVista || p.vistaId;
-                            const idPermiso = Number(p.permisoId || p.idPermiso || p.id);
-
-                            if (idVista && !isNaN(idPermiso)) {
-                                if (!this.selectedPermissions[idVista]) {
-                                    this.selectedPermissions[idVista] = [];
-                                }
-                                if (!this.selectedPermissions[idVista].includes(idPermiso)) {
-                                    this.selectedPermissions[idVista].push(idPermiso);
-                                }
-                            }
-                        });
-                    }
-
-                    // 2. Procesar array 'vistas' (Estructura: { vistaId, permisos: [...] })
-                    if (rol.vistas && Array.isArray(rol.vistas)) {
-                        rol.vistas.forEach((v: any) => {
-                            const idVista = v.nombreVista || v.vistaId || v.idVista;
-                            if (!idVista) return;
-
-                            let permisosAsignados: number[] = [];
-                            if (v.permisos && Array.isArray(v.permisos)) {
-                                permisosAsignados = v.permisos.map((p: any) => {
-                                    const id = typeof p === 'number' ? p : (p.permisoId || p.idPermiso || p.id);
-                                    return Number(id);
-                                }).filter(id => !isNaN(id));
-                            } else if (v.permisoId || v.idPermiso || v.id) {
-                                const id = Number(v.permisoId || v.idPermiso || v.id);
-                                if (!isNaN(id)) permisosAsignados = [id];
-                            }
-
-                            if (!this.selectedPermissions[idVista]) {
-                                this.selectedPermissions[idVista] = permisosAsignados;
-                            } else {
-                                this.selectedPermissions[idVista] = [...new Set([...this.selectedPermissions[idVista], ...permisosAsignados])];
-                            }
-                        });
-                    }
-
-                    this.contactForm.patchValue({
-                        rolId: rol.rolId || rol.id,
-                        nombreRol: rol.nombreRol || (rol.roles ? rol.roles[0] : ''),
-                    });
-
-                    this._changeDetectorRef.markForCheck();
-                },
-                error: (err) => console.error('[RolesDetail] Error cargando rol:', err)
+            .subscribe((rol: any) => {
+                if (!rol) return;
+                this.rol = rol;
+                this.nombre = rol.nombreRol || '';
+                this.nombreOriginal = this.nombre;
+                this.seleccionOriginal = seleccionDeRol(rol);
+                this.seleccion = { ...this.seleccionOriginal };
+                this._changeDetectorRef.markForCheck();
             });
 
-        // 2. OBTENER NAVEGACIÓN
+        // Menú completo (de él salen los módulos y vistas)
         this._rolService.getNavigation()
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
@@ -140,7 +73,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
                 },
                 error: (err) => {
                     console.error('[RolesDetail] Error cargando navegación:', err);
-                    this.loadError = 'No se pudo cargar el árbol de módulos. Usando datos locales.';
+                    this.loadError = 'No se pudo cargar el menú del servidor; se usa la copia local.';
                     this.navigation = defaultNavigation || [];
                     this._changeDetectorRef.markForCheck();
                 }
@@ -152,108 +85,125 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         this._unsubscribeAll.complete();
     }
 
-    closeDrawer(): Promise<MatDrawerToggleResult> {
-        return this._rolListComponent.matDrawer.close();
+    // ------------------------------------------------------------------ estado de edición
+
+    get esNuevo(): boolean {
+        return this.rol?.rolId === 0;
     }
 
-    // 🔹 3. CORRECCIÓN: Recibe la nueva estructura del hijo (Array de objetos)
-    // El hijo emite: [ { vistaId: 'dashboard', permisos: [1,2,3] }, ... ]
-    actualizarPermisos(eventPayload: any[]): void {
-        this.selectedPermissions = {}; // Reiniciamos el estado
+    get cambios(): number {
+        return contarCambios(this.seleccionOriginal, this.seleccion);
+    }
 
-        eventPayload.forEach(item => {
-            if (item.vistaId && item.permisos) {
-                this.selectedPermissions[item.vistaId] = item.permisos;
-            }
-        });
+    get nombreCambio(): boolean {
+        return this.nombre.trim() !== this.nombreOriginal.trim();
+    }
 
+    get hayCambios(): boolean {
+        return this.nombreCambio || this.cambios > 0;
+    }
+
+    get puedeGuardar(): boolean {
+        return !this.guardando && this.nombre.trim().length > 0 && (this.hayCambios || this.esNuevo);
+    }
+
+    get totalVistas(): number {
+        return vistasParaGuardar(this.seleccion).length;
+    }
+
+    get totalPermisos(): number {
+        return vistasParaGuardar(this.seleccion).reduce((suma, v) => suma + v.permisos.length, 0);
+    }
+
+    get textoCambios(): string {
+        if (this.esNuevo && this.nombre.trim().length === 0) return 'Escribe un nombre para el rol.';
+        const partes: string[] = [];
+        if (this.cambios > 0) partes.push(`${this.cambios} ${this.cambios === 1 ? 'cambio' : 'cambios'} en permisos`);
+        if (this.nombreCambio && !this.esNuevo) partes.push('nombre modificado');
+        return partes.length ? `${partes.join(' y ')} sin guardar` : 'Rol nuevo sin guardar';
+    }
+
+    onSeleccion(seleccion: Seleccion): void {
+        this.seleccion = seleccion;
         this._changeDetectorRef.markForCheck();
     }
 
-    toggleEditMode(editMode: boolean | null = null): void {
-        this.editMode = editMode ?? !this.editMode;
+    descartar(): void {
+        this.nombre = this.nombreOriginal;
+        this.seleccion = { ...this.seleccionOriginal };
         this._changeDetectorRef.markForCheck();
     }
 
-    /**
-     * 🔹 4. CORRECCIÓN: Enviar los permisos reales al Backend C#
-     */
-    updateContact(): void {
-        if (this.contactForm.invalid) return;
+    // ------------------------------------------------------------------ guardar
 
-        // Transformar el diccionario { 'vistaX': [1,2] } al formato del Backend
-        const vistasParaBackend = Object.keys(this.selectedPermissions)
-            .filter(key => this.selectedPermissions[key] && this.selectedPermissions[key].length > 0)
-            .map(key => ({
-                vistaId: key,               // Ej: "dashboards.analytics"
-                permisos: this.selectedPermissions[key] // Ej: [1, 2, 4]
-            }));
+    guardar(): void {
+        if (!this.puedeGuardar) return;
 
-        // Construir el Payload final
         const payload = {
-            rolId: this.rol.rolId ? parseInt(this.rol.rolId) : 0,
-            nombreRol: this.contactForm.get('nombreRol')?.value,
-            vistas: vistasParaBackend
+            rolId: this.rol?.rolId ? parseInt(this.rol.rolId, 10) : 0,
+            nombreRol: this.nombre.trim(),
+            vistas: vistasParaGuardar(this.seleccion)
         };
 
-        console.log('Enviando a C#:', payload);
-
-        // Enviar
-        this._rolService.updateRoles(payload).subscribe(() => {
-            this.toggleEditMode(false);
-
-            // Sincronizar en tiempo real el userInformation de la sesión actual
-            try {
-                const storedRaw = localStorage.getItem('userInformation');
-                if (storedRaw) {
-                    const info = JSON.parse(storedRaw);
-                    const currentRolId = Number(info.usuario?.rolId || info.rolId || info.usuario?.idRol || 0);
-                    const rolEditadoId = Number(payload.rolId);
-                    const currentRoles: string[] = info.roles || [];
-                    const esMismoRol = (currentRolId > 0 && currentRolId === rolEditadoId) || 
-                        currentRoles.some((r: string) => r.toLowerCase() === (payload.nombreRol || '').toLowerCase());
-
-                    if (esMismoRol) {
-                        if (!info.permisos) info.permisos = [];
-                        // Remover los permisos viejos de las vistas actualizadas
-                        const vistasIds = payload.vistas.map(v => v.vistaId);
-                        info.permisos = info.permisos.filter((p: any) => {
-                            const vId = p.vista?.nombreVista || p.vistaId || p.nombreVista;
-                            return !vistasIds.includes(vId);
-                        });
-                        // Agregar los nuevos permisos
-                        payload.vistas.forEach(v => {
-                            v.permisos.forEach((pId: number) => {
-                                info.permisos.push({
-                                    permisoId: pId,
-                                    vista: { nombreVista: v.vistaId }
-                                });
-                            });
-                        });
-                        localStorage.setItem('userInformation', JSON.stringify(info));
-                    }
+        this.guardando = true;
+        this._rolService.updateRoles(payload).subscribe({
+            next: (rolId) => {
+                this.guardando = false;
+                this.sincronizarSesion(payload);
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Rol guardado', showConfirmButton: false, timer: 2500 });
+                // Un rol nuevo ya tiene su número: se abre con él
+                if (Number(this._activatedRoute.snapshot.paramMap.get('id')) !== rolId) {
+                    this._router.navigate(['../', rolId], { relativeTo: this._activatedRoute });
                 }
-            } catch (err) {
-                console.error('Error sincronizando userInformation local:', err);
+                this._changeDetectorRef.markForCheck();
+            },
+            error: (err) => {
+                this.guardando = false;
+                Swal.fire('No se pudo guardar el rol', typeof err?.error === 'string' && err.error ? err.error : (err?.error?.mensaje || 'Inténtalo de nuevo.'), 'error');
+                this._changeDetectorRef.markForCheck();
             }
         });
     }
 
-    deleteContact(): void {
-        const confirmation = this._fuseConfirmationService.open({
-            title: 'Eliminar Rol', message: '¿Confirmar eliminación?',
-            actions: { confirm: { label: 'Eliminar', color: 'warn' } }
-        });
-        confirmation.afterClosed().subscribe((result) => {
-            if (result === 'confirmed') {
-                this._router.navigate(['../'], { relativeTo: this._activatedRoute });
-            }
-        });
+    /** Si se editó el rol de la persona con sesión abierta, sus permisos guardados en el navegador se actualizan al momento. */
+    private sincronizarSesion(payload: { rolId: number; nombreRol: string; vistas: { vistaId: string; permisos: number[] }[] }): void {
+        try {
+            const storedRaw = localStorage.getItem('userInformation');
+            if (!storedRaw) return;
+
+            const info = JSON.parse(storedRaw);
+            const currentRolId = Number(info.usuario?.rolId || info.rolId || info.usuario?.idRol || 0);
+            const currentRoles: string[] = info.roles || [];
+            const esMismoRol = (currentRolId > 0 && currentRolId === Number(payload.rolId)) ||
+                currentRoles.some((r: string) => r.toLowerCase() === (payload.nombreRol || '').toLowerCase());
+            if (!esMismoRol) return;
+
+            if (!info.permisos) info.permisos = [];
+            const vistasIds = payload.vistas.map(v => v.vistaId);
+            info.permisos = info.permisos.filter((p: any) => !vistasIds.includes(p.vista?.nombreVista || p.vistaId || p.nombreVista));
+            payload.vistas.forEach(v => v.permisos.forEach((pId: number) => info.permisos.push({ permisoId: pId, vista: { nombreVista: v.vistaId } })));
+            localStorage.setItem('userInformation', JSON.stringify(info));
+        } catch (err) {
+            console.error('Error sincronizando userInformation local:', err);
+        }
     }
 
-    onPermisosLoadError(errorMessage: string): void {
-        console.error('[RolesDetail] Error al cargar permisos desde rol-navigation:', errorMessage);
-        this.loadError = errorMessage;
-        this._changeDetectorRef.markForCheck();
+    // ------------------------------------------------------------------ salir de la pantalla
+
+    /** Lo usa la ruta: si hay cambios sin guardar pregunta antes de salir; un rol nuevo que no se guardó se quita de la lista. */
+    async puedeSalir(): Promise<boolean> {
+        if (this.hayCambios) {
+            const respuesta = await Swal.fire({
+                icon: 'warning',
+                title: 'Hay cambios sin guardar',
+                text: 'Si sales ahora se perderán los cambios de este rol.',
+                showCancelButton: true,
+                confirmButtonText: 'Salir sin guardar',
+                cancelButtonText: 'Seguir editando'
+            });
+            if (!respuesta.isConfirmed) return false;
+        }
+        if (this.esNuevo) this._rolService.descartarNuevo();
+        return true;
     }
 }
