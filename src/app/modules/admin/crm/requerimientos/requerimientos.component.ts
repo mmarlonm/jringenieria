@@ -283,7 +283,9 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
 
   openCreateDialog(): void {
     const dialogRef = this.dialog.open(RequerimientoDialogComponent, {
-      width: '600px',
+      width: '680px',
+      maxWidth: '95vw',
+      autoFocus: false,
       data: { users: this.usuarios }
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -297,7 +299,9 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
 
   openEditDialog(req: Requerimiento): void {
     const dialogRef = this.dialog.open(RequerimientoDialogComponent, {
-      width: '600px',
+      width: '680px',
+      maxWidth: '95vw',
+      autoFocus: false,
       data: { requerimiento: req, users: this.usuarios }
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -313,7 +317,9 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     this.reqService.getRequerimiento(req.id).subscribe({
       next: (reqFull) => {
         const dialogRef = this.dialog.open(RequerimientoCalificarDialogComponent, {
-          width: '750px',
+          width: '880px',
+          maxWidth: '95vw',
+          autoFocus: false,
           data: { requerimiento: reqFull, currentUser: { id: req.usuarioAsignadoId || 1 } }
         });
         dialogRef.afterClosed().subscribe(result => {

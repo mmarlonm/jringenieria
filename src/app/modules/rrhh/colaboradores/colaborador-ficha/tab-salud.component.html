@@ -1,0 +1,53 @@
+<div class="pt-6">
+    @if (cargando) {
+        <div class="text-secondary">Cargando…</div>
+    } @else if (error) {
+        <div class="rounded-2xl bg-red-50 p-4 text-red-800">{{ error }}</div>
+    } @else {
+        <div class="mb-3 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">
+            Datos clínicos: solo los ve y edita quien tenga el permiso «Ver y editar datos clínicos». En el historial se registra el cambio sin mostrar el valor.
+        </div>
+        <form [formGroup]="form" (ngSubmit)="guardar()">
+            <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="flex items-center gap-6 sm:col-span-2 lg:col-span-4">
+                    <mat-checkbox formControlName="lentes">Usa lentes</mat-checkbox>
+                    <mat-checkbox formControlName="alergias">Tiene alergias</mat-checkbox>
+                </div>
+                @if (form.controls.alergias.value) {
+                    <mat-form-field class="sm:col-span-2">
+                        <mat-label>Nombre de la alergia</mat-label>
+                        <input matInput formControlName="nombreAlergia" maxlength="200">
+                    </mat-form-field>
+                }
+                <mat-form-field>
+                    <mat-label>Tipo de sangre</mat-label>
+                    <mat-select formControlName="tipoSangre">
+                        <mat-option value="">Sin dato</mat-option>
+                        @for (t of tiposSangre; track t) {
+                            <mat-option [value]="t">{{ t }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Último examen médico</mat-label>
+                    <input matInput [matDatepicker]="pExamen" formControlName="fechaUltimoExamenMedico">
+                    <mat-datepicker-toggle matIconSuffix [for]="pExamen"></mat-datepicker-toggle>
+                    <mat-datepicker #pExamen></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Peso (kg)</mat-label>
+                    <input matInput type="number" step="0.01" min="0" formControlName="pesoKg">
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Estatura (m)</mat-label>
+                    <input matInput type="number" step="0.01" min="0" formControlName="estaturaM">
+                </mat-form-field>
+                <mat-form-field class="sm:col-span-2 lg:col-span-4">
+                    <mat-label>Vacunas</mat-label>
+                    <textarea matInput rows="2" formControlName="vacunas" maxlength="500"></textarea>
+                </mat-form-field>
+            </div>
+            <button mat-flat-button color="primary" type="submit" [disabled]="guardando">Guardar datos clínicos</button>
+        </form>
+    }
+</div>

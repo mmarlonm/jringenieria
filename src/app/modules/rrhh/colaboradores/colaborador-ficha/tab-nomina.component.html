@@ -1,0 +1,45 @@
+<div class="pt-6">
+    @if (cargando) {
+        <div class="text-secondary">Cargando…</div>
+    } @else if (error) {
+        <div class="rounded-2xl bg-red-50 p-4 text-red-800">{{ error }}</div>
+    } @else {
+        <div class="mb-3 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">
+            Datos sensibles: solo los ve y edita quien tenga el permiso «Ver y editar salario y datos bancarios». En el historial se registra el cambio sin mostrar el monto.
+        </div>
+        <form [formGroup]="form" (ngSubmit)="guardar()">
+            <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-4">
+                <mat-form-field>
+                    <mat-label>Salario diario</mat-label>
+                    <input matInput type="number" step="0.01" min="0" formControlName="salarioDiario">
+                    <span matTextPrefix>$&nbsp;</span>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Sueldo semanal</mat-label>
+                    <input matInput type="number" step="0.01" min="0" formControlName="sueldoSemanal">
+                    <span matTextPrefix>$&nbsp;</span>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Banco</mat-label>
+                    <input matInput formControlName="banco" maxlength="80">
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>CLABE interbancaria</mat-label>
+                    <input matInput formControlName="clabe" maxlength="18" inputmode="numeric">
+                    <mat-error>La CLABE debe tener 18 dígitos.</mat-error>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Último incremento</mat-label>
+                    <input matInput [matDatepicker]="pIncremento" formControlName="fechaUltimoIncremento">
+                    <mat-datepicker-toggle matIconSuffix [for]="pIncremento"></mat-datepicker-toggle>
+                    <mat-datepicker #pIncremento></mat-datepicker>
+                </mat-form-field>
+                <div class="flex items-center gap-6 sm:col-span-2">
+                    <mat-checkbox formControlName="infonavit">INFONAVIT</mat-checkbox>
+                    <mat-checkbox formControlName="fonacot">FONACOT</mat-checkbox>
+                </div>
+            </div>
+            <button mat-flat-button color="primary" type="submit" [disabled]="guardando">Guardar nómina</button>
+        </form>
+    }
+</div>
