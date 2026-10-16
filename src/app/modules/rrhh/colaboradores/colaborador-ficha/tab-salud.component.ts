@@ -3,12 +3,12 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { DateTime } from 'luxon';
 import { ColaboradoresService } from '../colaboradores.service';
 import { ColaboradorSalud } from '../colaboradores.types';
 import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.utils';
@@ -20,7 +20,7 @@ import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.
     templateUrl: './tab-salud.component.html',
     imports: [
         CommonModule, ReactiveFormsModule,
-        MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule
+        MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule
     ]
 })
 export class TabSaludComponent implements OnInit {
@@ -42,7 +42,7 @@ export class TabSaludComponent implements OnInit {
         alergias: [false],
         nombreAlergia: [''],
         tipoSangre: [''],
-        fechaUltimoExamenMedico: [null as Date | null],
+        fechaUltimoExamenMedico: [null as DateTime | null],
         pesoKg: [null as number | null, [Validators.min(0), Validators.max(999.99)]],
         estaturaM: [null as number | null, [Validators.min(0), Validators.max(9.99)]],
         vacunas: ['']

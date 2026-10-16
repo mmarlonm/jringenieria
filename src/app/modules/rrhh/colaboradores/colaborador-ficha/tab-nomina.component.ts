@@ -3,11 +3,11 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { DateTime } from 'luxon';
 import { ColaboradoresService } from '../colaboradores.service';
 import { ColaboradorNomina } from '../colaboradores.types';
 import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.utils';
@@ -19,7 +19,7 @@ import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.
     templateUrl: './tab-nomina.component.html',
     imports: [
         CommonModule, ReactiveFormsModule,
-        MatFormFieldModule, MatInputModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule
+        MatFormFieldModule, MatInputModule, MatButtonModule, MatCheckboxModule, MatDatepickerModule
     ]
 })
 export class TabNominaComponent implements OnInit {
@@ -43,7 +43,7 @@ export class TabNominaComponent implements OnInit {
         clabe: ['', [Validators.pattern(/^\d{18}$/)]],
         infonavit: [false],
         fonacot: [false],
-        fechaUltimoIncremento: [null as Date | null]
+        fechaUltimoIncremento: [null as DateTime | null]
     });
 
     ngOnInit(): void {

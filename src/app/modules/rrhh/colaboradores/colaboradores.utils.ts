@@ -1,13 +1,18 @@
-/** Fecha local → 'yyyy-MM-dd' (sin pasar por UTC, que corre el día en algunas zonas). */
-export function aFechaIso(fecha: Date | null | undefined): string | null {
-    if (!fecha) return null;
-    const dos = (n: number) => String(n).padStart(2, '0');
-    return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+import { DateTime } from 'luxon';
+
+// Las fechas de los datepicker son Luxon DateTime: la app registra LuxonDateAdapter (locale es, formato día/mes/año).
+// No importar MatNativeDateModule en estos componentes: sustituye ese adaptador y una fecha tecleada se lee mes/día.
+
+/** Fecha local del datepicker → 'yyyy-MM-dd' (null si está vacía o es inválida). */
+export function aFechaIso(fecha: DateTime | null | undefined): string | null {
+    return fecha?.isValid ? (fecha.toISODate() ?? null) : null;
 }
 
-/** 'yyyy-MM-ddTHH:mm:ss' del API → Date local (null si viene vacío). */
-export function desdeIso(texto: string | null | undefined): Date | null {
-    return texto ? new Date(texto) : null;
+/** 'yyyy-MM-ddTHH:mm:ss' del API (sin zona) → DateTime local a medianoche (null si viene vacío o inválido). */
+export function desdeIso(texto: string | null | undefined): DateTime | null {
+    if (!texto) return null;
+    const fecha = DateTime.fromISO(texto);
+    return fecha.isValid ? fecha.startOf('day') : null;
 }
 
 /** Texto vacío → null, para no mandar cadenas vacías al API. */

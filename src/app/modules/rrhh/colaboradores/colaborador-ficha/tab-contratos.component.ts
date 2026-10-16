@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { DateTime } from 'luxon';
 import { ColaboradoresService } from '../colaboradores.service';
 import { Catalogos, Contrato, ContratoGuardar, EstatusContrato, TipoContrato } from '../colaboradores.types';
 import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.utils';
@@ -22,7 +22,7 @@ import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.
     imports: [
         CommonModule, ReactiveFormsModule,
         MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
-        MatDatepickerModule, MatNativeDateModule
+        MatDatepickerModule
     ]
 })
 export class TabContratosComponent {
@@ -43,9 +43,9 @@ export class TabContratosComponent {
 
     readonly form = this._fb.group({
         tipoContratoId: [null as number | null, Validators.required],
-        fechaEmision: [null as Date | null, Validators.required],
+        fechaEmision: [null as DateTime | null, Validators.required],
         duracionDias: [null as number | null],
-        fechaVencimiento: [null as Date | null],
+        fechaVencimiento: [null as DateTime | null],
         proyectoId: [null as number | null],
         notas: ['']
     });
@@ -71,7 +71,7 @@ export class TabContratosComponent {
     get diasDelContrato(): number | null {
         const { fechaEmision, fechaVencimiento } = this.form.getRawValue();
         if (!fechaEmision || !fechaVencimiento) return null;
-        return Math.round((fechaVencimiento.getTime() - fechaEmision.getTime()) / 86_400_000);
+        return Math.round(fechaVencimiento.startOf('day').diff(fechaEmision.startOf('day'), 'days').days);
     }
 
     get excedeDuracionMaxima(): boolean {
@@ -153,9 +153,7 @@ export class TabContratosComponent {
     private calcularVencimiento(): void {
         const { fechaEmision, duracionDias } = this.form.getRawValue();
         if (!fechaEmision || !duracionDias || duracionDias < 1) return;
-        const vence = new Date(fechaEmision);
-        vence.setDate(vence.getDate() + duracionDias);
-        this.form.controls.fechaVencimiento.setValue(vence, { emitEvent: false });
+        this.form.controls.fechaVencimiento.setValue(fechaEmision.plus({ days: duracionDias }), { emitEvent: false });
     }
 
     private avisar(texto: string): void {

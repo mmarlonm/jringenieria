@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { DateTime } from 'luxon';
 import { forkJoin } from 'rxjs';
 import { ColaboradoresService } from '../colaboradores.service';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
@@ -41,7 +41,7 @@ const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
     imports: [
         CommonModule, ReactiveFormsModule, RouterLink,
         MatTabsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
-        MatDatepickerModule, MatNativeDateModule,
+        MatDatepickerModule,
         TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent
     ]
 })
@@ -70,10 +70,10 @@ export class ColaboradorFichaComponent implements OnInit {
         departamentoId: [null as number | null],
         puesto: [''],
         jefeInmediatoId: [null as number | null],
-        fechaAltaImss: [null as Date | null],
-        fechaBajaImss: [null as Date | null],
-        fechaIngresoReal: [null as Date | null],
-        fechaAntiguedadReconocida: [null as Date | null],
+        fechaAltaImss: [null as DateTime | null],
+        fechaBajaImss: [null as DateTime | null],
+        fechaIngresoReal: [null as DateTime | null],
+        fechaAntiguedadReconocida: [null as DateTime | null],
         rfc: [''], curp: [''], nss: [''],
         correoPersonal: [''], correoEmpresa: [''],
         direccionHogar: [''],
@@ -176,7 +176,7 @@ export class ColaboradorFichaComponent implements OnInit {
             forkJoin({ detalle: this._service.obtener(this.id), contratos: this._service.listarContratos(this.id) }).subscribe({
                 next: ({ detalle, contratos }) => {
                     this.contratos = contratos;
-                    this.aplicar(detalle);
+                    this.aplicar(detalle, true);
                 },
                 error: (e) => this.avisar(mensajeError(e, 'No se pudo cargar el colaborador.'))
             });
@@ -197,7 +197,7 @@ export class ColaboradorFichaComponent implements OnInit {
                 this.guardando = false;
                 this.avisar('Colaborador guardado.');
                 if (this.id) {
-                    this.aplicar(detalle);
+                    this.aplicar(detalle, false);
                     this.version++;
                 } else {
                     this._router.navigate(['/rrhh/colaboradores', detalle.colaboradorId]);
@@ -278,7 +278,8 @@ export class ColaboradorFichaComponent implements OnInit {
         });
     }
 
-    private aplicar(d: ColaboradorDetalle): void {
+    /** `conBeneficiarios` = false conserva las filas que el usuario esté capturando (se recargan solo al abrir la ficha). */
+    private aplicar(d: ColaboradorDetalle, conBeneficiarios: boolean): void {
         this.colaborador = d;
         for (const campo of TEXTOS) this.form.controls[campo].setValue(d[campo] ?? '');
         for (const campo of FECHAS) this.form.controls[campo].setValue(desdeIso(d[campo]));
@@ -286,8 +287,10 @@ export class ColaboradorFichaComponent implements OnInit {
         this.form.controls.nombre.setValue(d.nombre);
         this.form.markAsPristine();
 
-        this.beneficiarios.clear();
-        d.beneficiarios.forEach((b) => this.beneficiarios.push(this.nuevoBeneficiario(b)));
+        if (conBeneficiarios) {
+            this.beneficiarios.clear();
+            d.beneficiarios.forEach((b) => this.beneficiarios.push(this.nuevoBeneficiario(b)));
+        }
     }
 
     private armarDto(estatus: EstatusColaborador): ColaboradorGuardar {
