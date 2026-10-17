@@ -66,10 +66,11 @@ export class ColaboradorFichaComponent implements OnInit {
     readonly form = this._fb.group({
         codigo: [''],
         nombre: ['', Validators.required],
-        sucursalId: [null as number | null],
-        departamentoId: [null as number | null],
+        // 0 = sin asignar (un valor null deja el select en blanco); se convierte a null al enviar al API
+        sucursalId: [0],
+        departamentoId: [0],
         puesto: [''],
-        jefeInmediatoId: [null as number | null],
+        jefeInmediatoId: [0],
         fechaAltaImss: [null as DateTime | null],
         fechaBajaImss: [null as DateTime | null],
         fechaIngresoReal: [null as DateTime | null],
@@ -283,7 +284,7 @@ export class ColaboradorFichaComponent implements OnInit {
         this.colaborador = d;
         for (const campo of TEXTOS) this.form.controls[campo].setValue(d[campo] ?? '');
         for (const campo of FECHAS) this.form.controls[campo].setValue(desdeIso(d[campo]));
-        for (const campo of NUMEROS) this.form.controls[campo].setValue(d[campo]);
+        for (const campo of NUMEROS) this.form.controls[campo].setValue(d[campo] ?? 0);
         this.form.controls.nombre.setValue(d.nombre);
         this.form.markAsPristine();
 
@@ -300,10 +301,10 @@ export class ColaboradorFichaComponent implements OnInit {
             nombre: (v.nombre ?? '').trim(),
             // sin pantalla para vincular usuario: se conserva el vínculo que ya tenga (null borraría el enlace)
             usuarioId: this.colaborador?.usuarioId ?? null,
-            sucursalId: v.sucursalId,
-            departamentoId: v.departamentoId,
+            sucursalId: v.sucursalId || null,
+            departamentoId: v.departamentoId || null,
             puesto: textoONull(v.puesto),
-            jefeInmediatoId: v.jefeInmediatoId,
+            jefeInmediatoId: v.jefeInmediatoId || null,
             estatus,
             fechaAltaImss: aFechaIso(v.fechaAltaImss),
             fechaBajaImss: aFechaIso(v.fechaBajaImss),

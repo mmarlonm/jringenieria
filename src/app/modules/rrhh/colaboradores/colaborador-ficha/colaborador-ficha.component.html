@@ -47,7 +47,7 @@
                             <mat-label>Código</mat-label>
                             <input matInput formControlName="codigo" maxlength="20"
                                 [placeholder]="id === null ? 'JR-01 (se asigna solo si se deja vacío)' : 'JR-01'">
-                            <mat-hint>El código JR de nómina; al cambiarlo queda en el historial.</mat-hint>
+                            <mat-hint>Código JR de nómina</mat-hint>
                         </mat-form-field>
                         <mat-form-field class="sm:col-span-2">
                             <mat-label>Nombre</mat-label>
@@ -57,8 +57,8 @@
 
                         <mat-form-field>
                             <mat-label>Sucursal</mat-label>
-                            <mat-select formControlName="sucursalId" placeholder="Sin asignar">
-                                <mat-option [value]="null">Sin asignar</mat-option>
+                            <mat-select formControlName="sucursalId">
+                                <mat-option [value]="0">Sin asignar</mat-option>
                                 @for (s of catalogos?.sucursales ?? []; track s.id) {
                                     <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
                                 }
@@ -66,8 +66,8 @@
                         </mat-form-field>
                         <mat-form-field>
                             <mat-label>Área</mat-label>
-                            <mat-select formControlName="departamentoId" placeholder="Sin asignar">
-                                <mat-option [value]="null">Sin asignar</mat-option>
+                            <mat-select formControlName="departamentoId">
+                                <mat-option [value]="0">Sin asignar</mat-option>
                                 @for (d of catalogos?.departamentos ?? []; track d.id) {
                                     <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
                                 }
@@ -80,8 +80,8 @@
 
                         <mat-form-field class="sm:col-span-2">
                             <mat-label>Jefe inmediato</mat-label>
-                            <mat-select formControlName="jefeInmediatoId" placeholder="Sin asignar">
-                                <mat-option [value]="null">Sin asignar</mat-option>
+                            <mat-select formControlName="jefeInmediatoId">
+                                <mat-option [value]="0">Sin asignar</mat-option>
                                 @for (j of jefes; track j.colaboradorId) {
                                     <mat-option [value]="j.colaboradorId">{{ j.codigo }} · {{ j.nombre }}</mat-option>
                                 }

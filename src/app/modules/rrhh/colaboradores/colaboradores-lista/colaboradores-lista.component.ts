@@ -14,6 +14,7 @@ import { BehaviorSubject, Subject, catchError, combineLatest, debounceTime, of, 
 import { ColaboradoresService } from '../colaboradores.service';
 import { CatalogoItem, ColaboradorLista, EstatusColaborador, EstatusContrato } from '../colaboradores.types';
 import { ImportarUsuariosDialogComponent } from '../importar-usuarios-dialog/importar-usuarios-dialog.component';
+import { FilaLista, agruparSegunOrganigrama, aplanarGrupos } from '../organigrama.utils';
 
 @Component({
     selector: 'rrhh-colaboradores-lista',
@@ -32,7 +33,8 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
     /** Emite para volver a consultar la lista (tras importar usuarios). */
     private readonly _recargar = new BehaviorSubject<void>(undefined);
 
-    colaboradores: ColaboradorLista[] = [];
+    /** Encabezados de grupo (como en el organigrama) seguidos de sus colaboradores. */
+    filas: FilaLista[] = [];
     sucursales: CatalogoItem[] = [];
     cargando = true;
     cargandoUsuarios = false;
@@ -40,7 +42,8 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
     displayedColumns = ['codigo', 'nombre', 'sucursal', 'departamento', 'puesto', 'estatus', 'estatusContrato', 'vencimiento', 'acciones'];
 
     filtroEstatus = new FormControl<EstatusColaborador | ''>('', { nonNullable: true });
-    filtroSucursal = new FormControl<number | null>(null);
+    /** 0 = todas las sucursales (un valor null deja el select en blanco). */
+    filtroSucursal = new FormControl<number>(0, { nonNullable: true });
     filtroBuscar = new FormControl<string>('', { nonNullable: true });
 
     ngOnInit(): void {
@@ -59,7 +62,7 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
             switchMap(([estatus, sucursalId, buscar]) => {
                 this.cargando = true;
                 // el error se atrapa aquí dentro: si se propagara, los filtros dejarían de funcionar
-                return this._service.listar({ estatus, sucursalId, buscar }).pipe(
+                return this._service.listar({ estatus, sucursalId: sucursalId || null, buscar }).pipe(
                     catchError((e) => {
                         this.avisar(e, 'No se pudo cargar la lista de colaboradores.');
                         return of<ColaboradorLista[]>([]);
@@ -67,7 +70,7 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
                 );
             })
         ).subscribe((lista) => {
-            this.colaboradores = lista;
+            this.filas = aplanarGrupos(agruparSegunOrganigrama(lista));
             this.cargando = false;
         });
     }
@@ -76,6 +79,9 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
         this._destroy.next();
         this._destroy.complete();
     }
+
+    readonly esGrupo = (_: number, fila: FilaLista): boolean => fila.esGrupo;
+    readonly esColaborador = (_: number, fila: FilaLista): boolean => !fila.esGrupo;
 
     /** Sin filtros activos: si la lista sale vacía es que aún no hay colaboradores. */
     get sinFiltros(): boolean {
