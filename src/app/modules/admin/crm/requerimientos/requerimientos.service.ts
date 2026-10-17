@@ -128,6 +128,21 @@ export class RequerimientosService {
 
   constructor(private http: HttpClient) {}
 
+  /** Id del usuario con sesión iniciada. */
+  usuarioActualId(): number | null {
+    try {
+      const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
+      return info?.usuario?.usuarioId || info?.usuario?.id || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Califica el responsable asignado; si el requerimiento no tiene responsable, cualquiera. */
+  puedeCalificar(req: Requerimiento): boolean {
+    return !req.usuarioAsignadoId || req.usuarioAsignadoId === this.usuarioActualId();
+  }
+
   getRequerimientos(): Observable<Requerimiento[]> {
     return this.http.get<Requerimiento[]>(this.apiUrl);
   }

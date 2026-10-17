@@ -160,6 +160,12 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     const item = this.requerimientos.find(r => r.id === itemId);
     if (!item || item.estatus === targetEstatus) return;
 
+    if (!this.reqService.puedeCalificar(item)) {
+      Swal.fire('Sin permiso', `Solo ${item.usuarioAsignadoNombre || 'el responsable asignado'} puede calificar este requerimiento.`, 'info');
+      this.loadRequerimientos();
+      return;
+    }
+
     if (targetEstatus === 'No Viable') {
       Swal.fire({
         title: 'Motivo de descarte / No Viable',
@@ -320,7 +326,11 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
           width: '880px',
           maxWidth: '95vw',
           autoFocus: false,
-          data: { requerimiento: reqFull, currentUser: { id: req.usuarioAsignadoId || 1 } }
+          data: {
+            requerimiento: reqFull,
+            currentUser: { id: this.reqService.usuarioActualId() },
+            puedeCalificar: this.reqService.puedeCalificar(reqFull)
+          }
         });
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
