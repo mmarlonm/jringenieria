@@ -42,6 +42,8 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   requerimiento: Requerimiento;
   calificarForm: FormGroup;
   currentUser: any;
+  /** Solo el responsable asignado califica; los demás ven la calificación sin poder cambiarla. */
+  puedeCalificar: boolean;
 
   pestana: Pestana = 'clasificacion';
   guardando = false;
@@ -74,10 +76,11 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     private fb: FormBuilder,
     private reqService: RequerimientosService,
     private dialogRef: MatDialogRef<RequerimientoCalificarDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { requerimiento: Requerimiento; currentUser: any }
+    @Inject(MAT_DIALOG_DATA) public data: { requerimiento: Requerimiento; currentUser: any; puedeCalificar: boolean }
   ) {
     this.requerimiento = data.requerimiento;
     this.currentUser = data.currentUser;
+    this.puedeCalificar = data.puedeCalificar;
 
     this.calificarForm = this.fb.group({
       estatus: [this.requerimiento.estatus || 'Pendiente', [Validators.required]],
@@ -103,6 +106,8 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       faltaOtros: [this.requerimiento.faltaOtros || false],
       faltaOtrosDescripcion: [this.requerimiento.faltaOtrosDescripcion || '']
     });
+
+    if (!this.puedeCalificar) this.calificarForm.disable();
   }
 
   ngOnInit(): void {
@@ -230,7 +235,7 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       this.requerimiento.id,
       this.medioSeguimiento,
       this.detalleSeguimiento,
-      this.currentUser?.id || 1
+      this.currentUser?.id
     ).subscribe({
       next: () => {
         this.detalleSeguimiento = '';
@@ -250,7 +255,7 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   // ------------------------------------------------------------------ guardar
 
   onSubmit(): void {
-    if (this.calificarForm.invalid || this.guardando) return;
+    if (!this.puedeCalificar || this.calificarForm.invalid || this.guardando) return;
 
     this.guardando = true;
     this.reqService.calificarRequerimiento(this.requerimiento.id, this.calificarForm.value).subscribe({

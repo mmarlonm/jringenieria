@@ -41,7 +41,7 @@ export class NotificationsService {
                     time: new Date(item.fechaAccion || item.fecha || new Date()).toISOString(),
                     read: false,
                     view: true,
-                    link: `/dashboards/tasks?id=${item.referenciaId}`,
+                    link: item.tipo === 'Requerimiento' ? '/crm/requerimientos' : `/dashboards/tasks?id=${item.referenciaId}`,
                     useRouter: true,
                     // Guardamos la referenciaId para uso interno si es necesario
                     referenciaId: item.referenciaId,
