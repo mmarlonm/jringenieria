@@ -9,6 +9,17 @@ import { ColaboradoresService } from '../colaboradores/colaboradores.service';
 import { Parametro } from '../colaboradores/colaboradores.types';
 import { mensajeError } from '../colaboradores/colaboradores.utils';
 
+/** Título legible de cada parámetro (la clave técnica viene sin espacios ni acentos). */
+const TITULOS: Record<string, string> = {
+    ContratoDiasAlerta: 'Contrato: días de alerta',
+    FaltasInjustificadasUmbral: 'Faltas injustificadas: umbral',
+    HorasExtraMaxDia: 'Horas extra máximas por día',
+    HorasExtraMaxSemana: 'Horas extra máximas por semana',
+    PrimaVacacionalMinima: 'Prima vacacional mínima',
+    VentanaAlertaContratoDias: 'Ventana de alerta de contratos (días)',
+    VentanaAlertaDc3Dias: 'Ventana de alerta de DC-3 (días)'
+};
+
 interface FilaParametro {
     parametro: Parametro;
     control: FormControl<string>;
@@ -56,6 +67,11 @@ export class ParametrosComponent implements OnInit {
                 this.avisar(mensajeError(e, 'No se pudo guardar el parámetro.'));
             }
         });
+    }
+
+    /** Título para mostrar; un parámetro nuevo sin traducción se separa por palabras («HorasExtra» → «Horas Extra»). */
+    titulo(clave: string): string {
+        return TITULOS[clave] ?? clave.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
     }
 
     private avisar(texto: string): void {

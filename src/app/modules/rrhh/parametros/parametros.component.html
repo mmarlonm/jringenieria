@@ -16,7 +16,7 @@
                 @for (fila of filas; track fila.parametro.clave) {
                     <div class="grid grid-cols-1 items-center gap-x-4 p-4 sm:grid-cols-12">
                         <div class="sm:col-span-6">
-                            <div class="font-semibold">{{ fila.parametro.clave }}</div>
+                            <div class="font-semibold" [title]="fila.parametro.clave">{{ titulo(fila.parametro.clave) }}</div>
                             <div class="text-secondary text-sm">{{ fila.parametro.descripcion }}</div>
                         </div>
                         <mat-form-field class="sm:col-span-4" subscriptSizing="dynamic">

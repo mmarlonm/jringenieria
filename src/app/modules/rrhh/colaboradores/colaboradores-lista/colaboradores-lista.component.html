@@ -31,8 +31,8 @@
 
             <mat-form-field subscriptSizing="dynamic">
                 <mat-label>Sucursal</mat-label>
-                <mat-select [formControl]="filtroSucursal" placeholder="Todas">
-                    <mat-option [value]="null">Todas</mat-option>
+                <mat-select [formControl]="filtroSucursal">
+                    <mat-option [value]="0">Todas</mat-option>
                     @for (s of sucursales; track s.id) {
                         <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
                     }
@@ -47,14 +47,21 @@
         </div>
 
         <div class="mt-6 bg-card shadow rounded-2xl overflow-auto">
-            <table mat-table [dataSource]="colaboradores" class="w-full">
+            <table mat-table [dataSource]="filas" class="w-full">
+                <!-- encabezado de grupo del organigrama: ocupa toda la fila -->
+                <ng-container matColumnDef="grupo">
+                    <td mat-cell *matCellDef="let g" [attr.colspan]="displayedColumns.length" class="!bg-gray-50 !py-2">
+                        <span class="font-semibold">{{ g.titulo }}</span>
+                        <span class="text-secondary"> · {{ g.total }}</span>
+                    </td>
+                </ng-container>
                 <ng-container matColumnDef="codigo">
                     <th mat-header-cell *matHeaderCellDef>Código</th>
                     <td mat-cell *matCellDef="let c" class="font-semibold">{{ c.codigo }}</td>
                 </ng-container>
                 <ng-container matColumnDef="nombre">
                     <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                    <td mat-cell *matCellDef="let c">{{ c.nombre }}</td>
+                    <td mat-cell *matCellDef="let c" [style.padding-left.px]="16 + (c.nivel || 0) * 16">{{ c.nombre }}</td>
                 </ng-container>
                 <ng-container matColumnDef="sucursal">
                     <th mat-header-cell *matHeaderCellDef>Sucursal</th>
@@ -66,7 +73,7 @@
                 </ng-container>
                 <ng-container matColumnDef="puesto">
                     <th mat-header-cell *matHeaderCellDef>Puesto</th>
-                    <td mat-cell *matCellDef="let c">{{ c.puesto || '—' }}</td>
+                    <td mat-cell *matCellDef="let c">{{ c.puesto || c.puestoOrganigrama || '—' }}</td>
                 </ng-container>
                 <ng-container matColumnDef="estatus">
                     <th mat-header-cell *matHeaderCellDef>Estatus</th>
@@ -99,7 +106,8 @@
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['grupo']; when: esGrupo"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns; when: esColaborador"></tr>
                 <tr class="mat-row" *matNoDataRow>
                     <td class="mat-cell p-6 text-secondary" [attr.colspan]="displayedColumns.length">
                         @if (cargando) {
