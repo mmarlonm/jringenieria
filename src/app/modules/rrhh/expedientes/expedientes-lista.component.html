@@ -1,0 +1,108 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <div class="flex flex-col shadow bg-card">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-10 border-b">
+            <div>
+                <div class="text-3xl font-bold tracking-tight">Expedientes</div>
+                <div class="text-secondary">Documentos de ingreso de cada colaborador y su avance.</div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-3 sm:mt-0">
+                <button mat-stroked-button type="button" [disabled]="cargandoFormatos" (click)="abrirFormatos()">
+                    <mat-icon [svgIcon]="'heroicons_outline:document-arrow-down'"></mat-icon>
+                    <span class="ml-2">Formatos</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 sm:p-10">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Estado</mat-label>
+                <mat-select [formControl]="filtroEstado">
+                    <mat-option value="">Todos</mat-option>
+                    <mat-option value="incompletos">Incompletos</mat-option>
+                    <mat-option value="porrevisar">Con documentos por revisar</mat-option>
+                    <mat-option value="porvencer">Con documentos por vencer</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Sucursal</mat-label>
+                <mat-select [formControl]="filtroSucursal">
+                    <mat-option [value]="0">Todas</mat-option>
+                    @for (s of sucursales; track s.id) {
+                        <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Buscar</mat-label>
+                <input matInput [formControl]="filtroBuscar" placeholder="Código o nombre">
+                <mat-icon matSuffix [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+            </mat-form-field>
+        </div>
+
+        <div class="mt-6 bg-card shadow rounded-2xl overflow-auto">
+            <table mat-table [dataSource]="filas" class="w-full">
+                <ng-container matColumnDef="nombre">
+                    <th mat-header-cell *matHeaderCellDef>Colaborador</th>
+                    <td mat-cell *matCellDef="let c">
+                        <div class="font-semibold">{{ c.nombre }}</div>
+                        <div class="text-xs text-secondary">{{ c.codigo }}</div>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="sucursal">
+                    <th mat-header-cell *matHeaderCellDef>Sucursal</th>
+                    <td mat-cell *matCellDef="let c">{{ c.sucursal || '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="expediente">
+                    <th mat-header-cell *matHeaderCellDef>Expediente</th>
+                    <td mat-cell *matCellDef="let c">
+                        <div class="flex items-center gap-2">
+                            <div class="h-2 w-28 rounded-full bg-gray-200 overflow-hidden">
+                                <div class="h-full bg-emerald-500" [style.width.%]="c.porcentaje"></div>
+                            </div>
+                            <span class="text-sm font-semibold">{{ c.porcentaje }}%</span>
+                        </div>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="pendientes">
+                    <th mat-header-cell *matHeaderCellDef>Pendiente</th>
+                    <td mat-cell *matCellDef="let c">
+                        <div class="flex flex-wrap gap-1">
+                            @if (c.porRevisar > 0) {
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 whitespace-nowrap">{{ c.porRevisar }} por revisar</span>
+                            }
+                            @if (c.faltan > 0) {
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 whitespace-nowrap">{{ c.faltan }} faltan</span>
+                            }
+                            @if (c.porVencer > 0) {
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 whitespace-nowrap">{{ c.porVencer }} por vencer</span>
+                            }
+                            @if (c.porcentaje === 100 && c.porVencer === 0) {
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Completo</span>
+                            }
+                        </div>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let c" class="text-right">
+                        <a mat-icon-button [routerLink]="['/rrhh/expedientes', c.colaboradorId]" aria-label="Revisar expediente">
+                            <mat-icon [svgIcon]="'heroicons_outline:chevron-right'"></mat-icon>
+                        </a>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+                <tr mat-row *matRowDef="let row; columns: columnas" class="cursor-pointer hover:bg-hover" [routerLink]="['/rrhh/expedientes', row.colaboradorId]"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell p-6 text-secondary" [attr.colspan]="columnas.length">
+                        {{ cargando ? 'Cargando…' : 'No hay expedientes con esos filtros.' }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

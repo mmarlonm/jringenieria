@@ -92,6 +92,17 @@
                         </span>
                     </td>
                 </ng-container>
+                <ng-container matColumnDef="expediente">
+                    <th mat-header-cell *matHeaderCellDef>Expediente</th>
+                    <td mat-cell *matCellDef="let c">
+                        <div class="flex items-center gap-2" [attr.title]="c.porcentajeExpediente + '% del expediente digital'">
+                            <div class="h-2 w-16 rounded-full bg-gray-200 overflow-hidden">
+                                <div class="h-full bg-emerald-500" [style.width.%]="c.porcentajeExpediente"></div>
+                            </div>
+                            <span class="text-xs font-semibold">{{ c.porcentajeExpediente }}%</span>
+                        </div>
+                    </td>
+                </ng-container>
                 <ng-container matColumnDef="vencimiento">
                     <th mat-header-cell *matHeaderCellDef>Vencimiento</th>
                     <td mat-cell *matCellDef="let c">{{ (c.fechaVencimientoContrato | date: 'dd/MM/yyyy') || '—' }}</td>

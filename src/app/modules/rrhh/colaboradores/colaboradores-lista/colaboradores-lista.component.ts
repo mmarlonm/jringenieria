@@ -39,7 +39,7 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
     cargando = true;
     cargandoUsuarios = false;
 
-    displayedColumns = ['codigo', 'nombre', 'sucursal', 'departamento', 'puesto', 'estatus', 'estatusContrato', 'vencimiento', 'acciones'];
+    displayedColumns = ['codigo', 'nombre', 'sucursal', 'departamento', 'puesto', 'estatus', 'estatusContrato', 'expediente', 'vencimiento', 'acciones'];
 
     filtroEstatus = new FormControl<EstatusColaborador | ''>('', { nonNullable: true });
     /** 0 = todas las sucursales (un valor null deja el select en blanco). */

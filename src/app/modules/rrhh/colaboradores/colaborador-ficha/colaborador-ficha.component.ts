@@ -16,9 +16,10 @@ import { ColaboradoresService } from '../colaboradores.service';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import {
     Beneficiario, Catalogos, ColaboradorDetalle, ColaboradorGuardar, ColaboradorLista, Contrato, EstatusColaborador,
-    PERMISO_NOMINA, PERMISO_SALUD
+    PERMISO_EXPEDIENTES, PERMISO_NOMINA, PERMISO_SALUD
 } from '../colaboradores.types';
 import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.utils';
+import { ExpedienteComponent } from '../../expediente/expediente.component';
 import { TabContratosComponent } from './tab-contratos.component';
 import { TabHistorialComponent } from './tab-historial.component';
 import { TabNominaComponent } from './tab-nomina.component';
@@ -42,7 +43,7 @@ const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
         CommonModule, ReactiveFormsModule, RouterLink,
         MatTabsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
         MatDatepickerModule,
-        TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent
+        TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent, ExpedienteComponent
     ]
 })
 export class ColaboradorFichaComponent implements OnInit {
@@ -141,6 +142,10 @@ export class ColaboradorFichaComponent implements OnInit {
         return this._permisos.tiene(PERMISO_SALUD);
     }
 
+    get puedeVerExpediente(): boolean {
+        return this._permisos.tiene(PERMISO_EXPEDIENTES);
+    }
+
     /** Lo que falta para activar, con los datos que hay hoy en el formulario (igual que la regla del API). */
     get faltantes(): string[] {
         const v = this.form.getRawValue();
@@ -148,7 +153,12 @@ export class ColaboradorFichaComponent implements OnInit {
         if (!textoONull(v.rfc)) faltan.push('RFC');
         if (!textoONull(v.curp)) faltan.push('CURP');
         if (!textoONull(v.nss)) faltan.push('NSS');
-        if (this.contratos.length === 0) faltan.push('Contrato');
+        // El contrato firmado se exige solo al pasar a ACTIVO; quien ya lo es conserva la regla de siempre (al menos un contrato)
+        if (this.estatus === 'ACTIVO') {
+            if (this.contratos.length === 0) faltan.push('Contrato');
+        } else if (!this.contratos.some((c) => c.tieneArchivoFirmado)) {
+            faltan.push('Contrato firmado');
+        }
         return faltan;
     }
 
