@@ -370,7 +370,10 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
-            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' }
+            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' },
+            { id: 'rrhh.mis-solicitudes', title: 'Mis vacaciones y permisos', type: 'basic', icon: 'heroicons_outline:calendar-days', link: '/rrhh/mis-solicitudes' },
+            { id: 'rrhh.aprobaciones', title: 'Por aprobar', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/rrhh/aprobaciones' },
+            { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
         ]
     },
     // ==========================================================================================
@@ -471,7 +474,10 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
-            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' }
+            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' },
+            { id: 'rrhh.mis-solicitudes', title: 'Mis vacaciones y permisos', type: 'basic', icon: 'heroicons_outline:calendar-days', link: '/rrhh/mis-solicitudes' },
+            { id: 'rrhh.aprobaciones', title: 'Por aprobar', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/rrhh/aprobaciones' },
+            { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
         ]
     },
     {
@@ -568,7 +574,10 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
-            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' }
+            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' },
+            { id: 'rrhh.mis-solicitudes', title: 'Mis vacaciones y permisos', type: 'basic', icon: 'heroicons_outline:calendar-days', link: '/rrhh/mis-solicitudes' },
+            { id: 'rrhh.aprobaciones', title: 'Por aprobar', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/rrhh/aprobaciones' },
+            { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
         ]
     },
     { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
@@ -657,7 +666,10 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
-            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' }
+            { id: 'rrhh.expedientes', title: 'Expedientes', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/rrhh/expedientes' },
+            { id: 'rrhh.mis-solicitudes', title: 'Mis vacaciones y permisos', type: 'basic', icon: 'heroicons_outline:calendar-days', link: '/rrhh/mis-solicitudes' },
+            { id: 'rrhh.aprobaciones', title: 'Por aprobar', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/rrhh/aprobaciones' },
+            { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
         ]
     },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },

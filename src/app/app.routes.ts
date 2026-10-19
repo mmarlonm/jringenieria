@@ -130,7 +130,10 @@ export const appRoutes: Route[] = [
                     { path: 'colaboradores', loadChildren: () => import('app/modules/rrhh/colaboradores/colaboradores.routes') },
                     { path: 'parametros', loadChildren: () => import('app/modules/rrhh/parametros/parametros.routes') },
                     { path: 'mi-expediente', loadChildren: () => import('app/modules/rrhh/expediente/mi-expediente.routes') },
-                    { path: 'expedientes', loadChildren: () => import('app/modules/rrhh/expedientes/expedientes.routes') }
+                    { path: 'expedientes', loadChildren: () => import('app/modules/rrhh/expedientes/expedientes.routes') },
+                    { path: 'mis-solicitudes', loadChildren: () => import('app/modules/rrhh/ausencias/mis-solicitudes.routes') },
+                    { path: 'aprobaciones', loadChildren: () => import('app/modules/rrhh/aprobaciones/aprobaciones.routes') },
+                    { path: 'calendario-permisos', loadChildren: () => import('app/modules/rrhh/calendario-permisos/calendario-permisos.routes') }
                 ]
             },
             {

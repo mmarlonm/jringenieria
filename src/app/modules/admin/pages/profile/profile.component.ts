@@ -34,6 +34,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { ProfileService } from './profile.services';
 import { ExpedienteComponent } from 'app/modules/rrhh/expediente/expediente.component';
+import { MisSolicitudesComponent } from 'app/modules/rrhh/ausencias/mis-solicitudes.component';
 
 @Component({
   selector: 'profile',
@@ -60,7 +61,8 @@ import { ExpedienteComponent } from 'app/modules/rrhh/expediente/expediente.comp
     CommonModule,
     MatSelectModule,
     MatDatepickerModule,
-    ExpedienteComponent
+    ExpedienteComponent,
+    MisSolicitudesComponent
   ],
 })
 export class ProfileComponent implements OnInit {

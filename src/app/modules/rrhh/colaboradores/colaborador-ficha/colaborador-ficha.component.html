@@ -206,6 +206,14 @@
                     </mat-tab>
                 }
 
+                @if (puedeVerAusencias) {
+                    <mat-tab label="Vacaciones e incidencias">
+                        <ng-template matTabContent>
+                            <rrhh-tab-ausencias [colaboradorId]="colaborador.colaboradorId"></rrhh-tab-ausencias>
+                        </ng-template>
+                    </mat-tab>
+                }
+
                 @if (puedeVerNomina) {
                     <mat-tab label="Nómina">
                         <ng-template matTabContent>

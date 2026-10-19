@@ -1,0 +1,139 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <!-- Encabezado principal -->
+    <div class="flex flex-col shadow bg-card">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-10 border-b">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Calendario de permisos</h1>
+                <div class="text-secondary mt-1">Programación mensual de vacaciones, permisos e incidencias.</div>
+            </div>
+
+            @if (puedeGestionar) {
+                <div class="mt-4 flex flex-wrap items-center gap-3 sm:mt-0">
+                    <button mat-stroked-button type="button" [disabled]="cargandoDias()" (click)="abrirDiasNoLaborables()">
+                        <mat-icon [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                        <span class="ml-2">Días no laborables</span>
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Barra de control: mes y filtros -->
+    <div class="p-6 sm:p-10">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <!-- Selector de mes -->
+            <div class="flex items-center gap-2">
+                <button mat-icon-button type="button" aria-label="Mes anterior" (click)="irMesAnterior()">
+                    <mat-icon [svgIcon]="'heroicons_outline:chevron-left'"></mat-icon>
+                </button>
+                <div class="text-lg font-bold capitalize min-w-44 text-center">
+                    {{ nombreMes() }}
+                </div>
+                <button mat-icon-button type="button" aria-label="Mes siguiente" (click)="irMesSiguiente()">
+                    <mat-icon [svgIcon]="'heroicons_outline:chevron-right'"></mat-icon>
+                </button>
+            </div>
+
+            <!-- Filtro por sucursal para RRHH -->
+            @if (puedeGestionar) {
+                <div class="w-full sm:w-64">
+                    <mat-form-field subscriptSizing="dynamic" class="w-full">
+                        <mat-label>Sucursal</mat-label>
+                        <mat-select [formControl]="filtroSucursal">
+                            <mat-option [value]="0">Todas</mat-option>
+                            @for (s of sucursales(); track s.id) {
+                                <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            }
+        </div>
+
+        <!-- Vista de la cuadrícula -->
+        <div class="mt-6 bg-card rounded-2xl border dark:border-gray-800 shadow overflow-hidden">
+            @if (cargando()) {
+                <div class="p-8 text-center text-secondary">Cargando ausencias del mes…</div>
+            } @else if (filas().length === 0) {
+                <div class="p-10 text-center text-secondary">
+                    <mat-icon class="icon-size-12 mx-auto text-secondary mb-3" [svgIcon]="'heroicons_outline:calendar-days'"></mat-icon>
+                    <div class="text-base font-semibold">Nadie tiene ausencias este mes.</div>
+                </div>
+            } @else {
+                <div class="overflow-x-auto">
+                    <div class="flex flex-col" [style.min-width.px]="anchoMinimo()">
+                        <!-- Fila encabezado de días -->
+                        <div class="grid border-b dark:border-gray-800 text-xs font-semibold bg-gray-50/70 dark:bg-gray-800/50" [style.grid-template-columns]="plantillaColumnas()">
+                            <div class="sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 px-3 py-2 border-r dark:border-gray-800 flex items-center font-bold">
+                                Colaborador
+                            </div>
+                            @for (d of diasDelMes(); track d.dia) {
+                                <div class="flex flex-col items-center justify-center py-2 border-r dark:border-gray-800 last:border-r-0 text-center"
+                                    [ngClass]="d.esFinDeSemana ? 'bg-slate-200/50 dark:bg-gray-900/60 text-secondary' : ''">
+                                    <span class="font-bold text-xs">{{ d.dia }}</span>
+                                    <span class="text-[10px] uppercase text-secondary font-medium">{{ d.letra }}</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Filas por colaborador -->
+                        @for (fila of filas(); track fila.colaboradorId) {
+                            <div class="grid border-b dark:border-gray-800 last:border-b-0 min-h-[44px] relative" [style.grid-template-columns]="plantillaColumnas()">
+                                <!-- Nombre del colaborador fijo a la izquierda -->
+                                <div class="sticky left-0 z-20 bg-card px-3 py-2 border-r dark:border-gray-800 flex items-center min-w-0 font-medium text-sm truncate"
+                                    [style.grid-column]="'1'"
+                                    [style.grid-row]="'1'">
+                                    <span class="truncate" [title]="fila.colaborador">{{ fila.colaborador }}</span>
+                                </div>
+
+                                <!-- Cuadrículas de fondo para los días -->
+                                @for (d of diasDelMes(); track d.dia) {
+                                    <div class="border-r dark:border-gray-800 last:border-r-0 h-full pointer-events-none"
+                                        [style.grid-column]="d.dia + 1"
+                                        [style.grid-row]="'1'"
+                                        [ngClass]="d.esFinDeSemana ? 'bg-slate-100/50 dark:bg-gray-900/30' : ''">
+                                    </div>
+                                }
+
+                                <!-- Barras de ausencias -->
+                                @for (ev of fila.eventos; track ev.inicio + ev.fin + ev.tipo) {
+                                    <div class="z-10 my-1.5 mx-0.5 rounded px-2 py-1 text-xs font-semibold truncate shadow-sm flex items-center select-none cursor-default"
+                                        [ngStyle]="ev.estilo"
+                                        [title]="fila.colaborador + ': ' + ev.etiqueta + ' (' + formatearRango(ev.inicio, ev.fin) + ')'">
+                                        <span class="truncate">{{ ev.etiqueta }}</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Leyenda de colores -->
+        <div class="mt-6 flex flex-wrap items-center gap-4 text-xs text-secondary bg-card p-4 rounded-xl border dark:border-gray-800">
+            <span class="font-bold text-default">Leyenda:</span>
+            <div class="flex items-center gap-1.5">
+                <span class="h-3 w-3 rounded flex-none" style="background-color: #2563eb;"></span>
+                <span>Vacaciones</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="h-3 w-3 rounded flex-none" style="background-color: #d97706;"></span>
+                <span>Permisos (con / sin goce)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="h-3 w-3 rounded flex-none" style="background-color: #dc2626;"></span>
+                <span>Incapacidad</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="h-3 w-3 rounded flex-none" style="background-color: #374151;"></span>
+                <span>Falta</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="h-3 w-6 rounded flex-none border border-dashed border-gray-400"
+                    style="background: repeating-linear-gradient(135deg, #e5e7eb, #e5e7eb 4px, #cbd5e1 4px, #cbd5e1 8px);"></span>
+                <span>Pendiente (rayado)</span>
+            </div>
+        </div>
+    </div>
+</div>

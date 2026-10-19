@@ -16,10 +16,11 @@ import { ColaboradoresService } from '../colaboradores.service';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import {
     Beneficiario, Catalogos, ColaboradorDetalle, ColaboradorGuardar, ColaboradorLista, Contrato, EstatusColaborador,
-    PERMISO_EXPEDIENTES, PERMISO_NOMINA, PERMISO_SALUD
+    PERMISO_AUSENCIAS, PERMISO_EXPEDIENTES, PERMISO_NOMINA, PERMISO_SALUD
 } from '../colaboradores.types';
 import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.utils';
 import { ExpedienteComponent } from '../../expediente/expediente.component';
+import { TabAusenciasComponent } from './tab-ausencias.component';
 import { TabContratosComponent } from './tab-contratos.component';
 import { TabHistorialComponent } from './tab-historial.component';
 import { TabNominaComponent } from './tab-nomina.component';
@@ -43,7 +44,7 @@ const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
         CommonModule, ReactiveFormsModule, RouterLink,
         MatTabsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
         MatDatepickerModule,
-        TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent, ExpedienteComponent
+        TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent, ExpedienteComponent, TabAusenciasComponent
     ]
 })
 export class ColaboradorFichaComponent implements OnInit {
@@ -144,6 +145,10 @@ export class ColaboradorFichaComponent implements OnInit {
 
     get puedeVerExpediente(): boolean {
         return this._permisos.tiene(PERMISO_EXPEDIENTES);
+    }
+
+    get puedeVerAusencias(): boolean {
+        return this._permisos.tiene(PERMISO_AUSENCIAS);
     }
 
     /** Lo que falta para activar, con los datos que hay hoy en el formulario (igual que la regla del API). */

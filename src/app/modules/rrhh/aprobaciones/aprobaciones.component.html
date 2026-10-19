@@ -1,0 +1,112 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <!-- Encabezado -->
+    <div class="flex flex-col shadow bg-card">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-10 border-b">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl font-bold tracking-tight">Por aprobar</h1>
+                    @if (solicitudes().length > 0) {
+                        <span class="flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-2 text-xs font-bold text-white">
+                            {{ solicitudes().length }}
+                        </span>
+                    }
+                </div>
+                <div class="text-secondary mt-1">Solicitudes de vacaciones y permisos que requieren tu revisión.</div>
+            </div>
+            <div class="mt-4 flex items-center gap-3 sm:mt-0">
+                <button mat-stroked-button type="button" [disabled]="cargando()" (click)="cargar()">
+                    <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" [class.animate-spin]="cargando()"></mat-icon>
+                    <span class="ml-2">Actualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="p-6 sm:p-10">
+        @if (cargando() && solicitudes().length === 0) {
+            <div class="p-6 text-secondary text-center">Cargando solicitudes por aprobar…</div>
+        } @else if (error() && solicitudes().length === 0) {
+            <div class="bg-card rounded-2xl border p-6 text-secondary text-center">{{ error() }}</div>
+        } @else if (solicitudes().length === 0) {
+            <div class="bg-card rounded-2xl border p-10 text-center">
+                <mat-icon class="icon-size-12 mx-auto text-secondary mb-3" [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                <div class="text-base font-semibold">No tienes solicitudes por aprobar.</div>
+                <div class="text-xs text-secondary mt-1">Todas las peticiones de tu equipo o empresa están al día.</div>
+            </div>
+        } @else {
+            <div class="flex flex-col gap-4">
+                @for (s of solicitudes(); track s.solicitudId) {
+                    <article class="bg-card rounded-2xl border dark:border-gray-800 p-5 shadow-sm transition-shadow hover:shadow-md">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                            <!-- Datos del colaborador y solicitud -->
+                            <div class="flex items-start gap-3.5 min-w-0 flex-1">
+                                <div class="h-11 w-11 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 flex items-center justify-center font-bold text-sm flex-none">
+                                    {{ iniciales(s.colaborador) }}
+                                </div>
+                                <div class="min-w-0 flex-1 flex flex-col gap-1.5">
+                                    <div>
+                                        <div class="font-bold text-base leading-snug">{{ s.colaborador }}</div>
+                                        <div class="text-xs text-secondary">{{ s.area || 'Sin área asignada' }}</div>
+                                    </div>
+
+                                    <!-- Detalle del periodo -->
+                                    <div class="text-sm font-semibold text-default">
+                                        {{ s.tipo }} · {{ formatearFecha(s.fechaInicio) }} al {{ formatearFecha(s.fechaFin) }} · {{ s.diasHabiles }} {{ s.diasHabiles === 1 ? 'día hábil' : 'días hábiles' }}
+                                    </div>
+
+                                    <!-- Motivo si existe -->
+                                    @if (s.motivo) {
+                                        <div class="text-xs text-secondary bg-gray-50 dark:bg-gray-800/40 rounded-lg p-2.5 italic">
+                                            «{{ s.motivo }}»
+                                        </div>
+                                    }
+
+                                    <!-- Saldo vacaciones -->
+                                    @if (s.tipoCodigo === 'VACACIONES') {
+                                        <div class="text-xs font-semibold text-blue-700 dark:text-blue-400">
+                                            Saldo {{ s.disponible }} → {{ s.disponible - s.diasHabiles }}
+                                        </div>
+                                    }
+
+                                    <!-- Alerta de traslapes -->
+                                    @if (s.traslapes.length > 0) {
+                                        <div class="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-2.5 text-xs text-amber-800 dark:text-amber-200">
+                                            <mat-icon class="icon-size-4 flex-none text-amber-600 dark:text-amber-400 mt-0.5" [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                                            <span>⚠ {{ s.traslapes.join(', ') }} ya tiene(n) ausencia esos mismos días.</span>
+                                        </div>
+                                    }
+
+                                    <!-- Paso del flujo -->
+                                    <div class="text-xs font-medium text-secondary">
+                                        @if (s.estatus === 'PENDIENTE_JEFE') {
+                                            <span>Paso 1 de 2 · luego pasa a RRHH</span>
+                                        } @else if (s.estatus === 'PENDIENTE_RRHH') {
+                                            <span>Paso 2 de 2 · aprobación final de RRHH</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones de acción -->
+                            <div class="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 sm:self-center">
+                                <button mat-flat-button class="!bg-emerald-600 hover:!bg-emerald-700 !text-white flex-1 sm:flex-initial" type="button"
+                                    [disabled]="procesandoId() === s.solicitudId"
+                                    (click)="aprobar(s)">
+                                    <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                                    <span class="ml-1.5">{{ procesandoId() === s.solicitudId ? 'Aprobando…' : 'Aprobar' }}</span>
+                                </button>
+                                <button mat-stroked-button color="warn" class="flex-1 sm:flex-initial" type="button"
+                                    [disabled]="procesandoId() === s.solicitudId"
+                                    (click)="rechazar(s)">
+                                    <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                                    <span class="ml-1.5">Rechazar</span>
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</div>

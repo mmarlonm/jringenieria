@@ -158,3 +158,4 @@ export interface Parametro {
 export const PERMISO_NOMINA = 'rrhh.colaboradores.nomina';
 export const PERMISO_SALUD = 'rrhh.colaboradores.salud';
 export const PERMISO_EXPEDIENTES = 'rrhh.expedientes.revisar';
+export const PERMISO_AUSENCIAS = 'rrhh.permisos.aprobar';
