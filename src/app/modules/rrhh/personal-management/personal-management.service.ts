@@ -95,6 +95,21 @@ export class PersonalManagementService {
 
     return this._http.get<AsistenciaReporteDto[]>(`${this._apiUrl}/reporte-asistencias`, { params });
   }
+
+  /** RRHH corrige las marcas de un registro (requiere el permiso especial rrhh.asistencias.corregir). */
+  corregirAsistencia(asistenciaId: number, dto: AsistenciaCorreccionDto): Observable<{ mensaje: string }> {
+    return this._http.put<{ mensaje: string }>(`${this._apiUrl}/asistencias/${asistenciaId}`, dto);
+  }
+}
+
+/** Reemplazo completo de las marcas; las horas van como "HH:mm:ss" y vacío es null. */
+export interface AsistenciaCorreccionDto {
+  horaEntrada: string;
+  horaSalida: string | null;
+  comidaInicio: string | null;
+  comidaFin: string | null;
+  tipoJornada: string;
+  observaciones: string | null;
 }
 
 export interface AsistenciaReporteDto {
