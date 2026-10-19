@@ -6,7 +6,7 @@ export interface FilaColaborador extends ColaboradorLista {
     esGrupo: false;
     /** Puesto según el organigrama; null si la persona no aparece en él. */
     puestoOrganigrama: string | null;
-    /** 0 = cabeza del grupo, 1 = su equipo directo… (solo si aparece en el organigrama). */
+    /** 0 = cabeza del grupo, 1 = su equipo directo… hasta 3 (solo si aparece en el organigrama). */
     nivel: number;
 }
 
@@ -26,6 +26,9 @@ export interface GrupoOrganigrama {
 }
 
 const SIN_CLASIFICAR = 'sin-clasificar';
+
+/** Sangría máxima en la lista: la cadena de electricistas del organigrama baja 7 niveles y la tabla no debe deformarse. */
+const NIVEL_MAXIMO = 3;
 
 /** Mayúsculas sin acentos ni signos («Méndez, Ñ.» → «MENDEZ N»), para comparar nombres. */
 function normalizar(texto: string): string {
@@ -94,6 +97,7 @@ function categoriaDelArea(texto: string | null): string | null {
     if (t.includes('ADMIN')) return 'administracion';
     if (t.includes('COMERCIAL') || t.includes('VENTAS') || t.includes('MARKETING')) return 'comercial';
     if (t.includes('INGENIER')) return 'ingenieria';
+    if (t.includes('CALIDAD')) return 'calidad';
     return null;
 }
 
@@ -135,7 +139,7 @@ export function agruparSegunOrganigrama(colaboradores: ColaboradorLista[]): Grup
         const fila: FilaColaborador = {
             ...c, esGrupo: false,
             puestoOrganigrama: enOrganigrama?.nodo.role ?? null,
-            nivel: mismaCategoria ? Math.max(enOrganigrama.nivel - 1, 0) : 0
+            nivel: mismaCategoria ? Math.min(Math.max(enOrganigrama.nivel - 1, 0), NIVEL_MAXIMO) : 0
         };
         const orden = mismaCategoria ? enOrganigrama.orden : Number.MAX_SAFE_INTEGER;
 

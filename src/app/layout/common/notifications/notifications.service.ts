@@ -27,6 +27,15 @@ export class NotificationsService {
         return this._notifications.asObservable();
     }
 
+    /** A dónde lleva cada tipo de notificación; lo que no tiene pantalla propia abre la tarea (lo histórico). */
+    private enlaceDe(item: { tipo?: string; referenciaId?: number }): string {
+        switch (item.tipo) {
+            case 'Requerimiento': return '/crm/requerimientos';
+            case 'Compra': return '/administration/tablero-compras';
+            default: return `/dashboards/tasks?id=${item.referenciaId}`;
+        }
+    }
+
     /**
      * Obtiene notificaciones pendientes del nuevo endpoint de Tareas
      */
@@ -41,7 +50,7 @@ export class NotificationsService {
                     time: new Date(item.fechaAccion || item.fecha || new Date()).toISOString(),
                     read: false,
                     view: true,
-                    link: item.tipo === 'Requerimiento' ? '/crm/requerimientos' : `/dashboards/tasks?id=${item.referenciaId}`,
+                    link: this.enlaceDe(item),
                     useRouter: true,
                     // Guardamos la referenciaId para uso interno si es necesario
                     referenciaId: item.referenciaId,

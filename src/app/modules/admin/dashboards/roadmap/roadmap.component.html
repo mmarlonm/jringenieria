@@ -474,7 +474,7 @@
                         [ngClass]="organigramaViewMode === 'original' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
                         class="px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1">
                     <mat-icon [svgIcon]="'heroicons_outline:photo'" class="icon-size-3.5"></mat-icon>
-                    <span class="hidden sm:inline">Original (Img 3)</span>
+                    <span class="hidden sm:inline">Original</span>
                 </button>
             </div>
         </div>
@@ -529,7 +529,7 @@
                                 Encargado / Colaborador
                             </div>
                             <div class="text-sm font-black text-slate-900 dark:text-white leading-tight tracking-tight">
-                                {{ selectedRadialNode.person }}
+                                {{ selectedRadialNode.person || 'Sin asignar' }}
                             </div>
                         </div>
 
@@ -710,44 +710,32 @@
                         <!-- 1. ENCOMPASSING OUTER ORBIT: DIRECTOR GENERAL          -->
                         <!-- ======================================================= -->
                         <g class="outer-orbit-layer pointer-events-none">
-                            <ellipse cx="540" cy="500" rx="490" ry="460" 
-                                     fill="url(#outerSphereGrad)" />
-                            
-                            <ellipse cx="540" cy="500" rx="490" ry="460" 
-                                     fill="none" 
-                                     stroke="#0284c7" 
-                                     stroke-width="3.5" 
-                                     stroke-opacity="0.75" />
-                            
-                            <ellipse cx="540" cy="500" rx="482" ry="452" 
-                                     fill="none" 
-                                     stroke="#38bdf8" 
-                                     stroke-width="1.5" 
-                                     stroke-opacity="0.4"
-                                     stroke-dasharray="8,6" />
+                            <circle [attr.cx]="orbitalFrame.cx" [attr.cy]="orbitalFrame.cy" [attr.r]="orbitalFrame.radioAnillo"
+                                    fill="url(#outerSphereGrad)" />
 
-                            <!-- Repeated "Director General" Text along the Perimeter -->
-                            <text x="540" y="32" text-anchor="middle" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
-                            <text x="940" y="190" text-anchor="middle" transform="rotate(35, 940, 190)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
-                            <text x="1035" y="520" text-anchor="middle" transform="rotate(90, 1035, 520)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
-                            <text x="900" y="860" text-anchor="middle" transform="rotate(145, 900, 860)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
-                            <text x="540" y="990" text-anchor="middle" transform="rotate(180, 540, 990)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
-                            <text x="150" y="790" text-anchor="middle" transform="rotate(225, 150, 790)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
-                            <text x="120" y="270" text-anchor="middle" transform="rotate(295, 120, 270)" fill="#0284c7" class="text-xl sm:text-2xl font-black outer-orbit-text">
-                                Director General
-                            </text>
+                            <circle [attr.cx]="orbitalFrame.cx" [attr.cy]="orbitalFrame.cy" [attr.r]="orbitalFrame.radioAnillo"
+                                    fill="none"
+                                    stroke="#0284c7"
+                                    stroke-width="3.5"
+                                    stroke-opacity="0.75" />
+
+                            <circle [attr.cx]="orbitalFrame.cx" [attr.cy]="orbitalFrame.cy" [attr.r]="orbitalFrame.radioAnillo - 8"
+                                    fill="none"
+                                    stroke="#38bdf8"
+                                    stroke-width="1.5"
+                                    stroke-opacity="0.4"
+                                    stroke-dasharray="8,6" />
+
+                            <!-- «Director General» repetido sobre el anillo, siguiendo su tangente; la persona va debajo del cargo -->
+                            <g *ngFor="let l of directorLabels"
+                               [attr.transform]="'translate(' + l.x + ' ' + l.y + ') rotate(' + l.rotate + ')'">
+                                <text x="0" y="0" text-anchor="middle" fill="#0284c7" font-size="17" class="font-black outer-orbit-text">
+                                    {{ direccionGeneral.cargo }}
+                                </text>
+                                <text x="0" y="14" text-anchor="middle" fill="#0f172a" font-size="9" class="font-bold">
+                                    {{ direccionGeneral.persona }}
+                                </text>
+                            </g>
                         </g>
 
                         <!-- ======================================================= -->
@@ -908,7 +896,7 @@
                     </div>
 
                     <h4 class="text-sm font-black text-slate-900 dark:text-white uppercase leading-snug">
-                        {{ n.person }}
+                        {{ n.person || 'Sin asignar' }}
                     </h4>
                     <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                         {{ n.role }}
@@ -920,7 +908,7 @@
         <!-- MODE: ORIGINAL GRAPHIC PREVIEW (IMAGE 3) -->
         <div *ngIf="organigramaViewMode === 'original'" class="flex-auto overflow-y-auto p-4 flex flex-col items-center justify-center bg-white dark:bg-slate-900 max-w-5xl mx-auto w-full">
             <div class="w-full overflow-hidden rounded-xl shadow-md border border-slate-100 dark:border-slate-800">
-                <img src="images/identidad/organigrama-actual.png" alt="Organigrama Actual JR Ingeniería Eléctrica" class="w-full h-auto max-h-[80vh] object-contain mx-auto">
+                <img src="images/identidad/organigrama-estructura.jpg" alt="Diagrama estructural JR Ingeniería Eléctrica" class="w-full h-auto max-h-[80vh] object-contain mx-auto">
             </div>
         </div>
 

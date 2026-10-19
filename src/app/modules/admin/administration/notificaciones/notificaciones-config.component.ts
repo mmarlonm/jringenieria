@@ -383,6 +383,7 @@ export class NotificacionesConfigComponent implements OnInit {
             'Tareas.AdminGlobal':           'task_alt',
             'Tareas.AdminIngenieria':       'engineering',
             'SolicitudesCompra.Aprobacion': 'shopping_cart',
+            'SolicitudesCompra.Documentos': 'fact_check',
             'Subcontratacion.Notificacion': 'handshake',
         };
         return icons[clave] ?? 'notifications';

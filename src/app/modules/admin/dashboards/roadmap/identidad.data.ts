@@ -31,7 +31,7 @@ export interface ValorItem {
 }
 
 // -----------------------------------------------------------------------------
-// RADIAL / ORBITAL ORGANIGRAMA INTERFACES (Image 3)
+// RADIAL / ORBITAL ORGANIGRAMA INTERFACES
 // -----------------------------------------------------------------------------
 export interface RadialNodeTextLine {
     text: string;
@@ -46,7 +46,7 @@ export interface RadialNode {
     id: string;
     role: string;
     person: string;
-    category: 'cliente' | 'administracion' | 'comercial' | 'ingenieria' | 'puebla' | 'pachuca' | 'queretaro' | 'direccion';
+    category: 'cliente' | 'administracion' | 'comercial' | 'calidad' | 'ingenieria' | 'puebla' | 'pachuca' | 'queretaro' | 'direccion';
     cx: number;
     cy: number;
     r: number;
@@ -340,96 +340,6 @@ export const VALORES_LIST: ValorItem[] = [
     }
 ];
 
-// -----------------------------------------------------------------------------
-// RADIAL / ORBITAL DEPARTAMENTOS FILTROS & ZOOM PRESETS (Image 3)
-// -----------------------------------------------------------------------------
-export const RADIAL_DEPARTAMENTOS: RadialDepartmentFilter[] = [
-    {
-        id: 'todos',
-        name: 'Todo el Organigrama',
-        color: '#0284c7',
-        icon: 'heroicons_outline:globe-alt',
-        focusX: 0,
-        focusY: 0,
-        focusZoom: 0.95,
-        leader: 'Director General (Gobierno Integral)',
-        description: 'Estructura orbital completa centrada en el Cliente, con 6 frentes operativos y Dirección General en la periferia.',
-        teamCount: 36
-    },
-    {
-        id: 'administracion',
-        name: 'Administración',
-        color: '#22c55e',
-        icon: 'heroicons_outline:banknotes',
-        focusX: 65,
-        focusY: 670,
-        focusZoom: 2.15,
-        leader: 'Administrador General: CATALINA M',
-        description: 'Gestión administrativa, compras, contabilidad, finanzas, despachos fiscal/legal y recursos humanos.',
-        teamCount: 7
-    },
-    {
-        id: 'ingenieria',
-        name: 'Ingeniería',
-        color: '#f97316',
-        icon: 'heroicons_outline:wrench-screwdriver',
-        focusX: 520,
-        focusY: -280,
-        focusZoom: 1.95,
-        leader: 'Gerente de Ingeniería: JIMENA C',
-        description: 'Proyectos, tableros eléctricos, supervisión de seguridad, técnicos especialistas y control de calidad.',
-        teamCount: 15
-    },
-    {
-        id: 'comercial',
-        name: 'Desarrollo Comercial',
-        color: '#64748b',
-        icon: 'heroicons_outline:presentation-chart-line',
-        focusX: 530,
-        focusY: 340,
-        focusZoom: 2.3,
-        leader: 'Gerente de Desarrollo Comercial: FERMIN P',
-        description: 'Estrategia comercial corporativa, prospección de clientes y coordinación de mercadotecnia.',
-        teamCount: 2
-    },
-    {
-        id: 'puebla',
-        name: 'Sucursal Puebla',
-        color: '#2563eb',
-        icon: 'heroicons_outline:building-office',
-        focusX: -550,
-        focusY: 70,
-        focusZoom: 2.2,
-        leader: 'Gerente de Sucursal: JAIR C',
-        description: 'Operación comercial, administración de sucursal, almacén y atención a la región Puebla.',
-        teamCount: 5
-    },
-    {
-        id: 'pachuca',
-        name: 'Sucursal Pachuca',
-        color: '#0ea5e9',
-        icon: 'heroicons_outline:building-office-2',
-        focusX: -490,
-        focusY: -450,
-        focusZoom: 2.15,
-        leader: 'Gerente de Sucursal: DAMIAN Z',
-        description: 'Atención a clientes mostrador, ventas foráneas, almacén y administración Sucursal Pachuca.',
-        teamCount: 5
-    },
-    {
-        id: 'queretaro',
-        name: 'Sucursal Querétaro',
-        color: '#6366f1',
-        icon: 'heroicons_outline:building-storefront',
-        focusX: 20,
-        focusY: -690,
-        focusZoom: 2.15,
-        leader: 'Gerente de Sucursal: YAIR M',
-        description: 'Mercado del Bajío industrial, asesoría en mostrador, almacén y ventas regionales.',
-        teamCount: 5
-    }
-];
-
 // Helper to calculate exact, non-colliding vertical positions for text lines
 export function buildTextLines(
     cx: number,
@@ -444,14 +354,16 @@ export function buildTextLines(
     if (isDepartmentHub) {
         const n = linesPerson.length;
         if (n === 0) return [];
-        const lineHeight = 13.5;
-        const totalHeight = (n - 1) * lineHeight;
-        const startY = cy - (totalHeight / 2) + 3.8;
+        // El nombre más largo del área debe caber dentro del círculo (mayúsculas en negritas ≈ 0.68 em por letra)
+        const masLarga = Math.max(...linesPerson.map(l => l.length));
+        const fontSize = Math.min(n === 1 ? 22 : 18, Math.max(9, (1.7 * r) / (0.68 * masLarga)));
+        const lineHeight = fontSize * 1.15;
+        const startY = cy - (((n - 1) * lineHeight) / 2) + fontSize * 0.36;
         return linesPerson.map((line, idx) => ({
             text: line,
             isPerson: true,
             y: Number((startY + idx * lineHeight).toFixed(1)),
-            fontSize: n === 1 ? '12px' : '11px',
+            fontSize: `${fontSize.toFixed(1)}px`,
             fontWeight: '900',
             fill: textColor || '#0f172a'
         }));
@@ -464,56 +376,208 @@ export function buildTextLines(
     const n = allItems.length;
     if (n === 0) return [];
 
-    let lineHeight = 11.5;
-    let roleFontSize = '7.5px';
-    let personFontSize = '8.5px';
+    // La línea más ancha de cada tipo debe caber en el círculo (el puesto ≈ 0.56 em por letra; la persona va en
+    // mayúsculas y negritas, ≈ 0.72 em) y el bloque completo en su alto. Si no cabe, el texto se encoge hasta 5 px.
+    const masLargaRol = Math.max(1, ...linesRole.map(l => l.length));
+    const masLargaPersona = Math.max(1, ...linesPerson.map(l => l.length));
+    let roleFont = Math.min(8.5, (1.9 * r) / (0.56 * masLargaRol));
+    let personFont = Math.min(10, roleFont * 1.15, (1.9 * r) / (0.72 * masLargaPersona));
+    const alto = n * Math.max(roleFont, personFont) * 1.38;
+    const escala = Math.min(1, (1.7 * r) / alto);
+    roleFont = Math.max(5, roleFont * escala);
+    personFont = Math.max(5, personFont * escala);
 
-    if (r >= 44) {
-        lineHeight = n <= 3 ? 13.2 : 11.5;
-        roleFontSize = '8.5px';
-        personFontSize = '10px';
-    } else if (n >= 4) {
-        lineHeight = 10.2;
-        roleFontSize = '7px';
-        personFontSize = '8px';
-    } else if (n === 3) {
-        lineHeight = 11.6;
-        roleFontSize = '7.5px';
-        personFontSize = '8.8px';
-    } else {
-        lineHeight = 12.8;
-        roleFontSize = '8px';
-        personFontSize = '9.5px';
-    }
-
-    const totalBlockHeight = (n - 1) * lineHeight;
-    const startY = cy - (totalBlockHeight / 2) + 3.6;
+    const lineHeight = Math.max(roleFont, personFont) * 1.38;
+    const startY = cy - (((n - 1) * lineHeight) / 2) + Math.max(roleFont, personFont) * 0.36;
 
     return allItems.map((item, idx) => ({
         text: item.text,
         isPerson: item.isPerson,
         y: Number((startY + idx * lineHeight).toFixed(1)),
-        fontSize: item.isPerson ? personFontSize : roleFontSize,
+        fontSize: `${(item.isPerson ? personFont : roleFont).toFixed(1)}px`,
         fontWeight: item.isPerson ? '900' : '700',
         fill: item.isPerson ? (nodeColor || '#16a34a') : '#334155'
     }));
 }
 
 // -----------------------------------------------------------------------------
-// RADIAL NODES (Matching Image 3 Exactly with Generous Radii and Safe Spacing)
+// ORBITAL: «DIAGRAMA ESTRUCTURAL – JR INGENIERÍA ELÉCTRICA»
+// Las posiciones se midieron sobre la imagen del diagrama (coordenadas de imagen) y `aLienzo` las lleva al lienzo del
+// orbital. Los conectores y los enfoques por área se calculan a partir de ellas, así que mover o agregar una burbuja
+// no obliga a redibujar líneas ni a recalcular zooms a mano.
+// -----------------------------------------------------------------------------
+
+/** Lienzo del orbital (el HTML usa el mismo viewBox 1100×1000). (cx, cy) es el centro del anillo de Dirección General. */
+export const ORBITAL_FRAME = { width: 1100, height: 1000, cx: 550, cy: 500, radioAnillo: 492 } as const;
+
+/** Centro y escala de la imagen de origen: su círculo exterior mide ≈ 675 px de radio y aquí ≈ 500. */
+const IMG_CX = 685;
+const IMG_CY = 686;
+const IMG_ESCALA = 0.74;
+
+const redondear = (n: number): number => Number(n.toFixed(1));
+
+const aLienzo = (x: number, y: number, r: number): { cx: number; cy: number; r: number } => ({
+    cx: redondear(ORBITAL_FRAME.cx + (x - IMG_CX) * IMG_ESCALA),
+    cy: redondear(ORBITAL_FRAME.cy + (y - IMG_CY) * IMG_ESCALA),
+    r: Math.round(r * IMG_ESCALA)
+});
+
+type CategoriaArea = Exclude<RadialNode['category'], 'cliente' | 'direccion'>;
+
+interface EstiloArea {
+    color: string;
+    borde: string;
+    relleno: string;
+    texto: string;
+    bordeSatelite: string;
+    textoSatelite: string;
+}
+
+const ESTILOS: Record<CategoriaArea, EstiloArea> = {
+    administracion: { color: '#22c55e', borde: '#16a34a', relleno: '#dcfce7', texto: '#14532d', bordeSatelite: '#86efac', textoSatelite: '#15803d' },
+    comercial: { color: '#64748b', borde: '#475569', relleno: '#f1f5f9', texto: '#1e293b', bordeSatelite: '#cbd5e1', textoSatelite: '#334155' },
+    calidad: { color: '#ea580c', borde: '#c2410c', relleno: '#ffedd5', texto: '#9a3412', bordeSatelite: '#fb923c', textoSatelite: '#c2410c' },
+    ingenieria: { color: '#f97316', borde: '#ea580c', relleno: '#ffedd5', texto: '#9a3412', bordeSatelite: '#fdba74', textoSatelite: '#c2410c' },
+    puebla: { color: '#2563eb', borde: '#1d4ed8', relleno: '#dbeafe', texto: '#1e40af', bordeSatelite: '#93c5fd', textoSatelite: '#1d4ed8' },
+    pachuca: { color: '#0ea5e9', borde: '#0284c7', relleno: '#e0f2fe', texto: '#0369a1', bordeSatelite: '#7dd3fc', textoSatelite: '#0369a1' },
+    queretaro: { color: '#6366f1', borde: '#4f46e5', relleno: '#e0e7ff', texto: '#3730a3', bordeSatelite: '#a5b4fc', textoSatelite: '#4338ca' }
+};
+
+interface Puesto {
+    id: string;
+    parentId: string;
+    /** Puesto con «|» donde el diagrama parte la línea. */
+    rol: string;
+    /** Nombres tal como se leen en la burbuja. */
+    visible: string[];
+    /** Forma «NOMBRE I» (nombre + inicial del apellido) con la que RRHH ubica al colaborador; varias personas se separan con « / ». */
+    persona: string;
+    x: number;
+    y: number;
+    r: number;
+}
+
+/** Burbuja de puesto. Sin `persona` explícita se usa lo que muestra la burbuja en mayúsculas. */
+const puesto = (
+    id: string, parentId: string, rol: string, x: number, y: number, r: number,
+    visible: string[] = [], persona: string = visible.join(' / ').toUpperCase()
+): Puesto => ({ id, parentId, rol, visible, persona, x, y, r });
+
+interface Area {
+    categoria: CategoriaArea;
+    hub: { id: string; rol: string; lineas: string[]; x: number; y: number; r: number };
+    puestos: Puesto[];
+}
+
+const AREAS: Area[] = [
+    {
+        categoria: 'administracion',
+        hub: { id: 'adm-hub', rol: 'Dirección de Área', lineas: ['Administración'], x: 790, y: 460, r: 85 },
+        puestos: [
+            puesto('adm-gerente', 'adm-hub', 'Gerente de|Administración', 798, 281, 50, ['Catalina'], 'CATALINA M'),
+            puesto('adm-afianzadora', 'adm-gerente', 'Afianzadora', 712, 157, 37),
+            puesto('adm-rp', 'adm-gerente', 'Relaciones|públicas', 797, 145, 37, ['Catalina'], 'CATALINA M'),
+            puesto('adm-logistica', 'adm-gerente', 'Responsable|de logística', 873, 168, 37, ['Rafael']),
+            puesto('adm-rrhh', 'adm-gerente', 'Responsable de|RRHH', 935, 215, 38, ['Yadira'], 'YADIRA R'),
+            puesto('adm-reina', 'adm-rrhh', 'Auxiliar|administrativo', 1027, 270, 38, ['Reina']),
+            puesto('adm-contabilidad', 'adm-gerente', 'Responsable de|Contabilidad y|finanzas', 944, 294, 38, ['Ana'], 'ANA R'),
+            puesto('adm-compras', 'adm-gerente', 'Responsable de|Compras', 912, 368, 38, ['Catalina', 'Ana'], 'CATALINA M / ANA R'),
+            puesto('adm-fiscal', 'adm-gerente', 'Despacho|fiscal', 667, 224, 37),
+            puesto('adm-legal', 'adm-gerente', 'Despacho|legal', 664, 306, 37)
+        ]
+    },
+    {
+        categoria: 'comercial',
+        hub: { id: 'com-hub', rol: 'Dirección de Área', lineas: ['Desarrollo', 'Comercial'], x: 613, y: 485, r: 85 },
+        puestos: [
+            puesto('com-gerente', 'com-hub', 'Gerente de|Desarrollo|Comercial', 535, 325, 52, ['Fermin'], 'FERMIN P'),
+            puesto('com-marketing', 'com-gerente', 'Responsable de|Marketing', 399, 342, 35, ['Evelyn'], 'EVELYN M'),
+            puesto('com-aux-marketing', 'com-marketing', 'Auxiliar de|Marketing', 398, 258, 35, ['Johanna M'])
+        ]
+    },
+    {
+        categoria: 'calidad',
+        hub: { id: 'cal-hub', rol: 'Dirección de Área', lineas: ['Calidad'], x: 513, y: 645, r: 88 },
+        puestos: [
+            puesto('cal-gerente', 'cal-hub', 'Gerente de|Calidad', 380, 562, 52),
+            puesto('cal-seguridad', 'cal-gerente', 'Supervisor|de Seguridad', 330, 451, 36, ['Bryan']),
+            puesto('cal-ingenieria', 'cal-gerente', 'Inspector de|Calidad de|Ingeniería', 434.5, 458.7, 36),
+            puesto('cal-tableros', 'cal-gerente', 'Inspector de|Calidad de|Tableros', 255, 527, 36)
+        ]
+    },
+    {
+        categoria: 'ingenieria',
+        hub: { id: 'ing-hub', rol: 'Dirección de Área', lineas: ['Ingeniería'], x: 591, y: 843, r: 87 },
+        puestos: [
+            puesto('ing-gerente', 'ing-hub', 'Gerente de|ingeniería', 420, 886.5, 53, ['Jimena'], 'JIMENA C'),
+            puesto('ing-integ-tableros', 'ing-gerente', 'Coordinador de|integración de|Tableros', 379, 782.6, 41, ['Jimena'], 'JIMENA C'),
+            puesto('ing-sup-logistica', 'ing-integ-tableros', 'Supervisor de|Logística', 348, 691, 37, ['Rafa']),
+            puesto('ing-sup-tableros', 'ing-integ-tableros', 'Supervisor de|Tableros', 284, 769.6, 37),
+            puesto('ing-tableristas', 'ing-sup-tableros', 'Tableristas', 241, 679, 37),
+            puesto('ing-coord-proyectos', 'ing-gerente', 'Coordinador de|Proyectos', 356, 966, 37, ['Omar'], 'OMAR M'),
+            puesto('ing-admin', 'ing-gerente', 'administrador de|ingeniería', 442, 983.5, 37),
+            puesto('ing-proyectista', 'ing-coord-proyectos', 'proyectista', 273.5, 982.6, 35, ['Diego'], 'DIEGO B'),
+            puesto('ing-pruebas', 'ing-coord-proyectos', 'Ingeniero de|Pruebas y|Estudios', 321, 1050, 40, ['Osvaldo'], 'OSVALDO R'),
+            puesto('ing-sup-proyectos', 'ing-proyectista', 'Supervisor de|Proyectos', 213, 934, 36, ['Rosendo']),
+            puesto('ing-sobrestante', 'ing-sup-proyectos', 'Sobrestante|eléctrico', 157.4, 870.4, 33, ['Rosendo']),
+            puesto('ing-cabo', 'ing-sobrestante', 'Cabo|eléctrico', 130, 798, 33, ['Rosendo']),
+            puesto('ing-tecnico', 'ing-cabo', 'Técnico|electricista', 96.5, 712.6, 33, ['Andrés', 'Angel'], 'ANDRES F / ANGEL T'),
+            puesto('ing-oficial', 'ing-tecnico', 'Oficial|electricista', 85.5, 644, 32, ['Alí'], 'ALI G'),
+            puesto('ing-ayudante', 'ing-oficial', 'Ayudante|electricista', 85.5, 575.7, 32, ['Luis Eduardo', 'Alan'], 'LUIS EDUARDO / ALAN M')
+        ]
+    },
+    {
+        categoria: 'puebla',
+        hub: { id: 'pue-hub', rol: 'Sucursal Regional', lineas: ['Sucursal', 'Puebla'], x: 932, y: 582, r: 83 },
+        puestos: [
+            puesto('pue-gerente', 'pue-hub', 'Gerente de|Sucursal', 1066.8, 675, 53, ['Jaime']),
+            puesto('pue-admin', 'pue-gerente', 'Administrador|de Sucursal', 1137.8, 598, 37, ['Karem'], 'KAREM DILL'),
+            puesto('pue-asesor', 'pue-admin', 'Asesor comercial|de mostrador', 1158.9, 515, 37, ['Adrian', 'Gibran'], 'ADRIAN Q / GIBRAN'),
+            puesto('pue-almacen', 'pue-admin', 'Responsable de|almacén e|inventarios', 1232, 614.8, 38, ['Valentin']),
+            puesto('pue-rep', 'pue-gerente', 'Representante|Regional de|Ventas', 1158.9, 735.4, 37, ['Fermin', 'Marco'], 'FERMIN P / MARCO D')
+        ]
+    },
+    {
+        categoria: 'pachuca',
+        hub: { id: 'pac-hub', rol: 'Sucursal Regional', lineas: ['Sucursal', 'Pachuca'], x: 935, y: 768, r: 78 },
+        puestos: [
+            puesto('pac-gerente', 'pac-hub', 'Gerente de|Sucursal', 966, 955.6, 53, ['Damian'], 'DAMIAN Z'),
+            puesto('pac-admin', 'pac-gerente', 'Administrador|de Sucursal', 1062.9, 917.8, 37, ['Ana Laura'], 'ANA LAURA K'),
+            puesto('pac-asesor', 'pac-admin', 'Asesor comercial|de mostrador', 1084.6, 835, 37, ['Viridiana'], 'VIRIDIANA R'),
+            puesto('pac-almacen', 'pac-admin', 'Responsable de|almacén e|inventarios', 1153.5, 922, 37, ['Viridiana', 'Rafael'], 'VIRIDIANA R / RAFAEL'),
+            puesto('pac-rep', 'pac-gerente', 'Representante|Regional de|Ventas', 1035, 1036.5, 37)
+        ]
+    },
+    {
+        categoria: 'queretaro',
+        hub: { id: 'qro-hub', rol: 'Sucursal Regional', lineas: ['Sucursal', 'Querétaro'], x: 796, y: 888, r: 83 },
+        puestos: [
+            puesto('qro-gerente', 'qro-hub', 'Gerente de|Sucursal', 710, 1030, 53, ['Yair'], 'YAIR M'),
+            puesto('qro-rep', 'qro-gerente', 'Representante|Regional de|Ventas', 634, 1105.8, 37, ['Angel'], 'ANGEL S'),
+            puesto('qro-admin', 'qro-gerente', 'Administrador|de Sucursal', 805.7, 1085.2, 37, ['Monserrat'], 'MONSE D'),
+            puesto('qro-asesor', 'qro-admin', 'Asesor comercial|de mostrador', 764.6, 1178.9, 37, ['Monserrat'], 'MONSE D'),
+            puesto('qro-almacen', 'qro-admin', 'Responsable de|almacén e|inventarios', 877, 1171, 37, ['Monserrat'], 'MONSE D')
+        ]
+    }
+];
+
+/** Líneas del diagrama que unen a una burbuja con una segunda jefatura (además de su padre). */
+const ENLACES_EXTRA: [string, string][] = [
+    ['adm-reina', 'adm-contabilidad'],
+    ['ing-admin', 'ing-coord-proyectos']
+];
+
+// -----------------------------------------------------------------------------
+// RADIAL NODES
 // -----------------------------------------------------------------------------
 const RAW_RADIAL_NODES: RadialNode[] = [
-    // -------------------------------------------------------------------------
-    // CORE CENTER: CLIENTE
-    // -------------------------------------------------------------------------
     {
         id: 'cliente',
         role: 'Centro Estratégico',
         person: 'Cliente',
         category: 'cliente',
-        cx: 520,
-        cy: 480,
-        r: 62,
+        ...aLienzo(745, 675, 90),
         color: '#0284c7',
         borderColor: '#38bdf8',
         fillColor: '#0f172a',
@@ -522,702 +586,38 @@ const RAW_RADIAL_NODES: RadialNode[] = [
         linesRole: [],
         linesPerson: ['Cliente']
     },
-
-    // -------------------------------------------------------------------------
-    // 1. ADMINISTRACIÓN (GREEN CLUSTER)
-    // -------------------------------------------------------------------------
-    {
-        id: 'adm-hub',
-        role: 'Dirección de Área',
-        person: 'Administración',
-        category: 'administracion',
-        cx: 520,
-        cy: 310,
-        r: 48,
-        color: '#22c55e',
-        borderColor: '#16a34a',
-        fillColor: '#dcfce7',
-        textColor: '#14532d',
-        isDepartmentHub: true,
-        linesRole: [],
-        linesPerson: ['Administración']
-    },
-    {
-        id: 'adm-catalina',
-        role: 'Administrador General',
-        person: 'CATALINA M',
-        category: 'administracion',
-        cx: 520,
-        cy: 175,
-        r: 46,
-        color: '#22c55e',
-        borderColor: '#22c55e',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-hub',
-        linesRole: ['Administrador', 'General'],
-        linesPerson: ['CATALINA M']
-    },
-    {
-        id: 'adm-nadia',
-        role: 'RH/reclutamiento',
-        person: 'NADIA V',
-        category: 'administracion',
-        cx: 520,
-        cy: 70,
-        r: 32,
-        color: '#22c55e',
-        borderColor: '#86efac',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-catalina',
-        linesRole: ['RH/reclutamiento'],
-        linesPerson: ['NADIA V']
-    },
-    {
-        id: 'adm-yadira',
-        role: 'Coordinador de RRHH',
-        person: 'YADIRA R',
-        category: 'administracion',
-        cx: 625,
-        cy: 110,
-        r: 33,
-        color: '#22c55e',
-        borderColor: '#86efac',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-catalina',
-        linesRole: ['Coordinador de', 'RRHH'],
-        linesPerson: ['YADIRA R']
-    },
-    {
-        id: 'adm-ana',
-        role: 'Coordinador de Contabilidad y Finanzas',
-        person: 'ANA R',
-        category: 'administracion',
-        cx: 650,
-        cy: 185,
-        r: 36,
-        color: '#22c55e',
-        borderColor: '#86efac',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-catalina',
-        linesRole: ['Coordinador de', 'Contabilidad y', 'Finanzas'],
-        linesPerson: ['ANA R']
-    },
-    {
-        id: 'adm-compras-cat',
-        role: 'Coordinador de Compras',
-        person: 'CATALINA M',
-        category: 'administracion',
-        cx: 615,
-        cy: 265,
-        r: 32,
-        color: '#22c55e',
-        borderColor: '#86efac',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-catalina',
-        linesRole: ['Coordinador de', 'Compras'],
-        linesPerson: ['CATALINA M']
-    },
-    {
-        id: 'adm-silvia',
-        role: 'Despacho Legal',
-        person: 'SILVIA R',
-        category: 'administracion',
-        cx: 395,
-        cy: 175,
-        r: 31,
-        color: '#22c55e',
-        borderColor: '#86efac',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-catalina',
-        linesRole: ['Despacho', 'Legal'],
-        linesPerson: ['SILVIA R']
-    },
-    {
-        id: 'adm-juan',
-        role: 'Despacho Fiscal',
-        person: 'JUAN / GUILLE W',
-        category: 'administracion',
-        cx: 420,
-        cy: 95,
-        r: 32,
-        color: '#22c55e',
-        borderColor: '#86efac',
-        fillColor: '#ffffff',
-        textColor: '#15803d',
-        parentId: 'adm-catalina',
-        linesRole: ['Despacho', 'Fiscal'],
-        linesPerson: ['JUAN', 'GUILLE W']
-    },
-
-    // -------------------------------------------------------------------------
-    // 2. DESARROLLO COMERCIAL (GREY / SILVER CLUSTER)
-    // -------------------------------------------------------------------------
-    {
-        id: 'com-hub',
-        role: 'Dirección de Área',
-        person: 'Desarrollo Comercial',
-        category: 'comercial',
-        cx: 370,
-        cy: 400,
-        r: 48,
-        color: '#64748b',
-        borderColor: '#475569',
-        fillColor: '#f1f5f9',
-        textColor: '#1e293b',
-        isDepartmentHub: true,
-        linesRole: [],
-        linesPerson: ['Desarrollo', 'Comercial']
-    },
-    {
-        id: 'com-fermin',
-        role: 'Gerencia de Desarrollo Comercial',
-        person: 'FERMIN P',
-        category: 'comercial',
-        cx: 315,
-        cy: 275,
-        r: 38,
-        color: '#64748b',
-        borderColor: '#94a3b8',
-        fillColor: '#ffffff',
-        textColor: '#334155',
-        parentId: 'com-hub',
-        linesRole: ['Gerencia de', 'Desarrollo', 'Comercial'],
-        linesPerson: ['FERMIN P']
-    },
-    {
-        id: 'com-evelyn',
-        role: 'Coordinador de Marketing',
-        person: 'EVELYN M',
-        category: 'comercial',
-        cx: 220,
-        cy: 295,
-        r: 32,
-        color: '#64748b',
-        borderColor: '#cbd5e1',
-        fillColor: '#ffffff',
-        textColor: '#334155',
-        parentId: 'com-fermin',
-        linesRole: ['Coordinador de', 'Marketing'],
-        linesPerson: ['EVELYN M']
-    },
-
-    // -------------------------------------------------------------------------
-    // 3. INGENIERÍA (ORANGE CLUSTER)
-    // -------------------------------------------------------------------------
-    {
-        id: 'ing-hub',
-        role: 'Dirección de Área',
-        person: 'Ingeniería',
-        category: 'ingenieria',
-        cx: 370,
-        cy: 580,
-        r: 50,
-        color: '#f97316',
-        borderColor: '#ea580c',
-        fillColor: '#ffedd5',
-        textColor: '#9a3412',
-        isDepartmentHub: true,
-        linesRole: [],
-        linesPerson: ['Ingeniería']
-    },
-    {
-        id: 'ing-jimena',
-        role: 'Gerencia de Ingeniería',
-        person: 'JIMENA C',
-        category: 'ingenieria',
-        cx: 295,
-        cy: 620,
-        r: 40,
-        color: '#f97316',
-        borderColor: '#f97316',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-hub',
-        linesRole: ['Gerencia de', 'Ingeniería'],
-        linesPerson: ['JIMENA C']
-    },
-    {
-        id: 'ing-sup-tableros',
-        role: 'Supervisor de Tableros',
-        person: 'LIBRADO O',
-        category: 'ingenieria',
-        cx: 230,
-        cy: 490,
-        r: 32,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-jimena',
-        linesRole: ['Supervisor de', 'Tableros'],
-        linesPerson: ['LIBRADO O']
-    },
-    {
-        id: 'ing-cal-tableros',
-        role: 'Inspector de Calidad de Tableros',
-        person: 'LIBRADO O',
-        category: 'ingenieria',
-        cx: 300,
-        cy: 445,
-        r: 34,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-sup-tableros',
-        linesRole: ['Inspector de', 'Calidad Tableros'],
-        linesPerson: ['LIBRADO O']
-    },
-    {
-        id: 'ing-tableristas',
-        role: 'Tableristas',
-        person: 'DIEGO B / OSVALDO R',
-        category: 'ingenieria',
-        cx: 185,
-        cy: 425,
-        r: 33,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-sup-tableros',
-        linesRole: ['Tableristas'],
-        linesPerson: ['DIEGO B', 'OSVALDO R']
-    },
-    {
-        id: 'ing-integ-tableros',
-        role: 'Ingeniero de Integración de Tableros',
-        person: 'JIMENA C',
-        category: 'ingenieria',
-        cx: 295,
-        cy: 535,
-        r: 32,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-jimena',
-        linesRole: ['Ingeniero de', 'Integración Tableros'],
-        linesPerson: ['JIMENA C']
-    },
-    {
-        id: 'ing-oficiales',
-        role: 'Oficiales',
-        person: 'ALI G',
-        category: 'ingenieria',
-        cx: 215,
-        cy: 580,
-        r: 29,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-jimena',
-        linesRole: ['Oficiales'],
-        linesPerson: ['ALI G']
-    },
-    {
-        id: 'ing-tecnicos',
-        role: 'Técnicos',
-        person: 'JAVIER Y / ANDRES F / ANGEL T / ALAN M / ALBERTO R',
-        category: 'ingenieria',
-        cx: 125,
-        cy: 580,
-        r: 45,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-oficiales',
-        linesRole: ['Técnicos'],
-        linesPerson: ['JAVIER Y', 'ANDRES F', 'ANGEL T', 'ALAN M']
-    },
-    {
-        id: 'ing-sup-seg-aaron',
-        role: 'Supervisor de Seguridad',
-        person: 'AARON M',
-        category: 'ingenieria',
-        cx: 210,
-        cy: 665,
-        r: 30,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-jimena',
-        linesRole: ['Supervisor de', 'Seguridad'],
-        linesPerson: ['AARON M']
-    },
-    {
-        id: 'ing-sup-seg-librado',
-        role: 'Supervisor de Seguridad',
-        person: 'LIBRADO O',
-        category: 'ingenieria',
-        cx: 230,
-        cy: 730,
-        r: 30,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-jimena',
-        linesRole: ['Supervisor de', 'Seguridad'],
-        linesPerson: ['LIBRADO O']
-    },
-    {
-        id: 'ing-coord-omar',
-        role: 'Coordinador de Proyectos',
-        person: 'OMAR M',
-        category: 'ingenieria',
-        cx: 300,
-        cy: 705,
-        r: 32,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-jimena',
-        linesRole: ['Coordinador de', 'Proyectos'],
-        linesPerson: ['OMAR M']
-    },
-    {
-        id: 'ing-integ-proy',
-        role: 'Ingeniero de Integración de Proyectos',
-        person: 'JIMENA C / OMAR M / DIEGO B',
-        category: 'ingenieria',
-        cx: 385,
-        cy: 700,
-        r: 36,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-coord-omar',
-        linesRole: ['Ing. Integración', 'de Proyectos'],
-        linesPerson: ['JIMENA C', 'OMAR M']
-    },
-    {
-        id: 'ing-monitoreo',
-        role: 'Ingeniero de Monitoreo y Calidad',
-        person: 'HERIBERTO L / DIEGO B / OSVALDO R',
-        category: 'ingenieria',
-        cx: 230,
-        cy: 810,
-        r: 36,
-        color: '#f97316',
-        borderColor: '#fdba74',
-        fillColor: '#ffffff',
-        textColor: '#c2410c',
-        parentId: 'ing-sup-seg-librado',
-        linesRole: ['Monitoreo y', 'Calidad'],
-        linesPerson: ['HERIBERTO L', 'DIEGO B']
-    },
-
-    // -------------------------------------------------------------------------
-    // 4. SUCURSAL PUEBLA (BLUE CLUSTER)
-    // -------------------------------------------------------------------------
-    {
-        id: 'pue-hub',
-        role: 'Sucursal Regional',
-        person: 'Sucursal Puebla',
-        category: 'puebla',
-        cx: 690,
-        cy: 440,
-        r: 48,
-        color: '#2563eb',
-        borderColor: '#1d4ed8',
-        fillColor: '#dbeafe',
-        textColor: '#1e40af',
-        isDepartmentHub: true,
-        linesRole: [],
-        linesPerson: ['Sucursal', 'Puebla']
-    },
-    {
-        id: 'pue-jair',
-        role: 'Gerente de Sucursal',
-        person: 'JAIR C',
-        category: 'puebla',
-        cx: 780,
-        cy: 520,
-        r: 33,
-        color: '#2563eb',
-        borderColor: '#93c5fd',
-        fillColor: '#ffffff',
-        textColor: '#1d4ed8',
-        parentId: 'pue-hub',
-        linesRole: ['Gerente de', 'Sucursal'],
-        linesPerson: ['JAIR C']
-    },
-    {
-        id: 'pue-karem',
-        role: 'Administrador de Sucursal',
-        person: 'KAREM DILL',
-        category: 'puebla',
-        cx: 800,
-        cy: 445,
-        r: 34,
-        color: '#2563eb',
-        borderColor: '#93c5fd',
-        fillColor: '#ffffff',
-        textColor: '#1d4ed8',
-        parentId: 'pue-hub',
-        linesRole: ['Administrador', 'de Sucursal'],
-        linesPerson: ['KAREM DILL']
-    },
-    {
-        id: 'pue-adrian-vta',
-        role: 'Asesor Comercial',
-        person: 'ADRIAN Q',
-        category: 'puebla',
-        cx: 830,
-        cy: 380,
-        r: 30,
-        color: '#2563eb',
-        borderColor: '#93c5fd',
-        fillColor: '#ffffff',
-        textColor: '#1d4ed8',
-        parentId: 'pue-karem',
-        linesRole: ['Asesor', 'Comercial'],
-        linesPerson: ['ADRIAN Q']
-    },
-    {
-        id: 'pue-adrian-alm',
-        role: 'Almacenista',
-        person: 'ADRIAN Q',
-        category: 'puebla',
-        cx: 890,
-        cy: 435,
-        r: 30,
-        color: '#2563eb',
-        borderColor: '#93c5fd',
-        fillColor: '#ffffff',
-        textColor: '#1d4ed8',
-        parentId: 'pue-karem',
-        linesRole: ['Almacenista'],
-        linesPerson: ['ADRIAN Q']
-    },
-    {
-        id: 'pue-armando',
-        role: 'Representante Regional de Ventas',
-        person: 'ARMANDO P / MARCO D',
-        category: 'puebla',
-        cx: 850,
-        cy: 585,
-        r: 36,
-        color: '#2563eb',
-        borderColor: '#93c5fd',
-        fillColor: '#ffffff',
-        textColor: '#1d4ed8',
-        parentId: 'pue-jair',
-        linesRole: ['Rep. Regional', 'de Ventas'],
-        linesPerson: ['ARMANDO P', 'MARCO D']
-    },
-
-    // -------------------------------------------------------------------------
-    // 5. SUCURSAL PACHUCA (BLUE CLUSTER)
-    // -------------------------------------------------------------------------
-    {
-        id: 'pac-hub',
-        role: 'Sucursal Regional',
-        person: 'Sucursal Pachuca',
-        category: 'pachuca',
-        cx: 665,
-        cy: 615,
-        r: 48,
-        color: '#0ea5e9',
-        borderColor: '#0284c7',
-        fillColor: '#e0f2fe',
-        textColor: '#0369a1',
-        isDepartmentHub: true,
-        linesRole: [],
-        linesPerson: ['Sucursal', 'Pachuca']
-    },
-    {
-        id: 'pac-viridiana-vta',
-        role: 'Asesor comercial mostrador',
-        person: 'VIRIDIANA R',
-        category: 'pachuca',
-        cx: 765,
-        cy: 645,
-        r: 34,
-        color: '#0ea5e9',
-        borderColor: '#7dd3fc',
-        fillColor: '#ffffff',
-        textColor: '#0369a1',
-        parentId: 'pac-hub',
-        linesRole: ['Asesor comercial', 'mostrador'],
-        linesPerson: ['VIRIDIANA R']
-    },
-    {
-        id: 'pac-ana',
-        role: 'Administrador de Sucursal',
-        person: 'ANA K',
-        category: 'pachuca',
-        cx: 730,
-        cy: 725,
-        r: 33,
-        color: '#0ea5e9',
-        borderColor: '#7dd3fc',
-        fillColor: '#ffffff',
-        textColor: '#0369a1',
-        parentId: 'pac-hub',
-        linesRole: ['Administrador', 'de Sucursal'],
-        linesPerson: ['ANA K']
-    },
-    {
-        id: 'pac-viridiana-alm',
-        role: 'Almacenista',
-        person: 'VIRIDIANA R',
-        category: 'pachuca',
-        cx: 805,
-        cy: 725,
-        r: 30,
-        color: '#0ea5e9',
-        borderColor: '#7dd3fc',
-        fillColor: '#ffffff',
-        textColor: '#0369a1',
-        parentId: 'pac-ana',
-        linesRole: ['Almacenista'],
-        linesPerson: ['VIRIDIANA R']
-    },
-    {
-        id: 'pac-damian',
-        role: 'Gerente de Sucursal',
-        person: 'DAMIAN Z',
-        category: 'pachuca',
-        cx: 690,
-        cy: 760,
-        r: 33,
-        color: '#0ea5e9',
-        borderColor: '#7dd3fc',
-        fillColor: '#ffffff',
-        textColor: '#0369a1',
-        parentId: 'pac-hub',
-        linesRole: ['Gerente de', 'Sucursal'],
-        linesPerson: ['DAMIAN Z']
-    },
-    {
-        id: 'pac-guillermo',
-        role: 'Representante Regional de Ventas',
-        person: 'GUILLERMO L',
-        category: 'pachuca',
-        cx: 740,
-        cy: 830,
-        r: 35,
-        color: '#0ea5e9',
-        borderColor: '#7dd3fc',
-        fillColor: '#ffffff',
-        textColor: '#0369a1',
-        parentId: 'pac-damian',
-        linesRole: ['Rep. Regional', 'de Ventas'],
-        linesPerson: ['GUILLERMO L']
-    },
-
-    // -------------------------------------------------------------------------
-    // 6. SUCURSAL QUERÉTARO (BLUE CLUSTER)
-    // -------------------------------------------------------------------------
-    {
-        id: 'qro-hub',
-        role: 'Sucursal Regional',
-        person: 'Sucursal Querétaro',
-        category: 'queretaro',
-        cx: 545,
-        cy: 675,
-        r: 48,
-        color: '#6366f1',
-        borderColor: '#4f46e5',
-        fillColor: '#e0e7ff',
-        textColor: '#3730a3',
-        isDepartmentHub: true,
-        linesRole: [],
-        linesPerson: ['Sucursal', 'Querétaro']
-    },
-    {
-        id: 'qro-yair',
-        role: 'Gerente de Sucursal',
-        person: 'YAIR M',
-        category: 'queretaro',
-        cx: 480,
-        cy: 790,
-        r: 33,
-        color: '#6366f1',
-        borderColor: '#a5b4fc',
-        fillColor: '#ffffff',
-        textColor: '#4338ca',
-        parentId: 'qro-hub',
-        linesRole: ['Gerente de', 'Sucursal'],
-        linesPerson: ['YAIR M']
-    },
-    {
-        id: 'qro-angel',
-        role: 'Representante Regional de Ventas',
-        person: 'ANGEL S',
-        category: 'queretaro',
-        cx: 410,
-        cy: 845,
-        r: 34,
-        color: '#6366f1',
-        borderColor: '#a5b4fc',
-        fillColor: '#ffffff',
-        textColor: '#4338ca',
-        parentId: 'qro-yair',
-        linesRole: ['Rep. Regional', 'de Ventas'],
-        linesPerson: ['ANGEL S']
-    },
-    {
-        id: 'qro-monse',
-        role: 'Administrador de Sucursal',
-        person: 'MONSE D',
-        category: 'queretaro',
-        cx: 555,
-        cy: 840,
-        r: 34,
-        color: '#6366f1',
-        borderColor: '#a5b4fc',
-        fillColor: '#ffffff',
-        textColor: '#4338ca',
-        parentId: 'qro-hub',
-        linesRole: ['Administrador', 'de Sucursal'],
-        linesPerson: ['MONSE D']
-    },
-    {
-        id: 'qro-gustavo-vta',
-        role: 'Asesor comercial mostrador',
-        person: 'GUSTAVO M',
-        category: 'queretaro',
-        cx: 515,
-        cy: 920,
-        r: 30,
-        color: '#6366f1',
-        borderColor: '#a5b4fc',
-        fillColor: '#ffffff',
-        textColor: '#4338ca',
-        parentId: 'qro-monse',
-        linesRole: ['Asesor comercial', 'mostrador'],
-        linesPerson: ['GUSTAVO M']
-    },
-    {
-        id: 'qro-gustavo-alm',
-        role: 'Almacenista',
-        person: 'GUSTAVO M',
-        category: 'queretaro',
-        cx: 595,
-        cy: 920,
-        r: 30,
-        color: '#6366f1',
-        borderColor: '#a5b4fc',
-        fillColor: '#ffffff',
-        textColor: '#4338ca',
-        parentId: 'qro-monse',
-        linesRole: ['Almacenista'],
-        linesPerson: ['GUSTAVO M']
-    }
+    ...AREAS.flatMap((area): RadialNode[] => {
+        const e = ESTILOS[area.categoria];
+        const hub: RadialNode = {
+            id: area.hub.id,
+            role: area.hub.rol,
+            person: area.hub.lineas.join(' '),
+            category: area.categoria,
+            ...aLienzo(area.hub.x, area.hub.y, area.hub.r),
+            color: e.color,
+            borderColor: e.borde,
+            fillColor: e.relleno,
+            textColor: e.texto,
+            isDepartmentHub: true,
+            linesRole: [],
+            linesPerson: area.hub.lineas
+        };
+        const satelites = area.puestos.map((p): RadialNode => ({
+            id: p.id,
+            role: p.rol.replace(/\|/g, ' '),
+            person: p.persona,
+            category: area.categoria,
+            ...aLienzo(p.x, p.y, p.r),
+            color: e.color,
+            borderColor: e.bordeSatelite,
+            fillColor: '#ffffff',
+            textColor: e.textoSatelite,
+            parentId: p.parentId,
+            linesRole: p.rol.split('|'),
+            linesPerson: p.visible
+        }));
+        return [hub, ...satelites];
+    })
 ];
 
 // Pre-compute formatted textLines with exact Y-coordinates to guarantee ZERO overlap
@@ -1236,62 +636,135 @@ export const RADIAL_NODES: RadialNode[] = RAW_RADIAL_NODES.map(node => ({
 }));
 
 // -----------------------------------------------------------------------------
-// RADIAL CONNECTORS (Edges linking nodes - Centers are used, Circles cover line ends)
+// RADIAL CONNECTORS: uno por relación padre → hijo (las líneas van de centro a centro; los círculos tapan los extremos)
 // -----------------------------------------------------------------------------
+const nodoPorId = new Map(RAW_RADIAL_NODES.map(n => [n.id, n]));
+
+function conector(desdeId: string, hastaId: string): RadialConnector {
+    const desde = nodoPorId.get(desdeId)!;
+    const hasta = nodoPorId.get(hastaId)!;
+    return { fromId: desdeId, toId: hastaId, x1: desde.cx, y1: desde.cy, x2: hasta.cx, y2: hasta.cy, color: hasta.color };
+}
+
 export const RADIAL_CONNECTORS: RadialConnector[] = [
-    // Cliente to Department Hubs
-    { fromId: 'cliente', toId: 'adm-hub', x1: 520, y1: 480, x2: 520, y2: 310, color: '#22c55e' },
-    { fromId: 'cliente', toId: 'com-hub', x1: 520, y1: 480, x2: 370, y2: 400, color: '#64748b' },
-    { fromId: 'cliente', toId: 'ing-hub', x1: 520, y1: 480, x2: 370, y2: 580, color: '#f97316' },
-    { fromId: 'cliente', toId: 'pue-hub', x1: 520, y1: 480, x2: 690, y2: 440, color: '#2563eb' },
-    { fromId: 'cliente', toId: 'pac-hub', x1: 520, y1: 480, x2: 665, y2: 615, color: '#0ea5e9' },
-    { fromId: 'cliente', toId: 'qro-hub', x1: 520, y1: 480, x2: 545, y2: 675, color: '#6366f1' },
+    ...RAW_RADIAL_NODES.filter(n => n.parentId).map(n => conector(n.parentId!, n.id)),
+    ...ENLACES_EXTRA.map(([desde, hasta]) => conector(desde, hasta))
+];
 
-    // Administración Links
-    { fromId: 'adm-hub', toId: 'adm-catalina', x1: 520, y1: 310, x2: 520, y2: 175, color: '#22c55e' },
-    { fromId: 'adm-catalina', toId: 'adm-nadia', x1: 520, y1: 175, x2: 520, y2: 70, color: '#22c55e' },
-    { fromId: 'adm-catalina', toId: 'adm-yadira', x1: 520, y1: 175, x2: 625, y2: 110, color: '#22c55e' },
-    { fromId: 'adm-catalina', toId: 'adm-ana', x1: 520, y1: 175, x2: 650, y2: 185, color: '#22c55e' },
-    { fromId: 'adm-catalina', toId: 'adm-compras-cat', x1: 520, y1: 175, x2: 615, y2: 265, color: '#22c55e' },
-    { fromId: 'adm-catalina', toId: 'adm-silvia', x1: 520, y1: 175, x2: 395, y2: 175, color: '#22c55e' },
-    { fromId: 'adm-catalina', toId: 'adm-juan', x1: 520, y1: 175, x2: 420, y2: 95, color: '#22c55e' },
+// -----------------------------------------------------------------------------
+// DIRECCIÓN GENERAL: etiquetas sobre el anillo exterior (ángulos medidos en el diagrama, en grados desde arriba, a la derecha)
+// -----------------------------------------------------------------------------
+export interface RadialDirectorLabel {
+    x: number;
+    y: number;
+    /** El texto sigue la tangente del anillo; +y apunta siempre al centro, de modo que la persona queda debajo del cargo. */
+    rotate: number;
+}
 
-    // Comercial Links
-    { fromId: 'com-hub', toId: 'com-fermin', x1: 370, y1: 400, x2: 315, y2: 275, color: '#64748b' },
-    { fromId: 'com-fermin', toId: 'com-evelyn', x1: 315, y1: 275, x2: 220, y2: 295, color: '#64748b' },
+export const DIRECCION_GENERAL = { cargo: 'Director General', persona: 'Jesus' } as const;
 
-    // Ingeniería Links
-    { fromId: 'ing-hub', toId: 'ing-jimena', x1: 370, y1: 580, x2: 295, y2: 620, color: '#f97316' },
-    { fromId: 'ing-jimena', toId: 'ing-sup-tableros', x1: 295, y1: 620, x2: 230, y2: 490, color: '#f97316' },
-    { fromId: 'ing-sup-tableros', toId: 'ing-cal-tableros', x1: 230, y1: 490, x2: 300, y2: 445, color: '#f97316' },
-    { fromId: 'ing-sup-tableros', toId: 'ing-tableristas', x1: 230, y1: 490, x2: 185, y2: 425, color: '#f97316' },
-    { fromId: 'ing-jimena', toId: 'ing-integ-tableros', x1: 295, y1: 620, x2: 295, y2: 535, color: '#f97316' },
-    { fromId: 'ing-jimena', toId: 'ing-oficiales', x1: 295, y1: 620, x2: 215, y2: 580, color: '#f97316' },
-    { fromId: 'ing-oficiales', toId: 'ing-tecnicos', x1: 215, y1: 580, x2: 125, y2: 580, color: '#f97316' },
-    { fromId: 'ing-jimena', toId: 'ing-sup-seg-aaron', x1: 295, y1: 620, x2: 210, y2: 665, color: '#f97316' },
-    { fromId: 'ing-jimena', toId: 'ing-sup-seg-librado', x1: 295, y1: 620, x2: 230, y2: 730, color: '#f97316' },
-    { fromId: 'ing-jimena', toId: 'ing-coord-omar', x1: 295, y1: 620, x2: 300, y2: 705, color: '#f97316' },
-    { fromId: 'ing-coord-omar', toId: 'ing-integ-proy', x1: 300, y1: 705, x2: 385, y2: 700, color: '#f97316' },
-    { fromId: 'ing-sup-seg-librado', toId: 'ing-monitoreo', x1: 230, y1: 730, x2: 230, y2: 810, color: '#f97316' },
+const ANGULOS_DIRECCION = [0, 72, 124, 178, 240, 300];
+const RADIO_ETIQUETA = 456;
 
-    // Puebla Links
-    { fromId: 'pue-hub', toId: 'pue-jair', x1: 690, y1: 440, x2: 780, y2: 520, color: '#2563eb' },
-    { fromId: 'pue-hub', toId: 'pue-karem', x1: 690, y1: 440, x2: 800, y2: 445, color: '#2563eb' },
-    { fromId: 'pue-karem', toId: 'pue-adrian-vta', x1: 800, y1: 445, x2: 830, y2: 380, color: '#2563eb' },
-    { fromId: 'pue-karem', toId: 'pue-adrian-alm', x1: 800, y1: 445, x2: 890, y2: 435, color: '#2563eb' },
-    { fromId: 'pue-jair', toId: 'pue-armando', x1: 780, y1: 520, x2: 850, y2: 585, color: '#2563eb' },
+export const RADIAL_DIRECTOR_LABELS: RadialDirectorLabel[] = ANGULOS_DIRECCION.map(grados => {
+    const rad = (grados * Math.PI) / 180;
+    return {
+        x: redondear(ORBITAL_FRAME.cx + RADIO_ETIQUETA * Math.sin(rad)),
+        y: redondear(ORBITAL_FRAME.cy - RADIO_ETIQUETA * Math.cos(rad)),
+        rotate: grados
+    };
+});
 
-    // Pachuca Links
-    { fromId: 'pac-hub', toId: 'pac-viridiana-vta', x1: 665, y1: 615, x2: 765, y2: 645, color: '#0ea5e9' },
-    { fromId: 'pac-hub', toId: 'pac-ana', x1: 665, y1: 615, x2: 730, y2: 725, color: '#0ea5e9' },
-    { fromId: 'pac-ana', toId: 'pac-viridiana-alm', x1: 730, y1: 725, x2: 805, y2: 725, color: '#0ea5e9' },
-    { fromId: 'pac-hub', toId: 'pac-damian', x1: 665, y1: 615, x2: 690, y2: 760, color: '#0ea5e9' },
-    { fromId: 'pac-damian', toId: 'pac-guillermo', x1: 690, y1: 760, x2: 740, y2: 830, color: '#0ea5e9' },
+// -----------------------------------------------------------------------------
+// RADIAL / ORBITAL DEPARTAMENTOS FILTROS & ZOOM PRESETS
+// -----------------------------------------------------------------------------
 
-    // Querétaro Links
-    { fromId: 'qro-hub', toId: 'qro-yair', x1: 545, y1: 675, x2: 480, y2: 790, color: '#6366f1' },
-    { fromId: 'qro-yair', toId: 'qro-angel', x1: 480, y1: 790, x2: 410, y2: 845, color: '#6366f1' },
-    { fromId: 'qro-hub', toId: 'qro-monse', x1: 545, y1: 675, x2: 555, y2: 840, color: '#6366f1' },
-    { fromId: 'qro-monse', toId: 'qro-gustavo-vta', x1: 555, y1: 840, x2: 515, y2: 920, color: '#6366f1' },
-    { fromId: 'qro-monse', toId: 'qro-gustavo-alm', x1: 555, y1: 840, x2: 595, y2: 920, color: '#6366f1' }
+/** Nombres distintos que aparecen en las burbujas de un área (o de todo el organigrama si no se indica). */
+function colaboradoresVisibles(categoria?: CategoriaArea): number {
+    const nombres = AREAS
+        .filter(a => !categoria || a.categoria === categoria)
+        .flatMap(a => a.puestos.flatMap(p => p.visible.map(v => v.trim().toLowerCase())));
+    return new Set(nombres).size;
+}
+
+/** Zoom y desplazamiento que dejan a toda un área a la vista, centrada (mismo criterio que `selectRadialNode`). */
+function enfoque(categoria: CategoriaArea): Pick<RadialDepartmentFilter, 'focusX' | 'focusY' | 'focusZoom'> {
+    const nodos = RAW_RADIAL_NODES.filter(n => n.category === categoria);
+    const x1 = Math.min(...nodos.map(n => n.cx - n.r));
+    const x2 = Math.max(...nodos.map(n => n.cx + n.r));
+    const y1 = Math.min(...nodos.map(n => n.cy - n.r));
+    const y2 = Math.max(...nodos.map(n => n.cy + n.r));
+    const zoom = Math.min(2.4, Math.max(1.1, 0.9 * Math.min(1000 / (x2 - x1), 680 / (y2 - y1))));
+    return {
+        focusX: Math.round((ORBITAL_FRAME.cx - (x1 + x2) / 2) * zoom),
+        focusY: Math.round((ORBITAL_FRAME.cy - (y1 + y2) / 2) * zoom),
+        focusZoom: Number(zoom.toFixed(2))
+    };
+}
+
+interface DatosArea {
+    id: CategoriaArea;
+    name: string;
+    icon: string;
+    leader: string;
+    description: string;
+}
+
+const DATOS_AREAS: DatosArea[] = [
+    {
+        id: 'administracion', name: 'Administración', icon: 'heroicons_outline:banknotes',
+        leader: 'Gerente de Administración: Catalina',
+        description: 'Administración, compras, contabilidad y finanzas, RRHH, logística, relaciones públicas, afianzadora y despachos fiscal y legal.'
+    },
+    {
+        id: 'ingenieria', name: 'Ingeniería', icon: 'heroicons_outline:wrench-screwdriver',
+        leader: 'Gerente de Ingeniería: Jimena',
+        description: 'Proyectos, integración y supervisión de tableros, logística, pruebas y estudios, y cuadrilla de técnicos electricistas.'
+    },
+    {
+        id: 'calidad', name: 'Calidad', icon: 'heroicons_outline:check-badge',
+        leader: 'Gerente de Calidad',
+        description: 'Inspección de calidad de tableros e ingeniería, y supervisión de seguridad.'
+    },
+    {
+        id: 'comercial', name: 'Desarrollo Comercial', icon: 'heroicons_outline:presentation-chart-line',
+        leader: 'Gerente de Desarrollo Comercial: Fermin',
+        description: 'Estrategia comercial, mercadotecnia y desarrollo de clientes.'
+    },
+    {
+        id: 'puebla', name: 'Sucursal Puebla', icon: 'heroicons_outline:building-office',
+        leader: 'Gerente de Sucursal: Jaime',
+        description: 'Operación comercial, administración de sucursal, almacén e inventarios y ventas regionales en Puebla.'
+    },
+    {
+        id: 'pachuca', name: 'Sucursal Pachuca', icon: 'heroicons_outline:building-office-2',
+        leader: 'Gerente de Sucursal: Damian',
+        description: 'Atención a clientes de mostrador, almacén e inventarios, administración y ventas regionales en Pachuca.'
+    },
+    {
+        id: 'queretaro', name: 'Sucursal Querétaro', icon: 'heroicons_outline:building-storefront',
+        leader: 'Gerente de Sucursal: Yair',
+        description: 'Mercado del Bajío industrial: asesoría en mostrador, almacén e inventarios y ventas regionales.'
+    }
+];
+
+export const RADIAL_DEPARTAMENTOS: RadialDepartmentFilter[] = [
+    {
+        id: 'todos',
+        name: 'Todo el Organigrama',
+        color: '#0284c7',
+        icon: 'heroicons_outline:globe-alt',
+        focusX: 0,
+        focusY: 0,
+        focusZoom: 0.95,
+        leader: `${DIRECCION_GENERAL.cargo}: ${DIRECCION_GENERAL.persona}`,
+        description: `Estructura orbital completa centrada en el Cliente, con ${DATOS_AREAS.length} frentes operativos y la Dirección General en la periferia.`,
+        teamCount: colaboradoresVisibles()
+    },
+    ...DATOS_AREAS.map((a): RadialDepartmentFilter => ({
+        ...a,
+        color: ESTILOS[a.id].color,
+        ...enfoque(a.id),
+        teamCount: colaboradoresVisibles(a.id)
+    }))
 ];
