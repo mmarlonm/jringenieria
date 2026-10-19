@@ -11,11 +11,15 @@ import {
     RADIAL_DEPARTAMENTOS,
     RADIAL_NODES,
     RADIAL_CONNECTORS,
+    RADIAL_DIRECTOR_LABELS,
+    DIRECCION_GENERAL,
+    ORBITAL_FRAME,
     MisionVisionItem,
     ValorItem,
     RadialDepartmentFilter,
     RadialNode,
-    RadialConnector
+    RadialConnector,
+    RadialDirectorLabel
 } from './identidad.data';
 
 export interface SectorGeometry {
@@ -100,6 +104,9 @@ export class RoadmapComponent implements OnInit {
     departamentos: RadialDepartmentFilter[] = RADIAL_DEPARTAMENTOS;
     radialNodes: RadialNode[] = RADIAL_NODES;
     radialConnectors: RadialConnector[] = RADIAL_CONNECTORS;
+    orbitalFrame = ORBITAL_FRAME;
+    direccionGeneral = DIRECCION_GENERAL;
+    directorLabels: RadialDirectorLabel[] = RADIAL_DIRECTOR_LABELS;
 
     // Sub-view modes
     misionVisionMode: 'cards' | 'original' = 'cards';
@@ -336,20 +343,19 @@ export class RoadmapComponent implements OnInit {
                 this.activeDeptInfo = todosDept;
             }
             this.organigramaZoom = 1.35;
-            this.organigramaPanX = (550 - node.cx) * 1.35;
-            this.organigramaPanY = (500 - node.cy) * 1.35;
+            this.organigramaPanX = (ORBITAL_FRAME.cx - node.cx) * 1.35;
+            this.organigramaPanY = (ORBITAL_FRAME.cy - node.cy) * 1.35;
             setTimeout(() => {
                 this.isOrganigramaTransitioning = false;
             }, 650);
             return;
         }
 
-        // AUTO-ZOOM DIRECTLY INTO THE TOUCHED BUBBLE:
-        // Center of the 1100x1000 coordinate frame is (550, 500)
+        // AUTO-ZOOM DIRECTLY INTO THE TOUCHED BUBBLE: se lleva su centro al centro del lienzo
         const targetZoom = node.isDepartmentHub ? 2.05 : 2.5;
         this.organigramaZoom = targetZoom;
-        this.organigramaPanX = (550 - node.cx) * targetZoom;
-        this.organigramaPanY = (500 - node.cy) * targetZoom;
+        this.organigramaPanX = (ORBITAL_FRAME.cx - node.cx) * targetZoom;
+        this.organigramaPanY = (ORBITAL_FRAME.cy - node.cy) * targetZoom;
 
         // Synchronize active department filter
         const dept = this.departamentos.find(d => d.id === node.category);
@@ -367,6 +373,7 @@ export class RoadmapComponent implements OnInit {
         switch (category) {
             case 'administracion': return 'Administración';
             case 'ingenieria': return 'Ingeniería';
+            case 'calidad': return 'Calidad';
             case 'comercial': return 'Desarrollo Comercial';
             case 'puebla': return 'Sucursal Puebla';
             case 'pachuca': return 'Sucursal Pachuca';
