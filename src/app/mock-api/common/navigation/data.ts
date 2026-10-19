@@ -368,7 +368,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
-            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' }
+            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
+            { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' }
         ]
     },
     // ==========================================================================================
@@ -467,7 +468,8 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
-            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' }
+            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
+            { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' }
         ]
     },
     {
@@ -562,7 +564,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
-            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' }
+            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
+            { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' }
         ]
     },
     { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
@@ -649,7 +652,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
-            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' }
+            { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
+            { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' }
         ]
     },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
