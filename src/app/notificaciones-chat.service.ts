@@ -6,6 +6,17 @@ import { Notification } from 'app/layout/common/notifications/notifications.type
 import { environment } from 'environments/environment';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 
+/** Lo que empuja el API por el hub: lo de las tareas trae `idTarea`; lo de RRHH, además, `id` (de la tabla), `tipo` y `enlace` (la pantalla). */
+interface NotificacionEnVivo {
+    idTarea: number;
+    titulo: string;
+    mensaje: string;
+    fecha: Date;
+    id?: number;
+    tipo?: string;
+    enlace?: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -55,7 +66,7 @@ export class NotificacionesChatService {
                     .catch(err => { });
 
                 // Escuchar notificaciones de nuevos mensajes en tareas
-                this._hubConnection?.on('NuevaNotificacionChat', (data: { idTarea: number, titulo: string, mensaje: string, fecha: Date }) => {
+                this._hubConnection?.on('NuevaNotificacionChat', (data: NotificacionEnVivo) => {
                     this._handleNewNotification(data);
                 });
             })
@@ -65,25 +76,27 @@ export class NotificacionesChatService {
     /**
      * Procesa la notificación entrante: Muestra Toast e inyecta en el menú de Fuse
      */
-    private _handleNewNotification(data: { idTarea: number, titulo: string, mensaje: string, fecha: Date }): void {
+    private _handleNewNotification(data: NotificacionEnVivo): void {
         const { idTarea, titulo, mensaje, fecha } = data;
+        // las de RRHH vienen de la tabla de notificaciones (id numérico, así «marcar como leída» llega al servidor) y traen su pantalla
+        const esRrhh = data.tipo?.startsWith('RRHH.') ?? false;
 
         // 1. Mostrar Notificación Premium (Sileo)
         this._chatNotificationService.showSuccess(titulo, mensaje, 8000);
 
         // 2. Integrar con el sistema de notificaciones de Fuse (Campanita)
         const fuseNotification: Notification = {
-            id: `chat-${idTarea}-${new Date(fecha).getTime()}`,
-            icon: 'heroicons_outline:chat-bubble-left-right',
+            id: data.id ? String(data.id) : `chat-${idTarea}-${new Date(fecha).getTime()}`,
+            icon: esRrhh ? 'heroicons_outline:users' : 'heroicons_outline:chat-bubble-left-right',
             title: titulo,
             description: mensaje,
             time: new Date(fecha).toISOString(),
             read: false,
             view: true,
-            link: `/dashboards/tasks?id=${idTarea}`,
+            link: data.enlace ?? `/dashboards/tasks?id=${idTarea}`,
             useRouter: true,
             referenciaId: idTarea,
-            tipo: 'Chat'
+            tipo: data.tipo ?? 'Chat'
         };
 
         this._notificationsService.pushNotification(fuseNotification);
