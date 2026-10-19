@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>Corregir marcaje</h2>
+
+<mat-dialog-content class="!max-h-[70vh]">
+    <p class="text-secondary mb-4">
+        <b>{{ asistencia.nombreUsuario }}</b> · {{ asistencia.fecha | date: 'dd/MM/yyyy' }}
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+        <mat-form-field appearance="outline">
+            <mat-label>Entrada</mat-label>
+            <input matInput type="time" formControlName="horaEntrada">
+            @if (form.controls.horaEntrada.hasError('required')) {
+                <mat-error>La entrada es obligatoria.</mat-error>
+            }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Salida</mat-label>
+            <input matInput type="time" formControlName="horaSalida">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Inicio de comida</mat-label>
+            <input matInput type="time" formControlName="comidaInicio">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Fin de comida</mat-label>
+            <input matInput type="time" formControlName="comidaFin">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="sm:col-span-2">
+            <mat-label>Tipo de jornada</mat-label>
+            <mat-select formControlName="tipoJornada">
+                <mat-option value="DIURNA">Diurna</mat-option>
+                <mat-option value="NOCTURNA">Nocturna</mat-option>
+                <mat-option value="MIXTA">Mixta</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="sm:col-span-2">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput rows="2" maxlength="500" formControlName="observaciones"></textarea>
+        </mat-form-field>
+    </form>
+
+    <p class="text-secondary text-sm">
+        Sin comida capturada se descuenta la comida por defecto de los parámetros. El retardo se recalcula con el horario de ese día
+        y cada campo que cambie queda en la bitácora.
+    </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" type="button" [disabled]="form.invalid || guardando" (click)="guardar()">
+        Guardar corrección
+    </button>
+</mat-dialog-actions>

@@ -11,10 +11,14 @@ import { mensajeError } from '../colaboradores/colaboradores.utils';
 
 /** Título legible de cada parámetro (la clave técnica viene sin espacios ni acentos). */
 const TITULOS: Record<string, string> = {
+    ComidaMinutosPorDefecto: 'Comida por defecto (minutos)',
     ContratoDiasAlerta: 'Contrato: días de alerta',
     FaltasInjustificadasUmbral: 'Faltas injustificadas: umbral',
     HorasExtraMaxDia: 'Horas extra máximas por día',
     HorasExtraMaxSemana: 'Horas extra máximas por semana',
+    JornadaHorasDiurna: 'Jornada diurna (horas)',
+    JornadaHorasMixta: 'Jornada mixta (horas)',
+    JornadaHorasNocturna: 'Jornada nocturna (horas)',
     PrimaVacacionalMinima: 'Prima vacacional mínima',
     VentanaAlertaContratoDias: 'Ventana de alerta de contratos (días)',
     VentanaAlertaDc3Dias: 'Ventana de alerta de DC-3 (días)'

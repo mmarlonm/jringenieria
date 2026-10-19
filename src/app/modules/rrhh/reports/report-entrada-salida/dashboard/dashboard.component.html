@@ -9,7 +9,7 @@
     </div>
 
     <!-- KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
             <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
                 <mat-icon>groups</mat-icon>
@@ -35,6 +35,15 @@
             <div>
                 <p class="text-[10px] uppercase font-bold text-hint">Minutos Extra</p>
                 <p class="text-xl font-black text-main">{{totalMinutosExtra}}</p>
+            </div>
+        </div>
+        <div class="bg-card p-4 rounded-2xl shadow-sm border dark:border-gray-800 flex items-center gap-4">
+            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl">
+                <mat-icon>schedule</mat-icon>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-hint">Horas Extra</p>
+                <p class="text-xl font-black text-main">{{totalHorasExtra | number:'1.0-2'}}</p>
             </div>
         </div>
     </div>
@@ -123,6 +132,36 @@
                         {{row.ubicacionNombreSalida}}</td>
                 </ng-container>
 
+                <ng-container matColumnDef="comida">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        COMIDA</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 text-center font-mono whitespace-nowrap">
+                        {{row.comidaInicio ? hora(row.comidaInicio) + ' – ' + hora(row.comidaFin) : '—'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="horasTrabajadas">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        HORAS</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 text-center font-black">
+                        {{row.horasTrabajadas != null ? (row.horasTrabajadas | number:'1.2-2') : '--'}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="horasExtra">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        EXTRA</th>
+                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 text-center">
+                        <span *ngIf="row.horasExtra != null"
+                            class="px-2 py-1 text-[10px] font-bold rounded-full"
+                            [ngClass]="claseSemaforo(row.semaforoHorasExtra)"
+                            [title]="'Semana: ' + (row.horasExtraSemana | number:'1.0-2') + ' h'">
+                            {{row.horasExtra | number:'1.2-2'}}</span>
+                        <span *ngIf="row.horasExtra == null">--</span>
+                    </td>
+                </ng-container>
+
                 <ng-container matColumnDef="esRetardo">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header
                         class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
@@ -135,14 +174,6 @@
                     </td>
                 </ng-container>
 
-                <ng-container matColumnDef="minutosExtra">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header
-                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
-                        MIN. EXTRA</th>
-                    <td mat-cell *matCellDef="let row" class="p-4 border-b dark:border-gray-800 text-center font-black">
-                        {{row.minutosExtra || 0}}</td>
-                </ng-container>
-
                 <ng-container matColumnDef="observaciones">
                     <th mat-header-cell *matHeaderCellDef
                         class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">
@@ -151,8 +182,20 @@
                         {{row.observaciones}}</td>
                 </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-hover transition-colors">
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        <span class="sr-only">Acciones</span></th>
+                    <td mat-cell *matCellDef="let row" class="p-2 border-b dark:border-gray-800 text-center">
+                        <button mat-icon-button type="button" title="Corregir marcaje" aria-label="Corregir marcaje"
+                            (click)="corregir(row)">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="hover:bg-hover transition-colors">
                 </tr>
             </table>
         </div>
