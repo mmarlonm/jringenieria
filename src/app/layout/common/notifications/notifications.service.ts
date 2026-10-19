@@ -4,6 +4,17 @@ import { Notification } from 'app/layout/common/notifications/notifications.type
 import { environment } from 'environments/environment';
 import { map, Observable, ReplaySubject, switchMap, take, tap } from 'rxjs';
 
+/** Pantallas a las que lleva una notificación de RRHH (el API guarda el tipo como «RRHH.{destino}»). */
+const RUTAS_RRHH: Record<string, string> = {
+    Aprobaciones: '/rrhh/aprobaciones',
+    MisSolicitudes: '/rrhh/mis-solicitudes',
+    MiExpediente: '/rrhh/mi-expediente',
+    Expedientes: '/rrhh/expedientes',
+    Colaboradores: '/rrhh/colaboradores',
+    Calendario: '/rrhh/calendario-permisos',
+    Asistencias: '/rrhh/report-entrada-salida'
+};
+
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
     private apiUrl = `${environment.apiUrl}/Notificacion`;
@@ -29,6 +40,7 @@ export class NotificationsService {
 
     /** A dónde lleva cada tipo de notificación; lo que no tiene pantalla propia abre la tarea (lo histórico). */
     private enlaceDe(item: { tipo?: string; referenciaId?: number }): string {
+        if (item.tipo?.startsWith('RRHH.')) return RUTAS_RRHH[item.tipo.slice(5)] ?? '/rrhh/mis-solicitudes';
         switch (item.tipo) {
             case 'Requerimiento': return '/crm/requerimientos';
             case 'Compra': return '/administration/tablero-compras';
@@ -44,8 +56,9 @@ export class NotificationsService {
             map((data) =>
                 data.map((item: any) => ({
                     id: item.id.toString(),
-                    icon: item.tipo === 'Chat' ? 'heroicons_outline:chat-bubble-left-right' : 'heroicons_outline:clipboard-document-list',
-                    title: item.titulo || 'Nueva Notificación',
+                    icon: item.tipo === 'Chat' ? 'heroicons_outline:chat-bubble-left-right'
+                        : item.tipo?.startsWith('RRHH.') ? 'heroicons_outline:users' : 'heroicons_outline:clipboard-document-list',
+                    title: item.titulo || (item.tipo?.startsWith('RRHH.') ? 'Recursos Humanos' : 'Nueva Notificación'),
                     description: item.mensaje,
                     time: new Date(item.fechaAccion || item.fecha || new Date()).toISOString(),
                     read: false,
