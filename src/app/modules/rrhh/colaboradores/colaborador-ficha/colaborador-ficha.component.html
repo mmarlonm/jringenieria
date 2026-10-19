@@ -196,6 +196,24 @@
                         [contratos]="contratos" (cambio)="recargarContratos()"></rrhh-tab-contratos>
                 </mat-tab>
 
+                @if (puedeVerExpediente) {
+                    <mat-tab label="Expediente">
+                        <ng-template matTabContent>
+                            <div class="py-4 max-w-3xl">
+                                <rrhh-expediente [colaboradorId]="colaborador.colaboradorId"></rrhh-expediente>
+                            </div>
+                        </ng-template>
+                    </mat-tab>
+                }
+
+                @if (puedeVerAusencias) {
+                    <mat-tab label="Vacaciones e incidencias">
+                        <ng-template matTabContent>
+                            <rrhh-tab-ausencias [colaboradorId]="colaborador.colaboradorId"></rrhh-tab-ausencias>
+                        </ng-template>
+                    </mat-tab>
+                }
+
                 @if (puedeVerNomina) {
                     <mat-tab label="Nómina">
                         <ng-template matTabContent>

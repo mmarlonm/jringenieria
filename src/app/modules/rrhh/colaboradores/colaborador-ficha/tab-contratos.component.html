@@ -97,6 +97,19 @@
                     <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" [ngClass]="claseEstatus(c.estatus)">{{ c.estatus }}</span>
                 </td>
             </ng-container>
+            <ng-container matColumnDef="firmado">
+                <th mat-header-cell *matHeaderCellDef>Firmado</th>
+                <td mat-cell *matCellDef="let c">
+                    @if (c.tieneArchivoFirmado) {
+                        <button type="button" class="text-emerald-700 font-semibold" (click)="descargarFirmado(c)">✓ {{ c.archivoFirmadoNombre }}</button>
+                        <button type="button" class="ml-2 text-blue-600 font-semibold" [disabled]="subiendoFirmado === c.contratoId" (click)="pedirFirmado(c)">Reemplazar</button>
+                    } @else {
+                        <button mat-stroked-button type="button" [disabled]="subiendoFirmado === c.contratoId" (click)="pedirFirmado(c)">
+                            {{ subiendoFirmado === c.contratoId ? 'Subiendo…' : 'Subir firmado' }}
+                        </button>
+                    }
+                </td>
+            </ng-container>
             <ng-container matColumnDef="notas">
                 <th mat-header-cell *matHeaderCellDef>Notas</th>
                 <td mat-cell *matCellDef="let c">{{ c.notas || '—' }}</td>
@@ -118,3 +131,5 @@
         </table>
     </div>
 </div>
+
+<input #firmado type="file" class="hidden" accept="application/pdf,image/jpeg,image/png" (change)="alElegirFirmado($event)" />

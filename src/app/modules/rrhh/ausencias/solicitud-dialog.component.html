@@ -1,0 +1,94 @@
+<div class="flex items-center justify-between p-4 sm:p-6 pb-2">
+    <div>
+        <h2 class="text-xl font-bold m-0">Nueva solicitud</h2>
+        <p class="text-secondary text-sm m-0">Te quedan {{ data.saldo.disponible }} días de vacaciones</p>
+    </div>
+    <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar diálogo">
+        <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+    </button>
+</div>
+
+<mat-dialog-content class="!p-4 sm:!p-6 flex flex-col gap-5">
+    <form [formGroup]="form" class="flex flex-col gap-4">
+
+        <!-- Selector de Tipo (Botones segmentados) -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold text-secondary">¿Qué necesitas?</span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                @for (t of data.tipos; track t.tipoAusenciaId) {
+                    <button
+                        type="button"
+                        class="px-3 py-2.5 rounded-xl border text-sm font-semibold transition-colors flex items-center justify-center text-center"
+                        [ngClass]="{
+                            'bg-primary text-on-primary border-primary': form.controls.tipoAusenciaId.value === t.tipoAusenciaId,
+                            'bg-card text-default border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800': form.controls.tipoAusenciaId.value !== t.tipoAusenciaId
+                        }"
+                        (click)="seleccionarTipo(t.tipoAusenciaId)">
+                        {{ t.nombre }}
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Rango de Fechas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Del</mat-label>
+                <input matInput [matDatepicker]="pickerInicio" [min]="hoy" [formControl]="form.controls.fechaInicio" placeholder="dd/mm/aaaa" />
+                <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                <mat-datepicker #pickerInicio></mat-datepicker>
+                @if (form.controls.fechaInicio.hasError('required')) {
+                    <mat-error>Fecha obligatoria</mat-error>
+                }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Al</mat-label>
+                <input matInput [matDatepicker]="pickerFin" [min]="form.controls.fechaInicio.value || hoy" [formControl]="form.controls.fechaFin" placeholder="dd/mm/aaaa" />
+                <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFin></mat-datepicker>
+                @if (form.controls.fechaFin.hasError('required')) {
+                    <mat-error>Fecha obligatoria</mat-error>
+                }
+            </mat-form-field>
+        </div>
+
+        <!-- Recuadro de cálculo en vivo -->
+        @if (calculando()) {
+            <div class="rounded-xl border dark:border-gray-800 p-3 bg-gray-50 dark:bg-gray-800/50 text-secondary text-sm">
+                Calculando días hábiles…
+            </div>
+        }
+        @if (!calculando() && preview(); as p) {
+            <div class="rounded-xl border p-3" [ngClass]="p.error ? 'border-rose-300 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400' : 'border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300'">
+                @if (p.error) {
+                    <div class="text-sm font-semibold">{{ p.error }}</div>
+                } @else {
+                    <div class="text-sm font-bold">
+                        {{ p.diasHabiles }} {{ p.diasHabiles === 1 ? 'día hábil' : 'días hábiles' }} según tu horario
+                        @if (esVacaciones) {
+                            <span> · te quedarían {{ p.quedarian }}</span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Campo Comentario / Motivo -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>{{ tipoSeleccionado?.requiereMotivo ? 'Motivo' : 'Comentario' }}</mat-label>
+            <textarea matInput rows="3" [formControl]="form.controls.motivo" [placeholder]="tipoSeleccionado?.requiereMotivo ? 'Explica el motivo de tu solicitud' : 'Observaciones opcionales'"></textarea>
+            @if (form.controls.motivo.hasError('required')) {
+                <mat-error>El motivo es obligatorio para este tipo de ausencia</mat-error>
+            }
+        </mat-form-field>
+
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="!px-4 sm:!px-6 !pb-4 sm:!pb-6 gap-2">
+    <button mat-stroked-button type="button" mat-dialog-close [disabled]="guardando()">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" [disabled]="!puedeEnviar" (click)="enviar()">
+        {{ guardando() ? 'Enviando…' : 'Enviar solicitud' }}
+    </button>
+</mat-dialog-actions>

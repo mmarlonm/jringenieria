@@ -1,0 +1,191 @@
+<div class="pt-6 space-y-6">
+    <!-- Tarjeta de Saldo del Periodo -->
+    @if (saldo(); as s) {
+        <div class="bg-card rounded-2xl border p-6 shadow-sm dark:border-gray-800">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b dark:border-gray-800">
+                <div>
+                    <h3 class="text-lg font-bold">Saldo de vacaciones</h3>
+                    <div class="text-secondary text-sm">
+                        Periodo: {{ s.periodoDesde | date: 'dd/MM/yyyy' }} al {{ s.periodoHasta | date: 'dd/MM/yyyy' }} ({{ s.aniosAntiguedad }} años de antigüedad)
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button mat-stroked-button type="button" (click)="abrirAjustarSaldo()">
+                        <mat-icon [svgIcon]="'heroicons_outline:adjustments-horizontal'"></mat-icon>
+                        <span class="ml-2">Ajustar saldo</span>
+                    </button>
+                    <button mat-stroked-button type="button" (click)="abrirRegistrarIncidencia()">
+                        <mat-icon [svgIcon]="'heroicons_outline:exclamation-triangle'"></mat-icon>
+                        <span class="ml-2">Registrar falta o incapacidad</span>
+                    </button>
+                    <button mat-flat-button color="primary" type="button" (click)="abrirCapturarSolicitud()">
+                        <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        <span class="ml-2">Capturar solicitud</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 pt-4 text-center">
+                <div class="p-3 bg-gray-50 rounded-xl dark:bg-gray-800/50">
+                    <div class="text-xs text-secondary font-medium uppercase">Derechos</div>
+                    <div class="text-2xl font-semibold mt-1">{{ s.derechos }}</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl dark:bg-gray-800/50">
+                    <div class="text-xs text-secondary font-medium uppercase">Ajustes</div>
+                    <div class="text-2xl font-semibold mt-1" [ngClass]="{'text-emerald-600': s.ajustes > 0, 'text-rose-600': s.ajustes < 0}">
+                        {{ s.ajustes > 0 ? '+' : '' }}{{ s.ajustes }}
+                    </div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl dark:bg-gray-800/50">
+                    <div class="text-xs text-secondary font-medium uppercase">Aprobados</div>
+                    <div class="text-2xl font-semibold mt-1 text-slate-700 dark:text-slate-200">{{ s.aprobados }}</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl dark:bg-gray-800/50">
+                    <div class="text-xs text-secondary font-medium uppercase">Pendientes</div>
+                    <div class="text-2xl font-semibold mt-1 text-amber-600">{{ s.pendientes }}</div>
+                </div>
+                <div class="col-span-2 sm:col-span-1 p-3 bg-primary-50 rounded-xl border border-primary-200 dark:bg-primary-900/20 dark:border-primary-800">
+                    <div class="text-xs text-primary font-bold uppercase tracking-wider">Disponible</div>
+                    <div class="text-3xl font-extrabold text-primary mt-0.5">{{ s.disponible }}</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Tabla: Solicitudes de Ausencia -->
+    <div class="bg-card rounded-2xl border p-4 shadow-sm dark:border-gray-800">
+        <div class="text-base font-semibold mb-3">Solicitudes de ausencias</div>
+        <div class="overflow-auto rounded-xl border dark:border-gray-800">
+            <table mat-table [dataSource]="listaSolicitudes()" class="w-full">
+                <ng-container matColumnDef="tipo">
+                    <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                    <td mat-cell *matCellDef="let s">{{ s.tipo }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="fechas">
+                    <th mat-header-cell *matHeaderCellDef>Fechas</th>
+                    <td mat-cell *matCellDef="let s">
+                        {{ s.fechaInicio | date: 'dd/MM/yyyy' }} - {{ s.fechaFin | date: 'dd/MM/yyyy' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dias">
+                    <th mat-header-cell *matHeaderCellDef>Días hábiles</th>
+                    <td mat-cell *matCellDef="let s">{{ s.diasHabiles }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="estatus">
+                    <th mat-header-cell *matHeaderCellDef>Estatus</th>
+                    <td mat-cell *matCellDef="let s">
+                        <span class="rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap" [ngClass]="claseEstatus(s.estatus)">
+                            {{ etiquetaEstatus(s.estatus) }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let s" class="text-right">
+                        @if (puedeCancelarSolicitud(s.estatus)) {
+                            <button mat-stroked-button color="warn" type="button" (click)="cancelarSolicitud(s)">
+                                Cancelar
+                            </button>
+                        }
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="colsSolicitudes"></tr>
+                <tr mat-row *matRowDef="let row; columns: colsSolicitudes"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell p-4 text-secondary" [attr.colspan]="colsSolicitudes.length">Sin solicitudes registradas.</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabla: Incidencias (Faltas e Incapacidades) -->
+    <div class="bg-card rounded-2xl border p-4 shadow-sm dark:border-gray-800">
+        <div class="text-base font-semibold mb-3">Faltas e incapacidades registradas</div>
+        <div class="overflow-auto rounded-xl border dark:border-gray-800">
+            <table mat-table [dataSource]="listaIncidencias()" class="w-full">
+                <ng-container matColumnDef="tipo">
+                    <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                    <td mat-cell *matCellDef="let i">
+                        <span class="font-semibold">{{ i.tipo }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="fechas">
+                    <th mat-header-cell *matHeaderCellDef>Fechas</th>
+                    <td mat-cell *matCellDef="let i">
+                        {{ i.fechaInicio | date: 'dd/MM/yyyy' }} - {{ i.fechaFin | date: 'dd/MM/yyyy' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dias">
+                    <th mat-header-cell *matHeaderCellDef>Días</th>
+                    <td mat-cell *matCellDef="let i">{{ i.dias }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="detalle">
+                    <th mat-header-cell *matHeaderCellDef>Subtipo / Folio / Notas</th>
+                    <td mat-cell *matCellDef="let i" class="text-secondary text-sm">
+                        <div>{{ i.subtipo || '—' }} @if (i.folio) { (Folio: {{ i.folio }}) }</div>
+                        @if (i.notas) { <div class="text-xs italic">{{ i.notas }}</div> }
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let i" class="text-right">
+                        <button mat-button color="warn" type="button" (click)="eliminarIncidencia(i)">Quitar</button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="colsIncidencias"></tr>
+                <tr mat-row *matRowDef="let row; columns: colsIncidencias"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell p-4 text-secondary" [attr.colspan]="colsIncidencias.length">Sin faltas ni incapacidades registradas.</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabla: Ajustes de Saldo -->
+    <div class="bg-card rounded-2xl border p-4 shadow-sm dark:border-gray-800">
+        <div class="text-base font-semibold mb-3">Historial de ajustes de saldo</div>
+        <div class="overflow-auto rounded-xl border dark:border-gray-800">
+            <table mat-table [dataSource]="listaAjustes()" class="w-full">
+                <ng-container matColumnDef="fecha">
+                    <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                    <td mat-cell *matCellDef="let a">{{ a.fecha | date: 'dd/MM/yyyy' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="dias">
+                    <th mat-header-cell *matHeaderCellDef>Días</th>
+                    <td mat-cell *matCellDef="let a">
+                        <span class="font-bold" [ngClass]="a.dias > 0 ? 'text-emerald-600' : 'text-rose-600'">
+                            {{ a.dias > 0 ? '+' : '' }}{{ a.dias }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="motivo">
+                    <th mat-header-cell *matHeaderCellDef>Motivo</th>
+                    <td mat-cell *matCellDef="let a">{{ a.motivo }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="registradoPor">
+                    <th mat-header-cell *matHeaderCellDef>Registrado por</th>
+                    <td mat-cell *matCellDef="let a" class="text-secondary text-sm">{{ a.registradoPor }}</td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="colsAjustes"></tr>
+                <tr mat-row *matRowDef="let row; columns: colsAjustes"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell p-4 text-secondary" [attr.colspan]="colsAjustes.length">Sin ajustes de saldo registrados.</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

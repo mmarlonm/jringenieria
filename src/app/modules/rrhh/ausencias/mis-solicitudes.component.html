@@ -1,0 +1,102 @@
+@if (error()) {
+    <div class="rounded-2xl border p-6 text-secondary bg-card">{{ error() }}</div>
+} @else if (cargando() && !saldo()) {
+    <div class="p-6 text-secondary">Cargando ausencias…</div>
+} @else {
+    <div class="flex flex-col gap-6">
+
+        <!-- Tarjeta de Saldo y Acción Principal -->
+        @if (saldo(); as s) {
+            <div class="bg-card rounded-2xl border dark:border-gray-800 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex flex-col gap-1">
+                    @if (s.derechos === 0 && s.aniosAntiguedad === 0) {
+                        <span class="text-lg font-bold">Aún no cumples un año de servicio; todavía no tienes vacaciones, pero puedes pedir permisos.</span>
+                    } @else {
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-black text-primary">{{ s.disponible }}</span>
+                            <span class="text-lg font-bold">días de vacaciones disponibles</span>
+                        </div>
+                        <span class="text-sm text-secondary">Tu periodo vence el {{ s.periodoHasta | date: 'dd/MM/yyyy' }}</span>
+                    }
+                </div>
+                <button mat-flat-button color="primary" class="h-12 px-6 text-base w-full sm:w-auto" type="button" (click)="abrirSolicitud()">
+                    <mat-icon [svgIcon]="'heroicons_outline:plus'" class="mr-2"></mat-icon>
+                    Solicitar
+                </button>
+            </div>
+        }
+
+        <!-- Lista de solicitudes -->
+        <section class="flex flex-col gap-3">
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-secondary m-0">Historial de solicitudes</h2>
+
+            @if (solicitudes().length === 0) {
+                <div class="bg-card rounded-2xl border dark:border-gray-800 p-8 text-center text-secondary">
+                    No tienes solicitudes registradas.
+                </div>
+            } @else {
+                <div class="bg-card rounded-2xl border dark:border-gray-800 overflow-hidden divide-y dark:divide-gray-800">
+                    @for (s of solicitudes(); track s.solicitudId) {
+                        <article class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex flex-col gap-1 min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-bold text-base">{{ s.tipo }}</span>
+
+                                    <!-- Chips de estatus -->
+                                    @switch (s.estatus) {
+                                        @case ('PENDIENTE_JEFE') {
+                                            <span class="rounded-full px-2.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
+                                                Con tu jefe
+                                            </span>
+                                        }
+                                        @case ('PENDIENTE_RRHH') {
+                                            <span class="rounded-full px-2.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
+                                                Con RRHH
+                                            </span>
+                                        }
+                                        @case ('APROBADA') {
+                                            <span class="rounded-full px-2.5 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400">
+                                                Aprobada
+                                            </span>
+                                        }
+                                        @case ('RECHAZADA') {
+                                            <span class="rounded-full px-2.5 py-0.5 text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-400">
+                                                Rechazada
+                                            </span>
+                                        }
+                                        @case ('CANCELADA') {
+                                            <span class="rounded-full px-2.5 py-0.5 text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                                                Cancelada
+                                            </span>
+                                        }
+                                    }
+                                </div>
+
+                                <div class="text-sm text-secondary">
+                                    {{ s.fechaInicio | date: 'dd/MM/yyyy' }} – {{ s.fechaFin | date: 'dd/MM/yyyy' }}
+                                    <span class="mx-1">·</span>
+                                    <span class="font-medium text-default">{{ s.diasHabiles }} {{ s.diasHabiles === 1 ? 'día hábil' : 'días hábiles' }}</span>
+                                </div>
+
+                                @if (s.estatus === 'RECHAZADA' && (s.jefeComentario || s.rrhhComentario)) {
+                                    <div class="text-xs text-rose-600 dark:text-rose-400 mt-1">
+                                        Motivo: {{ s.jefeComentario || s.rrhhComentario }}
+                                    </div>
+                                }
+                            </div>
+
+                            @if (esPendiente(s.estatus)) {
+                                <div class="flex items-center sm:self-center">
+                                    <button mat-stroked-button color="warn" type="button" [disabled]="cancelando() === s.solicitudId" (click)="cancelar(s)">
+                                        {{ cancelando() === s.solicitudId ? 'Cancelando…' : 'Cancelar' }}
+                                    </button>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+    </div>
+}

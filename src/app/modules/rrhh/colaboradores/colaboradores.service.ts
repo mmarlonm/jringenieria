@@ -59,6 +59,17 @@ export class ColaboradoresService {
         return this._http.post<Contrato>(`${this._api}/${id}/contratos`, dto);
     }
 
+    /** Sube (o reemplaza) el contrato firmado: PDF, JPG o PNG de hasta 10 MB. */
+    subirContratoFirmado(id: number, contratoId: number, archivo: File): Observable<Contrato> {
+        const form = new FormData();
+        form.append('archivo', archivo, archivo.name);
+        return this._http.post<Contrato>(`${this._api}/${id}/contratos/${contratoId}/firmado`, form);
+    }
+
+    descargarContratoFirmado(id: number, contratoId: number): Observable<Blob> {
+        return this._http.get(`${this._api}/${id}/contratos/${contratoId}/firmado`, { responseType: 'blob' });
+    }
+
     actualizarContrato(id: number, contratoId: number, dto: ContratoGuardar): Observable<Contrato> {
         return this._http.put<Contrato>(`${this._api}/${id}/contratos/${contratoId}`, dto);
     }

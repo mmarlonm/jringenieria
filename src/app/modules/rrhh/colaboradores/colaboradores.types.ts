@@ -35,6 +35,8 @@ export interface ColaboradorLista {
     estatus: EstatusColaborador;
     estatusContrato: EstatusContrato;
     fechaVencimientoContrato: string | null;
+    /** % de expediente digital completo (documentos validados entre aplicables). */
+    porcentajeExpediente: number;
 }
 
 export interface Beneficiario {
@@ -97,6 +99,9 @@ export interface Contrato extends ContratoGuardar {
     contratoId: number;
     tipoContrato: string;
     estatus: EstatusContrato;
+    /** Tiene el PDF o la foto del contrato firmado (se exige para activar al colaborador). */
+    tieneArchivoFirmado: boolean;
+    archivoFirmadoNombre: string | null;
 }
 
 export interface ColaboradorNomina {
@@ -152,3 +157,5 @@ export interface Parametro {
 /** Códigos de permisos especiales que gobiernan las pestañas sensibles de la ficha. */
 export const PERMISO_NOMINA = 'rrhh.colaboradores.nomina';
 export const PERMISO_SALUD = 'rrhh.colaboradores.salud';
+export const PERMISO_EXPEDIENTES = 'rrhh.expedientes.revisar';
+export const PERMISO_AUSENCIAS = 'rrhh.permisos.aprobar';
