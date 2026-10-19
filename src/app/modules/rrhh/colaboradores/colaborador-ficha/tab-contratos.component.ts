@@ -201,7 +201,8 @@ export class TabContratosComponent {
                 enlace.href = url;
                 enlace.download = c.archivoFirmadoNombre ?? 'contrato';
                 enlace.click();
-                URL.revokeObjectURL(url);
+                // sin esperar, Firefox puede cancelar la descarga: la URL se libera después
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             },
             error: (e) => this._snackBar.open(mensajeError(e, 'No se pudo descargar el contrato firmado.'), 'Cerrar', { duration: 5000 })
         });

@@ -253,7 +253,8 @@ export class ExpedienteComponent implements OnInit, OnChanges {
         enlace.href = url;
         enlace.download = nombre;
         enlace.click();
-        URL.revokeObjectURL(url);
+        // sin esperar, Firefox puede cancelar la descarga: la URL se libera después
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     // ------------------------------------------------------------------ quitar y revisión de RRHH
