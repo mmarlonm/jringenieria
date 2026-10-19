@@ -43,8 +43,10 @@ export class ReportEntradaSalidaDashboardComponent implements OnInit {
         'ubicacionEntrada',
         'horaSalida',
         'ubicacionSalida',
+        'comida',
+        'horasTrabajadas',
+        'horasExtra',
         'esRetardo',
-        'minutosExtra',
         'observaciones'
     ];
 
@@ -57,12 +59,22 @@ export class ReportEntradaSalidaDashboardComponent implements OnInit {
     public totalRegistros: number = 0;
     public totalRetardos: number = 0;
     public totalMinutosExtra: number = 0;
+    public totalHorasExtra: number = 0;
+
+    // Clases completas (no armadas con texto) para que Tailwind las encuentre
+    private readonly _clasesSemaforo: Record<string, string> = {
+        ROJO: 'bg-rose-100 text-rose-600',
+        AMARILLO: 'bg-amber-100 text-amber-700',
+        VERDE: 'bg-emerald-100 text-emerald-600'
+    };
 
     constructor(private _rrhhService: PersonalManagementService) {
         // Inicializar con el mes actual
         const date = new Date();
         this.fechaInicio = new Date(date.getFullYear(), date.getMonth(), 1);
         this.fechaFin = new Date();
+        // El buscador es de empleado: sin esto también coincidiría con el semáforo, el tipo de jornada y los ids
+        this.dataSource.filterPredicate = (fila, filtro) => (fila.nombreUsuario ?? '').toLowerCase().includes(filtro);
     }
 
     ngOnInit(): void {
@@ -97,5 +109,15 @@ export class ReportEntradaSalidaDashboardComponent implements OnInit {
         this.totalRegistros = data.length;
         this.totalRetardos = data.filter(a => a.esRetardo).length;
         this.totalMinutosExtra = data.reduce((acc, curr) => acc + (curr.minutosExtra || 0), 0);
+        this.totalHorasExtra = Math.round(data.reduce((acc, curr) => acc + (curr.horasExtra || 0), 0) * 100) / 100;
+    }
+
+    /** El API manda las horas como "09:00:00"; se muestran como HH:mm. */
+    hora(valor?: string): string {
+        return valor ? valor.substring(0, 5) : '';
+    }
+
+    claseSemaforo(semaforo?: string): string {
+        return this._clasesSemaforo[semaforo ?? ''] ?? this._clasesSemaforo['VERDE'];
     }
 }

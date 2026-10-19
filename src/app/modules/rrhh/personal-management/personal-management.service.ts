@@ -109,4 +109,12 @@ export interface AsistenciaReporteDto {
   observaciones?: string;
   ubicacionNombreEntrada?: string;
   ubicacionNombreSalida?: string;
+  // Calculados por el API al leer, con los parámetros vigentes; las horas llegan como "HH:mm:ss"
+  comidaInicio?: string;
+  comidaFin?: string;
+  tipoJornada?: 'DIURNA' | 'NOCTURNA' | 'MIXTA';
+  horasTrabajadas?: number;
+  horasExtra?: number;
+  horasExtraSemana?: number;
+  semaforoHorasExtra?: 'VERDE' | 'AMARILLO' | 'ROJO';
 }
