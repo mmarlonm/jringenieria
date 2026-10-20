@@ -2812,21 +2812,7 @@ PARTICIPACIÓN FUTURA
             .pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (historial) => {
-                    this.historialEnviosMap.clear();
-                    (historial || []).forEach(h => {
-                        if (h.emailDestinatario) {
-                            this.historialEnviosMap.set(h.emailDestinatario.toLowerCase(), h);
-                        }
-                        if (h.asistenteId) {
-                            this.historialEnviosMap.set(`asistente_${h.asistenteId}`, h);
-                        }
-                        if (h.personalStaffId) {
-                            this.historialEnviosMap.set(`staff_${h.personalStaffId}`, h);
-                        }
-                        if (h.usuarioId) {
-                            this.historialEnviosMap.set(`usuario_${h.usuarioId}`, h);
-                        }
-                    });
+                    this._armarMapaHistorial(historial);
                     this._cdr.markForCheck();
                 },
                 error: () => {}
@@ -3036,15 +3022,15 @@ PARTICIPACIÓN FUTURA
     }
 
     obtenerInfoEnvioPrevio(dest: any): { texto: string; clase: string; icon: string } {
-        const keyEmail = dest.correo ? dest.correo.toLowerCase() : '';
+        const keyEmail = dest.correo ? dest.correo.trim().toLowerCase() : '';
         const keyAsistente = dest.asistenteId ? `asistente_${dest.asistenteId}` : '';
         const keyStaff = dest.personalStaffId ? `staff_${dest.personalStaffId}` : '';
         const keyUsuario = dest.usuarioId ? `usuario_${dest.usuarioId}` : '';
 
-        const registro = this.historialEnviosMap.get(keyEmail) ||
-                         (keyAsistente ? this.historialEnviosMap.get(keyAsistente) : undefined) ||
+        const registro = (keyAsistente ? this.historialEnviosMap.get(keyAsistente) : undefined) ||
                          (keyStaff ? this.historialEnviosMap.get(keyStaff) : undefined) ||
-                         (keyUsuario ? this.historialEnviosMap.get(keyUsuario) : undefined);
+                         (keyUsuario ? this.historialEnviosMap.get(keyUsuario) : undefined) ||
+                         this.historialEnviosMap.get(keyEmail);
 
         if (!registro) {
             return {
@@ -3175,13 +3161,22 @@ PARTICIPACIÓN FUTURA
         this._formService.getHistorialEnvios(formId)
             .pipe(takeUntil(this._destroy$))
             .subscribe(hist => {
-                (hist || []).forEach(h => {
-                    if (h.emailDestinatario) this.historialEnviosMap.set(h.emailDestinatario.toLowerCase(), h);
-                });
+                this._armarMapaHistorial(hist);
                 this._cdr.markForCheck();
             });
 
         this._cdr.markForCheck();
+    }
+
+    /** Mapa de la insignia de estado por destinatario: se arma igual al cargar y después de cada envío. */
+    private _armarMapaHistorial(historial: FormularioEnvioHistorialDto[] | null | undefined): void {
+        this.historialEnviosMap.clear();
+        (historial || []).forEach(h => {
+            if (h.asistenteId) this.historialEnviosMap.set(`asistente_${h.asistenteId}`, h);
+            if (h.personalStaffId) this.historialEnviosMap.set(`staff_${h.personalStaffId}`, h);
+            if (h.usuarioId) this.historialEnviosMap.set(`usuario_${h.usuarioId}`, h);
+            if (h.emailDestinatario) this.historialEnviosMap.set(h.emailDestinatario.trim().toLowerCase(), h);
+        });
     }
 
     /** Avance del envío por lotes (null si no hay envío en curso). */
