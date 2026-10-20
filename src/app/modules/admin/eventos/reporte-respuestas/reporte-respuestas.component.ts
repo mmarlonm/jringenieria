@@ -7,14 +7,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import Exporting from 'highcharts/modules/exporting';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Subject } from 'rxjs';
-import { switchMap, takeUntil } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { catchError, map, switchMap, takeUntil } from 'rxjs/operators';
 import { ReporteRespuestasService } from './reporte-respuestas.service';
 import { ReporteFormulario } from './reporte-respuestas.types';
 import { opcionesPorDia } from './reporte-respuestas.charts';
@@ -42,7 +41,6 @@ export interface GrupoFormularios {
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    MatTooltipModule,
     PreguntaReporteComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -78,29 +76,20 @@ export class ReporteRespuestasComponent implements OnInit, OnDestroy {
           this.cargando = true;
           this.error = null;
           this._cdr.markForCheck();
-          return this._reporteService.getReporte(peticion.formularioId, peticion.desde, peticion.hasta);
+          // el error se atrapa dentro del switchMap: si subiera hasta aquí cerraría la cadena y ya no se podría reintentar
+          return this._reporteService.getReporte(peticion.formularioId, peticion.desde, peticion.hasta).pipe(
+            map(rep => ({ rep, err: null as any })),
+            catchError(err => of({ rep: null as ReporteFormulario | null, err }))
+          );
         }),
         takeUntil(this._destroy$)
       )
-      .subscribe({
-        next: (rep) => {
-          this.reporte = rep;
-          this.cargando = false;
-          this.error = null;
-          if (rep.resumen && rep.resumen.porDia && rep.resumen.porDia.length > 0) {
-            this.opcionesPorDia = opcionesPorDia(rep.resumen);
-          } else {
-            this.opcionesPorDia = null;
-          }
-          this._cdr.markForCheck();
-        },
-        error: (err) => {
-          this.cargando = false;
-          this.reporte = null;
-          this.opcionesPorDia = null;
-          this.error = err?.error?.mensaje || 'No se pudo generar el reporte.';
-          this._cdr.markForCheck();
-        }
+      .subscribe(({ rep, err }) => {
+        this.cargando = false;
+        this.reporte = rep;
+        this.error = rep ? null : (err?.error?.mensaje || 'No se pudo generar el reporte.');
+        this.opcionesPorDia = rep && rep.resumen.porDia.length > 0 ? opcionesPorDia(rep.resumen) : null;
+        this._cdr.markForCheck();
       });
 
     this.cargarFormularios();
@@ -258,24 +247,24 @@ export class ReporteRespuestasComponent implements OnInit, OnDestroy {
         scrollY: -window.scrollY
       });
 
-      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
       const anchoPagina = pdf.internal.pageSize.getWidth();
       const altoPagina = pdf.internal.pageSize.getHeight();
 
       const imgWidth = anchoPagina;
       const imgHeight = (canvas.height * anchoPagina) / canvas.width;
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
 
       let alturaRestante = imgHeight;
       let posicionY = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, posicionY, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'JPEG', 0, posicionY, imgWidth, imgHeight);
       alturaRestante -= altoPagina;
 
       while (alturaRestante > 0) {
         posicionY -= altoPagina;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, posicionY, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, posicionY, imgWidth, imgHeight);
         alturaRestante -= altoPagina;
       }
 

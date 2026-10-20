@@ -2,6 +2,7 @@ import * as Highcharts from 'highcharts';
 import { PreguntaReporte, ResumenReporte } from './reporte-respuestas.types';
 
 export const BASE_THEME: Highcharts.Options = {
+  accessibility: { enabled: false },
   chart: {
     backgroundColor: 'transparent',
     spacingBottom: 20,
@@ -100,7 +101,8 @@ export const opcionesBarras = (p: PreguntaReporte): Highcharts.Options => {
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'bar'
+      type: 'bar',
+      marginTop: 40 // deja libre la franja del menú de descarga para que no tape la primera barra
     },
     legend: {
       enabled: false
@@ -111,6 +113,7 @@ export const opcionesBarras = (p: PreguntaReporte): Highcharts.Options => {
     },
     yAxis: {
       min: 0,
+      maxPadding: 0.2,
       title: {
         text: undefined
       },
@@ -125,6 +128,8 @@ export const opcionesBarras = (p: PreguntaReporte): Highcharts.Options => {
       series: {
         dataLabels: {
           enabled: true,
+          crop: false,
+          overflow: 'allow',
           formatter: function() {
             const point = this.point as OpcionPoint;
             return `${point.y} · ${point.custom.porcentaje.toFixed(1)}%`;
@@ -183,7 +188,8 @@ export const opcionesNiveles = (p: PreguntaReporte): Highcharts.Options => {
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'bar'
+      type: 'bar',
+      marginTop: 40 // deja libre la franja del menú de descarga para que no tape la primera barra
     },
     legend: {
       ...BASE_THEME.legend,
@@ -258,7 +264,8 @@ export const opcionesPromedios = (p: PreguntaReporte): Highcharts.Options | null
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'bar'
+      type: 'bar',
+      marginTop: 40 // deja libre la franja del menú de descarga para que no tape la primera barra
     },
     legend: {
       enabled: false
@@ -368,7 +375,8 @@ export const opcionesPorDia = (r: ResumenReporte): Highcharts.Options => {
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'spline'
+      type: 'line',
+      height: 320
     },
     legend: {
       enabled: false
@@ -411,7 +419,7 @@ export const opcionesPorDia = (r: ResumenReporte): Highcharts.Options => {
       }
     },
     series: [{
-      type: 'spline',
+      type: 'line',
       name: 'Respuestas',
       color: '#4f46e5',
       data: porDia.map(d => d.total)
