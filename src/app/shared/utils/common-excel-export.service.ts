@@ -118,6 +118,8 @@ export class CommonExcelExportService {
                     cell.numFmt = 'DD/MM/YYYY';
                 } else if (typeof value === 'number') {
                     cell.value = value;
+                    // La plantilla trae formato de fecha en la columna B: un número (p. ej. el folio) se vería como fecha
+                    cell.numFmt = 'General';
                     // Detectar si parece moneda o decimal
                     if (headers[colIndex]?.toLowerCase().includes('monto') || 
                         headers[colIndex]?.toLowerCase().includes('total') || 

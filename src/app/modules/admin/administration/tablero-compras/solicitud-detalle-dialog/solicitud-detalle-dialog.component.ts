@@ -156,7 +156,7 @@ import Swal from 'sweetalert2';
                         <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ solicitud.razonSocial || '-' }}</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Fecha Requerida</span>
+                        <span class="text-xs font-bold uppercase text-secondary tracking-wider">Fecha requerida de pago</span>
                         <span class="font-semibold text-red-600">{{ solicitud.fechaRequerida | date:'dd MMM, yyyy' }}</span>
                     </div>
                     <div class="flex flex-col">

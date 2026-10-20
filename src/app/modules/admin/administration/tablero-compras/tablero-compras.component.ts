@@ -26,6 +26,7 @@ import { AnticipoDialogComponent } from './anticipo-dialog/anticipo-dialog.compo
 import { SalidasAlmacenTabComponent } from './salidas-almacen-tab/salidas-almacen-tab.component';
 import Swal from 'sweetalert2';
 import { CommonExcelExportService } from 'app/shared/utils/common-excel-export.service';
+import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import { DocumentosRequisicionService } from 'app/core/documentos-requisicion/documentos-requisicion.service';
 import { chipDocumentacion, esPagadaSinDocumentos, estadoTipo, tipoIncompleto } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 
@@ -196,7 +197,8 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         private _purchaseReceptionService: PurchaseReceptionService,
         private _router: Router,
         private _excelService: CommonExcelExportService,
-        private _documentosService: DocumentosRequisicionService
+        private _documentosService: DocumentosRequisicionService,
+        private _permisos: PermisosEspecialesService
     ) {
     }
 
@@ -468,7 +470,16 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Solo quien tiene el permiso especial «Cambiar estatus de solicitudes de compra» (se asigna en Permisos especiales). */
+    get puedeCambiarEstatus(): boolean {
+        return this._permisos.tiene('compras.estatus.cambiar');
+    }
+
     cambiarEstatus(id: number, idEstatus: number): void {
+        if (!this.puedeCambiarEstatus) {
+            Swal.fire('Sin permiso', 'No tienes permiso para cambiar el estatus de las solicitudes de compra.', 'warning');
+            return;
+        }
         const estatusNuevo = this.estatus.find(e => e.idEstatus === idEstatus);
 
         if (idEstatus === 5 || estatusNuevo?.nombreEstatus.toLowerCase().includes('orden')) {
@@ -867,7 +878,7 @@ export class TableroComprasComponent implements OnInit, OnDestroy {
                 },
                 error: (error) => {
                     console.error('Error al actualizar estado de liquidación', error);
-                    Swal.fire('Error', 'No se pudo actualizar el estado de liquidación', 'error');
+                    Swal.fire('No se pudo registrar el pago', error?.error?.mensaje || 'No se pudo actualizar el estado de liquidación.', 'error');
                 }
             });
     }
