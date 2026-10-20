@@ -13,7 +13,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, concatMap, from, takeUntil, tap } from 'rxjs';
+import { TAMANO_LOTE_ENVIO, combinarResultados, dividirEnLotes } from './envio-masivo-lotes.utils';
 import { environment } from 'environments/environment';
 import { EventosService, EventoEdicion, Asistente } from '../eventos.service';
 import {
@@ -110,6 +111,8 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     formularioParaEnvio: FormularioRegistroAdminDto | null = null;
     cargandoDestinatariosEnvio = false;
     destinatariosParaEnvio: any[] = [];
+    /** Registrados en el módulo que no se muestran para el envío porque no asistieron al evento. */
+    noAsistieronEnvio = 0;
     destinatariosSeleccionadosIds: Set<string | number> = new Set();
     busquedaDestinatariosEnvio = '';
     asuntoEnvio = '';
@@ -2835,7 +2838,10 @@ PARTICIPACIÓN FUTURA
                 .pipe(takeUntil(this._destroy$))
                 .subscribe({
                     next: (list) => {
-                        this.destinatariosParaEnvio = (list || []).map(a => ({
+                        // Solo se envía a quien asistió al evento (asistencia registrada en el check-in)
+                        const asistieron = (list || []).filter(a => Number(a.asistio) === 1 || a.asistio === true);
+                        this.noAsistieronEnvio = (list || []).length - asistieron.length;
+                        this.destinatariosParaEnvio = asistieron.map(a => ({
                             id: a.id,
                             asistenteId: a.id,
                             nombre: `${a.nombre || ''} ${a.apellidos || ''}`.trim(),
@@ -2863,9 +2869,13 @@ PARTICIPACIÓN FUTURA
                         const delEvento = (staff || []).filter(p =>
                             !p.eventoIds || p.eventoIds.length === 0 || p.eventoIds.some(id => Number(id) === evId)
                         );
+                        // Solo se envía a quien asistió a este evento
+                        const asistieronEvento = delEvento.filter((p: any) =>
+                            (p.eventosAsistencia || []).some((x: any) => Number(x.eventoId) === evId && (Number(x.asistio) === 1 || x.asistio === true)));
+                        this.noAsistieronEnvio = delEvento.length - asistieronEvento.length;
                         const filtrados = modulo === 'Expositores'
-                            ? delEvento.filter(p => p.tipoPersonal === 'Expositor')
-                            : delEvento.filter(p => p.tipoPersonal !== 'Expositor');
+                            ? asistieronEvento.filter(p => p.tipoPersonal === 'Expositor')
+                            : asistieronEvento.filter(p => p.tipoPersonal !== 'Expositor');
 
                         this.destinatariosParaEnvio = filtrados.map(p => ({
                             id: p.id,
@@ -2888,30 +2898,10 @@ PARTICIPACIÓN FUTURA
                     }
                 });
         } else if (modulo === 'PersonalInterno') {
-            this._usersService.getUsers()
-                .pipe(takeUntil(this._destroy$))
-                .subscribe({
-                    next: (users) => {
-                        this.destinatariosParaEnvio = (users || []).map(u => ({
-                            id: u.usuarioId || u.id,
-                            usuarioId: u.usuarioId || u.id,
-                            nombre: u.nombreUsuario || `${u.nombre || ''} ${u.apellidos || ''}`.trim(),
-                            correo: u.email || u.correo,
-                            telefono: u.telefono,
-                            rol: u.nombreRol || 'Colaborador JR',
-                            organizacion: 'JR Ingeniería Eléctrica',
-                            tipo: 'Personal Interno',
-                            avatar: u.avatar || null
-                        }));
-                        this.seleccionarTodos();
-                        this.cargandoDestinatariosEnvio = false;
-                        this._cdr.markForCheck();
-                    },
-                    error: () => {
-                        this.cargandoDestinatariosEnvio = false;
-                        this._cdr.markForCheck();
-                    }
-                });
+            // El personal interno no tiene registro de asistencia al evento: no recibe el envío
+            this.destinatariosParaEnvio = [];
+            this.noAsistieronEnvio = 0;
+            this.cargandoDestinatariosEnvio = false;
         }
         this._cdr.markForCheck();
     }
@@ -3125,45 +3115,77 @@ PARTICIPACIÓN FUTURA
             }))
         };
 
+        // Se envía por lotes: una sola petición con cientos de destinatarios tarda más que el límite del servidor o del
+        // navegador, y al cortarse la respuesta el usuario reintenta y los correos ya enviados se repiten.
+        const lotes = dividirEnLotes(dto.destinatarios, TAMANO_LOTE_ENVIO);
+        const parciales: EnvioMasivoResultadoDto[] = [];
         this.enviandoMasivo = true;
         this.resultadoEnvio = null;
+        this.progresoEnvio = { lote: 0, totalLotes: lotes.length, enviados: 0, total: dto.destinatarios.length };
         this._cdr.markForCheck();
 
-        this._formService.enviarMasivo(formId, dto)
-            .pipe(takeUntil(this._destroy$))
-            .subscribe({
-                next: (res) => {
-                    this.enviandoMasivo = false;
-                    this.resultadoEnvio = res;
-                    const waExitosos = res.whatsappExitosos || 0;
-                    const conProblemas = this.totalConProblemasEnvio;
-                    this.mostrarAlerta(
-                        `¡Envío finalizado! ${res.enviadosExitosos} correos y ${waExitosos} mensajes de WhatsApp enviados` +
-                        (conProblemas > 0 ? `. ${conProblemas} destinatario(s) con problemas: revisa el detalle.` : '.')
-                    );
-
-                    // El resumen está arriba de la lista y el usuario suele estar abajo: se le lleva a verlo
-                    setTimeout(() => document.getElementById('resultadoEnvioMasivo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-
-                    // Actualizar mapa de historial en tiempo real
-                    this._formService.getHistorialEnvios(formId)
-                        .pipe(takeUntil(this._destroy$))
-                        .subscribe(hist => {
-                            (hist || []).forEach(h => {
-                                if (h.emailDestinatario) this.historialEnviosMap.set(h.emailDestinatario.toLowerCase(), h);
-                            });
-                            this._cdr.markForCheck();
-                        });
-
-                    this._cdr.markForCheck();
-                },
-                error: (err) => {
-                    this.enviandoMasivo = false;
-                    this.mostrarAlerta(this._mensajeErrorEnvio(err));
-                    this._cdr.markForCheck();
-                }
-            });
+        from(lotes).pipe(
+            concatMap((lote, i) => {
+                this.progresoEnvio = { ...this.progresoEnvio!, lote: i + 1 };
+                this._cdr.markForCheck();
+                return this._formService.enviarMasivo(formId, { ...dto, destinatarios: lote }).pipe(
+                    tap(r => {
+                        parciales.push(r);
+                        this.progresoEnvio = { ...this.progresoEnvio!, enviados: this.progresoEnvio!.enviados + lote.length };
+                        this._cdr.markForCheck();
+                    })
+                );
+            }),
+            takeUntil(this._destroy$)
+        ).subscribe({
+            complete: () => this._finalizarEnvioMasivo(formId, combinarResultados(parciales), null),
+            error: (err) => this._finalizarEnvioMasivo(formId, combinarResultados(parciales), err)
+        });
     }
+
+    /** Muestra el resultado de todos los lotes. Si un lote falló, deja claro lo que sí se envió y lo que faltó. */
+    private _finalizarEnvioMasivo(formId: number, res: EnvioMasivoResultadoDto, err: any): void {
+        const totalEnvio = this.progresoEnvio?.total ?? 0;
+        this.enviandoMasivo = false;
+        this.progresoEnvio = null;
+        this.resultadoEnvio = res;
+
+        if (err) {
+            const faltan = Math.max(0, totalEnvio - res.totalProcesados);
+            this.mostrarAlerta(
+                `El envío se detuvo: ${res.totalProcesados} destinatario(s) ya fueron procesados` +
+                (faltan ? `, faltan ${faltan} sin enviar` : '') +
+                `. ${this._mensajeErrorEnvio(err)} Revisa el resumen y reenvía solo a quienes no se notificaron.`
+            );
+        } else {
+            const waExitosos = res.whatsappExitosos || 0;
+            const conProblemas = this.totalConProblemasEnvio;
+            const omitidos = res.omitidos || 0;
+            this.mostrarAlerta(
+                `¡Envío finalizado! ${res.enviadosExitosos} correos y ${waExitosos} mensajes de WhatsApp enviados` +
+                (omitidos > 0 ? `. ${omitidos} omitido(s) por no asistir al evento` : '') +
+                (conProblemas > 0 ? `. ${conProblemas} destinatario(s) con problemas: revisa el detalle.` : '.')
+            );
+        }
+
+        // El resumen está arriba de la lista y el usuario suele estar abajo: se le lleva a verlo
+        setTimeout(() => document.getElementById('resultadoEnvioMasivo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+
+        // Actualizar mapa de historial en tiempo real
+        this._formService.getHistorialEnvios(formId)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe(hist => {
+                (hist || []).forEach(h => {
+                    if (h.emailDestinatario) this.historialEnviosMap.set(h.emailDestinatario.toLowerCase(), h);
+                });
+                this._cdr.markForCheck();
+            });
+
+        this._cdr.markForCheck();
+    }
+
+    /** Avance del envío por lotes (null si no hay envío en curso). */
+    progresoEnvio: { lote: number; totalLotes: number; enviados: number; total: number } | null = null;
 
     /**
      * Destinatarios a los que no se pudo notificar. Con el API anterior (sin `fallos`) se cae al conteo de correos fallidos.

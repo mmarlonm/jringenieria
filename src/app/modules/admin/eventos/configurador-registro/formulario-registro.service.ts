@@ -243,6 +243,8 @@ export interface EnvioMasivoResultadoDto {
     fallidos: number;
     /** WhatsApps que se intentaron y fallaron (el API anterior no lo enviaba) */
     whatsappFallidos?: number;
+    /** Destinatarios que no se enviaron porque no asistieron al evento */
+    omitidos?: number;
     detalleErrores: string[];
     /** Detalle por destinatario (el API anterior no lo enviaba) */
     fallos?: EnvioMasivoFalloDto[];
