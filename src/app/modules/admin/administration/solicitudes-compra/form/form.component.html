@@ -534,6 +534,24 @@
                                         </button>
                                     </div>
 
+                                    <!-- Filtros del buscador: régimen fiscal y uso de CFDI (se llenan con la última búsqueda) -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-3">
+                                        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar por régimen fiscal</mat-label>
+                                            <mat-select [value]="filtroRegimenFila[i] ?? null" (selectionChange)="filtroRegimenFila[i] = $event.value">
+                                                <mat-option [value]="null">Todos</mat-option>
+                                                <mat-option *ngFor="let r of opcionesRegimenFila(i)" [value]="r">{{ r }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                            <mat-label>Filtrar por uso de CFDI</mat-label>
+                                            <mat-select [value]="filtroUsoFila[i] ?? null" (selectionChange)="filtroUsoFila[i] = $event.value">
+                                                <mat-option [value]="null">Todos</mat-option>
+                                                <mat-option *ngFor="let u of opcionesUsoFila(i)" [value]="u">{{ u }}</mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+
                                     <!-- Supplier Basic Info -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
                                         <mat-form-field appearance="fill" class="w-full">
@@ -541,10 +559,11 @@
                                             <input matInput formControlName="razonSocial" [matAutocomplete]="autoProvRow" placeholder="Escribe para buscar proveedor...">
                                             <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
                                             <mat-autocomplete #autoProvRow="matAutocomplete" (optionSelected)="onProveedorSelectedForRow($event, i)">
-                                                <mat-option *ngFor="let prov of (filteredProveedoresRows$[i] | async)" [value]="prov">
+                                                <mat-option *ngFor="let prov of proveedoresVisibles(i, (filteredProveedoresRows$[i] | async))" [value]="prov">
                                                     <div class="flex flex-col leading-tight py-1">
                                                         <span class="font-bold text-primary">{{ prov.nombre }}</span>
                                                         <span class="text-[10px] text-secondary uppercase tabular-nums">RFC: {{ prov.rfc }}</span>
+                                                        <span *ngIf="prov.regimenFiscal" class="text-[10px] text-secondary">{{ prov.regimenFiscal }} · CFDI {{ prov.usoCfdi || '—' }}</span>
                                                     </div>
                                                 </mat-option>
                                             </mat-autocomplete>
@@ -911,7 +930,25 @@
                                 <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('subtotal').value | currency:solicitudForm.get('moneda').value }}</span>
                             </div>
 
-                            <!-- IVA (Only if items exist) -->
+                            <!-- Descuento -->
+                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold mt-2">
+                                <span>Descuento</span>
+                                <div class="w-24">
+                                    <input type="number" formControlName="descuento"
+                                        class="w-full p-1 bg-transparent border-b border-gray-300 dark:border-gray-600 outline-none text-right font-bold text-sm text-gray-900 dark:text-gray-100 focus:border-primary transition-colors"
+                                        placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div *ngIf="detalles.length > 0" class="w-full h-px bg-gray-200 dark:bg-gray-700 mt-2"></div>
+
+            <!-- Subtotal con descuento (base del IVA) -->
+            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
+                <span>Subtotal con descuento</span>
+                <span class="text-sm text-gray-900 dark:text-gray-100">{{ subtotalConDescuento | currency:solicitudForm.get('moneda').value }}</span>
+            </div>
+
+<!-- IVA (Only if items exist) -->
                             <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold">
                                 <span>IVA (16%)</span>
                                 <span class="text-sm text-gray-900 dark:text-gray-100">{{ solicitudForm.get('iva').value | currency:solicitudForm.get('moneda').value }}</span>
@@ -927,18 +964,6 @@
                                 </div>
                             </div>
 
-                            <!-- Descuento -->
-                            <div *ngIf="detalles.length > 0" class="flex justify-between items-center text-xs text-secondary uppercase tracking-wider font-bold mt-2">
-                                <span>Descuento</span>
-                                <div class="w-24">
-                                    <input type="number" formControlName="descuento"
-                                        class="w-full p-1 bg-transparent border-b border-gray-300 dark:border-gray-600 outline-none text-right font-bold text-sm text-gray-900 dark:text-gray-100 focus:border-primary transition-colors"
-                                        placeholder="0.00">
-                                </div>
-                            </div>
-
-                            <div *ngIf="detalles.length > 0" class="w-full h-px bg-gray-200 dark:bg-gray-700 mt-2"></div>
-                            
                             <!-- Total -->
                             <div class="flex flex-col pt-1">
                                 <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 ml-1">

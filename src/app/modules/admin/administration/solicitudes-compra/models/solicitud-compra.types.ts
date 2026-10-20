@@ -72,6 +72,8 @@ export interface SolicitudCompraProveedor {
     banco?: string;
     cuenta?: string;
     clabe?: string;
+    regimenFiscal?: string;
+    usoCfdi?: string;
     esSeleccionado: boolean;
     comentarios?: string;
 }
@@ -163,6 +165,8 @@ export interface ProveedorDto {
     banco?: string;
     cuenta?: string;
     clabe?: string;
+    regimenFiscal?: string;
+    usoCfdi?: string;
 }
 
 export interface ContpaqiMaterialDto {
