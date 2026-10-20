@@ -132,4 +132,15 @@ export interface AsistenciaReporteDto {
   horasExtra?: number;
   horasExtraSemana?: number;
   semaforoHorasExtra?: 'VERDE' | 'AMARILLO' | 'ROJO';
+  // El día sigue siendo una sola fila aunque haya entrado y salido varias veces: aquí va cada marcaje, en el orden en que se hizo
+  horasFuera?: number;
+  marcajes?: MarcajeAsistenciaDto[];
+}
+
+export interface MarcajeAsistenciaDto {
+  tipo: 'ENTRADA' | 'SALIDA';
+  hora: string; // "HH:mm:ss"
+  ubicacion?: string;
+  latitud?: number;
+  longitud?: number;
 }

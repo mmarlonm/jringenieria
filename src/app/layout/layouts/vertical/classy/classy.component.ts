@@ -157,6 +157,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     asistenciaStatus: 'ENTRADA' | 'SALIDA' | 'NINGUNO' = 'NINGUNO';
     ubicacionNombre: string = 'Detectando...';
     currentCoords: { lat: number, lon: number, lng?: number, ubicacionNombre?: string } | null = null;
+    marcando = false; // un marcaje en camino: evita que un doble clic mande dos
     private ubicacionEn = 0; // cuándo se obtuvieron currentCoords (ms); pasados 2 min se vuelven a pedir al GPS
     locationPermission: 'pending' | 'granted' | 'denied' | 'unavailable' = 'pending';
     constructor(
@@ -780,6 +781,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
      * Parámetros: tipo ('ENTRADA' | 'SALIDA')
      */
     ejecutarMarcaje(tipo: 'ENTRADA' | 'SALIDA'): void {
+        if (this.marcando) return;
 
         // 0. Si ya tenemos coordenadas recientes, usarlas directamente
         if (this.currentCoords && this.locationPermission === 'granted') {
@@ -839,12 +841,22 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             ubicacionNombre: coords.ubicacionNombre || 'Ubicación detectada por GPS'
         };
 
+        this.marcando = true;
         this._personalManagementService.registrarAsistencia(payload).subscribe({
             next: (res) => {
+                this.marcando = false;
+                // El API responde 200 con success=false cuando el marcaje no procede (p. ej. una segunda entrada seguida): se avisa
+                // y el botón vuelve a reflejar el estado real del día en lugar de quedarse con uno equivocado.
+                if (res?.success === false) {
+                    this._chatNotificationService.showWarning('No se registró el marcaje', res.message || 'Intenta de nuevo.', 6000);
+                    this.checkDailyStatus();
+                    return;
+                }
                 this.asistenciaStatus = tipo === 'ENTRADA' ? 'ENTRADA' : 'NINGUNO';
                 console.log('Asistencia registrada correctamente');
             },
             error: (err) => {
+                this.marcando = false;
                 console.error('Error en el servidor al registrar asistencia', err);
             }
         });

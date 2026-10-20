@@ -17,6 +17,7 @@ import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos
 
 import { PersonalManagementService, AsistenciaReporteDto } from '../../../personal-management/personal-management.service';
 import { CorregirAsistenciaDialogComponent } from '../corregir-asistencia-dialog/corregir-asistencia-dialog.component';
+import { HistorialMarcajesDialogComponent } from '../historial-marcajes-dialog/historial-marcajes-dialog.component';
 
 const PERMISO_CORREGIR = 'rrhh.asistencias.corregir';
 
@@ -49,6 +50,7 @@ export class ReportEntradaSalidaDashboardComponent implements OnInit {
     private readonly _columnasBase: string[] = [
         'fecha',
         'nombreUsuario',
+        'marcajes',
         'horaEntrada',
         'ubicacionEntrada',
         'horaSalida',
@@ -130,6 +132,11 @@ export class ReportEntradaSalidaDashboardComponent implements OnInit {
             .afterClosed().subscribe((guardado) => {
                 if (guardado) this.consultar();
             });
+    }
+
+    /** Historial de entradas y salidas del día (una persona puede marcar varias veces; la tabla sigue teniendo una fila por día). */
+    verHistorial(fila: AsistenciaReporteDto): void {
+        this._dialog.open(HistorialMarcajesDialogComponent, { width: '480px', maxWidth: '95vw', data: fila });
     }
 
     /** El API manda las horas como "09:00:00"; se muestran como HH:mm. */

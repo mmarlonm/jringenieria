@@ -1,0 +1,80 @@
+<h2 mat-dialog-title>Historial de marcajes</h2>
+
+<mat-dialog-content class="!max-h-[70vh]">
+    <p class="text-secondary mb-4">
+        <b>{{ asistencia.nombreUsuario }}</b> · {{ asistencia.fecha | date: 'dd/MM/yyyy' }}
+    </p>
+
+    @if (marcajes.length === 0) {
+        <p class="text-secondary italic py-4">Este día no tiene marcajes registrados.</p>
+    } @else {
+        <div class="flex flex-col">
+            @for (m of marcajes; track $index; let i = $index; let last = $last) {
+                @if (fuera(i); as tiempoFuera) {
+                    <div class="flex items-center my-2 pl-10">
+                        <span class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            Fuera {{ tiempoFuera }}
+                        </span>
+                    </div>
+                }
+
+                <div class="flex items-start gap-3 relative">
+                    @if (!last) {
+                        <div class="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -ml-[1px]"></div>
+                    }
+
+                    <div
+                        class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10"
+                        [ngClass]="m.tipo === 'ENTRADA' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'"
+                    >
+                        <mat-icon
+                            class="icon-size-4"
+                            [svgIcon]="m.tipo === 'ENTRADA' ? 'heroicons_outline:arrow-right-on-rectangle' : 'heroicons_outline:arrow-left-on-rectangle'"
+                        ></mat-icon>
+                    </div>
+
+                    <div class="flex flex-col pb-4">
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold text-sm">
+                                {{ m.tipo === 'ENTRADA' ? 'Entrada' : 'Salida' }}
+                            </span>
+                            <span class="font-mono text-sm text-secondary">
+                                {{ hora(m.hora) }}
+                            </span>
+                        </div>
+                        <div class="text-xs text-secondary mt-0.5">
+                            @if (m.ubicacion) {
+                                <span>{{ m.ubicacion }}</span>
+                            } @else {
+                                <span class="italic">Sin ubicación</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="border-t mt-4 pt-4 flex flex-wrap items-center justify-between gap-4 text-sm">
+        <div>
+            <span class="text-secondary block text-xs">Marcajes</span>
+            <span class="font-semibold">{{ marcajes.length }}</span>
+        </div>
+        <div>
+            <span class="text-secondary block text-xs">Tiempo fuera</span>
+            <span class="font-semibold">
+                {{ asistencia.horasFuera ? (asistencia.horasFuera | number: '1.2-2') + ' h' : '—' }}
+            </span>
+        </div>
+        <div>
+            <span class="text-secondary block text-xs">Horas trabajadas</span>
+            <span class="font-semibold">
+                {{ asistencia.horasTrabajadas != null ? (asistencia.horasTrabajadas | number: '1.2-2') + ' h' : '—' }}
+            </span>
+        </div>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close type="button">Cerrar</button>
+</mat-dialog-actions>
