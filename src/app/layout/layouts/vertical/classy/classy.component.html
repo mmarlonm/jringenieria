@@ -142,12 +142,12 @@
 
                         @if (asistenciaStatus !== 'ENTRADA') {
                         <button mat-flat-button color="primary"
-                            class="w-full h-12 rounded-xl text-md font-bold shadow-sm"
+                            class="w-full h-12 rounded-xl text-md font-bold shadow-sm" [disabled]="marcando"
                             (click)="ejecutarMarcaje('ENTRADA')">
                             CONFIRMAR ENTRADA
                         </button>
                         } @else {
-                        <button mat-flat-button color="warn" class="w-full h-12 rounded-xl text-md font-bold shadow-sm"
+                        <button mat-flat-button color="warn" class="w-full h-12 rounded-xl text-md font-bold shadow-sm" [disabled]="marcando"
                             (click)="ejecutarMarcaje('SALIDA')">
                             CONFIRMAR SALIDA
                         </button>
