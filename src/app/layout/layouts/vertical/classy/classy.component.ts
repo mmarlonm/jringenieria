@@ -156,7 +156,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
     asistenciaStatus: 'ENTRADA' | 'SALIDA' | 'NINGUNO' = 'NINGUNO';
     ubicacionNombre: string = 'Detectando...';
-    currentCoords: { lat: number, lon: number, lng?: number } | null = null;
+    currentCoords: { lat: number, lon: number, lng?: number, ubicacionNombre?: string } | null = null;
+    private ubicacionEn = 0; // cuándo se obtuvieron currentCoords (ms); pasados 2 min se vuelven a pedir al GPS
     locationPermission: 'pending' | 'granted' | 'denied' | 'unavailable' = 'pending';
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -658,41 +659,36 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
             return;
         }
 
-        navigator.permissions.query({ name: 'geolocation' as PermissionName })
-            .then(permissionStatus => {
+        this.estadoPermisoUbicacion().then(estado => this._ngZone.run(() => {
 
-                console.log('Estado actual permiso:', permissionStatus.state);
+            if (estado === 'denied') {
+                this.locationPermission = 'denied';
+                this.ubicacionNombre = 'Permiso bloqueado en navegador';
+                this._chatNotificationService.showError(
+                    'Permiso bloqueado',
+                    'Debes habilitar la ubicación manualmente en configuración del navegador.',
+                    6000
+                );
+                return;
+            }
 
-                if (permissionStatus.state === 'granted') {
+            // Ya concedido y con una ubicación reciente: no hay nada que pedir. Si no, se lee el GPS (sin diálogo si ya se concedió).
+            if (estado === 'granted' && this.currentCoords && Date.now() - this.ubicacionEn < 2 * 60 * 1000) {
+                this.locationPermission = 'granted';
+                return;
+            }
 
-                    // Si ya está concedido pero no tenemos coords
-                    if (!this.currentCoords) {
-                        this.obtenerUbicacion();
-                    } else {
-                        this.locationPermission = 'granted';
-                    }
+            this.obtenerUbicacion();
+        }));
+    }
 
-                    return;
-                }
-
-                if (permissionStatus.state === 'prompt') {
-                    // 🔥 Aquí el navegador mostrará el popup
-                    this.obtenerUbicacion();
-                    return;
-                }
-
-                if (permissionStatus.state === 'denied') {
-                    this.locationPermission = 'denied';
-                    this.ubicacionNombre = 'Permiso bloqueado en navegador';
-                    this._chatNotificationService.showError(
-                        'Permiso bloqueado',
-                        'Debes habilitar la ubicación manualmente en configuración del navegador.',
-                        6000
-                    );
-
-                    return;
-                }
-            });
+    /** Estado real del permiso de ubicación en el navegador; sin Permissions API se recuerda si ya se concedió en este equipo. */
+    private async estadoPermisoUbicacion(): Promise<PermissionState> {
+        try {
+            return (await navigator.permissions.query({ name: 'geolocation' as PermissionName })).state;
+        } catch {
+            return localStorage.getItem('jr.ubicacionConcedida') === '1' ? 'granted' : 'prompt';
+        }
     }
 
 
@@ -722,11 +718,14 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
 
                 this._ngZone.run(() => {
                     this.locationPermission = 'granted';
-                    this.currentCoords = {
+                    try { localStorage.setItem('jr.ubicacionConcedida', '1'); } catch { /* sin almacenamiento: se vuelve a consultar el permiso */ }
+                    const coords: { lat: number; lon: number; lng: number; ubicacionNombre?: string } = {
                         lat: position.coords.latitude,
                         lon: position.coords.longitude,
                         lng: position.coords.longitude
                     };
+                    this.currentCoords = coords;
+                    this.ubicacionEn = Date.now();
 
                     this.ubicacionNombre =
                         `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
@@ -735,12 +734,13 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=16&addressdetails=1`)
                         .then(res => res.json())
                         .then(data => {
-                            if (data && data.display_name) {
+                            // si mientras tanto se pidió otra ubicación, esta dirección ya no corresponde
+                            if (data && data.display_name && this.currentCoords === coords) {
                                 this._ngZone.run(() => {
                                     // Tomar las primeras partes de la dirección para no hacerlo tan largo
                                     const partes = data.display_name.split(',');
                                     this.ubicacionNombre = partes.slice(0, 3).join(',').trim();
-                                    this.currentCoords['ubicacionNombre'] = this.ubicacionNombre;
+                                    coords.ubicacionNombre = this.ubicacionNombre;
                                 });
                             }
                         }).catch(e => console.log('Error reverse geocoding', e));
@@ -755,6 +755,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                         case error.PERMISSION_DENIED:
                             this.locationPermission = 'denied';
                             this.ubicacionNombre = 'Permiso denegado';
+                            try { localStorage.removeItem('jr.ubicacionConcedida'); } catch { /* sin almacenamiento */ }
                             break;
 
                         case error.TIMEOUT:
@@ -784,7 +785,8 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
         if (this.currentCoords && this.locationPermission === 'granted') {
             const coords = {
                 lat: this.currentCoords.lat,
-                lng: this.currentCoords['lng'] || this.currentCoords.lon
+                lng: this.currentCoords.lng || this.currentCoords.lon,
+                ubicacionNombre: this.currentCoords.ubicacionNombre // la dirección que se mostró en el diálogo; sin ella el servidor la calcula por su cuenta
             };
             this._enviarAlServicio(tipo, coords);
             return;
@@ -866,9 +868,13 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
     }
 
     abrirMenuYSolicitarPermiso(event: MouseEvent): void {
-        if (this.locationPermission === 'granted') {
-            this.solicitarPermisosUbicacion();
-        } else {
+        this.estadoPermisoUbicacion().then(estado => this._ngZone.run(() => {
+            // Concedido (o bloqueado, donde solo se avisa): no se vuelve a pedir ni a explicar
+            if (estado !== 'prompt') {
+                this.solicitarPermisosUbicacion();
+                return;
+            }
+
             Swal.fire({
                 title: '📍 Permiso de Ubicación',
                 text: 'Para registrar tu asistencia en los proyectos, necesitamos acceder a tu ubicación GPS. Esto garantiza la validez del marcaje de tiempo. ¿Deseas continuar?',
@@ -886,7 +892,7 @@ export class ClassyLayoutComponent implements OnInit, OnDestroy {
                     this.ubicacionNombre = 'Permiso cancelado por el usuario';
                 }
             });
-        }
+        }));
     }
 
 }
