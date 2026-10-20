@@ -168,6 +168,7 @@ export const appRoutes: Route[] = [
                     { path: 'actividades', loadComponent: () => import('app/modules/admin/eventos/actividades/actividades.component').then(m => m.ActividadesComponent) },
                     { path: 'gestion-eventos', loadComponent: () => import('app/modules/admin/eventos/gestion-eventos/gestion-eventos.component').then(m => m.GestionEventosComponent) },
                     { path: 'reportes', loadComponent: () => import('app/modules/admin/eventos/reportes/reportes.component').then(m => m.EventosReportesComponent) },
+                    { path: 'respuestas-formularios', loadComponent: () => import('app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.component').then(m => m.ReporteRespuestasComponent) },
                     { path: 'encuestas-dashboard', loadComponent: () => import('app/modules/admin/eventos/encuestas/dashboard-encuestas.component').then(m => m.DashboardEncuestasComponent) },
                     { path: 'configurador-registro', loadComponent: () => import('app/modules/admin/eventos/configurador-registro/configurador-registro.component').then(m => m.ConfiguradorRegistroComponent) }
                 ]

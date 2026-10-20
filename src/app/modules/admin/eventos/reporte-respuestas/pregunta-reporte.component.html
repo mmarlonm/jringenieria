@@ -1,0 +1,95 @@
+<div class="bg-white rounded-3xl shadow-xl shadow-gray-200/40 p-6 border border-gray-50 break-inside-avoid">
+
+  <div class="flex items-start justify-between mb-6">
+    <h3 class="text-base font-bold text-gray-800 leading-tight pr-4">{{ pregunta.etiqueta }}</h3>
+    <span class="flex-shrink-0 text-[10px] font-black uppercase tracking-[0.25em] text-indigo-600 bg-indigo-50 rounded-full px-3 py-1">
+      n = {{ pregunta.base }}
+    </span>
+  </div>
+
+  <div *ngIf="pregunta.base === 0" class="py-12 flex flex-col items-center justify-center text-gray-400">
+    <mat-icon class="icon-size-8 mb-2 opacity-20">inbox</mat-icon>
+    <p class="text-sm font-medium">Sin respuestas todavía</p>
+  </div>
+
+  <div *ngIf="pregunta.base > 0">
+
+    <!-- Numérica: mínimo, promedio, mediana y máximo sobre el histograma -->
+    <div *ngIf="pregunta.tipo === 'numero' && pregunta.numerico" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+      <div class="bg-gray-50 rounded-2xl p-3">
+        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mínimo</p>
+        <p class="text-xl font-black text-gray-800">{{ pregunta.numerico.minimo | number:'1.0-2' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded-2xl p-3">
+        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Promedio</p>
+        <p class="text-xl font-black text-gray-800">{{ pregunta.numerico.promedio | number:'1.0-2' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded-2xl p-3">
+        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mediana</p>
+        <p class="text-xl font-black text-gray-800">{{ pregunta.numerico.mediana | number:'1.0-2' }}</p>
+      </div>
+      <div class="bg-gray-50 rounded-2xl p-3">
+        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Máximo</p>
+        <p class="text-xl font-black text-gray-800">{{ pregunta.numerico.maximo | number:'1.0-2' }}</p>
+      </div>
+    </div>
+
+    <!-- Opción, múltiple, matriz y numérica comparten el contenedor de la gráfica -->
+    <div *ngIf="opcionesPrincipal" class="w-full" [style.height.px]="altoPrincipal">
+      <highcharts-chart [Highcharts]="Highcharts" [options]="opcionesPrincipal" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+    </div>
+
+    <p *ngIf="pregunta.tipo === 'multiple'" class="mt-2 text-[11px] text-gray-400 italic">
+      % de las personas que contestaron; cada una puede elegir varias opciones.
+    </p>
+
+    <ng-container *ngIf="pregunta.tipo === 'matriz'">
+      <div *ngIf="opcionesPromedios" class="mt-8">
+        <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500 mb-4">Promedio por aspecto</h4>
+        <div class="w-full" [style.height.px]="altoPromedios">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="opcionesPromedios" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+        </div>
+      </div>
+
+      <div *ngIf="filasConTopDos.length > 0" class="mt-8 pt-6 border-t border-gray-100">
+        <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500 mb-4">% en las dos notas más altas</h4>
+        <div class="space-y-3">
+          <div *ngFor="let fila of filasConTopDos; trackBy: trackByIndex" class="flex items-center justify-between text-sm">
+            <span class="text-gray-600">{{ fila.texto }}</span>
+            <span class="font-bold text-emerald-600">{{ fila.topDos | number:'1.0-1' }}%</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="pregunta.tipo === 'abierta'">
+      <input
+        type="search"
+        [(ngModel)]="busqueda"
+        placeholder="Buscar en las respuestas…"
+        aria-label="Buscar en las respuestas abiertas"
+        class="w-full mb-4 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
+
+      <p class="mb-3 px-1 text-[11px] font-bold text-gray-500 uppercase tracking-tight">
+        Mostrando {{ abiertasFiltradas().length }} de {{ pregunta.base }}
+        <span *ngIf="pregunta.base > (pregunta.abiertas?.length ?? 0) && !busqueda" class="font-normal normal-case text-gray-400">(se listan las más recientes)</span>
+      </p>
+
+      <div class="max-h-72 overflow-auto space-y-2 pr-1">
+        <div *ngFor="let a of abiertasFiltradas(); trackBy: trackByIndex" class="bg-gray-50 rounded-xl p-3">
+          <p class="text-[10px] font-medium text-gray-400 mb-1">{{ a.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+          <p class="text-sm text-gray-700 whitespace-pre-line break-words leading-relaxed">{{ a.texto }}</p>
+        </div>
+        <p *ngIf="abiertasFiltradas().length === 0" class="py-8 text-center text-sm text-gray-400 italic">Ninguna respuesta coincide</p>
+      </div>
+    </ng-container>
+
+    <div *ngIf="pregunta.tipo === 'solo-conteo'" class="py-10 text-center">
+      <p class="text-lg font-bold text-gray-800">
+        {{ pregunta.base }} {{ pregunta.base === 1 ? 'persona contestó' : 'personas contestaron' }}
+      </p>
+      <p class="text-xs text-gray-400 mt-1">Por privacidad no se muestra el contenido</p>
+    </div>
+
+  </div>
+</div>

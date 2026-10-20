@@ -1,0 +1,240 @@
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-8 font-sans">
+
+  <!-- Header Section -->
+  <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+    <div class="flex flex-col">
+      <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-blue-600" [svgIcon]="'heroicons_outline:chart-bar'"></mat-icon>
+        Respuestas de Formularios
+      </h1>
+      <p class="text-secondary text-xs font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-70">
+        Análisis de formularios configurados
+      </p>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="w-full grid grid-cols-1 md:grid-cols-4 gap-4 px-2 items-center">
+    <!-- Selector de Formulario -->
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+      <mat-label>Formulario</mat-label>
+      <mat-select [(ngModel)]="formularioId" (selectionChange)="cargarReporte()" [disabled]="cargando">
+        <mat-optgroup *ngFor="let g of formulariosPorEvento" [label]="g.evento">
+          <mat-option *ngFor="let f of g.formularios" [value]="f.id">
+            {{ f.titulo }} · {{ f.totalRespuestas }}
+          </mat-option>
+        </mat-optgroup>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Fecha Inicio -->
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+      <mat-label>Fecha inicio</mat-label>
+      <input matInput type="date" [(ngModel)]="desde" (change)="cargarReporte()" [disabled]="!formularioId || cargando">
+    </mat-form-field>
+
+    <!-- Fecha Fin -->
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+      <mat-label>Fecha fin</mat-label>
+      <input matInput type="date" [(ngModel)]="hasta" (change)="cargarReporte()" [disabled]="!formularioId || cargando">
+    </mat-form-field>
+
+    <!-- Botón Limpiar Fechas -->
+    <div class="flex items-center">
+      <button *ngIf="hayFiltroDeFechas" mat-button class="text-blue-600 font-bold hover:bg-blue-50 rounded-xl"
+              (click)="limpiarFechas()" [disabled]="cargando">
+        <mat-icon class="mr-1">clear</mat-icon>
+        Limpiar fechas
+      </button>
+    </div>
+  </div>
+
+  <!-- Error de carga inicial de formularios -->
+  <div *ngIf="errorFormularios" class="px-2">
+    <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <mat-icon class="text-rose-600">error_outline</mat-icon>
+        <span class="text-sm font-semibold text-rose-800">{{ errorFormularios }}</span>
+      </div>
+      <button mat-flat-button color="warn" class="rounded-xl font-bold" (click)="cargarFormularios()">
+        Reintentar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado 1: Sin formulario elegido -->
+  <div *ngIf="!formularioId && !cargando && !error && !cargandoFormularios"
+       class="w-full py-24 flex flex-col items-center justify-center text-center px-2">
+    <div class="max-w-md flex flex-col items-center">
+      <div class="p-5 bg-indigo-50 text-indigo-600 rounded-3xl mb-4 shadow-sm border border-indigo-100">
+        <mat-icon class="icon-size-12" [svgIcon]="'heroicons_outline:presentation-chart-bar'"></mat-icon>
+      </div>
+      <h3 class="text-xl font-black text-gray-800 mb-2">Elige un formulario para ver sus respuestas</h3>
+      <p class="text-sm text-gray-500 font-medium">
+        Selecciona un formulario del catálogo para consultar el desglose por día, métricas clave y las respuestas por pregunta.
+      </p>
+    </div>
+  </div>
+
+  <!-- Estado 2: Cargando reporte -->
+  <div *ngIf="cargando" class="flex flex-col items-center justify-center py-32">
+    <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+    <p class="mt-6 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse">Generando Reportes…</p>
+  </div>
+
+  <!-- Estado 3: Error en el reporte -->
+  <div *ngIf="error && !cargando" class="px-2">
+    <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="p-3 bg-rose-100 text-rose-700 rounded-2xl">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div>
+          <h4 class="text-base font-black text-rose-900">No se pudo cargar el reporte</h4>
+          <p class="text-xs font-semibold text-rose-700 mt-0.5">{{ error }}</p>
+        </div>
+      </div>
+      <button mat-flat-button color="warn" class="rounded-xl font-bold px-6" (click)="reintentar()">
+        Reintentar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado 4: Reporte sin respuestas -->
+  <div *ngIf="reporte && !cargando && !error && reporte.resumen.totalRespuestas === 0"
+       class="w-full py-20 flex flex-col items-center justify-center text-center px-2">
+    <div class="max-w-md flex flex-col items-center">
+      <div class="p-4 bg-slate-100 text-slate-400 rounded-2xl mb-4 border border-gray-200">
+        <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:inbox'"></mat-icon>
+      </div>
+      <h4 class="text-lg font-black text-slate-800 mb-1">Este formulario aún no tiene respuestas</h4>
+      <p class="text-sm text-slate-500 mb-4" *ngIf="hayFiltroDeFechas">
+        No se encontraron registros en el rango de fechas elegido.
+      </p>
+      <button *ngIf="hayFiltroDeFechas" mat-stroked-button class="rounded-xl border-gray-300 font-bold text-xs"
+              (click)="limpiarFechas()">
+        Limpiar fechas
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenido con Reporte (Exportable a PDF) -->
+  <div *ngIf="reporte && !cargando && !error && reporte.resumen.totalRespuestas > 0"
+       class="space-y-8 px-2 animate-in fade-in slide-in-from-bottom-8 duration-700">
+
+    <!-- Título del Formulario y Evento -->
+    <div class="flex flex-col">
+      <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+        {{ reporte.titulo }}
+      </h2>
+      <p *ngIf="reporte.nombreEvento" class="text-xs font-bold text-indigo-600 uppercase tracking-widest mt-1">
+        {{ reporte.nombreEvento }}
+      </p>
+    </div>
+
+    <!-- 4 Tarjetas KPI -->
+    <div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <!-- Respuestas -->
+      <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-6 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-28 h-28 bg-blue-50/50 rounded-bl-full -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.25em] mb-3">Respuestas</p>
+          <p class="text-4xl font-black text-gray-800 tracking-tighter">{{ reporte.resumen.totalRespuestas }}</p>
+        </div>
+        <div class="mt-6 flex items-center text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">how_to_reg</mat-icon>
+          Total capturadas
+        </div>
+      </div>
+
+      <!-- Tasa de respuesta -->
+      <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-6 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-28 h-28 bg-emerald-50/50 rounded-bl-full -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.25em] mb-3">Tasa de respuesta</p>
+          <p class="text-4xl font-black text-gray-800 tracking-tighter">{{ tasaTexto }}</p>
+        </div>
+        <div class="mt-6 flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">send</mat-icon>
+          respondieron / enviados
+        </div>
+      </div>
+
+      <!-- Completitud promedio -->
+      <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-6 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-28 h-28 bg-amber-50/50 rounded-bl-full -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-amber-600 uppercase tracking-[0.25em] mb-3">Completitud promedio</p>
+          <p class="text-4xl font-black text-gray-800 tracking-tighter">{{ completitudTexto }}</p>
+        </div>
+        <div class="mt-6 flex items-center text-[10px] font-bold text-amber-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">check_circle</mat-icon>
+          Campos respondidos
+        </div>
+      </div>
+
+      <!-- Última respuesta -->
+      <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 p-6 border border-gray-50 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-28 h-28 bg-purple-50/50 rounded-bl-full -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+        <div class="flex flex-col relative z-10">
+          <p class="text-[10px] font-black text-purple-600 uppercase tracking-[0.25em] mb-3">Última respuesta</p>
+          <p class="text-lg font-black text-gray-800 tracking-tight leading-snug">
+            {{ ultimaRespuestaTexto }}
+          </p>
+        </div>
+        <div class="mt-6 flex items-center text-[10px] font-bold text-purple-600 uppercase tracking-widest">
+          <mat-icon class="icon-size-4 mr-2">schedule</mat-icon>
+          Hora de México
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Gráfica Respuestas por Día -->
+    <div *ngIf="opcionesPorDia" class="w-full">
+      <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col hover:shadow-xl transition-all">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-8">
+          <mat-icon class="mr-3 text-indigo-600 bg-indigo-50 p-2 rounded-2xl">show_chart</mat-icon>
+          Respuestas por día
+        </h2>
+        <div class="w-full h-[320px]">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="opcionesPorDia" style="width: 100%; height: 100%; display: block;"></highcharts-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aviso si totalPreguntas === 0 pero sí hay respuestas -->
+    <div *ngIf="totalPreguntas === 0" class="w-full py-12 flex flex-col items-center justify-center text-center">
+      <div class="p-3 bg-amber-50 text-amber-700 rounded-2xl mb-2 border border-amber-200">
+        <mat-icon>info</mat-icon>
+      </div>
+      <p class="text-sm font-bold text-gray-700">Este formulario no tiene preguntas que graficar</p>
+      <p class="text-xs text-gray-500">Solo se muestran los indicadores globales calculados.</p>
+    </div>
+
+    <!-- Secciones y Preguntas -->
+    <div *ngIf="totalPreguntas > 0" class="space-y-10">
+      <div *ngFor="let s of reporte.secciones" class="space-y-6">
+
+        <!-- Encabezado de Sección (si tiene título) -->
+        <div *ngIf="s.titulo" class="pt-4 border-t border-gray-200">
+          <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight flex items-center">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 mr-3"></span>
+            {{ s.titulo }}
+          </h3>
+        </div>
+
+        <!-- Cuadrícula de Preguntas -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+          <div *ngFor="let p of s.preguntas" [ngClass]="{ 'xl:col-span-2': p.tipo === 'matriz' }">
+            <eventos-pregunta-reporte [pregunta]="p"></eventos-pregunta-reporte>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
