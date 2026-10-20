@@ -9,9 +9,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
-import Exporting from 'highcharts/modules/exporting';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { Subject, of } from 'rxjs';
 import { catchError, map, switchMap, takeUntil } from 'rxjs/operators';
 import { ReporteRespuestasService } from './reporte-respuestas.service';
@@ -20,7 +17,6 @@ import { opcionesPorDia } from './reporte-respuestas.charts';
 import { FormularioRegistroService, FormularioRegistroAdminDto } from '../configurador-registro/formulario-registro.service';
 import { PreguntaReporteComponent } from './pregunta-reporte.component';
 
-Exporting(Highcharts);
 
 export interface GrupoFormularios {
   evento: string;
@@ -63,7 +59,6 @@ export class ReporteRespuestasComponent implements OnInit, OnDestroy {
   public cargandoFormularios: boolean = false;
   public error: string | null = null;
   public errorFormularios: string | null = null;
-  public exportando: boolean = false;
   public opcionesPorDia: Highcharts.Options | null = null;
 
   private _destroy$ = new Subject<void>();
@@ -214,75 +209,6 @@ export class ReporteRespuestasComponent implements OnInit, OnDestroy {
     // viene en hora de México sin zona: se lee y se muestra tal cual
     const d = new Date(f);
     return isNaN(d.getTime()) ? f : d.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
-  }
-
-  private slugificar(texto: string): string {
-    return (texto || 'formulario')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-
-  public async exportarPDF(): Promise<void> {
-    if (!this.reporte || this.cargando || this.exportando) {
-      return;
-    }
-
-    const elemento = document.getElementById('pdf-content');
-    if (!elemento) {
-      this.error = 'No se encontró el contenedor a exportar.';
-      this._cdr.markForCheck();
-      return;
-    }
-
-    this.exportando = true;
-    this._cdr.markForCheck();
-
-    try {
-      const canvas = await html2canvas(elemento, {
-        scale: 2,
-        useCORS: true,
-        scrollY: -window.scrollY
-      });
-
-      const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
-      const anchoPagina = pdf.internal.pageSize.getWidth();
-      const altoPagina = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = anchoPagina;
-      const imgHeight = (canvas.height * anchoPagina) / canvas.width;
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
-      let alturaRestante = imgHeight;
-      let posicionY = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, posicionY, imgWidth, imgHeight);
-      alturaRestante -= altoPagina;
-
-      while (alturaRestante > 0) {
-        posicionY -= altoPagina;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, posicionY, imgWidth, imgHeight);
-        alturaRestante -= altoPagina;
-      }
-
-      const slug = this.slugificar(this.reporte.titulo);
-      const hoy = new Date();
-      const yyyy = hoy.getFullYear();
-      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-      const dd = String(hoy.getDate()).padStart(2, '0');
-      const nombreArchivo = `respuestas-${slug}-${yyyy}-${mm}-${dd}.pdf`;
-
-      pdf.save(nombreArchivo);
-    } catch (err: any) {
-      console.error('Error al exportar PDF:', err);
-      this.error = 'Ocurrió un error al generar el PDF del reporte.';
-    } finally {
-      this.exportando = false;
-      this._cdr.markForCheck();
-    }
   }
 
   ngOnDestroy(): void {

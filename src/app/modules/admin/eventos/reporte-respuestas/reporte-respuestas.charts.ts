@@ -3,6 +3,7 @@ import { PreguntaReporte, ResumenReporte } from './reporte-respuestas.types';
 
 export const BASE_THEME: Highcharts.Options = {
   accessibility: { enabled: false },
+  exporting: { enabled: false },
   chart: {
     backgroundColor: 'transparent',
     spacingBottom: 20,
@@ -101,8 +102,7 @@ export const opcionesBarras = (p: PreguntaReporte): Highcharts.Options => {
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'bar',
-      marginTop: 40 // deja libre la franja del menú de descarga para que no tape la primera barra
+      type: 'bar'
     },
     legend: {
       enabled: false
@@ -188,8 +188,7 @@ export const opcionesNiveles = (p: PreguntaReporte): Highcharts.Options => {
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'bar',
-      marginTop: 40 // deja libre la franja del menú de descarga para que no tape la primera barra
+      type: 'bar'
     },
     legend: {
       ...BASE_THEME.legend,
@@ -264,8 +263,7 @@ export const opcionesPromedios = (p: PreguntaReporte): Highcharts.Options | null
     ...BASE_THEME,
     chart: {
       ...BASE_THEME.chart,
-      type: 'bar',
-      marginTop: 40 // deja libre la franja del menú de descarga para que no tape la primera barra
+      type: 'bar'
     },
     legend: {
       enabled: false

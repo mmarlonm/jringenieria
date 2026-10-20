@@ -11,15 +11,6 @@
         Análisis de formularios configurados
       </p>
     </div>
-
-    <!-- Botón Exportar PDF -->
-    <div>
-      <button mat-flat-button color="primary" class="rounded-xl px-5 py-2.5 shadow-sm font-bold flex items-center gap-2"
-              (click)="exportarPDF()" [disabled]="!reporte || reporte.resumen.totalRespuestas === 0 || cargando || exportando">
-        <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
-        <span>{{ exportando ? 'Exportando PDF…' : 'Exportar PDF' }}</span>
-      </button>
-    </div>
   </div>
 
   <!-- Barra de Filtros -->
@@ -27,7 +18,7 @@
     <!-- Selector de Formulario -->
     <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
       <mat-label>Formulario</mat-label>
-      <mat-select [(ngModel)]="formularioId" (selectionChange)="cargarReporte()" [disabled]="cargando || exportando">
+      <mat-select [(ngModel)]="formularioId" (selectionChange)="cargarReporte()" [disabled]="cargando">
         <mat-optgroup *ngFor="let g of formulariosPorEvento" [label]="g.evento">
           <mat-option *ngFor="let f of g.formularios" [value]="f.id">
             {{ f.titulo }} · {{ f.totalRespuestas }}
@@ -39,19 +30,19 @@
     <!-- Fecha Inicio -->
     <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
       <mat-label>Fecha inicio</mat-label>
-      <input matInput type="date" [(ngModel)]="desde" (change)="cargarReporte()" [disabled]="!formularioId || cargando || exportando">
+      <input matInput type="date" [(ngModel)]="desde" (change)="cargarReporte()" [disabled]="!formularioId || cargando">
     </mat-form-field>
 
     <!-- Fecha Fin -->
     <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
       <mat-label>Fecha fin</mat-label>
-      <input matInput type="date" [(ngModel)]="hasta" (change)="cargarReporte()" [disabled]="!formularioId || cargando || exportando">
+      <input matInput type="date" [(ngModel)]="hasta" (change)="cargarReporte()" [disabled]="!formularioId || cargando">
     </mat-form-field>
 
     <!-- Botón Limpiar Fechas -->
     <div class="flex items-center">
       <button *ngIf="hayFiltroDeFechas" mat-button class="text-blue-600 font-bold hover:bg-blue-50 rounded-xl"
-              (click)="limpiarFechas()" [disabled]="cargando || exportando">
+              (click)="limpiarFechas()" [disabled]="cargando">
         <mat-icon class="mr-1">clear</mat-icon>
         Limpiar fechas
       </button>
@@ -129,7 +120,7 @@
 
   <!-- Contenido con Reporte (Exportable a PDF) -->
   <div *ngIf="reporte && !cargando && !error && reporte.resumen.totalRespuestas > 0"
-       id="pdf-content" class="space-y-8 bg-gray-50 px-2 animate-in fade-in slide-in-from-bottom-8 duration-700">
+       class="space-y-8 px-2 animate-in fade-in slide-in-from-bottom-8 duration-700">
 
     <!-- Título del Formulario y Evento -->
     <div class="flex flex-col">

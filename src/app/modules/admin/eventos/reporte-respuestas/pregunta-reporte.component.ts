@@ -4,11 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
-import Exporting from 'highcharts/modules/exporting';
 import { PreguntaReporte, RespuestaAbierta, FilaMatrizReporte } from './reporte-respuestas.types';
 import { opcionesBarras, opcionesNiveles, opcionesPromedios, opcionesRangos } from './reporte-respuestas.charts';
-
-Exporting(Highcharts);
 
 @Component({
   selector: 'eventos-pregunta-reporte',
@@ -35,6 +32,7 @@ export class PreguntaReporteComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['pregunta']) {
+      this.busqueda = '';
       this.armarGraficas();
     }
   }
