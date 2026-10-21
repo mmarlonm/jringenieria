@@ -211,7 +211,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
                                                 <span class="aspect-main-text">{{ fila.texto }}</span>
                                                 <span *ngIf="fila.subtexto" class="aspect-sub-text">{{ fila.subtexto }}</span>
                                             </td>
-                                            <td *ngFor="let col of campo.columnasMatriz" class="matrix-td-score">
+                                            <td *ngFor="let col of campo.columnasMatriz" class="matrix-td-score" [attr.data-label]="col.etiqueta">
                                                 <div class="matrix-score-option cursor-pointer select-none"
                                                      role="radio"
                                                      [attr.aria-checked]="respuestas[campo.id]?.[fila.id] === col.valor"
@@ -649,7 +649,6 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
 .matrix-evaluation-table {
     width: 100%;
-    min-width: max-content;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.75rem;
@@ -667,8 +666,8 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    width: 40%;
     min-width: 140px;
-    max-width: 220px;
     border-bottom: 1px solid #e2e8f0;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 
@@ -713,6 +712,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
     position: sticky;
     left: 0;
     z-index: 2;
+    width: 40%;
     padding: 0.75rem 1rem;
     background: #ffffff;
     border-top: 1px solid #f1f5f9;
@@ -726,7 +726,6 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
     @media (max-width: 640px) {
         min-width: 105px;
-        max-width: 125px;
         padding: 0.6rem 0.55rem;
     }
 }
@@ -765,6 +764,7 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 .matrix-td-score {
     text-align: center;
     padding: 0.5rem;
+    min-width: 42px;
     border-top: 1px solid #f1f5f9;
     vertical-align: middle;
 
@@ -774,6 +774,59 @@ import { FormularioRegistroService, FormularioRegistroPublicoDto, CampoConfig, D
 
     @media (max-width: 640px) {
         padding: 0.4rem 0.15rem;
+    }
+}
+
+/* En celular cada pregunta ocupa todo el ancho y sus opciones van en fila debajo, sin deslizar la tabla */
+@media (max-width: 640px) {
+    .matrix-table-scroll {
+        overflow-x: visible;
+        border: none;
+        background: transparent;
+    }
+
+    .matrix-evaluation-table,
+    .matrix-evaluation-table tbody,
+    .matrix-evaluation-table tr,
+    .matrix-evaluation-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .matrix-evaluation-table thead {
+        display: none;
+    }
+
+    .matrix-evaluation-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .matrix-evaluation-table .matrix-td-aspect {
+        position: static;
+        box-shadow: none;
+        border-top: none;
+        padding: 0 0 0.5rem;
+    }
+
+    .matrix-evaluation-table .matrix-td-score {
+        flex: 1 1 56px;
+        min-width: 56px;
+        padding: 0.25rem 0;
+        border-top: none;
+        overflow-wrap: anywhere;
+    }
+
+    .matrix-evaluation-table .matrix-td-score::after {
+        content: attr(data-label);
+        display: block;
+        margin-top: 0.15rem;
+        font-size: 0.6rem;
+        color: #64748b;
+        line-height: 1.2;
     }
 }
 
