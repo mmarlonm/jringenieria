@@ -2,7 +2,6 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { filtrarProveedores, opcionesDe } from './proveedor-filtros.utils';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,7 +22,7 @@ import { ChatNotificationService } from 'app/shared/components/chat-notification
 import { SolicitudCompraCreateDto, ProductoBuscadorDto, ProveedorDto, ContpaqiMaterialDto, AnticipoDto } from '../models/solicitud-compra.types';
 import { ImportarMaterialesDialogComponent } from './importar-materiales-dialog/importar-materiales-dialog.component';
 import { ClientsService } from '../../../catalogs/clients/clients.service';
-import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, tap, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, filter, forkJoin, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, Subject } from 'rxjs';
 import { UsersService } from '../../../security/users/users.service';
 import Swal from 'sweetalert2';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -68,10 +67,6 @@ export class SolicitudCompraFormComponent implements OnInit {
     filteredProyectos$: Observable<any[]>;
     filteredClientes$: Observable<any[]>;
     filteredProveedoresRows$: Observable<ProveedorDto[]>[] = [];
-    /** Última lista de proveedores encontrada por fila (para llenar los filtros de régimen y uso CFDI). */
-    ultimaBusquedaProveedores: { [fila: number]: ProveedorDto[] } = {};
-    filtroRegimenFila: { [fila: number]: string | null } = {};
-    filtroUsoFila: { [fila: number]: string | null } = {};
     filteredBancos$: Observable<string[]>;
     private _bancoSearch$ = new Subject<string>();
     private _unsubscribeAll: Subject<any> = new Subject<any>();
@@ -353,7 +348,6 @@ export class SolicitudCompraFormComponent implements OnInit {
                 }
                 return of([] as ProveedorDto[]);
             }),
-            tap(lista => this.ultimaBusquedaProveedores[index] = lista),
             shareReplay(1)
         );
     }
@@ -374,26 +368,6 @@ export class SolicitudCompraFormComponent implements OnInit {
             regimenFiscal: proveedor.regimenFiscal || '',
             usoCfdi: proveedor.usoCfdi || ''
         }, { emitEvent: false });
-    }
-
-    /** Proveedores de la fila que cumplen los filtros de régimen fiscal y uso CFDI. */
-    /** Subtotal menos el descuento (importe): sobre esta base se calcula el IVA y el total. */
-    get subtotalConDescuento(): number {
-        const subtotal = parseFloat(this.solicitudForm.get('subtotal')?.value) || 0;
-        const descuento = parseFloat(this.solicitudForm.get('descuento')?.value) || 0;
-        return Math.max(0, Number((subtotal - descuento).toFixed(2)));
-    }
-
-    proveedoresVisibles(fila: number, lista: ProveedorDto[] | null): ProveedorDto[] {
-        return filtrarProveedores(lista, this.filtroRegimenFila[fila] ?? null, this.filtroUsoFila[fila] ?? null);
-    }
-
-    opcionesRegimenFila(fila: number): string[] {
-        return opcionesDe(this.ultimaBusquedaProveedores[fila], 'regimenFiscal');
-    }
-
-    opcionesUsoFila(fila: number): string[] {
-        return opcionesDe(this.ultimaBusquedaProveedores[fila], 'usoCfdi');
     }
 
     addDetalle(): void {

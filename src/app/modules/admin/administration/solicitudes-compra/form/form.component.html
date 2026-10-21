@@ -534,24 +534,6 @@
                                         </button>
                                     </div>
 
-                                    <!-- Filtros del buscador: régimen fiscal y uso de CFDI (se llenan con la última búsqueda) -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-3">
-                                        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-                                            <mat-label>Filtrar por régimen fiscal</mat-label>
-                                            <mat-select [value]="filtroRegimenFila[i] ?? null" (selectionChange)="filtroRegimenFila[i] = $event.value">
-                                                <mat-option [value]="null">Todos</mat-option>
-                                                <mat-option *ngFor="let r of opcionesRegimenFila(i)" [value]="r">{{ r }}</mat-option>
-                                            </mat-select>
-                                        </mat-form-field>
-                                        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-                                            <mat-label>Filtrar por uso de CFDI</mat-label>
-                                            <mat-select [value]="filtroUsoFila[i] ?? null" (selectionChange)="filtroUsoFila[i] = $event.value">
-                                                <mat-option [value]="null">Todos</mat-option>
-                                                <mat-option *ngFor="let u of opcionesUsoFila(i)" [value]="u">{{ u }}</mat-option>
-                                            </mat-select>
-                                        </mat-form-field>
-                                    </div>
-
                                     <!-- Supplier Basic Info -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
                                         <mat-form-field appearance="fill" class="w-full">
@@ -559,7 +541,7 @@
                                             <input matInput formControlName="razonSocial" [matAutocomplete]="autoProvRow" placeholder="Escribe para buscar proveedor...">
                                             <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:identification'"></mat-icon>
                                             <mat-autocomplete #autoProvRow="matAutocomplete" (optionSelected)="onProveedorSelectedForRow($event, i)">
-                                                <mat-option *ngFor="let prov of proveedoresVisibles(i, (filteredProveedoresRows$[i] | async))" [value]="prov">
+                                                <mat-option *ngFor="let prov of (filteredProveedoresRows$[i] | async)" [value]="prov">
                                                     <div class="flex flex-col leading-tight py-1">
                                                         <span class="font-bold text-primary">{{ prov.nombre }}</span>
                                                         <span class="text-[10px] text-secondary uppercase tabular-nums">RFC: {{ prov.rfc }}</span>
@@ -573,6 +555,21 @@
                                         <mat-form-field appearance="fill" class="w-full">
                                             <mat-label>RFC</mat-label>
                                             <input matInput formControlName="rfc" class="uppercase" placeholder="XAXX010101000">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                        </mat-form-field>
+                                    </div>
+
+                                    <!-- Datos fiscales del proveedor (se llenan al seleccionarlo y se pueden corregir) -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>Régimen fiscal</mat-label>
+                                            <input matInput formControlName="regimenFiscal" placeholder="Ej. 601 - General de Ley Personas Morales">
+                                            <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="fill" class="w-full">
+                                            <mat-label>Uso de CFDI</mat-label>
+                                            <input matInput formControlName="usoCfdi" placeholder="Ej. G03">
                                             <mat-icon matPrefix class="text-slate-400 opacity-50 ml-2 mr-2" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
                                         </mat-form-field>
                                     </div>
