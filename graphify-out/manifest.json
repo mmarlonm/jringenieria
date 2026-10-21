@@ -620,8 +620,8 @@
     "semantic_hash": "43d0c0967058504c849a26f2710b3383"
   },
   "src/app/app.routes.ts": {
-    "mtime": 1792170129.13635,
-    "ast_hash": "741765a47eb6efbab8e2fd084e15fa65",
+    "mtime": 1792514057.9152064,
+    "ast_hash": "340d1d8293dc688ca1a5dcf8d269a88e",
     "semantic_hash": ""
   },
   "src/app/core/auth/auth.interceptor.ts": {
@@ -735,8 +735,8 @@
     "semantic_hash": "442322f57e9f7b93ce0bf186c72faa64"
   },
   "src/app/layout/common/notifications/notifications.service.ts": {
-    "mtime": 1792216596.146032,
-    "ast_hash": "3cd6df6c7dcbf125ad351bc80588823f",
+    "mtime": 1792452731.643744,
+    "ast_hash": "57a00a59db0fd0bf8f6eb2a01741b7b0",
     "semantic_hash": ""
   },
   "src/app/layout/common/notifications/notifications.types.ts": {
@@ -830,8 +830,8 @@
     "semantic_hash": ""
   },
   "src/app/layout/layouts/vertical/classy/classy.component.ts": {
-    "mtime": 1791394771.9670794,
-    "ast_hash": "526ca80eadeefed9390c7e047a5436fc",
+    "mtime": 1792527661.3461533,
+    "ast_hash": "dbf83c09767be0a7ed5be1e3a74ba31d",
     "semantic_hash": ""
   },
   "src/app/layout/layouts/vertical/compact/compact.component.ts": {
@@ -975,8 +975,8 @@
     "semantic_hash": ""
   },
   "src/app/mock-api/common/navigation/data.ts": {
-    "mtime": 1792170129.1353495,
-    "ast_hash": "6d41ac9a2f059a7a52e0d8c36dbf5ff5",
+    "mtime": 1792514057.8989122,
+    "ast_hash": "04513c540f1f509c9e7e12c0f5f444c9",
     "semantic_hash": ""
   },
   "src/app/mock-api/common/notifications/api.ts": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/solicitudes-compra/form/form.component.ts": {
-    "mtime": 1792007355.769228,
-    "ast_hash": "c4f7a59c2cc7341d6e1271348333e7e5",
+    "mtime": 1792537039.3802402,
+    "ast_hash": "ea724c5a4049822cad135da212b1a12c",
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/solicitudes-compra/form/importar-materiales-dialog/importar-materiales-dialog.component.ts": {
@@ -1230,8 +1230,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types.ts": {
-    "mtime": 1792111601.1095724,
-    "ast_hash": "d62dd9004b98364d2812f7a68c15c8da",
+    "mtime": 1792536688.9943826,
+    "ast_hash": "510644d3a4e179ca7dd56af32a947f9c",
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/solicitudes-compra/solicitud-compra.routes.ts": {
@@ -1255,13 +1255,13 @@
     "semantic_hash": "8c5578dced94a3996cec20611371bda4"
   },
   "src/app/modules/admin/administration/tablero-compras/solicitud-detalle-dialog/solicitud-detalle-dialog.component.ts": {
-    "mtime": 1792111715.6102355,
-    "ast_hash": "c509f9ef8d3c5d1a0984c1b719f2ee32",
+    "mtime": 1792536902.6462028,
+    "ast_hash": "9245555ab9e32b53184741e9cb513bd6",
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/tablero-compras/tablero-compras.component.ts": {
-    "mtime": 1792111755.6045506,
-    "ast_hash": "c8f6461363dd205c42598570b309e6f5",
+    "mtime": 1792536784.0056102,
+    "ast_hash": "13f1e1f032ee8122a8fff30323cbf3e9",
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/tablero-compras/tablero-compras.routes.ts": {
@@ -1990,9 +1990,9 @@
     "semantic_hash": "4641df4b98f51d40b39f93b42c6cca9d"
   },
   "src/app/modules/admin/pages/profile/profile.component.ts": {
-    "mtime": 1778885246.67973,
-    "ast_hash": "84197d6e3f5213095edbea74f79ec26b",
-    "semantic_hash": "84197d6e3f5213095edbea74f79ec26b"
+    "mtime": 1792442027.0841339,
+    "ast_hash": "b77bb6ee06164fb5dc13537ec04fd4d5",
+    "semantic_hash": ""
   },
   "src/app/modules/admin/pages/profile/profile.routes.ts": {
     "mtime": 1776962858.6144164,
@@ -2510,14 +2510,14 @@
     "semantic_hash": "29cd2c49fab8dd413bbc683c8ef2f352"
   },
   "src/app/modules/rrhh/personal-management/personal-management.service.ts": {
-    "mtime": 1776962858.6696513,
-    "ast_hash": "c4ff6513378eacf7633c879445a51ff1",
-    "semantic_hash": "c4ff6513378eacf7633c879445a51ff1"
+    "mtime": 1792527212.7024791,
+    "ast_hash": "0892a086b36480530ebaa2119201754d",
+    "semantic_hash": ""
   },
   "src/app/modules/rrhh/reports/report-entrada-salida/dashboard/dashboard.component.ts": {
-    "mtime": 1776962858.6696513,
-    "ast_hash": "3d6f697f5ffd4d5f5f13f6e834139fdb",
-    "semantic_hash": "3d6f697f5ffd4d5f5f13f6e834139fdb"
+    "mtime": 1792527590.9232712,
+    "ast_hash": "4463fe2ecfccb12a0246fe4e8b188534",
+    "semantic_hash": ""
   },
   "src/app/modules/rrhh/reports/report-entrada-salida/report-entrada-salida.component.ts": {
     "mtime": 1771955574.0140667,
@@ -2570,9 +2570,9 @@
     "semantic_hash": "3a3147f09724bc75088b0cee0468187c"
   },
   "src/app/notificaciones-chat.service.ts": {
-    "mtime": 1776964950.5838206,
-    "ast_hash": "33182be7460581449cfa9b36be4defe6",
-    "semantic_hash": "33182be7460581449cfa9b36be4defe6"
+    "mtime": 1792452731.6547585,
+    "ast_hash": "e13924329e04460d75d09720393506b7",
+    "semantic_hash": ""
   },
   "src/app/pipes/currency-mask.pipe.ts": {
     "mtime": 1776962858.675906,
@@ -2620,8 +2620,8 @@
     "semantic_hash": "c38b7896d87059564eab6520cbd98b17"
   },
   "src/app/shared/utils/common-excel-export.service.ts": {
-    "mtime": 1788904889.1761458,
-    "ast_hash": "51adeae1876c0f7d1a3f5cd42e5bb6ca",
+    "mtime": 1792535813.6838553,
+    "ast_hash": "8aae6e7439bfcf215b13fca820290127",
     "semantic_hash": ""
   },
   "src/app/shared/utils/confetti.utils.ts": {
@@ -2895,8 +2895,8 @@
     "semantic_hash": ""
   },
   "src/app/layout/layouts/vertical/classy/classy.component.html": {
-    "mtime": 1786909164.189964,
-    "ast_hash": "6233440f14ac4d255c6ac76cf4b04872",
+    "mtime": 1792527661.3893428,
+    "ast_hash": "8f8ef3b1fc3b9043a8a0fa0777b9d91e",
     "semantic_hash": ""
   },
   "src/app/layout/layouts/vertical/compact/compact.component.html": {
@@ -2990,8 +2990,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/solicitudes-compra/form/form.component.html": {
-    "mtime": 1792007374.9965944,
-    "ast_hash": "4c1b1166c5e1e137069c1dc5c14447ac",
+    "mtime": 1792537039.2722046,
+    "ast_hash": "844db67f319cac1bf5b284bdacbe9f5c",
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/solicitudes-compra/list/list.component.html": {
@@ -3005,8 +3005,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/tablero-compras/tablero-compras.component.html": {
-    "mtime": 1792111755.606101,
-    "ast_hash": "693d21ff1d060be0a6463bf8facc8102",
+    "mtime": 1792536783.9993243,
+    "ast_hash": "df36927c43cb8f7a39542e484cdc4e6f",
     "semantic_hash": ""
   },
   "src/app/modules/admin/catalogs/clients/clients.component.html": {
@@ -3420,8 +3420,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/pages/profile/profile.component.html": {
-    "mtime": 1791401806.1822875,
-    "ast_hash": "6e2228b8018983f792eb920e51a5b67b",
+    "mtime": 1792442027.1093357,
+    "ast_hash": "751be6242691bd128468eba739552a71",
     "semantic_hash": ""
   },
   "src/app/modules/admin/security/activity-monitor/activity-feed.component.html": {
@@ -3680,8 +3680,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/reports/report-entrada-salida/dashboard/dashboard.component.html": {
-    "mtime": 1771954935.4197948,
-    "ast_hash": "8f99b0c7eb812b43dd2165f0738641fa",
+    "mtime": 1792527293.0008056,
+    "ast_hash": "7bdd56143a10994c01a8a3d17ab486f1",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/reports/report-entrada-salida/report-entrada-salida.component.html": {
@@ -5105,8 +5105,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/notificaciones/notificaciones-config.component.ts": {
-    "mtime": 1787759042.2467794,
-    "ast_hash": "1394d414485e278b85c714c12fb6bd9f",
+    "mtime": 1792426742.8212914,
+    "ast_hash": "85533bab1772e4a770ec219003d46aa5",
     "semantic_hash": ""
   },
   "src/app/modules/admin/administration/reporte-detalle-compras/reporte-detalle-compras.component.ts": {
@@ -5235,13 +5235,13 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/eventos/configurador-registro/configurador-registro.component.ts": {
-    "mtime": 1792162199.0796306,
-    "ast_hash": "104d083d4329c7ab313bbf9a28dc548d",
+    "mtime": 1792540509.5008814,
+    "ast_hash": "31b54577f965694ae89fa3cf98578dbb",
     "semantic_hash": ""
   },
   "src/app/modules/admin/eventos/configurador-registro/formulario-registro.service.ts": {
-    "mtime": 1792105423.3492732,
-    "ast_hash": "2befacf83cac72490e9e28db2daa94c5",
+    "mtime": 1792539966.5629702,
+    "ast_hash": "dfd5145108685d9afa236b466b3e33b5",
     "semantic_hash": ""
   },
   "src/app/modules/admin/eventos/configurador-registro/respuestas-formulario-dialog.component.ts": {
@@ -5320,8 +5320,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/public/registro-evento/registro-evento-publico.component.ts": {
-    "mtime": 1792028858.3235097,
-    "ast_hash": "f4c89601b28ca463bd671894364a0421",
+    "mtime": 1792541913.7066193,
+    "ast_hash": "4430af09a521461a14b4837c2c409189",
     "semantic_hash": ""
   },
   "src/app/modules/public/registro-staff/registro-staff.component.ts": {
@@ -5345,13 +5345,13 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaborador-ficha/colaborador-ficha.component.ts": {
-    "mtime": 1792195351.3622506,
-    "ast_hash": "641888a2ff7fc9312e95361793bad754",
+    "mtime": 1792442027.251778,
+    "ast_hash": "64004ce1a8d5ae8a68a230f08f89c2e8",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaborador-ficha/tab-contratos.component.ts": {
-    "mtime": 1792170716.2002647,
-    "ast_hash": "f1eb2b526750d4f7373d6de05b9b91af",
+    "mtime": 1792441478.151049,
+    "ast_hash": "d2a4103d489bdfbcfc644a4289753f34",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaborador-ficha/tab-historial.component.ts": {
@@ -5370,8 +5370,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaboradores-lista/colaboradores-lista.component.ts": {
-    "mtime": 1792195351.361249,
-    "ast_hash": "66f20fd81b6324613e46461c6e19606f",
+    "mtime": 1792439488.5131648,
+    "ast_hash": "0a5e402b46d23d9347e4c5d63588dba8",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaboradores.routes.ts": {
@@ -5380,13 +5380,13 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaboradores.service.ts": {
-    "mtime": 1792174365.457811,
-    "ast_hash": "b7576df0f4bef71603458397ba580b78",
+    "mtime": 1792439488.4781437,
+    "ast_hash": "948d2c50fa264274c406e56648cb6a07",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaboradores.types.ts": {
-    "mtime": 1792174365.4568112,
-    "ast_hash": "7120328ece35c7386ac4a974f2243714",
+    "mtime": 1792442027.1982718,
+    "ast_hash": "c75ef2d7787d1a9a19dedcc1e289965c",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaboradores.utils.ts": {
@@ -5405,8 +5405,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/parametros/parametros.component.ts": {
-    "mtime": 1792194334.941254,
-    "ast_hash": "4e6f4e4c1ee293691ac2a146cbaaa243",
+    "mtime": 1792432538.6715248,
+    "ast_hash": "706ffb5658e0eceb6acf13f3d600ee7b",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/parametros/parametros.routes.ts": {
@@ -5530,8 +5530,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/eventos/configurador-registro/configurador-registro.component.html": {
-    "mtime": 1792162199.117682,
-    "ast_hash": "742fa9db248011703c798a088cbbecff",
+    "mtime": 1792539977.2070918,
+    "ast_hash": "34df2b11a5ab9b2d20174783e49ab0ef",
     "semantic_hash": ""
   },
   "src/app/modules/admin/eventos/reportes/reportes.component.html": {
@@ -5550,13 +5550,13 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaborador-ficha/colaborador-ficha.component.html": {
-    "mtime": 1792195449.2695603,
-    "ast_hash": "49fbf9d370628507960b63cd88cae779",
+    "mtime": 1792442027.2608013,
+    "ast_hash": "3294141b4303f4a0d9714403e5e2c3fe",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaborador-ficha/tab-contratos.component.html": {
-    "mtime": 1792175020.158823,
-    "ast_hash": "8433a23dc79c6e2366a4e7a4bdc3a5cb",
+    "mtime": 1792439488.5116603,
+    "ast_hash": "34e8205560f295ed41126d901e3c9c24",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaborador-ficha/tab-historial.component.html": {
@@ -5575,8 +5575,8 @@
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/colaboradores-lista/colaboradores-lista.component.html": {
-    "mtime": 1792195351.361249,
-    "ast_hash": "cfe32c14cbbf5d4d9c7d4f76986ddd61",
+    "mtime": 1792439488.5131648,
+    "ast_hash": "1a49e1a4bf20ebcb6327cdbc0765d015",
     "semantic_hash": ""
   },
   "src/app/modules/rrhh/colaboradores/importar-usuarios-dialog/importar-usuarios-dialog.component.html": {
@@ -5632,6 +5632,246 @@
   "src/assets/images/default-taller-banner.svg": {
     "mtime": 1789149968.227562,
     "ast_hash": "8bd7198fb8f6fd5ca50ddf77dc611d0e",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/administration/solicitudes-compra/form/proveedor-filtros.utils.ts": {
+    "mtime": 1792536637.541756,
+    "ast_hash": "9f2371bf499b6f2ddb57267644c4cf98",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/configurador-registro/envio-masivo-lotes.utils.ts": {
+    "mtime": 1792539966.5634744,
+    "ast_hash": "abdeafc9f984ae7003c96b382de240d3",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/pregunta-reporte.component.ts": {
+    "mtime": 1792517599.83702,
+    "ast_hash": "f09ecc94f57b2e8b281061fd85241886",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.charts.ts": {
+    "mtime": 1792517599.8559258,
+    "ast_hash": "26d5100c8fd2fcb7f116784b5ea5eaaa",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.component.ts": {
+    "mtime": 1792517599.8240123,
+    "ast_hash": "2e9e2c578392e5891fe984096fa91e19",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.service.ts": {
+    "mtime": 1792513389.3243227,
+    "ast_hash": "6ef93548fa80b575b1e94c5bf5505a9b",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.types.ts": {
+    "mtime": 1792513389.392674,
+    "ast_hash": "c409b4990e39feeb7cadff0ca19d7829",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/aprobaciones/aprobaciones.component.ts": {
+    "mtime": 1792442103.9261615,
+    "ast_hash": "15d96eb98c63065078857148987f39fd",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/aprobaciones/aprobaciones.routes.ts": {
+    "mtime": 1792442103.912211,
+    "ast_hash": "1cf6b04b900a446d4154c074316b7327",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/aprobaciones/rechazo-dialog.component.ts": {
+    "mtime": 1792442103.9360952,
+    "ast_hash": "7a934b9c5d308dad1365781814469747",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/ausencias.formats.ts": {
+    "mtime": 1792443545.5436656,
+    "ast_hash": "28b93bce18e5c075ce116e2e3ab31f35",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/ausencias.service.ts": {
+    "mtime": 1792441707.6854599,
+    "ast_hash": "58f225a578f3e369d5228473ae48fd49",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/ausencias.types.ts": {
+    "mtime": 1792441706.5560915,
+    "ast_hash": "b1dbd765971331b6c34136be93577bef",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/mis-solicitudes-pagina.component.ts": {
+    "mtime": 1792442026.442737,
+    "ast_hash": "2dd1956a1c81bea013ecd606c55da46d",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/mis-solicitudes.component.ts": {
+    "mtime": 1792442669.6324415,
+    "ast_hash": "0c07cb54133be3676b93320d6d5aea78",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/mis-solicitudes.routes.ts": {
+    "mtime": 1792442026.504518,
+    "ast_hash": "9ccb8769066a644dba4e5feffa229cd8",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/solicitud-dialog.component.ts": {
+    "mtime": 1792443545.6615927,
+    "ast_hash": "0d3d0022cd6011100c41708088b0ddf7",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/calendario-permisos/calendario-permisos.component.ts": {
+    "mtime": 1792442103.9722202,
+    "ast_hash": "c53a26c4b19c445b4ad973caed5aac5f",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/calendario-permisos/calendario-permisos.routes.ts": {
+    "mtime": 1792442103.9441142,
+    "ast_hash": "ba5bb62949502f8f52218623ce997d85",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/calendario-permisos/dias-no-laborables-dialog.component.ts": {
+    "mtime": 1792443545.6625953,
+    "ast_hash": "2471e7467bb4fc429635480e1867d000",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/colaboradores/colaborador-ficha/ajuste-dialog.component.ts": {
+    "mtime": 1792443545.6615927,
+    "ast_hash": "985639a193cb3f78894a51a240df35d6",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/colaboradores/colaborador-ficha/captura-dialog.component.ts": {
+    "mtime": 1792443545.6615927,
+    "ast_hash": "8f7ab35470f3bfe07a27035c454c735f",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/colaboradores/colaborador-ficha/incidencia-dialog.component.ts": {
+    "mtime": 1792443545.6625953,
+    "ast_hash": "3824ce879995bfd03c3b95852c122b2d",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/colaboradores/colaborador-ficha/tab-ausencias.component.ts": {
+    "mtime": 1792443551.6796062,
+    "ast_hash": "588c310789446e571108a572d6966810",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/expediente.component.ts": {
+    "mtime": 1792441478.14654,
+    "ast_hash": "7df89300ab770abcf599d35d2dfd2636",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/expediente.service.ts": {
+    "mtime": 1792438786.7999227,
+    "ast_hash": "15d94f4562f83a691e523fb1d8d0ffd7",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/expediente.types.ts": {
+    "mtime": 1792438786.4471407,
+    "ast_hash": "b534cec3ab183210835fc5e8ebfd16fb",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/mi-expediente-pagina.component.ts": {
+    "mtime": 1792438863.5327854,
+    "ast_hash": "e3b948a09255c0cf644e9cc91a29b3aa",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/mi-expediente.routes.ts": {
+    "mtime": 1792438863.6133323,
+    "ast_hash": "b68053372127a509f7ae866199e81585",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/motivo-rechazo-dialog.component.ts": {
+    "mtime": 1792438826.2800233,
+    "ast_hash": "7205c7568f366e43c1100ae842641523",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/preview-documento-dialog.component.ts": {
+    "mtime": 1792438825.1599412,
+    "ast_hash": "a2df364e954dce345f14d65ea0f136ca",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expedientes/expedientes-detalle.component.ts": {
+    "mtime": 1792439455.964742,
+    "ast_hash": "f953ab9691c551bfff0aaa4916c238b2",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expedientes/expedientes-lista.component.ts": {
+    "mtime": 1792439458.190587,
+    "ast_hash": "839d10e929550ebaafc7609990cab384",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expedientes/expedientes.routes.ts": {
+    "mtime": 1792439454.7818317,
+    "ast_hash": "e077415465b21e3606e973aa5b537873",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expedientes/formatos-dialog.component.ts": {
+    "mtime": 1792439457.0681539,
+    "ast_hash": "a5fb8e7735661021f4c854e25dca2df5",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/reports/report-entrada-salida/corregir-asistencia-dialog/corregir-asistencia-dialog.component.ts": {
+    "mtime": 1792432902.187629,
+    "ast_hash": "0bf7f040655712ad1a60656f1e804189",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/reports/report-entrada-salida/historial-marcajes-dialog/historial-marcajes-dialog.component.ts": {
+    "mtime": 1792527292.8468235,
+    "ast_hash": "09f51882ea910590ad1b14e13f5857f4",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/pregunta-reporte.component.html": {
+    "mtime": 1792515872.3217015,
+    "ast_hash": "11b7a5b7645cbcafd0b6b39392901498",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.component.html": {
+    "mtime": 1792517599.83702,
+    "ast_hash": "c50c7573182725fe18212ec6ef6284a3",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/aprobaciones/aprobaciones.component.html": {
+    "mtime": 1792442103.9022017,
+    "ast_hash": "0ba8227656f37434d1f8657bac7524df",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/mis-solicitudes.component.html": {
+    "mtime": 1792442026.4938674,
+    "ast_hash": "aa63052c66f7ce620fc8329b3269b1b3",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/ausencias/solicitud-dialog.component.html": {
+    "mtime": 1792442088.6668644,
+    "ast_hash": "d0af08158e3518c962679a114da3d564",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/calendario-permisos/calendario-permisos.component.html": {
+    "mtime": 1792442103.9579635,
+    "ast_hash": "4ce02f1e5d649d4d243d760c8ed9e223",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/colaboradores/colaborador-ficha/tab-ausencias.component.html": {
+    "mtime": 1792443551.6796062,
+    "ast_hash": "dc076def11ad6e5ad2d47d2bca3b6061",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expediente/expediente.component.html": {
+    "mtime": 1792439335.7209055,
+    "ast_hash": "70b6d5ac229ee481013195fff2332883",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/expedientes/expedientes-lista.component.html": {
+    "mtime": 1792439459.382322,
+    "ast_hash": "f5cc2f63b2e3f50c25e00f7366e11c54",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/reports/report-entrada-salida/corregir-asistencia-dialog/corregir-asistencia-dialog.component.html": {
+    "mtime": 1792432903.297462,
+    "ast_hash": "bf692ca46caa65e6eaef0649765164d4",
+    "semantic_hash": ""
+  },
+  "src/app/modules/rrhh/reports/report-entrada-salida/historial-marcajes-dialog/historial-marcajes-dialog.component.html": {
+    "mtime": 1792527292.865682,
+    "ast_hash": "80af61752c06b0709fe29e81807d6d93",
     "semantic_hash": ""
   }
 }
