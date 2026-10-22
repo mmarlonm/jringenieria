@@ -3,6 +3,17 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export const defaultNavigation: FuseNavigationItem[] = [
 
     // ==========================================================================================
+    // CALENDARIO (Google Calendar del usuario, propios y compartidos)
+    // ==========================================================================================
+    {
+        id: 'calendario',
+        title: 'Calendario',
+        type: 'basic',
+        icon: 'heroicons_outline:calendar-days',
+        link: '/calendario'
+    },
+
+    // ==========================================================================================
     // NUESTRA IDENTIDAD (Directo raíz)
     // ==========================================================================================
     {

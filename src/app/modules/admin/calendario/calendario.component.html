@@ -1,0 +1,69 @@
+<div class="flex h-full w-full min-h-0 bg-white dark:bg-gray-900">
+
+    <!-- Calendarios: propios y compartidos -->
+    <aside class="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 p-4 overflow-y-auto">
+        <div *ngIf="misCalendarios.length">
+            <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Mis calendarios</div>
+            <label *ngFor="let c of misCalendarios" class="flex items-center gap-2 py-1.5 text-sm cursor-pointer">
+                <input type="checkbox" [checked]="c.seleccionado" (change)="alternarCalendario(c)">
+                <span class="w-3 h-3 rounded-sm shrink-0" [style.background]="c.color"></span>
+                <span class="truncate">{{ c.nombre }}</span>
+            </label>
+        </div>
+
+        <div class="mt-5" *ngIf="otrosCalendarios.length">
+            <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Otros calendarios</div>
+            <label *ngFor="let c of otrosCalendarios" class="flex items-center gap-2 py-1.5 text-sm cursor-pointer">
+                <input type="checkbox" [checked]="c.seleccionado" (change)="alternarCalendario(c)">
+                <span class="w-3 h-3 rounded-sm shrink-0" [style.background]="c.color"></span>
+                <span class="truncate">{{ c.nombre }}</span>
+            </label>
+        </div>
+    </aside>
+
+    <!-- Semana -->
+    <section class="flex-auto min-w-0 flex flex-col">
+        <header class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+            <div class="flex items-center gap-2">
+                <button mat-stroked-button (click)="irAHoy()">Hoy</button>
+                <button mat-icon-button (click)="cambiarSemana(-1)" aria-label="Semana anterior">
+                    <mat-icon [svgIcon]="'heroicons_outline:chevron-left'"></mat-icon>
+                </button>
+                <button mat-icon-button (click)="cambiarSemana(1)" aria-label="Semana siguiente">
+                    <mat-icon [svgIcon]="'heroicons_outline:chevron-right'"></mat-icon>
+                </button>
+            </div>
+            <div class="text-lg font-semibold capitalize">{{ rangoTexto }}</div>
+            <div class="text-sm text-gray-500" *ngIf="cargando">Cargando…</div>
+        </header>
+
+        <div *ngIf="error" class="m-6 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 p-4 text-sm">
+            {{ error }}
+        </div>
+
+        <div *ngIf="!error" class="grid grid-cols-7 flex-auto min-h-0 overflow-hidden">
+            <div *ngFor="let d of dias" class="border-r border-gray-200 dark:border-gray-800 last:border-r-0 flex flex-col min-h-0">
+                <div class="px-3 py-2 border-b border-gray-200 dark:border-gray-800 text-center"
+                     [class.bg-blue-50]="d.clave === claveHoy">
+                    <div class="text-xs uppercase text-gray-500">{{ d.fecha | date: 'EEE' : '' : 'es-MX' }}</div>
+                    <div class="text-xl font-bold">{{ d.fecha.getDate() }}</div>
+                </div>
+
+                <div class="p-2 space-y-2 overflow-y-auto flex-auto">
+                    <div *ngFor="let e of d.eventos"
+                         class="rounded-lg px-2.5 py-2 text-sm shadow-sm bg-gray-50 dark:bg-gray-800 border-l-4 cursor-pointer"
+                         [style.border-left-color]="e.color"
+                         (click)="e.enlace && abrirEvento(e)">
+                        <div class="font-mono text-xs text-gray-500" *ngIf="!e.esTodoElDia">
+                            {{ horaCorta(e.inicio) }} – {{ horaCorta(e.fin) }}
+                        </div>
+                        <div class="text-xs text-gray-500" *ngIf="e.esTodoElDia">Todo el día</div>
+                        <div class="font-semibold leading-snug">{{ e.titulo }}</div>
+                        <div class="text-xs text-gray-500 truncate" *ngIf="e.ubicacion">{{ e.ubicacion }}</div>
+                    </div>
+                    <div *ngIf="!d.eventos.length && !cargando" class="text-xs text-gray-400 text-center pt-4">Sin eventos</div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

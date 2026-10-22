@@ -158,6 +158,7 @@ export const appRoutes: Route[] = [
             },
             { path: 'example', loadChildren: () => import('app/modules/admin/example/example.routes') },
             { path: 'profile', loadChildren: () => import('app/modules/admin/pages/profile/profile.routes') },
+            { path: 'calendario', loadChildren: () => import('app/modules/admin/calendario/calendario.routes') },
             {
                 path: 'eventos', children: [
                     { path: 'dashboard', loadComponent: () => import('app/modules/admin/eventos/dashboard/dashboard.component').then(m => m.EventosDashboardComponent) },
