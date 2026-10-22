@@ -1739,7 +1739,7 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
             const cumple = this.evaluarCondicionPaso(paso.dependeDeCampoId, paso.dependeDeValor, paso.dependeDeOperador);
             if (!cumple) return false;
         }
-        const camposDelPaso = this.campos.filter(c => (c.paso || 1) === paso.numero);
+        const camposDelPaso = this.campos.filter(c => Number(c.paso || 1) === Number(paso.numero));
         if (camposDelPaso.length === 0) {
             return paso.numero === 1;
         }
@@ -1773,7 +1773,7 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
     esCampoDePasoActual(campo: CampoConfig): boolean {
         if (!this.diseno?.modoPasos) return true;
         const pasoCampo = campo.paso || 1;
-        return pasoCampo === this.pasoActual;
+        return Number(pasoCampo) === Number(this.pasoActual);
     }
 
     /** Seleccionar opción en la tabla de evaluación Matriz (Likert 1 al 5) */
@@ -1890,7 +1890,7 @@ export class RegistroEventoPublicoComponent implements OnInit, OnDestroy {
         const camposDelPaso = this.campos.filter(c => {
             if (!this.esCampoVisible(c)) return false;
             if (!this.diseno?.modoPasos) return true;
-            return (c.paso || 1) === pasoNum;
+            return Number(c.paso || 1) === Number(pasoNum);
         });
 
         for (const campo of camposDelPaso) {

@@ -779,7 +779,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
 
         // Reasignar campos del paso eliminado al paso 1 o anterior
         this.campos.forEach(c => {
-            if (c.paso === numero) {
+            if (Number(c.paso) === Number(numero)) {
                 c.paso = 1;
             } else if (c.paso && c.paso > numero) {
                 c.paso = c.paso - 1;
@@ -829,7 +829,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
             const cumple = this.evaluarCondicionPasoSimulador(paso.dependeDeCampoId, paso.dependeDeValor, paso.dependeDeOperador);
             if (!cumple) return false;
         }
-        const camposDelPaso = this.campos.filter(c => (c.paso || 1) === paso.numero);
+        const camposDelPaso = this.campos.filter(c => Number(c.paso || 1) === Number(paso.numero));
         if (camposDelPaso.length === 0) {
             return paso.numero === 1;
         }
@@ -864,7 +864,7 @@ export class ConfiguradorRegistroComponent implements OnInit, OnDestroy {
     esCampoDePasoSimulador(campo: CampoConfig): boolean {
         if (!this.diseno.modoPasos) return true;
         const pasoCampo = campo.paso || 1;
-        return pasoCampo === this.pasoSimuladorActual;
+        return Number(pasoCampo) === Number(this.pasoSimuladorActual);
     }
 
     /** Helper para crear columnas por defecto de matriz (Escala 1 al 5 y N/A) */

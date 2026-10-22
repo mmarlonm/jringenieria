@@ -830,7 +830,7 @@
                                     <label class="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Paso asignado</label>
                                     <select [(ngModel)]="campo.paso"
                                             class="w-full px-3 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/40 text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
-                                        <option *ngFor="let p of pasosDisponibles" [value]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
+                                        <option *ngFor="let p of pasosDisponibles" [ngValue]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
                                     </select>
                                 </div>
 
@@ -1580,7 +1580,7 @@
                         <div class="flex-auto overflow-y-auto p-4 md:p-5 space-y-4 custom-scrollbar">
                             
                             <!-- INDICADOR DE PASOS / WIZARD STEPPER EN SIMULADOR -->
-                            <div *ngIf="diseno.modoPasos" class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                            <div *ngIf="diseno.modoPasos" class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="font-bold text-slate-800 dark:text-slate-200">
                                         Paso {{ indicePasoActualSimulador + 1 }} de {{ pasosVisiblesSimulador.length }}
