@@ -114,6 +114,24 @@
                             <mat-datepicker-toggle matIconSuffix [for]="pAntig"></mat-datepicker-toggle>
                             <mat-datepicker #pAntig></mat-datepicker>
                         </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Fin del periodo de prueba</mat-label>
+                            <input matInput [matDatepicker]="pPrueba" formControlName="finPeriodoPrueba">
+                            <mat-datepicker-toggle matIconSuffix [for]="pPrueba"></mat-datepicker-toggle>
+                            <mat-datepicker #pPrueba></mat-datepicker>
+                            <mat-hint>Avisa 30 días antes del vencimiento</mat-hint>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Constancia anual de vacaciones (año)</mat-label>
+                            <input matInput type="number" formControlName="constanciaVacacionesAnio" min="2000" max="2100">
+                            <mat-hint>Año de la última constancia entregada</mat-hint>
+                        </mat-form-field>
+                        <div class="flex flex-col justify-center">
+                            <mat-checkbox formControlName="consentimientoDatos" color="primary">Consentimiento para tratar datos personales y sensibles</mat-checkbox>
+                            @if (colaborador?.fechaConsentimiento) {
+                                <span class="text-xs text-secondary mt-1">Otorgado el {{ colaborador?.fechaConsentimiento | date: 'dd/MM/yyyy' }}</span>
+                            }
+                        </div>
                     </div>
 
                     @for (grupo of gruposTexto; track grupo.titulo) {

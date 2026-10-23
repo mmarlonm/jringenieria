@@ -14,6 +14,7 @@ import { BehaviorSubject, Subject, catchError, combineLatest, debounceTime, of, 
 import { ColaboradoresService } from '../colaboradores.service';
 import { CatalogoItem, ColaboradorLista, EstatusColaborador, EstatusContrato } from '../colaboradores.types';
 import { ImportarUsuariosDialogComponent } from '../importar-usuarios-dialog/importar-usuarios-dialog.component';
+import { GeocercaSucursalesDialogComponent } from '../geocerca-sucursales-dialog/geocerca-sucursales-dialog.component';
 import { FilaLista, agruparSegunOrganigrama, aplanarGrupos } from '../organigrama.utils';
 
 @Component({
@@ -89,6 +90,14 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
     }
 
     /** Consulta los usuarios que aún no son colaboradores (en el clic, no al crear el diálogo) y abre el diálogo para elegir. */
+    /** Carga las geocercas actuales y abre el editor. */
+    editarGeocercas(): void {
+        this._service.geocercasSucursales().subscribe({
+            next: (sucursales) => this._dialog.open(GeocercaSucursalesDialogComponent, { width: '760px', maxWidth: '95vw', data: sucursales }),
+            error: (error) => this.avisar(error, 'No se pudieron cargar las sucursales.')
+        });
+    }
+
     importarUsuarios(): void {
         this.cargandoUsuarios = true;
         this._service.usuariosDisponibles().subscribe({

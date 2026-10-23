@@ -16,6 +16,8 @@ export interface SaldoVacaciones {
     periodoDesde: string;
     /** Último día del periodo; el siguiente aniversario es el día después. */
     periodoHasta: string;
+    /** Art. 81 LFT: fecha máxima para gozar los días de este periodo. */
+    fechaLimiteGoce: string;
     derechos: number;
     ajustes: number;
     aprobados: number;

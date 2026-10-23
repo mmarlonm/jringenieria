@@ -41,8 +41,8 @@
                         : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">
                 <mat-icon class="icon-size-4" [svgIcon]="p.icono"></mat-icon>
                 <span>{{ p.titulo }}</span>
-                <span *ngIf="p.contador" class="px-1.5 min-w-[20px] text-center rounded-full text-[10px] font-bold"
-                      [ngClass]="p.id === 'checklist' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">{{ p.contador }}</span>
+                <span *ngIf="contadorDe(p.id) as total" class="px-1.5 min-w-[20px] text-center rounded-full text-[10px] font-bold"
+                      [ngClass]="p.id === 'checklist' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">{{ total }}</span>
             </button>
         </nav>
     </div>

@@ -7,6 +7,7 @@
                     <h3 class="text-lg font-bold">Saldo de vacaciones</h3>
                     <div class="text-secondary text-sm">
                         Periodo: {{ s.periodoDesde | date: 'dd/MM/yyyy' }} al {{ s.periodoHasta | date: 'dd/MM/yyyy' }} ({{ s.aniosAntiguedad }} años de antigüedad)
+                        <br><span class="font-semibold">Fecha límite para gozar: {{ s.fechaLimiteGoce | date: 'dd/MM/yyyy' }}</span> (Art. 81 LFT)
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">

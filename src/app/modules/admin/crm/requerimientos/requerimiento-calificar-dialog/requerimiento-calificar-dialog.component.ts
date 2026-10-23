@@ -117,13 +117,26 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
 
   // ------------------------------------------------------------------ pestañas
 
-  get pestanas(): { id: Pestana; titulo: string; icono: string; contador: number | null }[] {
-    return [
-      { id: 'clasificacion', titulo: 'Clasificación SGC', icono: 'heroicons_outline:tag', contador: null },
-      { id: 'checklist', titulo: 'Información faltante', icono: 'heroicons_outline:clipboard-document-check', contador: this.totalFaltantes },
-      { id: 'seguimiento', titulo: 'Seguimiento', icono: 'heroicons_outline:chat-bubble-left-right', contador: this.seguimientos.length },
-      { id: 'archivos', titulo: 'Archivos y planos', icono: 'heroicons_outline:paper-clip', contador: this.archivos.length },
-    ];
+  /**
+   * Lista fija: si fuera un getter que arma objetos nuevos en cada revisión, el `*ngFor` destruiría y recrearía los
+   * botones en cada ciclo de detección de cambios (SignalR, temporizadores…) y un clic cuyo «mouse abajo» y «mouse
+   * arriba» caen en uno de esos ciclos se perdería: la pestaña «no abre».
+   */
+  readonly pestanas: { id: Pestana; titulo: string; icono: string }[] = [
+    { id: 'clasificacion', titulo: 'Clasificación SGC', icono: 'heroicons_outline:tag' },
+    { id: 'checklist', titulo: 'Información faltante', icono: 'heroicons_outline:clipboard-document-check' },
+    { id: 'seguimiento', titulo: 'Seguimiento', icono: 'heroicons_outline:chat-bubble-left-right' },
+    { id: 'archivos', titulo: 'Archivos y planos', icono: 'heroicons_outline:paper-clip' },
+  ];
+
+  /** Número que acompaña a la pestaña (0 o null = no se muestra). */
+  contadorDe(id: Pestana): number {
+    switch (id) {
+      case 'checklist': return this.totalFaltantes;
+      case 'seguimiento': return this.seguimientos.length;
+      case 'archivos': return this.archivos.length;
+      default: return 0;
+    }
   }
 
   get esDescarte(): boolean {

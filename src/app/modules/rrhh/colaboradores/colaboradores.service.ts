@@ -4,7 +4,7 @@ import { environment } from 'environments/environment';
 import { Observable } from 'rxjs';
 import {
     Beneficiario, BitacoraItem, Catalogos, ColaboradorDetalle, ColaboradorGuardar, ColaboradorLista,
-    ColaboradorNomina, ColaboradorSalud, Contrato, ContratoGuardar, Parametro, ResultadoImportacion, UsuarioDisponible
+    ColaboradorNomina, ColaboradorSalud, Contrato, ContratoGuardar, GeocercaSucursal, GeocercaSucursalGuardar, Parametro, ResultadoImportacion, UsuarioDisponible
 } from './colaboradores.types';
 
 /** Acceso al API de RRHH ET1 (colaboradores, contratos, datos sensibles y parámetros). */
@@ -20,6 +20,15 @@ export class ColaboradoresService {
         if (filtros.sucursalId) params = params.set('sucursalId', filtros.sucursalId);
         if (filtros.buscar) params = params.set('buscar', filtros.buscar);
         return this._http.get<ColaboradorLista[]>(this._api, { params });
+    }
+
+    /** Geocerca de cada sucursal (punto de referencia y radio). */
+    geocercasSucursales(): Observable<GeocercaSucursal[]> {
+        return this._http.get<GeocercaSucursal[]>(`${this._api}/sucursales-geocerca`);
+    }
+
+    guardarGeocercaSucursal(id: number, dto: GeocercaSucursalGuardar): Observable<{ mensaje: string }> {
+        return this._http.put<{ mensaje: string }>(`${this._api}/sucursales/${id}/geocerca`, dto);
     }
 
     catalogos(): Observable<Catalogos> {

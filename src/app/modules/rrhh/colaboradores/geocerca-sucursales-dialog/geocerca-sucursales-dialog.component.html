@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>Geocerca de sucursales</h2>
+
+<mat-dialog-content class="!max-h-[70vh]">
+    <p class="text-secondary mb-4">
+        Punto de referencia y radio de cada sucursal. Los marcajes registran si quedaron dentro; no bloquean.
+        Sin coordenadas la sucursal no se revisa.
+    </p>
+
+    @for (s of sucursales; track s.sucursalId) {
+        <form [formGroup]="form.controls[s.sucursalId]" class="grid grid-cols-1 sm:grid-cols-4 gap-x-4 items-start mb-2 border-b pb-3">
+            <div class="sm:col-span-4 font-semibold">{{ s.nombre }}</div>
+            <mat-form-field appearance="outline">
+                <mat-label>Latitud</mat-label>
+                <input matInput type="number" step="0.0000001" formControlName="latitud">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Longitud</mat-label>
+                <input matInput type="number" step="0.0000001" formControlName="longitud">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Radio (m)</mat-label>
+                <input matInput type="number" min="10" max="5000" formControlName="radioMetros">
+            </mat-form-field>
+            <div class="flex items-center">
+                <button mat-flat-button color="primary" type="button" [disabled]="guardando" (click)="guardar(s)">Guardar</button>
+            </div>
+        </form>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>
