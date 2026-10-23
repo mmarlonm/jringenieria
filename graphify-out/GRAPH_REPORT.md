@@ -1,16 +1,16 @@
-# Graph Report - jringenieria  (2026-10-20)
+# Graph Report - jringenieria  (2026-10-23)
 
 ## Corpus Check
-- 666 files · ~1,571,147 words
+- 672 files · ~1,575,183 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6795 nodes · 13081 edges · 432 communities (244 shown, 188 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 63 edges (avg confidence: 0.77)
+- 6854 nodes · 13224 edges · 423 communities (236 shown, 187 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 65 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cf67337a`
+- Built from commit: `1b183dca`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -20,13 +20,13 @@
 - SolicitudCompraFormComponent
 - LeadsService
 - TaskListComponent
+- ProjectService
 - ChatNotificationService
-- environment.ts
 - TableroComprasComponent
 - PersonalManagementService
 - ControlEjecucionDialogComponent
 - QuoteListComponent
-- CierreTerminalFormDialogComponent
+- CierreTerminalService
 - GanttGeneralComponent
 - ExpensesListComponent
 - QuotesService
@@ -38,7 +38,7 @@
 - NotificationsComponent
 - SolicitudCompraService
 - reporte-respuestas.charts.ts
-- SileoWrapperComponent
+- react
 - TaskChatComponent
 - EscanearPaseComponent
 - SolicitudDetalleDialogComponent
@@ -50,8 +50,8 @@
 - TableroProyectosComponent
 - ReportVentasAgenteDashboardComponent
 - TimePickerComponent
-- .showError
-- UsersService
+- TransferManagementService
+- users-detail.component.ts
 - TareaActividadesGanttComponent
 - report-ventas/dashboard/dashboard.component.ts
 - ReportVentasProductDashboardComponent
@@ -64,7 +64,7 @@
 - UsersDetailsComponent
 - ProductsSatisfactionSurveyReportViewComponent
 - DetalleEntregaDialogComponent
-- SolicitudCompra
+- SolicitudCompraListComponent
 - ExpenseDetailsComponent
 - SurveysListComponent
 - SurveysListComponent
@@ -99,12 +99,12 @@
 - TaskSegmentationComponent
 - ActividadesComponent
 - GestionTalleresComponent
-- EventosPersonalComponent
+- CalendarioFlotanteComponent
 - ProjectsReportViewComponent
 - NotaSalidaDialogComponent
-- control-ejecucion-form.component.ts
+- ControlEjecucionActividadDialogComponent
 - SubcontratacionService
-- ReportExistenciasTablerosDashboardComponent
+- .getComponent
 - ReportProductExistenceDashboardComponent
 - SurveyProductosService
 - FuseMockApiService
@@ -121,9 +121,9 @@
 - FuseNavigationItem
 - ControlEntregasService
 - MaestroComponent
-- PurchaseReceptionDetailsDialogComponent
+- .showError
 - expenses-list.component.ts
-- ProspectListComponent
+- engineering.service.ts
 - SalesService
 - EngineeringSeguimientoTareasComponent
 - EventosDashboardComponent
@@ -146,7 +146,7 @@
 - RequerimientoCalificarDialogComponent
 - RoleNavigationComponent
 - CommonExcelExportService
-- ReportProductExistenceService
+- TaskViewConfigService
 - TraspasoModalComponent
 - ExpedienteComponent
 - styles
@@ -157,16 +157,15 @@
 - .mostrarAlerta
 - AnticipoDialogComponent
 - ExpensesExcelService
-- notificaciones-config.component.ts
+- environment.ts
 - RolService
-- fuse.provider.ts
+- FuseLoadingService
 - theming.js
 - ReportEntradaSalidaDashboardComponent
-- .onGet
 - RegistroEventoPublicoComponent
-- ClientsDetailsComponent
+- CampoConfig
 - EventosReportesComponent
-- colaborador-ficha.component.ts
+- ColaboradoresService
 - MapaEventoComponent
 - ScannerAgendaComponent
 - animations/public-api.ts
@@ -175,48 +174,48 @@
 - FormularioRegistroService
 - CarteleraTalleresComponent
 - ImportarMaterialesDialogComponent
-- TaskService
+- TareaActividad
 - ResizeColumnDirective
-- eventos.service.ts
-- SignalRService
+- Actividad
+- mapa-evento.models.ts
 - FuseVerticalNavigationAsideItemComponent
 - angular.json
-- TaskViewConfigService
+- fuse.provider.ts
 - configurador-registro.component.ts
 - NotesDetailsComponent
 - NotesDetailsComponent
-- organigrama.utils.ts
+- ColaboradoresListaComponent
 - RolesListComponent
-- report-existencias-tableros/dashboard/dashboard.component.ts
+- QuotesService
 - RequerimientosComponent
-- calendario-permisos.component.ts
+- CalendarioPermisosComponent
 - Fuse - Admin template and Starter project for Angular
-- AuthMockApi
+- FuseUtilsService
 - ColaboradorFichaComponent
 - PermisosEspecialesComponent
 - RequerimientosService
-- auth.service.ts
+- mock-api.service.ts
 - neural-graph.component.ts
 - UserTrackerService
 - mensajeError
 - build-graphify-3d.js
 - NeuralGraphService
 - requerimiento-calificar-dialog.component.ts
-- AgendaPersonalComponent
+- CierreTerminalFormDialogComponent
 - GestionEventosComponent
 - fuseAnimations
 - TareasCalendarComponent
 - FuseHighlightComponent
-- NeumorphicProgressComponent
+- organigrama.utils.ts
 - PersonalConfigDialogComponent
 - tailwind.config.js
-- .getUsers
+- Task
 - respuestas-formulario-dialog.component.ts
 - Documentos de requisiciones — Diseño
 - Permisos especiales (Seguridad) — Diseño
 - SalesListComponent
 - TicketsDetailComponent
-- DashboardEncuestasComponent
+- EncuestasEventoService
 - chat/api.ts
 - mailbox/api.ts
 - scrumboard/api.ts
@@ -229,50 +228,46 @@
 - FuseCardComponent
 - TicketsService
 - aprobaciones.component.ts
-- FuseVerticalNavigationGroupItemComponent
+- ImportarCronogramaDialogComponent
 - app.config.ts
 - SystemNeuralGraphComponent
 - inventory/api.ts
 - NotificacionesConfigComponent
-- FuseHorizontalNavigationDividerItemComponent
-- FuseVerticalNavigationBasicItemComponent
+- Requerimiento
+- FuseSplashScreenService
 - Archivos
-- FuseVerticalNavigationSpacerItemComponent
+- file-manager/api.ts
 - ReporteDetalleComprasComponent
-- MisSolicitudesComponent
-- FormularioRegistroAdminDto
+- mis-solicitudes.component.ts
+- .updateTour
 - TicketsFormComponent
 - RequerimientoDialogComponent
-- roles.service.ts
-- ConfigurarApartadosDialogComponent
+- SolicitudDialogComponent
+- OnlyOfficeEditorComponent
 - help-center/api.ts
 - neural-graph.service.ts
-- notes/api.ts
-- .onPost
 - lib/mock-api/index.ts
-- ModalReunionesB2B
-- tasks/api.ts
-- SendSurveyComponent
-- analytics/api.ts
-- crypto/api.ts
 - app/mock-api/index.ts
+- ModalReunionesB2B
+- TimeAgoPipe
+- crypto/api.ts
+- finance/api.ts
 - project/api.ts
 - activities/api.ts
 - ActivitySignalRService
 - roles-permisos.utils.ts
-- notifications/api.ts
 - Archivos
-- EncuestasEventoService
-- AddProductDialogComponent
-- ModalApartarStand
+- analyze_schedule.js
+- @angular/common
+- @angular/core
 - FuseScrollResetDirective
 - ServerStatusService
 - generate-contrasts.js
 - generate-palette.js
-- EncuestaStaffDialogComponent
-- DashboardDetalleDialogComponent
+- @angular/platform-browser
+- apexcharts
 - build
-- quotes-products/list/quotes-list.component.ts
+- css-star-rating
 - tickets.routes.ts
 - icons/api.ts
 - ClientsComponent
@@ -288,8 +283,9 @@
 - TasksComponent
 - TransferManagementComponent
 - ExampleComponent
-- EncuestaAsistenteDialogComponent
-- EncuestaPublicaComponent
+- date-fns
+- ng-pick-datetime
+- snapsvg
 - scripts
 - LandingHomeComponent
 - LoginLogsComponent
@@ -309,14 +305,12 @@
 - SurveyComponent
 - EmptyLayoutComponent
 - ResumenComponent
-- EventoDialogComponent
+- @angular/cli
 - RadialNode
 - AusenciasService
 - ReportVentasService
-- CapturaDialogComponent
-- control.component.ts
+- colaborador-ficha.component.ts
 - RegistroStaffComponent
-- ParametrosComponent
 - production
 - academy/api.ts
 - analyze_hierarchy.js
@@ -326,25 +320,18 @@
 - check-generic-template.js
 - analyze_colors.js
 - @angular/animations
-- @angular/compiler
 - fuse-version.ts
 - dependencies
-- @angular/router
-- file-saver
 - jasmine-core
-- @angular/forms
 - @angular/material
 - @angular-material-components/datetime-picker
 - @angular-material-components/moment-adapter
 - @angular/material-luxon-adapter
 - @angular/material-moment-adapter
-- ngx-extended-pdf-viewer
 - @angular/platform-browser-dynamic
 - angular-resizable-element
-- tui-calendar
 - angular-star-rating
 - angularx-flatpickr
-- zone.js
 - autoprefixer
 - chroma-js
 - CLAUDE.md
@@ -384,7 +371,6 @@
 - sweetalert2
 - three
 - tslib
-- analyze_cols.js
 - tui-date-picker
 - tui-time-picker
 - @types/three
@@ -406,7 +392,6 @@
 - @types/react
 - @angular/cdk
 - typescript
-- @angular-devkit/build-angular
 - frappe-gantt
 - highcharts-angular
 - ng-apexcharts
@@ -419,84 +404,84 @@
 - icon-size.js
 - utilities.js
 - report-expenses/dashboard/dashboard.component.ts
-- ReportPortfolioOverdueService
+- report-portfolio-overdue/dashboard/dashboard.component.ts
 
 ## God Nodes (most connected - your core abstractions)
 1. `ConfiguradorRegistroComponent` - 129 edges
 2. `ControlEjecucionFormComponent` - 126 edges
-3. `environment` - 87 edges
+3. `environment` - 88 edges
 4. `ChatNotificationService` - 85 edges
 5. `TaskListComponent` - 82 edges
 6. `EngineeringService` - 77 edges
 7. `ProjectDetailsComponent` - 76 edges
 8. `UsersService` - 72 edges
 9. `EventosService` - 71 edges
-10. `SolicitudCompraFormComponent` - 68 edges
+10. `SolicitudCompraFormComponent` - 64 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `GrupoFormularios` --references--> `FormularioRegistroAdminDto`  [EXTRACTED]
+  src/app/modules/admin/eventos/reporte-respuestas/reporte-respuestas.component.ts → src/app/modules/admin/eventos/configurador-registro/formulario-registro.service.ts
 - `FilaColaborador` --inherits--> `ColaboradorLista`  [EXTRACTED]
   src/app/modules/rrhh/colaboradores/organigrama.utils.ts → src/app/modules/rrhh/colaboradores/colaboradores.types.ts
-- `Grupo` --references--> `ExpedienteRenglon`  [EXTRACTED]
-  src/app/modules/rrhh/expediente/expediente.component.ts → src/app/modules/rrhh/expediente/expediente.types.ts
+- `FuseAlertComponent` --references--> `FuseAlertAppearance`  [EXTRACTED]
+  src/@fuse/components/alert/alert.component.ts → src/@fuse/components/alert/alert.types.ts
 - `AuthResetPasswordComponent` --references--> `FuseAlertType`  [EXTRACTED]
   src/app/modules/auth/reset-password/reset-password.component.ts → src/@fuse/components/alert/alert.types.ts
-- `AuthSignInComponent` --references--> `FuseAlertType`  [EXTRACTED]
-  src/app/modules/auth/sign-in/sign-in.component.ts → src/@fuse/components/alert/alert.types.ts
-- `AuthUnlockSessionComponent` --references--> `FuseAlertType`  [EXTRACTED]
-  src/app/modules/auth/unlock-session/unlock-session.component.ts → src/@fuse/components/alert/alert.types.ts
+- `ClassyLayoutComponent` --references--> `TareasCalendarComponent`  [EXTRACTED]
+  src/app/layout/layouts/vertical/classy/classy.component.ts → src/@fuse/components/calendar/calendar.component.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (432 total, 188 thin omitted)
+## Communities (423 total, 187 thin omitted)
 
 ### Community 0 - "ControlEjecucionFormComponent"
 Cohesion: 0.03
-Nodes (4): ControlEjecucionFormComponent, Component, ViewChild, SeguimientoMaterial
+Nodes (6): ControlEjecucionFormComponent, Component, ViewChild, SeguimientoEjecucionActividadMaestra, SeguimientoEjecucionSubactividad, SeguimientoMaterial
 
 ### Community 1 - "ProjectDetailsComponent"
-Cohesion: 0.07
+Cohesion: 0.11
 Nodes (4): ProjectDetailsComponent, Component, ViewChild, ViewChildren
 
 ### Community 2 - "SolicitudCompraFormComponent"
-Cohesion: 0.05
-Nodes (3): SolicitudCompraFormComponent, Component, opcionesDe()
+Cohesion: 0.06
+Nodes (3): SolicitudCompraFormComponent, Component, ContpaqiMaterialDto
 
 ### Community 3 - "LeadsService"
 Cohesion: 0.05
 Nodes (18): LeadDialogComponent, Component, Inject, LeadSeguimientoDialogComponent, Component, Inject, LeadsComponent, Component (+10 more)
 
 ### Community 4 - "TaskListComponent"
-Cohesion: 0.04
-Nodes (5): GroupedTasks, TaskListComponent, Component, ViewChild, Task
+Cohesion: 0.07
+Nodes (3): TaskListComponent, Component, ViewChild
 
-### Community 5 - "ChatNotificationService"
-Cohesion: 0.04
-Nodes (26): Inject, ClientsService, Injectable, StarRatingBridgeModule, NgModule, ProjectService, Injectable, CUSTOM_DATE_FORMATS (+18 more)
-
-### Community 6 - "environment.ts"
+### Community 5 - "ProjectService"
 Cohesion: 0.06
-Nodes (16): MovimientoRealTime, Injectable, UserService, User, RUTAS_RRHH, TareaComentario, TaskViewConfig, ProfileComponent (+8 more)
+Nodes (17): ClientsService, Injectable, ClientsDetailsComponent, Component, StarRatingBridgeModule, NgModule, ProjectService, Injectable (+9 more)
+
+### Community 6 - "ChatNotificationService"
+Cohesion: 0.04
+Nodes (29): Optional, Injectable, UserService, User, Inject, Inject, Inject, PurchaseReceptionService (+21 more)
 
 ### Community 7 - "TableroComprasComponent"
-Cohesion: 0.07
-Nodes (6): esPagadaSinDocumentos(), estadoTipo(), tipoIncompleto(), TableroComprasComponent, Component, ViewChild
+Cohesion: 0.06
+Nodes (7): esPagadaSinDocumentos(), estadoTipo(), tipoIncompleto(), SolicitudCompra, TableroComprasComponent, Component, ViewChild
 
 ### Community 8 - "PersonalManagementService"
 Cohesion: 0.11
 Nodes (4): PersonalManagementDashboardComponent, Component, PersonalManagementService, Injectable
 
 ### Community 9 - "ControlEjecucionDialogComponent"
-Cohesion: 0.07
-Nodes (7): ControlEjecucionDialogComponent, Component, Inject, SeguimientoEjecucion, SeguimientoArchivosDialogComponent, Component, Inject
+Cohesion: 0.08
+Nodes (5): ControlEjecucionDialogComponent, Component, SeguimientoArchivosDialogComponent, Component, Inject
 
 ### Community 10 - "QuoteListComponent"
-Cohesion: 0.06
-Nodes (8): HistorialComponent, Component, Inject, QuoteListComponent, Component, ViewChild, QuotesService, Injectable
+Cohesion: 0.10
+Nodes (6): HistorialComponent, Component, Inject, QuoteListComponent, Component, ViewChild
 
-### Community 11 - "CierreTerminalFormDialogComponent"
-Cohesion: 0.06
-Nodes (14): CierreTerminalService, Injectable, CierreTerminal, CierreTerminalEvidencia, CierreTerminalResponse, FacturaContpaqi, CierreTerminalDetailComponent, Component (+6 more)
+### Community 11 - "CierreTerminalService"
+Cohesion: 0.08
+Nodes (12): CierreTerminalService, Injectable, CierreTerminal, CierreTerminalEvidencia, CierreTerminalResponse, FacturaContpaqi, CierreTerminalDetailComponent, Component (+4 more)
 
 ### Community 12 - "GanttGeneralComponent"
 Cohesion: 0.07
@@ -506,9 +491,9 @@ Nodes (3): GanttGeneralComponent, Component, ViewChild
 Cohesion: 0.08
 Nodes (3): ExpensesListComponent, Component, ViewChild
 
-### Community 15 - "MapaEventoService"
+### Community 14 - "QuotesService"
 Cohesion: 0.10
-Nodes (4): MapaEventoService, Injectable, wx(), wz()
+Nodes (4): AddProductDialogComponent, Component, QuotesService, Injectable
 
 ### Community 16 - "ReportCustomersDashboardComponent"
 Cohesion: 0.06
@@ -524,19 +509,15 @@ Nodes (7): ProductsDetailsComponent, Component, ProductsListComponent, Component
 
 ### Community 20 - "NotificationsComponent"
 Cohesion: 0.08
-Nodes (8): NotificationsComponent, Component, ViewChild, NotificationsService, Injectable, Notification, NotificacionesChatService, Injectable
+Nodes (10): NotificationsComponent, Component, ViewChild, NotificationsService, RUTAS_RRHH, Injectable, Notification, NotificacionEnVivo (+2 more)
 
 ### Community 21 - "SolicitudCompraService"
-Cohesion: 0.10
-Nodes (15): ExchangeRateService, Injectable, filtrarProveedores(), ProveedorFiltrable, AnticipoDto, CatEstatusCompra, HistorialEstatusDto, ProductoBuscadorDto (+7 more)
+Cohesion: 0.08
+Nodes (16): ExchangeRateService, Injectable, AnticipoDto, CatEstatusCompra, HistorialEstatusDto, ProductoBuscadorDto, ProveedorDto, SolicitudCompraCreateDto (+8 more)
 
 ### Community 22 - "reporte-respuestas.charts.ts"
-Cohesion: 0.06
-Nodes (35): PreguntaReporteComponent, Component, Input, BASE_THEME, colorDeNivel(), ETIQUETA_DATO, ETIQUETA_EJE, ETIQUETA_VALOR (+27 more)
-
-### Community 23 - "SileoWrapperComponent"
-Cohesion: 0.29
-Nodes (4): react, react, SileoWrapperComponent, Component
+Cohesion: 0.05
+Nodes (36): PreguntaReporteComponent, Component, Input, BASE_THEME, colorDeNivel(), ETIQUETA_DATO, ETIQUETA_EJE, ETIQUETA_VALOR (+28 more)
 
 ### Community 24 - "TaskChatComponent"
 Cohesion: 0.11
@@ -547,20 +528,24 @@ Cohesion: 0.08
 Nodes (3): SolicitudDetalleDialogComponent, Component, Inject
 
 ### Community 28 - "FuseHorizontalNavigationComponent"
-Cohesion: 0.08
-Nodes (13): FuseHorizontalNavigationBasicItemComponent, Component, Input, FuseHorizontalNavigationBranchItemComponent, Component, Input, ViewChild, FuseHorizontalNavigationSpacerItemComponent (+5 more)
+Cohesion: 0.06
+Nodes (16): FuseHorizontalNavigationBasicItemComponent, Component, Input, FuseHorizontalNavigationBranchItemComponent, Component, Input, ViewChild, FuseHorizontalNavigationDividerItemComponent (+8 more)
+
+### Community 29 - "ProspectDetailsComponent"
+Cohesion: 0.06
+Nodes (7): ProspectDetailsComponent, Component, ProspectListComponent, Component, ViewChild, ProspectosService, Injectable
 
 ### Community 30 - "Expense"
 Cohesion: 0.24
 Nodes (3): Expense, ReportExpensesDashboardComponent, Component
 
 ### Community 31 - "QuoteListComponent"
-Cohesion: 0.11
-Nodes (3): QuoteListComponent, Component, ViewChild
+Cohesion: 0.06
+Nodes (10): HistorialComponent, Component, Inject, QuoteListComponent, Component, ViewChild, SendSurveyComponent, SendSurveyDialogData (+2 more)
 
 ### Community 32 - "TableroProyectosComponent"
-Cohesion: 0.07
-Nodes (7): SeguimientoProyecto, SeguimientoGanttDialogComponent, Component, Inject, TableroProyectosComponent, Component, ViewChild
+Cohesion: 0.10
+Nodes (5): SeguimientoProyecto, Inject, TableroProyectosComponent, Component, ViewChild
 
 ### Community 33 - "ReportVentasAgenteDashboardComponent"
 Cohesion: 0.13
@@ -570,12 +555,16 @@ Nodes (6): ReportVentasAgenteDashboardComponent, spanishLang, Component, Agente,
 Cohesion: 0.10
 Nodes (5): TimePickerComponent, Component, HostListener, Input, ViewChild
 
-### Community 37 - "UsersService"
-Cohesion: 0.05
-Nodes (17): Inject, Inject, PurchaseReceptionService, Injectable, ImagePreviewDialogComponent, Component, Inject, Component (+9 more)
+### Community 35 - "TransferManagementService"
+Cohesion: 0.07
+Nodes (8): GestionarTraspasoModalComponent, Component, Inject, TransferManagementService, Injectable, TraspasoTimelineModalComponent, Component, Inject
+
+### Community 37 - "users-detail.component.ts"
+Cohesion: 0.09
+Nodes (8): Component, Inject, ViewChild, UsersListComponent, Component, UsersComponent, FuseFindByKeyPipe, Pipe
 
 ### Community 38 - "TareaActividadesGanttComponent"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (4): TareaActividadesGanttComponent, Component, Input, ViewChild
 
 ### Community 39 - "report-ventas/dashboard/dashboard.component.ts"
@@ -591,12 +580,16 @@ Cohesion: 0.12
 Nodes (6): MessagesComponent, Component, ViewChild, MessagesService, Injectable, Message
 
 ### Community 42 - "ShortcutsComponent"
-Cohesion: 0.12
-Nodes (6): ShortcutsComponent, Component, ViewChild, ShortcutsService, Injectable, Shortcut
+Cohesion: 0.09
+Nodes (10): initialDataResolver(), appRoutes, AuthGuard(), NoAuthGuard(), ShortcutsComponent, Component, ViewChild, ShortcutsService (+2 more)
 
 ### Community 45 - "ProjectListComponent"
-Cohesion: 0.07
-Nodes (6): ProjectListComponent, Component, ViewChild, SendSurveyDialogComponent, Component, Inject
+Cohesion: 0.06
+Nodes (9): HistorialComponent, Component, Inject, ProjectListComponent, Component, ViewChild, SendSurveyDialogComponent, Component (+1 more)
+
+### Community 46 - "EngineeringService"
+Cohesion: 0.06
+Nodes (5): ConfigurarApartadosDialogComponent, Component, Inject, EngineeringService, Injectable
 
 ### Community 47 - "UsersDetailsComponent"
 Cohesion: 0.11
@@ -609,10 +602,6 @@ Nodes (7): ProductSatisfactionReportFilter, ProductSatisfactionReport, ProductSa
 ### Community 49 - "DetalleEntregaDialogComponent"
 Cohesion: 0.16
 Nodes (3): DetalleEntregaDialogComponent, Component, MaterialEntregaDto
-
-### Community 50 - "SolicitudCompra"
-Cohesion: 0.11
-Nodes (3): SolicitudCompraListComponent, Component, SolicitudCompra
 
 ### Community 51 - "ExpenseDetailsComponent"
 Cohesion: 0.10
@@ -627,8 +616,8 @@ Cohesion: 0.12
 Nodes (8): SurveysListComponent, Component, ViewChild, SurveysComponent, Component, Inject, SurveysProductsService, Injectable
 
 ### Community 54 - "DashboardProyectosComponent"
-Cohesion: 0.12
-Nodes (3): DashboardProyectosComponent, Component, ViewChild
+Cohesion: 0.08
+Nodes (6): DashboardProyectosComponent, Component, ViewChild, DashboardDetalleDialogComponent, Component, Inject
 
 ### Community 56 - "FuseScrollbarDirective"
 Cohesion: 0.09
@@ -643,12 +632,12 @@ Cohesion: 0.15
 Nodes (3): ClassyLayoutComponent, Component, ViewChild
 
 ### Community 59 - "CuestionarioComponent"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (3): CuestionarioComponent, Component, ViewChild
 
 ### Community 60 - "ExpedienteService"
-Cohesion: 0.06
-Nodes (21): Grupo, ExpedienteService, Injectable, EstatusRenglon, Expediente, ExpedienteLista, ExpedienteTipo, MensajeApi (+13 more)
+Cohesion: 0.09
+Nodes (14): ExpedienteService, Injectable, EstatusRenglon, Expediente, ExpedienteLista, ExpedienteTipo, MensajeApi, ExpedientesDetalleComponent (+6 more)
 
 ### Community 61 - "ProjectSatisfactionSurveyReportViewComponent"
 Cohesion: 0.15
@@ -667,35 +656,35 @@ Cohesion: 0.14
 Nodes (3): AnalyticsComponent, Component, ViewChild
 
 ### Community 66 - "PurchaseReceptionComponent"
-Cohesion: 0.14
+Cohesion: 0.15
 Nodes (3): PurchaseReceptionComponent, Component, ViewChild
 
 ### Community 69 - "ConfiguradorRegistroComponent"
-Cohesion: 0.05
-Nodes (3): ConfiguradorRegistroComponent, Component, CampoConfig
+Cohesion: 0.04
+Nodes (3): ConfiguradorRegistroComponent, Component, FormularioRegistroAdminDto
+
+### Community 70 - "EventosControlComponent"
+Cohesion: 0.15
+Nodes (3): EventosControlComponent, Component, Asistente
 
 ### Community 71 - "PersonalStaffService"
-Cohesion: 0.12
-Nodes (4): FichaPersonalComponent, Component, PersonalStaffService, Injectable
-
-### Community 72 - "ReportPortfolioOverdueDashboardComponent"
-Cohesion: 0.16
-Nodes (4): CarteraVencidaDto, ReportPortfolioOverdueDashboardComponent, spanishLang, Component
+Cohesion: 0.08
+Nodes (7): FichaPersonalComponent, Component, EventosPersonalComponent, Component, PersonalStaff, PersonalStaffService, Injectable
 
 ### Community 73 - "highcharts"
 Cohesion: 0.22
 Nodes (4): highcharts, highcharts, ResumenComprasComponent, Component
 
 ### Community 74 - "QuickChatComponent"
-Cohesion: 0.05
-Nodes (15): ChatIaService, Injectable, NewChatComponent, Component, Inject, QuickChatComponent, Component, HostBinding (+7 more)
+Cohesion: 0.07
+Nodes (13): NewChatComponent, Component, Inject, QuickChatComponent, Component, HostBinding, HostListener, Inject (+5 more)
 
 ### Community 75 - "ClientsListComponent"
-Cohesion: 0.16
+Cohesion: 0.15
 Nodes (3): ClientsListComponent, Component, ViewChild
 
 ### Community 76 - "personal-staff.component.ts"
-Cohesion: 0.13
+Cohesion: 0.15
 Nodes (6): PersonalStaffDialogComponent, Component, Inject, QrPreviewDialogComponent, Component, Inject
 
 ### Community 77 - "development"
@@ -719,35 +708,35 @@ Cohesion: 0.18
 Nodes (3): TaskSegmentationComponent, Component, ViewChild
 
 ### Community 83 - "ActividadesComponent"
-Cohesion: 0.10
-Nodes (8): ActividadesComponent, Component, ActividadesService, ActividadStaff, Injectable, ActividadFormDialogComponent, Component, Inject
+Cohesion: 0.08
+Nodes (10): ActividadesComponent, Component, ActividadesService, ActividadStaff, Injectable, ActividadFormDialogComponent, Component, Inject (+2 more)
 
-### Community 85 - "EventosPersonalComponent"
-Cohesion: 0.19
-Nodes (3): EventosPersonalComponent, Component, PersonalStaff
+### Community 85 - "CalendarioFlotanteComponent"
+Cohesion: 0.09
+Nodes (17): CalendarioComponent, DiaSemana, Component, CalendarioFlotanteComponent, Component, HostListener, CalendarioGoogle, CalendarioService (+9 more)
 
 ### Community 86 - "ProjectsReportViewComponent"
-Cohesion: 0.16
+Cohesion: 0.15
 Nodes (5): ProjectProgressService, Injectable, ProjectsReportViewComponent, spanishLang, Component
 
 ### Community 87 - "NotaSalidaDialogComponent"
 Cohesion: 0.06
 Nodes (15): ComparativoSalidaDialogComponent, Component, Inject, MaterialAlmacenDto, RegistrarEntregaSalidaDto, SolicitudSalidaAlmacen, SolicitudSalidaAlmacenCreateDto, SolicitudSalidaAlmacenDetalle (+7 more)
 
-### Community 88 - "control-ejecucion-form.component.ts"
-Cohesion: 0.07
-Nodes (14): file-saver, ControlEjecucionActividadDialogComponent, Component, Inject, ImportarCronogramaDialogComponent, Component, Inject, GuardarSeguimientoMaterial (+6 more)
+### Community 88 - "ControlEjecucionActividadDialogComponent"
+Cohesion: 0.14
+Nodes (3): ControlEjecucionActividadDialogComponent, Component, Inject
 
 ### Community 89 - "SubcontratacionService"
 Cohesion: 0.13
 Nodes (7): ActividadMiembro, SubcontratacionService, SubcontratistaEmpresa, SubcontratistaPersonal, Injectable, SubcontratacionComponent, Component
 
-### Community 90 - "ReportExistenciasTablerosDashboardComponent"
-Cohesion: 0.19
-Nodes (3): ReportExistenciasTablerosDashboardComponent, Component, ViewChild
+### Community 90 - ".getComponent"
+Cohesion: 0.04
+Nodes (14): CenteredLayoutComponent, Component, MaterialLayoutComponent, Component, ClassicLayoutComponent, Component, CompactLayoutComponent, Component (+6 more)
 
 ### Community 91 - "ReportProductExistenceDashboardComponent"
-Cohesion: 0.18
+Cohesion: 0.16
 Nodes (3): ReportProductExistenceDashboardComponent, Component, ViewChild
 
 ### Community 92 - "SurveyProductosService"
@@ -755,8 +744,8 @@ Cohesion: 0.15
 Nodes (6): DetailComponent, Component, EncuestaProductosDTO, ResponseDTO, SurveyProductosService, Injectable
 
 ### Community 93 - "FuseMockApiService"
-Cohesion: 0.19
-Nodes (6): FUSE_MOCK_API_DEFAULT_DELAY, FuseMockApiHandler, FuseMockApiService, Injectable, FuseMockApiMethods, FuseMockApiReplyCallback
+Cohesion: 0.09
+Nodes (19): ContactsMockApi, Injectable, ECommerceInventoryMockApi, Injectable, MailboxMockApi, Injectable, NotesMockApi, Injectable (+11 more)
 
 ### Community 94 - "ControlEntregasComponent"
 Cohesion: 0.22
@@ -776,39 +765,39 @@ Nodes (6): DetailComponent, Component, EncuestaDTO, ResponseDTO, SurveyService, 
 
 ### Community 101 - "devDependencies"
 Cohesion: 0.13
-Nodes (15): @angular/compiler-cli, devDependencies, @angular/cli, @angular/compiler-cli, @types/chroma-js, @types/frappe-gantt, @types/jasmine, @types/react-dom (+7 more)
+Nodes (15): @angular/compiler-cli, @angular-devkit/build-angular, devDependencies, @angular/compiler-cli, @angular-devkit/build-angular, @types/chroma-js, @types/frappe-gantt, @types/jasmine (+7 more)
 
 ### Community 102 - "AppComponent"
 Cohesion: 0.21
 Nodes (3): AppComponent, Component, HostListener
 
 ### Community 104 - "FuseNavigationItem"
-Cohesion: 0.15
-Nodes (11): FuseNavigationService, Injectable, FuseNavigationItem, FuseVerticalNavigationAppearance, FuseVerticalNavigationMode, FuseVerticalNavigationPosition, FuseVerticalNavigationDividerItemComponent, Component (+3 more)
+Cohesion: 0.10
+Nodes (18): FuseNavigationService, Injectable, FuseNavigationItem, FuseVerticalNavigationAppearance, FuseVerticalNavigationMode, FuseVerticalNavigationPosition, FuseVerticalNavigationBasicItemComponent, Component (+10 more)
 
 ### Community 105 - "ControlEntregasService"
 Cohesion: 0.14
 Nodes (3): ControlEntregasService, Injectable, Inject
 
 ### Community 106 - "MaestroComponent"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (3): MaestroComponent, Component, ViewChild
 
 ### Community 108 - "expenses-list.component.ts"
 Cohesion: 0.29
 Nodes (5): GastoArchivoViewerModalComponent, Component, Inject, ExpenseCatalogs, GastoSubtipo
 
-### Community 109 - "ProspectListComponent"
-Cohesion: 0.19
-Nodes (3): ProspectListComponent, Component, ViewChild
+### Community 109 - "engineering.service.ts"
+Cohesion: 0.10
+Nodes (11): GuardarSeguimientoMaterial, MaterialDetalleCompra, MaterialDetalleSalida, ResumenTrazabilidadProyecto, SalidaAlmacen, Solicitante, SolicitanteDialogComponent, Component (+3 more)
 
 ### Community 110 - "SalesService"
-Cohesion: 0.15
+Cohesion: 0.13
 Nodes (4): SalesDetailsComponent, Component, SalesService, Injectable
 
 ### Community 113 - "EventosDashboardComponent"
-Cohesion: 0.10
-Nodes (4): EventosDashboardComponent, Component, ViewChild, DispositivoEscanerDto
+Cohesion: 0.07
+Nodes (12): EventosDashboardComponent, Component, ViewChild, NOTE: Do NOT call loadEventos() here — that re-emits ediciones$ causing Angular, AccesoTallerResultDto, ActividadMetricsDto, DashboardMetricasDto, DispositivoEscanerDto (+4 more)
 
 ### Community 114 - "LoginTableComponent"
 Cohesion: 0.19
@@ -839,16 +828,16 @@ Cohesion: 0.29
 Nodes (6): author, description, license, name, private, version
 
 ### Community 122 - "classy.component.ts"
-Cohesion: 0.05
-Nodes (35): NavigationService, Injectable, Navigation, ChatIaContext, LanguagesComponent, Component, Component, Input (+27 more)
+Cohesion: 0.09
+Nodes (21): NavigationService, Injectable, Navigation, ChatIaContext, LanguagesComponent, Component, Component, Input (+13 more)
 
 ### Community 123 - "PermisosEspecialesService"
 Cohesion: 0.19
 Nodes (10): PermisosEspecialesService, Injectable, ActualizarPermisoEspecial, AsignacionPermiso, GrupoPermisos, PermisoDeUsuario, PermisoEspecial, agruparPorModulo() (+2 more)
 
 ### Community 124 - "FuseMockApiUtils"
-Cohesion: 0.16
-Nodes (8): MessagesMockApi, Injectable, messages, now, ShortcutsMockApi, Injectable, shortcuts, FuseMockApiUtils
+Cohesion: 0.15
+Nodes (9): MessagesMockApi, Injectable, messages, now, NotificationsMockApi, Injectable, notifications, now (+1 more)
 
 ### Community 126 - "ExpenseFormComponent"
 Cohesion: 0.17
@@ -856,27 +845,27 @@ Nodes (3): ExpenseFormComponent, Component, Inject
 
 ### Community 127 - "project-details.component.ts"
 Cohesion: 0.11
-Nodes (9): AvanceDialogComponent, Component, Inject, HistorialComponent, Component, Inject, HistorialComponent, Component (+1 more)
+Nodes (9): AvanceDialogComponent, Component, Inject, HistorialComponent, Component, Inject, NeumorphicProgressComponent, Component (+1 more)
 
 ### Community 129 - "SeguimientoDialogComponent"
-Cohesion: 0.09
-Nodes (10): Solicitante, SolicitanteDialogComponent, Component, Inject, SolicitantesComponent, Component, ViewChild, SeguimientoDialogComponent (+2 more)
+Cohesion: 0.12
+Nodes (6): SolicitantesComponent, Component, ViewChild, SeguimientoDialogComponent, Component, Inject
 
 ### Community 131 - "RoleNavigationComponent"
-Cohesion: 0.14
-Nodes (7): RoleNavigationComponent, Component, Input, Output, ModuloRol, resumenModulo(), seleccionarModulo()
+Cohesion: 0.15
+Nodes (6): RoleNavigationComponent, Component, Input, Output, ModuloRol, resumenModulo()
 
 ### Community 132 - "CommonExcelExportService"
-Cohesion: 0.12
-Nodes (7): ProductKardexComponent, Component, KardexProducto, ProductKardexService, Injectable, CommonExcelExportService, Injectable
+Cohesion: 0.06
+Nodes (18): ProductKardexComponent, Component, KardexProducto, ProductKardexService, Injectable, ReportExistenciasTablerosDashboardComponent, Component, ViewChild (+10 more)
 
-### Community 133 - "ReportProductExistenceService"
+### Community 134 - "TraspasoModalComponent"
 Cohesion: 0.18
-Nodes (6): ExistenciaSucursalDto, ReportProductExistenceService, TraspasoDetalleDto, TraspasoDto, Injectable, Inject
+Nodes (3): TraspasoModalComponent, Component, Inject
 
 ### Community 135 - "ExpedienteComponent"
-Cohesion: 0.11
-Nodes (8): ExpedienteComponent, Component, Input, ViewChild, ExpedienteDocumento, ExpedienteRenglon, MiExpedientePaginaComponent, Component
+Cohesion: 0.08
+Nodes (15): ExpedienteComponent, Grupo, Component, Input, ViewChild, ExpedienteDocumento, ExpedienteRenglon, MiExpedientePaginaComponent (+7 more)
 
 ### Community 136 - "styles"
 Cohesion: 0.13
@@ -887,8 +876,8 @@ Cohesion: 0.08
 Nodes (20): DocumentosRequisicionService, Injectable, ColorChip, DocumentacionRequisicion, DocumentoRequisicion, EstadoTipoDocumento, EstatusDocumento, ResumenDocumentacion (+12 more)
 
 ### Community 138 - "AuthService"
-Cohesion: 0.10
-Nodes (7): AuthService, Injectable, AuthSignOutComponent, Component, AuthUnlockSessionComponent, Component, ViewChild
+Cohesion: 0.06
+Nodes (12): authInterceptor(), AuthService, Injectable, AuthUtils, ModalApartarStand, Component, Inject, ModalPreguntasB2B (+4 more)
 
 ### Community 139 - "reset-password.component.ts"
 Cohesion: 0.17
@@ -896,19 +885,23 @@ Nodes (4): AuthResetPasswordComponent, Component, ViewChild, FuseValidators
 
 ### Community 140 - "identidad.data.ts"
 Cohesion: 0.08
-Nodes (28): aLienzo(), ANGULOS_DIRECCION, Area, AREAS, CategoriaArea, DATOS_AREAS, DatosArea, DIRECCION_GENERAL (+20 more)
+Nodes (27): aLienzo(), ANGULOS_DIRECCION, Area, AREAS, CategoriaArea, DATOS_AREAS, DatosArea, DIRECCION_GENERAL (+19 more)
 
 ### Community 142 - "AnticipoDialogComponent"
 Cohesion: 0.20
 Nodes (3): AnticipoDialogComponent, Component, Inject
 
-### Community 145 - "notificaciones-config.component.ts"
-Cohesion: 0.15
-Nodes (9): ConfigNotificacionDto, ConfigNotificacionService, ContextoDescripcionDto, GuardarConfigNotificacionDto, Injectable, UsuarioBasico, CtxNombrePipe, Pipe (+1 more)
+### Community 145 - "environment.ts"
+Cohesion: 0.08
+Nodes (12): MovimientoRealTime, LogNavegacionDto, ConfigNotificacionDto, ConfigNotificacionService, ContextoDescripcionDto, GuardarConfigNotificacionDto, Injectable, UsuarioBasico (+4 more)
 
-### Community 147 - "fuse.provider.ts"
-Cohesion: 0.06
-Nodes (13): FuseProviderConfig, provideFuse(), FUSE_CONFIG, FuseConfirmationService, Injectable, FuseConfirmationConfig, FuseConfirmationDialogComponent, Component (+5 more)
+### Community 146 - "RolService"
+Cohesion: 0.11
+Nodes (6): RolesComponent, Component, puedeSalirDelRol(), ResultadoAsignacionMasiva, RolService, Injectable
+
+### Community 147 - "FuseLoadingService"
+Cohesion: 0.13
+Nodes (3): fuseLoadingInterceptor(), FuseLoadingService, Injectable
 
 ### Community 148 - "theming.js"
 Cohesion: 0.18
@@ -918,10 +911,6 @@ Nodes (9): _, chroma, colors, fs, generateContrasts, jsonToSassMap, path, plugin
 Cohesion: 0.12
 Nodes (12): AsistenciaCorreccionDto, AsistenciaReporteDto, MarcajeAsistenciaDto, aHora(), CorregirAsistenciaDialogComponent, hhmm(), Component, ReportEntradaSalidaDashboardComponent (+4 more)
 
-### Community 150 - ".onGet"
-Cohesion: 0.13
-Nodes (10): AcademyMockApi, Injectable, ChatMockApi, Injectable, ECommerceInventoryMockApi, Injectable, MailboxMockApi, Injectable (+2 more)
-
 ### Community 152 - "RegistroEventoPublicoComponent"
 Cohesion: 0.09
 Nodes (3): PasoFormularioConfig, RegistroEventoPublicoComponent, Component
@@ -930,45 +919,45 @@ Nodes (3): PasoFormularioConfig, RegistroEventoPublicoComponent, Component
 Cohesion: 0.12
 Nodes (7): FichaInteraccionPayload, InteraccionHistorialItem, InteraccionPorDia, MetricasFichasEvento, RankingPersonalFicha, EventosReportesComponent, Component
 
-### Community 155 - "colaborador-ficha.component.ts"
-Cohesion: 0.09
-Nodes (26): FECHAS, NUMEROS, TEXTOS, TabHistorialComponent, Component, Input, ColaboradoresService, Injectable (+18 more)
+### Community 155 - "ColaboradoresService"
+Cohesion: 0.07
+Nodes (28): TabHistorialComponent, Component, Input, ColaboradoresService, Injectable, Beneficiario, BitacoraItem, CatalogoItem (+20 more)
 
 ### Community 156 - "MapaEventoComponent"
-Cohesion: 0.06
-Nodes (26): MapaEventoComponent, Component, ViewChild, ContactoB2B, DEFAULT_H, EmpresaInfo, PxRect, RAW (+18 more)
+Cohesion: 0.10
+Nodes (8): MapaEventoComponent, Component, ViewChild, StandConfig, STANDS_DATA, StandTipo, WorldBox, StandClickEvent
 
 ### Community 158 - "animations/public-api.ts"
 Cohesion: 0.14
 Nodes (24): FuseAnimationCurves, FuseAnimationDurations, expandCollapse, fadeIn, fadeInBottom, fadeInLeft, fadeInRight, fadeInTop (+16 more)
 
 ### Community 159 - "ControlEjecucionComponent"
-Cohesion: 0.11
-Nodes (3): ControlEjecucionComponent, Component, ViewChild
+Cohesion: 0.08
+Nodes (5): ControlEjecucionComponent, Component, ViewChild, Inject, SeguimientoEjecucion
 
 ### Community 160 - "allowedCommonJsDependencies"
-Cohesion: 0.21
-Nodes (10): allowedCommonJsDependencies, apexcharts, archiver, archiver-utils, crypto-js/enc-base64, crypto-js/enc-utf8, crypto-js/hmac-sha256, jszip (+2 more)
+Cohesion: 0.11
+Nodes (15): allowedCommonJsDependencies, apexcharts, archiver, archiver-utils, crypto-js/enc-base64, crypto-js/enc-utf8, crypto-js/hmac-sha256, file-saver (+7 more)
 
 ### Community 162 - "CarteleraTalleresComponent"
 Cohesion: 0.13
 Nodes (3): CarteleraTalleresComponent, Component, ViewChild
 
 ### Community 163 - "ImportarMaterialesDialogComponent"
-Cohesion: 0.19
-Nodes (4): ImportarMaterialesDialogComponent, Component, Inject, ContpaqiMaterialDto
+Cohesion: 0.20
+Nodes (3): ImportarMaterialesDialogComponent, Component, Inject
 
-### Community 164 - "TaskService"
-Cohesion: 0.06
-Nodes (10): Optional, TareaActividadDialogComponent, Component, Inject, TareaActividad, Inject, Inject, Inject (+2 more)
+### Community 164 - "TareaActividad"
+Cohesion: 0.17
+Nodes (4): TareaActividadDialogComponent, Component, Inject, TareaActividad
 
 ### Community 165 - "ResizeColumnDirective"
 Cohesion: 0.24
 Nodes (5): ResizeColumnDirective, Directive, HostListener, Input, Output
 
-### Community 166 - "eventos.service.ts"
-Cohesion: 0.18
-Nodes (7): NOTE: Do NOT call loadEventos() here — that re-emits ediciones$ causing Angular, AccesoTallerResultDto, Actividad, ActividadMetricsDto, Asistente, DashboardMetricasDto, EventoEdicion
+### Community 167 - "mapa-evento.models.ts"
+Cohesion: 0.13
+Nodes (15): ContactoB2B, DEFAULT_H, EmpresaInfo, PxRect, RAW, rectToWorld(), STAND_COLORS, StandRaw (+7 more)
 
 ### Community 168 - "FuseVerticalNavigationAsideItemComponent"
 Cohesion: 0.31
@@ -978,13 +967,13 @@ Nodes (3): FuseVerticalNavigationAsideItemComponent, Component, Input
 Cohesion: 0.22
 Nodes (8): enabled, analytics, cache, cli, newProjectRoot, projects, $schema, version
 
-### Community 170 - "TaskViewConfigService"
-Cohesion: 0.06
-Nodes (16): SettingsComponent, Component, Inject, TaskViewConfigService, Injectable, TaskService, Injectable, FuseConfigService (+8 more)
+### Community 170 - "fuse.provider.ts"
+Cohesion: 0.05
+Nodes (19): ChatIaService, Injectable, SettingsComponent, Component, Inject, TaskService, Injectable, FuseProviderConfig (+11 more)
 
 ### Community 171 - "configurador-registro.component.ts"
-Cohesion: 0.19
-Nodes (11): combinarResultados(), dividirEnLotes(), DestinatarioItemEnvioDto, DisenoConfig, EnvioMasivoFalloDto, EnvioMasivoFormularioRequestDto, EnvioMasivoResultadoDto, FormularioEnvioHistorialDto (+3 more)
+Cohesion: 0.18
+Nodes (12): combinarResultados(), dividirEnLotes(), DestinatarioItemEnvioDto, DisenoConfig, EnvioMasivoFalloDto, EnvioMasivoFormularioRequestDto, EnvioMasivoResultadoDto, FormularioEnvioHistorialDto (+4 more)
 
 ### Community 172 - "NotesDetailsComponent"
 Cohesion: 0.22
@@ -994,49 +983,45 @@ Nodes (3): NotesDetailsComponent, Component, Inject
 Cohesion: 0.22
 Nodes (3): NotesDetailsComponent, Component, Inject
 
-### Community 174 - "organigrama.utils.ts"
-Cohesion: 0.09
-Nodes (18): ColaboradoresListaComponent, Component, EstatusContrato, ImportarUsuariosDialogComponent, Component, agruparSegunOrganigrama(), aplanarGrupos(), categoriaDelArea() (+10 more)
+### Community 174 - "ColaboradoresListaComponent"
+Cohesion: 0.14
+Nodes (5): ColaboradoresListaComponent, Component, EstatusContrato, aplanarGrupos(), FilaLista
 
 ### Community 175 - "RolesListComponent"
 Cohesion: 0.19
 Nodes (3): RolesListComponent, Component, Inject
 
-### Community 176 - "report-existencias-tableros/dashboard/dashboard.component.ts"
-Cohesion: 0.24
-Nodes (3): ExistenciasTablerosDto, ReportExistenciasTablerosService, Injectable
-
-### Community 177 - "RequerimientosComponent"
-Cohesion: 0.21
-Nodes (3): RequerimientosComponent, Component, Requerimiento
-
-### Community 178 - "calendario-permisos.component.ts"
-Cohesion: 0.16
-Nodes (7): TipoCalendario, CalendarioPermisosComponent, DiaColumna, EventoCalendario, FilaColaborador, Component, CatalogoItem
+### Community 178 - "CalendarioPermisosComponent"
+Cohesion: 0.19
+Nodes (4): TipoCalendario, CalendarioPermisosComponent, EventoCalendario, Component
 
 ### Community 179 - "Fuse - Admin template and Starter project for Angular"
 Cohesion: 0.25
 Nodes (7): Build, Code scaffolding, Development server, Further help, Fuse - Admin template and Starter project for Angular, Running end-to-end tests, Running unit tests
 
+### Community 180 - "FuseUtilsService"
+Cohesion: 0.16
+Nodes (5): FuseAlertService, Injectable, FuseAlertAppearance, FuseUtilsService, Injectable
+
+### Community 181 - "ColaboradorFichaComponent"
+Cohesion: 0.12
+Nodes (3): ColaboradorFichaComponent, Component, EstatusColaborador
+
 ### Community 182 - "PermisosEspecialesComponent"
 Cohesion: 0.23
 Nodes (3): UsuarioBasico, PermisosEspecialesComponent, Component
 
-### Community 183 - "RequerimientosService"
-Cohesion: 0.12
-Nodes (3): Inject, RequerimientosService, Injectable
+### Community 184 - "mock-api.service.ts"
+Cohesion: 0.22
+Nodes (4): FUSE_MOCK_API_DEFAULT_DELAY, mockApiInterceptor(), FuseMockApiMethods, FuseMockApiReplyCallback
 
 ### Community 185 - "neural-graph.component.ts"
 Cohesion: 0.11
 Nodes (10): SignalRService, Injectable, APPLICATION_DB_TABLES, DbTableSpec, Graph3DCommunity, Graph3DEdge, Graph3DNode, PipelineStepInfo (+2 more)
 
-### Community 186 - "UserTrackerService"
-Cohesion: 0.31
-Nodes (3): LogNavegacionDto, Injectable, UserTrackerService
-
 ### Community 187 - "mensajeError"
-Cohesion: 0.10
-Nodes (15): EstatusSolicitud, DiasNoLaborablesDialogComponent, Component, TabAusenciasComponent, Component, Input, TabNominaComponent, Component (+7 more)
+Cohesion: 0.12
+Nodes (9): EstatusSolicitud, DiasNoLaborablesDialogComponent, Component, TabAusenciasComponent, Component, Input, mensajeError(), ImportarUsuariosDialogComponent (+1 more)
 
 ### Community 188 - "build-graphify-3d.js"
 Cohesion: 0.10
@@ -1047,20 +1032,20 @@ Cohesion: 0.18
 Nodes (17): formatearTamano(), archivosDeCategoria(), CHECKLIST, etiquetaCategoria(), extension(), iconoArchivo(), ItemChecklist, OPCIONES (+9 more)
 
 ### Community 193 - "fuseAnimations"
-Cohesion: 0.10
-Nodes (9): AuthConfirmationRequiredComponent, Component, AuthSignInComponent, Component, ViewChild, fuseAnimations, FuseMasonryComponent, Component (+1 more)
+Cohesion: 0.16
+Nodes (6): AuthConfirmationRequiredComponent, Component, fuseAnimations, FuseMasonryComponent, Component, Input
 
 ### Community 194 - "TareasCalendarComponent"
-Cohesion: 0.20
+Cohesion: 0.17
 Nodes (5): TareasCalendarWrapperModule, NgModule, TareasCalendarComponent, Component, Input
 
 ### Community 195 - "FuseHighlightComponent"
 Cohesion: 0.18
 Nodes (6): FuseHighlightComponent, Component, Input, ViewChild, FuseHighlightService, Injectable
 
-### Community 196 - "NeumorphicProgressComponent"
-Cohesion: 0.29
-Nodes (3): NeumorphicProgressComponent, Component, Input
+### Community 196 - "organigrama.utils.ts"
+Cohesion: 0.28
+Nodes (12): RADIAL_DEPARTAMENTOS, agruparSegunOrganigrama(), categoriaDelArea(), categoriaDeLaSucursal(), coincide(), esDiminutivo(), FilaColaborador, FilaGrupo (+4 more)
 
 ### Community 197 - "PersonalConfigDialogComponent"
 Cohesion: 0.16
@@ -1070,13 +1055,9 @@ Nodes (3): PersonalConfigDialogComponent, Component, Inject
 Cohesion: 0.25
 Nodes (7): colors, config, customPalettes, defaultTheme, generatePalette, path, themes
 
-### Community 199 - ".getUsers"
-Cohesion: 0.15
-Nodes (3): HistorialDialogComponent, Component, Inject
-
 ### Community 200 - "respuestas-formulario-dialog.component.ts"
-Cohesion: 0.19
-Nodes (16): FormularioRespuestaDetalleDto, RespuestasFormularioDialogComponent, RespuestaVista, Component, coincideBusqueda(), construirDetalle(), fechaDesdeApi(), IdentidadRespuesta (+8 more)
+Cohesion: 0.20
+Nodes (15): RespuestasFormularioDialogComponent, RespuestaVista, Component, coincideBusqueda(), construirDetalle(), fechaDesdeApi(), IdentidadRespuesta, ItemDetalle (+7 more)
 
 ### Community 201 - "Documentos de requisiciones — Diseño"
 Cohesion: 0.10
@@ -1090,21 +1071,21 @@ Nodes (18): 10. Riesgos, 1. Objetivo, 2. Conceptos, 3. El código declara, la pa
 Cohesion: 0.19
 Nodes (3): SalesListComponent, Component, ViewChild
 
-### Community 205 - "DashboardEncuestasComponent"
-Cohesion: 0.15
-Nodes (3): DashboardEncuestasComponent, Component, Input
+### Community 205 - "EncuestasEventoService"
+Cohesion: 0.05
+Nodes (15): DashboardEncuestasComponent, Component, Input, EncuestaAsistenteDialogComponent, EncuestaAsistenteDialogData, Component, Inject, EncuestaPublicaComponent (+7 more)
 
 ### Community 206 - "chat/api.ts"
-Cohesion: 0.39
-Nodes (6): _attachments, chats, contacts, messages, now, profile
+Cohesion: 0.24
+Nodes (8): ChatMockApi, Injectable, _attachments, chats, contacts, messages, now, profile
 
 ### Community 207 - "mailbox/api.ts"
 Cohesion: 0.43
 Nodes (6): filters, folders, labels, mails, now, settings
 
 ### Community 208 - "scrumboard/api.ts"
-Cohesion: 0.26
-Nodes (8): ScrumboardMockApi, Injectable, boards, cards, labels, lists, members, now
+Cohesion: 0.43
+Nodes (6): boards, cards, labels, lists, members, now
 
 ### Community 209 - "PdfPreviewDialogComponent"
 Cohesion: 0.29
@@ -1115,7 +1096,7 @@ Cohesion: 0.14
 Nodes (3): RolesAsignacionMasivaDialogComponent, Component, ModoAsignacion
 
 ### Community 212 - "TabContratosComponent"
-Cohesion: 0.16
+Cohesion: 0.15
 Nodes (5): TabContratosComponent, Component, Input, Output, ViewChild
 
 ### Community 213 - "BirthdayModalComponent"
@@ -1123,8 +1104,8 @@ Cohesion: 0.27
 Nodes (4): BirthdayModalComponent, Component, confetti(), ConfettiOptions
 
 ### Community 214 - "FuseAlertComponent"
-Cohesion: 0.08
-Nodes (15): AuthForgotPasswordComponent, Component, ViewChild, AuthSignUpComponent, Component, ViewChild, FuseAlertComponent, Component (+7 more)
+Cohesion: 0.06
+Nodes (18): AuthForgotPasswordComponent, Component, ViewChild, AuthSignInComponent, Component, ViewChild, AuthSignUpComponent, Component (+10 more)
 
 ### Community 215 - "FuseCardComponent"
 Cohesion: 0.22
@@ -1134,13 +1115,13 @@ Nodes (5): FuseCardComponent, Component, HostBinding, Input, FuseCardFace
 Cohesion: 0.20
 Nodes (4): AprobacionesComponent, Component, RechazoDialogComponent, Component
 
-### Community 218 - "FuseVerticalNavigationGroupItemComponent"
-Cohesion: 0.33
-Nodes (3): FuseVerticalNavigationGroupItemComponent, Component, Input
+### Community 218 - "ImportarCronogramaDialogComponent"
+Cohesion: 0.18
+Nodes (3): ImportarCronogramaDialogComponent, Component, Inject
 
 ### Community 219 - "app.config.ts"
-Cohesion: 0.10
-Nodes (13): appConfig, initialDataResolver(), appRoutes, provideAuth(), AuthGuard(), NoAuthGuard(), provideIcons(), IconsService (+5 more)
+Cohesion: 0.11
+Nodes (9): appConfig, provideAuth(), provideIcons(), IconsService, Injectable, TranslocoHttpLoader, Injectable, SignalRService (+1 more)
 
 ### Community 220 - "SystemNeuralGraphComponent"
 Cohesion: 0.07
@@ -1150,37 +1131,25 @@ Nodes (4): SystemNeuralGraphComponent, Component, HostListener, ViewChild
 Cohesion: 0.52
 Nodes (5): brands, categories, products, tags, vendors
 
-### Community 223 - "FuseHorizontalNavigationDividerItemComponent"
-Cohesion: 0.40
-Nodes (3): FuseHorizontalNavigationDividerItemComponent, Component, Input
-
-### Community 224 - "FuseVerticalNavigationBasicItemComponent"
-Cohesion: 0.40
-Nodes (3): FuseVerticalNavigationBasicItemComponent, Component, Input
+### Community 223 - "Requerimiento"
+Cohesion: 0.25
+Nodes (5): abrir(), requerimiento(), Inject, Inject, Requerimiento
 
 ### Community 225 - "Archivos"
 Cohesion: 0.14
 Nodes (13): Archivos, Documentos de requisiciones Implementation Plan, Global Constraints, Review Focus, Task 1: Entidad, configuración y migración, Task 2: Reglas puras (catálogo, regla, validación de archivos) con pruebas, Task 3: `RequiereVista` acepta varias vistas (con pruebas), Task 4: DTOs, servicio de documentos y controlador (con pruebas del controlador) (+5 more)
 
-### Community 226 - "FuseVerticalNavigationSpacerItemComponent"
-Cohesion: 0.40
-Nodes (3): FuseVerticalNavigationSpacerItemComponent, Component, Input
+### Community 226 - "file-manager/api.ts"
+Cohesion: 0.38
+Nodes (3): FileManagerMockApi, Injectable, items
 
-### Community 228 - "MisSolicitudesComponent"
-Cohesion: 0.24
-Nodes (4): MisSolicitudesComponent, Component, MisSolicitudesPaginaComponent, Component
+### Community 228 - "mis-solicitudes.component.ts"
+Cohesion: 0.14
+Nodes (9): MisSolicitudesComponent, Component, MisSolicitudesPaginaComponent, Component, FuseConfirmationService, Injectable, FuseConfirmationConfig, FuseConfirmationDialogComponent (+1 more)
 
-### Community 231 - "RequerimientoDialogComponent"
-Cohesion: 0.17
-Nodes (3): RequerimientoDialogComponent, Component, Inject
-
-### Community 233 - "roles.service.ts"
-Cohesion: 0.20
-Nodes (4): RolesComponent, Component, puedeSalirDelRol(), ResultadoAsignacionMasiva
-
-### Community 234 - "ConfigurarApartadosDialogComponent"
-Cohesion: 0.18
-Nodes (3): ConfigurarApartadosDialogComponent, Component, Inject
+### Community 233 - "OnlyOfficeEditorComponent"
+Cohesion: 0.29
+Nodes (3): OnlyOfficeEditorComponent, Component, Inject
 
 ### Community 235 - "help-center/api.ts"
 Cohesion: 0.31
@@ -1190,41 +1159,25 @@ Nodes (6): HelpCenterMockApi, Injectable, faqCategories, faqs, guideCategories, 
 Cohesion: 0.33
 Nodes (6): INITIAL_NEURAL_LINKS, INITIAL_NEURAL_NODES, NeuralLink, NeuralNode, SynapseLog, SynapticPulse
 
-### Community 238 - "notes/api.ts"
-Cohesion: 0.31
-Nodes (5): NotesMockApi, Injectable, labels, notes, now
+### Community 238 - "lib/mock-api/index.ts"
+Cohesion: 0.21
+Nodes (6): labels, notes, now, shortcuts, analytics, now
 
-### Community 239 - ".onPost"
-Cohesion: 0.28
-Nodes (4): ContactsMockApi, Injectable, SearchMockApi, Injectable
-
-### Community 240 - "lib/mock-api/index.ts"
-Cohesion: 0.29
-Nodes (7): contacts, countries, tags, compactNavigation, defaultNavigation, futuristicNavigation, horizontalNavigation
+### Community 240 - "app/mock-api/index.ts"
+Cohesion: 0.13
+Nodes (15): contacts, countries, tags, members, tags, tasks, NavigationMockApi, Injectable (+7 more)
 
 ### Community 241 - "ModalReunionesB2B"
-Cohesion: 0.17
+Cohesion: 0.18
 Nodes (3): ModalReunionesB2B, Component, Inject
-
-### Community 242 - "tasks/api.ts"
-Cohesion: 0.31
-Nodes (5): TasksMockApi, Injectable, members, tags, tasks
-
-### Community 243 - "SendSurveyComponent"
-Cohesion: 0.22
-Nodes (4): SendSurveyComponent, SendSurveyDialogData, Component, Inject
-
-### Community 244 - "analytics/api.ts"
-Cohesion: 0.32
-Nodes (4): AnalyticsMockApi, Injectable, analytics, now
 
 ### Community 245 - "crypto/api.ts"
 Cohesion: 0.32
 Nodes (4): CryptoMockApi, Injectable, crypto, now
 
-### Community 246 - "app/mock-api/index.ts"
-Cohesion: 0.14
-Nodes (9): FileManagerMockApi, Injectable, items, NavigationMockApi, Injectable, FinanceMockApi, Injectable, finance (+1 more)
+### Community 246 - "finance/api.ts"
+Cohesion: 0.32
+Nodes (4): FinanceMockApi, Injectable, finance, now
 
 ### Community 247 - "project/api.ts"
 Cohesion: 0.32
@@ -1235,40 +1188,20 @@ Cohesion: 0.32
 Nodes (4): ActivitiesMockApi, Injectable, activities, now
 
 ### Community 250 - "roles-permisos.utils.ts"
-Cohesion: 0.13
-Nodes (18): Estado, alternarPermiso(), construirModulos(), construirPedidoMasivo(), esPermisoDeSeccion(), etiquetaPermiso(), ETIQUETAS_ISO, filtrarModulos() (+10 more)
-
-### Community 251 - "notifications/api.ts"
-Cohesion: 0.32
-Nodes (4): NotificationsMockApi, Injectable, notifications, now
+Cohesion: 0.12
+Nodes (19): Estado, alternarPermiso(), construirModulos(), construirPedidoMasivo(), esPermisoDeSeccion(), etiquetaPermiso(), ETIQUETAS_ISO, filtrarModulos() (+11 more)
 
 ### Community 252 - "Archivos"
 Cohesion: 0.18
 Nodes (10): Archivos, Global Constraints, Permisos especiales (Seguridad) Implementation Plan, Review Focus, Task 1: Entidades, configuración y migración, Task 2: Regla pura y catálogo (con pruebas), Task 3: Servicio, sincronizador y filtros de autorización (con pruebas), Task 4: Controlador y registro en Program.cs (con pruebas) (+2 more)
 
-### Community 256 - "ModalApartarStand"
-Cohesion: 0.22
-Nodes (3): ModalApartarStand, Component, Inject
-
 ### Community 258 - "ServerStatusService"
 Cohesion: 0.27
 Nodes (4): ServerStatusIndicatorComponent, Component, ServerStatusService, Injectable
 
-### Community 262 - "EncuestaStaffDialogComponent"
-Cohesion: 0.22
-Nodes (4): EncuestaStaffDialogComponent, EncuestaStaffDialogData, Component, Inject
-
-### Community 263 - "DashboardDetalleDialogComponent"
-Cohesion: 0.28
-Nodes (3): DashboardDetalleDialogComponent, Component, Inject
-
 ### Community 264 - "build"
 Cohesion: 0.22
 Nodes (9): build, extract-i18n, test, builder, configurations, defaultConfiguration, builder, architect (+1 more)
-
-### Community 265 - "quotes-products/list/quotes-list.component.ts"
-Cohesion: 0.29
-Nodes (3): HistorialComponent, Component, Inject
 
 ### Community 266 - "tickets.routes.ts"
 Cohesion: 0.31
@@ -1278,65 +1211,61 @@ Nodes (3): TicketsComponent, Component, ticketsRoutes
 Cohesion: 0.33
 Nodes (5): IconsMockApi, Injectable, feather, heroicons, material
 
-### Community 284 - "EncuestaAsistenteDialogComponent"
-Cohesion: 0.22
-Nodes (3): EncuestaAsistenteDialogComponent, Component, Inject
-
 ### Community 286 - "scripts"
 Cohesion: 0.25
 Nodes (8): scripts, build, graphify:build, ng, prebuild, start, test, watch
 
-### Community 303 - "EmptyLayoutComponent"
-Cohesion: 0.21
-Nodes (4): EmptyLayoutComponent, Component, TimeAgoPipe, Pipe
-
-### Community 305 - "EventoDialogComponent"
-Cohesion: 0.29
-Nodes (3): EventoDialogComponent, Component, Inject
-
 ### Community 307 - "AusenciasService"
-Cohesion: 0.07
-Nodes (26): FORMATOS_FECHA_CORTA, AusenciasService, Injectable, Ajuste, AjusteGuardar, CalendarioItem, CodigoTipoAusencia, DiaNoLaborable (+18 more)
+Cohesion: 0.09
+Nodes (19): FORMATOS_FECHA_CORTA, AusenciasService, Injectable, Ajuste, CalendarioItem, CodigoTipoAusencia, DiaNoLaborable, Incidencia (+11 more)
+
+### Community 310 - "colaborador-ficha.component.ts"
+Cohesion: 0.08
+Nodes (21): AjusteGuardar, AjusteDialogComponent, Component, CapturaDialogComponent, Component, FECHAS, NUMEROS, TEXTOS (+13 more)
 
 ### Community 315 - "production"
 Cohesion: 0.33
 Nodes (6): production, baseHref, budgets, buildTarget, optimization, outputHashing
 
 ### Community 317 - "academy/api.ts"
-Cohesion: 0.70
-Nodes (3): categories, courses, demoCourseSteps
+Cohesion: 0.33
+Nodes (5): AcademyMockApi, Injectable, categories, courses, demoCourseSteps
 
 ### Community 319 - "exceljs"
-Cohesion: 0.18
+Cohesion: 0.20
 Nodes (4): exceljs, ExcelJS, ExcelJS, ExcelJS
 
 ### Community 330 - "dependencies"
-Cohesion: 0.11
-Nodes (19): @angular/common, @angular/core, @angular/platform-browser, apexcharts, css-star-rating, date-fns, flatpickr, ng-pick-datetime (+11 more)
+Cohesion: 0.12
+Nodes (17): @angular/compiler, @angular/forms, @angular/router, file-saver, flatpickr, ngx-extended-pdf-viewer, dependencies, @angular/compiler (+9 more)
 
 ### Community 476 - "report-expenses/dashboard/dashboard.component.ts"
 Cohesion: 0.24
 Nodes (5): spanishLang, ChartItem, DashboardReportResponse, ReportExpensesService, Injectable
 
+### Community 477 - "report-portfolio-overdue/dashboard/dashboard.component.ts"
+Cohesion: 0.22
+Nodes (4): CarteraVencidaDto, spanishLang, ReportPortfolioOverdueService, Injectable
+
 ## Knowledge Gaps
-- **431 isolated node(s):** `$schema`, `version`, `newProjectRoot`, `projectType`, `style` (+426 more)
+- **430 isolated node(s):** `$schema`, `version`, `newProjectRoot`, `projectType`, `style` (+425 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **188 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **187 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `environment` connect `environment.ts` to `LeadsService`, `CommonExcelExportService`, `ChatNotificationService`, `ReportProductExistenceService`, `DocumentosRequisicionComponent`, `tickets.routes.ts`, `CierreTerminalFormDialogComponent`, `notificaciones-config.component.ts`, `SolicitudCompraService`, `reporte-respuestas.charts.ts`, `ReportEntradaSalidaDashboardComponent`, `EventosReportesComponent`, `colaborador-ficha.component.ts`, `ReportVentasAgenteDashboardComponent`, `UsersService`, `eventos.service.ts`, `configurador-registro.component.ts`, `ProductsSatisfactionSurveyReportViewComponent`, `report-existencias-tableros/dashboard/dashboard.component.ts`, `AusenciasService`, `SurveysListComponent`, `SurveysListComponent`, `auth.service.ts`, `control.component.ts`, `UserTrackerService`, `ExpedienteService`, `ProjectSatisfactionSurveyReportViewComponent`, `requerimiento-calificar-dialog.component.ts`, `detalle-entrega-dialog.component.ts`, `ProveedoresService`, `QuickChatComponent`, `ActividadesComponent`, `NotaSalidaDialogComponent`, `control-ejecucion-form.component.ts`, `SubcontratacionService`, `report-expenses/dashboard/dashboard.component.ts`, `SurveyProductosService`, `ActivityMonitorComponent`, `SurveyService`, `roles.service.ts`, `expenses-list.component.ts`, `CalidadComponent`, `IsoDocumentacionComponent`, `classy.component.ts`, `PermisosEspecialesService`, `AnalyticsService`, `project-details.component.ts`?**
-  _High betweenness centrality (0.208) - this node is a cross-community bridge._
-- **Why does `UsersService` connect `UsersService` to `LeadsService`, `CommonExcelExportService`, `ChatNotificationService`, `environment.ts`, `ReportProductExistenceService`, `SolicitudCompraService`, `SolicitudDetalleDialogComponent`, `TaskService`, `TareaActividadesGanttComponent`, `TaskViewConfigService`, `configurador-registro.component.ts`, `UsersDetailsComponent`, `RequerimientosService`, `requerimiento-calificar-dialog.component.ts`, `.getUsers`, `QuickChatComponent`, `control-ejecucion-form.component.ts`, `SubcontratacionService`, `ActivityMonitorComponent`, `classy.component.ts`, `PermisosEspecialesService`, `project-details.component.ts`?**
-  _High betweenness centrality (0.071) - this node is a cross-community bridge._
-- **Why does `ChatNotificationService` connect `ChatNotificationService` to `TaskListComponent`, `environment.ts`, `quotes-products/list/quotes-list.component.ts`, `QuoteListComponent`, `CierreTerminalFormDialogComponent`, `QuotesService`, `ExpensesExcelService`, `ProductsListComponent`, `TaskFormDialogComponent`, `NotificationsComponent`, `SolicitudCompraService`, `SolicitudDetalleDialogComponent`, `.showError`, `TaskService`, `UsersService`, `TaskViewConfigService`, `SurveysListComponent`, `SurveysListComponent`, `fuseAnimations`, `QuickChatComponent`, `expenses-list.component.ts`, `SalesService`, `PresenceService`, `classy.component.ts`, `ExpenseFormComponent`, `project-details.component.ts`?**
-  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+- **Why does `environment` connect `environment.ts` to `LeadsService`, `CommonExcelExportService`, `ProjectService`, `ChatNotificationService`, `DocumentosRequisicionComponent`, `AuthService`, `CierreTerminalService`, `tickets.routes.ts`, `RolService`, `NotificationsComponent`, `SolicitudCompraService`, `ReportEntradaSalidaDashboardComponent`, `EventosReportesComponent`, `ColaboradoresService`, `ReportVentasAgenteDashboardComponent`, `configurador-registro.component.ts`, `ProductsSatisfactionSurveyReportViewComponent`, `AusenciasService`, `SurveysListComponent`, `SurveysListComponent`, `DashboardProyectosComponent`, `ExpedienteService`, `ProjectSatisfactionSurveyReportViewComponent`, `requerimiento-calificar-dialog.component.ts`, `detalle-entrega-dialog.component.ts`, `EncuestasEventoService`, `ActividadesComponent`, `CalendarioFlotanteComponent`, `ProjectsReportViewComponent`, `NotaSalidaDialogComponent`, `SubcontratacionService`, `report-expenses/dashboard/dashboard.component.ts`, `SurveyProductosService`, `ActivityMonitorComponent`, `SurveyService`, `expenses-list.component.ts`, `engineering.service.ts`, `EventosDashboardComponent`, `CalidadComponent`, `IsoDocumentacionComponent`, `classy.component.ts`, `PermisosEspecialesService`, `AnalyticsService`, `project-details.component.ts`?**
+  _High betweenness centrality (0.230) - this node is a cross-community bridge._
+- **Why does `UsersService` connect `ChatNotificationService` to `ProjectDetailsComponent`, `LeadsService`, `CommonExcelExportService`, `ProjectService`, `TraspasoModalComponent`, `SolicitudCompraService`, `SolicitudDetalleDialogComponent`, `TareaActividad`, `users-detail.component.ts`, `fuse.provider.ts`, `configurador-registro.component.ts`, `UsersDetailsComponent`, `SolicitudCompraListComponent`, `RequerimientosService`, `requerimiento-calificar-dialog.component.ts`, `QuickChatComponent`, `ControlEjecucionActividadDialogComponent`, `SubcontratacionService`, `ActivityMonitorComponent`, `SalesService`, `classy.component.ts`, `PermisosEspecialesService`, `project-details.component.ts`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
+- **Why does `ChatNotificationService` connect `ChatNotificationService` to `ProjectDetailsComponent`, `ProjectService`, `QuoteListComponent`, `CierreTerminalService`, `QuotesService`, `ExpensesExcelService`, `ProductsListComponent`, `TaskFormDialogComponent`, `NotificationsComponent`, `SolicitudCompraService`, `.showSuccess`, `SolicitudDetalleDialogComponent`, `ProspectDetailsComponent`, `QuoteListComponent`, `TransferManagementService`, `users-detail.component.ts`, `fuse.provider.ts`, `ProjectListComponent`, `QuotesService`, `SurveysListComponent`, `SurveysListComponent`, `ClientsListComponent`, `FuseAlertComponent`, `QuoteDetailsComponent`, `.showError`, `expenses-list.component.ts`, `SalesService`, `PresenceService`, `classy.component.ts`, `ExpenseFormComponent`, `project-details.component.ts`?**
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
 - **What connects `$schema`, `version`, `newProjectRoot` to the rest of the system?**
-  _431 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _430 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `ControlEjecucionFormComponent` be split into smaller, more focused modules?**
-  _Cohesion score 0.029853951890034366 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0289395070948469 - nodes in this community are weakly interconnected._
 - **Should `ProjectDetailsComponent` be split into smaller, more focused modules?**
-  _Cohesion score 0.07301587301587302 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10507246376811594 - nodes in this community are weakly interconnected._
 - **Should `SolicitudCompraFormComponent` be split into smaller, more focused modules?**
-  _Cohesion score 0.051203277009728626 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.055191256830601096 - nodes in this community are weakly interconnected._
