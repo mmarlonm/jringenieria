@@ -19,6 +19,20 @@ export interface TipoContrato {
     duracionMaximaDias: number | null;
 }
 
+export interface GeocercaSucursal {
+    sucursalId: number;
+    nombre: string;
+    latitud: number | null;
+    longitud: number | null;
+    radioMetros: number;
+}
+
+export interface GeocercaSucursalGuardar {
+    latitud: number | null;
+    longitud: number | null;
+    radioMetros: number | null;
+}
+
 export interface Catalogos {
     sucursales: CatalogoItem[];
     departamentos: CatalogoItem[];
@@ -77,6 +91,11 @@ export interface ColaboradorGuardar {
     idiomas: string | null;
     experienciaPrevia: string | null;
     observaciones: string | null;
+    // ET1 v1.11
+    codigoPostalFiscal: string | null;
+    finPeriodoPrueba: string | null;
+    consentimientoDatos: boolean;
+    constanciaVacacionesAnio: number | null;
 }
 
 export interface ColaboradorDetalle extends ColaboradorGuardar {
@@ -85,6 +104,8 @@ export interface ColaboradorDetalle extends ColaboradorGuardar {
     estatusContrato: EstatusContrato;
     fechaVencimientoContrato: string | null;
     beneficiarios: Beneficiario[];
+    /** Lo pone el servidor: cuándo se otorgó el consentimiento. */
+    fechaConsentimiento: string | null;
 }
 
 export interface ContratoGuardar {

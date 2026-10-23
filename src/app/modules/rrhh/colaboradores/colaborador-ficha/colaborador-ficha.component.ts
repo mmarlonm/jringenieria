@@ -22,17 +22,18 @@ import { aFechaIso, desdeIso, mensajeError, textoONull } from '../colaboradores.
 import { ExpedienteComponent } from '../../expediente/expediente.component';
 import { TabAusenciasComponent } from './tab-ausencias.component';
 import { TabContratosComponent } from './tab-contratos.component';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TabHistorialComponent } from './tab-historial.component';
 import { TabNominaComponent } from './tab-nomina.component';
 import { TabSaludComponent } from './tab-salud.component';
 
 const TEXTOS = [
-    'codigo', 'puesto', 'rfc', 'curp', 'nss', 'correoPersonal', 'correoEmpresa', 'direccionHogar',
+    'codigo', 'puesto', 'rfc', 'curp', 'nss', 'codigoPostalFiscal', 'correoPersonal', 'correoEmpresa', 'direccionHogar',
     'contactoEmergenciaNombre', 'contactoEmergenciaTelefono', 'contactoEmergenciaParentesco',
     'tallaCamisa', 'tallaPantalon', 'tallaCalzado',
     'nivelAcademico', 'estatusAcademico', 'cedulaProfesional', 'idiomas', 'experienciaPrevia', 'observaciones'
 ] as const;
-const FECHAS = ['fechaAltaImss', 'fechaBajaImss', 'fechaIngresoReal', 'fechaAntiguedadReconocida'] as const;
+const FECHAS = ['fechaAltaImss', 'fechaBajaImss', 'fechaIngresoReal', 'fechaAntiguedadReconocida', 'finPeriodoPrueba'] as const;
 const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
 
 /** Ficha del colaborador: datos generales, beneficiarios, contratos, nómina y salud (estas dos con permiso especial) e historial. */
@@ -43,7 +44,7 @@ const NUMEROS = ['sucursalId', 'departamentoId', 'jefeInmediatoId'] as const;
     imports: [
         CommonModule, ReactiveFormsModule, RouterLink,
         MatTabsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
-        MatDatepickerModule,
+        MatDatepickerModule, MatCheckboxModule,
         TabContratosComponent, TabNominaComponent, TabSaludComponent, TabHistorialComponent, ExpedienteComponent, TabAusenciasComponent
     ]
 })
@@ -77,7 +78,10 @@ export class ColaboradorFichaComponent implements OnInit {
         fechaBajaImss: [null as DateTime | null],
         fechaIngresoReal: [null as DateTime | null],
         fechaAntiguedadReconocida: [null as DateTime | null],
-        rfc: [''], curp: [''], nss: [''],
+        finPeriodoPrueba: [null as DateTime | null],
+        rfc: [''], curp: [''], nss: [''], codigoPostalFiscal: [''],
+        consentimientoDatos: [false],
+        constanciaVacacionesAnio: [null as number | null],
         correoPersonal: [''], correoEmpresa: [''],
         direccionHogar: [''],
         contactoEmergenciaNombre: [''], contactoEmergenciaTelefono: [''], contactoEmergenciaParentesco: [''],
@@ -93,7 +97,8 @@ export class ColaboradorFichaComponent implements OnInit {
             campos: [
                 { nombre: 'rfc', etiqueta: 'RFC', max: 13 },
                 { nombre: 'curp', etiqueta: 'CURP', max: 18 },
-                { nombre: 'nss', etiqueta: 'NSS', max: 11 }
+                { nombre: 'nss', etiqueta: 'NSS', max: 11 },
+                { nombre: 'codigoPostalFiscal', etiqueta: 'Código postal fiscal', max: 5 }
             ]
         },
         {
@@ -300,6 +305,8 @@ export class ColaboradorFichaComponent implements OnInit {
         for (const campo of TEXTOS) this.form.controls[campo].setValue(d[campo] ?? '');
         for (const campo of FECHAS) this.form.controls[campo].setValue(desdeIso(d[campo]));
         for (const campo of NUMEROS) this.form.controls[campo].setValue(d[campo] ?? 0);
+        this.form.controls.consentimientoDatos.setValue(d.consentimientoDatos ?? false);
+        this.form.controls.constanciaVacacionesAnio.setValue(d.constanciaVacacionesAnio ?? null);
         this.form.controls.nombre.setValue(d.nombre);
         this.form.markAsPristine();
 
@@ -325,6 +332,10 @@ export class ColaboradorFichaComponent implements OnInit {
             fechaBajaImss: aFechaIso(v.fechaBajaImss),
             fechaIngresoReal: aFechaIso(v.fechaIngresoReal),
             fechaAntiguedadReconocida: aFechaIso(v.fechaAntiguedadReconocida),
+            finPeriodoPrueba: aFechaIso(v.finPeriodoPrueba),
+            consentimientoDatos: !!v.consentimientoDatos,
+            constanciaVacacionesAnio: v.constanciaVacacionesAnio ?? null,
+            codigoPostalFiscal: textoONull(v.codigoPostalFiscal),
             rfc: textoONull(v.rfc)?.toUpperCase() ?? null,
             curp: textoONull(v.curp)?.toUpperCase() ?? null,
             nss: textoONull(v.nss),

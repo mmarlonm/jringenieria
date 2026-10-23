@@ -6,6 +6,10 @@
                 <div class="text-secondary">Expediente maestro del personal de JR Ingeniería Eléctrica.</div>
             </div>
             <div class="mt-4 flex flex-wrap gap-3 sm:mt-0">
+                <button mat-stroked-button type="button" (click)="editarGeocercas()">
+                    <mat-icon [svgIcon]="'heroicons_outline:map-pin'"></mat-icon>
+                    <span class="ml-2">Geocerca de sucursales</span>
+                </button>
                 <button mat-stroked-button type="button" [disabled]="cargandoUsuarios" (click)="importarUsuarios()">
                     <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
                     <span class="ml-2">Importar usuarios del sistema</span>
