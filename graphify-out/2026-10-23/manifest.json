@@ -2640,9 +2640,9 @@
     "semantic_hash": "95fc200cd8485a0fa5ec03e9dd4b2783"
   },
   "src/main.ts": {
-    "mtime": 1776962858.6821473,
-    "ast_hash": "69395eb96671826c214b4e83b5dcb5b0",
-    "semantic_hash": "69395eb96671826c214b4e83b5dcb5b0"
+    "mtime": 1792781708.581335,
+    "ast_hash": "65bde55657dfc97ab465c61efaa2ab18",
+    "semantic_hash": ""
   },
   "tailwind.config.js": {
     "mtime": 1751380292.110806,
@@ -5917,6 +5917,16 @@
   "src/assets/privacidad-app-movil.html": {
     "mtime": 1792598122.134936,
     "ast_hash": "2a8b55b2c5ef8132916c083541dfb890",
+    "semantic_hash": ""
+  },
+  "src/app/core/select-busqueda/buscar-en-select.spec.ts": {
+    "mtime": 1792781519.4335673,
+    "ast_hash": "91cd10e11c0f44ca0b27a04e283d9358",
+    "semantic_hash": ""
+  },
+  "src/app/core/select-busqueda/buscar-en-select.ts": {
+    "mtime": 1792781677.452803,
+    "ast_hash": "66330ee7151819994beafd0850f4f90e",
     "semantic_hash": ""
   }
 }

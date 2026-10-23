@@ -44,10 +44,11 @@ import { TareaActividad } from '../../models/task-activity.model';
         </mat-form-field>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Responsable -->
+          <!-- Responsables (uno o varios) -->
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Responsable</mat-label>
-            <mat-select formControlName="responsableId">
+            <mat-label>Responsables</mat-label>
+            <mat-select formControlName="responsableIds" multiple>
+              <mat-select-trigger>{{ resumenResponsables }}</mat-select-trigger>
               <mat-option *ngFor="let user of data.userList" [value]="user.usuarioId">
                 <div class="flex items-center gap-3 py-1">
                   <div class="flex-none w-7 h-7 rounded-full overflow-hidden border shadow-sm">
@@ -146,7 +147,7 @@ export class TareaActividadDialogComponent implements OnInit {
   ) {
     this.form = this._fb.group({
       nombre: ['', [Validators.required]],
-      responsableId: [null, [Validators.required]],
+      responsableIds: [[], [Validators.required]],
       fechaInicio: [new Date(), [Validators.required]],
       fechaFin: [new Date(), [Validators.required]],
       estatus: [1, [Validators.required]],
@@ -155,10 +156,19 @@ export class TareaActividadDialogComponent implements OnInit {
     });
   }
 
+  /** Lo que muestra el select cerrado: el primer nombre y cuántos más hay. */
+  get resumenResponsables(): string {
+    const ids: number[] = this.form.get('responsableIds')?.value ?? [];
+    const nombres = ids.map(id => this.data.userList.find(u => u.usuarioId === id)?.nombreUsuario).filter(n => !!n);
+    return nombres.length > 1 ? `${nombres[0]} (+${nombres.length - 1} más)` : (nombres[0] ?? '');
+  }
+
   ngOnInit(): void {
     if (this.data.actividad) {
+      const act = this.data.actividad;
       this.form.patchValue({
-        ...this.data.actividad,
+        ...act,
+        responsableIds: act.responsableIds?.length ? act.responsableIds : act.responsableId ? [act.responsableId] : [],
         fechaInicio: this.data.actividad.fechaInicio ? new Date(this.data.actividad.fechaInicio) : new Date(),
         fechaFin: this.data.actividad.fechaFin ? new Date(this.data.actividad.fechaFin) : new Date()
       });
@@ -173,13 +183,21 @@ export class TareaActividadDialogComponent implements OnInit {
     if (this.form.invalid) return;
 
     const val = this.form.value;
-    // Encontrar el nombre del responsable para guardar en el objeto
-    const resp = this.data.userList.find(u => u.usuarioId === val.responsableId);
-    
+
+    // El select ordena a los elegidos como la lista; si la actividad ya tenía principal y sigue, se queda de primero
+    let ids: number[] = val.responsableIds;
+    const principal = this.data.actividad?.responsableId;
+    if (principal && ids.includes(principal)) ids = [principal, ...ids.filter(id => id !== principal)];
+
+    const nombres = ids.map(id => this.data.userList.find(u => u.usuarioId === id)?.nombreUsuario ?? '');
+
     const result: TareaActividad = {
       ...this.data.actividad,
       ...val,
-      nombreResponsable: resp ? resp.nombreUsuario : ''
+      responsableIds: ids,
+      responsableId: ids[0],
+      nombresResponsables: nombres,
+      nombreResponsable: nombres.filter(n => n).join(', ')
     };
 
     this._dialogRef.close(result);

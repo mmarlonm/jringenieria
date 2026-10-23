@@ -1655,14 +1655,14 @@
     "semantic_hash": "d8611c7f143797cc1e72dbf7661a70fa"
   },
   "src/app/modules/admin/dashboards/tasks/gantt/dialogs/tarea-actividad-dialog.component.ts": {
-    "mtime": 1777444343.0057094,
-    "ast_hash": "a1eb4546911ce4414c6f84c98a0b346b",
-    "semantic_hash": "a1eb4546911ce4414c6f84c98a0b346b"
+    "mtime": 1792783762.261539,
+    "ast_hash": "a685ca81fd7bdf8019b934a6c1b7718e",
+    "semantic_hash": ""
   },
   "src/app/modules/admin/dashboards/tasks/gantt/tarea-actividades-gantt.component.ts": {
-    "mtime": 1777922297.8377805,
-    "ast_hash": "a4baf4d5cc6595458b4d62f1ee44ac1d",
-    "semantic_hash": "a4baf4d5cc6595458b4d62f1ee44ac1d"
+    "mtime": 1792783818.3384113,
+    "ast_hash": "a51ce53c99ac1dc7223f1c7f23ea646e",
+    "semantic_hash": ""
   },
   "src/app/modules/admin/dashboards/tasks/list/resize-column.directive.ts": {
     "mtime": 1776962858.6036923,
@@ -1675,9 +1675,9 @@
     "semantic_hash": ""
   },
   "src/app/modules/admin/dashboards/tasks/models/task-activity.model.ts": {
-    "mtime": 1776962858.6036923,
-    "ast_hash": "7c14e806d89aa7c7a65d5d08354129fc",
-    "semantic_hash": "7c14e806d89aa7c7a65d5d08354129fc"
+    "mtime": 1792783760.0597153,
+    "ast_hash": "7f7e89eb9efbcf5420867b358394ac4c",
+    "semantic_hash": ""
   },
   "src/app/modules/admin/dashboards/tasks/models/tasks.model.ts": {
     "mtime": 1783141044.4620168,
@@ -5927,6 +5927,21 @@
   "src/app/core/select-busqueda/buscar-en-select.ts": {
     "mtime": 1792781677.452803,
     "ast_hash": "66330ee7151819994beafd0850f4f90e",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/dashboards/tasks/gantt/dialogs/tarea-actividad-dialog.component.spec.ts": {
+    "mtime": 1792783656.1697934,
+    "ast_hash": "fdedcf42e79dd2f711521b6097a85791",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/dashboards/tasks/gantt/responsables-actividad.utils.spec.ts": {
+    "mtime": 1792783653.5053055,
+    "ast_hash": "43b9aeec768b9dd3c8bdf0b2d59ef3a0",
+    "semantic_hash": ""
+  },
+  "src/app/modules/admin/dashboards/tasks/gantt/responsables-actividad.utils.ts": {
+    "mtime": 1792783761.011113,
+    "ast_hash": "74061f134765690f3e01d1ea46e9ea39",
     "semantic_hash": ""
   }
 }

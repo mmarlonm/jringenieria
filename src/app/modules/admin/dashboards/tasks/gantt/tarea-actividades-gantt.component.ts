@@ -7,6 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TareaActividad } from '../models/task-activity.model';
 import { TaskService } from '../tasks.service';
 import { TareaActividadDialogComponent } from './dialogs/tarea-actividad-dialog.component';
+import { ResponsableVista, responsablesDeActividad } from './responsables-actividad.utils';
 import { 
   addDays, 
   differenceInDays, 
@@ -75,26 +76,31 @@ import { fromEvent, Subject, takeUntil } from 'rxjs';
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <!-- User Avatar -->
+                <!-- Responsables: avatares encimados y sus nombres -->
                 <div class="flex items-center gap-2 flex-auto min-w-0">
-                    <div class="relative flex-none w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                        <ng-container *ngIf="getUser(act.responsableId) as user; else noUser">
-                            <img *ngIf="user.avatar" [src]="user.avatar" class="w-full h-full object-cover" [alt]="act.nombreResponsable">
-                            <div *ngIf="!user.avatar" 
+                    <div class="flex flex-none items-center -space-x-2">
+                        <div *ngFor="let r of responsablesDe(act).visibles; trackBy: porId"
+                             class="relative flex-none w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-slate-900 shadow-sm"
+                             [matTooltip]="r.nombre">
+                            <img *ngIf="r.avatar" [src]="r.avatar" class="w-full h-full object-cover" [alt]="r.nombre">
+                            <div *ngIf="!r.avatar"
                                  class="w-full h-full flex items-center justify-center text-[10px] font-bold text-white uppercase"
-                                 [style.background-color]="getUserColor(act.nombreResponsable)">
-                                {{ getUserInitials(act.nombreResponsable) }}
+                                 [style.background-color]="getUserColor(r.nombre)">
+                                {{ getUserInitials(r.nombre) }}
                             </div>
-                        </ng-container>
-                        <ng-template #noUser>
-                            <div class="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-slate-400">
-                                <mat-icon class="icon-size-4">person</mat-icon>
-                            </div>
-                        </ng-template>
+                        </div>
+                        <div *ngIf="responsablesDe(act).extra > 0"
+                             class="relative flex-none w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-300 shadow-sm">
+                            +{{ responsablesDe(act).extra }}
+                        </div>
+                        <div *ngIf="responsablesDe(act).visibles.length === 0"
+                             class="flex-none w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-slate-400">
+                            <mat-icon class="icon-size-4">person</mat-icon>
+                        </div>
                     </div>
                     <div class="flex flex-col min-w-0">
                         <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 truncate">{{ act.nombreResponsable }}</span>
-                        <span class="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Responsable</span>
+                        <span class="text-[9px] font-medium text-slate-400 uppercase tracking-wide">{{ responsablesDe(act).total > 1 ? 'Responsables' : 'Responsable' }}</span>
                     </div>
                 </div>
                 
@@ -434,9 +440,9 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
       },
       error: () => {
         this.activities = [
-          { id: 1, tareaId: this.tareaId, nombre: 'Levantamiento de Requerimientos', responsableId: 1, nombreResponsable: 'Juan Pérez', fechaInicio: subDays(new Date(), 2), fechaFin: addDays(new Date(), 3), estatus: 3, progreso: 100 },
-          { id: 2, tareaId: this.tareaId, nombre: 'Diseño Conceptual', responsableId: 2, nombreResponsable: 'Maria López', fechaInicio: addDays(new Date(), 2), fechaFin: addDays(new Date(), 8), estatus: 2, progreso: 45 },
-          { id: 3, tareaId: this.tareaId, nombre: 'Desarrollo Core API', responsableId: 1, nombreResponsable: 'Juan Pérez', fechaInicio: addDays(new Date(), 6), fechaFin: addDays(new Date(), 20), estatus: 1, progreso: 0 }
+          { id: 1, tareaId: this.tareaId, nombre: 'Levantamiento de Requerimientos', responsableId: 1, responsableIds: [1], nombreResponsable: 'Juan Pérez', fechaInicio: subDays(new Date(), 2), fechaFin: addDays(new Date(), 3), estatus: 3, progreso: 100 },
+          { id: 2, tareaId: this.tareaId, nombre: 'Diseño Conceptual', responsableId: 2, responsableIds: [2], nombreResponsable: 'Maria López', fechaInicio: addDays(new Date(), 2), fechaFin: addDays(new Date(), 8), estatus: 2, progreso: 45 },
+          { id: 3, tareaId: this.tareaId, nombre: 'Desarrollo Core API', responsableId: 1, responsableIds: [1], nombreResponsable: 'Juan Pérez', fechaInicio: addDays(new Date(), 6), fechaFin: addDays(new Date(), 20), estatus: 1, progreso: 0 }
         ];
       }
     });
@@ -499,6 +505,31 @@ export class TareaActividadesGanttComponent implements OnInit, OnChanges, AfterV
         }
       }
     });
+  }
+
+  private _responsablesCache = new WeakMap<TareaActividad, { visibles: ResponsableVista[]; extra: number; total: number }>();
+  private _usuariosEnCache: any[] | null = null;
+
+  /**
+   * Responsables de una actividad listos para dibujar (hasta 3 avatares y cuántos más hay). Se calcula una vez por
+   * actividad: si cada revisión de cambios devolviera listas nuevas, Angular recrearía los avatares todo el tiempo.
+   */
+  responsablesDe(act: TareaActividad): { visibles: ResponsableVista[]; extra: number; total: number } {
+    if (this._usuariosEnCache !== this.allUsers) {
+      this._responsablesCache = new WeakMap();
+      this._usuariosEnCache = this.allUsers;
+    }
+    let vista = this._responsablesCache.get(act);
+    if (!vista) {
+      const todos = responsablesDeActividad(act, this.allUsers);
+      vista = { visibles: todos.slice(0, 3), extra: Math.max(todos.length - 3, 0), total: todos.length };
+      this._responsablesCache.set(act, vista);
+    }
+    return vista;
+  }
+
+  porId(_: number, responsable: ResponsableVista): number {
+    return responsable.id;
   }
 
   getUser(userId: number): any {
