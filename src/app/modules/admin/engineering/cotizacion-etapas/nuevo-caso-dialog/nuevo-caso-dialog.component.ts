@@ -17,6 +17,11 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { SubcontratacionService, SubcontratistaPersonal } from '../../subcontratacion.service';
 import { CrearCasoDto } from '../cotizacion-etapas.models';
 
+export interface SucursalOption {
+    id: number;
+    nombre: string;
+}
+
 @Component({
     selector: 'app-nuevo-caso-dialog',
     standalone: true,
@@ -44,13 +49,20 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
     guardando = false;
     errorMsg: string | null = null;
 
+    sucursales: SucursalOption[] = [
+        { id: 1, nombre: 'Querétaro' },
+        { id: 2, nombre: 'Puebla' },
+        { id: 3, nombre: 'Hidalgo (Pachuca)' }
+    ];
+
     tiposProyecto: string[] = [
-        'PROYECTOS',
-        'ESTUDIOS Y ANÁLISIS',
-        'INSTALACIÓN Y PUESTA EN SERVICIO',
-        'MANTENIMIENTO',
-        'SUMINISTRO',
-        'OTRO'
+        'Construcción e instalación',
+        'Ingeniería',
+        'Mantenimiento',
+        'Instalación',
+        'Estudios y Pruebas',
+        'Gestiones y trámites',
+        'Proyectos llave en mano'
     ];
 
     private readonly _unsubscribeAll = new Subject<void>();
@@ -65,11 +77,11 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
     ) {
         this.form = this._fb.group({
             idSolicitante: [null, [Validators.required]],
+            sucursalId: [null, [Validators.required]],
             fechaRequisicion: [new Date()],
-            tipo: ['PROYECTOS', [Validators.required]],
-            sucursalId: [null],
-            tituloProyecto: ['', [Validators.required, Validators.maxLength(300)]],
-            actividad: ['', [Validators.required]],
+            tipo: ['Construcción e instalación', [Validators.required]],
+            titulo: ['', [Validators.required, Validators.maxLength(500)]],
+            descripcion: ['', [Validators.required, Validators.maxLength(500)]],
             esAliado: [false],
             responsableUsuarioId: [null]
         });
@@ -129,11 +141,11 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
         const val = this.form.value;
         const dto: CrearCasoDto = {
             idSolicitante: val.idSolicitante,
-            fechaRequisicion: val.fechaRequisicion ? new Date(val.fechaRequisicion).toISOString() : null,
+            titulo: val.titulo.trim(),
+            descripcion: val.descripcion.trim(),
             tipo: val.tipo,
             sucursalId: val.sucursalId,
-            tituloProyecto: val.tituloProyecto.trim(),
-            actividad: val.actividad.trim(),
+            fechaRequisicion: val.fechaRequisicion ? new Date(val.fechaRequisicion).toISOString() : null,
             responsableUsuarioId: !val.esAliado ? val.responsableUsuarioId : null,
             responsableAliadoId: val.esAliado ? val.responsableUsuarioId : null,
             esAliado: !!val.esAliado
