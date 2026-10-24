@@ -3,7 +3,7 @@ import { EtapaListaComponent } from './etapa-lista.component';
 import { CotizacionEtapasService } from '../cotizacion-etapas.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CotizacionEtapasListItemDto } from '../cotizacion-etapas.models';
 
@@ -85,6 +85,60 @@ describe('EtapaListaComponent', () => {
         expect(component.etapaNumero).toBe(2);
         expect(serviceMock.listar).toHaveBeenCalledWith(2, false);
         expect(component.etapaConfig?.permiteCrear).toBeFalse();
+    });
+
+    // ───── Un clic abre un solo diálogo (antes se apilaban dos) ─────
+
+    function dialogoQueSeCierraCuando(): Subject<unknown> {
+        const alCerrar = new Subject<unknown>();
+        dialogMock.open.and.returnValue({ afterClosed: () => alCerrar.asObservable() } as any);
+        return alCerrar;
+    }
+
+    it('un clic en el icono «Abrir expediente» abre un solo diálogo', () => {
+        setup(2);
+        dialogoQueSeCierraCuando();
+
+        const icono = (fixture.nativeElement as HTMLElement).querySelector('td.mat-column-acciones button') as HTMLButtonElement;
+        icono.click();
+
+        expect(dialogMock.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('un clic en la fila abre el expediente', () => {
+        setup(2);
+        dialogoQueSeCierraCuando();
+
+        const celda = (fixture.nativeElement as HTMLElement).querySelector('td.mat-column-idSeguimiento') as HTMLElement;
+        celda.click();
+
+        expect(dialogMock.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('mientras hay un expediente abierto no se abre otro, y al cerrarse se puede abrir de nuevo', () => {
+        setup(2);
+        const alCerrar = dialogoQueSeCierraCuando();
+
+        component.abrirDetalle(1);
+        component.abrirDetalle(1);
+        expect(dialogMock.open).toHaveBeenCalledTimes(1);
+
+        alCerrar.next(false);
+        component.abrirDetalle(2);
+        expect(dialogMock.open).toHaveBeenCalledTimes(2);
+    });
+
+    it('mientras hay un «Nuevo caso» abierto no se abre otro', () => {
+        setup(1);
+        const alCerrar = dialogoQueSeCierraCuando();
+
+        component.abrirNuevoCaso();
+        component.abrirNuevoCaso();
+        expect(dialogMock.open).toHaveBeenCalledTimes(1);
+
+        alCerrar.next(undefined);
+        component.abrirNuevoCaso();
+        expect(dialogMock.open).toHaveBeenCalledTimes(2);
     });
 
     it('debe filtrar los elementos por texto en solicitante, empresa o titulo', () => {

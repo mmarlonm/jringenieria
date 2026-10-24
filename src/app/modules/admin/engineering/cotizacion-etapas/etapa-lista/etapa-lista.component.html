@@ -168,7 +168,7 @@
                         <button
                             mat-icon-button
                             color="primary"
-                            (click)="abrirDetalle(row.idSeguimiento)"
+                            (click)="$event.stopPropagation(); abrirDetalle(row.idSeguimiento)"
                             [matTooltip]="'Abrir expediente'"
                             class="hover:bg-blue-50 dark:hover:bg-blue-900/30"
                         >
