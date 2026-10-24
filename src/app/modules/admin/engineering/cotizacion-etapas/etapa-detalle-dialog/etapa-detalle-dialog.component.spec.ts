@@ -87,7 +87,7 @@ describe('EtapaDetalleDialogComponent', () => {
         // Simular usuario actual id = 42 (distinto al autorizador 99)
         spyOn(localStorage, 'getItem').and.callFake((key: string) => {
             if (key === 'userInformation') {
-                return JSON.stringify({ usuario: { id: 42, rol: 'USUARIO' } });
+                return JSON.stringify({ usuario: { id: 42 }, roles: ['Usuario'] });
             }
             return null;
         });
@@ -190,6 +190,50 @@ describe('EtapaDetalleDialogComponent', () => {
         compiled = fixture.nativeElement as HTMLElement;
         expect(compiled.querySelector('button[color="primary"]')?.textContent).not.toContain('Autorizar');
         expect(compiled.textContent).not.toContain('Guardar Cambios');
+    });
+
+    function conSesion(roles: string[]): void {
+        (localStorage.getItem as jasmine.Spy).and.callFake((key: string) =>
+            key === 'userInformation' ? JSON.stringify({ usuario: { id: 42 }, roles }) : null
+        );
+    }
+
+    it('un administrador (rol admin o pruebas, sin importar mayusculas) puede autorizar y cambiar al autorizador aunque haya otro designado', () => {
+        for (const rol of ['Admin', 'PRUEBAS']) {
+            conSesion([rol]);
+            expect(component.esAdmin).withContext(rol).toBeTrue();
+            expect(component.puedeAutorizarAccion).withContext(rol).toBeTrue();
+            expect(component.puedeCambiarAutorizador).withContext(rol).toBeTrue();
+        }
+
+        conSesion(['Usuario']);
+        expect(component.esAdmin).toBeFalse();
+        expect(component.puedeAutorizarAccion).toBeFalse();
+        expect(component.puedeCambiarAutorizador).toBeFalse();
+    });
+
+    it('quien no autoriza ve «Poner en Proceso» pero no Autorizar ni Rechazar', () => {
+        fixture.detectChanges();
+        const botones = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+            .map((b) => (b.textContent || '').trim());
+
+        expect(botones.some((t) => t.includes('Poner en Proceso'))).toBeTrue();
+        expect(botones.some((t) => t === 'Autorizar')).toBeFalse();
+        expect(botones.some((t) => t === 'Rechazar')).toBeFalse();
+    });
+
+    it('la etapa 1 pregunta por la información brindada por el cliente y la 2 por la información recabada', () => {
+        component.etapaNumero = 1;
+        component.etapaConfig = obtenerEtapaConfig(1);
+        fixture.detectChanges();
+        expect(component.etiquetaInformacion).toBe('Información brindada por el cliente');
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Información brindada por el cliente');
+
+        component.etapaNumero = 2;
+        component.etapaConfig = obtenerEtapaConfig(2);
+        fixture.detectChanges();
+        expect(component.etiquetaInformacion).toBe('Información recabada');
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Información recabada');
     });
 
     it('fecha de elaboracion solo aparece en las etapas 3 a 5', () => {

@@ -120,12 +120,12 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <!-- Informacion Suficiente (Etapas 1 y 2) -->
                             <mat-form-field *ngIf="etapaConfig?.usaInformacion" appearance="outline" subscriptSizing="dynamic" class="w-full">
-                                <mat-label>Información Suficiente</mat-label>
+                                <mat-label>{{ etiquetaInformacion }}</mat-label>
                                 <mat-select formControlName="informacionSuficiente">
                                     <mat-option [value]="null">-- No especificado --</mat-option>
-                                    <mat-option [value]="1">1 - Información Suficiente</mat-option>
-                                    <mat-option [value]="2">2 - Información Insuficiente</mat-option>
-                                    <mat-option [value]="3">3 - No Hay Información</mat-option>
+                                    <mat-option [value]="1">Suficiente</mat-option>
+                                    <mat-option [value]="2">Insuficiente</mat-option>
+                                    <mat-option [value]="3">No hay</mat-option>
                                 </mat-select>
                             </mat-form-field>
 
@@ -409,16 +409,19 @@
 
         <!-- Acciones principales derecha -->
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <!-- Botones visibles si puedeOperarAcciones y puedeAutorizarAccion -->
+            <!-- Quien elabora puede dejar la etapa en proceso aunque no sea quien autoriza -->
+            <button
+                *ngIf="puedeOperarAcciones"
+                mat-stroked-button
+                (click)="ponerEnProceso()"
+                [disabled]="guardando"
+                class="text-xs"
+            >
+                Poner en Proceso
+            </button>
+
+            <!-- Rechazar y Autorizar: solo el autorizador designado (o un administrador) -->
             <ng-container *ngIf="puedeOperarAcciones && puedeAutorizarAccion">
-                <button
-                    mat-stroked-button
-                    (click)="ponerEnProceso()"
-                    [disabled]="guardando"
-                    class="text-xs"
-                >
-                    Poner en Proceso
-                </button>
                 <button
                     mat-flat-button
                     color="warn"

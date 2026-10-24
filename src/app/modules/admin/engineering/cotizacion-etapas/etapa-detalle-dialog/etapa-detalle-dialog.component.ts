@@ -141,14 +141,20 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** Igual que el backend: administra quien tiene el rol «admin» o «pruebas». El login guarda los roles en `roles`. */
     get esAdmin(): boolean {
         try {
             const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            const rol = (info?.usuario?.rol || info?.rol || '').toUpperCase();
-            return rol === 'ADMIN' || rol === 'ADMINISTRADOR' || rol === 'SUPERADMIN';
+            const roles: unknown[] = Array.isArray(info?.roles) ? info.roles : [];
+            return roles.some((r) => ['admin', 'pruebas'].includes(String(r ?? '').toLowerCase()));
         } catch {
             return false;
         }
+    }
+
+    /** La etapa 1 recibe lo que el cliente brindó; la 2 es lo que se recabó en campo. */
+    get etiquetaInformacion(): string {
+        return this.etapaNumero === 2 ? 'Información recabada' : 'Información brindada por el cliente';
     }
 
     get puedeAutorizarAccion(): boolean {
