@@ -21,6 +21,7 @@ import { ControlEjecucionActividadDialogComponent } from './dialogs/control-ejec
 import { ConfigurarApartadosDialogComponent } from './dialogs/configurar-apartados-dialog.component';
 import { SubcontratacionService } from '../../subcontratacion.service';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
+import { EvidenciasEtapasComponent } from '../../cotizacion-etapas/evidencias-etapas/evidencias-etapas.component';
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { environment } from 'environments/environment';
 import Swal from 'sweetalert2';
@@ -66,7 +67,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatMenuModule,
     MatCheckboxModule,
     MatAutocompleteModule,
-    ImportarCronogramaDialogComponent
+    ImportarCronogramaDialogComponent,
+    EvidenciasEtapasComponent
   ],
   templateUrl: './control-ejecucion-form.component.html',
   styles: [`

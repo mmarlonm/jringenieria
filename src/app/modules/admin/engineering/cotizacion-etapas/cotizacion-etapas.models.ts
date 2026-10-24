@@ -32,6 +32,13 @@ export interface CotizacionEtapasArchivoDto {
     nombreArchivo: string;
 }
 
+/** Archivo de evidencia subido en una revisión de una etapa (la API lista los de todas las etapas del caso). */
+export interface CotizacionEtapasArchivoCasoDto {
+    etapa: number;
+    revision: number;
+    nombreArchivo: string;
+}
+
 export interface CotizacionEtapasRevisionDto {
     numero: number;
     fechaElaboracion?: string | null;

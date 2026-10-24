@@ -86,6 +86,13 @@ describe('CotizacionEtapasService', () => {
         req.flush({});
     });
 
+    it('archivosDelCaso() debe llamar GET con los archivos de todas las etapas del caso', () => {
+        service.archivosDelCaso(85).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/85/archivos`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
     it('reactivar() debe llamar POST reactivar', () => {
         service.reactivar(8).subscribe();
         const req = httpMock.expectOne(`${baseUrl}/8/reactivar`);
