@@ -71,6 +71,8 @@ export interface CotizacionEtapasDetalleDto {
     empresa: string;
     sucursalId?: number | null;
     fechaRequisicion?: string | null;
+    /** Quien registró el caso: junto con los administradores, puede eliminarlo si se cancela. */
+    idUsuarioRegistro: number;
     etapaActual: number;
     cancelado: boolean;
     motivoRechazo?: string | null;
