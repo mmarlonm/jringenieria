@@ -54,12 +54,13 @@ describe('NuevoCasoDialogComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('el formulario es invalido con solicitante o titulo vacios y no permite enviar', () => {
+    it('el formulario es invalido sin solicitante, sucursal, titulo o descripcion y no permite enviar', () => {
         component.form.patchValue({
             idSolicitante: null,
-            tituloProyecto: '',
-            actividad: 'Prueba',
-            tipo: 'PROYECTO'
+            sucursalId: null,
+            titulo: '',
+            descripcion: '',
+            tipo: 'Construcción e instalación'
         });
         expect(component.form.valid).toBeFalse();
 
@@ -67,14 +68,35 @@ describe('NuevoCasoDialogComponent', () => {
         expect(cotizacionServiceMock.crear).not.toHaveBeenCalled();
     });
 
-    it('con datos validos llama a service.crear y cierra el dialogo', () => {
+    it('valida limites de longitud maxima de 500 caracteres en titulo y descripcion', () => {
+        const textoLargo = 'a'.repeat(501);
+        component.form.patchValue({
+            idSolicitante: 1,
+            sucursalId: 1,
+            titulo: textoLargo,
+            descripcion: 'Descripcion corta',
+            tipo: 'Construcción e instalación'
+        });
+        expect(component.form.get('titulo')?.hasError('maxlength')).toBeTrue();
+        expect(component.form.valid).toBeFalse();
+
+        component.form.patchValue({
+            titulo: 'Titulo valido',
+            descripcion: textoLargo
+        });
+        expect(component.form.get('descripcion')?.hasError('maxlength')).toBeTrue();
+        expect(component.form.valid).toBeFalse();
+    });
+
+    it('con datos validos llama a service.crear con payload canonico y cierra el dialogo', () => {
         cotizacionServiceMock.crear.and.returnValue(of({ idSeguimiento: 100 } as any));
 
         component.form.patchValue({
             idSolicitante: 1,
-            tituloProyecto: 'Proyecto Instalación',
-            actividad: 'Actividad descripción',
-            tipo: 'PROYECTO',
+            sucursalId: 2,
+            titulo: 'Proyecto Instalación',
+            descripcion: 'Actividad descripción',
+            tipo: 'Construcción e instalación',
             responsableUsuarioId: 10,
             esAliado: false
         });
@@ -82,7 +104,16 @@ describe('NuevoCasoDialogComponent', () => {
         expect(component.form.valid).toBeTrue();
         component.guardar();
 
-        expect(cotizacionServiceMock.crear).toHaveBeenCalled();
+        expect(cotizacionServiceMock.crear).toHaveBeenCalledWith(jasmine.objectContaining({
+            idSolicitante: 1,
+            sucursalId: 2,
+            titulo: 'Proyecto Instalación',
+            descripcion: 'Actividad descripción',
+            tipo: 'Construcción e instalación',
+            responsableUsuarioId: 10,
+            responsableAliadoId: null,
+            esAliado: false
+        }));
         expect(dialogRefMock.close).toHaveBeenCalledWith(jasmine.objectContaining({ idSeguimiento: 100 }));
     });
 });

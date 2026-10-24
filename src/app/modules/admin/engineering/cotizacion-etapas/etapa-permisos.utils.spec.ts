@@ -3,12 +3,10 @@ import { CotizacionEtapaDto } from './cotizacion-etapas.models';
 
 describe('etapa-permisos.utils', () => {
     const baseEtapa: CotizacionEtapaDto = {
-        idEtapa: 1,
-        idSeguimiento: 1,
         etapa: 1,
         estatus: 2,
         esAliado: false,
-        autorizadorDesignadoUsuarioId: 42,
+        autorizaUsuarioId: 42,
         revisiones: []
     };
 
@@ -24,7 +22,7 @@ describe('etapa-permisos.utils', () => {
     it('si no hay autorizador designado, cualquiera con permiso puede autorizar', () => {
         const sinDesignado: CotizacionEtapaDto = {
             ...baseEtapa,
-            autorizadorDesignadoUsuarioId: null
+            autorizaUsuarioId: null
         };
         expect(puedeAutorizar(sinDesignado, 10, false)).toBeTrue();
         expect(puedeAutorizar(sinDesignado, 99, false)).toBeTrue();

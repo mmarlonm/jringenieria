@@ -16,30 +16,32 @@ describe('EtapaListaComponent', () => {
     const mockProyectos: CotizacionEtapasListItemDto[] = [
         {
             idSeguimiento: 1,
-            etapaActual: 1,
-            idSolicitante: 1,
+            titulo: 'Fibra Óptica Central',
             solicitanteNombre: 'Carlos Slim',
-            solicitanteEmpresa: 'América Móvil',
-            actividad: 'Instalación de fibra',
-            tituloProyecto: 'Fibra Óptica Central',
+            empresa: 'América Móvil',
             tipo: 'PROYECTO',
-            estatusEtapaActual: 2,
-            revisionActualNumero: 1,
-            esAliado: false,
+            sucursalId: 1,
+            etapaActual: 1,
+            estatusEtapa: 2,
+            revisionActual: 1,
+            responsableNombre: 'Juan Pérez',
+            monto: 150000,
+            fechaRegistro: '2026-10-24T10:00:00Z',
             cancelado: false
         },
         {
             idSeguimiento: 2,
-            etapaActual: 1,
-            idSolicitante: 2,
+            titulo: 'Panadería Industrial',
             solicitanteNombre: 'Ana Lopez',
-            solicitanteEmpresa: 'Bimbo',
-            actividad: 'Línea de producción',
-            tituloProyecto: 'Panadería Industrial',
+            empresa: 'Bimbo',
             tipo: 'INDUSTRIAL',
-            estatusEtapaActual: 1,
-            revisionActualNumero: 1,
-            esAliado: false,
+            sucursalId: 2,
+            etapaActual: 1,
+            estatusEtapa: 1,
+            revisionActual: 1,
+            responsableNombre: 'Pedro Gómez',
+            monto: null,
+            fechaRegistro: '2026-10-24T11:00:00Z',
             cancelado: false
         }
     ];
@@ -91,11 +93,11 @@ describe('EtapaListaComponent', () => {
 
         component.aplicarFiltro('Bimbo');
         expect(component.dataSource.filteredData.length).toBe(1);
-        expect(component.dataSource.filteredData[0].solicitanteEmpresa).toBe('Bimbo');
+        expect(component.dataSource.filteredData[0].empresa).toBe('Bimbo');
 
         component.aplicarFiltro('Fibra');
         expect(component.dataSource.filteredData.length).toBe(1);
-        expect(component.dataSource.filteredData[0].tituloProyecto).toBe('Fibra Óptica Central');
+        expect(component.dataSource.filteredData[0].titulo).toBe('Fibra Óptica Central');
     });
 
     it('al marcar incluirProcesados debe volver a listar con flag true', () => {
@@ -103,5 +105,13 @@ describe('EtapaListaComponent', () => {
         component.incluirProcesados = true;
         component.cambiarIncluirProcesados();
         expect(serviceMock.listar).toHaveBeenCalledWith(1, true);
+    });
+
+    it('con un elemento con la forma real debe mostrar el título y el badge correcto en la vista', () => {
+        setup(1);
+        const compiled = fixture.nativeElement as HTMLElement;
+        expect(compiled.textContent).toContain('Fibra Óptica Central');
+        expect(compiled.textContent).toContain('América Móvil');
+        expect(compiled.textContent).toContain('En Proceso');
     });
 });

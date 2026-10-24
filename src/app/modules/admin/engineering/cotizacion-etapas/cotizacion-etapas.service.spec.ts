@@ -44,8 +44,8 @@ describe('CotizacionEtapasService', () => {
         const dto: CrearCasoDto = {
             idSolicitante: 1,
             tipo: 'PROYECTO',
-            tituloProyecto: 'Prueba',
-            actividad: 'Actividad',
+            titulo: 'Prueba',
+            descripcion: 'Actividad',
             esAliado: false
         };
         service.crear(dto).subscribe();
@@ -57,7 +57,7 @@ describe('CotizacionEtapasService', () => {
 
     it('guardar() debe llamar PUT a la etapa indicada', () => {
         const dto: GuardarEtapaDto = {
-            notas: 'Nota prueba'
+            observacionesInformacion: 'Nota prueba'
         };
         service.guardar(10, 3, dto).subscribe();
         const req = httpMock.expectOne(`${baseUrl}/10/etapas/3`);
@@ -68,7 +68,7 @@ describe('CotizacionEtapasService', () => {
 
     it('cambiarEstatus() debe llamar POST estatus con payload', () => {
         const dto: CambiarEstatusDto = {
-            nuevoEstatus: 3,
+            estatus: 3,
             etapaSiguiente: 4
         };
         service.cambiarEstatus(7, 3, dto).subscribe();
