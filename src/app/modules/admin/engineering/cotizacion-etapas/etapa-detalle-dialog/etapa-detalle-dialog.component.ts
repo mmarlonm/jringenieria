@@ -120,12 +120,10 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this._cargarCatalogos();
         this.cargarDetalle();
+    }
 
-        this.form.get('esAliado')?.valueChanges
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe(() => {
-                this.form.get('responsableUsuarioId')?.reset();
-            });
+    onTipoResponsableChange(): void {
+        this.form.get('responsableUsuarioId')?.setValue(null);
     }
 
     ngOnDestroy(): void {
@@ -205,16 +203,21 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                     this.etapaActualDto = det.etapas?.find((e) => e.etapa === this.etapaNumero);
 
                     if (this.etapaActualDto) {
+                        const esAliado = !!(this.etapaActualDto.responsableAliadoId || (this.etapaActualDto as any).esAliado);
+                        const respId = esAliado
+                            ? (this.etapaActualDto.responsableAliadoId ?? null)
+                            : (this.etapaActualDto.responsableUsuarioId ?? null);
+
                         this.form.patchValue({
-                            responsableUsuarioId: this.etapaActualDto.responsableUsuarioId,
-                            esAliado: this.etapaActualDto.esAliado,
-                            autorizadorDesignadoUsuarioId: this.etapaActualDto.autorizadorDesignadoUsuarioId,
-                            informacionBrindada: this.etapaActualDto.informacionBrindada,
+                            responsableUsuarioId: respId,
+                            esAliado: esAliado,
+                            autorizadorDesignadoUsuarioId: this.etapaActualDto.autorizadorDesignadoUsuarioId ?? (this.etapaActualDto as any).autorizaUsuarioId ?? null,
+                            informacionBrindada: this.etapaActualDto.informacionBrindada ?? (this.etapaActualDto as any).informacionSuficiente ?? null,
                             fechaProgramada: this.etapaActualDto.fechaProgramada ? new Date(this.etapaActualDto.fechaProgramada) : null,
-                            montoTotalEstimado: this.etapaActualDto.montoTotalEstimado,
-                            notas: this.etapaActualDto.notas || '',
+                            montoTotalEstimado: this.etapaActualDto.montoTotalEstimado ?? this.ultimaRevision?.monto ?? null,
+                            notas: this.etapaActualDto.notas ?? (this.etapaActualDto as any).observacionesInformacion ?? '',
                             queCambioUltimaRevision: ''
-                        });
+                        }, { emitEvent: false });
 
                         const ult = this.ultimaRevision;
                         if (ult) {
@@ -238,7 +241,8 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
         const val = this.form.value;
         const dto: GuardarEtapaDto = {
-            responsableUsuarioId: val.responsableUsuarioId,
+            responsableUsuarioId: !val.esAliado ? val.responsableUsuarioId : null,
+            responsableAliadoId: val.esAliado ? val.responsableUsuarioId : null,
             esAliado: !!val.esAliado,
             autorizadorDesignadoUsuarioId: val.autorizadorDesignadoUsuarioId,
             informacionBrindada: val.informacionBrindada,

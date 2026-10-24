@@ -77,7 +77,7 @@
                                 Asignación de Responsable para esta Etapa
                             </span>
                             <div class="flex items-center gap-4">
-                                <mat-radio-group formControlName="esAliado" class="flex gap-4">
+                                <mat-radio-group formControlName="esAliado" (change)="onTipoResponsableChange()" class="flex gap-4">
                                     <mat-radio-button [value]="false">Colaborador JR</mat-radio-button>
                                     <mat-radio-button [value]="true">Subcontratista / Aliado</mat-radio-button>
                                 </mat-radio-group>
@@ -88,8 +88,8 @@
                                     <mat-label>Responsable JR</mat-label>
                                     <mat-select formControlName="responsableUsuarioId">
                                         <mat-option [value]="null">-- Sin asignar --</mat-option>
-                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.id">
-                                            {{ u.nombre || u.nombreCompleto || u.nombreUsuario }}
+                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
+                                            {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
                                         </mat-option>
                                     </mat-select>
                                 </mat-form-field>
@@ -98,7 +98,7 @@
                                     <mat-label>Responsable Aliado Subcontratista</mat-label>
                                     <mat-select formControlName="responsableUsuarioId">
                                         <mat-option [value]="null">-- Sin asignar --</mat-option>
-                                        <mat-option *ngFor="let a of aliados" [value]="a.idPersonal">
+                                        <mat-option *ngFor="let a of aliados" [value]="a.idPersonal || a.id">
                                             {{ a.nombre }} <span class="text-xs text-slate-400">({{ a.cargo || 'Aliado' }})</span>
                                         </mat-option>
                                     </mat-select>
@@ -108,8 +108,8 @@
                                     <mat-label>Autorizador Designado (Opcional)</mat-label>
                                     <mat-select formControlName="autorizadorDesignadoUsuarioId">
                                         <mat-option [value]="null">-- Cualquier usuario autorizado --</mat-option>
-                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.id">
-                                            {{ u.nombre || u.nombreCompleto || u.nombreUsuario }}
+                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
+                                            {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
                                         </mat-option>
                                     </mat-select>
                                 </mat-form-field>

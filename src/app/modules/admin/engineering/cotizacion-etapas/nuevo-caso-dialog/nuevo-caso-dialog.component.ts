@@ -77,12 +77,10 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this._cargarCatalogos();
+    }
 
-        this.form.get('esAliado')?.valueChanges
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe(() => {
-                this.form.get('responsableUsuarioId')?.reset();
-            });
+    onTipoResponsableChange(): void {
+        this.form.get('responsableUsuarioId')?.setValue(null);
     }
 
     ngOnDestroy(): void {
@@ -136,7 +134,8 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
             sucursalId: val.sucursalId,
             tituloProyecto: val.tituloProyecto.trim(),
             actividad: val.actividad.trim(),
-            responsableUsuarioId: val.responsableUsuarioId,
+            responsableUsuarioId: !val.esAliado ? val.responsableUsuarioId : null,
+            responsableAliadoId: val.esAliado ? val.responsableUsuarioId : null,
             esAliado: !!val.esAliado
         };
 

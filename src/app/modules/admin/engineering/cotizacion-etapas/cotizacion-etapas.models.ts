@@ -43,6 +43,7 @@ export interface CotizacionEtapasRevisionDto {
     numero: number;
     fechaElaboracion?: string | null;
     resultado: number;
+    monto?: number | null;
     queCambio?: string | null;
     autorizadorUsuarioId?: number | null;
     autorizadorNombre?: string | null;
@@ -60,6 +61,8 @@ export interface CotizacionEtapaDto {
     estatus: number;
     responsableUsuarioId?: number | null;
     responsableNombre?: string | null;
+    responsableAliadoId?: number | null;
+    responsableAliadoNombre?: string | null;
     esAliado: boolean;
     autorizadorDesignadoUsuarioId?: number | null;
     autorizadorDesignadoNombre?: string | null;
@@ -98,11 +101,13 @@ export interface CrearCasoDto {
     tituloProyecto: string;
     actividad: string;
     responsableUsuarioId?: number | null;
+    responsableAliadoId?: number | null;
     esAliado: boolean;
 }
 
 export interface GuardarEtapaDto {
     responsableUsuarioId?: number | null;
+    responsableAliadoId?: number | null;
     esAliado?: boolean;
     autorizadorDesignadoUsuarioId?: number | null;
     informacionBrindada?: number | null;
