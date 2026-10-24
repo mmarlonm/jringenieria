@@ -275,7 +275,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     guardar(): void {
-        if (!this.puedeGuardarRevision()) return;
+        if (this.guardando || !this.puedeGuardarRevision()) return;
 
         this.guardando = true;
         this.errorMsg = null;
@@ -315,6 +315,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
     // --- ACCIONES DE ESTATUS ---
     ponerEnProceso(): void {
+        if (this.guardando) return;
         this.guardando = true;
         this.errorMsg = null;
         this._service.cambiarEstatus(this.idSeguimiento, this.etapaNumero, {
@@ -335,6 +336,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     abrirModalAutorizar(): void {
+        this.errorMsg = null;
         const siguientes = this.etapaConfig?.siguientes || [];
         this.etapaSiguienteSeleccionada = siguientes.length > 0 ? siguientes[0] : null;
         this.montoAutorizacion = this.form.get('monto')?.value || null;
@@ -343,6 +345,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     confirmarAutorizar(): void {
+        if (this.guardando) return;
         this.guardando = true;
         this.errorMsg = null;
 
@@ -370,12 +373,13 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     abrirModalRechazar(): void {
+        this.errorMsg = null;
         this.motivoRechazoTexto = '';
         this.modalRechazarAbierto = true;
     }
 
     confirmarRechazar(): void {
-        if (!this.motivoRechazoTexto.trim()) return;
+        if (this.guardando || !this.motivoRechazoTexto.trim()) return;
 
         this.guardando = true;
         this.errorMsg = null;
@@ -402,6 +406,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     iniciarRevision(): void {
+        if (this.guardando) return;
         this.guardando = true;
         this.errorMsg = null;
 
@@ -421,12 +426,13 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     abrirModalCancelar(): void {
+        this.errorMsg = null;
         this.motivoCancelacionTexto = '';
         this.modalCancelarAbierto = true;
     }
 
     confirmarCancelar(): void {
-        if (!this.motivoCancelacionTexto.trim()) return;
+        if (this.guardando || !this.motivoCancelacionTexto.trim()) return;
 
         this.guardando = true;
         this.errorMsg = null;

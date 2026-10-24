@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CotizacionEtapasService } from '../cotizacion-etapas.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { SubcontratacionService } from '../../subcontratacion.service';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CotizacionEtapasDetalleDto, ESTATUS_ETAPA } from '../cotizacion-etapas.models';
 import { obtenerEtapaConfig } from '../etapas.config';
@@ -234,6 +234,75 @@ describe('EtapaDetalleDialogComponent', () => {
         fixture.detectChanges();
         expect(component.etiquetaInformacion).toBe('Información recabada');
         expect((fixture.nativeElement as HTMLElement).textContent).toContain('Información recabada');
+    });
+
+    it('un doble clic no envía dos veces la misma acción mientras la primera sigue en curso', () => {
+        const enCurso = () => new Subject<CotizacionEtapasDetalleDto>();
+        serviceMock.guardar.and.callFake(() => enCurso());
+        serviceMock.cambiarEstatus.and.callFake(() => enCurso());
+        serviceMock.iniciarRevision.and.callFake(() => enCurso());
+        serviceMock.cancelar.and.callFake(() => enCurso());
+
+        const acciones: { nombre: string; ejecutar: () => void; llamadas: () => number }[] = [
+            { nombre: 'guardar', ejecutar: () => component.guardar(), llamadas: () => serviceMock.guardar.calls.count() },
+            { nombre: 'ponerEnProceso', ejecutar: () => component.ponerEnProceso(), llamadas: () => serviceMock.cambiarEstatus.calls.count() }
+        ];
+        for (const accion of acciones) {
+            accion.ejecutar();
+            accion.ejecutar();
+            expect(accion.llamadas()).withContext(accion.nombre).toBe(1);
+            component.guardando = false; // la siguiente acción parte de cero
+            serviceMock.cambiarEstatus.calls.reset();
+        }
+
+        component.guardando = false;
+        component.modalAutorizarAbierto = true;
+        component.confirmarAutorizar();
+        component.confirmarAutorizar();
+        expect(serviceMock.cambiarEstatus.calls.count()).withContext('confirmarAutorizar').toBe(1);
+
+        component.guardando = false;
+        serviceMock.cambiarEstatus.calls.reset();
+        component.motivoRechazoTexto = 'falta información';
+        component.confirmarRechazar();
+        component.confirmarRechazar();
+        expect(serviceMock.cambiarEstatus.calls.count()).withContext('confirmarRechazar').toBe(1);
+
+        component.guardando = false;
+        component.motivoCancelacionTexto = 'ya no procede';
+        component.confirmarCancelar();
+        component.confirmarCancelar();
+        expect(serviceMock.cancelar.calls.count()).withContext('confirmarCancelar').toBe(1);
+
+        component.guardando = false;
+        component.iniciarRevision();
+        component.iniciarRevision();
+        expect(serviceMock.iniciarRevision.calls.count()).withContext('iniciarRevision').toBe(1);
+    });
+
+    it('un error al autorizar, rechazar o cancelar se ve dentro del modal que lo tapa', () => {
+        const mensaje = 'La etapa ya se encuentra autorizada';
+        const modales = ['modalAutorizarAbierto', 'modalRechazarAbierto', 'modalCancelarAbierto'] as const;
+
+        for (const abierto of modales) {
+            component.modalAutorizarAbierto = false;
+            component.modalRechazarAbierto = false;
+            component.modalCancelarAbierto = false;
+            component[abierto] = true;
+            component.errorMsg = mensaje;
+            fixture.detectChanges();
+
+            const modal = (fixture.nativeElement as HTMLElement).querySelector('.fixed.inset-0');
+            expect(modal?.textContent).withContext(abierto).toContain(mensaje);
+        }
+    });
+
+    it('al abrir un modal se limpia el error anterior', () => {
+        for (const abrir of [() => component.abrirModalAutorizar(), () => component.abrirModalRechazar(), () => component.abrirModalCancelar()]) {
+            component.errorMsg = 'error viejo';
+            abrir();
+            expect(component.errorMsg).toBeNull();
+        }
     });
 
     it('fecha de elaboracion solo aparece en las etapas 3 a 5', () => {

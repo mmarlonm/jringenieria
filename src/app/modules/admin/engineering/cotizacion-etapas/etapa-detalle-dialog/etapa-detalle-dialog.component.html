@@ -329,9 +329,15 @@
                 <span class="text-[11px] text-slate-400 block text-right">{{ observacionesAutorizacionTexto.length }} / 2000</span>
             </div>
 
+            <!-- El modal tapa el aviso de error del encabezado: se repite aquí para que se vea -->
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalAutorizarAbierto = false">Cancelar</button>
-                <button mat-flat-button color="primary" (click)="confirmarAutorizar()">Confirmar Autorización</button>
+                <button mat-flat-button color="primary" (click)="confirmarAutorizar()" [disabled]="guardando">Confirmar Autorización</button>
             </div>
         </div>
     </div>
@@ -350,9 +356,15 @@
                 <span class="text-[11px] text-slate-400 block text-right">{{ motivoRechazoTexto.length }} / 2000</span>
             </div>
 
+            <!-- El modal tapa el aviso de error del encabezado: se repite aquí para que se vea -->
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalRechazarAbierto = false">Cancelar</button>
-                <button mat-flat-button color="warn" (click)="confirmarRechazar()" [disabled]="!motivoRechazoTexto.trim()">Rechazar</button>
+                <button mat-flat-button color="warn" (click)="confirmarRechazar()" [disabled]="guardando || !motivoRechazoTexto.trim()">Rechazar</button>
             </div>
         </div>
     </div>
@@ -371,9 +383,15 @@
                 <span class="text-[11px] text-slate-400 block text-right">{{ motivoCancelacionTexto.length }} / 2000</span>
             </div>
 
+            <!-- El modal tapa el aviso de error del encabezado: se repite aquí para que se vea -->
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalCancelarAbierto = false">Volver</button>
-                <button mat-flat-button color="warn" (click)="confirmarCancelar()" [disabled]="!motivoCancelacionTexto.trim()">Confirmar Cancelación</button>
+                <button mat-flat-button color="warn" (click)="confirmarCancelar()" [disabled]="guardando || !motivoCancelacionTexto.trim()">Confirmar Cancelación</button>
             </div>
         </div>
     </div>
