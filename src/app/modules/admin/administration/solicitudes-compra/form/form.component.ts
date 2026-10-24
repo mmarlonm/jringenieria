@@ -936,6 +936,8 @@ export class SolicitudCompraFormComponent implements OnInit {
 
         const data = {
             ...this.solicitudForm.value,
+            // Un campo numérico vacío da null y la columna Descuento no admite NULL: sin descuento es 0
+            descuento: Number(this.solicitudForm.value.descuento) || 0,
             IdUsuarioLogueado: this.currentUserId
         };
 

@@ -1,0 +1,202 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8 space-y-6">
+    <!-- Header Page -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                <span>Ingeniería</span>
+                <span>/</span>
+                <span>Etapa {{ etapaNumero }}</span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
+                {{ etapaConfig?.titulo }}
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Gestión y seguimiento de requerimientos técnicos en la etapa actual.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button
+                *ngIf="etapaConfig?.permiteCrear"
+                mat-flat-button
+                color="primary"
+                (click)="abrirNuevoCaso()"
+                class="gap-2 shadow-md hover:shadow-lg transition-all"
+            >
+                <mat-icon>add</mat-icon>
+                <span>Nuevo Caso</span>
+            </button>
+            <button mat-icon-button (click)="cargarCasos()" [matTooltip]="'Recargar lista'" class="text-slate-500">
+                <mat-icon>refresh</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter and Search Toolbar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full sm:w-96">
+            <mat-icon matPrefix class="text-slate-400 mr-2">search</mat-icon>
+            <input
+                matInput
+                [ngModel]="filtroTexto"
+                (ngModelChange)="aplicarFiltro($event)"
+                placeholder="Buscar por cliente, título, folio..."
+            />
+            <button *ngIf="filtroTexto" matSuffix mat-icon-button (click)="aplicarFiltro('')">
+                <mat-icon>clear</mat-icon>
+            </button>
+        </mat-form-field>
+
+        <div class="flex items-center">
+            <mat-checkbox
+                [(ngModel)]="incluirProcesados"
+                (change)="cambiarIncluirProcesados()"
+                color="primary"
+                class="text-sm text-slate-700 dark:text-slate-300"
+            >
+                Ver también los ya procesados (avanzados / concluidos)
+            </mat-checkbox>
+        </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="dataSource" matSort class="w-full">
+                <!-- ID Column -->
+                <ng-container matColumnDef="idSeguimiento">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-20 font-bold">Folio</th>
+                    <td mat-cell *matCellDef="let row" class="font-mono text-xs font-semibold text-slate-500">
+                        #{{ row.idSeguimiento }}
+                    </td>
+                </ng-container>
+
+                <!-- Solicitante Column -->
+                <ng-container matColumnDef="solicitante">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="min-w-44 font-bold">Cliente / Solicitante</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="flex flex-col py-2">
+                            <span class="font-medium text-slate-800 dark:text-slate-100">
+                                {{ row.solicitanteNombre || 'Sin nombre' }}
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                {{ row.empresa || 'Particular' }}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Titulo Column -->
+                <ng-container matColumnDef="titulo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="min-w-64 font-bold">Proyecto / Actividad</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="flex flex-col py-2">
+                            <span class="font-medium text-slate-800 dark:text-slate-100 line-clamp-1">
+                                {{ row.titulo }}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Tipo Column -->
+                <ng-container matColumnDef="tipo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-32 font-bold">Tipo</th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            {{ row.tipo || 'GENERAL' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Responsable Column -->
+                <ng-container matColumnDef="responsable">
+                    <th mat-header-cell *matHeaderCellDef class="min-w-40 font-bold">Responsable</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="flex items-center gap-1.5" *ngIf="row.responsableNombre; else sinResponsable">
+                            <span class="text-xs text-slate-700 dark:text-slate-300">
+                                {{ row.responsableNombre }}
+                            </span>
+                        </div>
+                        <ng-template #sinResponsable>
+                            <span class="text-xs italic text-slate-400">Sin asignar</span>
+                        </ng-template>
+                    </td>
+                </ng-container>
+
+                <!-- Estatus Column -->
+                <ng-container matColumnDef="estatus">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-32 font-bold">Estatus</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <ng-container *ngIf="getEstatusBadge(row.estatusEtapa) as badge">
+                                <span
+                                    [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ' + badge.clases"
+                                >
+                                    {{ badge.texto }}
+                                </span>
+                            </ng-container>
+                            <span
+                                *ngIf="row.cancelado"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-300"
+                            >
+                                Cancelado
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Revision Column -->
+                <ng-container matColumnDef="revision">
+                    <th mat-header-cell *matHeaderCellDef class="w-20 font-bold text-center">Rev</th>
+                    <td mat-cell *matCellDef="let row" class="text-center font-mono text-xs font-bold text-slate-600 dark:text-slate-400">
+                        R{{ row.revisionActual || 1 }}
+                    </td>
+                </ng-container>
+
+                <!-- Monto Column (Solo etapa 5) -->
+                <ng-container matColumnDef="monto">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-32 font-bold text-right">Monto Estimado</th>
+                    <td mat-cell *matCellDef="let row" class="text-right font-medium text-xs text-emerald-600 dark:text-emerald-400">
+                        {{ row.monto ? (row.monto | currency:'MXN':'symbol':'1.2-2') : '-' }}
+                    </td>
+                </ng-container>
+
+                <!-- Acciones Column -->
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef class="w-20 text-center font-bold">Detalle</th>
+                    <td mat-cell *matCellDef="let row" class="text-center">
+                        <button
+                            mat-icon-button
+                            color="primary"
+                            (click)="abrirDetalle(row.idSeguimiento)"
+                            [matTooltip]="'Abrir expediente'"
+                            class="hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                        >
+                            <mat-icon>open_in_new</mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="columnasVisibles"></tr>
+                <tr
+                    mat-row
+                    *matRowDef="let row; columns: columnasVisibles"
+                    class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer transition-colors"
+                    (click)="abrirDetalle(row.idSeguimiento)"
+                ></tr>
+
+                <!-- Row when there is no matching data -->
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell p-8 text-center text-slate-400" [attr.colspan]="columnasVisibles.length">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                            <mat-icon class="scale-150 text-slate-300 dark:text-slate-600">inbox</mat-icon>
+                            <span class="text-sm font-medium">No se encontraron casos registrados en esta etapa.</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" showFirstLastButtons></mat-paginator>
+    </div>
+</div>

@@ -41,6 +41,17 @@ export class NotificationsService {
     /** A dónde lleva cada tipo de notificación; lo que no tiene pantalla propia abre la tarea (lo histórico). */
     private enlaceDe(item: { tipo?: string; referenciaId?: number }): string {
         if (item.tipo?.startsWith('RRHH.')) return RUTAS_RRHH[item.tipo.slice(5)] ?? '/rrhh/mis-solicitudes';
+        if (item.tipo?.startsWith('Cotizacion')) {
+            const etapa = item.tipo.replace('Cotizacion', '');
+            switch (etapa) {
+                case '1': return '/engineering/solicitud-cliente';
+                case '2': return '/engineering/levantamiento-tecnico';
+                case '3': return '/engineering/diseno-calculo';
+                case '4': return '/engineering/presupuesto-tecnico';
+                case '5': return '/engineering/propuesta-tecnico-comercial';
+                default: return '/engineering/solicitud-cliente';
+            }
+        }
         switch (item.tipo) {
             case 'Requerimiento': return '/crm/requerimientos';
             case 'Compra': return '/administration/tablero-compras';

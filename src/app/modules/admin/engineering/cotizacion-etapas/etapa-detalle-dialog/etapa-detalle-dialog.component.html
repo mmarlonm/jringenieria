@@ -1,0 +1,458 @@
+<div class="flex flex-col w-full max-w-280 max-h-[92vh] overflow-hidden bg-card text-default">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono font-bold text-sm">
+                #{{ idSeguimiento }}
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-primary">
+                        Etapa {{ etapaNumero }}: {{ etapaConfig?.titulo }}
+                    </span>
+                    <span
+                        *ngIf="detalle?.cancelado"
+                        class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-300"
+                    >
+                        CANCELADO
+                    </span>
+                </div>
+                <h2 class="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100 line-clamp-1">
+                    {{ detalle?.titulo }}
+                </h2>
+            </div>
+        </div>
+        <button mat-icon-button (click)="cerrar()" [disabled]="guardando">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <mat-progress-bar *ngIf="cargando || guardando" mode="indeterminate"></mat-progress-bar>
+
+    <!-- Error message banner -->
+    <div *ngIf="errorMsg" class="mx-6 mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+        <mat-icon class="text-red-500">error_outline</mat-icon>
+        <span>{{ errorMsg }}</span>
+    </div>
+
+    <!-- Dialog Content Body with Tabs -->
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+        <mat-tab-group animationDuration="200ms" class="w-full">
+            <!-- TAB 1: DATOS -->
+            <mat-tab label="Datos de la Etapa">
+                <div class="py-4 space-y-6">
+                    <!-- Resumen del Caso -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 text-xs">
+                        <div>
+                            <span class="text-slate-400 block font-semibold uppercase tracking-wider">Solicitante</span>
+                            <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">
+                                {{ detalle?.solicitanteNombre }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-semibold uppercase tracking-wider">Empresa</span>
+                            <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">
+                                {{ detalle?.empresa || 'Particular' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-semibold uppercase tracking-wider">Tipo Requisición</span>
+                            <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">
+                                {{ detalle?.tipo || 'PROYECTO' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-semibold uppercase tracking-wider">Fecha Requisición</span>
+                            <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">
+                                {{ detalle?.fechaRequisicion ? (detalle.fechaRequisicion | date:'dd/MM/yyyy') : '-' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de la Etapa -->
+                    <form [formGroup]="form" class="space-y-4">
+                        <!-- Responsable Asignado -->
+                        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Asignación de Responsable para esta Etapa
+                            </span>
+                            <div class="flex items-center gap-4">
+                                <mat-radio-group formControlName="esAliado" (change)="onTipoResponsableChange()" class="flex gap-4">
+                                    <mat-radio-button [value]="false">Colaborador JR</mat-radio-button>
+                                    <mat-radio-button [value]="true">Subcontratista / Aliado</mat-radio-button>
+                                </mat-radio-group>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <mat-form-field *ngIf="!form.get('esAliado')?.value" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                    <mat-label>Responsable JR</mat-label>
+                                    <mat-select formControlName="responsableUsuarioId">
+                                        <mat-option [value]="null">-- Sin asignar --</mat-option>
+                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
+                                            {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+
+                                <mat-form-field *ngIf="form.get('esAliado')?.value" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                    <mat-label>Responsable Aliado Subcontratista</mat-label>
+                                    <mat-select formControlName="responsableUsuarioId">
+                                        <mat-option [value]="null">-- Sin asignar --</mat-option>
+                                        <mat-option *ngFor="let a of aliados" [value]="a.idPersonal || a.id">
+                                            {{ a.nombre }} <span class="text-xs text-slate-400">({{ a.cargo || 'Aliado' }})</span>
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                    <mat-label>Autorizador Designado (Opcional)</mat-label>
+                                    <mat-select formControlName="autorizaUsuarioId">
+                                        <mat-option [value]="null">-- Cualquier usuario autorizado --</mat-option>
+                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
+                                            {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <!-- Campos condicionales segun etapaConfig -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Informacion Suficiente (Etapas 1 y 2) -->
+                            <mat-form-field *ngIf="etapaConfig?.usaInformacion" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                <mat-label>{{ etiquetaInformacion }}</mat-label>
+                                <mat-select formControlName="informacionSuficiente">
+                                    <mat-option [value]="null">-- No especificado --</mat-option>
+                                    <mat-option [value]="1">Suficiente</mat-option>
+                                    <mat-option [value]="2">Insuficiente</mat-option>
+                                    <mat-option [value]="3">No hay</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <!-- Fecha Programada (Etapa 2) -->
+                            <mat-form-field *ngIf="etapaConfig?.usaFechaProgramada" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                <mat-label>Fecha Programada para Levantamiento</mat-label>
+                                <input matInput [matDatepicker]="pickerProg" formControlName="fechaProgramada" />
+                                <mat-datepicker-toggle matIconSuffix [for]="pickerProg"></mat-datepicker-toggle>
+                                <mat-datepicker #pickerProg></mat-datepicker>
+                            </mat-form-field>
+
+                            <!-- Fecha de Elaboración (Etapas 3, 4 y 5) -->
+                            <mat-form-field *ngIf="etapaNumero >= 3 && etapaNumero <= 5" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                <mat-label>Fecha de Elaboración</mat-label>
+                                <input matInput [matDatepicker]="pickerElab" formControlName="fechaElaboracion" />
+                                <mat-datepicker-toggle matIconSuffix [for]="pickerElab"></mat-datepicker-toggle>
+                                <mat-datepicker #pickerElab></mat-datepicker>
+                            </mat-form-field>
+
+                            <!-- Monto Total Estimado (Etapa 5) -->
+                            <mat-form-field *ngIf="etapaConfig?.usaMonto" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                <mat-label>Monto Total Estimado ($ MXN)</mat-label>
+                                <input matInput type="number" formControlName="monto" placeholder="0.00" />
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Observaciones de la Información / Notas -->
+                        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                            <mat-label>Observaciones de la Información</mat-label>
+                            <textarea matInput formControlName="observacionesInformacion" rows="3" maxlength="1000" placeholder="Detalles, acuerdos o especificaciones técnicas..."></textarea>
+                            <mat-hint align="end">{{ (form.get('observacionesInformacion')?.value || '').length }} / 1000</mat-hint>
+                        </mat-form-field>
+
+                        <!-- Campo Que Cambio si la ultima revision es >= 2 -->
+                        <div
+                            *ngIf="ultimaRevision && ultimaRevision.numero >= 2"
+                            class="p-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/20 space-y-2"
+                        >
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                                Justificación de la Revisión {{ ultimaRevision.numero }}
+                            </span>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Indique qué cambió respecto a la revisión anterior (requerido para autorizar o guardar).
+                            </p>
+                            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                <mat-label>¿Qué cambió en esta revisión?</mat-label>
+                                <textarea matInput formControlName="queCambio" rows="2" maxlength="2000" placeholder="Describa los cambios aplicados en esta iteración..."></textarea>
+                                <mat-hint align="end">{{ (form.get('queCambio')?.value || '').length }} / 2000</mat-hint>
+                            </mat-form-field>
+                        </div>
+                    </form>
+                </div>
+            </mat-tab>
+
+            <!-- TAB 2: REVISIONES -->
+            <mat-tab label="Historial de Revisiones ({{ etapaActualDto?.revisiones?.length || 0 }})">
+                <div class="py-4 space-y-4">
+                    <div
+                        *ngFor="let rev of etapaActualDto?.revisiones"
+                        class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 space-y-2 shadow-sm"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-md font-mono text-xs font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                                    Revisión {{ rev.numero }}
+                                </span>
+                                <span *ngIf="rev.historica" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                                    Histórica
+                                </span>
+                            </div>
+                            <span class="text-xs text-slate-400">
+                                Elaborada: {{ rev.fechaElaboracion ? (rev.fechaElaboracion | date:'dd/MM/yyyy HH:mm') : '-' }}
+                                <span *ngIf="rev.elaboradoPorNombre"> por {{ rev.elaboradoPorNombre }}</span>
+                            </span>
+                        </div>
+
+                        <div *ngIf="rev.queCambio" class="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                            <span class="font-semibold block text-slate-400">Qué cambió:</span>
+                            {{ rev.queCambio }}
+                        </div>
+
+                        <div
+                            *ngIf="rev.observacionesAutorizacion"
+                            [class]="rev.resultado === 4 ? 'text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 p-2.5 rounded-lg border border-rose-200 dark:border-rose-800' : 'text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800'"
+                        >
+                            <span class="font-semibold block">{{ rev.resultado === 4 ? 'Motivo de rechazo:' : 'Observaciones de autorización:' }}</span>
+                            {{ rev.observacionesAutorizacion }}
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
+                            <span>
+                                Autorizador: <strong>{{ rev.autorizadoPorNombre || 'Pendiente' }}</strong>
+                            </span>
+                            <span>
+                                {{ rev.fechaAutorizacion ? (rev.fechaAutorizacion | date:'dd/MM/yyyy HH:mm') : '' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+
+            <!-- TAB 3: ARCHIVOS -->
+            <mat-tab label="Archivos y Evidencias">
+                <div class="py-4 space-y-4">
+                    <!-- Selector de Revision para Archivos -->
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Archivos de la Revisión:</span>
+                            <div class="flex gap-2">
+                                <button
+                                    *ngFor="let r of etapaActualDto?.revisiones"
+                                    type="button"
+                                    (click)="cambiarRevisionArchivos(r.numero)"
+                                    [class]="r.numero === revisionSeleccionadaArchivos ? 'px-3 py-1 rounded-lg text-xs font-bold bg-primary text-white shadow' : 'px-3 py-1 rounded-lg text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
+                                >
+                                    R{{ r.numero }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Boton Subir Archivos (si no esta congelada y no es solo lectura) -->
+                        <div *ngIf="!revisionActualEstaCongelada() && puedeOperarAcciones">
+                            <input #fileInput type="file" multiple (change)="onArchivosSeleccionados($event)" class="hidden" />
+                            <button mat-stroked-button color="primary" (click)="fileInput.click()" [disabled]="cargandoArchivos" class="gap-1 text-xs">
+                                <mat-icon class="scale-90">upload_file</mat-icon>
+                                <span>Subir Archivo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Archivos -->
+                    <div *ngIf="cargandoArchivos" class="p-6 text-center text-xs text-slate-400">
+                        Cargando archivos...
+                    </div>
+
+                    <div *ngIf="!cargandoArchivos && archivosLista.length === 0" class="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-xs">
+                        No hay archivos cargados para la revisión R{{ revisionSeleccionadaArchivos }}.
+                    </div>
+
+                    <div *ngIf="!cargandoArchivos && archivosLista.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div
+                            *ngFor="let a of archivosLista"
+                            class="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm hover:shadow transition-all"
+                        >
+                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                <mat-icon class="text-blue-500 scale-90">description</mat-icon>
+                                <span class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                                    {{ a.nombreArchivo }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button mat-icon-button (click)="descargarArchivo(a.nombreArchivo)" [matTooltip]="'Descargar'">
+                                    <mat-icon class="scale-90 text-slate-500">download</mat-icon>
+                                </button>
+                                <button
+                                    *ngIf="!revisionActualEstaCongelada() && puedeOperarAcciones"
+                                    mat-icon-button
+                                    (click)="eliminarArchivo(a.nombreArchivo)"
+                                    [matTooltip]="'Eliminar'"
+                                    class="text-rose-500"
+                                >
+                                    <mat-icon class="scale-90">delete</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+
+    <!-- Modales Internos -->
+    <!-- Modal Autorizar -->
+    <div *ngIf="modalAutorizarAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-emerald-500">check_circle</mat-icon>
+                <span>Autorizar Etapa {{ etapaNumero }}</span>
+            </h3>
+
+            <!-- Siguiente Etapa -->
+            <div *ngIf="(etapaConfig?.siguientes || []).length > 0" class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Etapa Siguiente Permitida</label>
+                <select [(ngModel)]="etapaSiguienteSeleccionada" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm">
+                    <option *ngFor="let s of etapaConfig?.siguientes" [value]="s">
+                        Etapa {{ s }}
+                    </option>
+                </select>
+            </div>
+
+            <!-- Monto para Etapa 5 -->
+            <div *ngIf="etapaConfig?.usaMonto" class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto Total Estimado ($ MXN)</label>
+                <input type="number" [(ngModel)]="montoAutorizacion" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm font-semibold" placeholder="0.00" />
+            </div>
+
+            <!-- Observaciones de Autorización (Opcional) -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Observaciones (Opcional)</label>
+                <textarea [(ngModel)]="observacionesAutorizacionTexto" rows="3" maxlength="2000" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm" placeholder="Observaciones o notas sobre la autorización..."></textarea>
+                <span class="text-[11px] text-slate-400 block text-right">{{ observacionesAutorizacionTexto.length }} / 2000</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button mat-button (click)="modalAutorizarAbierto = false">Cancelar</button>
+                <button mat-flat-button color="primary" (click)="confirmarAutorizar()">Confirmar Autorización</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rechazar -->
+    <div *ngIf="modalRechazarAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-rose-500">cancel</mat-icon>
+                <span>Rechazar Etapa {{ etapaNumero }}</span>
+            </h3>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Motivo del Rechazo (Requerido)</label>
+                <textarea [(ngModel)]="motivoRechazoTexto" rows="3" maxlength="2000" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm" placeholder="Explique las razones técnicas o comerciales del rechazo..."></textarea>
+                <span class="text-[11px] text-slate-400 block text-right">{{ motivoRechazoTexto.length }} / 2000</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button mat-button (click)="modalRechazarAbierto = false">Cancelar</button>
+                <button mat-flat-button color="warn" (click)="confirmarRechazar()" [disabled]="!motivoRechazoTexto.trim()">Rechazar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cancelar Caso -->
+    <div *ngIf="modalCancelarAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-rose-500">block</mat-icon>
+                <span>Cancelar Expediente / Caso</span>
+            </h3>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Motivo de Cancelación</label>
+                <textarea [(ngModel)]="motivoCancelacionTexto" rows="3" maxlength="2000" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm" placeholder="Razón por la cual se cancela el caso definitivamente..."></textarea>
+                <span class="text-[11px] text-slate-400 block text-right">{{ motivoCancelacionTexto.length }} / 2000</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button mat-button (click)="modalCancelarAbierto = false">Volver</button>
+                <button mat-flat-button color="warn" (click)="confirmarCancelar()" [disabled]="!motivoCancelacionTexto.trim()">Confirmar Cancelación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <!-- Acciones secundarias izquierda -->
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button
+                *ngIf="!detalle?.cancelado"
+                mat-stroked-button
+                color="warn"
+                (click)="abrirModalCancelar()"
+                [disabled]="guardando"
+                class="text-xs"
+            >
+                <mat-icon class="scale-75">block</mat-icon>
+                <span>Cancelar Caso</span>
+            </button>
+
+            <button
+                *ngIf="puedeIniciarRevision()"
+                mat-flat-button
+                color="accent"
+                (click)="iniciarRevision()"
+                [disabled]="guardando"
+                class="text-xs gap-1"
+            >
+                <mat-icon class="scale-75">replay</mat-icon>
+                <span>Iniciar Revisión</span>
+            </button>
+        </div>
+
+        <!-- Acciones principales derecha -->
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <!-- Quien elabora puede dejar la etapa en proceso aunque no sea quien autoriza -->
+            <button
+                *ngIf="puedeOperarAcciones"
+                mat-stroked-button
+                (click)="ponerEnProceso()"
+                [disabled]="guardando"
+                class="text-xs"
+            >
+                Poner en Proceso
+            </button>
+
+            <!-- Rechazar y Autorizar: solo el autorizador designado (o un administrador) -->
+            <ng-container *ngIf="puedeOperarAcciones && puedeAutorizarAccion">
+                <button
+                    mat-flat-button
+                    color="warn"
+                    (click)="abrirModalRechazar()"
+                    [disabled]="guardando"
+                    class="text-xs"
+                >
+                    Rechazar
+                </button>
+                <button
+                    mat-flat-button
+                    color="primary"
+                    (click)="abrirModalAutorizar()"
+                    [disabled]="guardando || !puedeGuardarRevision()"
+                    class="text-xs"
+                >
+                    Autorizar
+                </button>
+            </ng-container>
+
+            <!-- Guardar Cambios -->
+            <button
+                *ngIf="puedeOperarAcciones"
+                mat-flat-button
+                (click)="guardar()"
+                [disabled]="guardando || !puedeGuardarRevision()"
+                class="text-xs bg-slate-800 text-white dark:bg-slate-700"
+            >
+                <mat-icon class="scale-75">save</mat-icon>
+                <span>Guardar Cambios</span>
+            </button>
+        </div>
+    </div>
+</div>

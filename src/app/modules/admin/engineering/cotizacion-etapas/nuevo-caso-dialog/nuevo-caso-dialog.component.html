@@ -1,0 +1,144 @@
+<div class="flex flex-col max-w-240 max-h-[90vh] overflow-hidden bg-card text-default">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <mat-icon>add_circle_outline</mat-icon>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">
+                    Nueva Solicitud de Cotización
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Etapa 1: Registro inicial de requisición del cliente
+                </p>
+            </div>
+        </div>
+        <button mat-icon-button (click)="cancelar()" [disabled]="guardando">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+        <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+            <mat-icon class="text-red-500">error_outline</mat-icon>
+            <span>{{ errorMsg }}</span>
+        </div>
+
+        <form [formGroup]="form" class="space-y-4">
+            <!-- Solicitante, Sucursal y Fecha Requisicion -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                    <mat-label>Cliente / Solicitante</mat-label>
+                    <mat-select formControlName="idSolicitante">
+                        <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
+                            {{ s.nombreCompleto }} <span class="text-xs text-slate-400">({{ s.empresa }})</span>
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="form.get('idSolicitante')?.hasError('required')">
+                        El cliente solicitante es obligatorio
+                    </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                    <mat-label>Sucursal</mat-label>
+                    <mat-select formControlName="sucursalId">
+                        <mat-option *ngFor="let suc of sucursales" [value]="suc.id">
+                            {{ suc.nombre }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="form.get('sucursalId')?.hasError('required')">
+                        La sucursal es obligatoria
+                    </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                    <mat-label>Fecha de la Requisición</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="fechaRequisicion" />
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+            </div>
+
+            <!-- Tipo y Titulo -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                    <mat-label>Tipo de Requisición</mat-label>
+                    <mat-select formControlName="tipo">
+                        <mat-option *ngFor="let t of tiposProyecto" [value]="t">
+                            {{ t }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="form.get('tipo')?.hasError('required')">El tipo es obligatorio</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full md:col-span-2">
+                    <mat-label>Título del Proyecto / Cotización</mat-label>
+                    <input matInput formControlName="titulo" maxlength="500" placeholder="Ej. Remodelación subestación 13.2 kV" />
+                    <mat-hint align="end">{{ (form.get('titulo')?.value || '').length }} / 500</mat-hint>
+                    <mat-error *ngIf="form.get('titulo')?.hasError('required')">
+                        El título es obligatorio
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Descripcion -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                <mat-label>Descripción detallada de la requisición / Alcance</mat-label>
+                <textarea matInput formControlName="descripcion" rows="3" maxlength="500" placeholder="Detalle las necesidades y requerimientos específicos del cliente..."></textarea>
+                <mat-hint align="end">{{ (form.get('descripcion')?.value || '').length }} / 500</mat-hint>
+                <mat-error *ngIf="form.get('descripcion')?.hasError('required')">
+                    La descripción de la actividad es requerida
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Responsable asignado para Etapa 1 -->
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Asignación de Responsable para Solicitud
+                </span>
+                <div class="flex items-center gap-4">
+                    <mat-radio-group formControlName="esAliado" (change)="onTipoResponsableChange()" class="flex gap-4">
+                        <mat-radio-button [value]="false">Colaborador JR</mat-radio-button>
+                        <mat-radio-button [value]="true">Subcontratista / Aliado</mat-radio-button>
+                    </mat-radio-group>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <mat-form-field *ngIf="!form.get('esAliado')?.value" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                        <mat-label>Seleccionar Colaborador JR</mat-label>
+                        <mat-select formControlName="responsableUsuarioId">
+                            <mat-option [value]="null">-- Sin asignar por ahora --</mat-option>
+                            <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
+                                {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field *ngIf="form.get('esAliado')?.value" appearance="outline" subscriptSizing="dynamic" class="w-full">
+                        <mat-label>Seleccionar Aliado Subcontratista</mat-label>
+                        <mat-select formControlName="responsableUsuarioId">
+                            <mat-option [value]="null">-- Sin asignar por ahora --</mat-option>
+                            <mat-option *ngFor="let a of aliados" [value]="a.idPersonal || a.id">
+                                {{ a.nombre }} <span class="text-xs text-slate-400">({{ a.cargo || 'Aliado' }})</span>
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <button mat-button (click)="cancelar()" [disabled]="guardando">
+            Cancelar
+        </button>
+        <button mat-flat-button color="primary" (click)="guardar()" [disabled]="guardando || form.invalid" class="gap-2">
+            <mat-icon *ngIf="!guardando">check</mat-icon>
+            <span *ngIf="guardando">Guardando...</span>
+            <span *ngIf="!guardando">Registrar Solicitud</span>
+        </button>
+    </div>
+</div>
