@@ -391,6 +391,17 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
         ]
     },
+    {
+        id: 'finanzas',
+        title: 'FINANZAS',
+        subtitle: 'Cobranza y bancos',
+        type: 'collapsable',
+        icon: 'heroicons_outline:banknotes',
+        children: [
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
+            { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' }
+        ]
+    },
     // ==========================================================================================
     // SECCIÓN: EVENTOS
     // ==========================================================================================
@@ -506,6 +517,17 @@ export const compactNavigation: FuseNavigationItem[] = [
         ]
     },
     {
+        id: 'finanzas',
+        title: 'FINANZAS',
+        tooltip: 'Finanzas',
+        type: 'collapsable',
+        icon: 'heroicons_outline:banknotes',
+        children: [
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
+            { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' }
+        ]
+    },
+    {
         id: 'apps',
         title: 'Seguridad',
         tooltip: 'Seguridad',
@@ -615,6 +637,16 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
         ]
     },
+    {
+        id: 'finanzas',
+        title: 'FINANZAS',
+        type: 'collapsable',
+        icon: 'heroicons_outline:banknotes',
+        children: [
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
+            { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' }
+        ]
+    },
     { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
     {
         id: 'eventos',
@@ -715,6 +747,16 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'rrhh.mis-solicitudes', title: 'Mis vacaciones y permisos', type: 'basic', icon: 'heroicons_outline:calendar-days', link: '/rrhh/mis-solicitudes' },
             { id: 'rrhh.aprobaciones', title: 'Por aprobar', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/rrhh/aprobaciones' },
             { id: 'rrhh.calendario-permisos', title: 'Calendario de permisos', type: 'basic', icon: 'heroicons_outline:calendar', link: '/rrhh/calendario-permisos' }
+        ]
+    },
+    {
+        id: 'finanzas',
+        title: 'FINANZAS',
+        type: 'group',
+        icon: 'heroicons_outline:banknotes',
+        children: [
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
+            { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' }
         ]
     },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
