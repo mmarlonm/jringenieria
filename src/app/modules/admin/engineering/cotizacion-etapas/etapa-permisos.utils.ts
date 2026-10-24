@@ -21,9 +21,9 @@ export function puedeAutorizar(
         return false;
     }
 
-    if (!etapa.autorizadorDesignadoUsuarioId) {
+    if (!etapa.autorizaUsuarioId) {
         return true;
     }
 
-    return etapa.autorizadorDesignadoUsuarioId === usuarioActualId;
+    return etapa.autorizaUsuarioId === usuarioActualId;
 }

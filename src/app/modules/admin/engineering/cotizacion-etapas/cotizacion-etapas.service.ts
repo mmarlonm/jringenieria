@@ -43,12 +43,12 @@ export class CotizacionEtapasService {
         return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/etapas/${etapa}/estatus`, dto);
     }
 
-    iniciarRevision(id: number, etapa: number): Observable<CotizacionEtapasRevisionDto> {
-        return this._http.post<CotizacionEtapasRevisionDto>(`${this._baseUrl}/${id}/etapas/${etapa}/revisiones`, {});
+    iniciarRevision(id: number, etapa: number): Observable<CotizacionEtapasDetalleDto> {
+        return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/etapas/${etapa}/revisiones`, {});
     }
 
-    cancelar(id: number, motivo: string): Observable<void> {
-        return this._http.post<void>(`${this._baseUrl}/${id}/cancelar`, { motivo });
+    cancelar(id: number, motivo: string): Observable<CotizacionEtapasDetalleDto> {
+        return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/cancelar`, { motivo });
     }
 
     archivos(id: number, etapa: number, numero: number): Observable<CotizacionEtapasArchivoDto[]> {
