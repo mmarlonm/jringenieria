@@ -80,7 +80,7 @@
                                 {{ row.solicitanteNombre || 'Sin nombre' }}
                             </span>
                             <span class="text-xs text-slate-400">
-                                {{ row.solicitanteEmpresa || 'Particular' }}
+                                {{ row.empresa || 'Particular' }}
                             </span>
                         </div>
                     </td>
@@ -92,10 +92,7 @@
                     <td mat-cell *matCellDef="let row">
                         <div class="flex flex-col py-2">
                             <span class="font-medium text-slate-800 dark:text-slate-100 line-clamp-1">
-                                {{ row.tituloProyecto || row.actividad }}
-                            </span>
-                            <span class="text-xs text-slate-400 line-clamp-1">
-                                {{ row.actividad }}
+                                {{ row.titulo }}
                             </span>
                         </div>
                     </td>
@@ -115,12 +112,9 @@
                 <ng-container matColumnDef="responsable">
                     <th mat-header-cell *matHeaderCellDef class="min-w-40 font-bold">Responsable</th>
                     <td mat-cell *matCellDef="let row">
-                        <div class="flex items-center gap-1.5" *ngIf="row.responsableEtapaActualNombre; else sinResponsable">
-                            <mat-icon *ngIf="row.esAliado" class="text-xs text-amber-500 scale-75" [matTooltip]="'Subcontratista / Aliado'">
-                                handshaking
-                            </mat-icon>
+                        <div class="flex items-center gap-1.5" *ngIf="row.responsableNombre; else sinResponsable">
                             <span class="text-xs text-slate-700 dark:text-slate-300">
-                                {{ row.responsableEtapaActualNombre }}
+                                {{ row.responsableNombre }}
                             </span>
                         </div>
                         <ng-template #sinResponsable>
@@ -133,13 +127,21 @@
                 <ng-container matColumnDef="estatus">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-32 font-bold">Estatus</th>
                     <td mat-cell *matCellDef="let row">
-                        <ng-container *ngIf="getEstatusBadge(row.estatusEtapaActual) as badge">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <ng-container *ngIf="getEstatusBadge(row.estatusEtapa) as badge">
+                                <span
+                                    [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ' + badge.clases"
+                                >
+                                    {{ badge.texto }}
+                                </span>
+                            </ng-container>
                             <span
-                                [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ' + badge.clases"
+                                *ngIf="row.cancelado"
+                                class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-300"
                             >
-                                {{ badge.texto }}
+                                Cancelado
                             </span>
-                        </ng-container>
+                        </div>
                     </td>
                 </ng-container>
 
@@ -147,7 +149,7 @@
                 <ng-container matColumnDef="revision">
                     <th mat-header-cell *matHeaderCellDef class="w-20 font-bold text-center">Rev</th>
                     <td mat-cell *matCellDef="let row" class="text-center font-mono text-xs font-bold text-slate-600 dark:text-slate-400">
-                        R{{ row.revisionActualNumero || 1 }}
+                        R{{ row.revisionActual || 1 }}
                     </td>
                 </ng-container>
 
@@ -155,7 +157,7 @@
                 <ng-container matColumnDef="monto">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-32 font-bold text-right">Monto Estimado</th>
                     <td mat-cell *matCellDef="let row" class="text-right font-medium text-xs text-emerald-600 dark:text-emerald-400">
-                        {{ row.montoTotalEstimado ? (row.montoTotalEstimado | currency:'MXN':'symbol':'1.2-2') : '-' }}
+                        {{ row.monto ? (row.monto | currency:'MXN':'symbol':'1.2-2') : '-' }}
                     </td>
                 </ng-container>
 

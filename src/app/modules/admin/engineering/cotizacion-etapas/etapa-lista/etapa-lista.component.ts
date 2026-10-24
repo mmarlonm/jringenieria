@@ -102,10 +102,9 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
             return (
                 (data.idSeguimiento?.toString() || '').includes(query) ||
                 (data.solicitanteNombre || '').toLowerCase().includes(query) ||
-                (data.solicitanteEmpresa || '').toLowerCase().includes(query) ||
-                (data.tituloProyecto || '').toLowerCase().includes(query) ||
-                (data.actividad || '').toLowerCase().includes(query) ||
-                (data.responsableEtapaActualNombre || '').toLowerCase().includes(query) ||
+                (data.empresa || '').toLowerCase().includes(query) ||
+                (data.titulo || '').toLowerCase().includes(query) ||
+                (data.responsableNombre || '').toLowerCase().includes(query) ||
                 (data.tipo || '').toLowerCase().includes(query)
             );
         };
