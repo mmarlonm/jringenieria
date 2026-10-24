@@ -15,7 +15,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Subject, takeUntil } from 'rxjs';
 import { CotizacionEtapasService } from '../cotizacion-etapas.service';
-import { EngineeringService } from '../../engineering.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { SubcontratacionService, SubcontratistaPersonal } from '../../subcontratacion.service';
 import {
@@ -83,6 +82,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     modalAutorizarAbierto = false;
     etapaSiguienteSeleccionada: number | null = null;
     montoAutorizacion: number | null = null;
+    observacionesAutorizacionTexto = '';
 
     modalRechazarAbierto = false;
     motivoRechazoTexto = '';
@@ -97,7 +97,6 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         private readonly _dialogRef: MatDialogRef<EtapaDetalleDialogComponent>,
         private readonly _fb: FormBuilder,
         private readonly _service: CotizacionEtapasService,
-        private readonly _engineeringService: EngineeringService,
         private readonly _usersService: UsersService,
         private readonly _subcontratacionService: SubcontratacionService
     ) {
@@ -108,12 +107,13 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         this.form = this._fb.group({
             responsableUsuarioId: [null],
             esAliado: [false],
-            autorizadorDesignadoUsuarioId: [null],
-            informacionBrindada: [null],
+            autorizaUsuarioId: [null],
+            informacionSuficiente: [null],
             fechaProgramada: [null],
-            montoTotalEstimado: [null],
-            notas: [''],
-            queCambioUltimaRevision: ['']
+            fechaElaboracion: [null],
+            monto: [null],
+            observacionesInformacion: ['', [Validators.maxLength(1000)]],
+            queCambio: ['', [Validators.maxLength(2000)]]
         });
     }
 
@@ -131,12 +131,13 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         this._unsubscribeAll.complete();
     }
 
-    get usuarioActualId(): number {
+    get usuarioActualId(): number | null {
         try {
             const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
-            return info?.usuario?.usuarioId || info?.usuario?.id || 1;
+            const id = info?.usuario?.usuarioId ?? info?.usuario?.id ?? info?.idUsuario ?? info?.id;
+            return id != null ? Number(id) : null;
         } catch {
-            return 1;
+            return null;
         }
     }
 
@@ -151,6 +152,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     get puedeAutorizarAccion(): boolean {
+        if (!this.usuarioActualId) return false;
         return puedeAutorizar(this.etapaActualDto, this.usuarioActualId, this.esAdmin);
     }
 
@@ -159,16 +161,41 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         return [...this.etapaActualDto.revisiones].sort((a, b) => b.numero - a.numero)[0];
     }
 
-    puedeIniciarRevision(): boolean {
-        if (this.detalle?.cancelado) return false;
+    get esSoloLectura(): boolean {
+        if (!this.detalle || !this.etapaActualDto) return true;
+        if (this.detalle.cancelado) return true;
+        if (this.detalle.etapaActual !== this.etapaNumero) return true;
+        if (this.etapaActualDto.estatus === ESTATUS_ETAPA.Autorizada || this.etapaActualDto.estatus === ESTATUS_ETAPA.NoAplica) return true;
+        return false;
+    }
+
+    get ultimaRevisionRechazada(): boolean {
         const ult = this.ultimaRevision;
         return !!ult && ult.resultado === ESTATUS_ETAPA.Rechazada;
     }
 
+    get puedeOperarAcciones(): boolean {
+        return !this.esSoloLectura && !this.ultimaRevisionRechazada;
+    }
+
+    get puedeCambiarAutorizador(): boolean {
+        if (this.esSoloLectura) return false;
+        if (!this.etapaActualDto?.autorizaUsuarioId) return true;
+        if (this.esAdmin) return true;
+        return this.usuarioActualId === this.etapaActualDto.autorizaUsuarioId;
+    }
+
+    puedeIniciarRevision(): boolean {
+        if (this.esSoloLectura) return false;
+        return this.ultimaRevisionRechazada;
+    }
+
     puedeGuardarRevision(): boolean {
+        if (this.esSoloLectura || this.ultimaRevisionRechazada) return false;
+        if (this.form.invalid) return false;
         const ult = this.ultimaRevision;
         if (ult && ult.numero >= 2 && !ult.queCambio) {
-            const texto = this.form.get('queCambioUltimaRevision')?.value;
+            const texto = this.form.get('queCambio')?.value;
             return !!texto && texto.trim().length > 0;
         }
         return true;
@@ -203,23 +230,31 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                     this.etapaActualDto = det.etapas?.find((e) => e.etapa === this.etapaNumero);
 
                     if (this.etapaActualDto) {
-                        const esAliado = !!(this.etapaActualDto.responsableAliadoId || (this.etapaActualDto as any).esAliado);
+                        const esAliado = !!this.etapaActualDto.esAliado;
                         const respId = esAliado
                             ? (this.etapaActualDto.responsableAliadoId ?? null)
                             : (this.etapaActualDto.responsableUsuarioId ?? null);
 
+                        const ult = this.ultimaRevision;
+
                         this.form.patchValue({
                             responsableUsuarioId: respId,
                             esAliado: esAliado,
-                            autorizadorDesignadoUsuarioId: this.etapaActualDto.autorizadorDesignadoUsuarioId ?? (this.etapaActualDto as any).autorizaUsuarioId ?? null,
-                            informacionBrindada: this.etapaActualDto.informacionBrindada ?? (this.etapaActualDto as any).informacionSuficiente ?? null,
+                            autorizaUsuarioId: this.etapaActualDto.autorizaUsuarioId ?? null,
+                            informacionSuficiente: this.etapaActualDto.informacionSuficiente ?? null,
                             fechaProgramada: this.etapaActualDto.fechaProgramada ? new Date(this.etapaActualDto.fechaProgramada) : null,
-                            montoTotalEstimado: this.etapaActualDto.montoTotalEstimado ?? this.ultimaRevision?.monto ?? null,
-                            notas: this.etapaActualDto.notas ?? (this.etapaActualDto as any).observacionesInformacion ?? '',
-                            queCambioUltimaRevision: ''
+                            fechaElaboracion: ult?.fechaElaboracion ? new Date(ult.fechaElaboracion) : null,
+                            monto: ult?.monto ?? null,
+                            observacionesInformacion: this.etapaActualDto.observacionesInformacion ?? '',
+                            queCambio: ''
                         }, { emitEvent: false });
 
-                        const ult = this.ultimaRevision;
+                        if (!this.puedeCambiarAutorizador) {
+                            this.form.get('autorizaUsuarioId')?.disable({ emitEvent: false });
+                        } else {
+                            this.form.get('autorizaUsuarioId')?.enable({ emitEvent: false });
+                        }
+
                         if (ult) {
                             this.revisionSeleccionadaArchivos = ult.numero;
                             this.cargarArchivos();
@@ -239,23 +274,28 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         this.guardando = true;
         this.errorMsg = null;
 
-        const val = this.form.value;
+        const val = this.form.getRawValue();
         const dto: GuardarEtapaDto = {
             responsableUsuarioId: !val.esAliado ? val.responsableUsuarioId : null,
             responsableAliadoId: val.esAliado ? val.responsableUsuarioId : null,
             esAliado: !!val.esAliado,
-            autorizadorDesignadoUsuarioId: val.autorizadorDesignadoUsuarioId,
-            informacionBrindada: val.informacionBrindada,
-            fechaProgramada: val.fechaProgramada ? new Date(val.fechaProgramada).toISOString() : null,
-            montoTotalEstimado: val.montoTotalEstimado,
-            notas: val.notas,
-            queCambioUltimaRevision: val.queCambioUltimaRevision?.trim() || null
+            autorizaUsuarioId: val.autorizaUsuarioId,
+            informacionSuficiente: this.etapaConfig?.usaInformacion ? val.informacionSuficiente : null,
+            observacionesInformacion: val.observacionesInformacion?.trim() || null,
+            fechaProgramada: (this.etapaConfig?.usaFechaProgramada && val.fechaProgramada)
+                ? new Date(val.fechaProgramada).toISOString()
+                : null,
+            fechaElaboracion: (this.etapaNumero >= 3 && this.etapaNumero <= 5 && val.fechaElaboracion)
+                ? new Date(val.fechaElaboracion).toISOString()
+                : null,
+            monto: this.etapaConfig?.usaMonto ? val.monto : null,
+            queCambio: val.queCambio?.trim() || null
         };
 
         this._service.guardar(this.idSeguimiento, this.etapaNumero, dto)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
-                next: (actualizado) => {
+                next: () => {
                     this.guardando = false;
                     this.huboCambios = true;
                     this.cargarDetalle();
@@ -272,7 +312,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         this.guardando = true;
         this.errorMsg = null;
         this._service.cambiarEstatus(this.idSeguimiento, this.etapaNumero, {
-            nuevoEstatus: ESTATUS_ETAPA.EnProceso
+            estatus: ESTATUS_ETAPA.EnProceso
         })
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
@@ -291,7 +331,8 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     abrirModalAutorizar(): void {
         const siguientes = this.etapaConfig?.siguientes || [];
         this.etapaSiguienteSeleccionada = siguientes.length > 0 ? siguientes[0] : null;
-        this.montoAutorizacion = this.form.get('montoTotalEstimado')?.value || null;
+        this.montoAutorizacion = this.form.get('monto')?.value || null;
+        this.observacionesAutorizacionTexto = '';
         this.modalAutorizarAbierto = true;
     }
 
@@ -300,8 +341,9 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         this.errorMsg = null;
 
         const dto: CambiarEstatusDto = {
-            nuevoEstatus: ESTATUS_ETAPA.Autorizada,
-            etapaSiguiente: this.etapaSiguienteSeleccionada,
+            estatus: ESTATUS_ETAPA.Autorizada,
+            observaciones: this.observacionesAutorizacionTexto.trim() || null,
+            etapaSiguiente: (this.etapaConfig?.siguientes || []).length > 0 ? this.etapaSiguienteSeleccionada : null,
             montoTotalEstimado: this.etapaConfig?.usaMonto ? this.montoAutorizacion : undefined
         };
 
@@ -333,8 +375,8 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         this.errorMsg = null;
 
         const dto: CambiarEstatusDto = {
-            nuevoEstatus: ESTATUS_ETAPA.Rechazada,
-            motivoRechazo: this.motivoRechazoTexto.trim()
+            estatus: ESTATUS_ETAPA.Rechazada,
+            observaciones: this.motivoRechazoTexto.trim()
         };
 
         this._service.cambiarEstatus(this.idSeguimiento, this.etapaNumero, dto)
@@ -446,13 +488,6 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     descargarArchivo(nombre: string): void {
-        const rev = this.etapaActualDto?.revisiones?.find((r) => r.numero === this.revisionSeleccionadaArchivos);
-        if (rev?.historica) {
-            const carpetaLegada = this.etapaNumero === 2 ? 'Levantamiento' : (this.etapaNumero === 5 ? 'Cotizacion' : '');
-            this._engineeringService.descargarArchivoEjecucion(this.idSeguimiento, carpetaLegada, nombre);
-            return;
-        }
-
         this._service.descargarArchivo(this.idSeguimiento, this.etapaNumero, this.revisionSeleccionadaArchivos, nombre)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
