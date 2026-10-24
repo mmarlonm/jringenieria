@@ -6,8 +6,34 @@ export default [
         loadComponent: () => import('./solicitantes/solicitantes.component').then(m => m.SolicitantesComponent)
     },
     {
+        path: 'solicitud-cliente',
+        loadComponent: () => import('./cotizacion-etapas/etapa-lista/etapa-lista.component').then(m => m.EtapaListaComponent),
+        data: { etapa: 1 }
+    },
+    {
+        path: 'levantamiento-tecnico',
+        loadComponent: () => import('./cotizacion-etapas/etapa-lista/etapa-lista.component').then(m => m.EtapaListaComponent),
+        data: { etapa: 2 }
+    },
+    {
+        path: 'diseno-calculo',
+        loadComponent: () => import('./cotizacion-etapas/etapa-lista/etapa-lista.component').then(m => m.EtapaListaComponent),
+        data: { etapa: 3 }
+    },
+    {
+        path: 'presupuesto-tecnico',
+        loadComponent: () => import('./cotizacion-etapas/etapa-lista/etapa-lista.component').then(m => m.EtapaListaComponent),
+        data: { etapa: 4 }
+    },
+    {
+        path: 'propuesta-tecnico-comercial',
+        loadComponent: () => import('./cotizacion-etapas/etapa-lista/etapa-lista.component').then(m => m.EtapaListaComponent),
+        data: { etapa: 5 }
+    },
+    {
         path: 'tablero-proyectos',
-        loadComponent: () => import('./tablero-proyectos/tablero-proyectos.component').then(m => m.TableroProyectosComponent)
+        redirectTo: 'solicitud-cliente',
+        pathMatch: 'full'
     },
     {
         path: 'control-ejecucion',
