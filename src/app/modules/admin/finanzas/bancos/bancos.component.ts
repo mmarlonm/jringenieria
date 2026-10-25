@@ -12,8 +12,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Subscription } from 'rxjs';
 import { FinanzasService } from '../finanzas.service';
-import { Cuenta, HojaInfo, Movimiento, Pagina, ResultadoImportacion } from '../finanzas.types';
-import { mensajeDeError } from '../finanzas.utils';
+import { Cuenta, Empresa, HojaInfo, Movimiento, Pagina, ResultadoImportacion } from '../finanzas.types';
+import { etiquetaCuenta, mensajeDeError, motivoArchivoInvalido } from '../finanzas.utils';
 import { CuentaDialogComponent } from '../shared/cuenta-dialog/cuenta-dialog.component';
 import { ImportacionesHistorialComponent } from '../shared/importaciones-historial/importaciones-historial.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
@@ -58,9 +58,12 @@ export class BancosComponent implements OnInit {
     @ViewChild(ImportacionesHistorialComponent) historial?: ImportacionesHistorialComponent;
 
     readonly etiquetaFormato = (f: HojaInfo['formatoDetectado']): string => ETIQUETA_FORMATO[f];
-    readonly etiquetaCuenta = (c: Cuenta): string => `${c.alias} ····${c.terminacion} · ${c.moneda}`;
+    /** «Empresa · alias ····NNNN · moneda»: dice de qué empresa es la cuenta, que es lo que evita mezclarlas al importar. */
+    readonly etiquetaCuenta = (c: Cuenta): string => etiquetaCuenta(c, this.nombresEmpresa());
 
     // Cuenta
+    readonly empresas = signal<Empresa[]>([]);
+    readonly nombresEmpresa = computed(() => new Map(this.empresas().map((e) => [e.empresaId, e.nombre] as const)));
     readonly cuentas = signal<Cuenta[]>([]);
     readonly cargandoCuentas = signal(false);
     readonly errorCuentas = signal<string | null>(null);
@@ -103,6 +106,7 @@ export class BancosComponent implements OnInit {
 
     ngOnInit(): void {
         this.cargarCuentas();
+        this.cargarEmpresas();
     }
 
     get fechasInvalidas(): boolean {
@@ -111,6 +115,14 @@ export class BancosComponent implements OnInit {
 
     get hayFiltros(): boolean {
         return Boolean(this.desde || this.hasta || this.q.trim());
+    }
+
+    /** Solo da el nombre de la empresa a las etiquetas de cuenta: si falla, las cuentas salen sin empresa y la página sigue sirviendo. */
+    private cargarEmpresas(): void {
+        this._service
+            .empresas()
+            .pipe(takeUntilDestroyed(this._destroyRef))
+            .subscribe({ next: (empresas) => this.empresas.set(empresas), error: () => this.empresas.set([]) });
     }
 
     cargarCuentas(): void {
@@ -156,10 +168,16 @@ export class BancosComponent implements OnInit {
         entrada.value = ''; // permite volver a elegir el mismo archivo
         if (!archivo) return;
 
-        this.archivo.set(archivo);
+        // Un archivo que el servidor va a rechazar no se sube: se avisa aquí, sin esperar a subirlo entero.
+        const motivo = motivoArchivoInvalido(archivo);
+        this.archivo.set(motivo ? null : archivo);
         this.hojas.set([]);
         this.hoja.set(null);
         this.invalidar();
+        if (motivo) {
+            this.errorImportacion.set(motivo);
+            return;
+        }
         this.cargandoHojas.set(true);
         this._subHojas?.unsubscribe();
         this._subHojas = this._service

@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
 import '../finanzas.locale'; // registra 'es-MX' (importes de la lista)
 import { FinanzasService } from '../finanzas.service';
 import { Cfdi, Empresa, HojaInfo, Pagina, ResultadoImportacion } from '../finanzas.types';
-import { mensajeDeError } from '../finanzas.utils';
+import { mensajeDeError, motivoArchivoInvalido } from '../finanzas.utils';
 import { EmpresaDialogComponent } from '../shared/empresa-dialog/empresa-dialog.component';
 import { ImportacionesHistorialComponent } from '../shared/importaciones-historial/importaciones-historial.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
@@ -155,11 +155,14 @@ export class CfdiComponent implements OnInit {
         entrada.value = ''; // permite volver a elegir el mismo archivo
         if (!archivo) return;
 
-        this.archivo.set(archivo);
+        // Un archivo que el servidor va a rechazar no se sube: se avisa aquí, sin esperar a subirlo entero.
+        const motivo = motivoArchivoInvalido(archivo);
+        this.archivo.set(motivo ? null : archivo);
         this.hojas.set([]);
         this.hoja.set(null);
         this.resultado.set(null);
-        this.errorImportacion.set(null);
+        this.errorImportacion.set(motivo);
+        if (motivo) return;
         this.cargandoHojas.set(true);
         this._subHojas?.unsubscribe();
         this._subHojas = this._service

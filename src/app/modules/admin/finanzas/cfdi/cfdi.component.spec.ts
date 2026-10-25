@@ -138,6 +138,23 @@ describe('CfdiComponent', () => {
         httpMock.expectOne((r) => r.url === `${base}/importaciones`).flush(vacia);
     });
 
+    it('un archivo de más de 10 MB no se sube: muestra el motivo, descarta el archivo y no pide las hojas', () => {
+        elegirEmpresa();
+        const entrada = fixture.nativeElement.querySelector('input[type=file]') as HTMLInputElement;
+        const datos = new DataTransfer();
+        datos.items.add(new File([new ArrayBuffer(10 * 1024 * 1024 + 1)], 'grande.xlsx'));
+        entrada.files = datos.files;
+
+        entrada.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+
+        // httpMock.verify() (afterEach) falla si se hubiera pedido /importaciones/hojas.
+        expect(fixture.nativeElement.textContent).toContain('El archivo es demasiado grande (máximo 10 MB).');
+        expect(componente.archivo()).toBeNull();
+        expect(entrada.files!.length).toBe(0);
+        expect(componente.puedeImportar()).toBeFalse();
+    });
+
     it('un 413 sin cuerpo da el texto de tamaño máximo con «Reintentar»', () => {
         elegirEmpresa();
         elegirArchivo();

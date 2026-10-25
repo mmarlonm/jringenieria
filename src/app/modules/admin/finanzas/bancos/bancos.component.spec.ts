@@ -7,7 +7,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSelect } from '@angular/material/select';
 import { of } from 'rxjs';
 import { environment } from 'environments/environment';
-import { Cuenta, HojaInfo, Movimiento, ResultadoImportacion } from '../finanzas.types';
+import { Cuenta, Empresa, HojaInfo, Movimiento, ResultadoImportacion } from '../finanzas.types';
 import { ImportacionesHistorialComponent } from '../shared/importaciones-historial/importaciones-historial.component';
 import { BancosComponent } from './bancos.component';
 
@@ -15,6 +15,12 @@ describe('BancosComponent', () => {
     const base = `${environment.apiUrl}/Finanzas`;
     const cuentaA: Cuenta = { cuentaId: 5, empresaId: 3, banco: 'BBVA', alias: 'Cheques principal', tipo: 'Cheques', moneda: 'MXN', terminacion: '1234', activa: true };
     const cuentaB: Cuenta = { cuentaId: 6, empresaId: 3, banco: 'BBVA', alias: 'Tarjeta dólares', tipo: 'TarjetaCredito', moneda: 'USD', terminacion: '56789', activa: true };
+    // Misma etiqueta de cuenta (alias y terminación) en la otra empresa: lo único que las distingue es el nombre de la empresa.
+    const cuentaC: Cuenta = { cuentaId: 7, empresaId: 4, banco: 'BBVA', alias: 'Cheques principal', tipo: 'Cheques', moneda: 'MXN', terminacion: '1234', activa: true };
+    const empresas: Empresa[] = [
+        { empresaId: 3, rfc: 'AAA010101AAA', nombre: 'Empresa Ficticia', tipo: 'M', activa: true },
+        { empresaId: 4, rfc: 'BBB020202BB2', nombre: 'Otra Empresa Ficticia', tipo: 'M', activa: true }
+    ];
     const hojasLibro: HojaInfo[] = [
         { nombre: 'Resumen', filas: 3, formatoDetectado: 'Desconocido' },
         { nombre: 'Enero', filas: 40, formatoDetectado: 'BancoA' },
@@ -109,12 +115,18 @@ describe('BancosComponent', () => {
         fixture.detectChanges();
     }
 
-    function elegirArchivo(nombre = 'ficticio.xlsx', hojas: HojaInfo[] = hojasLibro): void {
+    /** Pone el archivo en el selector del navegador y dispara su evento `change`. */
+    function ponerArchivo(archivo: File): HTMLInputElement {
         const entrada = el().querySelector('input[type=file]') as HTMLInputElement;
         const datos = new DataTransfer();
-        datos.items.add(new File(['x'], nombre));
+        datos.items.add(archivo);
         entrada.files = datos.files;
         entrada.dispatchEvent(new Event('change'));
+        return entrada;
+    }
+
+    function elegirArchivo(nombre = 'ficticio.xlsx', hojas: HojaInfo[] = hojasLibro): void {
+        ponerArchivo(new File(['x'], nombre));
         httpMock.expectOne(`${base}/importaciones/hojas`).flush(hojas);
         fixture.detectChanges();
     }
@@ -135,7 +147,8 @@ describe('BancosComponent', () => {
         fixture = TestBed.createComponent(BancosComponent);
         componente = fixture.componentInstance;
         fixture.detectChanges();
-        httpMock.expectOne(`${base}/cuentas`).flush([cuentaA, cuentaB]);
+        httpMock.expectOne(`${base}/cuentas`).flush([cuentaA, cuentaB, cuentaC]);
+        httpMock.expectOne(`${base}/empresas`).flush(empresas);
         fixture.detectChanges();
     });
 
@@ -160,10 +173,30 @@ describe('BancosComponent', () => {
         expect(celdas.filter((c) => c.textContent?.trim() === '—').length).toBeGreaterThan(0); // el cargo no trae saldo
     });
 
-    it('las opciones de cuenta muestran alias, terminación con puntos y moneda', () => {
-        const opciones = opcionesDe('Cuenta');
-        expect(opciones).toContain('Cheques principal ····1234 · MXN');
-        expect(opciones).toContain('Tarjeta dólares ····56789 · USD');
+    it('las opciones de cuenta llevan la empresa: dos cuentas con el mismo alias y terminación de empresas distintas se distinguen', () => {
+        expect(opcionesDe('Cuenta')).toEqual([
+            'Empresa Ficticia · Cheques principal ····1234 · MXN',
+            'Empresa Ficticia · Tarjeta dólares ····56789 · USD',
+            'Otra Empresa Ficticia · Cheques principal ····1234 · MXN'
+        ]);
+    });
+
+    it('la cuenta elegida se ve con su empresa en el selector', async () => {
+        elegirCuentaA();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(selector('Cuenta').textContent).toContain('Empresa Ficticia · Cheques principal ····1234 · MXN');
+    });
+
+    it('si no se pueden cargar las empresas las cuentas salen sin empresa y la página sigue funcionando', () => {
+        const otro = TestBed.createComponent(BancosComponent);
+        otro.detectChanges();
+        httpMock.expectOne(`${base}/cuentas`).flush([cuentaA]);
+        httpMock.expectOne(`${base}/empresas`).flush({ mensaje: 'No tienes acceso.' }, { status: 403, statusText: 'Forbidden' });
+        otro.detectChanges();
+
+        expect(otro.componentInstance.etiquetaCuenta(cuentaA)).toBe('Cheques principal ····1234 · MXN');
     });
 
     it('los importes de una cuenta en dólares salen con la moneda de la cuenta', () => {
@@ -275,7 +308,7 @@ describe('BancosComponent', () => {
         expect(lista.request.params.get('cuentaId')).toBe('9');
         lista.flush(paginaMovs([]));
         fixture.detectChanges();
-        expect(opcionesDe('Cuenta')).toContain('Ahorro nuevo ····4321 · MXN');
+        expect(opcionesDe('Cuenta')).toContain('Otra Empresa Ficticia · Ahorro nuevo ····4321 · MXN');
         expect(httpMock.expectOne(esHistorial).request.params.get('empresaId')).toBe('4');
     });
 
@@ -317,7 +350,7 @@ describe('BancosComponent', () => {
             // Valores distintos entre sí y que no aparecen en ningún otro lugar de la pantalla (lista, hojas…).
             validar(resultado({ filasLeidas: 77, primerSaldo: 2345.67, ultimoSaldo: 8765.43, ultimoSaldoGuardado: 3456.78 }));
 
-            expect(dato('Cuenta destino')).toBe('Cheques principal ····1234 · MXN');
+            expect(dato('Cuenta destino')).toBe('Empresa Ficticia · Cheques principal ····1234 · MXN');
             expect(dato('Periodo')).toBe('02/01/2026 al 30/01/2026');
             expect(dato('Filas leídas')).toBe('77');
             expect(dato('Primer saldo del archivo')).toBe('$2,345.67');
@@ -355,6 +388,23 @@ describe('BancosComponent', () => {
             expect(texto()).toContain('El archivo es demasiado grande (máximo 10 MB).');
             expect(boton('Confirmar importación').disabled).toBeTrue();
             expect(boton('Validar').disabled).toBeFalse(); // se puede volver a intentar
+        });
+
+        it('un archivo de más de 10 MB no se sube: muestra el motivo, descarta archivo y vista previa y no pide las hojas', () => {
+            elegirArchivo();
+            validar();
+            expect(boton('Confirmar importación').disabled).toBeFalse();
+
+            const entrada = ponerArchivo(new File([new ArrayBuffer(10 * 1024 * 1024 + 1)], 'grande.xlsx'));
+            fixture.detectChanges();
+
+            // httpMock.verify() (afterEach) falla si se hubiera pedido /importaciones/hojas.
+            expect(texto()).toContain('El archivo es demasiado grande (máximo 10 MB).');
+            expect(componente.archivo()).toBeNull();
+            expect(entrada.files!.length).toBe(0);
+            expect(texto()).not.toContain('Vista previa: no se guardó nada');
+            expect(boton('Validar').disabled).toBeTrue();
+            expect(boton('Confirmar importación').disabled).toBeTrue();
         });
 
         it('cambiar de cuenta después de la vista previa la invalida', () => {

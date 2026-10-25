@@ -4,7 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { of } from 'rxjs';
 import { environment } from 'environments/environment';
-import { Importacion } from '../../finanzas.types';
+import { Cuenta, Importacion } from '../../finanzas.types';
 import { ImportacionesHistorialComponent } from './importaciones-historial.component';
 
 describe('ImportacionesHistorialComponent', () => {
@@ -60,6 +60,14 @@ describe('ImportacionesHistorialComponent', () => {
         expect(filas[0].textContent).toContain('Anular');
         expect(filas[1].textContent).toContain('Anulada');
         expect(filas[1].querySelector('button')).toBeNull();
+    });
+
+    it('el historial de CFDI no tiene columna de cuenta', () => {
+        httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, false)));
+        fixture.detectChanges();
+
+        const encabezados = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('thead th')).map((th) => th.textContent?.trim());
+        expect(encabezados).not.toContain('Cuenta');
     });
 
     it('anular confirma, llama al API una sola vez, recarga el historial y avisa al padre', () => {
@@ -155,5 +163,86 @@ describe('ImportacionesHistorialComponent', () => {
         const texto: string = fixture.nativeElement.textContent;
         expect(texto).toContain('No tienes acceso.');
         expect(texto).toContain('Reintentar');
+    });
+});
+
+describe('ImportacionesHistorialComponent (BbvaExcel)', () => {
+    const base = `${environment.apiUrl}/Finanzas/importaciones`;
+    const cuenta = (cuentaId: number, alias: string, terminacion: string, moneda = 'MXN'): Cuenta => ({
+        cuentaId, empresaId: 3, banco: 'BBVA', alias, tipo: 'Cheques', moneda, terminacion, activa: true
+    });
+    const cuentas = [cuenta(5, 'Cheques principal', '1234'), cuenta(6, 'Tarjeta dólares', '56789', 'USD')];
+    const nombres = new Map([[3, 'Empresa Ficticia']]);
+    let fixture: ComponentFixture<ImportacionesHistorialComponent>;
+    let httpMock: HttpTestingController;
+
+    const imp = (importacionId: number, cuentaId: number | null): Importacion => ({
+        importacionId,
+        empresaId: 3,
+        cuentaId,
+        fuente: 'BbvaExcel',
+        nombreArchivo: 'mismo-archivo.xlsx',
+        hoja: 'Enero',
+        usuarioId: 1,
+        fecha: '2026-10-24T17:12:39',
+        nuevos: 4,
+        actualizados: 0,
+        sinCambios: 1,
+        rechazados: 0,
+        anulada: false
+    });
+
+    /** Texto de la celda de la columna «Cuenta» de cada fila. */
+    const celdasDeCuenta = (): (string | undefined)[] => {
+        const encabezados = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('thead th')).map((th) => th.textContent?.trim());
+        const columna = encabezados.indexOf('Cuenta');
+        expect(columna).withContext('columna «Cuenta»').toBeGreaterThanOrEqual(0);
+        return Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tbody tr')).map((tr) => tr.querySelectorAll('td')[columna].textContent?.trim());
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
+            providers: [provideNoopAnimations(), { provide: FuseConfirmationService, useValue: { open: jasmine.createSpy('open') } }]
+        });
+        httpMock = TestBed.inject(HttpTestingController);
+        fixture = TestBed.createComponent(ImportacionesHistorialComponent);
+        fixture.componentRef.setInput('fuente', 'BbvaExcel');
+        fixture.componentRef.setInput('empresaId', 3);
+        fixture.componentRef.setInput('cuentas', cuentas);
+        fixture.componentRef.setInput('nombresEmpresa', nombres);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => httpMock.verify());
+
+    it('el mismo archivo importado a dos cuentas se ve en dos filas con cuentas distintas', () => {
+        httpMock.expectOne((r) => r.url === base).flush({ pagina: 1, tamano: 10, total: 2, items: [imp(2, 6), imp(1, 5)] });
+        fixture.detectChanges();
+
+        expect(celdasDeCuenta()).toEqual([
+            'Empresa Ficticia · Tarjeta dólares ····56789 · USD',
+            'Empresa Ficticia · Cheques principal ····1234 · MXN'
+        ]);
+    });
+
+    it('una importación sin cuenta o con una cuenta que no se conoce muestra «—»', () => {
+        httpMock.expectOne((r) => r.url === base).flush({ pagina: 1, tamano: 10, total: 2, items: [imp(2, null), imp(1, 99)] });
+        fixture.detectChanges();
+
+        expect(celdasDeCuenta()).toEqual(['—', '—']);
+    });
+
+    it('cambiar las cuentas o los nombres no recarga el historial, pero cambiar de empresa sí', () => {
+        httpMock.expectOne((r) => r.url === base).flush({ pagina: 1, tamano: 10, total: 0, items: [] });
+
+        fixture.componentRef.setInput('cuentas', [...cuentas, cuenta(7, 'Ahorro', '4321')]);
+        fixture.componentRef.setInput('nombresEmpresa', new Map([[3, 'Empresa Ficticia'], [4, 'Otra']]));
+        fixture.detectChanges();
+        httpMock.expectNone((r) => r.url === base);
+
+        fixture.componentRef.setInput('empresaId', 4);
+        fixture.detectChanges();
+        expect(httpMock.expectOne((r) => r.url === base).request.params.get('empresaId')).toBe('4');
     });
 });

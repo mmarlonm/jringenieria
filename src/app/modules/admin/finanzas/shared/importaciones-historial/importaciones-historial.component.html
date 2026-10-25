@@ -27,6 +27,9 @@
             <tr class="border-b text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">
               <th class="p-3">Fecha</th>
               <th class="p-3">Archivo</th>
+              @if (fuente === 'BbvaExcel') {
+                <th class="p-3">Cuenta</th>
+              }
               <th class="p-3">Hoja</th>
               <th class="p-3 text-right">Nuevos</th>
               <th class="p-3 text-right">Actualizados</th>
@@ -41,6 +44,9 @@
               <tr class="border-b last:border-b-0">
                 <td class="p-3 whitespace-nowrap">{{ fechaUtc(i.fecha) | date: 'dd/MM/yyyy HH:mm' }}</td>
                 <td class="p-3 font-medium">{{ i.nombreArchivo }}</td>
+                @if (fuente === 'BbvaExcel') {
+                  <td class="p-3">{{ etiquetaDeCuenta(i.cuentaId) }}</td>
+                }
                 <td class="p-3">{{ i.hoja || '—' }}</td>
                 <td class="p-3 text-right">{{ i.nuevos }}</td>
                 <td class="p-3 text-right">{{ i.actualizados }}</td>

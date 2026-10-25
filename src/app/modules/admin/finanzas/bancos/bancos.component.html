@@ -321,7 +321,8 @@
       </div>
 
       <!-- Historial de importaciones -->
-      <app-finanzas-importaciones-historial fuente="BbvaExcel" [empresaId]="c.empresaId"
+      <app-finanzas-importaciones-historial fuente="BbvaExcel" [empresaId]="c.empresaId" [cuentas]="cuentas()"
+                                            [nombresEmpresa]="nombresEmpresa()"
                                             (anulada)="cargarLista(1)"></app-finanzas-importaciones-historial>
     </div>
    }

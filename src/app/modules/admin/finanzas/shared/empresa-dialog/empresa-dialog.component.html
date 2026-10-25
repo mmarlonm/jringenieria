@@ -25,7 +25,7 @@
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+        <button mat-stroked-button type="button" mat-dialog-close [disabled]="guardando()">Cancelar</button>
         <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || guardando()">Guardar</button>
     </mat-dialog-actions>
 </form>

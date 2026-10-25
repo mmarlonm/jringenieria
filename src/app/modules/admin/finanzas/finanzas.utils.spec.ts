@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ResultadoImportacion } from './finanzas.types';
-import { fechaUtc, hayAdvertencias, mensajeDeError, textoResumen } from './finanzas.utils';
+import { Cuenta, ResultadoImportacion } from './finanzas.types';
+import { etiquetaCuenta, fechaUtc, hayAdvertencias, mensajeDeError, motivoArchivoInvalido, textoResumen } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -78,6 +78,47 @@ describe('finanzas.utils', () => {
             expect(mensajeDeError('texto')).toBe(generico);
             expect(mensajeDeError(null)).toBe(generico);
             expect(mensajeDeError(undefined)).toBe(generico);
+        });
+    });
+
+    describe('motivoArchivoInvalido', () => {
+        const DIEZ_MB = 10 * 1024 * 1024;
+
+        it('acepta un Excel de exactamente 10 MB', () => {
+            expect(motivoArchivoInvalido({ name: 'movimientos.xlsx', size: DIEZ_MB })).toBeNull();
+            expect(motivoArchivoInvalido({ name: 'movimientos.xls', size: 1 })).toBeNull();
+        });
+
+        it('rechaza 10 MB más un byte', () => {
+            expect(motivoArchivoInvalido({ name: 'movimientos.xlsx', size: DIEZ_MB + 1 })).toBe('El archivo es demasiado grande (máximo 10 MB).');
+        });
+
+        it('la extensión no distingue mayúsculas', () => {
+            expect(motivoArchivoInvalido({ name: 'MOVIMIENTOS.XLSX', size: 10 })).toBeNull();
+            expect(motivoArchivoInvalido({ name: 'Libro.Xls', size: 10 })).toBeNull();
+        });
+
+        it('rechaza lo que no es Excel: .csv, sin extensión, doble extensión y .xlsx solo como parte del nombre', () => {
+            const texto = 'Solo se aceptan archivos de Excel (.xlsx o .xls).';
+
+            expect(motivoArchivoInvalido({ name: 'movimientos.csv', size: 10 })).toBe(texto);
+            expect(motivoArchivoInvalido({ name: 'movimientos', size: 10 })).toBe(texto);
+            expect(motivoArchivoInvalido({ name: 'movimientos.xlsx.exe', size: 10 })).toBe(texto);
+            expect(motivoArchivoInvalido({ name: 'xlsx', size: 10 })).toBe(texto);
+            expect(motivoArchivoInvalido({ name: '', size: 10 })).toBe(texto);
+        });
+    });
+
+    describe('etiquetaCuenta', () => {
+        const cuenta: Cuenta = { cuentaId: 5, empresaId: 3, banco: 'BBVA', alias: 'Cheques principal', tipo: 'Cheques', moneda: 'MXN', terminacion: '1234', activa: true };
+
+        it('antepone la empresa a «alias ····terminación · moneda»', () => {
+            expect(etiquetaCuenta(cuenta, new Map([[3, 'Empresa Ficticia']]))).toBe('Empresa Ficticia · Cheques principal ····1234 · MXN');
+        });
+
+        it('si la empresa no se conoce da la etiqueta sin empresa', () => {
+            expect(etiquetaCuenta(cuenta, new Map())).toBe('Cheques principal ····1234 · MXN');
+            expect(etiquetaCuenta(cuenta, new Map([[4, 'Otra']]))).toBe('Cheques principal ····1234 · MXN');
         });
     });
 

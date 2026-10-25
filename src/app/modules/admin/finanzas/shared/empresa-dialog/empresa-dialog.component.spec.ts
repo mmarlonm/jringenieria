@@ -11,7 +11,7 @@ describe('EmpresaDialogComponent', () => {
     let fixture: ComponentFixture<EmpresaDialogComponent>;
     let componente: EmpresaDialogComponent;
     let httpMock: HttpTestingController;
-    let dialogRef: { close: jasmine.Spy };
+    let dialogRef: { close: jasmine.Spy; disableClose?: boolean };
 
     beforeEach(() => {
         dialogRef = { close: jasmine.createSpy('close') };
@@ -62,5 +62,41 @@ describe('EmpresaDialogComponent', () => {
         expect(componente.error()).toBe('Ya existe una empresa con ese RFC.');
         expect(componente.guardando()).toBeFalse();
         expect(dialogRef.close).not.toHaveBeenCalled();
+    });
+
+    describe('mientras guarda', () => {
+        const boton = (texto: string): HTMLButtonElement =>
+            Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button')).find((b) => b.textContent?.includes(texto))!;
+
+        beforeEach(() => {
+            componente.form.setValue({ rfc: 'AAA010101AAA', nombre: 'Empresa Ficticia' });
+            fixture.detectChanges();
+        });
+
+        it('bloquea el cierre (Esc, fondo y «Cancelar») hasta que el API responde y no manda dos peticiones', () => {
+            boton('Guardar').click();
+            boton('Guardar').click(); // el botón aún no se deshabilitó en pantalla: lo frena el método
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne(url); // expectOne falla si hubo dos
+            expect(dialogRef.disableClose).toBeTrue();
+            expect(boton('Cancelar').disabled).toBeTrue();
+            expect(boton('Guardar').disabled).toBeTrue();
+
+            const creada: Empresa = { empresaId: 7, rfc: 'AAA010101AAA', nombre: 'Empresa Ficticia', tipo: 'M', activa: true };
+            req.flush(creada);
+            expect(dialogRef.close).toHaveBeenCalledOnceWith(creada);
+        });
+
+        it('si el API falla vuelve a permitir cerrar y reintentar', () => {
+            boton('Guardar').click();
+            httpMock.expectOne(url).flush({ mensaje: 'Ya existe una empresa con ese RFC.' }, { status: 409, statusText: 'Conflict' });
+            fixture.detectChanges();
+
+            expect(dialogRef.disableClose).toBeFalse();
+            expect(boton('Cancelar').disabled).toBeFalse();
+            expect(boton('Guardar').disabled).toBeFalse();
+            expect(dialogRef.close).not.toHaveBeenCalled();
+        });
     });
 });

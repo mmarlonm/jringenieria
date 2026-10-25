@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, EventEmitter, Input, OnChanges, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,8 +9,8 @@ import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Subscription } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { FinanzasService } from '../../finanzas.service';
-import { Importacion, Pagina } from '../../finanzas.types';
-import { fechaUtc, mensajeDeError } from '../../finanzas.utils';
+import { Cuenta, Importacion, Pagina } from '../../finanzas.types';
+import { etiquetaCuenta, fechaUtc, mensajeDeError } from '../../finanzas.utils';
 import { PaginadorComponent } from '../paginador/paginador.component';
 
 const TAMANO = 10;
@@ -32,6 +32,9 @@ export class ImportacionesHistorialComponent implements OnChanges {
 
     @Input() fuente: 'OneFacturaExcel' | 'BbvaExcel' = 'OneFacturaExcel';
     @Input() empresaId: number | null = null;
+    /** Solo para `BbvaExcel`: con ellas la columna «Cuenta» dice a cuál cuenta fue cada importación. */
+    @Input() cuentas: Cuenta[] = [];
+    @Input() nombresEmpresa: ReadonlyMap<number, string> = new Map();
     /** Se emite tras anular, para que quien muestra las filas importadas (CFDI, movimientos) las vuelva a pedir. */
     @Output() anulada = new EventEmitter<void>();
 
@@ -41,8 +44,15 @@ export class ImportacionesHistorialComponent implements OnChanges {
     readonly anulando = signal<number | null>(null);
     readonly fechaUtc = fechaUtc;
 
-    ngOnChanges(): void {
-        this.recargar();
+    /** Solo lo que cambia lo pedido recarga; las cuentas y los nombres únicamente rotulan. */
+    ngOnChanges(cambios: SimpleChanges): void {
+        if (cambios['fuente'] || cambios['empresaId']) this.recargar();
+    }
+
+    /** «Empresa · alias ····NNNN · moneda» de la cuenta de una importación, o «—» si no tiene o no se conoce. */
+    etiquetaDeCuenta(cuentaId: number | null): string {
+        const cuenta = this.cuentas.find((c) => c.cuentaId === cuentaId);
+        return cuenta ? etiquetaCuenta(cuenta, this.nombresEmpresa) : '—';
     }
 
     /** Vuelve a la primera página (donde aparece una importación recién hecha); la llama quien importa. */
