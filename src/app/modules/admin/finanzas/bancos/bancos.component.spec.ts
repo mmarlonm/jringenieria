@@ -67,6 +67,12 @@ describe('BancosComponent', () => {
             .find((f) => f.querySelector('mat-label')?.textContent?.trim() === etiqueta)!
             .querySelector('mat-select') as HTMLElement;
 
+    /** Texto del `dd` de la cifra de la vista previa cuyo `dt` es exactamente `etiqueta` (así cada cifra queda atada a su etiqueta). */
+    const dato = (etiqueta: string): string | undefined => {
+        const dt = Array.from(el().querySelectorAll('dt')).find((d) => d.textContent?.trim() === etiqueta);
+        return dt?.parentElement?.querySelector('dd')?.textContent?.replace(/\s+/g, ' ').trim();
+    };
+
     /** Pulsa el selector con ese nombre, como lo haría una persona, y devuelve sus opciones. */
     function abrir(etiqueta: string): MatOption[] {
         const host = selector(etiqueta);
@@ -306,28 +312,28 @@ describe('BancosComponent', () => {
             // httpMock.verify() (afterEach) falla si «Validar» hubiera pedido la lista o el historial.
         });
 
-        it('la vista previa muestra cuenta destino, periodo, filas, primer y último saldo, último saldo guardado, advertencias y rechazos', () => {
+        it('la vista previa muestra cada cifra bajo su etiqueta: cuenta destino, periodo, filas y los tres saldos, además de advertencias y rechazos', () => {
             elegirArchivo();
-            validar();
+            // Valores distintos entre sí y que no aparecen en ningún otro lugar de la pantalla (lista, hojas…).
+            validar(resultado({ filasLeidas: 77, primerSaldo: 2345.67, ultimoSaldo: 8765.43, ultimoSaldoGuardado: 3456.78 }));
 
-            const t = texto();
-            expect(t).toContain('Cheques principal ····1234 · MXN');
-            expect(t).toContain('02/01/2026 al 30/01/2026');
-            expect(t).toContain('40'); // filas leídas
-            expect(t).toContain('$1,000.00'); // primer saldo
-            expect(t).toContain('$1,500.50'); // último saldo
-            expect(t).toContain('$900.00'); // último saldo guardado
-            expect(t).toContain('38 nuevos · 0 actualizados · 2 sin cambios · 1 rechazados');
-            expect(t).toContain('El archivo no empieza donde terminó el último saldo guardado.');
-            expect(t).toContain('Fecha no válida');
+            expect(dato('Cuenta destino')).toBe('Cheques principal ····1234 · MXN');
+            expect(dato('Periodo')).toBe('02/01/2026 al 30/01/2026');
+            expect(dato('Filas leídas')).toBe('77');
+            expect(dato('Primer saldo del archivo')).toBe('$2,345.67');
+            expect(dato('Último saldo del archivo')).toBe('$8,765.43');
+            expect(dato('Último saldo guardado')).toBe('$3,456.78');
+            expect(texto()).toContain('Vista previa: no se guardó nada.');
+            expect(texto()).toContain('38 nuevos · 0 actualizados · 2 sin cambios · 1 rechazados');
+            expect(texto()).toContain('El archivo no empieza donde terminó el último saldo guardado.');
+            expect(texto()).toContain('Fecha no válida');
         });
 
         it('si no hay último saldo guardado (cuenta sin movimientos) lo muestra como «—»', () => {
             elegirArchivo();
             validar(resultado({ ultimoSaldoGuardado: null }));
 
-            const guardado = Array.from(el().querySelectorAll('dt')).find((d) => d.textContent?.includes('Último saldo guardado'))!;
-            expect(guardado.parentElement!.querySelector('dd')!.textContent?.trim()).toBe('—');
+            expect(dato('Último saldo guardado')).toBe('—');
         });
 
         it('«Confirmar importación» se habilita solo tras una vista previa correcta', () => {
