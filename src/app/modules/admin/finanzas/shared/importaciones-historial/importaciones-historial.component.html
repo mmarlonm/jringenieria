@@ -1,0 +1,80 @@
+<div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sm:p-8">
+  <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-6">
+    <mat-icon class="mr-3 text-indigo-600 bg-indigo-50 p-2 rounded-2xl">history</mat-icon>
+    Historial de importaciones
+  </h2>
+
+  @if (error(); as mensaje) {
+    <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <mat-icon class="text-rose-600">error_outline</mat-icon>
+        <span class="text-sm font-semibold text-rose-800">{{ mensaje }}</span>
+      </div>
+      <button mat-flat-button color="warn" class="rounded-xl font-bold" (click)="cargar(datos()?.pagina ?? 1)">Reintentar</button>
+    </div>
+  } @else if (cargando() && !datos()) {
+    <div class="flex justify-center py-12">
+      <mat-spinner diameter="40" strokeWidth="4" color="primary"></mat-spinner>
+    </div>
+  } @else {
+   @if (datos(); as pagina) {
+    @if (pagina.total === 0) {
+      <p class="py-8 text-center text-sm font-semibold text-gray-500">Todavía no hay importaciones.</p>
+    } @else {
+      <div class="overflow-x-auto" [class.opacity-50]="cargando()">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">
+              <th class="p-3">Fecha</th>
+              <th class="p-3">Archivo</th>
+              @if (fuente === 'BbvaExcel') {
+                <th class="p-3">Cuenta</th>
+              }
+              <th class="p-3">Hoja</th>
+              <th class="p-3 text-right">Nuevos</th>
+              <th class="p-3 text-right">Actualizados</th>
+              <th class="p-3 text-right">Sin cambios</th>
+              <th class="p-3 text-right">Rechazados</th>
+              <th class="p-3">Estado</th>
+              <th class="p-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of pagina.items; track i.importacionId) {
+              <tr class="border-b last:border-b-0">
+                <td class="p-3 whitespace-nowrap">{{ fechaUtc(i.fecha) | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="p-3 font-medium">{{ i.nombreArchivo }}</td>
+                @if (fuente === 'BbvaExcel') {
+                  <td class="p-3">{{ etiquetaDeCuenta(i.cuentaId) }}</td>
+                }
+                <td class="p-3">{{ i.hoja || '—' }}</td>
+                <td class="p-3 text-right">{{ i.nuevos }}</td>
+                <td class="p-3 text-right">{{ i.actualizados }}</td>
+                <td class="p-3 text-right">{{ i.sinCambios }}</td>
+                <td class="p-3 text-right">{{ i.rechazados }}</td>
+                <td class="p-3">
+                  @if (i.anulada) {
+                    <span class="px-2 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black uppercase tracking-widest">Anulada</span>
+                  } @else {
+                    <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest">Activa</span>
+                  }
+                </td>
+                <td class="p-3 text-right">
+                  @if (!i.anulada) {
+                    <button mat-stroked-button color="warn" type="button" class="rounded-xl" (click)="anular(i)"
+                            [disabled]="anulando() !== null">
+                      {{ anulando() === i.importacionId ? 'Anulando…' : 'Anular' }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-finanzas-paginador [pagina]="pagina.pagina" [tamano]="pagina.tamano" [total]="pagina.total"
+                              [deshabilitado]="cargando() || anulando() !== null" (cambio)="cargar($event)"></app-finanzas-paginador>
+    }
+   }
+  }
+</div>
