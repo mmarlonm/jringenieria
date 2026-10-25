@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>Nueva empresa</h2>
+
+<form [formGroup]="form" (ngSubmit)="guardar()">
+    <mat-dialog-content>
+        <p class="text-secondary mb-4">
+            Razón social propia sobre la que se importan los CFDI. El tipo (persona física o moral) se deduce del RFC.
+        </p>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>RFC</mat-label>
+            <input matInput formControlName="rfc" class="uppercase" maxlength="13" autocomplete="off">
+            <mat-hint>12 caracteres (persona moral) o 13 (persona física)</mat-hint>
+            <mat-error>El RFC debe tener 12 o 13 caracteres (letras y números).</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full mt-4">
+            <mat-label>Nombre o razón social</mat-label>
+            <input matInput formControlName="nombre" maxlength="200" autocomplete="off">
+            <mat-error>Escribe el nombre de la empresa.</mat-error>
+        </mat-form-field>
+
+        @if (error(); as mensaje) {
+            <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm font-semibold text-rose-800">{{ mensaje }}</div>
+        }
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || guardando()">Guardar</button>
+    </mat-dialog-actions>
+</form>

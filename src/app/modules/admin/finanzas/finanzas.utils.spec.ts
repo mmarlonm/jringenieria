@@ -1,5 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ResultadoImportacion } from './finanzas.types';
-import { hayAdvertencias, textoResumen } from './finanzas.utils';
+import { fechaUtc, hayAdvertencias, mensajeDeError, textoResumen } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -40,5 +41,49 @@ describe('finanzas.utils', () => {
         expect(hayAdvertencias(resultado({ advertencias: [] }))).toBeFalse();
         expect(hayAdvertencias(resultado({ advertencias: ['Falta la columna Folio'] }))).toBeTrue();
         expect(hayAdvertencias(resultado({ advertencias: ['a', 'b'] }))).toBeTrue();
+    });
+
+    describe('mensajeDeError', () => {
+        it('usa el mensaje del cuerpo en 400, 404 y 409', () => {
+            for (const status of [400, 404, 409]) {
+                const err = new HttpErrorResponse({ status, error: { mensaje: `Motivo ${status}` } });
+
+                expect(mensajeDeError(err)).toBe(`Motivo ${status}`);
+            }
+        });
+
+        it('prefiere el mensaje del servidor en un 413 con cuerpo (p. ej. el tope de filas)', () => {
+            const err = new HttpErrorResponse({ status: 413, error: { mensaje: 'El archivo tiene más de 20,000 filas.' } });
+
+            expect(mensajeDeError(err)).toBe('El archivo tiene más de 20,000 filas.');
+        });
+
+        it('413 sin cuerpo (Kestrel) da el texto de tamaño máximo', () => {
+            expect(mensajeDeError(new HttpErrorResponse({ status: 413 }))).toBe('El archivo es demasiado grande (máximo 10 MB).');
+            expect(mensajeDeError(new HttpErrorResponse({ status: 413, error: '' }))).toBe('El archivo es demasiado grande (máximo 10 MB).');
+        });
+
+        it('estado 0 es falta de conexión', () => {
+            const err = new HttpErrorResponse({ status: 0, error: new ProgressEvent('error') });
+
+            expect(mensajeDeError(err)).toBe('No se pudo conectar con el servidor.');
+        });
+
+        it('cualquier otra forma da el texto genérico', () => {
+            const generico = 'Ocurrió un error inesperado.';
+
+            expect(mensajeDeError(new HttpErrorResponse({ status: 500 }))).toBe(generico);
+            expect(mensajeDeError(new HttpErrorResponse({ status: 500, error: { mensaje: '  ' } }))).toBe(generico);
+            expect(mensajeDeError(new Error('boom'))).toBe(generico);
+            expect(mensajeDeError('texto')).toBe(generico);
+            expect(mensajeDeError(null)).toBe(generico);
+            expect(mensajeDeError(undefined)).toBe(generico);
+        });
+    });
+
+    it('fechaUtc marca como UTC solo las fechas sin zona', () => {
+        expect(fechaUtc('2026-10-24T17:12:39.1234567')).toBe('2026-10-24T17:12:39.1234567Z');
+        expect(fechaUtc('2026-10-24T17:12:39Z')).toBe('2026-10-24T17:12:39Z');
+        expect(fechaUtc('2026-10-24T11:12:39-06:00')).toBe('2026-10-24T11:12:39-06:00');
     });
 });
