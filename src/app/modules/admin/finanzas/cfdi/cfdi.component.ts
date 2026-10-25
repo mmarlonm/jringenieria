@@ -1,5 +1,4 @@
-import { CurrencyPipe, DatePipe, registerLocaleData } from '@angular/common';
-import localeEsMx from '@angular/common/locales/es-MX';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -11,15 +10,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Subscription } from 'rxjs';
+import '../finanzas.locale'; // registra 'es-MX' (importes de la lista)
 import { FinanzasService } from '../finanzas.service';
 import { Cfdi, Empresa, HojaInfo, Pagina, ResultadoImportacion } from '../finanzas.types';
 import { hayAdvertencias, mensajeDeError, textoResumen } from '../finanzas.utils';
 import { EmpresaDialogComponent } from '../shared/empresa-dialog/empresa-dialog.component';
 import { ImportacionesHistorialComponent } from '../shared/importaciones-historial/importaciones-historial.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
-
-// Los importes se muestran con separadores de México; la app solo registra `es`, que usa los de España.
-registerLocaleData(localeEsMx, 'es-MX');
 
 const TAMANO_PAGINA = 50;
 // shortcut: la tabla de rechazos muestra solo las primeras filas (un archivo equivocado puede traer miles); paginarla si hace falta ver todas.

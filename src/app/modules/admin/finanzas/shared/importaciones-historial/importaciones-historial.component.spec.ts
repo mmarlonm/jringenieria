@@ -44,7 +44,8 @@ describe('ImportacionesHistorialComponent', () => {
         fixture.detectChanges();
     });
 
-    afterEach(() => httpMock.verify());
+    // ignoreCancelled: la prueba de «destruir con la anulación en vuelo» cancela a propósito una petición.
+    afterEach(() => httpMock.verify({ ignoreCancelled: true }));
 
     it('pide la primera página de la fuente y la empresa, y ofrece «Anular» solo en las que no están anuladas', () => {
         const req = httpMock.expectOne((r) => r.url === base);
@@ -61,19 +62,78 @@ describe('ImportacionesHistorialComponent', () => {
         expect(filas[1].querySelector('button')).toBeNull();
     });
 
-    it('anular confirma, llama al API y recarga el historial', () => {
+    it('anular confirma, llama al API una sola vez, recarga el historial y avisa al padre', () => {
         httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, false)));
         const anulada = jasmine.createSpy('anulada');
         fixture.componentInstance.anulada.subscribe(anulada);
 
         fixture.componentInstance.anular(imp(1, false));
 
-        expect(confirmacion.open).toHaveBeenCalled();
-        const post = httpMock.expectOne(`${base}/1/anular`);
+        expect(confirmacion.open).toHaveBeenCalledTimes(1);
+        const post = httpMock.expectOne(`${base}/1/anular`); // expectOne: falla si hubiera más de una
         expect(post.request.method).toBe('POST');
+        expect(fixture.componentInstance.anulando()).toBe(1);
         post.flush(null, { status: 204, statusText: 'No Content' });
-        expect(anulada).toHaveBeenCalled();
+        expect(fixture.componentInstance.anulando()).toBeNull();
+        expect(anulada).toHaveBeenCalledTimes(1);
         httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, true)));
+    });
+
+    it('el mensaje de la confirmación es fijo: no lleva el nombre del archivo (Fuse lo pinta como HTML)', () => {
+        httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, false)));
+        const conMarcas = { ...imp(1, false), nombreArchivo: '<img src=x onerror=alert(1)>.xlsx' };
+
+        fixture.componentInstance.anular(conMarcas);
+
+        const mensaje: string = confirmacion.open.calls.mostRecent().args[0].message;
+        expect(mensaje).not.toContain('<img');
+        expect(mensaje).not.toContain('.xlsx');
+        httpMock.expectOne(`${base}/1/anular`).flush(null, { status: 204, statusText: 'No Content' });
+        httpMock.expectOne((r) => r.url === base).flush(respuesta());
+    });
+
+    it('si se cancela la confirmación no se llama al API, no se recarga y anulando sigue en null', () => {
+        httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, false)));
+        confirmacion.open.and.returnValue({ afterClosed: () => of('cancelled') });
+        const anulada = jasmine.createSpy('anulada');
+        fixture.componentInstance.anulada.subscribe(anulada);
+
+        fixture.componentInstance.anular(imp(1, false));
+
+        expect(confirmacion.open).toHaveBeenCalledTimes(1);
+        httpMock.expectNone(`${base}/1/anular`);
+        expect(fixture.componentInstance.anulando()).toBeNull();
+        expect(anulada).not.toHaveBeenCalled();
+        httpMock.expectNone((r) => r.url === base); // tampoco recarga el historial
+    });
+
+    it('un segundo anular mientras hay uno en vuelo no hace nada', () => {
+        httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, false), imp(2, false)));
+
+        fixture.componentInstance.anular(imp(1, false));
+        const primero = httpMock.expectOne(`${base}/1/anular`);
+        fixture.componentInstance.anular(imp(2, false));
+
+        expect(confirmacion.open).toHaveBeenCalledTimes(1);
+        httpMock.expectNone(`${base}/2/anular`);
+        expect(fixture.componentInstance.anulando()).toBe(1);
+
+        primero.flush(null, { status: 204, statusText: 'No Content' });
+        httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, true), imp(2, false)));
+    });
+
+    it('si el componente se destruye con la anulación en vuelo, la petición se cancela y no se recarga ni se avisa al padre', () => {
+        httpMock.expectOne((r) => r.url === base).flush(respuesta(imp(1, false)));
+        const anulada = jasmine.createSpy('anulada');
+        fixture.componentInstance.anulada.subscribe(anulada);
+
+        fixture.componentInstance.anular(imp(1, false));
+        const post = httpMock.expectOne(`${base}/1/anular`);
+        fixture.destroy();
+
+        expect(post.cancelled).toBeTrue();
+        expect(anulada).not.toHaveBeenCalled();
+        httpMock.expectNone((r) => r.url === base); // no hubo recarga
     });
 
     it('si el API rechaza la anulación no recarga ni avisa al padre', () => {

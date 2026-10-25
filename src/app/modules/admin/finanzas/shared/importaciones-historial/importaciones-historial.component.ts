@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Subscription } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { FinanzasService } from '../../finanzas.service';
 import { Importacion, Pagina } from '../../finanzas.types';
 import { fechaUtc, mensajeDeError } from '../../finanzas.utils';
@@ -69,28 +70,35 @@ export class ImportacionesHistorialComponent implements OnChanges {
     }
 
     anular(i: Importacion): void {
+        if (this.anulando() !== null) return;
+        const id = i.importacionId;
         this._confirmacion
             .open({
                 title: 'Anular importación',
-                message: `Se borrarán las filas nuevas que creó la importación de «${i.nombreArchivo}». Lo que ya existía antes no se toca. ¿Anularla?`,
+                // Texto fijo: Fuse pinta `message` con [innerHTML], así que no se le interpola nada guardado (p. ej. el nombre del archivo).
+                message:
+                    '¿Anular esta importación? Se borrarán los registros que creó; los CFDI que una importación posterior marcó como Cancelado no se revierten.',
                 actions: { confirm: { label: 'Anular' } }
             })
             .afterClosed()
-            .subscribe((resultado) => {
-                if (resultado !== 'confirmed') return;
-                this.anulando.set(i.importacionId);
-                this._service.anularImportacion(i.importacionId).subscribe({
-                    next: () => {
-                        this.anulando.set(null);
-                        this._snackBar.open('Importación anulada.', 'Cerrar', { duration: 5000 });
-                        this.anulada.emit();
-                        this.recargar();
-                    },
-                    error: (e) => {
-                        this.anulando.set(null);
-                        this._snackBar.open(mensajeDeError(e), 'Cerrar', { duration: 7000 });
-                    }
-                });
+            .pipe(
+                filter((resultado) => resultado === 'confirmed'),
+                tap(() => this.anulando.set(id)),
+                switchMap(() => this._service.anularImportacion(id)),
+                // Si la página se cierra con la anulación en vuelo, se cancela la petición y no se toca un componente destruido.
+                takeUntilDestroyed(this._destroyRef)
+            )
+            .subscribe({
+                next: () => {
+                    this.anulando.set(null);
+                    this._snackBar.open('Importación anulada.', 'Cerrar', { duration: 5000 });
+                    this.anulada.emit();
+                    this.recargar();
+                },
+                error: (e) => {
+                    this.anulando.set(null);
+                    this._snackBar.open(mensajeDeError(e), 'Cerrar', { duration: 7000 });
+                }
             });
     }
 }
