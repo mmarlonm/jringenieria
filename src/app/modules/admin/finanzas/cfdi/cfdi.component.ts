@@ -13,14 +13,13 @@ import { Subscription } from 'rxjs';
 import '../finanzas.locale'; // registra 'es-MX' (importes de la lista)
 import { FinanzasService } from '../finanzas.service';
 import { Cfdi, Empresa, HojaInfo, Pagina, ResultadoImportacion } from '../finanzas.types';
-import { hayAdvertencias, mensajeDeError, textoResumen } from '../finanzas.utils';
+import { mensajeDeError } from '../finanzas.utils';
 import { EmpresaDialogComponent } from '../shared/empresa-dialog/empresa-dialog.component';
 import { ImportacionesHistorialComponent } from '../shared/importaciones-historial/importaciones-historial.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
+import { ResultadoImportacionComponent } from '../shared/resultado-importacion/resultado-importacion.component';
 
 const TAMANO_PAGINA = 50;
-// shortcut: la tabla de rechazos muestra solo las primeras filas (un archivo equivocado puede traer miles); paginarla si hace falta ver todas.
-const MAX_RECHAZOS_VISIBLES = 200;
 
 const ETIQUETA_FORMATO: Record<HojaInfo['formatoDetectado'], string> = {
     CFDI: 'CFDI',
@@ -52,7 +51,8 @@ const TIPOS = [
         MatProgressSpinnerModule,
         MatSelectModule,
         ImportacionesHistorialComponent,
-        PaginadorComponent
+        PaginadorComponent,
+        ResultadoImportacionComponent
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -69,8 +69,6 @@ export class CfdiComponent implements OnInit {
     readonly tipos = TIPOS;
     readonly tipoTexto = (t: string): string => TIPOS.find((x) => x.valor === t)?.texto ?? t;
     readonly etiquetaFormato = (f: HojaInfo['formatoDetectado']): string => ETIQUETA_FORMATO[f];
-    readonly textoResumen = textoResumen;
-    readonly hayAdvertencias = hayAdvertencias;
 
     // Empresa
     readonly empresas = signal<Empresa[]>([]);
@@ -86,7 +84,6 @@ export class CfdiComponent implements OnInit {
     readonly importando = signal(false);
     readonly errorImportacion = signal<string | null>(null);
     readonly resultado = signal<ResultadoImportacion | null>(null);
-    readonly rechazosVisibles = computed(() => this.resultado()?.rechazados.slice(0, MAX_RECHAZOS_VISIBLES) ?? []);
     /** Con varias hojas hay que elegir una; con una sola el API usa la primera con encabezado reconocible. */
     readonly puedeImportar = computed(
         () => this.archivo() !== null && !this.cargandoHojas() && !this.importando() && (this.hojas().length <= 1 || this.hoja() !== null)

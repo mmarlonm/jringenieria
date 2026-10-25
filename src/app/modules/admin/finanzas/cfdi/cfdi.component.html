@@ -165,47 +165,7 @@
             </div>
           }
 
-          <p class="text-2xl font-black text-gray-800 tracking-tight">{{ textoResumen(r) }}</p>
-
-          @if (hayAdvertencias(r)) {
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-              <p class="text-[10px] font-black text-amber-700 uppercase tracking-[0.25em] mb-2">Advertencias</p>
-              <ul class="list-disc pl-5 text-sm font-medium text-amber-900 space-y-1">
-                @for (a of r.advertencias; track $index) {
-                  <li>{{ a }}</li>
-                }
-              </ul>
-            </div>
-          }
-
-          @if (r.rechazados.length > 0) {
-            <div>
-              <p class="text-[10px] font-black text-rose-700 uppercase tracking-[0.25em] mb-2">Filas rechazadas</p>
-              <div class="overflow-auto max-h-80 rounded-2xl border">
-                <table class="w-full text-left text-sm">
-                  <thead>
-                    <tr class="border-b text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">
-                      <th class="p-3 w-24">Fila</th>
-                      <th class="p-3">Motivo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (x of rechazosVisibles(); track $index) {
-                      <tr class="border-b last:border-b-0">
-                        <td class="p-3 font-bold">{{ x.fila }}</td>
-                        <td class="p-3">{{ x.motivo }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-              @if (r.rechazados.length > rechazosVisibles().length) {
-                <p class="text-xs text-gray-500 font-medium mt-2">
-                  Se muestran las primeras {{ rechazosVisibles().length }} de {{ r.rechazados.length }} filas rechazadas.
-                </p>
-              }
-            </div>
-          }
+          <app-finanzas-resultado-importacion [resultado]="r"></app-finanzas-resultado-importacion>
         </div>
       }
 
