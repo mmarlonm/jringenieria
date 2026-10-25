@@ -1,1 +1,329 @@
-<h1 class="text-2xl font-black text-gray-900">Bancos</h1>
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-8 font-sans">
+
+  <!-- Encabezado -->
+  <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+    <div class="flex flex-col">
+      <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-blue-600">account_balance</mat-icon>
+        Bancos
+      </h1>
+      <p class="text-secondary text-xs font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-70">
+        Importación y consulta de movimientos bancarios
+      </p>
+    </div>
+  </div>
+
+  <!-- Selector de cuenta -->
+  <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 px-2 items-center">
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript md:col-span-2">
+      <mat-label>Cuenta</mat-label>
+      <mat-select [value]="cuentaId()" (selectionChange)="elegirCuenta($event.value)"
+                  [disabled]="cargandoCuentas() || procesando()">
+        @for (c of cuentas(); track c.cuentaId) {
+          <mat-option [value]="c.cuentaId">{{ etiquetaCuenta(c) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="flex items-center">
+      <button mat-stroked-button type="button" class="rounded-xl font-bold" (click)="nuevaCuenta()" [disabled]="procesando()">
+        <mat-icon class="mr-1">add</mat-icon>
+        Nueva cuenta
+      </button>
+    </div>
+  </div>
+
+  @if (errorCuentas(); as mensaje) {
+    <div class="px-2">
+      <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <mat-icon class="text-rose-600">error_outline</mat-icon>
+          <span class="text-sm font-semibold text-rose-800">{{ mensaje }}</span>
+        </div>
+        <button mat-flat-button color="warn" class="rounded-xl font-bold" (click)="cargarCuentas()">Reintentar</button>
+      </div>
+    </div>
+  }
+
+  @if (cargandoCuentas()) {
+    <div class="flex flex-col items-center justify-center py-24">
+      <mat-spinner diameter="64" strokeWidth="5" color="primary"></mat-spinner>
+      <p class="mt-6 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse">Cargando cuentas…</p>
+    </div>
+  } @else if (cuenta() === null) {
+    <!-- Sin cuenta elegida -->
+    @if (!errorCuentas()) {
+      <div class="w-full py-24 flex flex-col items-center justify-center text-center px-2">
+        <div class="max-w-md flex flex-col items-center">
+          <div class="p-5 bg-indigo-50 text-indigo-600 rounded-3xl mb-4 shadow-sm border border-indigo-100">
+            <mat-icon class="icon-size-12">account_balance</mat-icon>
+          </div>
+          <h3 class="text-xl font-black text-gray-800 mb-2">Elige una cuenta para importar y consultar sus movimientos</h3>
+          <p class="text-sm text-gray-500 font-medium">
+            @if (cuentas().length === 0) {
+              Todavía no hay cuentas dadas de alta: usa «Nueva cuenta».
+            } @else {
+              Cada archivo se importa a una sola cuenta.
+            }
+          </p>
+        </div>
+      </div>
+    }
+  } @else {
+   @if (cuenta(); as c) {
+    <div class="space-y-8 px-2">
+
+      <!-- Importar -->
+      <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sm:p-8 space-y-6">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+          <mat-icon class="mr-3 text-indigo-600 bg-indigo-50 p-2 rounded-2xl">upload_file</mat-icon>
+          Importar movimientos
+        </h2>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <input #selector type="file" hidden accept=".xlsx,.xls" (change)="alElegirArchivo($event)">
+          <button mat-stroked-button type="button" class="rounded-xl font-bold" (click)="selector.click()"
+                  [disabled]="procesando() || cargandoHojas()">
+            <mat-icon class="mr-1">attach_file</mat-icon>
+            {{ archivo() ? 'Cambiar archivo' : 'Elegir archivo (.xlsx, .xls)' }}
+          </button>
+          @if (archivo(); as a) {
+            <span class="text-sm font-semibold text-gray-700 truncate">{{ a.name }}</span>
+          }
+          @if (cargandoHojas()) {
+            <mat-spinner diameter="24" strokeWidth="3" color="primary"></mat-spinner>
+          }
+        </div>
+
+        @if (hojas().length > 1) {
+          <mat-form-field appearance="outline" class="w-full md:w-2/3 fuse-mat-no-subscript">
+            <mat-label>Hoja a importar</mat-label>
+            <mat-select [value]="hoja()" (selectionChange)="elegirHoja($event.value)" [disabled]="procesando()">
+              @for (h of hojas(); track h.nombre) {
+                <mat-option [value]="h.nombre">{{ h.nombre }} · {{ etiquetaFormato(h.formatoDetectado) }} · {{ h.filas }} filas</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button mat-stroked-button type="button" class="rounded-xl font-bold" (click)="validar()" [disabled]="!puedeValidar()">
+            <mat-icon class="mr-1">fact_check</mat-icon>
+            Validar
+          </button>
+          <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold" (click)="confirmar()"
+                  [disabled]="!puedeConfirmar()">
+            <mat-icon class="mr-1">cloud_upload</mat-icon>
+            Confirmar importación
+          </button>
+          <span class="text-xs text-gray-500 font-medium">
+            Primero «Validar»: revisa el archivo y muestra la cuenta, el periodo y los saldos sin guardar nada. Solo entonces se puede confirmar.
+          </span>
+        </div>
+
+        @if (procesando()) {
+          <div class="flex items-center gap-3 text-gray-500 font-bold tracking-widest uppercase text-xs animate-pulse">
+            <mat-spinner diameter="24" strokeWidth="3" color="primary"></mat-spinner>
+            Procesando el archivo…
+          </div>
+        }
+
+        @if (errorImportacion(); as mensaje) {
+          <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex items-center gap-3">
+            <mat-icon class="text-rose-600">error_outline</mat-icon>
+            <span class="text-sm font-semibold text-rose-800">{{ mensaje }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Vista previa (no se guardó nada) -->
+      @if (vistaPrevia(); as r) {
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sm:p-8 space-y-5">
+          <div class="flex flex-col">
+            <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+              <mat-icon class="mr-3 p-2 rounded-2xl text-amber-600 bg-amber-50">fact_check</mat-icon>
+              Vista previa de la importación
+            </h2>
+            <p class="text-xs font-bold text-gray-500 mt-2">{{ r.nombreArchivo }}@if (r.hoja) { · Hoja «{{ r.hoja }}» }</p>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm font-semibold text-amber-900">
+            Vista previa: no se guardó nada. Revisa que la cuenta, el periodo y los saldos sean los esperados y, si lo son, pulsa «Confirmar importación».
+          </div>
+
+          <app-finanzas-resultado-importacion [resultado]="r">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="bg-gray-50 rounded-2xl px-5 py-4">
+                <dt class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Cuenta destino</dt>
+                <dd class="mt-1 text-sm font-bold text-gray-800">{{ etiquetaCuenta(c) }}</dd>
+              </div>
+              <div class="bg-gray-50 rounded-2xl px-5 py-4">
+                <dt class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Periodo</dt>
+                <dd class="mt-1 text-sm font-bold text-gray-800">
+                  @if (r.periodoDesde && r.periodoHasta) {
+                    {{ r.periodoDesde | date: 'dd/MM/yyyy' }} al {{ r.periodoHasta | date: 'dd/MM/yyyy' }}
+                  } @else {
+                    —
+                  }
+                </dd>
+              </div>
+              <div class="bg-gray-50 rounded-2xl px-5 py-4">
+                <dt class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Filas leídas</dt>
+                <dd class="mt-1 text-sm font-bold text-gray-800">{{ r.filasLeidas }}</dd>
+              </div>
+              <div class="bg-gray-50 rounded-2xl px-5 py-4">
+                <dt class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Primer saldo del archivo</dt>
+                <dd class="mt-1 text-sm font-bold text-gray-800">
+                  {{ r.primerSaldo === null ? '—' : (r.primerSaldo | currency: c.moneda : 'symbol' : '1.2-2' : 'es-MX') }}
+                </dd>
+              </div>
+              <div class="bg-gray-50 rounded-2xl px-5 py-4">
+                <dt class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Último saldo del archivo</dt>
+                <dd class="mt-1 text-sm font-bold text-gray-800">
+                  {{ r.ultimoSaldo === null ? '—' : (r.ultimoSaldo | currency: c.moneda : 'symbol' : '1.2-2' : 'es-MX') }}
+                </dd>
+              </div>
+              <div class="bg-gray-50 rounded-2xl px-5 py-4">
+                <dt class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Último saldo guardado</dt>
+                <dd class="mt-1 text-sm font-bold text-gray-800">
+                  {{ r.ultimoSaldoGuardado === null ? '—' : (r.ultimoSaldoGuardado | currency: c.moneda : 'symbol' : '1.2-2' : 'es-MX') }}
+                </dd>
+              </div>
+            </dl>
+          </app-finanzas-resultado-importacion>
+        </div>
+      }
+
+      <!-- Resultado de la importación real -->
+      @if (resultado(); as r) {
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sm:p-8 space-y-5">
+          <div class="flex flex-col">
+            <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight">
+              <mat-icon class="mr-3 p-2 rounded-2xl text-emerald-600 bg-emerald-50">task_alt</mat-icon>
+              Importación realizada
+            </h2>
+            <p class="text-xs font-bold text-gray-500 mt-2">
+              {{ r.nombreArchivo }}@if (r.hoja) { · Hoja «{{ r.hoja }}» }
+              · {{ r.filasLeidas }} filas leídas
+              @if (r.periodoDesde && r.periodoHasta) {
+                · Periodo {{ r.periodoDesde | date: 'dd/MM/yyyy' }} al {{ r.periodoHasta | date: 'dd/MM/yyyy' }}
+              }
+            </p>
+          </div>
+
+          <app-finanzas-resultado-importacion [resultado]="r"></app-finanzas-resultado-importacion>
+        </div>
+      }
+
+      <!-- Lista de movimientos -->
+      <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sm:p-8">
+        <h2 class="text-lg font-black text-gray-800 flex items-center uppercase tracking-tight mb-6">
+          <mat-icon class="mr-3 text-indigo-600 bg-indigo-50 p-2 rounded-2xl">receipt_long</mat-icon>
+          Movimientos
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+          <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+            <mat-label>Desde</mat-label>
+            <input matInput type="date" [(ngModel)]="desde" (change)="cargarLista(1)">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+            <mat-label>Hasta</mat-label>
+            <input matInput type="date" [(ngModel)]="hasta" (change)="cargarLista(1)">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+            <mat-label>Buscar (descripción o referencia)</mat-label>
+            <input matInput type="search" [(ngModel)]="q" (change)="cargarLista(1)" autocomplete="off">
+            <button matSuffix mat-icon-button type="button" aria-label="Buscar" (click)="cargarLista(1)">
+              <mat-icon>search</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+
+        @if (fechasInvalidas) {
+          <p class="text-xs font-bold text-rose-700 mt-2">La fecha inicial no puede ser posterior a la final.</p>
+        }
+        @if (hayFiltros) {
+          <button mat-button type="button" class="text-blue-600 font-bold hover:bg-blue-50 rounded-xl mt-2" (click)="limpiarFiltros()">
+            <mat-icon class="mr-1">clear</mat-icon>
+            Limpiar filtros
+          </button>
+        }
+
+        <div class="mt-6">
+          @if (errorLista(); as mensaje) {
+            <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <mat-icon class="text-rose-600">error_outline</mat-icon>
+                <span class="text-sm font-semibold text-rose-800">{{ mensaje }}</span>
+              </div>
+              <button mat-flat-button color="warn" class="rounded-xl font-bold" (click)="cargarLista(lista()?.pagina ?? 1)">Reintentar</button>
+            </div>
+          } @else if (cargandoLista()) {
+            <div class="flex flex-col items-center justify-center py-16">
+              <mat-spinner diameter="48" strokeWidth="4" color="primary"></mat-spinner>
+              <p class="mt-4 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse text-xs">Cargando movimientos…</p>
+            </div>
+          } @else {
+           @if (lista(); as pagina) {
+            @if (pagina.total === 0) {
+              <div class="py-14 flex flex-col items-center justify-center text-center">
+                <div class="p-4 bg-slate-100 text-slate-400 rounded-2xl mb-4 border border-gray-200">
+                  <mat-icon class="icon-size-8">inbox</mat-icon>
+                </div>
+                <h4 class="text-lg font-black text-slate-800 mb-1">
+                  {{ hayFiltros ? 'Ningún movimiento coincide con los filtros' : 'Esta cuenta todavía no tiene movimientos' }}
+                </h4>
+                @if (!hayFiltros) {
+                  <p class="text-sm text-slate-500">Elige un archivo arriba, valídalo y confírmalo.</p>
+                }
+              </div>
+            } @else {
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead>
+                    <tr class="border-b text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">
+                      <th class="p-3">Fecha</th>
+                      <th class="p-3">Descripción</th>
+                      <th class="p-3">Tipo de operación</th>
+                      <th class="p-3">Referencia</th>
+                      <th class="p-3 text-right">Importe</th>
+                      <th class="p-3 text-right">Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (m of pagina.items; track m.movimientoId) {
+                      <tr class="border-b last:border-b-0 align-top">
+                        <td class="p-3 whitespace-nowrap">{{ m.fecha | date: 'dd/MM/yyyy' }}</td>
+                        <td class="p-3 min-w-[16rem] break-words">{{ m.descripcion }}</td>
+                        <td class="p-3">{{ m.tipoOperacion || '—' }}</td>
+                        <td class="p-3 whitespace-nowrap">{{ m.referencia || '—' }}</td>
+                        <td class="p-3 text-right whitespace-nowrap">
+                          <span class="font-bold" [class]="m.importe < 0 ? 'text-rose-600' : 'text-emerald-600'">
+                            {{ m.importe | currency: c.moneda : 'symbol' : '1.2-2' : 'es-MX' }}
+                          </span>
+                        </td>
+                        <td class="p-3 text-right whitespace-nowrap">
+                          {{ m.saldo === null ? '—' : (m.saldo | currency: c.moneda : 'symbol' : '1.2-2' : 'es-MX') }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <app-finanzas-paginador [pagina]="pagina.pagina" [tamano]="pagina.tamano" [total]="pagina.total"
+                                      (cambio)="cargarLista($event)"></app-finanzas-paginador>
+            }
+           }
+          }
+        </div>
+      </div>
+
+      <!-- Historial de importaciones -->
+      <app-finanzas-importaciones-historial fuente="BbvaExcel" [empresaId]="c.empresaId"
+                                            (anulada)="cargarLista(1)"></app-finanzas-importaciones-historial>
+    </div>
+   }
+  }
+</div>
