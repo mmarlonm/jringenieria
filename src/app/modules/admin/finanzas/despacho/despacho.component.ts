@@ -1,7 +1,6 @@
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,7 +18,6 @@ import { PaginadorComponent } from '../shared/paginador/paginador.component';
     standalone: true,
     imports: [
         DatePipe,
-        FormsModule,
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,

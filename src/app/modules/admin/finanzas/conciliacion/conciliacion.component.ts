@@ -1,5 +1,4 @@
 import '../finanzas.locale';
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -47,8 +46,6 @@ import { MovimientoTarjetaComponent } from './movimiento-tarjeta/movimiento-tarj
     standalone: true,
     templateUrl: './conciliacion.component.html',
     imports: [
-        CurrencyPipe,
-        DatePipe,
         FormsModule,
         MatButtonModule,
         MatFormFieldModule,
