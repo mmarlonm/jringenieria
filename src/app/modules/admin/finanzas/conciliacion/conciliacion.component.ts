@@ -242,6 +242,12 @@ export class ConciliacionComponent implements OnInit {
         this.descartarClases();
         if (this.desde && this.hasta && this.desde > this.hasta) {
             this.errorPeriodo.set('La fecha inicial no puede ser posterior a la final.');
+            // Sin esto quedarían a la vista el resumen y la lista del periodo anterior.
+            this.cargarResumen();
+            this._subLista?.unsubscribe();
+            this.cargandoLista.set(false);
+            this.errorLista.set(null);
+            this.lista.set(null);
             return;
         }
         this.errorPeriodo.set(null);

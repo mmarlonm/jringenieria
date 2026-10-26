@@ -1171,5 +1171,43 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
             httpMock.expectNone(r => r.url === `${base}/conciliacion/movimientos`);
             expect(componente.cargandoLista()).toBeFalse();
         });
+
+        it('Fechas_invertidas_quitan_el_resumen_y_la_lista_del_periodo_anterior_y_dicen_el_motivo', () => {
+            inicializarConEmpresa(3);
+            expect(texto()).toContain('Facturas de la empresa');
+            expect(fixture.debugElement.queryAll(By.directive(MovimientoTarjetaComponent)).length).toBe(2);
+
+            componente.desde = '2026-03-20';
+            componente.hasta = '2026-03-10';
+            componente.alCambiarFiltro();
+            fixture.detectChanges();
+
+            httpMock.expectNone(r => r.url === `${base}/conciliacion/movimientos`);
+            httpMock.expectNone(r => r.url === `${base}/conciliacion/resumen`);
+            expect(texto()).toContain('Resumen no disponible: La fecha inicial no puede ser posterior a la final.');
+            expect(texto()).not.toContain('Facturas de la empresa');
+            expect(componente.lista()).toBeNull();
+            expect(fixture.debugElement.queryAll(By.directive(MovimientoTarjetaComponent)).length).toBe(0);
+        });
+
+        it('Fechas_invertidas_cancelan_la_lista_y_el_resumen_que_estaban_en_curso', () => {
+            inicializarConEmpresa(3);
+
+            componente.q = 'Ficticio';
+            componente.alCambiarFiltro();
+            const lista: TestRequest = httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('q') === 'Ficticio');
+            const resumen: TestRequest = httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`);
+
+            componente.desde = '2026-03-20';
+            componente.hasta = '2026-03-10';
+            componente.alCambiarFiltro();
+            fixture.detectChanges();
+
+            expect(lista.cancelled).toBeTrue();
+            expect(resumen.cancelled).toBeTrue();
+            expect(componente.cargandoLista()).toBeFalse();
+            expect(componente.cargandoResumen()).toBeFalse();
+            expect(texto()).not.toContain('Cargando movimientos');
+        });
     });
 });
