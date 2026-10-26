@@ -196,6 +196,27 @@ describe('DespachoComponent', () => {
         expect(el.textContent).toContain('99');
     });
 
+    it('Si_la_vista_previa_del_periodo_nuevo_falla_no_quedan_recuadros_ni_boton_de_generar', () => {
+        inicializarConEmpresa(1);
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.textContent).toContain('Facturas emitidas');
+        expect(el.textContent).toContain('Generar y descargar paquete (.xlsx)');
+
+        componente.cambiarMes(11);
+        fixture.detectChanges();
+        httpMock.expectOne(req => req.url === `${base}/despacho/vista-previa` && req.params.get('mes') === '11')
+            .flush({ mensaje: 'No se pudo consultar el mes.' }, { status: 500, statusText: 'Server Error' });
+        fixture.detectChanges();
+
+        expect(componente.vistaPrevia()).toBeNull();
+        expect(el.textContent).toContain('No se pudo consultar el mes.');
+        expect(el.textContent).not.toContain('Facturas emitidas');
+        expect(el.textContent).not.toContain('Generar y descargar paquete (.xlsx)');
+
+        componente.generar();
+        httpMock.expectNone(`${base}/despacho/generar`);
+    });
+
     it('Sin_permiso_no_hay_boton_de_generar', () => {
         tienePermisoSignal.set(false);
         inicializarConEmpresa(1);

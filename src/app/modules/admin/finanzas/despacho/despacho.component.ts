@@ -134,6 +134,8 @@ export class DespachoComponent implements OnInit {
         this._subVistaPrevia?.unsubscribe();
         this.cargandoVistaPrevia.set(true);
         this.errorVistaPrevia.set(null);
+        // Si la consulta del periodo nuevo falla, no deben quedar los recuadros ni el botón del periodo anterior.
+        this.vistaPrevia.set(null);
 
         this._subVistaPrevia = this._service.vistaPreviaDespacho(empId, anio, mes).pipe(
             takeUntilDestroyed(this._destroyRef)
