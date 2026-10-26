@@ -533,7 +533,7 @@ export class ConciliacionComponent implements OnInit {
 
     sugerir(): void {
         const motivo = periodoValido(this.desde, this.hasta);
-        if (motivo !== null || !this.empresaId() || this.sugiriendo()) return;
+        if (motivo !== null || !this.empresaId() || this.sugiriendo() || this.procesandoLote() || this.procesandoClasificacion() || this.buscandoClases()) return;
 
         this.limpiarAvisos();
         this.sugiriendo.set(true);

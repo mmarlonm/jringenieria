@@ -128,7 +128,7 @@
                   Buscar clases sugeridas
                 </button>
                 <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
-                        [disabled]="motivoPeriodo() !== null || sugiriendo()"
+                        [disabled]="motivoPeriodo() !== null || sugiriendo() || procesandoLote() || procesandoClasificacion() || buscandoClases()"
                         (click)="sugerir()">
                   @if (sugiriendo()) {
                     <mat-spinner diameter="18" strokeWidth="2" class="mr-2"></mat-spinner>

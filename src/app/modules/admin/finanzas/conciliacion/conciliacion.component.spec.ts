@@ -1209,5 +1209,24 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
             expect(componente.cargandoResumen()).toBeFalse();
             expect(texto()).not.toContain('Cargando movimientos');
         });
+
+        it('Sugerir_se_deshabilita_y_no_envia_mientras_hay_lote_clasificacion_o_busqueda_de_clases', () => {
+            inicializarConEmpresa(3);
+            const btnSugerir = () => boton('Sugerir conciliaciones');
+            expect(btnSugerir().disabled).toBeFalse();
+
+            for (const ocupado of [componente.procesandoLote, componente.procesandoClasificacion, componente.buscandoClases]) {
+                ocupado.set(true);
+                fixture.detectChanges();
+                expect(btnSugerir().disabled).toBeTrue();
+
+                componente.sugerir();
+                httpMock.expectNone({ method: 'POST', url: `${base}/conciliacion/sugerir` });
+
+                ocupado.set(false);
+                fixture.detectChanges();
+                expect(btnSugerir().disabled).toBeFalse();
+            }
+        });
     });
 });
