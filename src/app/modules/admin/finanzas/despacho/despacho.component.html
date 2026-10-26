@@ -1,0 +1,247 @@
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-8 font-sans">
+
+  <!-- Encabezado -->
+  <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+    <div class="flex flex-col">
+      <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-blue-600">inventory_2</mat-icon>
+        Despacho
+      </h1>
+      <p class="text-secondary text-xs font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-70">
+        Paquete mensual para el despacho contable
+      </p>
+    </div>
+  </div>
+
+  <!-- Selectores: Empresa, Año y Mes -->
+  <div class="w-full grid grid-cols-1 md:grid-cols-4 gap-4 px-2 items-center">
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript md:col-span-2">
+      <mat-label>Empresa</mat-label>
+      <mat-select [value]="empresaId()" (selectionChange)="elegirEmpresa($event.value)"
+                  [disabled]="cargandoEmpresas() || generando()">
+        @for (e of empresas(); track e.empresaId) {
+          <mat-option [value]="e.empresaId">{{ e.nombre }} · {{ e.rfc }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+      <mat-label>Año</mat-label>
+      <mat-select [value]="anio()" (selectionChange)="cambiarAnio($event.value)"
+                  [disabled]="!empresaId() || generando()">
+        @for (a of anios; track a) {
+          <mat-option [value]="a">{{ a }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+      <mat-label>Mes</mat-label>
+      <mat-select [value]="mes()" (selectionChange)="cambiarMes($event.value)"
+                  [disabled]="!empresaId() || generando()">
+        @for (m of meses; track $index) {
+          <mat-option [value]="$index + 1">{{ m }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (errorEmpresas(); as mensaje) {
+    <div class="px-2">
+      <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <mat-icon class="text-rose-600">error_outline</mat-icon>
+          <span class="text-sm font-semibold text-rose-800">{{ mensaje }}</span>
+        </div>
+        <button mat-flat-button color="warn" class="rounded-xl font-bold" (click)="cargarEmpresas()">Reintentar</button>
+      </div>
+    </div>
+  }
+
+  @if (!empresaId()) {
+    <!-- Estado vacío sin empresa -->
+    <div class="px-2">
+      <div class="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-500 space-y-3">
+        <mat-icon class="icon-size-12 text-gray-400">domain</mat-icon>
+        <p class="text-base font-semibold">Selecciona una empresa para consultar la vista previa del paquete mensual.</p>
+      </div>
+    </div>
+  } @else {
+
+    <!-- Vista previa del paquete -->
+    <div class="px-2 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-gray-800 tracking-tight">Vista previa del mes</h2>
+        @if (cargandoVistaPrevia()) {
+          <div class="flex items-center gap-2 text-xs font-semibold text-gray-500">
+            <mat-progress-spinner diameter="16" mode="indeterminate"></mat-progress-spinner>
+            <span>Consultando datos del mes...</span>
+          </div>
+        }
+      </div>
+
+      @if (errorVistaPrevia(); as err) {
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-sm text-rose-800">
+            <mat-icon class="text-rose-600">error_outline</mat-icon>
+            <span>{{ err }}</span>
+          </div>
+          <button mat-stroked-button color="warn" class="rounded-xl" (click)="cargarVistaPrevia()">Reintentar</button>
+        </div>
+      }
+
+      @if (vistaPrevia(); as vp) {
+        <!-- Tarjetas de resumen -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <!-- Emitidas -->
+          <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Facturas emitidas</span>
+            <div class="text-2xl font-black text-gray-900">{{ vp.cfdiEmitidos }}</div>
+          </div>
+
+          <!-- Recibidas -->
+          <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Facturas recibidas</span>
+            <div class="text-2xl font-black text-gray-900">{{ vp.cfdiRecibidos }}</div>
+          </div>
+
+          <!-- Movimientos y cuentas -->
+          <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Movimientos</span>
+            <div class="text-2xl font-black text-gray-900">{{ vp.movimientos }}</div>
+            @if (vp.cuentas.length > 0) {
+              <div class="pt-2 border-t border-gray-100 space-y-1">
+                @for (c of vp.cuentas; track c.cuentaId) {
+                  <div class="text-xs text-gray-600 flex justify-between gap-2">
+                    <span class="truncate" [title]="c.etiqueta">{{ c.etiqueta }}</span>
+                    <span class="font-bold shrink-0">{{ c.movimientos }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Movimientos sin conciliar -->
+          <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Movimientos sin conciliar</span>
+            <div class="text-2xl font-black text-amber-700">{{ vp.movimientosPendientes }}</div>
+          </div>
+
+          <!-- Facturas con saldo pendiente -->
+          <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Facturas con saldo pendiente</span>
+            <div class="text-2xl font-black text-amber-700">{{ vp.cfdiPendientes }}</div>
+          </div>
+        </div>
+
+        <!-- Aviso ámbar si faltan datos originales del SAT -->
+        @if (vp.cfdiSinDatosOriginales > 0) {
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3 text-sm text-amber-900">
+            <mat-icon class="text-amber-600 shrink-0">warning</mat-icon>
+            <span>{{ vp.cfdiSinDatosOriginales }} facturas se importaron sin todos los datos del SAT. Vuelve a importar el Excel de One Factura de ese mes para completarlas.</span>
+          </div>
+        }
+
+        <!-- Acciones de generación y descarga -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <p class="text-xs text-gray-500 italic">
+              El archivo contiene información financiera sensible. Compártelo solo con el despacho contable.
+            </p>
+            @if (errorGenerar(); as error) {
+              <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-center gap-2 text-sm text-rose-800">
+                <mat-icon class="text-rose-600">error_outline</mat-icon>
+                <span>{{ error }}</span>
+              </div>
+            }
+          </div>
+
+          @if (puedeExportar()) {
+            <button mat-flat-button color="primary" class="rounded-xl font-bold px-6 py-2.5 flex items-center gap-2 self-start md:self-center"
+                    (click)="generar()" [disabled]="generando() || cargandoVistaPrevia()">
+              @if (generando()) {
+                <mat-progress-spinner diameter="20" mode="indeterminate" class="mr-2"></mat-progress-spinner>
+                <span>Generando...</span>
+              } @else {
+                <mat-icon class="mr-1">download</mat-icon>
+                <span>Generar y descargar paquete (.xlsx)</span>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Historial de paquetes generados -->
+    <div class="px-2 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-gray-800 tracking-tight">Historial de paquetes</h2>
+      </div>
+
+      @if (errorHistorial(); as err) {
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-sm text-rose-800">
+            <mat-icon class="text-rose-600">error_outline</mat-icon>
+            <span>{{ err }}</span>
+          </div>
+          <button mat-stroked-button color="warn" class="rounded-xl" (click)="cargarHistorial()">Reintentar</button>
+        </div>
+      }
+
+      <div [class.opacity-50]="cargandoHistorial()" [class.pointer-events-none]="cargandoHistorial()" class="transition-opacity">
+        @if (historial(); as h) {
+          @if (h.items.length === 0) {
+            <div class="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500">
+              <p class="text-sm font-medium">No se han generado paquetes para esta empresa.</p>
+            </div>
+          } @else {
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead class="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-xs uppercase tracking-wider">
+                    <tr>
+                      <th class="py-3 px-4">Fecha</th>
+                      <th class="py-3 px-4">Periodo</th>
+                      <th class="py-3 px-4 text-right">Emitidos</th>
+                      <th class="py-3 px-4 text-right">Recibidos</th>
+                      <th class="py-3 px-4 text-right">Movimientos</th>
+                      <th class="py-3 px-4 text-right">Pendientes</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    @for (p of h.items; track p.paqueteId) {
+                      <tr class="hover:bg-gray-50/50">
+                        <td class="py-3 px-4 font-mono text-xs text-gray-700">
+                          {{ fechaUtc(p.fecha) | date:'dd/MM/yyyy HH:mm' }}
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-gray-800">
+                          {{ meses[p.mes - 1] }} {{ p.anio }}
+                        </td>
+                        <td class="py-3 px-4 text-right font-mono">{{ p.cfdiEmitidos }}</td>
+                        <td class="py-3 px-4 text-right font-mono">{{ p.cfdiRecibidos }}</td>
+                        <td class="py-3 px-4 text-right font-mono">{{ p.movimientos }}</td>
+                        <td class="py-3 px-4 text-right font-mono font-bold" [class.text-amber-600]="p.pendientes > 0">
+                          {{ p.pendientes }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="p-4 border-t border-gray-100">
+                <app-finanzas-paginador
+                  [pagina]="paginaHistorial()"
+                  [tamano]="10"
+                  [total]="h.total"
+                  [deshabilitado]="cargandoHistorial()"
+                  (cambio)="cambiarPaginaHistorial($event)">
+                </app-finanzas-paginador>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>
