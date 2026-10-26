@@ -309,6 +309,12 @@ export class ConciliacionComponent implements OnInit {
             takeUntilDestroyed(this._destroyRef)
         ).subscribe({
             next: (data) => {
+                // La página ya no existe (p. ej. se confirmó el último movimiento de «Con sugerencia» en la página 2): pide la última válida.
+                const ultima = Math.ceil(data.total / data.tamano);
+                if (data.items.length === 0 && data.total > 0 && data.pagina > 1 && ultima < data.pagina) {
+                    this.cargarLista(ultima);
+                    return;
+                }
                 this.lista.set(data);
                 // Solo siguen marcados los movimientos que aún están en la página.
                 const visibles = new Set(data.items.map((m) => m.movimientoId));

@@ -1140,5 +1140,36 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
             httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('pagina') === '2')
                 .flush({ pagina: 2, tamano: 50, total: 2, items: [movA, movB] });
         });
+
+        it('Pagina_vacia_con_total_mayor_a_cero_pide_la_ultima_pagina_valida_y_muestra_el_paginador', () => {
+            inicializarConEmpresa(3);
+
+            componente.cargarLista(5);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('pagina') === '5')
+                .flush({ pagina: 5, tamano: 50, total: 120, items: [] });
+            fixture.detectChanges();
+            expect(componente.cargandoLista()).toBeTrue();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('pagina') === '3')
+                .flush({ pagina: 3, tamano: 50, total: 120, items: [movA] });
+            fixture.detectChanges();
+
+            expect(componente.paginaActual()).toBe(3);
+            expect(texto()).not.toContain('Ningún movimiento coincide');
+            expect(texto()).toContain('ABONO CLIENTE FICTICIO');
+            expect(fixture.debugElement.query(By.directive(PaginadorComponent))).toBeTruthy();
+        });
+
+        it('Pagina_vacia_que_ya_es_la_ultima_no_pide_otra_pagina', () => {
+            inicializarConEmpresa(3);
+
+            componente.cargarLista(2);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('pagina') === '2')
+                .flush({ pagina: 2, tamano: 50, total: 51, items: [] });
+            fixture.detectChanges();
+
+            httpMock.expectNone(r => r.url === `${base}/conciliacion/movimientos`);
+            expect(componente.cargandoLista()).toBeFalse();
+        });
     });
 });
