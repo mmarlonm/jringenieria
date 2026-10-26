@@ -116,16 +116,28 @@
 
           @if (puedeEscribir()) {
             <div class="flex flex-col items-end">
-              <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
-                      [disabled]="motivoPeriodo() !== null || sugiriendo()"
-                      (click)="sugerir()">
-                @if (sugiriendo()) {
-                  <mat-spinner diameter="18" strokeWidth="2" class="mr-2"></mat-spinner>
-                } @else {
-                  <mat-icon class="mr-1">auto_fix_high</mat-icon>
-                }
-                Sugerir conciliaciones
-              </button>
+              <div class="flex flex-wrap items-center gap-2">
+                <button mat-stroked-button type="button" class="rounded-xl font-bold"
+                        [disabled]="motivoPeriodo() !== null || buscandoClases() || sugiriendo() || procesandoClasificacion() || procesandoLote()"
+                        (click)="buscarClasesSugeridas()">
+                  @if (buscandoClases()) {
+                    <mat-spinner diameter="18" strokeWidth="2" class="mr-2"></mat-spinner>
+                  } @else {
+                    <mat-icon class="mr-1">category</mat-icon>
+                  }
+                  Buscar clases sugeridas
+                </button>
+                <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
+                        [disabled]="motivoPeriodo() !== null || sugiriendo()"
+                        (click)="sugerir()">
+                  @if (sugiriendo()) {
+                    <mat-spinner diameter="18" strokeWidth="2" class="mr-2"></mat-spinner>
+                  } @else {
+                    <mat-icon class="mr-1">auto_fix_high</mat-icon>
+                  }
+                  Sugerir conciliaciones
+                </button>
+              </div>
               @if (motivoPeriodo(); as motivo) {
                 <span class="text-xs text-amber-700 mt-1">{{ motivo }}</span>
               }
@@ -173,6 +185,25 @@
         <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-3">
           <mat-icon class="text-rose-600">error_outline</mat-icon>
           <span class="text-sm font-semibold text-rose-800">{{ err }}</span>
+        </div>
+      }
+
+      <!-- Resumen de clases sugeridas del periodo -->
+      @if (clasesSugeridasResumen().length > 0) {
+        <div class="bg-indigo-50 border border-indigo-200 rounded-[2rem] p-5 space-y-3">
+          <div class="flex items-center gap-2 text-indigo-900 font-bold text-sm">
+            <mat-icon class="text-indigo-600">lightbulb</mat-icon>
+            <span>Clases sugeridas para este periodo:</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (g of clasesSugeridasResumen(); track g.clase) {
+              <button mat-stroked-button type="button" class="rounded-xl bg-white text-indigo-900 font-semibold shadow-sm"
+                      [disabled]="procesandoClasificacion()"
+                      (click)="aceptarClasesDeTipo(g.clase)">
+                Aceptar las {{ g.count }} de «{{ etiquetaClase(g.clase) }}» del periodo
+              </button>
+            }
+          </div>
         </div>
       }
 
@@ -267,6 +298,40 @@
             }
           }
         }
+      }
+
+      <!-- Barra de selección de movimientos -->
+      @if (puedeEscribir() && seleccionados().size > 0) {
+        <div class="bg-primary-50 border border-primary-200 rounded-[2rem] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 font-bold text-primary-900 text-sm">
+            <mat-icon class="text-primary-600">check_box</mat-icon>
+            <span>{{ seleccionados().size }} {{ seleccionados().size === 1 ? 'seleccionado' : 'seleccionados' }}</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <mat-form-field appearance="outline" class="fuse-mat-no-subscript w-48">
+              <mat-select [ngModel]="claseSeleccionada()" (ngModelChange)="claseSeleccionada.set($event)" placeholder="Clase" [disabled]="procesandoClasificacion()">
+                @for (c of CLASES; track c) {
+                  <mat-option [value]="c">{{ etiquetaClase(c) }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
+                    [disabled]="!claseSeleccionada() || procesandoClasificacion()"
+                    (click)="aplicarClaseSeleccionada()">
+              Aplicar clase
+            </button>
+            <button mat-stroked-button type="button" class="rounded-xl font-bold"
+                    [disabled]="procesandoClasificacion()"
+                    (click)="quitarClaseSeleccionados()">
+              Quitar clase
+            </button>
+            <button mat-button type="button" class="rounded-xl text-gray-600 font-medium"
+                    [disabled]="procesandoClasificacion()"
+                    (click)="limpiarSeleccion()">
+              Limpiar selección
+            </button>
+          </div>
+        </div>
       }
 
       <!-- Franja de Lote de Altas -->

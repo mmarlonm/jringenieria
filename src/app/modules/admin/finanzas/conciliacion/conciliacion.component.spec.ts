@@ -9,7 +9,7 @@ import { ManualDialogComponent } from './manual-dialog/manual-dialog.component';
 import { environment } from 'environments/environment';
 
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
-import { Cuenta, Empresa, MovimientoConciliacion, ResumenConciliacion } from '../finanzas.types';
+import { ClaseMovimiento, ClaseSugerida, Cuenta, Empresa, MovimientoConciliacion, ResumenConciliacion } from '../finanzas.types';
 import { MovimientoTarjetaComponent } from './movimiento-tarjeta/movimiento-tarjeta.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
 import { ConciliacionComponent } from './conciliacion.component';
@@ -751,6 +751,257 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
             expect(dialogSpy).toHaveBeenCalledTimes(1);
             httpMock.expectNone(r => r.url === `${base}/conciliacion/movimientos`);
             httpMock.expectNone(r => r.url === `${base}/conciliacion/resumen`);
+        });
+    });
+
+    describe('clasificación (F6)', () => {
+        beforeEach(() => {
+            tienePermisoSignal.set(true);
+        });
+
+        it('Seleccionar_tarjetas_muestra_la_barra_con_el_conteo', () => {
+            inicializarConEmpresa(3);
+            expect(texto()).not.toContain('seleccionado');
+
+            componente.alCambiarSeleccion(101, true);
+            fixture.detectChanges();
+            expect(texto()).toContain('1 seleccionado');
+
+            componente.alCambiarSeleccion(102, true);
+            fixture.detectChanges();
+            expect(texto()).toContain('2 seleccionados');
+
+            componente.limpiarSeleccion();
+            fixture.detectChanges();
+            expect(texto()).not.toContain('seleccionados');
+            expect(componente.seleccionados().size).toBe(0);
+        });
+
+        it('Aplicar_clase_envia_los_ids_y_la_clase_y_recarga', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            componente.claseSeleccionada.set('Nomina');
+            fixture.detectChanges();
+
+            componente.aplicarClaseSeleccionada();
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(req.request.body).toEqual({ movimientoIds: [101], clase: 'Nomina' });
+            req.flush({ clasificados: 1 });
+            fixture.detectChanges();
+
+            expect(componente.seleccionados().size).toBe(0);
+            expect(componente.mensajeExito()).toContain('1 movimientos clasificados');
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Quitar_clase_envia_clase_null', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            fixture.detectChanges();
+
+            componente.quitarClaseSeleccionados();
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(req.request.body).toEqual({ movimientoIds: [101], clase: null });
+            req.flush({ clasificados: 1 });
+            fixture.detectChanges();
+
+            expect(componente.mensajeExito()).toContain('Clase quitada de 1 movimientos');
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Mas_de_500_ids_se_envian_en_tandas_de_500', () => {
+            inicializarConEmpresa(3);
+            const ids = Array.from({ length: 1050 }, (_, i) => i + 1);
+
+            componente.clasificarIds(ids, 'Comision');
+            fixture.detectChanges();
+
+            const req1 = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(req1.request.body.movimientoIds.length).toBe(500);
+            expect(req1.request.body.movimientoIds[0]).toBe(1);
+            expect(req1.request.body.movimientoIds[499]).toBe(500);
+            expect(req1.request.body.clase).toBe('Comision');
+            req1.flush({ clasificados: 500 });
+            fixture.detectChanges();
+
+            const req2 = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(req2.request.body.movimientoIds.length).toBe(500);
+            expect(req2.request.body.movimientoIds[0]).toBe(501);
+            expect(req2.request.body.movimientoIds[499]).toBe(1000);
+            req2.flush({ clasificados: 500 });
+            fixture.detectChanges();
+
+            const req3 = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(req3.request.body.movimientoIds.length).toBe(50);
+            expect(req3.request.body.movimientoIds[0]).toBe(1001);
+            expect(req3.request.body.movimientoIds[49]).toBe(1050);
+            req3.flush({ clasificados: 50 });
+            fixture.detectChanges();
+
+            expect(componente.mensajeExito()).toContain('1050 movimientos clasificados');
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Cambiar_de_pagina_o_filtros_vacia_la_seleccion', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            expect(componente.seleccionados().size).toBe(1);
+
+            componente.cargarLista(2);
+            expect(componente.seleccionados().size).toBe(0);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 2, tamano: 50, total: 0, items: [] });
+        });
+
+        it('Clasificar_con_409_muestra_el_mensaje_y_recarga', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            componente.claseSeleccionada.set('PagoTarjeta');
+
+            componente.aplicarClaseSeleccionada();
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            req.flush({ mensaje: 'Deshaz primero sus conciliaciones.' }, { status: 409, statusText: 'Conflict' });
+            fixture.detectChanges();
+
+            expect(componente.mensajeError()).toBe('Deshaz primero sus conciliaciones.');
+            expect(componente.movimientosOcupados().has(101)).toBeFalse();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Buscar_clases_sugeridas_esta_deshabilitado_con_periodo_invalido', () => {
+            inicializarConEmpresa(3);
+            componente.desde = '2026-03-20';
+            componente.hasta = '2026-03-10';
+            fixture.detectChanges();
+
+            expect(componente.motivoPeriodo()).toBe('La fecha inicial no puede ser posterior a la final.');
+            componente.buscarClasesSugeridas();
+            httpMock.expectNone(r => r.url === `${base}/conciliacion/clases-sugeridas`);
+        });
+
+        it('Buscar_clases_sugeridas_pide_con_los_filtros_y_muestra_la_sugerencia_en_la_tarjeta', () => {
+            inicializarConEmpresa(3);
+
+            componente.buscarClasesSugeridas();
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne(r => r.url === `${base}/conciliacion/clases-sugeridas` &&
+                r.params.get('empresaId') === '3' &&
+                r.params.get('desde') === '2026-03-01' &&
+                r.params.get('hasta') === '2026-03-17');
+            const sugerida: ClaseSugerida = { movimientoId: 101, clase: 'Comision', motivo: 'Cobro de comisiones' };
+            req.flush([sugerida]);
+            fixture.detectChanges();
+
+            expect(componente.clasesSugeridasPorId().get(101)?.clase).toBe('Comision');
+            const tarjeta101 = fixture.debugElement.query(By.directive(MovimientoTarjetaComponent));
+            expect(tarjeta101.nativeElement.textContent).toContain('Sugerida:');
+            expect(tarjeta101.nativeElement.textContent).toContain('Comisión');
+            expect(tarjeta101.nativeElement.textContent).toContain('Cobro de comisiones');
+        });
+
+        it('Aceptar_las_de_una_clase_clasifica_todos_sus_ids_y_las_quita_del_mapa', () => {
+            inicializarConEmpresa(3);
+
+            componente.clasesSugeridasPorId.set(new Map<number, ClaseSugerida>([
+                [101, { movimientoId: 101, clase: 'Comision', motivo: 'Comisión A' }],
+                [102, { movimientoId: 102, clase: 'Comision', motivo: 'Comisión B' }],
+                [103, { movimientoId: 103, clase: 'Nomina', motivo: 'Nómina C' }]
+            ]));
+            fixture.detectChanges();
+
+            expect(componente.clasesSugeridasResumen().length).toBe(2);
+
+            componente.aceptarClasesDeTipo('Comision');
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(req.request.body).toEqual({ movimientoIds: [101, 102], clase: 'Comision' });
+            req.flush({ clasificados: 2 });
+            fixture.detectChanges();
+
+            expect(componente.clasesSugeridasPorId().has(101)).toBeFalse();
+            expect(componente.clasesSugeridasPorId().has(102)).toBeFalse();
+            expect(componente.clasesSugeridasPorId().has(103)).toBeTrue();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Aceptar_clase_y_Quitar_clase_ignoran_un_segundo_evento_mientras_hay_peticion', () => {
+            inicializarConEmpresa(3);
+
+            componente.clasesSugeridasPorId.set(new Map<number, ClaseSugerida>([
+                [101, { movimientoId: 101, clase: 'Nomina', motivo: 'Sueldo' }]
+            ]));
+            fixture.detectChanges();
+
+            componente.aceptarClase(101);
+            componente.aceptarClase(101);
+            componente.quitarClase(101);
+            fixture.detectChanges();
+
+            const reqs = httpMock.match({ method: 'POST', url: `${base}/movimientos/clasificar` });
+            expect(reqs.length).toBe(1);
+            expect(componente.movimientosOcupados().has(101)).toBeTrue();
+
+            reqs[0].flush({ clasificados: 1 });
+            fixture.detectChanges();
+
+            expect(componente.movimientosOcupados().has(101)).toBeFalse();
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Cambiar_el_periodo_borra_las_clases_sugeridas', () => {
+            inicializarConEmpresa(3);
+            componente.clasesSugeridasPorId.set(new Map<number, ClaseSugerida>([
+                [101, { movimientoId: 101, clase: 'Nomina', motivo: 'Sueldo' }]
+            ]));
+            expect(componente.clasesSugeridasPorId().size).toBe(1);
+
+            componente.desde = '2026-03-02';
+            componente.alCambiarFiltro();
+            expect(componente.clasesSugeridasPorId().size).toBe(0);
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Sin_clases_sugeridas_muestra_el_aviso', () => {
+            inicializarConEmpresa(3);
+
+            componente.buscarClasesSugeridas();
+            fixture.detectChanges();
+
+            const req = httpMock.expectOne(r => r.url === `${base}/conciliacion/clases-sugeridas`);
+            req.flush([]);
+            fixture.detectChanges();
+
+            expect(componente.mensajeExito()).toContain('No hay clases que sugerir en este periodo.');
+        });
+
+        it('Sin_permiso_no_hay_barra_ni_boton_de_clases', () => {
+            tienePermisoSignal.set(false);
+            inicializarConEmpresa(3);
+
+            componente.alCambiarSeleccion(101, true);
+            fixture.detectChanges();
+
+            expect(texto()).not.toContain('seleccionado');
+            expect(texto()).not.toContain('Buscar clases sugeridas');
         });
     });
 });
