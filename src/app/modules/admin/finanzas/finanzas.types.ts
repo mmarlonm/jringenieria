@@ -112,6 +112,7 @@ export interface Movimiento {
     tipoOperacion: string | null;
     referencia: string | null;
     rfcComercio: string | null;
+    clase?: ClaseMovimiento | null;
 }
 
 export interface FiltroMovimientos {
@@ -151,3 +152,24 @@ export interface HojaInfo {
     filas: number;
     formatoDetectado: 'CFDI' | 'BancoA' | 'BancoB' | 'Desconocido';
 }
+
+export type EstadoMovimiento = 'SinConciliar' | 'ConSugerencia' | 'Parcial' | 'Conciliado' | 'Clasificado';
+export type EstadoVinculo = 'Sugerida' | 'Confirmada' | 'Rechazada' | 'Deshecha';
+export type Confianza = 'Alta' | 'Media' | 'Baja';
+export type ClaseMovimiento = 'TransferenciaPropia' | 'PagoTarjeta' | 'Nomina' | 'Comision' | 'Tpv' | 'Personal';
+export interface SugerirConciliacion { empresaId: number; desde: string; hasta: string; cuentaId?: number | null; }
+export interface ResultadoSugerir { movimientosAnalizados: number; sugerenciasNuevas: number; cfdiConsiderados: number; }
+export interface FiltroConciliacion { empresaId: number; cuentaId?: number | null; desde?: string | null; hasta?: string | null; estado?: string | null; q?: string | null; pagina?: number; tamano?: number; }
+export interface Vinculo { conciliacionId: number; cfdiId: number; uuid: string; serie: string | null; folio: string | null; contraparte: string; total: number; saldo: number; moneda: string; regla: string; confianza: Confianza | null; estado: EstadoVinculo; importeAplicado: number; }
+export interface MovimientoConciliacion { movimientoId: number; cuentaId: number; fecha: string; descripcion: string; importe: number; saldo: number | null; tipoOperacion: string | null; clase: ClaseMovimiento | null; estado: EstadoMovimiento; pendiente: number; sugerencias: Vinculo[]; confirmadas: Vinculo[]; }
+export interface ManualConciliacion { movimientoId: number; cfdiId: number; importeAplicado: number; }
+export interface FalloLote { conciliacionId: number; motivo: string; }
+export interface ResultadoLote { confirmadas: number[]; fallidas: FalloLote[]; }
+export interface ClasificarMovimientos { movimientoIds: number[]; clase: ClaseMovimiento | null; }
+export interface ResultadoClasificar { clasificados: number; }
+export interface FiltroClases { empresaId: number; cuentaId?: number | null; desde: string; hasta: string; }
+export interface ClaseSugerida { movimientoId: number; clase: ClaseMovimiento; motivo: string; }
+export interface CfdiCandidato { cfdiId: number; uuid: string; serie: string | null; folio: string | null; fechaEmision: string; contraparte: string; tipoComprobante: string; metodoPago: string | null; total: number; saldo: number; moneda: string; }
+export interface ResumenMovimientos { total: number; sinConciliar: number; conSugerencia: number; parcial: number; conciliado: number; clasificado: number; }
+export interface ResumenCfdi { pendiente: number; parcial: number; pagado: number; pagadoEnEfectivo: number; cancelado: number; }
+export interface ResumenConciliacion { movimientos: ResumenMovimientos; cfdi: ResumenCfdi; }

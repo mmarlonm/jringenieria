@@ -3,8 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
 import {
-    Cfdi, Cuenta, CuentaGuardar, Empresa, EmpresaGuardar, FiltroCfdi, FiltroImportaciones, FiltroMovimientos,
-    HojaInfo, Importacion, Movimiento, Pagina, ResultadoImportacion
+    Cfdi, CfdiCandidato, ClaseSugerida, ClasificarMovimientos, Cuenta, CuentaGuardar, Empresa, EmpresaGuardar,
+    FiltroCfdi, FiltroClases, FiltroConciliacion, FiltroImportaciones, FiltroMovimientos, HojaInfo, Importacion,
+    ManualConciliacion, Movimiento, MovimientoConciliacion, Pagina, ResultadoClasificar, ResultadoImportacion,
+    ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo
 } from './finanzas.types';
 
 @Injectable({
@@ -66,6 +68,54 @@ export class FinanzasService {
 
     anularImportacion(id: number): Observable<void> {
         return this._http.post<void>(`${this._api}/importaciones/${id}/anular`, null);
+    }
+
+    sugerirConciliaciones(dto: SugerirConciliacion): Observable<ResultadoSugerir> {
+        return this._http.post<ResultadoSugerir>(`${this._api}/conciliacion/sugerir`, dto);
+    }
+
+    movimientosConciliacion(filtro: FiltroConciliacion): Observable<Pagina<MovimientoConciliacion>> {
+        return this._http.get<Pagina<MovimientoConciliacion>>(`${this._api}/conciliacion/movimientos`, { params: this._query(filtro) });
+    }
+
+    resumenConciliacion(empresaId: number, cuentaId: number | null, desde: string, hasta: string): Observable<ResumenConciliacion> {
+        return this._http.get<ResumenConciliacion>(`${this._api}/conciliacion/resumen`, {
+            params: this._query({ empresaId, cuentaId, desde, hasta })
+        });
+    }
+
+    candidatosCfdi(movimientoId: number, q: string): Observable<CfdiCandidato[]> {
+        return this._http.get<CfdiCandidato[]>(`${this._api}/conciliacion/cfdi-candidatos`, {
+            params: this._query({ movimientoId, q })
+        });
+    }
+
+    clasesSugeridas(filtro: FiltroClases): Observable<ClaseSugerida[]> {
+        return this._http.get<ClaseSugerida[]>(`${this._api}/conciliacion/clases-sugeridas`, { params: this._query(filtro) });
+    }
+
+    confirmarVinculo(id: number): Observable<Vinculo> {
+        return this._http.post<Vinculo>(`${this._api}/conciliacion/${id}/confirmar`, null);
+    }
+
+    confirmarLote(ids: number[]): Observable<ResultadoLote> {
+        return this._http.post<ResultadoLote>(`${this._api}/conciliacion/confirmar-lote`, { ids });
+    }
+
+    rechazarVinculo(id: number): Observable<void> {
+        return this._http.post<void>(`${this._api}/conciliacion/${id}/rechazar`, null);
+    }
+
+    deshacerVinculo(id: number): Observable<void> {
+        return this._http.post<void>(`${this._api}/conciliacion/${id}/deshacer`, null);
+    }
+
+    conciliarManual(dto: ManualConciliacion): Observable<Vinculo> {
+        return this._http.post<Vinculo>(`${this._api}/conciliacion/manual`, dto);
+    }
+
+    clasificar(dto: ClasificarMovimientos): Observable<ResultadoClasificar> {
+        return this._http.post<ResultadoClasificar>(`${this._api}/movimientos/clasificar`, dto);
     }
 
     /** Multipart con los nombres que enlaza el controlador; `hoja` solo viaja si se eligió una. */

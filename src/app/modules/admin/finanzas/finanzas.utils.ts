@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Cuenta, ResultadoImportacion } from './finanzas.types';
+import { ClaseMovimiento, Cuenta, EstadoMovimiento, MovimientoConciliacion, ResultadoImportacion, ResultadoSugerir, Vinculo } from './finanzas.types';
 
 const MAX_BYTES_ARCHIVO = 10 * 1024 * 1024;
 const TEXTO_ARCHIVO_GRANDE = 'El archivo es demasiado grande (máximo 10 MB).';
@@ -42,4 +42,115 @@ export function etiquetaCuenta(cuenta: Cuenta, nombresEmpresa: ReadonlyMap<numbe
     const texto = `${cuenta.alias} ····${cuenta.terminacion} · ${cuenta.moneda}`;
     const empresa = nombresEmpresa.get(cuenta.empresaId);
     return empresa ? `${empresa} · ${texto}` : texto;
+}
+
+export const ESTADOS_MOVIMIENTO: readonly EstadoMovimiento[] = ['SinConciliar', 'ConSugerencia', 'Parcial', 'Conciliado', 'Clasificado'];
+export const CLASES_MOVIMIENTO: readonly ClaseMovimiento[] = ['TransferenciaPropia', 'PagoTarjeta', 'Nomina', 'Comision', 'Tpv', 'Personal'];
+
+export function etiquetaEstadoMovimiento(e: string): string {
+    switch (e) {
+        case 'SinConciliar': return 'Sin conciliar';
+        case 'ConSugerencia': return 'Con sugerencia';
+        case 'Parcial': return 'Parcial';
+        case 'Conciliado': return 'Conciliado';
+        case 'Clasificado': return 'Clasificado';
+        default: return e;
+    }
+}
+
+export function etiquetaClase(c: string): string {
+    switch (c) {
+        case 'TransferenciaPropia': return 'Transferencia entre cuentas propias';
+        case 'PagoTarjeta': return 'Pago de tarjeta';
+        case 'Nomina': return 'Nómina';
+        case 'Comision': return 'Comisión';
+        case 'Tpv': return 'Cobro de terminal (TPV)';
+        case 'Personal': return 'Personal';
+        default: return c;
+    }
+}
+
+export function etiquetaRegla(r: string): string {
+    switch (r) {
+        case 'SALDO_EXACTO': return 'Importe exacto';
+        case 'PPD_SALDO': return 'Saldo de factura a crédito (PPD)';
+        case 'TARJETA_RFC': return 'Compra con tarjeta (RFC coincide)';
+        case 'REP_EXACTO': return 'Complemento de pago';
+        case 'SUMA_EXACTA': return 'Suma de varias facturas';
+        case 'MANUAL': return 'Manual';
+        default: return r;
+    }
+}
+
+export function clasesDeConfianza(c: string | null): string {
+    switch (c) {
+        case 'Alta': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
+        case 'Media': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+}
+
+export function fechaLocalISO(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+export function primerDiaDelMes(hoy: Date): string {
+    const y = hoy.getFullYear();
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}-01`;
+}
+
+export function periodoValido(desde: string, hasta: string): string | null {
+    if (!desde || !hasta || desde.trim() === '' || hasta.trim() === '') {
+        return 'Indica el periodo (desde y hasta).';
+    }
+    const [yD, mD, dD] = desde.split('-').map(Number);
+    const [yH, mH, dH] = hasta.split('-').map(Number);
+    const utcDesde = Date.UTC(yD, mD - 1, dD);
+    const utcHasta = Date.UTC(yH, mH - 1, dH);
+    if (utcDesde > utcHasta) {
+        return 'La fecha inicial no puede ser posterior a la final.';
+    }
+    const diffDias = (utcHasta - utcDesde) / 86_400_000;
+    if (diffDias > 366) {
+        return 'El periodo no puede pasar de 366 días.';
+    }
+    return null;
+}
+
+export function referenciaCfdi(c: { serie: string | null; folio: string | null; uuid: string }): string {
+    if (c.serie && c.folio) return `${c.serie}-${c.folio}`;
+    if (c.folio) return c.folio;
+    if (c.serie) return c.serie;
+    return c.uuid ? c.uuid.substring(0, 8) : "";
+}
+
+export function textoSugerir(r: ResultadoSugerir): string {
+    return `${r.sugerenciasNuevas} sugerencias nuevas · ${r.movimientosAnalizados} movimientos analizados · ${r.cfdiConsiderados} facturas consideradas`;
+}
+
+export function altasPendientes(items: readonly MovimientoConciliacion[]): Vinculo[] {
+    const res: Vinculo[] = [];
+    for (const item of items) {
+        if (item.sugerencias) {
+            for (const s of item.sugerencias) {
+                if (s.estado === 'Sugerida' && s.confianza === 'Alta') {
+                    res.push(s);
+                }
+            }
+        }
+    }
+    return res;
+}
+
+export function partir<T>(items: readonly T[], tamano: number): T[][] {
+    if (tamano <= 0 || items.length === 0) return [];
+    const res: T[][] = [];
+    for (let i = 0; i < items.length; i += tamano) {
+        res.push(items.slice(i, i + tamano));
+    }
+    return res;
 }

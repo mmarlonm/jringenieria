@@ -71,4 +71,107 @@ describe('FinanzasService', () => {
         expect(anular.request.method).toBe('POST');
         anular.flush(null);
     });
+    it('movimientosConciliacion envía el filtro como query string y omite null, undefined y vacío', () => {
+        service.movimientosConciliacion({ empresaId: 1, cuentaId: null, desde: '2026-01-01', hasta: '2026-01-31', estado: '', q: '', pagina: 2, tamano: 50 }).subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${base}/conciliacion/movimientos`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys().sort()).toEqual(['desde', 'empresaId', 'hasta', 'pagina', 'tamano']);
+        expect(req.request.params.get('empresaId')).toBe('1');
+        expect(req.request.params.get('pagina')).toBe('2');
+        expect(req.request.params.get('tamano')).toBe('50');
+        req.flush({ pagina: 2, tamano: 50, total: 0, items: [] });
+    });
+
+    it('resumenConciliacion manda empresaId, desde y hasta sin cuentaId cuando es null, y con cuentaId si viene', () => {
+        service.resumenConciliacion(1, null, '2026-01-01', '2026-01-31').subscribe();
+        const reqSinCuenta = httpMock.expectOne((r) => r.url === `${base}/conciliacion/resumen`);
+        expect(reqSinCuenta.request.method).toBe('GET');
+        expect(reqSinCuenta.request.params.keys().sort()).toEqual(['desde', 'empresaId', 'hasta']);
+        reqSinCuenta.flush({});
+
+        service.resumenConciliacion(1, 7, '2026-01-01', '2026-01-31').subscribe();
+        const reqConCuenta = httpMock.expectOne((r) => r.url === `${base}/conciliacion/resumen`);
+        expect(reqConCuenta.request.params.keys().sort()).toEqual(['cuentaId', 'desde', 'empresaId', 'hasta']);
+        expect(reqConCuenta.request.params.get('cuentaId')).toBe('7');
+        reqConCuenta.flush({});
+    });
+
+    it('candidatosCfdi manda movimientoId y omite q cuando está vacío', () => {
+        service.candidatosCfdi(9, '').subscribe();
+        const reqVacio = httpMock.expectOne((r) => r.url === `${base}/conciliacion/cfdi-candidatos`);
+        expect(reqVacio.request.method).toBe('GET');
+        expect(reqVacio.request.params.keys()).toEqual(['movimientoId']);
+        expect(reqVacio.request.params.get('movimientoId')).toBe('9');
+        reqVacio.flush([]);
+
+        service.candidatosCfdi(9, 'F-100').subscribe();
+        const reqConQ = httpMock.expectOne((r) => r.url === `${base}/conciliacion/cfdi-candidatos`);
+        expect(reqConQ.request.params.keys().sort()).toEqual(['movimientoId', 'q']);
+        expect(reqConQ.request.params.get('q')).toBe('F-100');
+        reqConQ.flush([]);
+    });
+
+    it('clasesSugeridas manda empresaId, desde y hasta y omite cuentaId cuando es null', () => {
+        service.clasesSugeridas({ empresaId: 3, cuentaId: null, desde: '2026-01-01', hasta: '2026-01-31' }).subscribe();
+        const req = httpMock.expectOne((r) => r.url === `${base}/conciliacion/clases-sugeridas`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys().sort()).toEqual(['desde', 'empresaId', 'hasta']);
+        req.flush([]);
+    });
+
+    it('sugerirConciliaciones hace POST a conciliacion/sugerir con el cuerpo dto', () => {
+        const dto = { empresaId: 2, desde: '2026-01-01', hasta: '2026-01-31', cuentaId: 5 };
+        service.sugerirConciliaciones(dto).subscribe();
+        const req = httpMock.expectOne(`${base}/conciliacion/sugerir`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ movimientosAnalizados: 10, sugerenciasNuevas: 2, cfdiConsiderados: 5 });
+    });
+
+    it('confirmarVinculo, rechazarVinculo y deshacerVinculo hacen POST con cuerpo null', () => {
+        service.confirmarVinculo(7).subscribe();
+        const conf = httpMock.expectOne(`${base}/conciliacion/7/confirmar`);
+        expect(conf.request.method).toBe('POST');
+        expect(conf.request.body).toBeNull();
+        conf.flush({});
+
+        service.rechazarVinculo(8).subscribe();
+        const rech = httpMock.expectOne(`${base}/conciliacion/8/rechazar`);
+        expect(rech.request.method).toBe('POST');
+        expect(rech.request.body).toBeNull();
+        rech.flush(null);
+
+        service.deshacerVinculo(9).subscribe();
+        const desh = httpMock.expectOne(`${base}/conciliacion/9/deshacer`);
+        expect(desh.request.method).toBe('POST');
+        expect(desh.request.body).toBeNull();
+        desh.flush(null);
+    });
+
+    it('confirmarLote hace POST a conciliacion/confirmar-lote con ids', () => {
+        service.confirmarLote([4, 5]).subscribe();
+        const req = httpMock.expectOne(`${base}/conciliacion/confirmar-lote`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({ ids: [4, 5] });
+        req.flush({ confirmadas: [4, 5], fallidas: [] });
+    });
+
+    it('conciliarManual hace POST a conciliacion/manual con el dto', () => {
+        const dto = { movimientoId: 10, cfdiId: 20, importeAplicado: 1500.5 };
+        service.conciliarManual(dto).subscribe();
+        const req = httpMock.expectOne(`${base}/conciliacion/manual`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({});
+    });
+
+    it('clasificar hace POST a movimientos/clasificar con el dto', () => {
+        const dto = { movimientoIds: [1, 2], clase: null };
+        service.clasificar(dto).subscribe();
+        const req = httpMock.expectOne(`${base}/movimientos/clasificar`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ clasificados: 2 });
+    });
 });
