@@ -173,3 +173,8 @@ export interface CfdiCandidato { cfdiId: number; uuid: string; serie: string | n
 export interface ResumenMovimientos { total: number; sinConciliar: number; conSugerencia: number; parcial: number; conciliado: number; clasificado: number; }
 export interface ResumenCfdi { pendiente: number; parcial: number; pagado: number; pagadoEnEfectivo: number; cancelado: number; }
 export interface ResumenConciliacion { movimientos: ResumenMovimientos; cfdi: ResumenCfdi; }
+
+export interface GenerarPaquete { empresaId: number; anio: number; mes: number; }
+export interface CuentaPaquete { cuentaId: number; etiqueta: string; movimientos: number; }
+export interface VistaPreviaPaquete { empresaId: number; anio: number; mes: number; cfdiEmitidos: number; cfdiRecibidos: number; movimientos: number; movimientosPendientes: number; cfdiPendientes: number; cfdiSinDatosOriginales: number; cuentas: CuentaPaquete[]; }
+export interface PaqueteDespacho { paqueteId: number; empresaId: number; anio: number; mes: number; usuarioId: number; fecha: string; cfdiEmitidos: number; cfdiRecibidos: number; movimientos: number; pendientes: number; }

@@ -174,4 +174,30 @@ describe('FinanzasService', () => {
         expect(req.request.body).toEqual(dto);
         req.flush({ clasificados: 2 });
     });
+
+    it('vistaPreviaDespacho, historialDespacho y generarDespacho apuntan a las rutas del controlador', () => {
+        service.vistaPreviaDespacho(1, 2026, 10).subscribe();
+        const vp = httpMock.expectOne((r) => r.url === `${base}/despacho/vista-previa`);
+        expect(vp.request.method).toBe('GET');
+        expect(vp.request.params.get('empresaId')).toBe('1');
+        expect(vp.request.params.get('anio')).toBe('2026');
+        expect(vp.request.params.get('mes')).toBe('10');
+        vp.flush({ empresaId: 1, anio: 2026, mes: 10, cfdiEmitidos: 0, cfdiRecibidos: 0, movimientos: 0, movimientosPendientes: 0, cfdiPendientes: 0, cfdiSinDatosOriginales: 0, cuentas: [] });
+
+        service.historialDespacho(1, 2, 20).subscribe();
+        const hist = httpMock.expectOne((r) => r.url === `${base}/despacho/historial`);
+        expect(hist.request.method).toBe('GET');
+        expect(hist.request.params.get('empresaId')).toBe('1');
+        expect(hist.request.params.get('pagina')).toBe('2');
+        expect(hist.request.params.get('tamano')).toBe('20');
+        hist.flush({ pagina: 2, tamano: 20, total: 0, items: [] });
+
+        const blob = new Blob(['test']);
+        service.generarDespacho({ empresaId: 1, anio: 2026, mes: 10 }).subscribe();
+        const gen = httpMock.expectOne(`${base}/despacho/generar`);
+        expect(gen.request.method).toBe('POST');
+        expect(gen.request.body).toEqual({ empresaId: 1, anio: 2026, mes: 10 });
+        expect(gen.request.responseType).toBe('blob');
+        gen.flush(blob);
+    });
 });

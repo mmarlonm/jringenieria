@@ -154,3 +154,55 @@ export function partir<T>(items: readonly T[], tamano: number): T[][] {
     }
     return res;
 }
+
+export const MESES: readonly string[] = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+export function nombrePaquete(rfc: string, anio: number, mes: number): string {
+    const mesStr = mes.toString().padStart(2, '0');
+    return `PaqueteDespacho_${anio}-${mesStr}_${rfc}.xlsx`;
+}
+
+export function mesAnteriorA(hoy: Date): { anio: number; mes: number } {
+    const anio = hoy.getFullYear();
+    const mesIdx = hoy.getMonth();
+    if (mesIdx === 0) {
+        return { anio: anio - 1, mes: 12 };
+    }
+    return { anio, mes: mesIdx };
+}
+
+export async function mensajeDeErrorBlob(err: unknown): Promise<string> {
+    if (err && typeof err === 'object' && 'error' in err) {
+        const errorProp = (err as { error: unknown }).error;
+        if (errorProp instanceof Blob) {
+            try {
+                const text = await errorProp.text();
+                const parsed = JSON.parse(text);
+                if (parsed && typeof parsed.mensaje === 'string' && parsed.mensaje.trim()) {
+                    return parsed.mensaje;
+                }
+            } catch {
+                return 'Ocurrió un error inesperado.';
+            }
+            return 'Ocurrió un error inesperado.';
+        }
+    }
+    return mensajeDeError(err);
+}
+
+export function descargarBlob(documento: Document, blob: Blob, nombre: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = documento.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    documento.body.appendChild(a);
+    try {
+        a.click();
+    } finally {
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+}

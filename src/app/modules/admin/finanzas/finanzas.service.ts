@@ -6,7 +6,7 @@ import {
     Cfdi, CfdiCandidato, ClaseSugerida, ClasificarMovimientos, Cuenta, CuentaGuardar, Empresa, EmpresaGuardar,
     FiltroCfdi, FiltroClases, FiltroConciliacion, FiltroImportaciones, FiltroMovimientos, HojaInfo, Importacion,
     ManualConciliacion, Movimiento, MovimientoConciliacion, Pagina, ResultadoClasificar, ResultadoImportacion,
-    ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo
+    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete
 } from './finanzas.types';
 
 @Injectable({
@@ -116,6 +116,24 @@ export class FinanzasService {
 
     clasificar(dto: ClasificarMovimientos): Observable<ResultadoClasificar> {
         return this._http.post<ResultadoClasificar>(`${this._api}/movimientos/clasificar`, dto);
+    }
+
+    vistaPreviaDespacho(empresaId: number, anio: number, mes: number): Observable<VistaPreviaPaquete> {
+        return this._http.get<VistaPreviaPaquete>(`${this._api}/despacho/vista-previa`, {
+            params: this._query({ empresaId, anio, mes })
+        });
+    }
+
+    historialDespacho(empresaId: number, pagina: number = 1, tamano: number = 50): Observable<Pagina<PaqueteDespacho>> {
+        return this._http.get<Pagina<PaqueteDespacho>>(`${this._api}/despacho/historial`, {
+            params: this._query({ empresaId, pagina, tamano })
+        });
+    }
+
+    generarDespacho(dto: GenerarPaquete): Observable<Blob> {
+        return this._http.post(`${this._api}/despacho/generar`, dto, {
+            responseType: 'blob'
+        });
     }
 
     /** Multipart con los nombres que enlaza el controlador; `hoja` solo viaja si se eligió una. */

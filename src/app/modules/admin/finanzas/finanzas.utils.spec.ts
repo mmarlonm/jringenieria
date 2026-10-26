@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Cuenta, MovimientoConciliacion, ResultadoImportacion } from './finanzas.types';
-import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, altasPendientes, clasesDeConfianza, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, motivoArchivoInvalido, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir } from './finanzas.utils';
+import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -234,4 +234,61 @@ describe('finanzas.utils', () => {
             expect(partir([], 3)).toEqual([]);
         });
     });
+
+    describe('utilidades de paquete de despacho', () => {
+        it('MESES contiene los 12 meses de Enero a Diciembre', () => {
+            expect(MESES.length).toBe(12);
+            expect(MESES[0]).toBe('Enero');
+            expect(MESES[11]).toBe('Diciembre');
+        });
+
+        it('nombrePaquete arma el formato esperado con dos dígitos de mes', () => {
+            expect(nombrePaquete('AAA010101AAA', 2026, 3)).toBe('PaqueteDespacho_2026-03_AAA010101AAA.xlsx');
+            expect(nombrePaquete('RFC123456789', 2025, 11)).toBe('PaqueteDespacho_2025-11_RFC123456789.xlsx');
+        });
+
+        it('mesAnteriorA calcula correctamente el mes anterior incluyendo cambio de año en enero', () => {
+            expect(mesAnteriorA(new Date(2026, 0, 15))).toEqual({ anio: 2025, mes: 12 });
+            expect(mesAnteriorA(new Date(2026, 6, 1))).toEqual({ anio: 2026, mes: 6 });
+        });
+
+        describe('mensajeDeErrorBlob', () => {
+            it('lee el mensaje cuando el error es un Blob con JSON', async () => {
+                const blob = new Blob([JSON.stringify({ mensaje: 'El mes no es válido.' })], { type: 'application/json' });
+                const err = { error: blob };
+                const msg = await mensajeDeErrorBlob(err);
+                expect(msg).toBe('El mes no es válido.');
+            });
+
+            it('devuelve mensaje inesperado cuando el Blob no es JSON', async () => {
+                const blob = new Blob(['Not valid json content'], { type: 'text/plain' });
+                const err = { error: blob };
+                const msg = await mensajeDeErrorBlob(err);
+                expect(msg).toBe('Ocurrió un error inesperado.');
+            });
+
+            it('delega en mensajeDeError para errores estándar no Blob', async () => {
+                const err = new HttpErrorResponse({ error: { mensaje: 'Error común' }, status: 400 });
+                const msg = await mensajeDeErrorBlob(err);
+                expect(msg).toBe('Error común');
+            });
+        });
+
+        describe('descargarBlob', () => {
+            it('crea enlace temporal con download, hace click y revoca la URL', () => {
+                const blob = new Blob(['dummy content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const mockUrl = 'blob:http://localhost/fake-uuid';
+                spyOn(URL, 'createObjectURL').and.returnValue(mockUrl);
+                spyOn(URL, 'revokeObjectURL');
+                const clickSpy = spyOn(HTMLAnchorElement.prototype, 'click');
+
+                descargarBlob(document, blob, 'reporte.xlsx');
+
+                expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
+                expect(clickSpy).toHaveBeenCalled();
+                expect(URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
+            });
+        });
+    });
+
 });
