@@ -1004,4 +1004,97 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
             expect(texto()).not.toContain('Buscar clases sugeridas');
         });
     });
+
+    describe('revisión final', () => {
+        beforeEach(() => {
+            tienePermisoSignal.set(true);
+        });
+
+        const esClasesSugeridas = (r: { url: string }): boolean => r.url === `${base}/conciliacion/clases-sugeridas`;
+        const listaVacia = { pagina: 1, tamano: 50, total: 0, items: [] };
+
+        /** Responde las tres peticiones que dispara elegirEmpresa. */
+        function atenderCargaDeEmpresa(empresaId: number): void {
+            httpMock.expectOne(r => r.url === `${base}/cuentas` && r.params.get('empresaId') === String(empresaId)).flush([]);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen` && r.params.get('empresaId') === String(empresaId)).flush(resumenBase);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('empresaId') === String(empresaId))
+                .flush({ pagina: 1, tamano: 50, total: 2, items: [movA, movB] });
+            fixture.detectChanges();
+        }
+
+        /** Una búsqueda de clases queda pendiente, ocurre `cambio` y la búsqueda debe quedar cancelada sin dejar rastro. */
+        function cambioCancelaLaBusquedaDeClases(cambio: () => void): void {
+            inicializarConEmpresa(3);
+            componente.buscarClasesSugeridas();
+            const primera: TestRequest = httpMock.expectOne(esClasesSugeridas);
+
+            cambio();
+            expect(primera.cancelled).toBeTrue();
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush(listaVacia);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+            fixture.detectChanges();
+
+            expect(componente.buscandoClases()).toBeFalse();
+            expect(componente.clasesSugeridasPorId().size).toBe(0);
+            expect(texto()).not.toContain('Aceptar las');
+        }
+
+        it('Buscar_clases_pendiente_y_cambiar_de_empresa_cancela_la_peticion_y_el_mapa_sigue_vacio', () => {
+            inicializarConEmpresa(3);
+            componente.buscarClasesSugeridas();
+            const primera: TestRequest = httpMock.expectOne(esClasesSugeridas);
+
+            componente.elegirEmpresa(4);
+            expect(primera.cancelled).toBeTrue();
+            atenderCargaDeEmpresa(4);
+
+            expect(componente.buscandoClases()).toBeFalse();
+            expect(componente.clasesSugeridasPorId().size).toBe(0);
+            expect(texto()).not.toContain('Aceptar las');
+        });
+
+        it('Buscar_clases_pendiente_y_cambiar_el_periodo_cancela_la_peticion_y_el_mapa_sigue_vacio', () => {
+            cambioCancelaLaBusquedaDeClases(() => {
+                componente.desde = '2026-03-02';
+                componente.alCambiarFiltro();
+            });
+        });
+
+        it('Buscar_clases_pendiente_y_cambiar_de_cuenta_cancela_la_peticion', () => {
+            cambioCancelaLaBusquedaDeClases(() => componente.elegirCuenta(5));
+        });
+
+        it('Buscar_clases_pendiente_y_limpiar_filtros_cancela_la_peticion', () => {
+            cambioCancelaLaBusquedaDeClases(() => componente.limpiarFiltros());
+        });
+
+        it('Sugerir_pendiente_y_cambiar_de_empresa_cancela_la_peticion_y_no_avisa_en_la_nueva', () => {
+            inicializarConEmpresa(3);
+            boton('Sugerir conciliaciones').click();
+            const primera: TestRequest = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/sugerir` });
+
+            componente.elegirEmpresa(4);
+            expect(primera.cancelled).toBeTrue();
+            atenderCargaDeEmpresa(4);
+
+            expect(componente.sugiriendo()).toBeFalse();
+            expect(componente.mensajeExito()).toBeNull();
+            expect(texto()).not.toContain('sugerencias nuevas');
+        });
+
+        it('Lote_pendiente_y_cambiar_de_empresa_cancela_la_peticion_y_no_avisa_en_la_nueva', () => {
+            inicializarConEmpresa(3);
+            componente.confirmandoLoteFranja.set(true);
+            componente.ejecutarConfirmarLote();
+            const primera: TestRequest = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/confirmar-lote` });
+
+            componente.elegirEmpresa(4);
+            expect(primera.cancelled).toBeTrue();
+            atenderCargaDeEmpresa(4);
+
+            expect(componente.procesandoLote()).toBeFalse();
+            expect(componente.mensajeExito()).toBeNull();
+            expect(texto()).not.toContain('Confirmadas:');
+        });
+    });
 });

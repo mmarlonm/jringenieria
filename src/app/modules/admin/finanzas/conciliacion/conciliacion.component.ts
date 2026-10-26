@@ -70,6 +70,9 @@ export class ConciliacionComponent implements OnInit {
     private _subCuentas?: Subscription;
     private _subLista?: Subscription;
     private _subResumen?: Subscription;
+    private _subClases?: Subscription;
+    private _subSugerir?: Subscription;
+    private _subLote?: Subscription;
 
     readonly estadosMovimiento = ESTADOS_MOVIMIENTO;
     readonly etiquetaEstado = etiquetaEstadoMovimiento;
@@ -190,7 +193,10 @@ export class ConciliacionComponent implements OnInit {
         this.seleccionados.set(new Set());
         this.ocupados.set(new Set());
         this.movimientosOcupados.set(new Set());
-        this.clasesSugeridasPorId.set(new Map());
+        this.descartarClases();
+        // El aviso de la empresa anterior no debe aparecer en la nueva.
+        this._subSugerir?.unsubscribe();
+        this._subLote?.unsubscribe();
         this.sugiriendo.set(false);
         this.confirmandoLoteFranja.set(false);
         this.procesandoLote.set(false);
@@ -226,14 +232,14 @@ export class ConciliacionComponent implements OnInit {
     elegirCuenta(id: number | null): void {
         this.cuentaId.set(id);
         this.limpiarSeleccion();
-        this.clasesSugeridasPorId.set(new Map());
+        this.descartarClases();
         this.cargarLista(1);
         this.cargarResumen();
     }
 
     alCambiarFiltro(): void {
         this.limpiarSeleccion();
-        this.clasesSugeridasPorId.set(new Map());
+        this.descartarClases();
         if (this.desde && this.hasta && this.desde > this.hasta) {
             this.errorPeriodo.set('La fecha inicial no puede ser posterior a la final.');
             return;
@@ -261,7 +267,7 @@ export class ConciliacionComponent implements OnInit {
 
     limpiarFiltros(): void {
         this.limpiarSeleccion();
-        this.clasesSugeridasPorId.set(new Map());
+        this.descartarClases();
         const hoy = new Date();
         this.desde = primerDiaDelMes(hoy);
         this.hasta = fechaLocalISO(hoy);
@@ -463,12 +469,19 @@ export class ConciliacionComponent implements OnInit {
         this.clasificarIds(ids, clase);
     }
 
+    /** Cancela la búsqueda de clases en curso y vacía las sugeridas: ya no corresponden a la empresa, cuenta o periodo. */
+    private descartarClases(): void {
+        this._subClases?.unsubscribe();
+        this.buscandoClases.set(false);
+        this.clasesSugeridasPorId.set(new Map());
+    }
+
     buscarClasesSugeridas(): void {
         if (!this.empresaId() || this.motivoPeriodo() !== null || this.buscandoClases() || this.procesandoClasificacion()) return;
 
         this.limpiarAvisos();
         this.buscandoClases.set(true);
-        this._service.clasesSugeridas({
+        this._subClases = this._service.clasesSugeridas({
             empresaId: this.empresaId()!,
             cuentaId: this.cuentaId(),
             desde: this.desde,
@@ -509,7 +522,7 @@ export class ConciliacionComponent implements OnInit {
         this.limpiarAvisos();
         this.sugiriendo.set(true);
 
-        this._service.sugerirConciliaciones({
+        this._subSugerir = this._service.sugerirConciliaciones({
             empresaId: this.empresaId()!,
             desde: this.desde,
             hasta: this.hasta,
@@ -611,7 +624,7 @@ export class ConciliacionComponent implements OnInit {
         this.limpiarAvisos();
         this.procesandoLote.set(true);
 
-        this._service.confirmarLote(ids).pipe(
+        this._subLote = this._service.confirmarLote(ids).pipe(
             takeUntilDestroyed(this._destroyRef)
         ).subscribe({
             next: (res) => {
