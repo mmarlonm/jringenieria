@@ -178,7 +178,8 @@ export const appRoutes: Route[] = [
                 path: 'finanzas', children: [
                     { path: 'cfdi', loadComponent: () => import('app/modules/admin/finanzas/cfdi/cfdi.component').then(m => m.CfdiComponent) },
                     { path: 'bancos', loadComponent: () => import('app/modules/admin/finanzas/bancos/bancos.component').then(m => m.BancosComponent) },
-                    { path: 'conciliacion', loadComponent: () => import('app/modules/admin/finanzas/conciliacion/conciliacion.component').then(m => m.ConciliacionComponent) }
+                    { path: 'conciliacion', loadComponent: () => import('app/modules/admin/finanzas/conciliacion/conciliacion.component').then(m => m.ConciliacionComponent) },
+                    { path: 'despacho', loadComponent: () => import('app/modules/admin/finanzas/despacho/despacho.component').then(m => m.DespachoComponent) }
                 ]
             }
         ]

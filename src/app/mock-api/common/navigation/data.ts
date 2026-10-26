@@ -400,7 +400,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
-            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' }
+            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
+            { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
     },
     // ==========================================================================================
@@ -526,7 +527,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
-            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' }
+            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
+            { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
     },
     {
@@ -647,7 +649,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
-            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' }
+            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
+            { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
     },
     { id: 'apps', title: 'SEGURIDAD', type: 'collapsable', children: [] },
@@ -760,7 +763,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
-            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' }
+            { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
+            { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
     },
     { id: 'apps', title: 'Seguridad', type: 'group', icon: 'heroicons_outline:shield-check', children: [] },
