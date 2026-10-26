@@ -431,6 +431,48 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
         fixture.detectChanges();
     });
 
+    describe('ajustes F4/F5', () => {
+        it('Recargar_conserva_las_tarjetas_visibles_atenuadas_mientras_actualiza', () => {
+            inicializarConEmpresa(3);
+            expect(fixture.debugElement.queryAll(By.directive(MovimientoTarjetaComponent)).length).toBe(2);
+
+            componente.recargar();
+            fixture.detectChanges();
+
+            const tarjetas = fixture.debugElement.queryAll(By.directive(MovimientoTarjetaComponent));
+            expect(tarjetas.length).toBe(2);
+            expect(texto()).toContain('Actualizando…');
+            expect(texto()).not.toContain('Cargando movimientos…');
+
+            const reqL = httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`);
+            reqL.flush({ pagina: 1, tamano: 50, total: 2, items: [movA, movB] });
+            const reqR = httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`);
+            reqR.flush(resumenBase);
+            fixture.detectChanges();
+
+            expect(texto()).not.toContain('Actualizando…');
+        });
+
+        it('Una_respuesta_tardia_de_cuentas_de_otra_empresa_no_pisa_las_actuales', () => {
+            fixture.detectChanges();
+            httpMock.expectOne(`${base}/empresas`).flush(empresas);
+
+            componente.cargarCuentas(3);
+            const primera: TestRequest = httpMock.expectOne(r => r.url === `${base}/cuentas` && r.params.get('empresaId') === '3');
+
+            componente.cargarCuentas(4);
+            expect(primera.cancelled).toBeTrue();
+
+            const segunda = httpMock.expectOne(r => r.url === `${base}/cuentas` && r.params.get('empresaId') === '4');
+            const cuenta4: Cuenta = { cuentaId: 99, empresaId: 4, banco: 'BBVA', alias: 'Cuenta 4', tipo: 'Cheques', moneda: 'MXN', terminacion: '9999', activa: true };
+            segunda.flush([cuenta4]);
+            fixture.detectChanges();
+
+            expect(componente.cuentas().length).toBe(1);
+            expect(componente.cuentas()[0].cuentaId).toBe(99);
+        });
+    });
+
     describe('acciones (F5)', () => {
         beforeEach(() => {
             tienePermisoSignal.set(true);

@@ -1,6 +1,7 @@
 import '../finanzas.locale';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,7 +18,6 @@ import {
     ClaseSugerida,
     Cuenta,
     Empresa,
-    EstadoMovimiento,
     MovimientoConciliacion,
     FalloLote,
     Pagina,
@@ -63,6 +63,7 @@ export class ConciliacionComponent implements OnInit {
     private readonly _dialog = inject(MatDialog);
     private readonly _destroyRef = inject(DestroyRef);
 
+    private _subCuentas?: Subscription;
     private _subLista?: Subscription;
     private _subResumen?: Subscription;
 
@@ -142,7 +143,9 @@ export class ConciliacionComponent implements OnInit {
     cargarEmpresas(): void {
         this.cargandoEmpresas.set(true);
         this.errorEmpresas.set(null);
-        this._service.empresas().subscribe({
+        this._service.empresas().pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: (data) => {
                 this.empresas.set(data);
                 this.cargandoEmpresas.set(false);
@@ -185,8 +188,11 @@ export class ConciliacionComponent implements OnInit {
     }
 
     cargarCuentas(empresaId: number): void {
+        this._subCuentas?.unsubscribe();
         this.cargandoCuentas.set(true);
-        this._service.cuentas(empresaId).subscribe({
+        this._subCuentas = this._service.cuentas(empresaId).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: (data) => {
                 this.cuentas.set(data);
                 this.cargandoCuentas.set(false);
@@ -263,7 +269,9 @@ export class ConciliacionComponent implements OnInit {
             q: this.q?.trim() || null,
             pagina,
             tamano: 50
-        }).subscribe({
+        }).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: (data) => {
                 this.lista.set(data);
                 this.cargandoLista.set(false);
@@ -297,6 +305,8 @@ export class ConciliacionComponent implements OnInit {
             this.cuentaId(),
             this.desde,
             this.hasta
+        ).pipe(
+            takeUntilDestroyed(this._destroyRef)
         ).subscribe({
             next: (data) => {
                 this.resumen.set(data);
@@ -358,7 +368,9 @@ export class ConciliacionComponent implements OnInit {
             desde: this.desde,
             hasta: this.hasta,
             cuentaId: this.cuentaId()
-        }).subscribe({
+        }).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: (res) => {
                 this.sugiriendo.set(false);
                 this.mensajeExito.set(textoSugerir(res));
@@ -376,7 +388,9 @@ export class ConciliacionComponent implements OnInit {
         this.limpiarAvisos();
         this.ocupados.update(set => new Set(set).add(id));
 
-        this._service.confirmarVinculo(id).subscribe({
+        this._service.confirmarVinculo(id).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: () => {
                 this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
                 this.recargar();
@@ -396,7 +410,9 @@ export class ConciliacionComponent implements OnInit {
         this.limpiarAvisos();
         this.ocupados.update(set => new Set(set).add(id));
 
-        this._service.rechazarVinculo(id).subscribe({
+        this._service.rechazarVinculo(id).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: () => {
                 this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
                 this.recargar();
@@ -416,7 +432,9 @@ export class ConciliacionComponent implements OnInit {
         this.limpiarAvisos();
         this.ocupados.update(set => new Set(set).add(id));
 
-        this._service.deshacerVinculo(id).subscribe({
+        this._service.deshacerVinculo(id).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: () => {
                 this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
                 this.recargar();
@@ -447,7 +465,9 @@ export class ConciliacionComponent implements OnInit {
         this.limpiarAvisos();
         this.procesandoLote.set(true);
 
-        this._service.confirmarLote(ids).subscribe({
+        this._service.confirmarLote(ids).pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe({
             next: (res) => {
                 this.procesandoLote.set(false);
                 this.confirmandoLoteFranja.set(false);
@@ -470,7 +490,9 @@ export class ConciliacionComponent implements OnInit {
             maxWidth: '95vw',
             data: { movimiento, moneda: this.monedaDeMovimiento(movimiento.cuentaId) }
         });
-        ref.afterClosed().subscribe((vinculo) => {
+        ref.afterClosed().pipe(
+            takeUntilDestroyed(this._destroyRef)
+        ).subscribe((vinculo) => {
             if (vinculo) {
                 this.recargar();
             }

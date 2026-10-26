@@ -309,7 +309,7 @@
       }
 
       <!-- Lista de movimientos -->
-      @if (cargandoLista()) {
+      @if (lista() === null && cargandoLista()) {
         <div class="flex flex-col items-center justify-center py-16">
           <mat-spinner diameter="48" strokeWidth="4" color="primary"></mat-spinner>
           <p class="mt-4 text-gray-500 font-bold tracking-wider uppercase animate-pulse">Cargando movimientos…</p>
@@ -337,7 +337,13 @@
                 </p>
               </div>
             } @else {
-              <div class="space-y-4">
+              <div class="space-y-4" [class.opacity-60]="cargandoLista()" [class.pointer-events-none]="cargandoLista()">
+                @if (cargandoLista()) {
+                  <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 animate-pulse">
+                    <mat-spinner diameter="14" strokeWidth="2"></mat-spinner>
+                    <span>Actualizando…</span>
+                  </div>
+                }
                 @for (m of pag.items; track m.movimientoId) {
                   <app-finanzas-movimiento-tarjeta
                     [movimiento]="m"
