@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { ManualDialogComponent } from './manual-dialog/manual-dialog.component';
 import { environment } from 'environments/environment';
 
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
@@ -77,18 +81,22 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
     let fixture: ComponentFixture<ConciliacionComponent>;
     let componente: ConciliacionComponent;
     let httpMock: HttpTestingController;
+    const tienePermisoSignal = signal(false);
     let permisosSpy: jasmine.Spy;
 
     const el = (): HTMLElement => fixture.nativeElement;
     const texto = (): string => el().textContent ?? '';
     const boton = (etiqueta: string): HTMLButtonElement =>
         Array.from(el().querySelectorAll('button')).find((b) => b.textContent?.includes(etiqueta)) as HTMLButtonElement;
+    const botonExacto = (etiqueta: string): HTMLButtonElement =>
+        Array.from(el().querySelectorAll('button')).find((b) => b.textContent?.trim() === etiqueta) as HTMLButtonElement;
 
     beforeEach(async () => {
         // Mock de fecha SIN jasmine.clock().install() para no romper temporizadores de Material
         jasmine.clock().mockDate(new Date(2026, 2, 17));
 
-        permisosSpy = jasmine.createSpy('tiene').and.returnValue(false);
+        tienePermisoSignal.set(false);
+        permisosSpy = jasmine.createSpy('tiene').and.callFake(() => tienePermisoSignal());
 
         await TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, ConciliacionComponent],
@@ -421,5 +429,286 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
         expect(req.request.params.get('pagina')).toBe('2');
         req.flush({ pagina: 2, tamano: 50, total: 2, items: [movA, movB] });
         fixture.detectChanges();
+    });
+
+    describe('acciones (F5)', () => {
+        beforeEach(() => {
+            tienePermisoSignal.set(true);
+        });
+
+        it('Sin_permiso_no_hay_botones_de_escritura', () => {
+            tienePermisoSignal.set(false);
+            inicializarConEmpresa(3);
+
+            expect(boton('Sugerir conciliaciones')).toBeFalsy();
+            expect(boton('Confirmar Altas')).toBeFalsy();
+            expect(boton('Confirmar')).toBeFalsy();
+            expect(boton('Rechazar')).toBeFalsy();
+            expect(boton('Aplicar a mano')).toBeFalsy();
+        });
+
+        it('Sugerir_esta_deshabilitado_con_periodo_invalido_y_dice_por_que', () => {
+            inicializarConEmpresa(3);
+            const btnSugerir = () => boton('Sugerir conciliaciones');
+
+            componente.desde = '';
+            fixture.detectChanges();
+            expect(btnSugerir().disabled).toBeTrue();
+            expect(texto()).toContain('Indica el periodo (desde y hasta).');
+
+            componente.desde = '2026-03-20';
+            componente.hasta = '2026-03-10';
+            fixture.detectChanges();
+            expect(btnSugerir().disabled).toBeTrue();
+            expect(texto()).toContain('La fecha inicial no puede ser posterior a la final.');
+
+            componente.desde = '2025-01-01';
+            componente.hasta = '2026-01-05';
+            fixture.detectChanges();
+            expect(btnSugerir().disabled).toBeTrue();
+            expect(texto()).toContain('El periodo no puede pasar de 366 días.');
+        });
+
+        it('Sugerir_envia_el_cuerpo_exacto_muestra_el_resultado_y_recarga', () => {
+            inicializarConEmpresa(3);
+
+            boton('Sugerir conciliaciones').click();
+            fixture.detectChanges();
+
+            const reqSug = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/sugerir` });
+            expect(reqSug.request.body).toEqual({
+                empresaId: 3,
+                cuentaId: null,
+                desde: '2026-03-01',
+                hasta: '2026-03-17'
+            });
+            reqSug.flush({
+                movimientosAnalizados: 15,
+                sugerenciasNuevas: 5,
+                cfdiConsiderados: 20
+            });
+            fixture.detectChanges();
+
+            expect(texto()).toContain('5 sugerencias nuevas · 15 movimientos analizados · 20 facturas consideradas');
+
+            const reqL = httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`);
+            reqL.flush({ pagina: 1, tamano: 50, total: 2, items: [movA, movB] });
+            const reqR = httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`);
+            reqR.flush(resumenBase);
+            fixture.detectChanges();
+        });
+
+        it('Sugerir_con_error_muestra_el_mensaje', () => {
+            inicializarConEmpresa(3);
+
+            boton('Sugerir conciliaciones').click();
+            fixture.detectChanges();
+
+            const reqSug = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/sugerir` });
+            reqSug.flush({ mensaje: 'Error al generar sugerencias' }, { status: 500, statusText: 'Server Error' });
+            fixture.detectChanges();
+
+            expect(texto()).toContain('Error al generar sugerencias');
+        });
+
+        it('Confirmar_manda_una_peticion_y_recarga', () => {
+            inicializarConEmpresa(3);
+
+            const btnConfirmar = botonExacto('Confirmar');
+            expect(btnConfirmar).toBeDefined();
+            btnConfirmar.click();
+            fixture.detectChanges();
+
+            const reqConf = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/1/confirmar` });
+            expect(reqConf.request.body).toBeNull();
+            reqConf.flush({ ...movA.sugerencias[0], estado: 'Confirmada' });
+            fixture.detectChanges();
+
+            const reqL = httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`);
+            reqL.flush({ pagina: 1, tamano: 50, total: 2, items: [movA, movB] });
+            const reqR = httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`);
+            reqR.flush(resumenBase);
+            fixture.detectChanges();
+        });
+
+        it('Doble_clic_en_Confirmar_manda_una_sola_peticion', () => {
+            inicializarConEmpresa(3);
+
+            componente.confirmar(1);
+            componente.confirmar(1);
+            fixture.detectChanges();
+
+            const reqs = httpMock.match({ method: 'POST', url: `${base}/conciliacion/1/confirmar` });
+            expect(reqs.length).toBe(1);
+            reqs[0].flush({ ...movA.sugerencias[0], estado: 'Confirmada' });
+            fixture.detectChanges();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Doble_clic_en_Rechazar_manda_una_sola_peticion', () => {
+            inicializarConEmpresa(3);
+
+            componente.rechazar(1);
+            componente.rechazar(1);
+            fixture.detectChanges();
+
+            const reqs = httpMock.match({ method: 'POST', url: `${base}/conciliacion/1/rechazar` });
+            expect(reqs.length).toBe(1);
+            reqs[0].flush(null);
+            fixture.detectChanges();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Doble_clic_en_Deshacer_manda_una_sola_peticion', () => {
+            const movConConfirmada: MovimientoConciliacion = {
+                ...movA,
+                sugerencias: [],
+                confirmadas: [{ ...movA.sugerencias[0], conciliacionId: 44, estado: 'Confirmada' }]
+            };
+            fixture.detectChanges();
+            httpMock.expectOne(`${base}/empresas`).flush(empresas);
+            fixture.detectChanges();
+            componente.elegirEmpresa(3);
+            fixture.detectChanges();
+            httpMock.expectOne(r => r.url === `${base}/cuentas`).flush(cuentas);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 1, items: [movConConfirmada] });
+            fixture.detectChanges();
+
+            componente.deshacer(44);
+            componente.deshacer(44);
+            fixture.detectChanges();
+
+            const reqs = httpMock.match({ method: 'POST', url: `${base}/conciliacion/44/deshacer` });
+            expect(reqs.length).toBe(1);
+            reqs[0].flush(null);
+            fixture.detectChanges();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Confirmar_con_409_muestra_el_mensaje_del_API_y_recarga', () => {
+            inicializarConEmpresa(3);
+
+            componente.confirmar(1);
+            fixture.detectChanges();
+
+            const reqConf = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/1/confirmar` });
+            reqConf.flush({ mensaje: 'La factura ya fue pagada por otra vía.' }, { status: 409, statusText: 'Conflict' });
+            fixture.detectChanges();
+
+            expect(texto()).toContain('La factura ya fue pagada por otra vía.');
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+            fixture.detectChanges();
+        });
+
+        it('Lote_pide_confirmacion_antes_de_enviar_y_Cancelar_no_envia', () => {
+            inicializarConEmpresa(3);
+
+            const btnLote = boton('Confirmar Altas');
+            expect(btnLote).toBeDefined();
+            btnLote.click();
+            fixture.detectChanges();
+
+            expect(texto()).toContain('Se confirmarán 1 sugerencias de confianza Alta');
+            expect(texto()).toContain('No se pueden confirmar solas');
+
+            boton('Cancelar').click();
+            fixture.detectChanges();
+
+            httpMock.expectNone({ method: 'POST', url: `${base}/conciliacion/confirmar-lote` });
+            expect(texto()).not.toContain('No se pueden confirmar solas');
+        });
+
+        it('Lote_envia_los_ids_de_las_Altas_y_muestra_confirmadas_y_fallidas_con_motivo', () => {
+            inicializarConEmpresa(3);
+
+            boton('Confirmar Altas').click();
+            fixture.detectChanges();
+
+            const franja = el().querySelector('.bg-emerald-50');
+            const btnConfirmarLote = Array.from(franja?.querySelectorAll('button') ?? []).find(b => b.textContent?.trim() === 'Confirmar');
+            expect(btnConfirmarLote).toBeDefined();
+            btnConfirmarLote!.click();
+            fixture.detectChanges();
+
+            const reqLote = httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/confirmar-lote` });
+            expect(reqLote.request.body).toEqual({ ids: [1] });
+            reqLote.flush({
+                confirmadas: [],
+                fallidas: [{ conciliacionId: 1, motivo: 'Factura cancelada en el SAT' }]
+            });
+            fixture.detectChanges();
+
+            expect(texto()).toContain('Confirmadas: 0');
+            expect(texto()).toContain('No se pudieron confirmar');
+            expect(texto()).toContain('Factura cancelada en el SAT');
+            expect(texto()).toContain('ABONO CLIENTE FICTICIO');
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Lote_no_se_envia_dos_veces_con_doble_clic', () => {
+            inicializarConEmpresa(3);
+
+            componente.confirmandoLoteFranja.set(true);
+            fixture.detectChanges();
+
+            componente.ejecutarConfirmarLote();
+            componente.ejecutarConfirmarLote();
+            fixture.detectChanges();
+
+            const reqs = httpMock.match({ method: 'POST', url: `${base}/conciliacion/confirmar-lote` });
+            expect(reqs.length).toBe(1);
+            reqs[0].flush({ confirmadas: [1], fallidas: [] });
+            fixture.detectChanges();
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Aplicar_a_mano_abre_el_dialogo_y_recarga_si_devuelve_un_vinculo', () => {
+            inicializarConEmpresa(3);
+
+            const vinculoCreado = { ...movA.sugerencias[0], conciliacionId: 99, regla: 'MANUAL', estado: 'Confirmada' as const };
+            const dialogSpy = spyOn(TestBed.inject(MatDialog), 'open').and.returnValue({
+                afterClosed: () => of(vinculoCreado)
+            } as any);
+
+            componente.aplicarManual(movA);
+            fixture.detectChanges();
+
+            expect(dialogSpy).toHaveBeenCalledWith(ManualDialogComponent, {
+                width: '40rem',
+                maxWidth: '95vw',
+                data: { movimiento: movA, moneda: 'MXN' }
+            });
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+        });
+
+        it('Aplicar_a_mano_cancelado_no_recarga', () => {
+            inicializarConEmpresa(3);
+
+            const dialogSpy = spyOn(TestBed.inject(MatDialog), 'open').and.returnValue({
+                afterClosed: () => of(undefined)
+            } as any);
+
+            componente.aplicarManual(movA);
+            fixture.detectChanges();
+
+            expect(dialogSpy).toHaveBeenCalledTimes(1);
+            httpMock.expectNone(r => r.url === `${base}/conciliacion/movimientos`);
+            httpMock.expectNone(r => r.url === `${base}/conciliacion/resumen`);
+        });
     });
 });

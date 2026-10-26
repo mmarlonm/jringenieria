@@ -108,13 +108,65 @@
           </mat-form-field>
         </div>
 
-        <div class="flex items-center justify-between gap-4 pt-2">
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
           <button mat-stroked-button type="button" class="rounded-xl font-bold" (click)="limpiarFiltros()">
             <mat-icon class="mr-1">filter_list_off</mat-icon>
             Limpiar filtros
           </button>
+
+          @if (puedeEscribir()) {
+            <div class="flex flex-col items-end">
+              <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
+                      [disabled]="motivoPeriodo() !== null || sugiriendo()"
+                      (click)="sugerir()">
+                @if (sugiriendo()) {
+                  <mat-spinner diameter="18" strokeWidth="2" class="mr-2"></mat-spinner>
+                } @else {
+                  <mat-icon class="mr-1">auto_fix_high</mat-icon>
+                }
+                Sugerir conciliaciones
+              </button>
+              @if (motivoPeriodo(); as motivo) {
+                <span class="text-xs text-amber-700 mt-1">{{ motivo }}</span>
+              }
+            </div>
+          }
         </div>
       </div>
+
+      <!-- Avisos -->
+      @if (mensajeExito(); as exito) {
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
+          <mat-icon class="text-emerald-600">check_circle</mat-icon>
+          <span class="text-sm font-semibold text-emerald-800">{{ exito }}</span>
+        </div>
+      }
+
+      @if (mensajeError(); as err) {
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-3">
+          <mat-icon class="text-rose-600">error_outline</mat-icon>
+          <span class="text-sm font-semibold text-rose-800">{{ err }}</span>
+        </div>
+      }
+
+      @if (fallidasLote().length > 0) {
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-2">
+          <div class="flex items-center gap-2 text-amber-800 font-bold text-sm">
+            <mat-icon class="text-amber-600">warning</mat-icon>
+            <span>No se pudieron confirmar ({{ fallidasLote().length }}):</span>
+          </div>
+          <ul class="list-disc list-inside text-xs text-amber-900 space-y-1">
+            @for (f of fallidasLote(); track f.conciliacionId) {
+              <li>
+                @if (descripcionMovimientoDeVinculo(f.conciliacionId); as desc) {
+                  <strong>{{ desc }}:</strong>
+                }
+                {{ f.motivo }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
 
       <!-- Error periodo -->
       @if (errorPeriodo(); as err) {
@@ -215,6 +267,45 @@
             }
           }
         }
+      }
+
+      <!-- Franja de Lote de Altas -->
+      @if (puedeEscribir() && altas().length > 0) {
+        <div class="bg-white rounded-[2rem] border border-emerald-100 shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <mat-icon class="text-emerald-600">playlist_add_check</mat-icon>
+            <span class="text-sm font-bold text-gray-800">
+              Hay {{ altas().length }} sugerencias de confianza Alta listas para confirmar en esta página.
+            </span>
+          </div>
+          @if (!confirmandoLoteFranja()) {
+            <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                    (click)="iniciarLote()">
+              Confirmar Altas de esta página ({{ altas().length }})
+            </button>
+          } @else {
+            <div class="flex flex-col sm:flex-row items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+              <span class="text-xs font-semibold text-emerald-900">
+                Se confirmarán {{ altas().length }} sugerencias de confianza Alta de esta página. No se pueden confirmar solas: revísalas antes.
+              </span>
+              <div class="flex gap-2">
+                <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
+                        [disabled]="procesandoLote()"
+                        (click)="ejecutarConfirmarLote()">
+                  @if (procesandoLote()) {
+                    <mat-spinner diameter="16" class="mr-1"></mat-spinner>
+                  }
+                  Confirmar
+                </button>
+                <button mat-stroked-button type="button" class="rounded-xl font-bold"
+                        [disabled]="procesandoLote()"
+                        (click)="cancelarLote()">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          }
+        </div>
       }
 
       <!-- Lista de movimientos -->

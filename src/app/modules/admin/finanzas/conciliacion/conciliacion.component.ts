@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
@@ -18,17 +19,22 @@ import {
     Empresa,
     EstadoMovimiento,
     MovimientoConciliacion,
+    FalloLote,
     Pagina,
-    ResumenConciliacion
+    ResumenConciliacion,
+    Vinculo
 } from '../finanzas.types';
 import {
     ESTADOS_MOVIMIENTO,
     etiquetaEstadoMovimiento,
+    altasPendientes,
     fechaLocalISO,
     mensajeDeError,
     periodoValido,
-    primerDiaDelMes
+    primerDiaDelMes,
+    textoSugerir
 } from '../finanzas.utils';
+import { ManualDialogComponent, ManualDialogData } from './manual-dialog/manual-dialog.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
 import { MovimientoTarjetaComponent } from './movimiento-tarjeta/movimiento-tarjeta.component';
 
@@ -54,6 +60,7 @@ import { MovimientoTarjetaComponent } from './movimiento-tarjeta/movimiento-tarj
 export class ConciliacionComponent implements OnInit {
     private readonly _service = inject(FinanzasService);
     private readonly _permisos = inject(PermisosEspecialesService);
+    private readonly _dialog = inject(MatDialog);
     private readonly _destroyRef = inject(DestroyRef);
 
     private _subLista?: Subscription;
@@ -96,6 +103,14 @@ export class ConciliacionComponent implements OnInit {
 
     readonly errorPeriodo = signal<string | null>(null);
 
+    // Avisos y estado de acciones (F5)
+    readonly sugiriendo = signal(false);
+    readonly mensajeExito = signal<string | null>(null);
+    readonly mensajeError = signal<string | null>(null);
+    readonly confirmandoLoteFranja = signal(false);
+    readonly procesandoLote = signal(false);
+    readonly fallidasLote = signal<FalloLote[]>([]);
+
     // Resumen
     readonly resumen = signal<ResumenConciliacion | null>(null);
     readonly cargandoResumen = signal(false);
@@ -111,6 +126,8 @@ export class ConciliacionComponent implements OnInit {
     readonly tieneFiltrosActivos = computed(() =>
         this.cuentaId() !== null || this._estado() !== '' || (this._q()?.trim() ?? '') !== ''
     );
+
+    readonly altas = computed(() => altasPendientes(this.lista()?.items ?? []));
 
     // Para la tarjeta de movimiento (preparadas para F5/F6)
     readonly ocupados = signal<ReadonlySet<number>>(new Set());
@@ -151,6 +168,10 @@ export class ConciliacionComponent implements OnInit {
         this.ocupados.set(new Set());
         this.movimientosOcupados.set(new Set());
         this.clasesSugeridasPorId.set(new Map());
+        this.sugiriendo.set(false);
+        this.confirmandoLoteFranja.set(false);
+        this.procesandoLote.set(false);
+        this.limpiarAvisos();
 
         const hoy = new Date();
         this.desde = primerDiaDelMes(hoy);
@@ -315,11 +336,159 @@ export class ConciliacionComponent implements OnInit {
         });
     }
 
-    // Métodos stubs para inputs de eventos de tarjeta (se implementan en F5 y F6)
-    confirmar(_id: number): void {}
-    rechazar(_id: number): void {}
-    deshacer(_id: number): void {}
-    aplicarManual(_movimiento: MovimientoConciliacion): void {}
+    limpiarAvisos(): void {
+        this.mensajeExito.set(null);
+        this.mensajeError.set(null);
+        this.fallidasLote.set([]);
+    }
+
+    motivoPeriodo(): string | null {
+        return periodoValido(this.desde, this.hasta);
+    }
+
+    sugerir(): void {
+        const motivo = periodoValido(this.desde, this.hasta);
+        if (motivo !== null || !this.empresaId() || this.sugiriendo()) return;
+
+        this.limpiarAvisos();
+        this.sugiriendo.set(true);
+
+        this._service.sugerirConciliaciones({
+            empresaId: this.empresaId()!,
+            desde: this.desde,
+            hasta: this.hasta,
+            cuentaId: this.cuentaId()
+        }).subscribe({
+            next: (res) => {
+                this.sugiriendo.set(false);
+                this.mensajeExito.set(textoSugerir(res));
+                this.recargar();
+            },
+            error: (err) => {
+                this.sugiriendo.set(false);
+                this.mensajeError.set(mensajeDeError(err));
+            }
+        });
+    }
+
+    confirmar(id: number): void {
+        if (this.ocupados().has(id)) return;
+        this.limpiarAvisos();
+        this.ocupados.update(set => new Set(set).add(id));
+
+        this._service.confirmarVinculo(id).subscribe({
+            next: () => {
+                this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
+                this.recargar();
+            },
+            error: (err) => {
+                this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
+                this.mensajeError.set(mensajeDeError(err));
+                if (err?.status === 409) {
+                    this.recargar();
+                }
+            }
+        });
+    }
+
+    rechazar(id: number): void {
+        if (this.ocupados().has(id)) return;
+        this.limpiarAvisos();
+        this.ocupados.update(set => new Set(set).add(id));
+
+        this._service.rechazarVinculo(id).subscribe({
+            next: () => {
+                this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
+                this.recargar();
+            },
+            error: (err) => {
+                this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
+                this.mensajeError.set(mensajeDeError(err));
+                if (err?.status === 409) {
+                    this.recargar();
+                }
+            }
+        });
+    }
+
+    deshacer(id: number): void {
+        if (this.ocupados().has(id)) return;
+        this.limpiarAvisos();
+        this.ocupados.update(set => new Set(set).add(id));
+
+        this._service.deshacerVinculo(id).subscribe({
+            next: () => {
+                this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
+                this.recargar();
+            },
+            error: (err) => {
+                this.ocupados.update(set => { const n = new Set(set); n.delete(id); return n; });
+                this.mensajeError.set(mensajeDeError(err));
+                if (err?.status === 409) {
+                    this.recargar();
+                }
+            }
+        });
+    }
+
+    iniciarLote(): void {
+        this.confirmandoLoteFranja.set(true);
+    }
+
+    cancelarLote(): void {
+        this.confirmandoLoteFranja.set(false);
+    }
+
+    ejecutarConfirmarLote(): void {
+        if (this.procesandoLote()) return;
+        const ids = this.altas().map(v => v.conciliacionId);
+        if (ids.length === 0) return;
+
+        this.limpiarAvisos();
+        this.procesandoLote.set(true);
+
+        this._service.confirmarLote(ids).subscribe({
+            next: (res) => {
+                this.procesandoLote.set(false);
+                this.confirmandoLoteFranja.set(false);
+                this.mensajeExito.set(`Confirmadas: ${res.confirmadas.length}`);
+                this.fallidasLote.set(res.fallidas);
+                this.recargar();
+            },
+            error: (err) => {
+                this.procesandoLote.set(false);
+                this.confirmandoLoteFranja.set(false);
+                this.mensajeError.set(mensajeDeError(err));
+            }
+        });
+    }
+
+    aplicarManual(movimiento: MovimientoConciliacion): void {
+        this.limpiarAvisos();
+        const ref = this._dialog.open<ManualDialogComponent, ManualDialogData, Vinculo>(ManualDialogComponent, {
+            width: '40rem',
+            maxWidth: '95vw',
+            data: { movimiento, moneda: this.monedaDeMovimiento(movimiento.cuentaId) }
+        });
+        ref.afterClosed().subscribe((vinculo) => {
+            if (vinculo) {
+                this.recargar();
+            }
+        });
+    }
+
+    descripcionMovimientoDeVinculo(conciliacionId: number): string | null {
+        const items = this.lista()?.items ?? [];
+        for (const m of items) {
+            if (m.sugerencias.some(v => v.conciliacionId === conciliacionId) ||
+                m.confirmadas.some(v => v.conciliacionId === conciliacionId)) {
+                return m.descripcion;
+            }
+        }
+        return null;
+    }
+
+    // Métodos stubs para clasificación (se implementan en F6)
     aceptarClase(_movimientoId: number): void {}
     quitarClase(_movimientoId: number): void {}
 }
