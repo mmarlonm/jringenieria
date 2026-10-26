@@ -221,6 +221,15 @@ describe('MovimientoTarjetaComponent', () => {
         expect(botonConTexto('Aplicar a mano')).toBeFalsy();
     });
 
+    it('Aplicar_a_mano_no_aparece_con_pendiente_de_un_centavo_o_menos_porque_ya_esta_conciliado', () => {
+        setInputs({ movimiento: { ...movimientoBase, clase: null, estado: 'Conciliado', pendiente: 0.01 }, puedeEscribir: true });
+        expect(botonConTexto('Aplicar a mano')).toBeFalsy();
+
+        // Con dos centavos pendientes sí se puede aplicar a mano.
+        setInputs({ movimiento: { ...movimientoBase, clase: null, estado: 'Parcial', pendiente: 0.02 }, puedeEscribir: true });
+        expect(botonConTexto('Aplicar a mano')).toBeTruthy();
+    });
+
     it('La_casilla_emite_seleccion_true_y_false', () => {
         setInputs({ movimiento: movimientoBase, puedeEscribir: true, seleccionado: false });
 

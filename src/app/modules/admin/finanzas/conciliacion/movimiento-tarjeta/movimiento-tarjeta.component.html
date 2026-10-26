@@ -150,7 +150,7 @@
     </div>
 
     <!-- 6. Aplicar a mano -->
-    <div *ngIf="puedeEscribir && movimiento.clase === null && movimiento.pendiente > 0" class="pt-1 flex justify-end">
+    <div *ngIf="puedeEscribir && movimiento.clase === null && movimiento.pendiente > 0.01"class="pt-1 flex justify-end">
         <button
             type="button"
             mat-stroked-button
