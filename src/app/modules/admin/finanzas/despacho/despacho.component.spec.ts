@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { signal } from '@angular/core';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
@@ -206,7 +206,7 @@ describe('DespachoComponent', () => {
         expect(el.textContent).not.toContain('Generar y descargar paquete (.xlsx)');
     });
 
-    it('Generar_descarga_con_el_nombre_esperado_y_recarga_el_historial', () => {
+    it('Generar_descarga_con_el_nombre_esperado_y_recarga_el_historial', fakeAsync(() => {
         tienePermisoSignal.set(true);
         inicializarConEmpresa(1);
 
@@ -237,6 +237,8 @@ describe('DespachoComponent', () => {
 
         expect(URL.createObjectURL).toHaveBeenCalledWith(fakeBlob);
         expect(downloadAttr).toBe('PaqueteDespacho_2025-12_AAA010101AAA.xlsx');
+        expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        tick(1000);
         expect(URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
 
         // Verifica que recarga el historial en página 1
@@ -249,7 +251,8 @@ describe('DespachoComponent', () => {
         fixture.detectChanges();
 
         expect(componente.historial()?.total).toBe(2);
-    });
+        flush(); // temporizadores propios de Material
+    }));
 
     it('Doble_clic_en_Generar_manda_una_sola_peticion', () => {
         tienePermisoSignal.set(true);

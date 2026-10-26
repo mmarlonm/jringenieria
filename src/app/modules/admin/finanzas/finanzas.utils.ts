@@ -203,6 +203,7 @@ export function descargarBlob(documento: Document, blob: Blob, nombre: string): 
         a.click();
     } finally {
         a.remove();
-        URL.revokeObjectURL(url);
+        // Firefox puede cancelar la descarga si se libera la URL en el mismo instante del clic.
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 }

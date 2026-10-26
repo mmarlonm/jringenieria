@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { Cuenta, MovimientoConciliacion, ResultadoImportacion } from './finanzas.types';
 import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir } from './finanzas.utils';
 
@@ -275,7 +276,7 @@ describe('finanzas.utils', () => {
         });
 
         describe('descargarBlob', () => {
-            it('crea enlace temporal con download, hace click y revoca la URL', () => {
+            it('crea enlace temporal con download, hace click y revoca la URL un segundo despues', fakeAsync(() => {
                 const blob = new Blob(['dummy content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const mockUrl = 'blob:http://localhost/fake-uuid';
                 spyOn(URL, 'createObjectURL').and.returnValue(mockUrl);
@@ -286,8 +287,12 @@ describe('finanzas.utils', () => {
 
                 expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
                 expect(clickSpy).toHaveBeenCalled();
-                expect(URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
-            });
+                expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+                tick(1000);
+
+                expect(URL.revokeObjectURL).toHaveBeenCalledOnceWith(mockUrl);
+            }));
         });
     });
 
