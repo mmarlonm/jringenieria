@@ -250,6 +250,41 @@ describe('ManualDialogComponent', () => {
         expect(dialogRef.close).toHaveBeenCalledOnceWith(vinculoCreado);
     });
 
+    describe('Aplicar redondea el importe a centavos antes de enviarlo', () => {
+        function importeEnviado(preparar: () => void): number {
+            crearComponente();
+            httpMock.expectOne((r) => r.url === `${base}/conciliacion/cfdi-candidatos`).flush(candidatos);
+            fixture.detectChanges();
+
+            preparar();
+            fixture.detectChanges();
+            botonAplicar().click();
+
+            return httpMock.expectOne(`${base}/conciliacion/manual`).request.body.importeAplicado;
+        }
+
+        const casos: { nombre: string; importe: number; esperado: number }[] = [
+            { nombre: '10.004 se envia como 10', importe: 10.004, esperado: 10 },
+            { nombre: '10.006 se envia como 10.01', importe: 10.006, esperado: 10.01 }
+        ];
+        casos.forEach(({ nombre, importe, esperado }) => {
+            it(nombre, () => {
+                const enviado = importeEnviado(() => {
+                    componente.elegirCandidato(candidatos[0]);
+                    componente.importe.set(importe);
+                });
+                expect(enviado).toBe(esperado);
+            });
+        });
+
+        [100.00, 0.07, 1234.57].forEach((saldo) => {
+            it(`el maximo ${saldo} se envia sin cambios`, () => {
+                const enviado = importeEnviado(() => componente.elegirCandidato({ ...candidatos[0], saldo }));
+                expect(enviado).toBe(saldo);
+            });
+        });
+    });
+
     it('Doble_clic_en_Aplicar_manda_una_sola_peticion', () => {
         crearComponente();
         httpMock.expectOne((r) => r.url === `${base}/conciliacion/cfdi-candidatos`).flush(candidatos);

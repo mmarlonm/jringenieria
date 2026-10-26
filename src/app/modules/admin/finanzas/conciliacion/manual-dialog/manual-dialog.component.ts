@@ -119,7 +119,8 @@ export class ManualDialogComponent implements OnInit {
             .conciliarManual({
                 movimientoId: this.data.movimiento.movimientoId,
                 cfdiId: c.cfdiId,
-                importeAplicado: this.importe()
+                // El API rechaza más de dos decimales (10.005 pasa la validación en centavos).
+                importeAplicado: Math.round(this.importe() * 100) / 100
             })
             .pipe(takeUntilDestroyed(this._destroyRef))
             .subscribe({
