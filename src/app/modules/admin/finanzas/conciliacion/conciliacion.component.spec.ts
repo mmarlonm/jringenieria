@@ -1096,5 +1096,49 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
             expect(componente.mensajeExito()).toBeNull();
             expect(texto()).not.toContain('Confirmadas:');
         });
+
+        it('Confirmar_un_vinculo_conserva_las_casillas_marcadas_y_la_clase_elegida', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            componente.alCambiarSeleccion(102, true);
+            componente.claseSeleccionada.set('Nomina');
+
+            componente.confirmar(1);
+            httpMock.expectOne({ method: 'POST', url: `${base}/conciliacion/1/confirmar` }).flush({ ...movA.sugerencias[0], estado: 'Confirmada' });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 2, items: [movA, movB] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+            fixture.detectChanges();
+
+            expect(Array.from(componente.seleccionados())).toEqual([101, 102]);
+            expect(componente.claseSeleccionada()).toBe('Nomina');
+            expect(texto()).toContain('2 seleccionados');
+        });
+
+        it('Al_recargar_se_descartan_las_casillas_de_movimientos_que_ya_no_estan_en_la_pagina', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            componente.alCambiarSeleccion(102, true);
+
+            componente.recargar();
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos`).flush({ pagina: 1, tamano: 50, total: 1, items: [movB] });
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/resumen`).flush(resumenBase);
+            fixture.detectChanges();
+
+            expect(Array.from(componente.seleccionados())).toEqual([102]);
+        });
+
+        it('Cambiar_de_pagina_con_el_paginador_vacia_las_casillas_marcadas', () => {
+            inicializarConEmpresa(3);
+            componente.alCambiarSeleccion(101, true);
+            fixture.detectChanges();
+
+            const paginador = fixture.debugElement.query(By.directive(PaginadorComponent)).componentInstance as PaginadorComponent;
+            paginador.cambio.emit(2);
+            fixture.detectChanges();
+            expect(componente.seleccionados().size).toBe(0);
+
+            httpMock.expectOne(r => r.url === `${base}/conciliacion/movimientos` && r.params.get('pagina') === '2')
+                .flush({ pagina: 2, tamano: 50, total: 2, items: [movA, movB] });
+        });
     });
 });

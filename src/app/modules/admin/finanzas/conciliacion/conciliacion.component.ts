@@ -279,10 +279,11 @@ export class ConciliacionComponent implements OnInit {
         this.cargarResumen();
     }
 
-    cargarLista(pagina: number): void {
+    /** `conservarSeleccion` lo usa `recargar()`: tras confirmar o rechazar un vínculo las casillas marcadas siguen marcadas. */
+    cargarLista(pagina: number, conservarSeleccion = false): void {
         if (!this.empresaId()) return;
 
-        this.limpiarSeleccion();
+        if (!conservarSeleccion) this.limpiarSeleccion();
         this.paginaActual.set(pagina);
 
         if (this.desde && this.hasta && this.desde > this.hasta) {
@@ -309,6 +310,9 @@ export class ConciliacionComponent implements OnInit {
         ).subscribe({
             next: (data) => {
                 this.lista.set(data);
+                // Solo siguen marcados los movimientos que aún están en la página.
+                const visibles = new Set(data.items.map((m) => m.movimientoId));
+                this.seleccionados.update((s) => new Set(Array.from(s).filter((id) => visibles.has(id))));
                 this.cargandoLista.set(false);
             },
             error: (err) => {
@@ -356,7 +360,7 @@ export class ConciliacionComponent implements OnInit {
 
     recargar(): void {
         const pagina = this.lista()?.pagina ?? 1;
-        this.cargarLista(pagina);
+        this.cargarLista(pagina, true);
         this.cargarResumen();
     }
 
