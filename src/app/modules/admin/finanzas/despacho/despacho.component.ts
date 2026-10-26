@@ -6,12 +6,27 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatDateFormats } from '@angular/material/core';
+import { provideLuxonDateAdapter } from '@angular/material-luxon-adapter';
+import { DateTime } from 'luxon';
 import { Subscription } from 'rxjs';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import { FinanzasService } from '../finanzas.service';
 import { Empresa, Pagina, PaqueteDespacho, VistaPreviaPaquete } from '../finanzas.types';
 import { MESES, descargarBlob, fechaUtc, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, nombrePaquete } from '../finanzas.utils';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
+
+const FORMATOS_MES_ANO: MatDateFormats = {
+    parse: { dateInput: ['LLLL yyyy', 'MM/yyyy', 'yyyy-MM'] },
+    display: {
+        dateInput: 'LLLL yyyy',
+        monthYearLabel: 'LLLL yyyy',
+        dateA11yLabel: 'LLLL yyyy',
+        monthYearA11yLabel: 'LLLL yyyy'
+    }
+};
 
 @Component({
     selector: 'app-finanzas-despacho',
@@ -21,9 +36,14 @@ import { PaginadorComponent } from '../shared/paginador/paginador.component';
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
+        MatInputModule,
         MatProgressSpinnerModule,
         MatSelectModule,
+        MatDatepickerModule,
         PaginadorComponent
+    ],
+    providers: [
+        provideLuxonDateAdapter(FORMATOS_MES_ANO)
     ],
     templateUrl: './despacho.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -212,4 +232,26 @@ export class DespachoComponent implements OnInit {
             }
         });
     }
+    get fechaPeriodo(): any {
+        return DateTime.local(this.anio(), this.mes(), 1);
+    }
+
+    alSeleccionarMesPeriodo(fecha: any, picker: any): void {
+        const dt = fecha?.toJSDate ? fecha.toJSDate() : (fecha instanceof Date ? fecha : new Date(fecha));
+        this.anio.set(dt.getFullYear());
+        this.mes.set(dt.getMonth() + 1);
+        picker?.close();
+        this.errorGenerar.set(null);
+        this.cargarVistaPrevia();
+    }
+
+    alCambiarFechaPeriodo(fecha: any): void {
+        if (!fecha) return;
+        const dt = fecha?.toJSDate ? fecha.toJSDate() : (fecha instanceof Date ? fecha : new Date(fecha));
+        this.anio.set(dt.getFullYear());
+        this.mes.set(dt.getMonth() + 1);
+        this.errorGenerar.set(null);
+        this.cargarVistaPrevia();
+    }
+
 }

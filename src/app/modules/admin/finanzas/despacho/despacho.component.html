@@ -25,24 +25,15 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
-      <mat-label>Año</mat-label>
-      <mat-select [value]="anio()" (selectionChange)="cambiarAnio($event.value)"
-                  [disabled]="!empresaId() || generando()">
-        @for (a of anios; track a) {
-          <mat-option [value]="a">{{ a }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
-      <mat-label>Mes</mat-label>
-      <mat-select [value]="mes()" (selectionChange)="cambiarMes($event.value)"
-                  [disabled]="!empresaId() || generando()">
-        @for (m of meses; track $index) {
-          <mat-option [value]="$index + 1">{{ m }}</mat-option>
-        }
-      </mat-select>
+    <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript md:col-span-2">
+      <mat-label>Periodo (Mes y Año)</mat-label>
+      <input matInput [matDatepicker]="pickerPeriodo" [value]="fechaPeriodo"
+             [disabled]="!empresaId() || generando()" readonly placeholder="Selecciona un mes"
+             class="capitalize" (dateChange)="alCambiarFechaPeriodo($event.value)">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerPeriodo"></mat-datepicker-toggle>
+      <mat-datepicker #pickerPeriodo startView="year"
+                      (monthSelected)="alSeleccionarMesPeriodo($event, pickerPeriodo)">
+      </mat-datepicker>
     </mat-form-field>
   </div>
 

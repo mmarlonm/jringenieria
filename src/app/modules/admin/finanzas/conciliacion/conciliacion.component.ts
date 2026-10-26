@@ -8,6 +8,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDateFormats } from '@angular/material/core';
+import { provideLuxonDateAdapter } from '@angular/material-luxon-adapter';
+import { DateTime } from 'luxon';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription, concatMap, from, toArray } from 'rxjs';
 
@@ -41,6 +45,16 @@ import { ManualDialogComponent, ManualDialogData } from './manual-dialog/manual-
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
 import { MovimientoTarjetaComponent } from './movimiento-tarjeta/movimiento-tarjeta.component';
 
+const FORMATOS_FECHA_CORTA: MatDateFormats = {
+    parse: { dateInput: ['dd/MM/yyyy', 'yyyy-MM-dd', 'D'] },
+    display: {
+        dateInput: 'dd/MM/yyyy',
+        monthYearLabel: 'LLLL yyyy',
+        dateA11yLabel: 'DD',
+        monthYearA11yLabel: 'LLLL yyyy'
+    }
+};
+
 @Component({
     selector: 'app-finanzas-conciliacion',
     standalone: true,
@@ -53,8 +67,12 @@ import { MovimientoTarjetaComponent } from './movimiento-tarjeta/movimiento-tarj
         MatInputModule,
         MatProgressSpinnerModule,
         MatSelectModule,
+        MatDatepickerModule,
         PaginadorComponent,
         MovimientoTarjetaComponent
+    ],
+    providers: [
+        provideLuxonDateAdapter(FORMATOS_FECHA_CORTA)
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -97,10 +115,44 @@ export class ConciliacionComponent implements OnInit {
     private readonly _q = signal('');
 
     get desde(): string { return this._desde(); }
-    set desde(v: string) { this._desde.set(v); }
+    set desde(v: any) { this._desde.set(this._normalizarFecha(v)); }
 
     get hasta(): string { return this._hasta(); }
-    set hasta(v: string) { this._hasta.set(v); }
+    set hasta(v: any) { this._hasta.set(this._normalizarFecha(v)); }
+
+    get fechaDesde(): any {
+        const d = this._desde();
+        return d ? DateTime.fromISO(d) : null;
+    }
+    set fechaDesde(v: any) {
+        this.desde = v;
+    }
+
+    get fechaHasta(): any {
+        const h = this._hasta();
+        return h ? DateTime.fromISO(h) : null;
+    }
+    set fechaHasta(v: any) {
+        this.hasta = v;
+    }
+
+    alCambiarFechaDesde(v: any): void {
+        this.desde = v;
+        this.alCambiarFiltro();
+    }
+
+    alCambiarFechaHasta(v: any): void {
+        this.hasta = v;
+        this.alCambiarFiltro();
+    }
+
+    private _normalizarFecha(v: any): string {
+        if (!v) return '';
+        if (typeof v === 'string') return v.slice(0, 10);
+        if (typeof v.toISODate === 'function') return v.toISODate() ?? '';
+        if (v instanceof Date) return fechaLocalISO(v);
+        return '';
+    }
 
     get estado(): string { return this._estado(); }
     set estado(v: string) { this._estado.set(v); }

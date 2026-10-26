@@ -80,13 +80,21 @@
           <!-- Desde -->
           <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
             <mat-label>Desde</mat-label>
-            <input matInput type="date" [(ngModel)]="desde" (change)="alCambiarFiltro()">
+            <input matInput [matDatepicker]="pickerDesde" [ngModel]="fechaDesde"
+                   (dateChange)="alCambiarFechaDesde($event.value)"
+                   (change)="alCambiarFechaDesde($any($event.target).value)">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+            <mat-datepicker #pickerDesde></mat-datepicker>
           </mat-form-field>
 
           <!-- Hasta -->
           <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
             <mat-label>Hasta</mat-label>
-            <input matInput type="date" [(ngModel)]="hasta" (change)="alCambiarFiltro()">
+            <input matInput [matDatepicker]="pickerHasta" [ngModel]="fechaHasta"
+                   (dateChange)="alCambiarFechaHasta($event.value)"
+                   (change)="alCambiarFechaHasta($any($event.target).value)">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+            <mat-datepicker #pickerHasta></mat-datepicker>
           </mat-form-field>
 
           <!-- Estado -->
