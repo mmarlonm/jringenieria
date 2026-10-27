@@ -1,6 +1,9 @@
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
+import { of } from 'rxjs';
 import { environment } from 'environments/environment';
 import { Cfdi, Empresa, ResultadoImportacion } from '../finanzas.types';
 import { CfdiComponent } from './cfdi.component';
@@ -123,6 +126,100 @@ describe('CfdiComponent', () => {
         expect(texto).toContain('Columna «Folio» no encontrada');
         expect(texto).toContain('Tipo no válido: X');
         // httpMock.verify() (afterEach) falla si «Validar» hubiera pedido la lista o el historial.
+    });
+
+    describe('eliminar CFDI', () => {
+        const confirmar = (resultado: 'confirmed' | 'cancelled') =>
+            spyOn(TestBed.inject(FuseConfirmationService), 'open').and.returnValue({ afterClosed: () => of(resultado) } as never);
+        const botonesEliminar = (): HTMLButtonElement[] => Array.from(fixture.nativeElement.querySelectorAll('button[aria-label="Eliminar CFDI"]'));
+
+        it('cada fila trae su botón «Eliminar CFDI»', () => {
+            elegirEmpresa();
+
+            expect(botonesEliminar().length).toBe(1);
+        });
+
+        it('pide confirmar con un texto fijo y, si se cancela, no manda nada', () => {
+            elegirEmpresa();
+            const abrir = confirmar('cancelled');
+
+            botonesEliminar()[0].click();
+
+            const config = abrir.calls.mostRecent().args[0]!;
+            expect(config.title).toBe('Eliminar CFDI');
+            expect(config.message).toContain('No se puede deshacer');
+            expect(config.message).toContain('vuelves a importar');
+            expect(config.message).toContain('conciliaciones confirmadas');
+            expect(config.message).not.toContain(cfdi.uuid); // nada capturado se interpola: Fuse pinta el mensaje con innerHTML
+            expect(config.actions?.confirm?.label).toBe('Eliminar');
+            // httpMock.verify() (afterEach) falla si hubiera mandado un DELETE.
+        });
+
+        it('al confirmar manda DELETE, avisa y recarga la misma página', () => {
+            elegirEmpresa();
+            confirmar('confirmed');
+            const aviso = spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            botonesEliminar()[0].click();
+            const req = httpMock.expectOne(`${base}/cfdi/${cfdi.cfdiId}`);
+            expect(req.request.method).toBe('DELETE');
+            expect(componente.eliminandoCfdi()).toBe(cfdi.cfdiId);
+            req.flush(null, { status: 204, statusText: 'No Content' });
+
+            const recarga = httpMock.expectOne((r) => r.url === `${base}/cfdi`);
+            expect(recarga.request.params.get('pagina')).toBe('1');
+            recarga.flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+            fixture.detectChanges();
+
+            expect(aviso.calls.mostRecent().args[0]).toBe('CFDI eliminado.');
+            expect(componente.eliminandoCfdi()).toBeNull();
+        });
+
+        it('si era el único CFDI de la última página vuelve a la página anterior', () => {
+            elegirEmpresa();
+            componente.cargarLista(2);
+            httpMock.expectOne((r) => r.url === `${base}/cfdi`).flush({ pagina: 2, tamano: 50, total: 51, items: [cfdi] });
+            fixture.detectChanges();
+            confirmar('confirmed');
+            spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            botonesEliminar()[0].click();
+            httpMock.expectOne(`${base}/cfdi/${cfdi.cfdiId}`).flush(null, { status: 204, statusText: 'No Content' });
+
+            const recarga = httpMock.expectOne((r) => r.url === `${base}/cfdi`);
+            expect(recarga.request.params.get('pagina')).toBe('1');
+            recarga.flush({ pagina: 1, tamano: 50, total: 50, items: [cfdi] });
+        });
+
+        it('si el API rechaza la eliminación (409) muestra su mensaje y no recarga', () => {
+            elegirEmpresa();
+            confirmar('confirmed');
+            const aviso = spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            botonesEliminar()[0].click();
+            httpMock.expectOne(`${base}/cfdi/${cfdi.cfdiId}`).flush(
+                { mensaje: 'El CFDI tiene 1 conciliación confirmada; deshazla antes de eliminarlo.' },
+                { status: 409, statusText: 'Conflict' }
+            );
+
+            expect(aviso.calls.mostRecent().args[0]).toContain('deshazla');
+            expect(componente.eliminandoCfdi()).toBeNull();
+            // httpMock.verify() (afterEach) falla si hubiera pedido la lista otra vez.
+        });
+
+        it('mientras se elimina uno, los botones se bloquean y un segundo intento no manda otra petición', () => {
+            elegirEmpresa();
+            confirmar('confirmed');
+            spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            botonesEliminar()[0].click();
+            fixture.detectChanges();
+            expect(botonesEliminar()[0].disabled).toBeTrue();
+            componente.eliminarCfdi(cfdi);
+
+            httpMock.expectOne(`${base}/cfdi/${cfdi.cfdiId}`).flush(null, { status: 204, statusText: 'No Content' }); // expectOne falla si hubiera dos
+            httpMock.expectOne((r) => r.url === `${base}/cfdi`).flush({ pagina: 1, tamano: 50, total: 0, items: [] });
+        });
     });
 
     it('«Importar» de verdad refresca la lista y el historial', () => {
