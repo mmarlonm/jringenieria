@@ -5,6 +5,8 @@ import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@an
 import { MatOption } from '@angular/material/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSelect } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { of } from 'rxjs';
 import { environment } from 'environments/environment';
 import { Cuenta, Empresa, HojaInfo, Movimiento, ResultadoImportacion } from '../finanzas.types';
@@ -310,6 +312,117 @@ describe('BancosComponent', () => {
         fixture.detectChanges();
         expect(opcionesDe('Cuenta')).toContain('Otra Empresa Ficticia · Ahorro nuevo ····4321 · MXN');
         expect(httpMock.expectOne(esHistorial).request.params.get('empresaId')).toBe('4');
+    });
+
+    describe('empresa y eliminación de cuentas', () => {
+        const confirmar = (resultado: 'confirmed' | 'cancelled') =>
+            spyOn(TestBed.inject(FuseConfirmationService), 'open').and.returnValue({ afterClosed: () => of(resultado) } as never);
+
+        it('«Nueva empresa» abre el diálogo y la empresa creada se agrega a la lista', () => {
+            const creada: Empresa = { empresaId: 8, rfc: 'CCC030303CC3', nombre: 'Tercera Empresa Ficticia', tipo: 'M', activa: true };
+            const abrir = spyOn(TestBed.inject(MatDialog), 'open').and.returnValue({ afterClosed: () => of(creada) } as MatDialogRef<unknown, Empresa>);
+
+            boton('Nueva empresa').click();
+
+            expect(abrir).toHaveBeenCalledTimes(1);
+            expect(componente.empresas().map((e) => e.empresaId)).toEqual([3, 4, 8]);
+        });
+
+        it('sin cuenta elegida no hay botón «Eliminar cuenta»', () => {
+            expect(boton('Eliminar cuenta')).toBeUndefined();
+        });
+
+        it('«Eliminar cuenta» pide confirmar con un texto fijo y, si se cancela, no manda nada', () => {
+            elegirCuentaA();
+            const abrir = confirmar('cancelled');
+
+            boton('Eliminar cuenta').click();
+
+            expect(abrir).toHaveBeenCalledTimes(1);
+            const config = abrir.calls.mostRecent().args[0]!;
+            expect(config.title).toBe('Eliminar cuenta');
+            expect(config.message).toContain('No se puede deshacer');
+            expect(config.message).toContain('conciliaciones confirmadas');
+            expect(config.message).not.toContain('Cheques principal'); // nada capturado se interpola: Fuse pinta el mensaje con innerHTML
+            expect(config.actions?.confirm?.label).toBe('Eliminar');
+            expect(componente.cuentaId()).toBe(5);
+            // httpMock.verify() (afterEach) falla si hubiera mandado un DELETE.
+        });
+
+        it('al confirmar manda DELETE, quita la cuenta, limpia la pantalla y avisa', () => {
+            elegirCuentaA();
+            confirmar('confirmed');
+            const aviso = spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            boton('Eliminar cuenta').click();
+            const req = httpMock.expectOne(`${base}/cuentas/5`);
+            expect(req.request.method).toBe('DELETE');
+            expect(componente.procesando()).toBeTrue();
+            req.flush({ movimientos: 2, conciliaciones: 0, importaciones: 1 });
+            fixture.detectChanges();
+
+            expect(componente.procesando()).toBeFalse();
+            expect(componente.cuentas().map((c) => c.cuentaId)).toEqual([6, 7]);
+            expect(componente.cuentaId()).toBeNull();
+            expect(componente.lista()).toBeNull();
+            expect(texto()).toContain('Elige una cuenta');
+            expect(boton('Eliminar cuenta')).toBeUndefined();
+            expect(aviso.calls.mostRecent().args[0]).toBe('Cuenta eliminada (2 movimientos).');
+        });
+
+        it('el aviso dice «1 movimiento» en singular', () => {
+            elegirCuentaA();
+            confirmar('confirmed');
+            const aviso = spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            boton('Eliminar cuenta').click();
+            httpMock.expectOne(`${base}/cuentas/5`).flush({ movimientos: 1, conciliaciones: 0, importaciones: 1 });
+
+            expect(aviso.calls.mostRecent().args[0]).toBe('Cuenta eliminada (1 movimiento).');
+        });
+
+        it('si el API rechaza la eliminación (409) muestra su mensaje y la cuenta sigue elegida', () => {
+            elegirCuentaA();
+            confirmar('confirmed');
+            const aviso = spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            boton('Eliminar cuenta').click();
+            httpMock.expectOne(`${base}/cuentas/5`).flush(
+                { mensaje: 'La cuenta tiene 1 conciliación confirmada; deshazla antes de eliminar la cuenta.' },
+                { status: 409, statusText: 'Conflict' }
+            );
+            fixture.detectChanges();
+
+            expect(aviso.calls.mostRecent().args[0]).toContain('deshazla');
+            expect(componente.procesando()).toBeFalse();
+            expect(componente.cuentaId()).toBe(5);
+            expect(componente.cuentas().length).toBe(3);
+        });
+
+        it('mientras se elimina, los botones se bloquean y un segundo intento no manda otra petición', () => {
+            elegirCuentaA();
+            confirmar('confirmed');
+            spyOn(TestBed.inject(MatSnackBar), 'open');
+
+            boton('Eliminar cuenta').click();
+            fixture.detectChanges();
+            expect(boton('Eliminar cuenta').disabled).toBeTrue();
+            expect(boton('Nueva cuenta').disabled).toBeTrue();
+            expect(boton('Nueva empresa').disabled).toBeTrue();
+            componente.eliminarCuenta();
+
+            httpMock.expectOne(`${base}/cuentas/5`).flush({ movimientos: 0, conciliaciones: 0, importaciones: 0 }); // expectOne falla si hubiera dos
+        });
+
+        it('sin empresas la pantalla vacía explica que primero va «Nueva empresa»', () => {
+            const otro = TestBed.createComponent(BancosComponent);
+            otro.detectChanges();
+            httpMock.expectOne(`${base}/cuentas`).flush([]);
+            httpMock.expectOne(`${base}/empresas`).flush([]);
+            otro.detectChanges();
+
+            expect(otro.nativeElement.textContent).toContain('Primero da de alta una empresa');
+        });
     });
 
     describe('importación con vista previa obligatoria', () => {

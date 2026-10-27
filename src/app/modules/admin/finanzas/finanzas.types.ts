@@ -59,6 +59,9 @@ export interface Cuenta {
     activa: boolean;
 }
 
+/** Lo que borró (o dejó anulado) la eliminación de una cuenta: sus movimientos, las conciliaciones no confirmadas de esos movimientos y sus importaciones. */
+export interface ResultadoEliminarCuenta { movimientos: number; conciliaciones: number; importaciones: number; }
+
 export interface CuentaGuardar {
     empresaId: number;
     alias: string;
