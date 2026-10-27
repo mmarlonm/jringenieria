@@ -8,6 +8,7 @@ import {
     horizontalNavigation,
 } from 'app/mock-api/common/navigation/data';
 import { cloneDeep } from 'lodash-es';
+import { filtrarMenuPorVistas } from './navigation-filter';
 
 @Injectable({ providedIn: 'root' })
 export class NavigationMockApi {
@@ -82,30 +83,9 @@ export class NavigationMockApi {
                 });
             });
 
-            // Función de filtrado (la que me pasaste)
-            const filtrarNavegacion = (navigation: FuseNavigationItem[]): FuseNavigationItem[] => {
-                // ... tu lógica de filtrado ...
-                return navigation.map(item => {
-                    const newItem = cloneDeep(item);
-                    if (newItem.children && newItem.children.length > 0) {
-                        newItem.children = filtrarNavegacion(newItem.children);
-                    }
-                    if (newItem.type === 'group' || newItem.type === 'collapsable' || newItem.type === 'aside') {
-                        return (newItem.children && newItem.children.length > 0) ? newItem : null;
-                    }
-                    // Lógica para ITEMS FINALES
-                    if (newItem.id === 'dashboards.identidad' || newItem.id === 'dashboards.neural-graph') {
-                        return newItem;
-                    }
-                    const tienePermiso = vistasPermitidas.some(permiso => {
-                        if (!permiso) return false;
-                        const basePermiso = permiso.split('.').pop();
-                        const baseItemId = newItem.id.split('.').pop();
-                        return basePermiso === baseItemId || permiso === newItem.id;
-                    });
-                    return tienePermiso ? newItem : null;
-                }).filter(item => item !== null);
-            };
+            // El filtrado vive en navigation-filter.ts (función pura con pruebas).
+            const filtrarNavegacion = (navigation: FuseNavigationItem[]): FuseNavigationItem[] =>
+                filtrarMenuPorVistas(navigation, vistasPermitidas);
 
             return [
                 200,
