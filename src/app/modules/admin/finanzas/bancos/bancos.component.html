@@ -24,11 +24,21 @@
         }
       </mat-select>
     </mat-form-field>
-    <div class="flex items-center">
+    <div class="flex flex-wrap items-center gap-2">
+      <button mat-stroked-button type="button" class="rounded-xl font-bold" (click)="nuevaEmpresa()" [disabled]="procesando()">
+        <mat-icon class="mr-1">add_business</mat-icon>
+        Nueva empresa
+      </button>
       <button mat-stroked-button type="button" class="rounded-xl font-bold" (click)="nuevaCuenta()" [disabled]="procesando()">
         <mat-icon class="mr-1">add</mat-icon>
         Nueva cuenta
       </button>
+      @if (cuenta() !== null) {
+        <button mat-stroked-button color="warn" type="button" class="rounded-xl font-bold" (click)="eliminarCuenta()" [disabled]="procesando()">
+          <mat-icon class="mr-1">delete_outline</mat-icon>
+          Eliminar cuenta
+        </button>
+      }
     </div>
   </div>
 
@@ -59,7 +69,9 @@
           </div>
           <h3 class="text-xl font-black text-gray-800 mb-2">Elige una cuenta para importar y consultar sus movimientos</h3>
           <p class="text-sm text-gray-500 font-medium">
-            @if (cuentas().length === 0) {
+            @if (cuentas().length === 0 && empresas().length === 0) {
+              Primero da de alta una empresa con «Nueva empresa» y después su cuenta con «Nueva cuenta».
+            } @else if (cuentas().length === 0) {
               Todavía no hay cuentas dadas de alta: usa «Nueva cuenta».
             } @else {
               Cada archivo se importa a una sola cuenta.

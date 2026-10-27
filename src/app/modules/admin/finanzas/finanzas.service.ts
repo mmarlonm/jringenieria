@@ -6,7 +6,7 @@ import {
     Cfdi, CfdiCandidato, ClaseSugerida, ClasificarMovimientos, Cuenta, CuentaGuardar, Empresa, EmpresaGuardar,
     FiltroCfdi, FiltroClases, FiltroConciliacion, FiltroImportaciones, FiltroMovimientos, HojaInfo, Importacion,
     ManualConciliacion, Movimiento, MovimientoConciliacion, Pagina, ResultadoClasificar, ResultadoImportacion,
-    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete, Dashboard
+    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete, Dashboard, ResultadoEliminarCuenta
 } from './finanzas.types';
 
 @Injectable({
@@ -40,6 +40,11 @@ export class FinanzasService {
         return this._http.put<Cuenta>(`${this._api}/cuentas/${id}`, dto);
     }
 
+    /** Borra la cuenta con sus movimientos y conciliaciones no confirmadas; con conciliaciones confirmadas el API responde 409 y no borra nada. */
+    eliminarCuenta(id: number): Observable<ResultadoEliminarCuenta> {
+        return this._http.delete<ResultadoEliminarCuenta>(`${this._api}/cuentas/${id}`);
+    }
+
     hojas(archivo: File): Observable<HojaInfo[]> {
         const datos = new FormData();
         datos.append('archivo', archivo);
@@ -52,6 +57,11 @@ export class FinanzasService {
 
     listarCfdi(filtro: FiltroCfdi): Observable<Pagina<Cfdi>> {
         return this._http.get<Pagina<Cfdi>>(`${this._api}/cfdi`, { params: this._query(filtro) });
+    }
+
+    /** Borra el CFDI con sus conciliaciones no confirmadas; con conciliaciones confirmadas el API responde 409 y no borra nada. */
+    eliminarCfdi(id: number): Observable<void> {
+        return this._http.delete<void>(`${this._api}/cfdi/${id}`);
     }
 
     importarMovimientos(cuentaId: number, archivo: File, hoja: string | null, soloValidar: boolean): Observable<ResultadoImportacion> {

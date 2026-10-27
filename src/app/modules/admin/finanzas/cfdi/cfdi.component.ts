@@ -9,7 +9,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Subscription } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import '../finanzas.locale'; // registra 'es-MX' (importes de la lista)
 import { FinanzasService } from '../finanzas.service';
 import { Cfdi, Empresa, HojaInfo, Pagina, ResultadoImportacion } from '../finanzas.types';
@@ -59,6 +62,8 @@ const TIPOS = [
 export class CfdiComponent implements OnInit {
     private readonly _service = inject(FinanzasService);
     private readonly _dialog = inject(MatDialog);
+    private readonly _confirmacion = inject(FuseConfirmationService);
+    private readonly _snackBar = inject(MatSnackBar);
     private readonly _destroyRef = inject(DestroyRef);
     private _subLista?: Subscription;
     private _subHojas?: Subscription;
@@ -82,6 +87,8 @@ export class CfdiComponent implements OnInit {
     readonly hoja = signal<string | null>(null);
     readonly cargandoHojas = signal(false);
     readonly importando = signal(false);
+    /** Id del CFDI cuya eliminación va en vuelo: bloquea los botones de la lista y evita una segunda petición. */
+    readonly eliminandoCfdi = signal<number | null>(null);
     readonly errorImportacion = signal<string | null>(null);
     readonly resultado = signal<ResultadoImportacion | null>(null);
     /** Con varias hojas hay que elegir una; con una sola el API usa la primera con encabezado reconocible. */
@@ -138,6 +145,42 @@ export class CfdiComponent implements OnInit {
                 if (!empresa) return;
                 this.empresas.update((lista) => [...lista, empresa]);
                 this.elegirEmpresa(empresa.empresaId);
+            });
+    }
+
+    /** Borra el CFDI con sus conciliaciones sugeridas; el API se niega (409) si tiene conciliaciones confirmadas. */
+    eliminarCfdi(c: Cfdi): void {
+        if (this.eliminandoCfdi() !== null || this.importando()) return;
+        this._confirmacion
+            .open({
+                title: 'Eliminar CFDI',
+                // Texto fijo: Fuse pinta `message` con [innerHTML], así que no se le interpola nada guardado (p. ej. el nombre del emisor).
+                message:
+                    '¿Eliminar este CFDI? Se borrarán también sus conciliaciones sugeridas. ' +
+                    'No se puede deshacer: si vuelves a importar el mismo archivo, el CFDI regresará. ' +
+                    'Si tiene conciliaciones confirmadas no se elimina: deshazlas antes.',
+                icon: { show: true, name: 'heroicons_outline:exclamation-triangle', color: 'warn' },
+                actions: { confirm: { label: 'Eliminar', color: 'warn' } }
+            })
+            .afterClosed()
+            .pipe(
+                filter((resultado) => resultado === 'confirmed'),
+                tap(() => this.eliminandoCfdi.set(c.cfdiId)),
+                switchMap(() => this._service.eliminarCfdi(c.cfdiId)),
+                takeUntilDestroyed(this._destroyRef)
+            )
+            .subscribe({
+                next: () => {
+                    this.eliminandoCfdi.set(null);
+                    this._snackBar.open('CFDI eliminado.', 'Cerrar', { duration: 5000 });
+                    // Si era el único de la última página, esa página ya no existe: se vuelve a la anterior.
+                    const pagina = this.lista();
+                    this.cargarLista(pagina && pagina.items.length === 1 && pagina.pagina > 1 ? pagina.pagina - 1 : (pagina?.pagina ?? 1));
+                },
+                error: (e) => {
+                    this.eliminandoCfdi.set(null);
+                    this._snackBar.open(mensajeDeError(e), 'Cerrar', { duration: 7000 });
+                }
             });
     }
 

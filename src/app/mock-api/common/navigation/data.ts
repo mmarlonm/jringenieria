@@ -399,8 +399,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:banknotes',
         children: [
             { id: 'finanzas.dashboard', title: 'Dashboard', type: 'basic', icon: 'heroicons_outline:chart-bar-square', link: '/finanzas/dashboard' },
-            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
             { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
@@ -527,8 +527,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:banknotes',
         children: [
             { id: 'finanzas.dashboard', title: 'Dashboard', type: 'basic', icon: 'heroicons_outline:chart-bar-square', link: '/finanzas/dashboard' },
-            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
             { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
@@ -650,8 +650,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:banknotes',
         children: [
             { id: 'finanzas.dashboard', title: 'Dashboard', type: 'basic', icon: 'heroicons_outline:chart-bar-square', link: '/finanzas/dashboard' },
-            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
             { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]
@@ -765,8 +765,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         icon: 'heroicons_outline:banknotes',
         children: [
             { id: 'finanzas.dashboard', title: 'Dashboard', type: 'basic', icon: 'heroicons_outline:chart-bar-square', link: '/finanzas/dashboard' },
-            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.bancos', title: 'Bancos', type: 'basic', icon: 'heroicons_outline:building-library', link: '/finanzas/bancos' },
+            { id: 'finanzas.cfdi', title: 'CFDI', type: 'basic', icon: 'heroicons_outline:document-text', link: '/finanzas/cfdi' },
             { id: 'finanzas.conciliacion', title: 'Conciliación', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/finanzas/conciliacion' },
             { id: 'finanzas.despacho', title: 'Despacho', type: 'basic', icon: 'heroicons_outline:archive-box-arrow-down', link: '/finanzas/despacho' }
         ]

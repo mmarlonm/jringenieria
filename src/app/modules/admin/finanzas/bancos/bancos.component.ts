@@ -10,11 +10,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Subscription } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { FinanzasService } from '../finanzas.service';
 import { Cuenta, Empresa, HojaInfo, Movimiento, Pagina, ResultadoImportacion } from '../finanzas.types';
 import { etiquetaCuenta, mensajeDeError, motivoArchivoInvalido } from '../finanzas.utils';
 import { CuentaDialogComponent } from '../shared/cuenta-dialog/cuenta-dialog.component';
+import { EmpresaDialogComponent } from '../shared/empresa-dialog/empresa-dialog.component';
 import { ImportacionesHistorialComponent } from '../shared/importaciones-historial/importaciones-historial.component';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
 import { ResultadoImportacionComponent } from '../shared/resultado-importacion/resultado-importacion.component';
@@ -51,6 +55,8 @@ const ETIQUETA_FORMATO: Record<HojaInfo['formatoDetectado'], string> = {
 export class BancosComponent implements OnInit {
     private readonly _service = inject(FinanzasService);
     private readonly _dialog = inject(MatDialog);
+    private readonly _confirmacion = inject(FuseConfirmationService);
+    private readonly _snackBar = inject(MatSnackBar);
     private readonly _destroyRef = inject(DestroyRef);
     private _subLista?: Subscription;
     private _subHojas?: Subscription;
@@ -152,6 +158,58 @@ export class BancosComponent implements OnInit {
                 if (!cuenta) return;
                 this.cuentas.update((lista) => [...lista, cuenta]);
                 this.elegirCuenta(cuenta.cuentaId);
+            });
+    }
+
+    /** Una cuenta pertenece a una empresa: sin ninguna dada de alta no hay dónde crearla, así que el primer paso también se puede dar aquí. */
+    nuevaEmpresa(): void {
+        this._dialog
+            .open<EmpresaDialogComponent, void, Empresa>(EmpresaDialogComponent, { width: '28rem', maxWidth: '95vw' })
+            .afterClosed()
+            .pipe(takeUntilDestroyed(this._destroyRef))
+            .subscribe((empresa) => {
+                if (!empresa) return;
+                this.empresas.update((lista) => [...lista, empresa]);
+            });
+    }
+
+    /** Borra la cuenta elegida con sus movimientos; el API se niega (409) si tiene conciliaciones confirmadas. */
+    eliminarCuenta(): void {
+        const cuenta = this.cuenta();
+        if (cuenta === null || this.procesando()) return;
+        this._confirmacion
+            .open({
+                title: 'Eliminar cuenta',
+                // Texto fijo: Fuse pinta `message` con [innerHTML], así que no se le interpola nada capturado (p. ej. el alias de la cuenta).
+                message:
+                    '¿Eliminar esta cuenta? Se borrarán la cuenta, todos sus movimientos importados y las conciliaciones sugeridas. ' +
+                    'No se puede deshacer: para recuperar los movimientos habría que volver a importar el archivo del banco. ' +
+                    'Si la cuenta ya tiene conciliaciones confirmadas no se elimina: deshazlas antes.',
+                icon: { show: true, name: 'heroicons_outline:exclamation-triangle', color: 'warn' },
+                actions: { confirm: { label: 'Eliminar', color: 'warn' } }
+            })
+            .afterClosed()
+            .pipe(
+                filter((resultado) => resultado === 'confirmed'),
+                tap(() => this.procesando.set(true)), // bloquea botones y selectores, como una importación en curso
+                switchMap(() => this._service.eliminarCuenta(cuenta.cuentaId)),
+                takeUntilDestroyed(this._destroyRef)
+            )
+            .subscribe({
+                next: (r) => {
+                    this.procesando.set(false);
+                    this.cuentas.update((lista) => lista.filter((c) => c.cuentaId !== cuenta.cuentaId));
+                    this.cuentaId.set(null);
+                    this._subLista?.unsubscribe();
+                    this.cargandoLista.set(false);
+                    this.lista.set(null);
+                    this.invalidar();
+                    this._snackBar.open(`Cuenta eliminada (${r.movimientos} ${r.movimientos === 1 ? 'movimiento' : 'movimientos'}).`, 'Cerrar', { duration: 5000 });
+                },
+                error: (e) => {
+                    this.procesando.set(false);
+                    this._snackBar.open(mensajeDeError(e), 'Cerrar', { duration: 7000 });
+                }
             });
     }
 

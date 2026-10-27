@@ -35,6 +35,20 @@ describe('FinanzasService', () => {
         req.flush([]);
     });
 
+    it('eliminarCuenta y eliminarCfdi usan DELETE sobre sus rutas', () => {
+        let resultado: unknown;
+        service.eliminarCuenta(5).subscribe((r) => (resultado = r));
+        const cuenta = httpMock.expectOne(`${base}/cuentas/5`);
+        expect(cuenta.request.method).toBe('DELETE');
+        cuenta.flush({ movimientos: 3, conciliaciones: 2, importaciones: 1 });
+        expect(resultado).toEqual({ movimientos: 3, conciliaciones: 2, importaciones: 1 });
+
+        service.eliminarCfdi(9).subscribe();
+        const cfdi = httpMock.expectOne(`${base}/cfdi/9`);
+        expect(cfdi.request.method).toBe('DELETE');
+        cfdi.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
     it('importarCfdi manda multipart con archivo, empresaId, hoja y soloValidar', () => {
         service.importarCfdi(3, archivo, 'Hoja1', true).subscribe();
 
