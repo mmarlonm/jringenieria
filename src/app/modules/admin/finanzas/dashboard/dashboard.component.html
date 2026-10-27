@@ -1,0 +1,166 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-6 sm:py-8 sm:px-10 border-b bg-card dark:bg-transparent">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Finanzas</span>
+            </div>
+            <h2 class="text-3xl font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                Panel financiero ejecutivo
+            </h2>
+        </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 p-6 sm:px-10">
+        <mat-form-field class="w-full sm:w-80" data-testid="selector-empresa" subscriptSizing="dynamic">
+            <mat-label>Empresa</mat-label>
+            <mat-select [value]="empresaId() ?? TODAS" (selectionChange)="elegirEmpresa($event.value)">
+                <mat-option [value]="TODAS">Todas las empresas (suma)</mat-option>
+                @for (e of empresas(); track e.empresaId) {
+                    <mat-option [value]="e.empresaId">{{ e.nombre }} · {{ e.rfc }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    @if (errorEmpresas()) {
+        <div class="mx-6 sm:mx-10 mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 flex items-center justify-between">
+            <span>{{ errorEmpresas() }}</span>
+            <button mat-button color="warn" (click)="cargarEmpresas()">Reintentar</button>
+        </div>
+    }
+
+    @if (error()) {
+        <div class="mx-6 sm:mx-10 mb-6 p-6 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" data-testid="error-tablero">
+            <div>
+                <p class="font-semibold">Ocurrió un error al cargar el tablero</p>
+                <p class="text-sm mt-1">{{ error() }}</p>
+            </div>
+            <button mat-flat-button color="warn" data-testid="boton-reintentar" (click)="cargar()">Reintentar</button>
+        </div>
+    }
+
+    @if (cargando()) {
+        <div class="flex justify-center items-center py-16" data-testid="cargando">
+            <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+        </div>
+    }
+
+    @if (!cargando() && !error()) {
+        <div class="px-6 sm:px-10 pb-10 flex flex-col gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @for (i of tarjetas(); track i.clave) {
+                    <div class="flex flex-col p-5 rounded-xl border bg-card shadow-sm transition-shadow relative"
+                         [class.opacity-60]="!i.disponible"
+                         data-testid="tarjeta"
+                         [attr.data-clave]="i.clave">
+
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-sm font-semibold text-secondary truncate">{{ i.nombre }}</span>
+                            @if (i.clave === 'PorCobrar') {
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-medium"
+                                      data-testid="etiqueta-aproximado">
+                                    Aproximado
+                                </span>
+                            }
+                        </div>
+
+                        @if (i.disponible && i.valores.length > 0) {
+                            <div class="flex flex-col gap-1 my-auto">
+                                @for (v of i.valores; track v.moneda) {
+                                    <div class="text-2xl font-bold tracking-tight text-default" data-testid="tarjeta-valor">
+                                        @if (i.tipo === 'Dinero') {
+                                            {{ formatearMonto(v.valor, v.moneda) }}
+                                        } @else if (i.tipo === 'Cantidad') {
+                                            {{ v.valor }}
+                                        } @else if (i.tipo === 'Porcentaje') {
+                                            {{ v.valor }}%
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (i.disponible && i.valores.length === 0) {
+                            <div class="flex flex-col my-auto py-2">
+                                <span class="text-2xl font-bold text-secondary" data-testid="tarjeta-vacio">—</span>
+                                @if (i.calidad.length > 0) {
+                                    <span class="text-xs text-secondary mt-1">{{ i.calidad[0] }}</span>
+                                }
+                            </div>
+                        }
+
+                        @if (!i.disponible) {
+                            <div class="flex flex-col my-auto py-2" data-testid="tarjeta-pendiente">
+                                <span class="text-lg font-bold text-secondary">Pendiente</span>
+                                <span class="text-xs text-secondary mt-1">Se activa con el módulo {{ i.pendienteDe }}</span>
+                            </div>
+                        }
+
+                        @if (i.datosAl) {
+                            <div class="mt-3 pt-2 border-t text-xs text-secondary" data-testid="tarjeta-datos-al">
+                                Datos al {{ fechaCorta(i.datosAl) }}
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <h3 class="text-lg font-bold">Proyección de tesorería</h3>
+                <div class="p-6 rounded-xl border border-dashed bg-card/50 flex flex-col items-center justify-center text-center text-secondary py-10"
+                     data-testid="proyeccion-reservada">
+                    <mat-icon class="icon-size-8 mb-2 opacity-50">timeline</mat-icon>
+                    <span class="text-sm font-medium">Se activará con el módulo Flujo de 13 semanas</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <h3 class="text-lg font-bold">Definiciones y calidad del dato</h3>
+                <div class="overflow-x-auto rounded-xl border bg-card">
+                    <table class="w-full text-left text-sm" data-testid="tabla-definiciones">
+                        <thead class="bg-muted/50 border-b text-xs font-semibold uppercase text-secondary">
+                            <tr>
+                                <th class="p-3">Indicador</th>
+                                <th class="p-3">Definición</th>
+                                <th class="p-3">Origen</th>
+                                <th class="p-3">Frecuencia</th>
+                                <th class="p-3">Observaciones</th>
+                                <th class="p-3">Estado</th>
+                                <th class="p-3">Calidad</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            @for (ind of indicadores(); track ind.clave) {
+                                <tr class="hover:bg-muted/30 transition-colors" data-testid="fila-definicion">
+                                    <td class="p-3 font-semibold whitespace-nowrap">{{ ind.nombre }}</td>
+                                    <td class="p-3 min-w-[200px]">{{ ind.definicion }}</td>
+                                    <td class="p-3 whitespace-nowrap">{{ ind.origen }}</td>
+                                    <td class="p-3 whitespace-nowrap">{{ ind.frecuencia }}</td>
+                                    <td class="p-3 min-w-[150px]">{{ ind.observaciones }}</td>
+                                    <td class="p-3 whitespace-nowrap">
+                                        @if (ind.disponible) {
+                                            <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 font-medium">Disponible</span>
+                                        } @else {
+                                            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 font-medium">Pendiente de {{ ind.pendienteDe }}</span>
+                                        }
+                                    </td>
+                                    <td class="p-3 min-w-[200px]">
+                                        <div class="flex flex-col gap-0.5 text-xs">
+                                            @for (c of ind.calidad; track c) {
+                                                <span>{{ c }}</span>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t text-xs text-secondary text-center sm:text-left">
+                Prioridades de lectura: 1. Liquidez · 2. Cobros y vencimientos · 3. Proyectos · 4. Conciliación bancaria
+            </div>
+        </div>
+    }
+</div>
