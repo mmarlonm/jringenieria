@@ -200,4 +200,22 @@ describe('FinanzasService', () => {
         expect(gen.request.responseType).toBe('blob');
         gen.flush(blob);
     });
+
+    it('dashboard_sin_empresa_pide_GET_dashboard_sin_parametros', () => {
+        service.dashboard().subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${base}/dashboard`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.has('empresaId')).toBeFalse();
+        req.flush({});
+    });
+
+    it('dashboard_con_empresa_manda_empresaId', () => {
+        service.dashboard(2).subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${base}/dashboard`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('empresaId')).toBe('2');
+        req.flush({});
+    });
 });
