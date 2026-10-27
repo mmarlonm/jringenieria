@@ -1,6 +1,9 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideAnimations, provideNoopAnimations } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
+import { MatSelect } from '@angular/material/select';
+import { DateTime } from 'luxon';
 import { signal } from '@angular/core';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
 import { environment } from 'environments/environment';
@@ -343,5 +346,67 @@ describe('DespachoComponent', () => {
         expect(el.textContent).toContain('8');
         expect(el.textContent).toContain('23');
         expect(el.textContent).toContain('6');
+    });
+});
+
+/**
+ * Regresión: el calendario del periodo recibe un objeto Luxon que debe ser el mismo mientras el periodo no cambie. Se prueba con
+ * detección automática y animaciones reales, que es donde se ve un ciclo de detección (con `detectChanges()` manual no aparece).
+ */
+describe('DespachoComponent (calendario sin ciclos de detección)', () => {
+    const base = `${environment.apiUrl}/Finanzas`;
+    const empresas = [{ empresaId: 1, rfc: 'AAAA010101AAA', nombre: 'Empresa Uno', tipo: 'F', activa: true }];
+    const vistaPrevia = { empresaId: 1, anio: 2026, mes: 9, cfdiEmitidos: 0, cfdiRecibidos: 0, movimientos: 0, movimientosPendientes: 0, cfdiPendientes: 0, cfdiSinDatosOriginales: 0, cuentas: [] };
+    const pagina = { pagina: 1, tamano: 10, total: 0, items: [] };
+
+    let httpMock: HttpTestingController;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule, DespachoComponent],
+            providers: [provideAnimations(), { provide: PermisosEspecialesService, useValue: { tiene: () => true } }]
+        }).compileComponents();
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    it('Elegir_una_empresa_no_crea_fechas_nuevas_en_cada_revision_de_Angular', async () => {
+        let creadas = 0;
+        const original = DateTime.local.bind(DateTime) as (...a: unknown[]) => DateTime;
+        spyOn(DateTime, 'local').and.callFake((...args: unknown[]) => {
+            // Tope para que, si el ciclo regresara, la prueba falle en vez de colgar el navegador.
+            if (++creadas > 2000) throw new Error('Ciclo de detección: se siguen creando fechas nuevas');
+            return original(...args);
+        });
+        const fixture = TestBed.createComponent(DespachoComponent);
+        fixture.autoDetectChanges(true);
+        httpMock.expectOne(`${base}/empresas`).flush(empresas);
+        await fixture.whenStable();
+
+        const selector = fixture.debugElement.queryAll(By.directive(MatSelect))[0];
+        (selector.nativeElement.querySelector('.mat-mdc-select-trigger') as HTMLElement).click();
+        await fixture.whenStable();
+        const antes = creadas;
+        (selector.componentInstance as MatSelect).options.toArray()[0]._getHostElement().click();
+        await fixture.whenStable();
+        for (const peticion of httpMock.match(() => true)) {
+            peticion.flush(peticion.request.url.includes('/despacho/vista-previa') ? vistaPrevia : pagina);
+        }
+        await fixture.whenStable();
+
+        expect(creadas - antes).toBeLessThan(50);
+    });
+
+    it('La_fecha_del_calendario_es_la_misma_instancia_mientras_el_periodo_no_cambia', () => {
+        const componente = TestBed.createComponent(DespachoComponent).componentInstance;
+        componente.anio.set(2026);
+        componente.mes.set(3);
+
+        const fecha = componente.fechaPeriodo();
+        expect(fecha.toISODate()).toBe('2026-03-01');
+        expect(componente.fechaPeriodo()).toBe(fecha);
+
+        componente.mes.set(4);
+        expect(componente.fechaPeriodo()).not.toBe(fecha);
+        expect(componente.fechaPeriodo().toISODate()).toBe('2026-04-01');
     });
 });

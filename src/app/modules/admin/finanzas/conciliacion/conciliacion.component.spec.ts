@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideAnimations, provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSelect } from '@angular/material/select';
+import { DateTime } from 'luxon';
 import { ManualDialogComponent } from './manual-dialog/manual-dialog.component';
 import { environment } from 'environments/environment';
 
@@ -1228,5 +1230,88 @@ describe('ConciliacionComponent (F4 - solo lectura)', () => {
                 expect(btnSugerir().disabled).toBeFalse();
             }
         });
+    });
+});
+
+/**
+ * Regresión: los campos de fecha reciben un objeto Luxon. Si ese objeto se creara de nuevo en cada lectura, `ngModel` lo vería como
+ * un cambio en cada revisión de Angular y la pestaña quedaría en un ciclo infinito en cuanto se elige una empresa. Estas pruebas usan
+ * detección automática y animaciones reales (como el navegador); con `detectChanges()` manual el ciclo no aparece.
+ */
+describe('ConciliacionComponent (calendario sin ciclos de detección)', () => {
+    const base = `${environment.apiUrl}/Finanzas`;
+    const empresas = [{ empresaId: 1, rfc: 'AAAA010101AAA', nombre: 'Empresa Uno', tipo: 'F', activa: true }];
+    const resumen = {
+        movimientos: { total: 0, sinConciliar: 0, conSugerencia: 0, parcial: 0, conciliado: 0, clasificado: 0 },
+        cfdi: { pendiente: 0, parcial: 0, pagado: 0, pagadoEnEfectivo: 0, cancelado: 0 }
+    };
+    const pagina = { pagina: 1, tamano: 50, total: 0, items: [] };
+
+    let httpMock: HttpTestingController;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule, ConciliacionComponent],
+            providers: [provideAnimations(), { provide: PermisosEspecialesService, useValue: { tiene: () => true } }]
+        }).compileComponents();
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    it('Elegir_una_empresa_no_crea_fechas_nuevas_en_cada_revision_de_Angular', async () => {
+        let creadas = 0;
+        const original = DateTime.fromISO.bind(DateTime);
+        spyOn(DateTime, 'fromISO').and.callFake((...args: Parameters<typeof DateTime.fromISO>) => {
+            // Tope para que, si el ciclo regresara, la prueba falle en vez de colgar el navegador.
+            if (++creadas > 2000) throw new Error('Ciclo de detección: se siguen creando fechas nuevas');
+            return original(...args);
+        });
+        const fixture = TestBed.createComponent(ConciliacionComponent);
+        fixture.autoDetectChanges(true);
+        httpMock.expectOne(`${base}/empresas`).flush(empresas);
+        await fixture.whenStable();
+
+        const selector = fixture.debugElement.queryAll(By.directive(MatSelect))[0];
+        (selector.nativeElement.querySelector('.mat-mdc-select-trigger') as HTMLElement).click();
+        await fixture.whenStable();
+        const antes = creadas;
+        (selector.componentInstance as MatSelect).options.toArray()[0]._getHostElement().click();
+        await fixture.whenStable();
+        for (const peticion of httpMock.match(() => true)) {
+            peticion.flush(peticion.request.url.includes('/conciliacion/resumen') ? resumen : peticion.request.url.includes('/cuentas') ? [] : pagina);
+        }
+        await fixture.whenStable();
+
+        expect(creadas - antes).toBeLessThan(50);
+    });
+
+    it('Las_fechas_del_calendario_son_la_misma_instancia_mientras_el_filtro_no_cambia', () => {
+        const componente = TestBed.createComponent(ConciliacionComponent).componentInstance;
+        expect(componente.fechaDesde()).toBeNull();
+        expect(componente.fechaHasta()).toBeNull();
+
+        componente.desde = '2026-03-05';
+        componente.hasta = '2026-03-17';
+        const desde = componente.fechaDesde();
+        const hasta = componente.fechaHasta();
+        expect(desde?.toISODate()).toBe('2026-03-05');
+        expect(hasta?.toISODate()).toBe('2026-03-17');
+        expect(componente.fechaDesde()).toBe(desde);
+        expect(componente.fechaHasta()).toBe(hasta);
+
+        componente.desde = '2026-03-10';
+        expect(componente.fechaDesde()).not.toBe(desde);
+        expect(componente.fechaDesde()?.toISODate()).toBe('2026-03-10');
+        expect(componente.fechaHasta()).toBe(hasta);
+    });
+
+    it('Elegir_una_fecha_en_el_calendario_actualiza_el_filtro_en_formato_ISO', () => {
+        const componente = TestBed.createComponent(ConciliacionComponent).componentInstance;
+
+        componente.alCambiarFechaDesde(DateTime.fromISO('2026-03-05'));
+        componente.alCambiarFechaHasta(new Date(2026, 2, 17));
+
+        expect(componente.desde).toBe('2026-03-05');
+        expect(componente.hasta).toBe('2026-03-17');
+        httpMock.verify();
     });
 });

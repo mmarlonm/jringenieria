@@ -232,9 +232,8 @@ export class DespachoComponent implements OnInit {
             }
         });
     }
-    get fechaPeriodo(): any {
-        return DateTime.local(this.anio(), this.mes(), 1);
-    }
+    /** `computed` y no `get`: el calendario debe recibir el mismo objeto mientras el periodo no cambie (ver Conciliación). */
+    readonly fechaPeriodo = computed(() => DateTime.local(this.anio(), this.mes(), 1));
 
     alSeleccionarMesPeriodo(fecha: any, picker: any): void {
         const dt = fecha?.toJSDate ? fecha.toJSDate() : (fecha instanceof Date ? fecha : new Date(fecha));

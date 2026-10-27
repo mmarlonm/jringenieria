@@ -115,43 +115,38 @@ export class ConciliacionComponent implements OnInit {
     private readonly _q = signal('');
 
     get desde(): string { return this._desde(); }
-    set desde(v: any) { this._desde.set(this._normalizarFecha(v)); }
+    set desde(v: DateTime | Date | string | null) { this._desde.set(this._normalizarFecha(v)); }
 
     get hasta(): string { return this._hasta(); }
-    set hasta(v: any) { this._hasta.set(this._normalizarFecha(v)); }
+    set hasta(v: DateTime | Date | string | null) { this._hasta.set(this._normalizarFecha(v)); }
 
-    get fechaDesde(): any {
-        const d = this._desde();
-        return d ? DateTime.fromISO(d) : null;
-    }
-    set fechaDesde(v: any) {
-        this.desde = v;
-    }
+    /**
+     * Fechas que recibe el calendario. Son `computed` y NO un `get` a propósito: el campo debe recibir EL MISMO objeto mientras la
+     * fecha no cambie. Con un `get` que crea un DateTime nuevo en cada lectura, `ngModel` ve un «cambio» en cada revisión de Angular,
+     * reescribe el campo y vuelve a marcar la pantalla: un ciclo infinito que congela la pestaña y crece en memoria.
+     */
+    readonly fechaDesde = computed(() => this._aDateTime(this._desde()));
+    readonly fechaHasta = computed(() => this._aDateTime(this._hasta()));
 
-    get fechaHasta(): any {
-        const h = this._hasta();
-        return h ? DateTime.fromISO(h) : null;
-    }
-    set fechaHasta(v: any) {
-        this.hasta = v;
-    }
-
-    alCambiarFechaDesde(v: any): void {
+    alCambiarFechaDesde(v: DateTime | Date | string | null): void {
         this.desde = v;
         this.alCambiarFiltro();
     }
 
-    alCambiarFechaHasta(v: any): void {
+    alCambiarFechaHasta(v: DateTime | Date | string | null): void {
         this.hasta = v;
         this.alCambiarFiltro();
     }
 
-    private _normalizarFecha(v: any): string {
+    private _aDateTime(iso: string): DateTime | null {
+        return iso ? DateTime.fromISO(iso) : null;
+    }
+
+    private _normalizarFecha(v: DateTime | Date | string | null): string {
         if (!v) return '';
         if (typeof v === 'string') return v.slice(0, 10);
-        if (typeof v.toISODate === 'function') return v.toISODate() ?? '';
         if (v instanceof Date) return fechaLocalISO(v);
-        return '';
+        return v.toISODate() ?? '';
     }
 
     get estado(): string { return this._estado(); }
