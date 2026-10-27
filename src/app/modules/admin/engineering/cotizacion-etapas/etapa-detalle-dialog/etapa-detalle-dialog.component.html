@@ -35,6 +35,15 @@
         <span>{{ errorMsg }}</span>
     </div>
 
+    <!-- Caso cancelado: qué se puede hacer con él -->
+    <div *ngIf="detalle?.cancelado" class="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-sm flex items-start gap-2">
+        <mat-icon class="text-rose-500 shrink-0">block</mat-icon>
+        <span>
+            Este caso está cancelado<ng-container *ngIf="detalle?.motivoRechazo">: <strong>{{ detalle?.motivoRechazo }}</strong></ng-container>.
+            Puedes reactivarlo para seguir modificándolo<ng-container *ngIf="puedeEliminar"> o eliminarlo con todo su historial</ng-container>.
+        </span>
+    </div>
+
     <!-- Dialog Content Body with Tabs -->
     <div class="flex-1 overflow-y-auto px-6 py-4">
         <mat-tab-group animationDuration="200ms" class="w-full">
@@ -329,9 +338,15 @@
                 <span class="text-[11px] text-slate-400 block text-right">{{ observacionesAutorizacionTexto.length }} / 2000</span>
             </div>
 
+            <!-- El modal tapa el aviso de error del encabezado: se repite aquí para que se vea -->
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalAutorizarAbierto = false">Cancelar</button>
-                <button mat-flat-button color="primary" (click)="confirmarAutorizar()">Confirmar Autorización</button>
+                <button mat-flat-button color="primary" (click)="confirmarAutorizar()" [disabled]="guardando">Confirmar Autorización</button>
             </div>
         </div>
     </div>
@@ -350,9 +365,15 @@
                 <span class="text-[11px] text-slate-400 block text-right">{{ motivoRechazoTexto.length }} / 2000</span>
             </div>
 
+            <!-- El modal tapa el aviso de error del encabezado: se repite aquí para que se vea -->
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalRechazarAbierto = false">Cancelar</button>
-                <button mat-flat-button color="warn" (click)="confirmarRechazar()" [disabled]="!motivoRechazoTexto.trim()">Rechazar</button>
+                <button mat-flat-button color="warn" (click)="confirmarRechazar()" [disabled]="guardando || !motivoRechazoTexto.trim()">Rechazar</button>
             </div>
         </div>
     </div>
@@ -371,9 +392,64 @@
                 <span class="text-[11px] text-slate-400 block text-right">{{ motivoCancelacionTexto.length }} / 2000</span>
             </div>
 
+            <!-- El modal tapa el aviso de error del encabezado: se repite aquí para que se vea -->
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalCancelarAbierto = false">Volver</button>
-                <button mat-flat-button color="warn" (click)="confirmarCancelar()" [disabled]="!motivoCancelacionTexto.trim()">Confirmar Cancelación</button>
+                <button mat-flat-button color="warn" (click)="confirmarCancelar()" [disabled]="guardando || !motivoCancelacionTexto.trim()">Confirmar Cancelación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reactivar Caso -->
+    <div *ngIf="modalReactivarAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-emerald-500">restore</mat-icon>
+                <span>Reactivar Caso</span>
+            </h3>
+
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+                El caso vuelve a la etapa {{ detalle?.etapaActual }} donde estaba y se puede seguir modificando. Se borra el motivo de cancelación.
+            </p>
+
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button mat-button (click)="modalReactivarAbierto = false" [disabled]="guardando">Volver</button>
+                <button mat-flat-button color="primary" (click)="confirmarReactivar()" [disabled]="guardando">Confirmar Reactivación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Eliminar Caso -->
+    <div *ngIf="modalEliminarAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-rose-500">delete_forever</mat-icon>
+                <span>Eliminar Caso #{{ idSeguimiento }}</span>
+            </h3>
+
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+                Se eliminará el caso con todas sus etapas, revisiones, avisos y archivos de evidencia.
+                <strong>Esta acción no se puede deshacer.</strong>
+            </p>
+
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                <mat-icon class="text-red-500">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button mat-button (click)="modalEliminarAbierto = false" [disabled]="guardando">Volver</button>
+                <button mat-flat-button color="warn" (click)="confirmarEliminar()" [disabled]="guardando">Eliminar Definitivamente</button>
             </div>
         </div>
     </div>
@@ -392,6 +468,30 @@
             >
                 <mat-icon class="scale-75">block</mat-icon>
                 <span>Cancelar Caso</span>
+            </button>
+
+            <button
+                *ngIf="puedeReactivar"
+                mat-flat-button
+                color="primary"
+                (click)="abrirModalReactivar()"
+                [disabled]="guardando"
+                class="text-xs"
+            >
+                <mat-icon class="scale-75">restore</mat-icon>
+                <span>Reactivar Caso</span>
+            </button>
+
+            <button
+                *ngIf="puedeEliminar"
+                mat-stroked-button
+                color="warn"
+                (click)="abrirModalEliminar()"
+                [disabled]="guardando"
+                class="text-xs"
+            >
+                <mat-icon class="scale-75">delete_forever</mat-icon>
+                <span>Eliminar Caso</span>
             </button>
 
             <button

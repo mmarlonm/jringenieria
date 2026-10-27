@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CotizacionEtapasService } from '../cotizacion-etapas.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { SubcontratacionService } from '../../subcontratacion.service';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CotizacionEtapasDetalleDto, ESTATUS_ETAPA } from '../cotizacion-etapas.models';
 import { obtenerEtapaConfig } from '../etapas.config';
@@ -27,6 +27,7 @@ describe('EtapaDetalleDialogComponent', () => {
         empresa: 'Empresa SA',
         sucursalId: 1,
         fechaRequisicion: '2026-10-24T10:00:00Z',
+        idUsuarioRegistro: 42,
         etapaActual: 1,
         cancelado: false,
         motivoRechazo: null,
@@ -70,6 +71,8 @@ describe('EtapaDetalleDialogComponent', () => {
             'cambiarEstatus',
             'iniciarRevision',
             'cancelar',
+            'reactivar',
+            'eliminar',
             'archivos',
             'subirArchivos',
             'descargarArchivo',
@@ -234,6 +237,182 @@ describe('EtapaDetalleDialogComponent', () => {
         fixture.detectChanges();
         expect(component.etiquetaInformacion).toBe('Información recabada');
         expect((fixture.nativeElement as HTMLElement).textContent).toContain('Información recabada');
+    });
+
+    it('un doble clic no envía dos veces la misma acción mientras la primera sigue en curso', () => {
+        const enCurso = () => new Subject<CotizacionEtapasDetalleDto>();
+        serviceMock.guardar.and.callFake(() => enCurso());
+        serviceMock.cambiarEstatus.and.callFake(() => enCurso());
+        serviceMock.iniciarRevision.and.callFake(() => enCurso());
+        serviceMock.cancelar.and.callFake(() => enCurso());
+
+        const acciones: { nombre: string; ejecutar: () => void; llamadas: () => number }[] = [
+            { nombre: 'guardar', ejecutar: () => component.guardar(), llamadas: () => serviceMock.guardar.calls.count() },
+            { nombre: 'ponerEnProceso', ejecutar: () => component.ponerEnProceso(), llamadas: () => serviceMock.cambiarEstatus.calls.count() }
+        ];
+        for (const accion of acciones) {
+            accion.ejecutar();
+            accion.ejecutar();
+            expect(accion.llamadas()).withContext(accion.nombre).toBe(1);
+            component.guardando = false; // la siguiente acción parte de cero
+            serviceMock.cambiarEstatus.calls.reset();
+        }
+
+        component.guardando = false;
+        component.modalAutorizarAbierto = true;
+        component.confirmarAutorizar();
+        component.confirmarAutorizar();
+        expect(serviceMock.cambiarEstatus.calls.count()).withContext('confirmarAutorizar').toBe(1);
+
+        component.guardando = false;
+        serviceMock.cambiarEstatus.calls.reset();
+        component.motivoRechazoTexto = 'falta información';
+        component.confirmarRechazar();
+        component.confirmarRechazar();
+        expect(serviceMock.cambiarEstatus.calls.count()).withContext('confirmarRechazar').toBe(1);
+
+        component.guardando = false;
+        component.motivoCancelacionTexto = 'ya no procede';
+        component.confirmarCancelar();
+        component.confirmarCancelar();
+        expect(serviceMock.cancelar.calls.count()).withContext('confirmarCancelar').toBe(1);
+
+        component.guardando = false;
+        component.iniciarRevision();
+        component.iniciarRevision();
+        expect(serviceMock.iniciarRevision.calls.count()).withContext('iniciarRevision').toBe(1);
+    });
+
+    it('un error al autorizar, rechazar o cancelar se ve dentro del modal que lo tapa', () => {
+        const mensaje = 'La etapa ya se encuentra autorizada';
+        const modales = ['modalAutorizarAbierto', 'modalRechazarAbierto', 'modalCancelarAbierto'] as const;
+
+        for (const abierto of modales) {
+            component.modalAutorizarAbierto = false;
+            component.modalRechazarAbierto = false;
+            component.modalCancelarAbierto = false;
+            component[abierto] = true;
+            component.errorMsg = mensaje;
+            fixture.detectChanges();
+
+            const modal = (fixture.nativeElement as HTMLElement).querySelector('.fixed.inset-0');
+            expect(modal?.textContent).withContext(abierto).toContain(mensaje);
+        }
+    });
+
+    it('al abrir un modal se limpia el error anterior', () => {
+        for (const abrir of [() => component.abrirModalAutorizar(), () => component.abrirModalRechazar(), () => component.abrirModalCancelar()]) {
+            component.errorMsg = 'error viejo';
+            abrir();
+            expect(component.errorMsg).toBeNull();
+        }
+    });
+
+    // ───── Caso cancelado: reactivar o eliminar ─────
+
+    function conCasoCancelado(cambios: Partial<CotizacionEtapasDetalleDto> = {}): void {
+        component.detalle = { ...mockDetalle, cancelado: true, motivoRechazo: 'ya no procede', ...cambios };
+        fixture.detectChanges();
+    }
+
+    function textosDeBotones(): string[] {
+        return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).map((b) => (b.textContent || '').trim());
+    }
+
+    it('un caso cancelado ofrece reactivar, y no ofrece cancelar de nuevo', () => {
+        conCasoCancelado();
+
+        const botones = textosDeBotones();
+        expect(botones.some((t) => t.includes('Reactivar'))).toBeTrue();
+        expect(botones.some((t) => t.includes('Cancelar Caso'))).toBeFalse();
+    });
+
+    it('eliminar solo se ofrece a quien registró el caso o a un administrador, y nunca si ya pasó a Seguimiento de Proyectos', () => {
+        // Usuario actual: 42. Registró él el caso → puede.
+        conCasoCancelado({ idUsuarioRegistro: 42 });
+        expect(component.puedeEliminar).toBeTrue();
+        expect(textosDeBotones().some((t) => t.includes('Eliminar'))).toBeTrue();
+
+        // Lo registró otra persona y no es admin → no.
+        conCasoCancelado({ idUsuarioRegistro: 7 });
+        expect(component.puedeEliminar).toBeFalse();
+        expect(textosDeBotones().some((t) => t.includes('Eliminar'))).toBeFalse();
+
+        // Lo registró otra persona pero es administrador → sí.
+        conSesion(['Admin']);
+        conCasoCancelado({ idUsuarioRegistro: 7 });
+        expect(component.puedeEliminar).toBeTrue();
+
+        // Ya pasó a Seguimiento de Proyectos (etapa 5 autorizada) → no, ni siquiera un administrador.
+        conCasoCancelado({
+            idUsuarioRegistro: 7,
+            etapas: [...mockDetalle.etapas, { ...mockDetalle.etapas[0], etapa: 5, estatus: ESTATUS_ETAPA.Autorizada }]
+        });
+        expect(component.puedeEliminar).toBeFalse();
+        expect(textosDeBotones().some((t) => t.includes('Eliminar'))).toBeFalse();
+    });
+
+    it('un caso que no está cancelado no ofrece reactivar ni eliminar', () => {
+        component.detalle = { ...mockDetalle, cancelado: false };
+        fixture.detectChanges();
+
+        expect(component.puedeReactivar).toBeFalse();
+        expect(component.puedeEliminar).toBeFalse();
+    });
+
+    it('confirmar la reactivación llama al servicio, cierra el modal y recarga el caso', () => {
+        serviceMock.reactivar.and.returnValue(of({ ...mockDetalle, cancelado: false }));
+        serviceMock.obtener.calls.reset();
+        conCasoCancelado();
+
+        component.abrirModalReactivar();
+        expect(component.modalReactivarAbierto).toBeTrue();
+        component.confirmarReactivar();
+
+        expect(serviceMock.reactivar).toHaveBeenCalledOnceWith(10);
+        expect(component.modalReactivarAbierto).toBeFalse();
+        expect(component.huboCambios).toBeTrue();
+        expect(serviceMock.obtener).toHaveBeenCalledWith(10);
+    });
+
+    it('confirmar la eliminación llama al servicio y cierra el diálogo avisando que hubo cambios', () => {
+        serviceMock.eliminar.and.returnValue(of({ success: true }));
+        conCasoCancelado();
+
+        component.abrirModalEliminar();
+        expect(component.modalEliminarAbierto).toBeTrue();
+        component.confirmarEliminar();
+
+        expect(serviceMock.eliminar).toHaveBeenCalledOnceWith(10);
+        expect(dialogRefMock.close).toHaveBeenCalledWith(true);
+    });
+
+    it('si la API rechaza eliminar, el mensaje se ve dentro del modal y el diálogo sigue abierto', () => {
+        serviceMock.eliminar.and.returnValue(throwError(() => ({ error: { mensaje: 'Este caso ya pasó a Seguimiento de Proyectos y no se puede eliminar' } })));
+        conCasoCancelado();
+
+        component.abrirModalEliminar();
+        component.confirmarEliminar();
+        fixture.detectChanges();
+
+        expect(dialogRefMock.close).not.toHaveBeenCalled();
+        const modal = (fixture.nativeElement as HTMLElement).querySelector('.fixed.inset-0');
+        expect(modal?.textContent).toContain('Seguimiento de Proyectos');
+    });
+
+    it('reactivar y eliminar no se envían dos veces con un doble clic', () => {
+        serviceMock.reactivar.and.callFake(() => new Subject<CotizacionEtapasDetalleDto>());
+        serviceMock.eliminar.and.callFake(() => new Subject<any>());
+        conCasoCancelado();
+
+        component.confirmarReactivar();
+        component.confirmarReactivar();
+        expect(serviceMock.reactivar.calls.count()).toBe(1);
+
+        component.guardando = false;
+        component.confirmarEliminar();
+        component.confirmarEliminar();
+        expect(serviceMock.eliminar.calls.count()).toBe(1);
     });
 
     it('fecha de elaboracion solo aparece en las etapas 3 a 5', () => {

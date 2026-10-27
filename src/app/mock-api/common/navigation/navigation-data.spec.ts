@@ -53,6 +53,19 @@ describe('Navigation Data (mock-api)', () => {
                 const cincoAntes = hijos.slice(indiceControlEjecucion - 5, indiceControlEjecucion).map((h) => h.id);
                 expect(cincoAntes).toEqual(idsCincoEtapas, `Las 5 etapas deben preceder a control-ejecucion en ${nombre}`);
             });
+
+            it('debe tener el grupo finanzas con Dashboard, CFDI, Bancos, Conciliación y Despacho, inmediatamente después de rrhh', () => {
+                const indiceRrhh = nav.findIndex((i) => i.id === 'rrhh');
+                expect(indiceRrhh).toBeGreaterThanOrEqual(0, `No existe el grupo rrhh en ${nombre}`);
+
+                const finanzas = nav[indiceRrhh + 1];
+                expect(finanzas?.id).toBe('finanzas', `finanzas debe seguir a rrhh en ${nombre}`);
+                expect(nav.filter((i) => i.id === 'finanzas').length).toBe(1);
+
+                const hijos = finanzas.children ?? [];
+                expect(hijos.map((h) => h.id)).toEqual(['finanzas.dashboard', 'finanzas.cfdi', 'finanzas.bancos', 'finanzas.conciliacion', 'finanzas.despacho']);
+                hijos.forEach((h) => expect(h.link).toMatch(/^\/finanzas\//));
+            });
         });
     });
 });

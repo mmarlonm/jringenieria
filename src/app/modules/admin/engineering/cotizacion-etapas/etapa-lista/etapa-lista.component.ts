@@ -144,7 +144,14 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
         }
     }
 
+    // Un doble clic (o un clic que sube del icono a la fila) apilaba dos diálogos iguales: solo uno a la vez.
+    private _nuevoCasoAbierto = false;
+    private _detalleAbierto = false;
+
     abrirNuevoCaso(): void {
+        if (this._nuevoCasoAbierto) return;
+        this._nuevoCasoAbierto = true;
+
         const ref = this._dialog.open(NuevoCasoDialogComponent, {
             width: '800px',
             maxWidth: '95vw',
@@ -154,6 +161,7 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
         ref.afterClosed()
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((creado) => {
+                this._nuevoCasoAbierto = false;
                 if (creado) {
                     this.cargarCasos();
                     this.abrirDetalle(creado.idSeguimiento);
@@ -162,6 +170,9 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
     }
 
     abrirDetalle(idSeguimiento: number): void {
+        if (this._detalleAbierto) return;
+        this._detalleAbierto = true;
+
         const ref = this._dialog.open(EtapaDetalleDialogComponent, {
             width: '1100px',
             maxWidth: '96vw',
@@ -175,6 +186,7 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
         ref.afterClosed()
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((modificado) => {
+                this._detalleAbierto = false;
                 if (modificado) {
                     this.cargarCasos();
                 }

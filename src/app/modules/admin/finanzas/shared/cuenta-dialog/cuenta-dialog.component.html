@@ -1,0 +1,70 @@
+<h2 mat-dialog-title>Nueva cuenta</h2>
+
+<form [formGroup]="form" (ngSubmit)="guardar()">
+    <mat-dialog-content>
+        <p class="text-secondary mb-4">
+            Cuenta o tarjeta de BBVA sobre la que se importan los movimientos.
+        </p>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Empresa</mat-label>
+            <mat-select formControlName="empresaId">
+                @for (e of empresas(); track e.empresaId) {
+                    <mat-option [value]="e.empresaId">{{ e.nombre }} · {{ e.rfc }}</mat-option>
+                }
+            </mat-select>
+            <mat-error>Elige la empresa dueña de la cuenta.</mat-error>
+        </mat-form-field>
+
+        @if (errorEmpresas(); as mensaje) {
+            <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 mb-4 text-sm font-semibold text-rose-800">{{ mensaje }}</div>
+        } @else if (empresas()?.length === 0) {
+            <div class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 mb-4 text-sm font-semibold text-amber-900">
+                Todavía no hay empresas dadas de alta: primero crea una en la página CFDI.
+            </div>
+        }
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Alias</mat-label>
+            <input matInput formControlName="alias" maxlength="80" autocomplete="off">
+            <mat-hint>Un nombre para reconocerla, p. ej. «Cheques principal»</mat-hint>
+            <mat-error>Escribe un alias (hasta 80 caracteres).</mat-error>
+        </mat-form-field>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 mt-4">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Tipo</mat-label>
+                <mat-select formControlName="tipo">
+                    @for (t of tipos; track t.valor) {
+                        <mat-option [value]="t.valor">{{ t.texto }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Moneda</mat-label>
+                <mat-select formControlName="moneda">
+                    @for (m of monedas; track m) {
+                        <mat-option [value]="m">{{ m }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full mt-4">
+            <mat-label>Terminación</mat-label>
+            <input matInput formControlName="terminacion" inputmode="numeric" autocomplete="off">
+            <mat-hint>Solo los últimos 4 o 5 dígitos. Nunca escribas el número de cuenta ni la CLABE completos: no se guardan.</mat-hint>
+            <mat-error>La terminación debe tener exactamente 4 o 5 dígitos.</mat-error>
+        </mat-form-field>
+
+        @if (error(); as mensaje) {
+            <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 mt-4 text-sm font-semibold text-rose-800">{{ mensaje }}</div>
+        }
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-stroked-button type="button" mat-dialog-close [disabled]="guardando()">Cancelar</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || guardando()">Guardar</button>
+    </mat-dialog-actions>
+</form>

@@ -173,6 +173,15 @@ export const appRoutes: Route[] = [
                     { path: 'encuestas-dashboard', loadComponent: () => import('app/modules/admin/eventos/encuestas/dashboard-encuestas.component').then(m => m.DashboardEncuestasComponent) },
                     { path: 'configurador-registro', loadComponent: () => import('app/modules/admin/eventos/configurador-registro/configurador-registro.component').then(m => m.ConfiguradorRegistroComponent) }
                 ]
+            },
+            {
+                path: 'finanzas', children: [
+                    { path: 'dashboard', loadComponent: () => import('app/modules/admin/finanzas/dashboard/dashboard.component').then(m => m.DashboardFinanzasComponent) },
+                    { path: 'cfdi', loadComponent: () => import('app/modules/admin/finanzas/cfdi/cfdi.component').then(m => m.CfdiComponent) },
+                    { path: 'bancos', loadComponent: () => import('app/modules/admin/finanzas/bancos/bancos.component').then(m => m.BancosComponent) },
+                    { path: 'conciliacion', loadComponent: () => import('app/modules/admin/finanzas/conciliacion/conciliacion.component').then(m => m.ConciliacionComponent) },
+                    { path: 'despacho', loadComponent: () => import('app/modules/admin/finanzas/despacho/despacho.component').then(m => m.DespachoComponent) }
+                ]
             }
         ]
     },

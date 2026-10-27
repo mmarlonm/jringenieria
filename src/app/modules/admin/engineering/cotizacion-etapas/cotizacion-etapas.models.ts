@@ -32,6 +32,13 @@ export interface CotizacionEtapasArchivoDto {
     nombreArchivo: string;
 }
 
+/** Archivo de evidencia subido en una revisión de una etapa (la API lista los de todas las etapas del caso). */
+export interface CotizacionEtapasArchivoCasoDto {
+    etapa: number;
+    revision: number;
+    nombreArchivo: string;
+}
+
 export interface CotizacionEtapasRevisionDto {
     numero: number;
     fechaElaboracion?: string | null;
@@ -71,6 +78,8 @@ export interface CotizacionEtapasDetalleDto {
     empresa: string;
     sucursalId?: number | null;
     fechaRequisicion?: string | null;
+    /** Quien registró el caso: junto con los administradores, puede eliminarlo si se cancela. */
+    idUsuarioRegistro: number;
     etapaActual: number;
     cancelado: boolean;
     motivoRechazo?: string | null;

@@ -90,6 +90,9 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     modalCancelarAbierto = false;
     motivoCancelacionTexto = '';
 
+    modalReactivarAbierto = false;
+    modalEliminarAbierto = false;
+
     private readonly _unsubscribeAll = new Subject<void>();
 
     constructor(
@@ -165,6 +168,21 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     get ultimaRevision(): CotizacionEtapasRevisionDto | undefined {
         if (!this.etapaActualDto?.revisiones?.length) return undefined;
         return [...this.etapaActualDto.revisiones].sort((a, b) => b.numero - a.numero)[0];
+    }
+
+    /** Autorizada la etapa 5 el caso ya está en Seguimiento de Proyectos. */
+    get casoPasoASeguimiento(): boolean {
+        return !!this.detalle?.etapas?.some((e) => e.etapa === 5 && e.estatus === ESTATUS_ETAPA.Autorizada);
+    }
+
+    get puedeReactivar(): boolean {
+        return !!this.detalle?.cancelado;
+    }
+
+    /** Eliminar: solo un caso cancelado, que no pasó a Seguimiento de Proyectos, a quien lo registró o a un administrador. */
+    get puedeEliminar(): boolean {
+        if (!this.detalle?.cancelado || this.casoPasoASeguimiento) return false;
+        return this.esAdmin || (this.usuarioActualId != null && this.usuarioActualId === this.detalle.idUsuarioRegistro);
     }
 
     get esSoloLectura(): boolean {
@@ -275,7 +293,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     guardar(): void {
-        if (!this.puedeGuardarRevision()) return;
+        if (this.guardando || !this.puedeGuardarRevision()) return;
 
         this.guardando = true;
         this.errorMsg = null;
@@ -315,6 +333,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
     // --- ACCIONES DE ESTATUS ---
     ponerEnProceso(): void {
+        if (this.guardando) return;
         this.guardando = true;
         this.errorMsg = null;
         this._service.cambiarEstatus(this.idSeguimiento, this.etapaNumero, {
@@ -335,6 +354,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     abrirModalAutorizar(): void {
+        this.errorMsg = null;
         const siguientes = this.etapaConfig?.siguientes || [];
         this.etapaSiguienteSeleccionada = siguientes.length > 0 ? siguientes[0] : null;
         this.montoAutorizacion = this.form.get('monto')?.value || null;
@@ -343,6 +363,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     confirmarAutorizar(): void {
+        if (this.guardando) return;
         this.guardando = true;
         this.errorMsg = null;
 
@@ -370,12 +391,13 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     abrirModalRechazar(): void {
+        this.errorMsg = null;
         this.motivoRechazoTexto = '';
         this.modalRechazarAbierto = true;
     }
 
     confirmarRechazar(): void {
-        if (!this.motivoRechazoTexto.trim()) return;
+        if (this.guardando || !this.motivoRechazoTexto.trim()) return;
 
         this.guardando = true;
         this.errorMsg = null;
@@ -402,6 +424,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     iniciarRevision(): void {
+        if (this.guardando) return;
         this.guardando = true;
         this.errorMsg = null;
 
@@ -421,12 +444,13 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     abrirModalCancelar(): void {
+        this.errorMsg = null;
         this.motivoCancelacionTexto = '';
         this.modalCancelarAbierto = true;
     }
 
     confirmarCancelar(): void {
-        if (!this.motivoCancelacionTexto.trim()) return;
+        if (this.guardando || !this.motivoCancelacionTexto.trim()) return;
 
         this.guardando = true;
         this.errorMsg = null;
@@ -443,6 +467,56 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                 error: (err) => {
                     this.guardando = false;
                     this.errorMsg = err?.error?.mensaje || 'Error al cancelar el caso.';
+                }
+            });
+    }
+
+    abrirModalReactivar(): void {
+        this.errorMsg = null;
+        this.modalReactivarAbierto = true;
+    }
+
+    confirmarReactivar(): void {
+        if (this.guardando) return;
+        this.guardando = true;
+        this.errorMsg = null;
+
+        this._service.reactivar(this.idSeguimiento)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.guardando = false;
+                    this.huboCambios = true;
+                    this.modalReactivarAbierto = false;
+                    this.cargarDetalle();
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorMsg = err?.error?.mensaje || 'Error al reactivar el caso.';
+                }
+            });
+    }
+
+    abrirModalEliminar(): void {
+        this.errorMsg = null;
+        this.modalEliminarAbierto = true;
+    }
+
+    confirmarEliminar(): void {
+        if (this.guardando) return;
+        this.guardando = true;
+        this.errorMsg = null;
+
+        this._service.eliminar(this.idSeguimiento)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.guardando = false;
+                    this._dialogRef.close(true);
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorMsg = err?.error?.mensaje || 'Error al eliminar el caso.';
                 }
             });
     }

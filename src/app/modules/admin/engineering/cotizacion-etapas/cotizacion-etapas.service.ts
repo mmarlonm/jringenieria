@@ -5,7 +5,7 @@ import { environment } from 'environments/environment';
 import {
     CotizacionEtapasListItemDto,
     CotizacionEtapasDetalleDto,
-    CotizacionEtapasRevisionDto,
+    CotizacionEtapasArchivoCasoDto,
     CotizacionEtapasArchivoDto,
     CrearCasoDto,
     GuardarEtapaDto,
@@ -49,6 +49,21 @@ export class CotizacionEtapasService {
 
     cancelar(id: number, motivo: string): Observable<CotizacionEtapasDetalleDto> {
         return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/cancelar`, { motivo });
+    }
+
+    /** Archivos subidos en todas las etapas del caso (Seguimiento de Proyectos los muestra en su pestaña de archivos). */
+    archivosDelCaso(id: number): Observable<CotizacionEtapasArchivoCasoDto[]> {
+        return this._http.get<CotizacionEtapasArchivoCasoDto[]>(`${this._baseUrl}/${id}/archivos`);
+    }
+
+    /** Deja operable un caso cancelado para seguir modificándolo. */
+    reactivar(id: number): Observable<CotizacionEtapasDetalleDto> {
+        return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/reactivar`, {});
+    }
+
+    /** Borra un caso cancelado con todo su historial; la API no lo permite si ya pasó a Seguimiento de Proyectos. */
+    eliminar(id: number): Observable<{ success: boolean }> {
+        return this._http.delete<{ success: boolean }>(`${this._baseUrl}/${id}`);
     }
 
     archivos(id: number, etapa: number, numero: number): Observable<CotizacionEtapasArchivoDto[]> {

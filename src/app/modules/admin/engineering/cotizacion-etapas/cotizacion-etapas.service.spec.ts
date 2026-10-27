@@ -86,6 +86,27 @@ describe('CotizacionEtapasService', () => {
         req.flush({});
     });
 
+    it('archivosDelCaso() debe llamar GET con los archivos de todas las etapas del caso', () => {
+        service.archivosDelCaso(85).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/85/archivos`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('reactivar() debe llamar POST reactivar', () => {
+        service.reactivar(8).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/8/reactivar`);
+        expect(req.request.method).toBe('POST');
+        req.flush({});
+    });
+
+    it('eliminar() debe llamar DELETE sobre el caso', () => {
+        service.eliminar(8).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/8`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({ success: true });
+    });
+
     it('cancelar() debe llamar POST cancelar con el motivo', () => {
         service.cancelar(8, 'Cliente declino').subscribe();
         const req = httpMock.expectOne(`${baseUrl}/8/cancelar`);
