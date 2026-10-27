@@ -139,6 +139,16 @@ describe('CfdiComponent', () => {
             expect(botonesEliminar().length).toBe(1);
         });
 
+        it('el botón de eliminar va en la primera columna, para verse sin desplazarse a la derecha en una tabla ancha', () => {
+            elegirEmpresa();
+
+            const fila = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
+            expect(fila.querySelector('td:first-child button[aria-label="Eliminar CFDI"]')).not.toBeNull();
+            expect(fila.querySelectorAll('button[aria-label="Eliminar CFDI"]').length).toBe(1);
+            const encabezado = fixture.nativeElement.querySelector('thead tr th:first-child') as HTMLElement;
+            expect(encabezado.textContent).toContain('Acciones');
+        });
+
         it('pide confirmar con un texto fijo y, si se cancela, no manda nada', () => {
             elegirEmpresa();
             const abrir = confirmar('cancelled');

@@ -267,6 +267,7 @@
                 <table class="w-full text-left text-sm">
                   <thead>
                     <tr class="border-b text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">
+                      <th class="p-3 w-12"><span class="sr-only">Acciones</span></th>
                       <th class="p-3">Fecha</th>
                       <th class="p-3">Dirección</th>
                       <th class="p-3">Tipo</th>
@@ -275,12 +276,17 @@
                       <th class="p-3">Receptor</th>
                       <th class="p-3 text-right">Total</th>
                       <th class="p-3">Estado</th>
-                      <th class="p-3"><span class="sr-only">Acciones</span></th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (c of pagina.items; track c.cfdiId) {
                       <tr class="border-b last:border-b-0 align-top">
+                        <td class="p-1 w-12 whitespace-nowrap">
+                          <button mat-icon-button type="button" color="warn" aria-label="Eliminar CFDI" title="Eliminar CFDI"
+                                  (click)="eliminarCfdi(c)" [disabled]="eliminandoCfdi() !== null || importando()">
+                            <mat-icon>delete_outline</mat-icon>
+                          </button>
+                        </td>
                         <td class="p-3 whitespace-nowrap">{{ c.fechaEmision | date: 'dd/MM/yyyy' }}</td>
                         <td class="p-3">{{ c.direccion }}</td>
                         <td class="p-3 whitespace-nowrap">{{ tipoTexto(c.tipoComprobante) }}</td>
@@ -311,12 +317,6 @@
                             <span class="ml-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest"
                                   title="Moneda extranjera sin tipo de cambio válido">Revisar</span>
                           }
-                        </td>
-                        <td class="p-3 text-right whitespace-nowrap">
-                          <button mat-icon-button type="button" color="warn" aria-label="Eliminar CFDI" title="Eliminar CFDI"
-                                  (click)="eliminarCfdi(c)" [disabled]="eliminandoCfdi() !== null || importando()">
-                            <mat-icon>delete_outline</mat-icon>
-                          </button>
                         </td>
                       </tr>
                     }
