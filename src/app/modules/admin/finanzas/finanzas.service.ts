@@ -6,7 +6,7 @@ import {
     Cfdi, CfdiCandidato, ClaseSugerida, ClasificarMovimientos, Cuenta, CuentaGuardar, Empresa, EmpresaGuardar,
     FiltroCfdi, FiltroClases, FiltroConciliacion, FiltroImportaciones, FiltroMovimientos, HojaInfo, Importacion,
     ManualConciliacion, Movimiento, MovimientoConciliacion, Pagina, ResultadoClasificar, ResultadoImportacion,
-    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete
+    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete, Dashboard
 } from './finanzas.types';
 
 @Injectable({
@@ -134,6 +134,11 @@ export class FinanzasService {
         return this._http.post(`${this._api}/despacho/generar`, dto, {
             responseType: 'blob'
         });
+    }
+
+    dashboard(empresaId?: number): Observable<Dashboard> {
+        const params = this._query({ empresaId });
+        return this._http.get<Dashboard>(`${this._api}/dashboard`, { params });
     }
 
     /** Multipart con los nombres que enlaza el controlador; `hoja` solo viaja si se eligió una. */

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { Cuenta, MovimientoConciliacion, ResultadoImportacion } from './finanzas.types';
-import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir } from './finanzas.utils';
+import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -296,4 +296,28 @@ describe('finanzas.utils', () => {
         });
     });
 
+
+    describe('dashboard utils', () => {
+        it('formatearMonto formatea con moneda o devuelve el numero como texto si es null', () => {
+            expect(formatearMonto(1234.5, 'MXN')).toBe('$1,234.50 MXN');
+            expect(formatearMonto(1234567.891, 'USD')).toBe('$1,234,567.89 USD');
+            expect(formatearMonto(0, 'MXN')).toBe('$0.00 MXN');
+            expect(formatearMonto(-100, 'MXN')).toBe('-$100.00 MXN');
+            expect(formatearMonto(5, null)).toBe('5');
+        });
+
+        it('fechaIsoACorta formatea yyyy-MM-dd a dd/MM/yyyy sin mover la zona horaria', () => {
+            expect(fechaIsoACorta('2026-10-05')).toBe('05/10/2026');
+            expect(fechaIsoACorta('')).toBe('');
+            expect(fechaIsoACorta('texto raro')).toBe('texto raro');
+        });
+
+        it('ORDEN_TARJETAS_DASHBOARD tiene ocho claves con SaldoBancos primera y Saldo13Semanas ultima', () => {
+            expect(ORDEN_TARJETAS_DASHBOARD.length).toBe(8);
+            const unicas = new Set(ORDEN_TARJETAS_DASHBOARD);
+            expect(unicas.size).toBe(8);
+            expect(ORDEN_TARJETAS_DASHBOARD[0]).toBe('SaldoBancos');
+            expect(ORDEN_TARJETAS_DASHBOARD[7]).toBe('Saldo13Semanas');
+        });
+    });
 });

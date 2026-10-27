@@ -178,3 +178,11 @@ export interface GenerarPaquete { empresaId: number; anio: number; mes: number; 
 export interface CuentaPaquete { cuentaId: number; etiqueta: string; movimientos: number; }
 export interface VistaPreviaPaquete { empresaId: number; anio: number; mes: number; cfdiEmitidos: number; cfdiRecibidos: number; movimientos: number; movimientosPendientes: number; cfdiPendientes: number; cfdiSinDatosOriginales: number; cuentas: CuentaPaquete[]; }
 export interface PaqueteDespacho { paqueteId: number; empresaId: number; anio: number; mes: number; usuarioId: number; fecha: string; cfdiEmitidos: number; cfdiRecibidos: number; movimientos: number; pendientes: number; }
+
+export type TipoIndicador = 'Dinero' | 'Cantidad' | 'Porcentaje';
+export interface ValorIndicador { moneda: string | null; valor: number; }
+export interface IndicadorDashboard {
+    clave: string; nombre: string; tipo: TipoIndicador; definicion: string; origen: string; frecuencia: string; observaciones: string;
+    disponible: boolean; pendienteDe: string | null; valores: ValorIndicador[]; datosAl: string | null; calidad: string[];
+}
+export interface Dashboard { fechaCorte: string; empresaId: number | null; empresasIncluidas: number; indicadores: IndicadorDashboard[]; }

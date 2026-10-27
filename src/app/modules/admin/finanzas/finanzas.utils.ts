@@ -207,3 +207,29 @@ export function descargarBlob(documento: Document, blob: Blob, nombre: string): 
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 }
+
+export const ORDEN_TARJETAS_DASHBOARD: readonly string[] = [
+    'SaldoBancos', 'PorCobrar', 'PorPagar', 'DeudaFinanciera',
+    'ProyectosActivos', 'Cobros30Dias', 'Pagos30Dias', 'Saldo13Semanas'
+];
+
+export function formatearMonto(valor: number, moneda: string | null): string {
+    if (!moneda) {
+        return String(valor);
+    }
+    const fmt = new Intl.NumberFormat('es-MX', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    const formatted = fmt.format(Math.abs(valor));
+    const prefix = valor < 0 ? '-$' : '$';
+    return `${prefix}${formatted} ${moneda}`;
+}
+
+export function fechaIsoACorta(iso: string): string {
+    if (!/^\d{4}-\d{2}-\d{2}/.test(iso)) {
+        return iso;
+    }
+    const [yyyy, mm, dd] = iso.slice(0, 10).split('-');
+    return `${dd}/${mm}/${yyyy}`;
+}
