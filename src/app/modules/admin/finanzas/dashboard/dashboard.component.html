@@ -107,7 +107,7 @@
 
             <div class="flex flex-col gap-3">
                 <h3 class="text-lg font-bold">Proyección de tesorería</h3>
-                <div class="p-6 rounded-xl border border-dashed bg-card/50 flex flex-col items-center justify-center text-center text-secondary py-10"
+                <div class="p-6 rounded-xl border border-dashed bg-card flex flex-col items-center justify-center text-center text-secondary py-10"
                      data-testid="proyeccion-reservada">
                     <mat-icon class="icon-size-8 mb-2 opacity-50">timeline</mat-icon>
                     <span class="text-sm font-medium">Se activará con el módulo Flujo de 13 semanas</span>
@@ -118,7 +118,7 @@
                 <h3 class="text-lg font-bold">Definiciones y calidad del dato</h3>
                 <div class="overflow-x-auto rounded-xl border bg-card">
                     <table class="w-full text-left text-sm" data-testid="tabla-definiciones">
-                        <thead class="bg-muted/50 border-b text-xs font-semibold uppercase text-secondary">
+                        <thead class="bg-gray-50 dark:bg-gray-800/50 border-b text-xs font-semibold uppercase text-secondary">
                             <tr>
                                 <th class="p-3">Indicador</th>
                                 <th class="p-3">Definición</th>
@@ -131,7 +131,7 @@
                         </thead>
                         <tbody class="divide-y">
                             @for (ind of indicadores(); track ind.clave) {
-                                <tr class="hover:bg-muted/30 transition-colors" data-testid="fila-definicion">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors" data-testid="fila-definicion">
                                     <td class="p-3 font-semibold whitespace-nowrap">{{ ind.nombre }}</td>
                                     <td class="p-3 min-w-[200px]">{{ ind.definicion }}</td>
                                     <td class="p-3 whitespace-nowrap">{{ ind.origen }}</td>
