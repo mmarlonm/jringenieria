@@ -336,8 +336,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 type: 'collapsable',
                 icon: 'heroicons_outline:clipboard-document-list',
                 children: [
-                    { id: 'dashboards.surveys', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/dashboards/surveys' }, // Conservado
-                    { id: 'dashboards.surveys-products', title: 'Encuestas de Productos', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' }, // Conservado
+
+                    { id: 'dashboards.surveys-products', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' },
                     { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
                     { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' }
                 ]

@@ -79,9 +79,13 @@
            }">
         <img [src]="formDinamicoConfig.imagenPortadaUrl" alt="Portada" class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-        <div class="absolute bottom-4 left-6 text-white">
+        <div class="absolute bottom-4 left-6 text-white flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest uppercase bg-emerald-600/90 px-3 py-1 rounded-full backdrop-blur-sm">
             JR Ingeniería Eléctrica
+          </span>
+          <span *ngIf="formDinamicoConfig.tipo" class="text-[11px] font-bold tracking-widest uppercase px-3 py-1 rounded-full backdrop-blur-sm"
+                [ngClass]="formDinamicoConfig.tipo === 'servicio' ? 'bg-purple-600/90 text-white' : 'bg-sky-600/90 text-white'">
+            {{ formDinamicoConfig.tipo === 'servicio' ? '⚡ Servicio' : '📦 Producto' }}
           </span>
         </div>
       </div>
