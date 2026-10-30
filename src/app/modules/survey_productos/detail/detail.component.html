@@ -1,174 +1,449 @@
-<form *ngIf="form" [formGroup]="form" (ngSubmit)="enviar()" class="p-6 max-w-4xl mx-auto space-y-6">
-  <!-- Título -->
-  <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
-    ENCUESTA DE SATISFACCIÓN PRODUCTOS
-  </h1>
-<div *ngIf="encuestaYaRespondida"
-    class="max-w-xl mx-auto my-8 bg-green-100 border border-green-400 rounded-2xl p-6 shadow-lg flex flex-col items-center text-center">
-    <div class="text-green-700 mb-4">
-      <svg class="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd"
-          d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 011.5 0v.5a.75.75 0 01-1.5 0v-.5zM10 6a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 6z"
-          clip-rule="evenodd" />
-      </svg>
-    </div>
-    <h2 class="text-lg sm:text-xl font-bold text-green-800 mb-2">Encuesta ya respondida</h2>
-    <p class="text-green-900 text-sm">
-      Esta encuesta ya fue contestada anteriormente. Gracias por tu participación.<br />
-      El formulario se encuentra en modo lectura.
-    </p>
+<!-- PANTALLA DE CARGA -->
+<div *ngIf="loading" class="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-900">
+  <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-8 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col items-center max-w-sm w-full text-center animate-fade-in">
+    <div class="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-600 rounded-full animate-spin"></div>
+    <h3 class="text-base font-bold text-slate-800 dark:text-white mt-4">Cargando Encuesta...</h3>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">JR Ingeniería Eléctrica</p>
   </div>
+</div>
 
-  <div *ngIf="!encuestaYaRespondida">
-     <!-- Datos de contacto -->
-  <div class="flex items-center justify-center">
-    <mat-label>Que sucursal le atendió:</mat-label>
-    <mat-radio-group formControlName="sucursal">
-      <mat-radio-button class="example-margin" value="3">Pachuca</mat-radio-button>
-      <mat-radio-button class="example-margin" value="1">Queretaro</mat-radio-button>
-      <mat-radio-button class="example-margin" value="2">Puebla</mat-radio-button>
-    </mat-radio-group>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <mat-form-field appearance="outline">
-      <mat-label>Nombre</mat-label>
-      <input matInput formControlName="nombre" />
-    </mat-form-field>
+<!-- ========================================================================= -->
+<!-- MODO DINÁMICO: FORMULARIO CONFIGURADO -->
+<!-- ========================================================================= -->
+<div *ngIf="!loading && isDynamic" 
+     class="min-h-screen py-8 px-4 sm:px-6 transition-colors duration-300"
+     [ngClass]="disenoDinamico?.temaOscuro ? 'bg-slate-950 text-slate-100 dark-theme' : 'bg-slate-100 text-slate-800'"
+     [ngStyle]="{'--theme-primary': disenoDinamico?.colorPrimario || '#1e8449'}">
 
-    <mat-form-field appearance="outline">
-      <mat-label>Empresa</mat-label>
-      <input matInput formControlName="empresa" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Email</mat-label>
-      <input matInput formControlName="email" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Teléfono</mat-label>
-      <input matInput formControlName="telefono" />
-    </mat-form-field>
-  </div>
-  <div class="col-span-1 md:col-span-2 flex justify-center">
-    <mat-form-field appearance="outline" class="w-full md:w-1/2">
-      <mat-label>Cargo/Puesto</mat-label>
-      <input matInput formControlName="cargo" />
-    </mat-form-field>
-  </div>
-
-  <!-- Leyenda de bienvenida -->
-  <div style="background-color: #419486">
-    <div style="padding: 10px">
-      <p class="text-white font-bold">
-        Estimado cliente.<br />En JR Ingeniería Eléctrica nos interesa mejorar
-        nuestro servicio.
-      </p>
-      <p class="text-black font-bold">
-        Por favor indica tu respuesta en una escala del 0 al 10, donde 0
-        representa el nivel más bajo y 10 el más alto
+  <!-- FORMULARIO INACTIVO O NO ENCONTRADO -->
+  <div *ngIf="!formDinamicoConfig || !formDinamicoConfig.activo" class="max-w-lg mx-auto my-12 animate-fade-in">
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-8 rounded-3xl border border-rose-200 dark:border-rose-900/50 shadow-2xl text-center">
+      <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center mx-auto mb-4">
+        <mat-icon class="text-3xl">sentiment_dissatisfied</mat-icon>
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Encuesta No Disponible</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
+        El formulario de satisfacción de productos solicitado no se encuentra activo o ha concluido su periodo de recepción.
       </p>
     </div>
   </div>
 
-  <!-- Preguntas + Comentarios -->
-  <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+  <!-- PANTALLA DE ÉXITO TRAS RESPONDER -->
+  <div *ngIf="enviadoConExito" class="max-w-xl mx-auto my-12 animate-fade-in">
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-8 sm:p-10 rounded-3xl border border-emerald-200 dark:border-emerald-800/50 shadow-2xl text-center">
+      <div class="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/20">
+        <mat-icon class="text-4xl">check_circle</mat-icon>
+      </div>
+      <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2">
+        Folio de Respuesta: #{{ resultadoFolio }}
+      </span>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
+        ¡Gracias por tu Opinión!
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+        {{ disenoDinamico?.mensajeExito || 'Tus comentarios han sido registrados con éxito. En JR Ingeniería Eléctrica trabajamos cada día para elevar nuestra calidad y superar tus expectativas.' }}
+      </p>
 
-    <!-- Columna izquierda: preguntas -->
-    <div class="md:col-span-3 space-y-4">
+      <!-- QR de confirmación si está activado -->
+      <div *ngIf="disenoDinamico?.mostrarQrExito && qrCodeUrl" class="mt-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-3">Comprobante de Encuesta JR</span>
+        <div class="bg-white p-3 rounded-xl shadow-md inline-block mb-3 border border-slate-100">
+          <img [src]="qrCodeUrl" alt="QR Encuesta" class="w-36 h-36 object-contain mx-auto">
+        </div>
+      </div>
 
-      <div *ngFor="let field of fields" class="border rounded space-y-4">
-        <div class="grid grid-cols-1">
+      <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
+        <mat-icon class="text-xs">verified</mat-icon>
+        <span>Encuesta certificada bajo el Sistema de Gestión de Calidad ISO 9001:2015</span>
+      </div>
+    </div>
+  </div>
 
-          <!-- Pregunta -->
-          <div class="md:col-span-3">
-            <label class="font-semibold block mb-2">
-              {{ field.label }}
+  <!-- CONTENEDOR PRINCIPAL DEL FORMULARIO DINÁMICO -->
+  <div *ngIf="formDinamicoConfig && formDinamicoConfig.activo && !enviadoConExito" class="max-w-4xl mx-auto space-y-6">
+
+    <!-- HERO / BANNER PRINCIPAL -->
+    <div class="overflow-hidden shadow-xl"
+         [ngClass]="[
+           disenoDinamico?.radioBorde || 'rounded-3xl',
+           disenoDinamico?.estiloCard === 'glassmorphism' ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800'
+         ]">
+      
+      <!-- Imagen de portada si existe -->
+      <div *ngIf="formDinamicoConfig.imagenPortadaUrl" 
+           class="w-full relative overflow-hidden bg-slate-200 dark:bg-slate-800"
+           [ngClass]="{
+             'h-32 sm:h-40': disenoDinamico?.alturaPortada === 'compact',
+             'h-44 sm:h-56': disenoDinamico?.alturaPortada === 'medium' || !disenoDinamico?.alturaPortada,
+             'h-60 sm:h-72': disenoDinamico?.alturaPortada === 'tall'
+           }">
+        <img [src]="formDinamicoConfig.imagenPortadaUrl" alt="Portada" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+        <div class="absolute bottom-4 left-6 text-white">
+          <span class="text-[11px] font-bold tracking-widest uppercase bg-emerald-600/90 px-3 py-1 rounded-full backdrop-blur-sm">
+            JR Ingeniería Eléctrica
+          </span>
+        </div>
+      </div>
+
+      <!-- Cabecera de Texto -->
+      <div class="p-6 sm:p-8">
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight">
+          {{ formDinamicoConfig.titulo }}
+        </h1>
+        <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+          {{ formDinamicoConfig.descripcion }}
+        </p>
+      </div>
+
+      <!-- Barra de Pasos / Wizard (si modoPasos está activo) -->
+      <div *ngIf="disenoDinamico?.modoPasos && totalPasosDinamicos > 1" class="px-6 pb-6 sm:px-8 border-t border-slate-100 dark:border-slate-800 pt-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div *ngFor="let paso of pasosDinamicos"
+               class="flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer border"
+               [ngClass]="{
+                 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500/50 shadow-sm': paso.numero === pasoActual,
+                 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-60': paso.numero !== pasoActual
+               }"
+               (click)="paso.numero < pasoActual ? pasoActual = paso.numero : null">
+            <div class="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center transition-colors"
+                 [ngStyle]="{'background-color': paso.numero === pasoActual ? (disenoDinamico?.colorPrimario || '#1e8449') : '#cbd5e1', 'color': paso.numero === pasoActual ? '#fff' : '#475569'}">
+              <mat-icon *ngIf="paso.numero < pasoActual" class="text-sm">check</mat-icon>
+              <span *ngIf="paso.numero >= pasoActual">{{ paso.numero }}</span>
+            </div>
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ paso.titulo }}</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ paso.descripcion || 'Paso ' + paso.numero }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUERPO DE PREGUNTAS DEL PASO ACTUAL -->
+    <div class="p-6 sm:p-8 shadow-xl transition-all"
+         [ngClass]="[
+           disenoDinamico?.radioBorde || 'rounded-3xl',
+           disenoDinamico?.estiloCard === 'glassmorphism' ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800'
+         ]">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ng-container *ngFor="let campo of camposDelPasoActual">
+
+          <!-- SEPARADOR / SECCIÓN -->
+          <div *ngIf="campo.tipo === 'section'" class="col-span-1 md:col-span-2 pt-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full" [ngStyle]="{'background-color': disenoDinamico?.colorPrimario || '#1e8449'}"></span>
+              {{ campo.etiqueta }}
+            </h3>
+            <p *ngIf="campo.placeholder" class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ campo.placeholder }}</p>
+          </div>
+
+          <!-- INPUT DE TEXTO, EMAIL, TELÉFONO O NÚMERO -->
+          <div *ngIf="['input', 'email', 'tel', 'number'].includes(campo.tipo)" 
+               [ngClass]="campo.ancho === 'half' ? 'col-span-1' : 'col-span-1 md:col-span-2'">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              {{ campo.etiqueta }} <span *ngIf="campo.requerido" class="text-rose-500">*</span>
+            </label>
+            <input [type]="campo.tipo === 'input' ? 'text' : campo.tipo"
+                   [(ngModel)]="respuestasDinamicas[campo.id]"
+                   [placeholder]="campo.placeholder || ''"
+                   class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-inner">
+          </div>
+
+          <!-- TEXTAREA -->
+          <div *ngIf="campo.tipo === 'textarea'" class="col-span-1 md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              {{ campo.etiqueta }} <span *ngIf="campo.requerido" class="text-rose-500">*</span>
+            </label>
+            <textarea [(ngModel)]="respuestasDinamicas[campo.id]"
+                      [placeholder]="campo.placeholder || 'Escribe tus comentarios aquí...'"
+                      rows="4"
+                      class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-inner resize-y"></textarea>
+          </div>
+
+          <!-- SELECT -->
+          <div *ngIf="campo.tipo === 'select'" 
+               [ngClass]="campo.ancho === 'half' ? 'col-span-1' : 'col-span-1 md:col-span-2'">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              {{ campo.etiqueta }} <span *ngIf="campo.requerido" class="text-rose-500">*</span>
+            </label>
+            <select [(ngModel)]="respuestasDinamicas[campo.id]"
+                    class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+              <option value="" disabled selected>{{ campo.placeholder || 'Selecciona una opción' }}</option>
+              <option *ngFor="let opt of campo.opciones" [value]="opt">{{ opt }}</option>
+            </select>
+          </div>
+
+          <!-- RADIO NORMAL O ESCALA NUMÉRICA CON EMOJIS (NPS / SATISFACCIÓN) -->
+          <div *ngIf="campo.tipo === 'radio'" class="col-span-1 md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              {{ campo.etiqueta }} <span *ngIf="campo.requerido" class="text-rose-500">*</span>
             </label>
 
+            <!-- Caso especial: escala 0 a 10 con caritas ISO 9001 -->
+            <div *ngIf="campo.escalaNotaInferior || (campo.opciones && campo.opciones.length >= 10)" class="space-y-3">
+              <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <span>0 = {{ campo.escalaNotaInferior || 'Poco probable / Muy insatisfecho' }}</span>
+                <span>10 = {{ campo.escalaNotaSuperior || 'Muy probable / Totalmente satisfecho' }}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 sm:gap-2 justify-start sm:justify-between py-2">
+                <button type="button"
+                        *ngFor="let item of scale"
+                        (click)="seleccionarRating(campo.id, item.value)"
+                        class="w-10 sm:w-12 h-16 rounded-xl flex flex-col items-center justify-center p-1 border transition-all select-none hover:scale-105 active:scale-95"
+                        [ngClass]="{
+                          'bg-emerald-600 text-white border-emerald-700 shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400 scale-105': esRatingSeleccionado(campo.id, item.value),
+                          'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-slate-400': !esRatingSeleccionado(campo.id, item.value)
+                        }">
+                  <span class="text-lg leading-none mb-1">{{ item.emoji }}</span>
+                  <span class="text-xs font-black">{{ item.value }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Radio estándar de opciones múltiples -->
+            <div *ngIf="!campo.escalaNotaInferior && (!campo.opciones || campo.opciones.length < 10)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              <label *ngFor="let opt of campo.opciones"
+                     class="flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer"
+                     [ngClass]="{
+                       'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-950 dark:text-emerald-200 font-bold': respuestasDinamicas[campo.id] === opt,
+                       'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300': respuestasDinamicas[campo.id] !== opt
+                     }">
+                <input type="radio" 
+                       [name]="campo.id" 
+                       [value]="opt" 
+                       [(ngModel)]="respuestasDinamicas[campo.id]"
+                       class="text-emerald-600 focus:ring-emerald-500">
+                <span class="text-xs">{{ opt }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- CHECKBOX -->
+          <div *ngIf="campo.tipo === 'checkbox'" class="col-span-1 md:col-span-2">
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 cursor-pointer">
+              <input type="checkbox"
+                     [(ngModel)]="respuestasDinamicas[campo.id]"
+                     class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+              <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ campo.etiqueta }}</span>
+            </label>
+          </div>
+
+          <!-- MATRIZ DE SATISFACCIÓN (PREGUNTAS MULTI-CRITERIO) -->
+          <div *ngIf="campo.tipo === 'matrix'" class="col-span-1 md:col-span-2 space-y-3">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              {{ campo.etiqueta }} <span *ngIf="campo.requerido" class="text-rose-500">*</span>
+            </label>
+            
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                    <th class="p-3.5 min-w-[200px]">Aspecto a Evaluar</th>
+                    <th *ngFor="let col of campo.columnasMatriz" class="p-3 text-center min-w-[70px]">
+                      {{ col.etiqueta }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tr *ngFor="let fila of campo.filasMatriz" 
+                      class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3.5">
+                      <div class="font-bold text-slate-800 dark:text-white">{{ fila.texto }}</div>
+                      <div *ngIf="fila.subtexto" class="text-[11px] text-slate-400 mt-0.5">{{ fila.subtexto }}</div>
+                    </td>
+                    <td *ngFor="let col of campo.columnasMatriz" class="p-3 text-center">
+                      <input type="radio" 
+                             [name]="campo.id + '_' + fila.id"
+                             [value]="col.valor"
+                             [checked]="obtenerValorMatriz(campo.id, fila.id) === col.valor"
+                             (change)="seleccionarValorMatriz(campo.id, fila.id, col.valor)"
+                             class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </ng-container>
+      </div>
+
+      <!-- BOTONES DE ACCIÓN / PASOS -->
+      <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+        <button *ngIf="disenoDinamico?.modoPasos && pasoActual > 1"
+                type="button"
+                (click)="anteriorPaso()"
+                class="px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 shadow-sm">
+          <mat-icon class="text-sm">arrow_back</mat-icon> Anterior
+        </button>
+        <div *ngIf="!disenoDinamico?.modoPasos || pasoActual === 1"></div>
+
+        <button *ngIf="disenoDinamico?.modoPasos && pasoActual < totalPasosDinamicos"
+                type="button"
+                (click)="siguientePaso()"
+                class="px-6 py-2.5 rounded-2xl text-xs font-bold text-white shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 ml-auto"
+                [ngStyle]="{'background-color': disenoDinamico?.colorPrimario || '#1e8449'}">
+          Siguiente <mat-icon class="text-sm">arrow_forward</mat-icon>
+        </button>
+
+        <button *ngIf="!disenoDinamico?.modoPasos || pasoActual === totalPasosDinamicos"
+                type="button"
+                (click)="enviarDinamico()"
+                class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-lg hover:shadow-xl transition-all flex items-center gap-2 ml-auto"
+                [ngStyle]="{'background-color': disenoDinamico?.colorPrimario || '#1e8449'}">
+          <mat-icon class="text-sm">send</mat-icon>
+          {{ disenoDinamico?.botonTexto || 'Enviar Encuesta' }}
+        </button>
+      </div>
+
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <div class="text-center text-xs text-slate-500 dark:text-slate-500 py-4">
+      JR Ingeniería Eléctrica S.A. de C.V. — Sistema de Encuestas de Satisfacción
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODO LEGACY: FORMULARIO EXISTENTE POR COTIZACIÓN -->
+<!-- ========================================================================= -->
+<div *ngIf="!loading && !isDynamic" class="p-6 max-w-4xl mx-auto space-y-6">
+  <form *ngIf="formLegacy" [formGroup]="formLegacy" (ngSubmit)="enviarLegacy()">
+    <h1 class="text-center text-2xl font-bold mb-4 uppercase text-green-800">
+      ENCUESTA DE SATISFACCIÓN PRODUCTOS
+    </h1>
+
+    <div *ngIf="encuestaYaRespondida"
+         class="max-w-xl mx-auto my-8 bg-green-100 border border-green-400 rounded-2xl p-6 shadow-lg flex flex-col items-center text-center">
+      <div class="text-green-700 mb-4">
+        <svg class="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 011.5 0v.5a.75.75 0 01-1.5 0v-.5zM10 6a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 6z"
+                clip-rule="evenodd" />
+        </svg>
+      </div>
+      <h2 class="text-lg sm:text-xl font-bold text-green-800 mb-2">Encuesta ya respondida</h2>
+      <p class="text-green-900 text-sm">
+        Esta encuesta ya fue contestada anteriormente. Gracias por tu participación.<br />
+        El formulario se encuentra en modo lectura.
+      </p>
+    </div>
+
+    <div *ngIf="!encuestaYaRespondida">
+      <!-- Sucursal -->
+      <div class="flex items-center justify-center mb-4">
+        <mat-label class="mr-4 font-semibold">Qué sucursal le atendió:</mat-label>
+        <mat-radio-group formControlName="sucursal" class="flex gap-4">
+          <mat-radio-button value="3">Pachuca</mat-radio-button>
+          <mat-radio-button value="1">Querétaro</mat-radio-button>
+          <mat-radio-button value="2">Puebla</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Empresa</mat-label>
+          <input matInput formControlName="empresa" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Teléfono</mat-label>
+          <input matInput formControlName="telefono" />
+        </mat-form-field>
+      </div>
+
+      <div class="flex justify-center my-2">
+        <mat-form-field appearance="outline" class="w-full md:w-1/2">
+          <mat-label>Cargo/Puesto</mat-label>
+          <input matInput formControlName="cargo" />
+        </mat-form-field>
+      </div>
+
+      <!-- Leyenda de bienvenida -->
+      <div style="background-color: #419486" class="p-4 rounded-xl text-white mb-6">
+        <p class="font-bold">
+          Estimado cliente.<br />En JR Ingeniería Eléctrica nos interesa mejorar nuestro servicio.
+        </p>
+        <p class="text-xs font-semibold text-emerald-100 mt-1">
+          Por favor indica tu respuesta en una escala del 0 al 10, donde 0 representa el nivel más bajo y 10 el más alto
+        </p>
+      </div>
+
+      <!-- Preguntas + Comentarios -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="md:col-span-3 space-y-4">
+          <div *ngFor="let field of legacyFields" class="border rounded-2xl p-4 bg-white shadow-sm space-y-3">
+            <label class="font-semibold block text-sm">{{ field.label }}</label>
             <div class="flex flex-wrap gap-1 justify-start">
-              <div class="emoji-block" *ngFor="let item of scale" [ngClass]="{
-            low: item.value <= 6,
-            medium: item.value === 7 || item.value === 8,
-            high: item.value >= 9,
-            selected: form.get(field.control)?.value === item.value
-          }" (click)="form.get(field.control)?.setValue(item.value)">
+              <div class="emoji-block" 
+                   *ngFor="let item of scale" 
+                   [ngClass]="{
+                     'low': item.value <= 6,
+                     'medium': item.value === 7 || item.value === 8,
+                     'high': item.value >= 9,
+                     'selected': formLegacy.get(field.control)?.value === item.value
+                   }" 
+                   (click)="formLegacy.get(field.control)?.setValue(item.value)">
                 <div class="emoji">{{ item.emoji }}</div>
                 <div class="number">{{ item.value }}</div>
               </div>
             </div>
           </div>
+        </div>
 
+        <div class="md:col-span-2">
+          <div class="p-4 border rounded-2xl bg-white shadow-sm h-full flex flex-col">
+            <label class="font-semibold block text-sm mb-2">
+              ¿Qué podemos mejorar para brindarte una mejor experiencia?
+            </label>
+            <mat-form-field appearance="outline" class="w-full flex-1">
+              <textarea matInput rows="16" formControlName="razonServicio"></textarea>
+            </mat-form-field>
+          </div>
         </div>
       </div>
 
-
-    </div>
-
-    <!-- Columna derecha: comentarios -->
-    <div class="md:col-span-2">
-      <div class="p-4 border rounded h-full">
-        <label class="font-semibold block">
-          ¿Qué podemos mejorar para brindarte una mejor experiencia?
+      <!-- Pregunta adicional: Catálogo -->
+      <div class="p-4 border rounded-2xl bg-white shadow-sm mt-6">
+        <label class="font-semibold block text-sm mb-2">
+          ¿Qué servicios le gustaría que agreguemos a nuestro catálogo?
         </label>
-        <mat-form-field appearance="outline" class="w-full h-[95%]">
-          <textarea matInput rows="22" formControlName="razonServicio"></textarea>
+        <mat-form-field appearance="outline" class="w-full">
+          <textarea matInput rows="3" formControlName="productosDeseados"></textarea>
         </mat-form-field>
       </div>
+
+      <!-- Pregunta: Cómo conoció -->
+      <div class="p-4 border rounded-2xl bg-white shadow-sm mt-4">
+        <label class="font-semibold block text-sm mb-3">¿Cómo conociste JR Ingeniería?</label>
+        <mat-radio-group formControlName="comoConocio" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <mat-radio-button value="Recomendación">Recomendación</mat-radio-button>
+          <mat-radio-button value="VisitaTienda">Visita a tienda</mat-radio-button>
+          <mat-radio-button value="BusquedaInternet">Búsqueda en internet</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <!-- Botón de Envío -->
+      <div class="mt-6 flex justify-end">
+        <button mat-raised-button color="primary" type="submit" class="px-8 py-3 text-sm font-bold">
+          Enviar Encuesta
+        </button>
+      </div>
     </div>
-
-
-  </div>
-
-  <!-- Pregunta: Productos deseados -->
-  <div class="p-4 border rounded mt-6">
-    <label class="font-semibold block mb-2">
-      ¿Qué servicios le gustaría que agreguemos a nuestro catálogo?
-    </label>
-
-    <mat-form-field appearance="outline" class="w-full">
-      <textarea matInput rows="3" formControlName="productosDeseados"></textarea>
-    </mat-form-field>
-  </div>
-
-  <!-- Pregunta: ¿Cómo conoció JR Ingeniería? -->
-  <div class="p-4 border rounded mt-4">
-    <label class="font-semibold block mb-3">
-      ¿Cómo conociste JR Ingeniería?
-    </label>
-
-    <mat-radio-group formControlName="comoConocio" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <mat-radio-button value="Recomendación">
-        Recomendación de un conocido
-      </mat-radio-button>
-
-      <mat-radio-button value="VisitaTienda">
-        Visita a la tienda
-      </mat-radio-button>
-
-      <mat-radio-button value="BusquedaInternet">
-        Búsqueda en internet
-      </mat-radio-button>
-
-      <mat-radio-button value="Espectaculares">
-        Espectaculares
-      </mat-radio-button>
-
-      <mat-radio-button value="Evento">
-        Encuentro en evento
-      </mat-radio-button>
-
-      <mat-radio-button value="RedesSociales">
-        Redes sociales
-      </mat-radio-button>
-    </mat-radio-group>
-  </div>
-
-  <div class="pt-4">
-    <button mat-raised-button color="primary" type="submit" class="w-full">
-      Enviar
-    </button>
-  </div>
-  </div>
- 
-</form>
+  </form>
+</div>

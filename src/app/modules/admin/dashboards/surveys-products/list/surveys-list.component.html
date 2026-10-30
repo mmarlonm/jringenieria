@@ -1,147 +1,1032 @@
-<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden flex flex-col">
-    <!-- Main -->
-    <div class="flex-auto">
-        <!-- Header -->
-        <div class="flex flex-auto flex-col justify-between  px-6 sm:flex-col md:flex- md:px-8">
-            <!-- Title -->
-            <div>
-                <div class="text-4xl font-extrabold leading-none tracking-tight">
-                    Encuestas
-                </div>
-                <div class="text-secondary ml-0.5 font-medium">
-                    @if (surveysCount > 0) {
-                    {{ surveysCount }}
-                    }
-                    {{
-                    surveysCount
-                    | i18nPlural
-                    : {
-                    "=0": "Sin encuestas",
-                    "=1": "Encuesta",
-                    other: "Encuestas",
-                    }
-                    }}
+<div class="flex flex-col flex-auto min-w-0 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen">
+
+    <!-- ========================================================================= -->
+    <!-- VISTA 1: LISTADO DE FORMULARIOS Y RESPUESTAS                              -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="vistaActual === 'listado'">
+        <div class="flex flex-col flex-auto p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+
+            <!-- HEADER Y ACCIONES PRINCIPALES -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
+                        <mat-icon class="text-3xl">fact_check</mat-icon>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                                Configurador de Encuestas de Productos
+                            </h1>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50">
+                                {{ formulariosList.length }} encuestas
+                            </span>
+                        </div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            Diseña, personaliza y comparte encuestas dinámicas de satisfacción para clientes de JR Ingeniería.
+                        </p>
+                    </div>
                 </div>
 
-                <!-- Main actions -->
-                <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
-                    <!-- Search -->
-                    <div class="flex-auto">
-                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
-                            subscriptSizing="dynamic">
-                            <mat-icon class="icon-size-5" matPrefix [svgIcon]="
-                        'heroicons_solid:magnifying-glass'
-                    "></mat-icon>
-                            <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" [autocomplete]="'off'"
-                                [placeholder]="'Buscar encuesta'" />
-                        </mat-form-field>
+                <div class="flex items-center gap-3">
+                    <button (click)="cargarListado(); cargarRespuestas()"
+                            mat-stroked-button
+                            class="rounded-2xl border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 py-2"
+                            matTooltip="Actualizar datos">
+                        <mat-icon [class.animate-spin]="cargandoListado" class="text-sm mr-1.5">refresh</mat-icon>
+                        <span>Actualizar</span>
+                    </button>
+
+                    <button (click)="nuevoFormulario()"
+                            class="inline-flex items-center justify-center px-5 py-2.5 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transition-all duration-200 text-sm cursor-pointer">
+                        <mat-icon class="mr-1.5 text-sm">add</mat-icon>
+                        <span>Nueva Encuesta</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TARJETAS DE MÉTRICAS KPI -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="text-2xl">assignment</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white">{{ formulariosList.length }}</div>
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Encuestas</div>
+                    </div>
+                </div>
+
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="text-2xl">mark_email_read</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white">{{ totalRespuestasGeneral }}</div>
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Respuestas Recibidas</div>
+                    </div>
+                </div>
+
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="text-2xl">toggle_on</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white">{{ totalActivosGeneral }}</div>
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Encuestas Activas</div>
+                    </div>
+                </div>
+
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="text-2xl">star</mat-icon>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white">{{ promedioSatisfaccionGeneral }} / 10</div>
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">NPS Satisfacción</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABS DE NAVEGACIÓN: FORMULARIOS VS RESPUESTAS -->
+            <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <button (click)="subTabListado = 'formularios'"
+                        class="px-5 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center gap-2"
+                        [ngClass]="subTabListado === 'formularios' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                    <mat-icon class="text-sm">dashboard_customize</mat-icon>
+                    <span>Formularios de Encuestas ({{ formulariosList.length }})</span>
+                </button>
+
+                <button (click)="subTabListado = 'respuestas'"
+                        class="px-5 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center gap-2"
+                        [ngClass]="subTabListado === 'respuestas' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                    <mat-icon class="text-sm">reviews</mat-icon>
+                    <span>Respuestas Recibidas ({{ respuestasList.length }})</span>
+                </button>
+            </div>
+
+            <!-- SUB-PESTAÑA 1: FORMULARIOS -->
+            <ng-container *ngIf="subTabListado === 'formularios'">
+                <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="relative w-full sm:w-96">
+                        <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</mat-icon>
+                        <input type="text"
+                               [(ngModel)]="busquedaListado"
+                               placeholder="Buscar por título, descripción o slug..."
+                               class="w-full pl-9 pr-8 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                        <button *ngIf="busquedaListado"
+                                (click)="busquedaListado = ''"
+                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <mat-icon class="text-xs">close</mat-icon>
+                        </button>
                     </div>
 
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Estado:</span>
+                        <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                            <button (click)="filtroEstado = 'todos'"
+                                    [class.bg-white]="filtroEstado === 'todos'"
+                                    [class.dark:bg-slate-800]="filtroEstado === 'todos'"
+                                    [class.shadow-sm]="filtroEstado === 'todos'"
+                                    class="px-3 py-1 rounded-lg transition-all">Todos</button>
+                            <button (click)="filtroEstado = 'activos'"
+                                    [class.bg-white]="filtroEstado === 'activos'"
+                                    [class.dark:bg-slate-800]="filtroEstado === 'activos'"
+                                    [class.shadow-sm]="filtroEstado === 'activos'"
+                                    class="px-3 py-1 rounded-lg transition-all">Activos</button>
+                            <button (click)="filtroEstado = 'inactivos'"
+                                    [class.bg-white]="filtroEstado === 'inactivos'"
+                                    [class.dark:bg-slate-800]="filtroEstado === 'inactivos'"
+                                    [class.shadow-sm]="filtroEstado === 'inactivos'"
+                                    class="px-3 py-1 rounded-lg transition-all">Inactivos</button>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- LISTADO DE TARJETAS DE FORMULARIOS -->
+                <div *ngIf="formulariosFiltrados.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div *ngFor="let form of formulariosFiltrados"
+                         class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-3xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
+
+                        <!-- IMAGEN / PORTADA DE TARJETA -->
+                        <div class="relative h-36 bg-slate-900 overflow-hidden">
+                            <img [src]="form.imagenPortadaUrl || 'assets/images/cards/08-320x200.jpg'"
+                                 alt="Portada"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+
+                            <!-- SLUG BADGE -->
+                            <div class="absolute top-3 left-3 bg-black/50 backdrop-blur-md border border-white/20 text-white text-[11px] font-mono px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow">
+                                <mat-icon class="text-[14px]">link</mat-icon>
+                                <span>/{{ form.slug }}</span>
+                            </div>
+
+                            <!-- STATUS BADGE -->
+                            <div class="absolute top-3 right-3">
+                                <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold tracking-wider uppercase border shadow"
+                                      [ngClass]="form.activo ? 'bg-emerald-500/90 text-white border-emerald-400/50' : 'bg-slate-600/90 text-white border-slate-500/50'">
+                                    {{ form.activo ? 'Activo' : 'Pausado' }}
+                                </span>
+                            </div>
+
+                            <!-- CONTADOR DE RESPUESTAS -->
+                            <div class="absolute bottom-3 left-3 text-white flex items-center gap-2">
+                                <span class="text-xs font-bold bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-lg border border-white/20">
+                                    {{ form.totalRespuestas || 0 }} respuestas
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- CUERPO DE TARJETA -->
+                        <div class="p-5 flex-auto flex flex-col justify-between space-y-4">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                    {{ form.titulo }}
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                                    {{ form.descripcion || 'Sin descripción detallada.' }}
+                                </p>
+                            </div>
+
+                            <!-- ACCIONES DE TARJETA -->
+                            <div class="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    <button (click)="copiarEnlacePublico(form.slug, form.id)"
+                                            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative"
+                                            matTooltip="Copiar enlace público">
+                                        <mat-icon class="text-sm">
+                                            {{ copiadoId === form.id ? 'check' : 'content_copy' }}
+                                        </mat-icon>
+                                    </button>
+
+                                    <button (click)="abrirModalQr(form)"
+                                            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                            matTooltip="Código QR para escanear">
+                                        <mat-icon class="text-sm">qr_code</mat-icon>
+                                    </button>
+
+                                    <button (click)="abrirEnNuevaPestana(form.slug)"
+                                            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                            matTooltip="Abrir formulario en nueva pestaña">
+                                        <mat-icon class="text-sm">open_in_new</mat-icon>
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button (click)="duplicarFormulario(form)"
+                                            class="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                            matTooltip="Duplicar">
+                                        <mat-icon class="text-sm">content_paste_go</mat-icon>
+                                    </button>
+
+                                    <button (click)="eliminarFormulario(form)"
+                                            class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                            matTooltip="Eliminar">
+                                        <mat-icon class="text-sm">delete_outline</mat-icon>
+                                    </button>
+
+                                    <button (click)="editarFormulario(form)"
+                                            class="px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5">
+                                        <mat-icon class="text-xs">tune</mat-icon>
+                                        <span>Configurar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EMPTY STATE -->
+                <div *ngIf="formulariosFiltrados.length === 0 && !cargandoListado"
+                     class="bg-white/80 dark:bg-slate-800/80 p-12 rounded-3xl border border-slate-200 dark:border-slate-700 text-center max-w-lg mx-auto">
+                    <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center mx-auto mb-4">
+                        <mat-icon class="text-3xl">inbox</mat-icon>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">No se encontraron encuestas</h3>
+                    <p class="text-xs text-slate-400 mt-1">Crea una nueva encuesta o ajusta el filtro de búsqueda.</p>
+                    <button (click)="nuevoFormulario()"
+                            class="mt-4 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-md hover:bg-emerald-500">
+                        + Crear Primera Encuesta
+                    </button>
+                </div>
+            </ng-container>
+
+            <!-- SUB-PESTAÑA 2: RESPUESTAS -->
+            <ng-container *ngIf="subTabListado === 'respuestas'">
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="relative w-full sm:w-96">
+                            <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</mat-icon>
+                            <input type="text"
+                                   [(ngModel)]="busquedaRespuestas"
+                                   placeholder="Buscar por cliente, empresa, correo..."
+                                   class="w-full pl-9 pr-8 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button (click)="exportarRespuestasExcel()"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors">
+                                <mat-icon class="text-sm">download</mat-icon>
+                                <span>Exportar CSV</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TABLA DE RESPUESTAS -->
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="p-3.5">ID</th>
+                                    <th class="p-3.5">Cliente / Evaluador</th>
+                                    <th class="p-3.5">Empresa</th>
+                                    <th class="p-3.5">Contacto</th>
+                                    <th class="p-3.5 text-center">Calificación General</th>
+                                    <th class="p-3.5">Fecha</th>
+                                    <th class="p-3.5 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr *ngFor="let r of respuestasFiltradas" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td class="p-3.5 font-mono text-slate-400">#{{ r.id }}</td>
+                                    <td class="p-3.5 font-bold text-slate-900 dark:text-white">{{ r.nombre || 'Anónimo' }}</td>
+                                    <td class="p-3.5 text-slate-600 dark:text-slate-300">{{ r.empresa || '—' }}</td>
+                                    <td class="p-3.5 text-slate-500">
+                                        <div>{{ r.email || '—' }}</div>
+                                        <div class="text-[10px] text-slate-400">{{ r.telefono || '' }}</div>
+                                    </td>
+                                    <td class="p-3.5 text-center">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black"
+                                              [ngClass]="(r.scorePromedio || 9) >= 8 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300' : ((r.scorePromedio || 9) >= 6 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')">
+                                            ⭐ {{ r.scorePromedio || 9.0 }} / 10
+                                        </span>
+                                    </td>
+                                    <td class="p-3.5 text-slate-500 text-[11px]">{{ (r.fechaRegistro | date:'mediumDate') || '—' }}</td>
+                                    <td class="p-3.5 text-center">
+                                        <button (click)="abrirDetalleRespuesta(r)"
+                                                class="px-3 py-1 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-300 hover:bg-blue-100 transition-colors">
+                                            Ver Respuestas
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="respuestasFiltradas.length === 0">
+                                    <td colspan="7" class="p-8 text-center text-slate-400">
+                                        No hay respuestas registradas que coincidan con la búsqueda.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </ng-container>
+
+        </div>
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- VISTA 2: EDITOR Y CONSTRUCTOR EN TIEMPO REAL                              -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="vistaActual === 'editor'">
+        <div class="flex flex-col flex-auto h-screen overflow-hidden">
+
+            <!-- BARRA SUPERIOR DEL EDITOR (STICKY TOOLBAR) -->
+            <header class="h-16 px-6 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0 z-20">
+                <div class="flex items-center gap-3">
+                    <button (click)="volverAListado()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <mat-icon class="text-sm">arrow_back</mat-icon>
+                        <span>Volver</span>
+                    </button>
+
+                    <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="text"
+                               [(ngModel)]="titulo"
+                               (blur)="generarSlugAutomatico()"
+                               class="text-base font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-emerald-500 focus:outline-none px-1 py-0.5 max-w-sm sm:max-w-md">
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500">
+                            /{{ slug }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- CONTROLES CENTRALES: SWITCHER DE DISPOSITIVO PARA SIMULADOR -->
+                <div class="hidden md:flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <button (click)="previewDevice = 'desktop'"
+                            [class.bg-white]="previewDevice === 'desktop'"
+                            [class.dark:bg-slate-800]="previewDevice === 'desktop'"
+                            [class.shadow-sm]="previewDevice === 'desktop'"
+                            class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                            matTooltip="Vista Escritorio">
+                        <mat-icon class="text-sm">computer</mat-icon>
+                        <span>Desktop</span>
+                    </button>
+                    <button (click)="previewDevice = 'tablet'"
+                            [class.bg-white]="previewDevice === 'tablet'"
+                            [class.dark:bg-slate-800]="previewDevice === 'tablet'"
+                            [class.shadow-sm]="previewDevice === 'tablet'"
+                            class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                            matTooltip="Vista Tablet">
+                        <mat-icon class="text-sm">tablet_mac</mat-icon>
+                        <span>Tablet</span>
+                    </button>
+                    <button (click)="previewDevice = 'mobile'"
+                            [class.bg-white]="previewDevice === 'mobile'"
+                            [class.dark:bg-slate-800]="previewDevice === 'mobile'"
+                            [class.shadow-sm]="previewDevice === 'mobile'"
+                            class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                            matTooltip="Vista Móvil">
+                        <mat-icon class="text-sm">smartphone</mat-icon>
+                        <span>Móvil</span>
+                    </button>
+                </div>
+
+                <!-- ACCIONES DERECHA -->
+                <div class="flex items-center gap-3">
+                    <button (click)="abrirEnNuevaPestana(slug)"
+                            class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <mat-icon class="text-xs">open_in_new</mat-icon>
+                        <span>Probar Enlace</span>
+                    </button>
+
+                    <button (click)="guardarFormulario()"
+                            [disabled]="saving"
+                            class="inline-flex items-center justify-center px-5 py-2 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/25 transition-all text-xs cursor-pointer">
+                        <mat-icon *ngIf="saving" class="animate-spin text-sm mr-1">refresh</mat-icon>
+                        <mat-icon *ngIf="!saving" class="text-sm mr-1">save</mat-icon>
+                        <span>{{ saving ? 'Guardando...' : 'Guardar Cambios' }}</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENEDOR SPLIT: CONFIGURACIÓN IZQUIERDA VS SIMULADOR DERECHA -->
+            <div class="flex flex-auto overflow-hidden">
+
+                <!-- COLUMNA IZQUIERDA: PANELES DE CONFIGURACIÓN CON TABS -->
+                <div class="w-full lg:w-1/2 xl:w-5/12 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 overflow-y-auto">
+
+                    <!-- PESTAÑAS DE CONFIGURACIÓN -->
+                    <div class="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-10 px-6 pt-4 border-b border-slate-200 dark:border-slate-700 flex gap-1 overflow-x-auto">
+                        <button (click)="activeTab = 'general'"
+                                [class.border-emerald-600]="activeTab === 'general'"
+                                [class.text-emerald-600]="activeTab === 'general'"
+                                [class.dark:text-emerald-400]="activeTab === 'general'"
+                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
+                            <mat-icon class="text-sm">settings</mat-icon>
+                            <span>General</span>
+                        </button>
+                        <button (click)="activeTab = 'campos'"
+                                [class.border-emerald-600]="activeTab === 'campos'"
+                                [class.text-emerald-600]="activeTab === 'campos'"
+                                [class.dark:text-emerald-400]="activeTab === 'campos'"
+                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
+                            <mat-icon class="text-sm">format_list_bulleted</mat-icon>
+                            <span>Preguntas ({{ campos.length }})</span>
+                        </button>
+                        <button (click)="activeTab = 'diseno'"
+                                [class.border-emerald-600]="activeTab === 'diseno'"
+                                [class.text-emerald-600]="activeTab === 'diseno'"
+                                [class.dark:text-emerald-400]="activeTab === 'diseno'"
+                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
+                            <mat-icon class="text-sm">palette</mat-icon>
+                            <span>Diseño</span>
+                        </button>
+                        <button (click)="activeTab = 'enlace'"
+                                [class.border-emerald-600]="activeTab === 'enlace'"
+                                [class.text-emerald-600]="activeTab === 'enlace'"
+                                [class.dark:text-emerald-400]="activeTab === 'enlace'"
+                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
+                            <mat-icon class="text-sm">share</mat-icon>
+                            <span>Compartir</span>
+                        </button>
+                    </div>
+
+                    <!-- CONTENIDO DE PESTAÑAS -->
+                    <div class="p-6 space-y-6 flex-auto">
+
+                        <!-- PESTAÑA: GENERAL -->
+                        <div *ngIf="activeTab === 'general'" class="space-y-5 animate-fade-in">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Título de la Encuesta</label>
+                                <input type="text" [(ngModel)]="titulo" (blur)="generarSlugAutomatico()"
+                                       class="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Descripción o Instrucciones</label>
+                                <textarea [(ngModel)]="descripcion" rows="3"
+                                          class="w-full px-3.5 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 leading-relaxed"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Enlace Amigable (Slug)</label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-mono text-slate-400">#/survey-productos/</span>
+                                    <input type="text" [(ngModel)]="slug"
+                                           class="w-full px-3 py-2 rounded-xl text-sm font-mono bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                                </div>
+                            </div>
+
+                            <!-- PRESETS DE PORTADA -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Imagen de Portada / Banner</label>
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <div *ngFor="let p of portadasPresets"
+                                         (click)="imagenPortadaUrl = p.url"
+                                         [class.ring-2]="imagenPortadaUrl === p.url"
+                                         [class.ring-emerald-500]="imagenPortadaUrl === p.url"
+                                         class="relative h-20 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-slate-700 group">
+                                        <img [src]="p.url" alt="" class="w-full h-full object-cover">
+                                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 flex items-end p-2 transition-colors">
+                                            <span class="text-[10px] font-bold text-white truncate">{{ p.nombre }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="text" [(ngModel)]="imagenPortadaUrl" placeholder="O pega una URL personalizada..."
+                                       class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:outline-none">
+                            </div>
+
+                            <!-- ESTADO ACTIVO -->
+                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900 dark:text-white">Encuesta Activa</div>
+                                    <div class="text-xs text-slate-500">Permite a los clientes responder la encuesta en línea.</div>
+                                </div>
+                                <mat-slide-toggle [(ngModel)]="activo" color="primary"></mat-slide-toggle>
+                            </div>
+                        </div>
+
+                        <!-- PESTAÑA: CAMPOS (PREGUNTAS DINÁMICAS) -->
+                        <div *ngIf="activeTab === 'campos'" class="space-y-4 animate-fade-in">
+                            <div class="flex items-center justify-between">
+                                <button (click)="cargarPreguntasEstandar()"
+                                        type="button"
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
+                                    <mat-icon class="text-xs">restore</mat-icon>
+                                    <span>Plantilla Estándar ISO</span>
+                                </button>
+
+                                <button (click)="agregarCampo()"
+                                        type="button"
+                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20 flex items-center gap-1 cursor-pointer">
+                                    <mat-icon class="text-xs">add</mat-icon>
+                                    <span>+ Agregar Pregunta</span>
+                                </button>
+                            </div>
+
+                            <!-- LISTA DE PREGUNTAS -->
+                            <div class="space-y-3">
+                                <div *ngFor="let campo of campos; let i = index"
+                                     class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-3 transition-all hover:border-slate-300 dark:hover:border-slate-600">
+                                    
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-center">
+                                                {{ i + 1 }}
+                                            </span>
+                                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                {{ campo.tipo }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center gap-1">
+                                            <button (click)="moverCampo(i, 'arriba')" [disabled]="i === 0" class="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30">
+                                                <mat-icon class="text-sm">arrow_upward</mat-icon>
+                                            </button>
+                                            <button (click)="moverCampo(i, 'abajo')" [disabled]="i === campos.length - 1" class="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30">
+                                                <mat-icon class="text-sm">arrow_downward</mat-icon>
+                                            </button>
+                                            <button (click)="eliminarCampo(i)" class="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg">
+                                                <mat-icon class="text-sm">delete</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- TÍTULO DE PREGUNTA -->
+                                    <div>
+                                        <input type="text" [(ngModel)]="campo.etiqueta" placeholder="Escribe el texto de la pregunta..."
+                                               class="w-full px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                    </div>
+
+                                    <!-- CONFIGURACIÓN RÁPIDA -->
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div>
+                                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo de Campo</label>
+                                            <select [(ngModel)]="campo.tipo" class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs">
+                                                <option *ngFor="let tc of tiposCampo" [value]="tc.value">{{ tc.label }}</option>
+                                            </select>
+                                        </div>
+
+                                        <div *ngIf="diseno.modoPasos">
+                                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Paso Asignado</label>
+                                            <select [(ngModel)]="campo.paso" class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs">
+                                                <option *ngFor="let p of diseno.pasos" [value]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- OPCIONES (SI ES RADIO O SELECT O CHECKBOX) -->
+                                    <div *ngIf="campo.tipo === 'radio' || campo.tipo === 'select' || campo.tipo === 'checkbox'" class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-bold uppercase text-slate-400">Opciones de Respuesta</span>
+                                            <button (click)="agregarOpcion(campo)" type="button" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                                + Añadir Opción
+                                            </button>
+                                        </div>
+                                        <div *ngFor="let opt of campo.opciones; let optIdx = index" class="flex items-center gap-1.5">
+                                            <input type="text" [(ngModel)]="campo.opciones![optIdx]" class="w-full px-2.5 py-1 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                                            <button (click)="eliminarOpcion(campo, optIdx)" class="text-rose-400 hover:text-rose-600">
+                                                <mat-icon class="text-xs">close</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- TOGGLES -->
+                                    <div class="flex items-center gap-4 text-xs pt-1">
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" [(ngModel)]="campo.requerido" class="rounded text-emerald-600">
+                                            <span class="font-semibold text-slate-600 dark:text-slate-300">Obligatorio</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PESTAÑA: DISEÑO -->
+                        <div *ngIf="activeTab === 'diseno'" class="space-y-5 animate-fade-in">
+                            <!-- MODO PASOS / WIZARD -->
+                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm font-bold text-slate-900 dark:text-white">Formulario por Pasos (Wizard)</div>
+                                        <div class="text-xs text-slate-500">Divide la encuesta en secciones guiadas paso a paso.</div>
+                                    </div>
+                                    <mat-slide-toggle [(ngModel)]="diseno.modoPasos" color="primary"></mat-slide-toggle>
+                                </div>
+
+                                <div *ngIf="diseno.modoPasos" class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Pasos Configurados</span>
+                                        <button (click)="agregarPasoWizard()" type="button" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                            + Agregar Paso
+                                        </button>
+                                    </div>
+                                    <div *ngFor="let p of diseno.pasos; let pIdx = index" class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2 flex-auto">
+                                            <span class="font-bold text-xs text-slate-400">#{{ p.numero }}</span>
+                                            <input type="text" [(ngModel)]="p.titulo" placeholder="Título del paso..." class="w-full text-xs font-bold bg-transparent border-none focus:outline-none">
+                                        </div>
+                                        <button (click)="eliminarPasoWizard(p.numero)" [disabled]="diseno.pasos.length <= 1" class="text-rose-400 hover:text-rose-600 disabled:opacity-30">
+                                            <mat-icon class="text-xs">delete</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PALETAS DE COLOR -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Color Primario de la Encuesta</label>
+                                <div class="grid grid-cols-4 gap-2 mb-2">
+                                    <button *ngFor="let pal of paletasColores"
+                                            (click)="diseno.colorPrimario = pal.color"
+                                            type="button"
+                                            class="p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center"
+                                            [class.ring-2]="diseno.colorPrimario === pal.color"
+                                            [class.ring-emerald-500]="diseno.colorPrimario === pal.color"
+                                            [class.border-slate-300]="diseno.colorPrimario !== pal.color"
+                                            [class.dark:border-slate-700]="diseno.colorPrimario !== pal.color">
+                                        <div class="w-6 h-6 rounded-full shadow" [style.background-color]="pal.color"></div>
+                                        <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate w-full">{{ pal.nombre }}</span>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-slate-500 font-bold">Personalizado:</span>
+                                    <input type="color" [(ngModel)]="diseno.colorPrimario" class="w-8 h-8 rounded-lg cursor-pointer border border-slate-300">
+                                    <input type="text" [(ngModel)]="diseno.colorPrimario" class="px-2 py-1 rounded-lg text-xs font-mono border border-slate-300 w-24">
+                                </div>
+                            </div>
+
+                            <!-- ESTILO DE TARJETA -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Estilo de Tarjeta</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button (click)="diseno.estiloCard = 'glassmorphism'"
+                                            type="button"
+                                            [class.ring-2]="diseno.estiloCard === 'glassmorphism'"
+                                            [class.ring-emerald-500]="diseno.estiloCard === 'glassmorphism'"
+                                            class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-xs font-bold">
+                                        Glassmorphism
+                                    </button>
+                                    <button (click)="diseno.estiloCard = 'solid'"
+                                            type="button"
+                                            [class.ring-2]="diseno.estiloCard === 'solid'"
+                                            [class.ring-emerald-500]="diseno.estiloCard === 'solid'"
+                                            class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
+                                        Sólido
+                                    </button>
+                                    <button (click)="diseno.estiloCard = 'bordered'"
+                                            type="button"
+                                            [class.ring-2]="diseno.estiloCard === 'bordered'"
+                                            [class.ring-emerald-500]="diseno.estiloCard === 'bordered'"
+                                            class="p-3 rounded-xl border-2 border-slate-300 dark:border-slate-600 text-xs font-bold">
+                                        Con Borde
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- TEXTOS DE BOTÓN Y ÉXITO -->
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Texto del Botón de Envío</label>
+                                    <input type="text" [(ngModel)]="diseno.botonTexto"
+                                           class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mensaje de Agradecimiento</label>
+                                    <textarea [(ngModel)]="diseno.mensajeExito" rows="2"
+                                              class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 leading-relaxed"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PESTAÑA: COMPARTIR / ENLACE -->
+                        <div *ngIf="activeTab === 'enlace'" class="space-y-5 animate-fade-in">
+                            <div class="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-4">
+                                <div class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                    <mat-icon class="text-emerald-600">link</mat-icon>
+                                    <span>Enlace Público de la Encuesta</span>
+                                </div>
+                                <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono text-xs text-emerald-600 dark:text-emerald-400 break-all select-all">
+                                    {{ obtenerUrlPublica(slug) }}
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button (click)="copiarEnlacePublico(slug, currentFormId)"
+                                            class="flex-1 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md transition-colors flex items-center justify-center gap-1.5">
+                                        <mat-icon class="text-sm">content_copy</mat-icon>
+                                        <span>Copiar Enlace</span>
+                                    </button>
+
+                                    <button (click)="abrirEnNuevaPestana(slug)"
+                                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 transition-colors flex items-center gap-1.5">
+                                        <mat-icon class="text-sm">open_in_new</mat-icon>
+                                        <span>Abrir</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- CÓDIGO QR -->
+                            <div class="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center space-y-3">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Código QR para Escaneo</span>
+                                <div class="p-3 bg-white rounded-2xl border border-slate-200 inline-block shadow-md">
+                                    <img [src]="obtenerQrUrl(slug)" alt="QR Encuesta" class="w-44 h-44 object-contain mx-auto">
+                                </div>
+                                <div>
+                                    <button (click)="descargarQrPng(slug)"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <mat-icon class="text-sm">download</mat-icon>
+                                        <span>Descargar Imagen QR</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- COLUMNA DERECHA: SIMULADOR INTERACTIVO EN TIEMPO REAL -->
+                <div class="hidden lg:flex lg:w-1/2 xl:w-7/12 flex-col items-center justify-center p-6 bg-slate-100 dark:bg-slate-950 overflow-y-auto">
+                    
+                    <div class="transition-all duration-300 w-full flex justify-center"
+                         [ngClass]="{
+                             'max-w-2xl': previewDevice === 'desktop',
+                             'max-w-md': previewDevice === 'tablet',
+                             'max-w-sm': previewDevice === 'mobile'
+                         }">
+
+                        <!-- TARJETA DEL SIMULADOR (REFLEJA DISEÑO EN VIVO) -->
+                        <div class="w-full overflow-hidden shadow-2xl transition-all duration-300 border"
+                             [ngClass]="[
+                                 diseno.radioBorde || 'rounded-2xl',
+                                 diseno.estiloCard === 'glassmorphism' ? 'bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-white/40 dark:border-slate-800/50' : (diseno.estiloCard === 'bordered' ? 'bg-white dark:bg-slate-900 border-2 border-slate-300' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800')
+                             ]">
+
+                            <!-- PORTADA / BANNER DEL SIMULADOR -->
+                            <div class="relative bg-slate-900 overflow-hidden"
+                                 [ngClass]="{
+                                     'h-24': diseno.alturaPortada === 'compact',
+                                     'h-36': diseno.alturaPortada === 'medium',
+                                     'h-48': diseno.alturaPortada === 'tall'
+                                 }">
+                                <img [src]="imagenPortadaUrl || 'assets/images/cards/08-320x200.jpg'" alt=""
+                                     class="w-full h-full object-cover opacity-85">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                <div class="absolute bottom-3 left-4 right-4 text-white">
+                                    <h2 class="text-base font-black leading-tight drop-shadow-md">{{ titulo }}</h2>
+                                    <p class="text-[11px] text-white/80 line-clamp-1 mt-0.5">{{ descripcion }}</p>
+                                </div>
+                            </div>
+
+                            <!-- INDICADOR DE PASOS SI MODO WIZARD -->
+                            <div *ngIf="diseno.modoPasos && diseno.pasos && diseno.pasos.length > 0 && !simuladorEnviado"
+                                 class="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 overflow-x-auto">
+                                    <div *ngFor="let p of diseno.pasos; let pIdx = index"
+                                         class="flex items-center gap-1.5">
+                                        <div class="w-6 h-6 rounded-full text-[11px] font-black flex items-center justify-center transition-all"
+                                             [style.background-color]="pasoSimuladorActual === p.numero ? diseno.colorPrimario : ''"
+                                             [class.text-white]="pasoSimuladorActual === p.numero"
+                                             [class.bg-slate-200]="pasoSimuladorActual !== p.numero"
+                                             [class.text-slate-600]="pasoSimuladorActual !== p.numero">
+                                            {{ p.numero }}
+                                        </div>
+                                        <span *ngIf="pasoSimuladorActual === p.numero" class="text-xs font-bold text-slate-800 dark:text-white truncate max-w-[120px]">
+                                            {{ p.titulo }}
+                                        </span>
+                                        <div *ngIf="pIdx < diseno.pasos.length - 1" class="w-4 h-0.5 bg-slate-200 dark:bg-slate-700"></div>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400">Paso {{ pasoSimuladorActual }} de {{ diseno.pasos.length }}</span>
+                            </div>
+
+                            <!-- CUERPO DE PREGUNTAS DEL SIMULADOR -->
+                            <div *ngIf="!simuladorEnviado" class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+                                <div *ngFor="let campo of camposSimuladorPasoActual" class="space-y-1.5">
+                                    
+                                    <!-- SEPARADOR DE SECCIÓN -->
+                                    <div *ngIf="campo.tipo === 'section'" class="pt-2 pb-1 border-b border-slate-200 dark:border-slate-700">
+                                        <h4 class="text-sm font-black text-slate-900 dark:text-white">{{ campo.etiqueta }}</h4>
+                                    </div>
+
+                                    <!-- PREGUNTAS REGULARES -->
+                                    <div *ngIf="campo.tipo !== 'section'">
+                                        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                                            {{ campo.etiqueta }}
+                                            <span *ngIf="campo.requerido" class="text-rose-500">*</span>
+                                        </label>
+
+                                        <!-- INPUT TEXTO / EMAIL / TEL / NUMBER -->
+                                        <input *ngIf="campo.tipo === 'input' || campo.tipo === 'email' || campo.tipo === 'tel' || campo.tipo === 'number'"
+                                               [type]="campo.tipo === 'number' ? 'number' : (campo.tipo === 'email' ? 'email' : (campo.tipo === 'tel' ? 'tel' : 'text'))"
+                                               [(ngModel)]="respuestasSimulador[campo.id]"
+                                               [placeholder]="campo.placeholder || ''"
+                                               class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1"
+                                               [style.focus-ring-color]="diseno.colorPrimario">
+
+                                        <!-- TEXTAREA -->
+                                        <textarea *ngIf="campo.tipo === 'textarea'"
+                                                  [(ngModel)]="respuestasSimulador[campo.id]"
+                                                  [placeholder]="campo.placeholder || ''"
+                                                  rows="2"
+                                                  class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1"
+                                                  [style.focus-ring-color]="diseno.colorPrimario"></textarea>
+
+                                        <!-- RADIO / CARITAS / ESCALAS -->
+                                        <div *ngIf="campo.tipo === 'radio'" class="grid grid-cols-2 sm:grid-cols-2 gap-1.5 pt-1">
+                                            <div *ngFor="let opt of campo.opciones"
+                                                 (click)="simuladorSeleccionarRating(campo.id, opt)"
+                                                 class="px-2.5 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all flex items-center gap-1.5"
+                                                 [style.border-color]="respuestasSimulador[campo.id] === opt ? diseno.colorPrimario : ''"
+                                                 [style.background-color]="respuestasSimulador[campo.id] === opt ? (diseno.colorPrimario + '15') : ''"
+                                                 [style.color]="respuestasSimulador[campo.id] === opt ? diseno.colorPrimario : ''"
+                                                 [class.border-slate-200]="respuestasSimulador[campo.id] !== opt"
+                                                 [class.dark:border-slate-700]="respuestasSimulador[campo.id] !== opt">
+                                                <div class="w-3.5 h-3.5 rounded-full border flex items-center justify-center flex-shrink-0"
+                                                     [style.border-color]="respuestasSimulador[campo.id] === opt ? diseno.colorPrimario : '#94a3b8'">
+                                                    <div *ngIf="respuestasSimulador[campo.id] === opt"
+                                                         class="w-2 h-2 rounded-full"
+                                                         [style.background-color]="diseno.colorPrimario"></div>
+                                                </div>
+                                                <span class="truncate">{{ opt }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- SELECT -->
+                                        <select *ngIf="campo.tipo === 'select'"
+                                                [(ngModel)]="respuestasSimulador[campo.id]"
+                                                class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                            <option value="">Selecciona una opción...</option>
+                                            <option *ngFor="let opt of campo.opciones" [value]="opt">{{ opt }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PANTALLA DE ÉXITO EN SIMULADOR -->
+                            <div *ngIf="simuladorEnviado" class="p-8 text-center space-y-4 animate-fade-in">
+                                <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+                                    <mat-icon class="text-3xl">check_circle</mat-icon>
+                                </div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-white">¡Gracias por tu Evaluación!</h3>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
+                                    {{ diseno.mensajeExito }}
+                                </p>
+                                <button (click)="reiniciarSimulador()"
+                                        type="button"
+                                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200">
+                                    Probar de Nuevo
+                                </button>
+                            </div>
+
+                            <!-- FOOTER / BOTONES DE NAVEGACIÓN EN SIMULADOR -->
+                            <div *ngIf="!simuladorEnviado" class="p-4 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <button *ngIf="diseno.modoPasos && pasoSimuladorActual > 1"
+                                        (click)="simuladorPasoAnterior()"
+                                        type="button"
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200">
+                                    ← Anterior
+                                </button>
+                                <div *ngIf="!diseno.modoPasos || pasoSimuladorActual === 1"></div>
+
+                                <button (click)="simuladorSiguientePaso()"
+                                        type="button"
+                                        class="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all ml-auto"
+                                        [style.background-color]="diseno.colorPrimario">
+                                    {{ (diseno.modoPasos && pasoSimuladorActual < (diseno.pasos?.length || 1)) ? 'Siguiente Paso →' : diseno.botonTexto }}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
 
         </div>
+    </ng-container>
 
-        <!-- Contacts list -->
-        <div class="flex flex-auto flex-col justify-between px-6 py-8 sm:flex-col md:flex- md:px-8">
-            @if (surveysCount > 0) {
-            <div class="mat-elevation-z8">
-
-                <!-- Tabla -->
-                <div class="overflow-auto" style="max-height: 400px; overflow-y: auto">
-                    <table mat-table [dataSource]="dataSource" matSort class="w-full">
-                        <!-- ID -->
-                        <ng-container matColumnDef="id">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                                ID
-                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
-                                    <mat-icon>filter_list</mat-icon>
-                                </button>
-                            </th>
-                            <td mat-cell *matCellDef="let survey">{{ survey.id }}</td>
-                        </ng-container>
-
-                        <!-- Nombre -->
-                        <ng-container matColumnDef="nombre">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                                Nombre
-                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
-                                    <mat-icon>filter_list</mat-icon>
-                                </button>
-                            </th>
-                            <td mat-cell *matCellDef="let survey">{{ survey.nombre }}</td>
-                        </ng-container>
-
-                        <!-- Estatus -->
-                        <ng-container matColumnDef="proyectoNombre">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                                Proyecto
-                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
-                                    <mat-icon>filter_list</mat-icon>
-                                </button>
-                            </th>
-                            <td mat-cell *matCellDef="let survey">{{ survey.proyectoNombre }}</td>
-                        </ng-container>
-
-                        <!-- Categoría -->
-                        <ng-container matColumnDef="email">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                                Email
-                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
-                                    <mat-icon>filter_list</mat-icon>
-                                </button>
-                            </th>
-                            <td mat-cell *matCellDef="let survey">{{ survey.email }}</td>
-                        </ng-container>
-
-                        <!-- Fecha Inicio -->
-                        <ng-container matColumnDef="fechaRegistro">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                                Fecha Registro
-                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
-                                    <mat-icon>filter_list</mat-icon>
-                                </button>
-                            </th>
-                            <td mat-cell *matCellDef="let survey">{{ survey.fechaRegistro | date: "yyyy-MM-dd" }}</td>
-                        </ng-container>
-
-                        <!-- Fecha Fin -->
-                        <ng-container matColumnDef="fechaFin">
-                            <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                                Fecha Fin
-                                <button mat-icon-button [matMenuTriggerFor]="filterMenu">
-                                    <mat-icon>filter_list</mat-icon>
-                                </button>
-                            </th>
-                            <td mat-cell *matCellDef="let survey">{{ survey.fechaFin | date: "yyyy-MM-dd" }}</td>
-                        </ng-container>
-
-                        <!-- Acciones -->
-                        <ng-container matColumnDef="actions" stickyEnd>
-                            <th mat-header-cell *matHeaderCellDef>Acciones</th>
-                            <td mat-cell *matCellDef="let survey">
-                                <button mat-icon-button color="accent" class="small-icon-button"
-                                    (click)="openSurveyDialog(survey.encuestaProductosId)">
-                                    <mat-icon>visibility</mat-icon>
-                                </button>
-                            </td>
-                        </ng-container>
-
-
-                        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky:true"></tr>
-                        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-                    </table>
-
-                </div>
-
-                <!-- Paginador -->
-                <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    <!-- ========================================================================= -->
+    <!-- MODAL DE CÓDIGO QR                                                        -->
+    <!-- ========================================================================= -->
+    <div *ngIf="modalQrAbierto && formularioQrSeleccionado"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-700 shadow-2xl text-center space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pase QR de Encuesta</span>
+                <button (click)="cerrarModalQr()" class="text-slate-400 hover:text-slate-600">
+                    <mat-icon class="text-sm">close</mat-icon>
+                </button>
             </div>
-            } @else {
-            <div class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16">
-                Sin Encuestas
+
+            <h3 class="text-base font-black text-slate-900 dark:text-white leading-tight">
+                {{ formularioQrSeleccionado.titulo }}
+            </h3>
+
+            <div class="p-3 bg-white rounded-2xl border border-slate-200 inline-block shadow-md">
+                <img [src]="obtenerQrUrl(formularioQrSeleccionado.slug)" alt="QR" class="w-52 h-52 object-contain mx-auto">
             </div>
-            }
+
+            <p class="text-xs font-mono text-emerald-600 break-all select-all">
+                {{ obtenerUrlPublica(formularioQrSeleccionado.slug) }}
+            </p>
+
+            <div class="flex gap-2">
+                <button (click)="descargarQrPng(formularioQrSeleccionado.slug)"
+                        class="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md">
+                    Descargar QR PNG
+                </button>
+                <button (click)="copiarEnlacePublico(formularioQrSeleccionado.slug, formularioQrSeleccionado.id)"
+                        class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200">
+                    Copiar URL
+                </button>
+            </div>
         </div>
     </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL DETALLE DE RESPUESTA                                                -->
+    <!-- ========================================================================= -->
+    <div *ngIf="modalDetalleAbierto && respuestaDetalleSeleccionada"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-2xl w-full border border-slate-200 dark:border-slate-700 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <div>
+                    <h3 class="text-lg font-black text-slate-900 dark:text-white">
+                        Detalle de Evaluación de Cliente
+                    </h3>
+                    <p class="text-xs text-slate-400">ID: #{{ respuestaDetalleSeleccionada.id }} — {{ respuestaDetalleSeleccionada.fechaRegistro | date:'medium' }}</p>
+                </div>
+                <button (click)="cerrarDetalleRespuesta()" class="text-slate-400 hover:text-slate-600">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <!-- DATOS DEL EVALUADOR -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 text-xs">
+                <div>
+                    <span class="text-slate-400 font-bold block">Cliente:</span>
+                    <span class="font-bold text-slate-900 dark:text-white">{{ respuestaDetalleSeleccionada.nombre || '—' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 font-bold block">Empresa:</span>
+                    <span class="font-bold text-slate-900 dark:text-white">{{ respuestaDetalleSeleccionada.empresa || '—' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 font-bold block">Email:</span>
+                    <span class="font-bold text-slate-900 dark:text-white">{{ respuestaDetalleSeleccionada.email || '—' }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 font-bold block">Teléfono:</span>
+                    <span class="font-bold text-slate-900 dark:text-white">{{ respuestaDetalleSeleccionada.telefono || '—' }}</span>
+                </div>
+            </div>
+
+            <!-- CALIFICACIONES Y PREGUNTAS CLAVE -->
+            <div class="space-y-3 text-xs">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span class="font-medium text-slate-700 dark:text-slate-300">1. Servicio y atención del personal:</span>
+                    <span class="font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                        ⭐ {{ respuestaDetalleSeleccionada.servicioPersonal ?? 10 }} / 10
+                    </span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span class="font-medium text-slate-700 dark:text-slate-300">2. Recomendación de productos (NPS):</span>
+                    <span class="font-black px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">
+                        ⭐ {{ respuestaDetalleSeleccionada.recomendarProductos ?? 10 }} / 10
+                    </span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span class="font-medium text-slate-700 dark:text-slate-300">3. Resolución del problema con los productos:</span>
+                    <span class="font-black px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
+                        ⭐ {{ respuestaDetalleSeleccionada.ayudaProducto ?? 10 }} / 10
+                    </span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span class="font-medium text-slate-700 dark:text-slate-300">4. Comprensión de especificaciones y necesidades:</span>
+                    <span class="font-black px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
+                        ⭐ {{ respuestaDetalleSeleccionada.comprensionNecesidades ?? 10 }} / 10
+                    </span>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                    <span class="font-medium text-slate-700 dark:text-slate-300">5. Calidad del producto y tiempo de entrega:</span>
+                    <span class="font-black px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                        ⭐ {{ respuestaDetalleSeleccionada.tiempoEntrega ?? 10 }} / 10
+                    </span>
+                </div>
+
+                <div *ngIf="respuestaDetalleSeleccionada.razonServicio" class="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                    <span class="font-bold text-amber-800 dark:text-amber-300 block mb-1">Motivo / Razón de la Calificación:</span>
+                    <p class="text-slate-700 dark:text-slate-300 leading-relaxed italic">"{{ respuestaDetalleSeleccionada.razonServicio }}"</p>
+                </div>
+
+                <div *ngIf="respuestaDetalleSeleccionada.productosDeseados" class="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <span class="font-bold text-blue-800 dark:text-blue-300 block mb-1">Otros productos o soluciones solicitadas:</span>
+                    <p class="text-slate-700 dark:text-slate-300 leading-relaxed">{{ respuestaDetalleSeleccionada.productosDeseados }}</p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 text-right">
+                <button (click)="cerrarDetalleRespuesta()"
+                        class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700">
+                    Cerrar Detalle
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>

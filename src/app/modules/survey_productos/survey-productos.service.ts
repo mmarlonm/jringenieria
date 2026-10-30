@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, catchError, of } from 'rxjs';
 import { environment } from 'environments/environment';
 
 
@@ -83,4 +83,24 @@ export class SurveyProductosService {
       `${this.apiUrl}/productos/todas`
     );
   }
+
+  // ============================
+  // FORMULARIOS DINÁMICOS DE PRODUCTOS
+  // ============================
+
+  obtenerFormularioPorSlug(slug: string): Observable<ResponseDTO> {
+    return this.http.get<ResponseDTO>(
+      `${this.apiUrl}/productos/formularios/slug/${encodeURIComponent(slug)}`
+    ).pipe(
+      catchError(err => of({ code: 404, message: 'Formulario no encontrado', data: null }))
+    );
+  }
+
+  responderFormularioDinamico(slug: string, payload: any): Observable<ResponseDTO> {
+    return this.http.post<ResponseDTO>(
+      `${this.apiUrl}/productos/formularios/slug/${encodeURIComponent(slug)}/responder`,
+      payload
+    );
+  }
 }
+
