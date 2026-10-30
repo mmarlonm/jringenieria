@@ -90,7 +90,7 @@ export const appRoutes: Route[] = [
                     { path: 'sales', loadChildren: () => import('app/modules/admin/dashboards/sales/sales.routes') },
                     { path: 'quote-products', loadChildren: () => import('app/modules/admin/dashboards/quotes-products/quotes-products.routes') },
                     { path: 'tasks', loadChildren: () => import('app/modules/admin/dashboards/tasks/tasks.routes') },
-                    { path: 'surveys', loadChildren: () => import('app/modules/admin/dashboards/surveys/surveys.routes') },
+                    { path: 'surveys', redirectTo: 'surveys-products', pathMatch: 'full' },
                     { path: 'surveys-products', loadChildren: () => import('app/modules/admin/dashboards/surveys-products/surveys.routes') },
                     { path: 'transfer-management', loadChildren: () => import('app/modules/admin/dashboards/transfer-management/transfer-management.routes') },
                     { path: 'expenses', loadChildren: () => import('app/modules/admin/dashboards/expenses/expenses.routes') },
