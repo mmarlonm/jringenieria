@@ -378,7 +378,7 @@ export class SurveysProductsService {
             slug: 'satisfaccion-productos',
             titulo: 'Encuesta de Satisfacción de Productos y Servicios',
             descripcion: 'En JR Ingeniería Eléctrica valoramos tu opinión. Por favor ayúdanos a evaluar tu experiencia para seguir ofreciéndote la mejor calidad.',
-            imagenPortadaUrl: 'assets/images/cards/08-320x200.jpg',
+            imagenPortadaUrl: 'assets/images/surveys/tableros-electricos.jpg',
             camposConfigJson: JSON.stringify(this.generarCamposPredeterminados()),
             disenoConfigJson: JSON.stringify(this.generarDisenoPredeterminado()),
             activo: true,

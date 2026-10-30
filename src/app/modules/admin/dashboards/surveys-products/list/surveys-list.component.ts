@@ -81,7 +81,7 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     titulo = 'Encuesta de Satisfacción de Productos y Servicios';
     descripcion = 'En JR Ingeniería Eléctrica valoramos tu opinión. Por favor ayúdanos a evaluar tu experiencia para seguir ofreciéndote la mejor calidad.';
     slug = 'satisfaccion-productos';
-    imagenPortadaUrl = 'assets/images/cards/08-320x200.jpg';
+    imagenPortadaUrl = 'assets/images/surveys/tableros-electricos.jpg';
     sucursalId: number | null = null;
     activo = true;
     campos: CampoConfig[] = [];
@@ -134,11 +134,10 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     ];
 
     portadasPresets = [
-        { nombre: 'Tableros y Distribución', url: 'assets/images/cards/08-320x200.jpg' },
-        { nombre: 'Subestación y Media Tensión', url: 'assets/images/cards/14-320x200.jpg' },
-        { nombre: 'Inspección de Calidad', url: 'assets/images/cards/19-320x200.jpg' },
-        { nombre: 'Ingeniería y Proyectos', url: 'assets/images/cards/21-320x200.jpg' },
-        { nombre: 'Banner Foro Energiza', url: 'assets/eventos/foro-energiza-logo.png' }
+        { nombre: 'Tableros y Distribución', url: 'assets/images/surveys/tableros-electricos.jpg' },
+        { nombre: 'Subestación y Media Tensión', url: 'assets/images/surveys/subestacion-electrica.jpg' },
+        { nombre: 'Inspección de Calidad ISO', url: 'assets/images/surveys/inspeccion-calidad.jpg' },
+        { nombre: 'Ingeniería y Monitoreo SCADA', url: 'assets/images/surveys/ingenieria-proyectos.jpg' }
     ];
 
     tiposCampo = [
@@ -211,7 +210,7 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         this.titulo = 'Nueva Encuesta de Satisfacción';
         this.descripcion = 'Agradecemos tus valiosos comentarios sobre la calidad y entrega de nuestros productos.';
         this.slug = 'encuesta-' + Math.random().toString(36).substring(2, 8);
-        this.imagenPortadaUrl = 'assets/images/cards/08-320x200.jpg';
+        this.imagenPortadaUrl = 'assets/images/surveys/tableros-electricos.jpg';
         this.sucursalId = null;
         this.activo = true;
         this.campos = this._surveyService.generarCamposPredeterminados();
@@ -227,7 +226,7 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         this.titulo = form.titulo;
         this.descripcion = form.descripcion || '';
         this.slug = form.slug;
-        this.imagenPortadaUrl = form.imagenPortadaUrl || 'assets/images/cards/08-320x200.jpg';
+        this.imagenPortadaUrl = form.imagenPortadaUrl || 'assets/images/surveys/tableros-electricos.jpg';
         this.sucursalId = form.sucursalId || null;
         this.activo = form.activo;
 
@@ -247,6 +246,42 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         this.activeTab = 'general';
         this.reiniciarSimulador();
         this.vistaActual = 'editor';
+        this._cdr.markForCheck();
+    }
+
+    /** Selecciona un preset de portada */
+    seleccionarPresetPortada(url: string): void {
+        this.imagenPortadaUrl = url;
+        this._cdr.markForCheck();
+    }
+
+    /** Carga y convierte un archivo de imagen local a Data URL */
+    onFileSelected(event: any): void {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            this._snackBar.open('Por favor selecciona un archivo de imagen válido (PNG, JPG, WebP).', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            this._snackBar.open('La imagen es demasiado pesada. Máximo permitido: 5MB.', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            this.imagenPortadaUrl = e.target.result;
+            this._snackBar.open('¡Foto cargada exitosamente como portada!', 'Aceptar', { duration: 2500 });
+            this._cdr.markForCheck();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /** Elimina la imagen de portada */
+    eliminarPortada(): void {
+        this.imagenPortadaUrl = '';
         this._cdr.markForCheck();
     }
 
@@ -446,19 +481,44 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     // GESTIÓN DE CAMPOS DINÁMICOS
     // =========================================================================
 
-    agregarCampo(): void {
+    agregarCampo(tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel' | 'matrix' | 'section' = 'input'): void {
         const nuevoOrden = this.campos.length + 1;
         const nuevoCampo: CampoConfig = {
             id: 'campo_' + Date.now().toString(36),
-            tipo: 'input',
-            etiqueta: `Pregunta ${nuevoOrden}`,
-            placeholder: 'Escribe tu respuesta aquí...',
-            requerido: false,
+            tipo: tipo,
+            etiqueta: tipo === 'section' ? `SECCIÓN ${nuevoOrden}: NUEVO BLOQUE` : (tipo === 'matrix' ? 'Matriz de Evaluación de Calidad' : `Pregunta ${nuevoOrden}`),
+            placeholder: tipo === 'section' ? 'Subtítulo o descripción de la sección...' : 'Escribe tu respuesta aquí...',
+            requerido: tipo !== 'section',
             ancho: 'full',
             orden: nuevoOrden,
-            paso: this.diseno.modoPasos ? 1 : undefined
+            paso: this.diseno.modoPasos ? 1 : undefined,
+            opciones: (tipo === 'radio' || tipo === 'select' || tipo === 'checkbox') ? ['Excelente', 'Bueno', 'Regular', 'Malo'] : undefined,
+            filasMatriz: tipo === 'matrix' ? [
+                { id: 'f1', texto: 'Atención y asesoría técnica del personal', subtexto: 'Disposición y amabilidad' },
+                { id: 'f2', texto: 'Calidad de acabados y especificaciones', subtexto: 'Cumplimiento de estándares de ingeniería' },
+                { id: 'f3', texto: 'Tiempo y puntualidad de entrega', subtexto: 'Cumplimiento del cronograma convenido' }
+            ] : undefined,
+            columnasMatriz: tipo === 'matrix' ? [
+                { valor: '1', etiqueta: '1 ⭐' },
+                { valor: '2', etiqueta: '2 ⭐' },
+                { valor: '3', etiqueta: '3 ⭐' },
+                { valor: '4', etiqueta: '4 ⭐' },
+                { valor: '5', etiqueta: '5 ⭐' }
+            ] : undefined
         };
         this.campos.push(nuevoCampo);
+        this._cdr.markForCheck();
+    }
+
+    duplicarCampo(index: number): void {
+        const orig = this.campos[index];
+        const copia: CampoConfig = JSON.parse(JSON.stringify(orig));
+        copia.id = 'campo_' + Date.now().toString(36);
+        copia.etiqueta = `${copia.etiqueta} (Copia)`;
+        copia.orden = this.campos.length + 1;
+        this.campos.splice(index + 1, 0, copia);
+        this.reordenarCampos();
+        this._snackBar.open('Campo duplicado', 'Cerrar', { duration: 2000 });
         this._cdr.markForCheck();
     }
 
@@ -512,6 +572,23 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     eliminarOpcion(campo: CampoConfig, optIndex: number): void {
         if (!campo.opciones) return;
         campo.opciones.splice(optIndex, 1);
+        this._cdr.markForCheck();
+    }
+
+    agregarFilaMatriz(campo: CampoConfig): void {
+        if (!campo.filasMatriz) campo.filasMatriz = [];
+        const num = campo.filasMatriz.length + 1;
+        campo.filasMatriz.push({
+            id: 'f_' + Date.now().toString(36),
+            texto: `Nuevo Criterio ${num}`,
+            subtexto: 'Descripción del criterio de evaluación'
+        });
+        this._cdr.markForCheck();
+    }
+
+    eliminarFilaMatriz(campo: CampoConfig, filaIndex: number): void {
+        if (!campo.filasMatriz || campo.filasMatriz.length <= 1) return;
+        campo.filasMatriz.splice(filaIndex, 1);
         this._cdr.markForCheck();
     }
 

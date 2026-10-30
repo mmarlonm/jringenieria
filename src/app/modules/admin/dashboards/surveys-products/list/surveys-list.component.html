@@ -150,7 +150,7 @@
 
                         <!-- IMAGEN / PORTADA DE TARJETA -->
                         <div class="relative h-36 bg-slate-900 overflow-hidden">
-                            <img [src]="form.imagenPortadaUrl || 'assets/images/cards/08-320x200.jpg'"
+                            <img [src]="form.imagenPortadaUrl || 'assets/images/surveys/tableros-electricos.jpg'"
                                  alt="Portada"
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80">
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
@@ -327,123 +327,113 @@
     <!-- VISTA 2: EDITOR Y CONSTRUCTOR EN TIEMPO REAL                              -->
     <!-- ========================================================================= -->
     <ng-container *ngIf="vistaActual === 'editor'">
-        <div class="flex flex-col flex-auto h-screen overflow-hidden">
+        <!-- HEADER BAR DEL EDITOR -->
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
+            <div class="flex items-center gap-3 min-w-0">
+                <button (click)="volverAListado()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-shrink-0">
+                    <mat-icon class="text-sm">arrow_back</mat-icon>
+                    <span>Volver</span>
+                </button>
 
-            <!-- BARRA SUPERIOR DEL EDITOR (STICKY TOOLBAR) -->
-            <header class="h-16 px-6 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0 z-20">
-                <div class="flex items-center gap-3">
-                    <button (click)="volverAListado()"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                        <mat-icon class="text-sm">arrow_back</mat-icon>
-                        <span>Volver</span>
+                <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1 flex-shrink-0"></div>
+
+                <div class="flex items-center gap-2 min-w-0">
+                    <input type="text"
+                           [(ngModel)]="titulo"
+                           (blur)="generarSlugAutomatico()"
+                           class="text-base font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-emerald-500 focus:outline-none px-1 py-0.5 max-w-sm sm:max-w-md truncate">
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 flex-shrink-0">
+                        /{{ slug }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- CONTROLES CENTRALES: SWITCHER DE DISPOSITIVO PARA SIMULADOR -->
+            <div class="hidden md:flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                <button (click)="previewDevice = 'desktop'"
+                        [class.active-device]="previewDevice === 'desktop'"
+                        class="device-btn"
+                        matTooltip="Vista Escritorio">
+                    <mat-icon class="text-sm">computer</mat-icon>
+                    <span>Desktop</span>
+                </button>
+                <button (click)="previewDevice = 'tablet'"
+                        [class.active-device]="previewDevice === 'tablet'"
+                        class="device-btn"
+                        matTooltip="Vista Tablet">
+                    <mat-icon class="text-sm">tablet_mac</mat-icon>
+                    <span>Tablet</span>
+                </button>
+                <button (click)="previewDevice = 'mobile'"
+                        [class.active-device]="previewDevice === 'mobile'"
+                        class="device-btn"
+                        matTooltip="Vista Móvil">
+                    <mat-icon class="text-sm">smartphone</mat-icon>
+                    <span>Móvil</span>
+                </button>
+            </div>
+
+            <!-- ACCIONES DERECHA -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <button (click)="abrirEnNuevaPestana(slug)"
+                        class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <mat-icon class="text-xs">open_in_new</mat-icon>
+                    <span>Probar Enlace</span>
+                </button>
+
+                <button (click)="guardarFormulario()"
+                        [disabled]="saving"
+                        class="inline-flex items-center justify-center px-5 py-2 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/25 transition-all text-xs cursor-pointer">
+                    <mat-icon *ngIf="saving" class="animate-spin text-sm mr-1">refresh</mat-icon>
+                    <mat-icon *ngIf="!saving" class="text-sm mr-1">save</mat-icon>
+                    <span>{{ saving ? 'Guardando...' : 'Guardar Cambios' }}</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CUERPO PRINCIPAL: 2 COLUMNAS (EDITOR IZQ / PREVIEW DER) -->
+        <div class="flex-auto flex flex-col lg:flex-row min-h-[calc(100vh-73px)]">
+
+            <!-- COLUMNA IZQUIERDA: PANELES DE CONFIGURACIÓN CON TABS -->
+            <div class="w-full lg:w-1/2 flex flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 min-w-0">
+
+                <!-- PESTAÑAS DE CONFIGURACIÓN (SIEMPRE FIJAS Y NUNCA SE ENCOGEN) -->
+                <div class="flex border-b border-slate-200 dark:border-slate-700 px-4 pt-2 gap-1 overflow-x-auto bg-slate-50/50 dark:bg-slate-800 flex-shrink-0 z-10">
+                    <button (click)="activeTab = 'general'"
+                            [class.active-tab]="activeTab === 'general'"
+                            class="tab-btn">
+                        <mat-icon class="text-sm mr-1.5">image</mat-icon>
+                        General & Portada
                     </button>
-
-                    <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-                    <div class="flex items-center gap-2">
-                        <input type="text"
-                               [(ngModel)]="titulo"
-                               (blur)="generarSlugAutomatico()"
-                               class="text-base font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-emerald-500 focus:outline-none px-1 py-0.5 max-w-sm sm:max-w-md">
-                        <span class="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500">
-                            /{{ slug }}
-                        </span>
-                    </div>
+                    <button (click)="activeTab = 'campos'"
+                            [class.active-tab]="activeTab === 'campos'"
+                            class="tab-btn">
+                        <mat-icon class="text-sm mr-1.5">list_alt</mat-icon>
+                        Preguntas ({{ campos.length }})
+                    </button>
+                    <button (click)="activeTab = 'diseno'"
+                            [class.active-tab]="activeTab === 'diseno'"
+                            class="tab-btn">
+                        <mat-icon class="text-sm mr-1.5">palette</mat-icon>
+                        Diseño de Card
+                    </button>
+                    <button (click)="activeTab = 'enlace'"
+                            [class.active-tab]="activeTab === 'enlace'"
+                            class="tab-btn">
+                        <mat-icon class="text-sm mr-1.5">link</mat-icon>
+                        Enlace & QR
+                    </button>
+                    <button (click)="activeTab = 'respuestas'"
+                            [class.active-tab]="activeTab === 'respuestas'"
+                            class="tab-btn">
+                        <mat-icon class="text-sm mr-1.5">group</mat-icon>
+                        Respuestas ({{ totalRespuestasGeneral }})
+                    </button>
                 </div>
 
-                <!-- CONTROLES CENTRALES: SWITCHER DE DISPOSITIVO PARA SIMULADOR -->
-                <div class="hidden md:flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
-                    <button (click)="previewDevice = 'desktop'"
-                            [class.bg-white]="previewDevice === 'desktop'"
-                            [class.dark:bg-slate-800]="previewDevice === 'desktop'"
-                            [class.shadow-sm]="previewDevice === 'desktop'"
-                            class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-                            matTooltip="Vista Escritorio">
-                        <mat-icon class="text-sm">computer</mat-icon>
-                        <span>Desktop</span>
-                    </button>
-                    <button (click)="previewDevice = 'tablet'"
-                            [class.bg-white]="previewDevice === 'tablet'"
-                            [class.dark:bg-slate-800]="previewDevice === 'tablet'"
-                            [class.shadow-sm]="previewDevice === 'tablet'"
-                            class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-                            matTooltip="Vista Tablet">
-                        <mat-icon class="text-sm">tablet_mac</mat-icon>
-                        <span>Tablet</span>
-                    </button>
-                    <button (click)="previewDevice = 'mobile'"
-                            [class.bg-white]="previewDevice === 'mobile'"
-                            [class.dark:bg-slate-800]="previewDevice === 'mobile'"
-                            [class.shadow-sm]="previewDevice === 'mobile'"
-                            class="px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-                            matTooltip="Vista Móvil">
-                        <mat-icon class="text-sm">smartphone</mat-icon>
-                        <span>Móvil</span>
-                    </button>
-                </div>
-
-                <!-- ACCIONES DERECHA -->
-                <div class="flex items-center gap-3">
-                    <button (click)="abrirEnNuevaPestana(slug)"
-                            class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                        <mat-icon class="text-xs">open_in_new</mat-icon>
-                        <span>Probar Enlace</span>
-                    </button>
-
-                    <button (click)="guardarFormulario()"
-                            [disabled]="saving"
-                            class="inline-flex items-center justify-center px-5 py-2 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/25 transition-all text-xs cursor-pointer">
-                        <mat-icon *ngIf="saving" class="animate-spin text-sm mr-1">refresh</mat-icon>
-                        <mat-icon *ngIf="!saving" class="text-sm mr-1">save</mat-icon>
-                        <span>{{ saving ? 'Guardando...' : 'Guardar Cambios' }}</span>
-                    </button>
-                </div>
-            </header>
-
-            <!-- CONTENEDOR SPLIT: CONFIGURACIÓN IZQUIERDA VS SIMULADOR DERECHA -->
-            <div class="flex flex-auto overflow-hidden">
-
-                <!-- COLUMNA IZQUIERDA: PANELES DE CONFIGURACIÓN CON TABS -->
-                <div class="w-full lg:w-1/2 xl:w-5/12 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 overflow-y-auto">
-
-                    <!-- PESTAÑAS DE CONFIGURACIÓN -->
-                    <div class="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-10 px-6 pt-4 border-b border-slate-200 dark:border-slate-700 flex gap-1 overflow-x-auto">
-                        <button (click)="activeTab = 'general'"
-                                [class.border-emerald-600]="activeTab === 'general'"
-                                [class.text-emerald-600]="activeTab === 'general'"
-                                [class.dark:text-emerald-400]="activeTab === 'general'"
-                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
-                            <mat-icon class="text-sm">settings</mat-icon>
-                            <span>General</span>
-                        </button>
-                        <button (click)="activeTab = 'campos'"
-                                [class.border-emerald-600]="activeTab === 'campos'"
-                                [class.text-emerald-600]="activeTab === 'campos'"
-                                [class.dark:text-emerald-400]="activeTab === 'campos'"
-                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
-                            <mat-icon class="text-sm">format_list_bulleted</mat-icon>
-                            <span>Preguntas ({{ campos.length }})</span>
-                        </button>
-                        <button (click)="activeTab = 'diseno'"
-                                [class.border-emerald-600]="activeTab === 'diseno'"
-                                [class.text-emerald-600]="activeTab === 'diseno'"
-                                [class.dark:text-emerald-400]="activeTab === 'diseno'"
-                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
-                            <mat-icon class="text-sm">palette</mat-icon>
-                            <span>Diseño</span>
-                        </button>
-                        <button (click)="activeTab = 'enlace'"
-                                [class.border-emerald-600]="activeTab === 'enlace'"
-                                [class.text-emerald-600]="activeTab === 'enlace'"
-                                [class.dark:text-emerald-400]="activeTab === 'enlace'"
-                                class="px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 border-transparent transition-all whitespace-nowrap flex items-center gap-1.5">
-                            <mat-icon class="text-sm">share</mat-icon>
-                            <span>Compartir</span>
-                        </button>
-                    </div>
-
-                    <!-- CONTENIDO DE PESTAÑAS -->
-                    <div class="p-6 space-y-6 flex-auto">
+                <!-- CONTENIDO DE PESTAÑAS (SCROLL INTERNO) -->
+                <div class="flex-auto p-6 overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar min-w-0">
 
                         <!-- PESTAÑA: GENERAL -->
                         <div *ngIf="activeTab === 'general'" class="space-y-5 animate-fade-in">
@@ -468,23 +458,89 @@
                                 </div>
                             </div>
 
-                            <!-- PRESETS DE PORTADA -->
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Imagen de Portada / Banner</label>
-                                <div class="grid grid-cols-2 gap-2 mb-2">
-                                    <div *ngFor="let p of portadasPresets"
-                                         (click)="imagenPortadaUrl = p.url"
-                                         [class.ring-2]="imagenPortadaUrl === p.url"
-                                         [class.ring-emerald-500]="imagenPortadaUrl === p.url"
-                                         class="relative h-20 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-slate-700 group">
-                                        <img [src]="p.url" alt="" class="w-full h-full object-cover">
-                                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 flex items-end p-2 transition-colors">
-                                            <span class="text-[10px] font-bold text-white truncate">{{ p.nombre }}</span>
+                            <!-- CONFIGURACIÓN DE PORTADA / BANNER -->
+                            <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                            <mat-icon class="text-emerald-500 text-base">image</mat-icon>
+                                            Imagen de Portada / Banner
+                                        </h3>
+                                        <p class="text-xs text-slate-400 mt-0.5">Se mostrará en la cabecera superior de la encuesta para tus clientes.</p>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-1 rounded-lg">
+                                        16:9 HD
+                                    </span>
+                                </div>
+
+                                <!-- PREVIEW DE PORTADA ACTUAL -->
+                                <div class="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center group shadow-inner">
+                                    <img *ngIf="imagenPortadaUrl" [src]="imagenPortadaUrl" alt="Portada"
+                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                    <div *ngIf="!imagenPortadaUrl" class="text-center text-slate-400 p-4">
+                                        <mat-icon class="text-4xl mb-1 text-slate-500">add_photo_alternate</mat-icon>
+                                        <p class="text-xs font-medium">Sin imagen de portada configurada</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">Selecciona un preset o sube tu propia foto abajo</p>
+                                    </div>
+                                    <div *ngIf="imagenPortadaUrl" class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-between p-3.5">
+                                        <div class="min-w-0 pr-2">
+                                            <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-black/50 px-2 py-0.5 rounded backdrop-blur-sm">JR Ingeniería Eléctrica</span>
+                                            <p class="text-xs font-bold text-white truncate drop-shadow mt-1">{{ titulo || 'Previsualización del título' }}</p>
+                                        </div>
+                                        <button (click)="eliminarPortada()" type="button"
+                                                class="px-2.5 py-1 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-[11px] font-bold backdrop-blur-sm transition-colors flex items-center gap-1 shadow">
+                                            <mat-icon class="text-xs">delete</mat-icon>
+                                            Quitar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- CONTROLES: SUBIR FOTO O INGRESAR URL -->
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                                        Ingresar o Subir Foto
+                                    </label>
+                                    <div class="flex flex-col sm:flex-row gap-2.5">
+                                        <div class="relative flex-1">
+                                            <input type="text" [(ngModel)]="imagenPortadaUrl"
+                                                   placeholder="Pega un enlace URL directo (https://...)"
+                                                   class="w-full pl-8 pr-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                                            <mat-icon class="absolute left-2.5 top-2.5 text-slate-400 text-sm">link</mat-icon>
+                                        </div>
+
+                                        <label class="cursor-pointer inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow transition-all whitespace-nowrap">
+                                            <mat-icon class="text-sm mr-1.5">upload_file</mat-icon>
+                                            Subir Foto de mi Equipo
+                                            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
+                                        </label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400">Puedes subir archivos JPG, PNG o WebP desde tu computadora o celular, o pegar cualquier URL.</p>
+                                </div>
+
+                                <!-- GALERÍA DE PORTADAS PRESET (JR INGENIERÍA) -->
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                        O Elige una Portada de Ingeniería Recomendada:
+                                    </label>
+                                    <div class="grid grid-cols-2 gap-2.5">
+                                        <div *ngFor="let p of portadasPresets"
+                                             (click)="seleccionarPresetPortada(p.url)"
+                                             [class.ring-2]="imagenPortadaUrl === p.url"
+                                             [class.ring-emerald-500]="imagenPortadaUrl === p.url"
+                                             [class.border-emerald-500]="imagenPortadaUrl === p.url"
+                                             class="relative h-24 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-slate-700 group hover:shadow-md transition-all">
+                                            <img [src]="p.url" [alt]="p.nombre" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent group-hover:from-black/70 flex items-end p-2.5 transition-colors">
+                                                <div class="flex items-center justify-between w-full">
+                                                    <span class="text-[11px] font-bold text-white drop-shadow truncate">{{ p.nombre }}</span>
+                                                    <div *ngIf="imagenPortadaUrl === p.url" class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 shadow">
+                                                        <mat-icon class="text-xs">check</mat-icon>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <input type="text" [(ngModel)]="imagenPortadaUrl" placeholder="O pega una URL personalizada..."
-                                       class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:outline-none">
                             </div>
 
                             <!-- ESTADO ACTIVO -->
@@ -499,96 +555,215 @@
 
                         <!-- PESTAÑA: CAMPOS (PREGUNTAS DINÁMICAS) -->
                         <div *ngIf="activeTab === 'campos'" class="space-y-4 animate-fade-in">
-                            <div class="flex items-center justify-between">
-                                <button (click)="cargarPreguntasEstandar()"
-                                        type="button"
-                                        class="px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 flex items-center gap-1">
-                                    <mat-icon class="text-xs">restore</mat-icon>
-                                    <span>Plantilla Estándar ISO</span>
-                                </button>
+                            
+                            <!-- BARRA SUPERIOR: AGREGADO RÁPIDO DE PREGUNTAS -->
+                            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-700/80 space-y-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                            <mat-icon class="text-emerald-400 text-base">format_list_bulleted</mat-icon>
+                                            Preguntas y Criterios de Evaluación
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                                {{ campos.length }} preguntas
+                                            </span>
+                                        </h3>
+                                        <p class="text-xs text-slate-300 mt-0.5">
+                                            Personaliza o añade preguntas para evaluar la satisfacción de tus clientes.
+                                        </p>
+                                    </div>
 
-                                <button (click)="agregarCampo()"
-                                        type="button"
-                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20 flex items-center gap-1 cursor-pointer">
-                                    <mat-icon class="text-xs">add</mat-icon>
-                                    <span>+ Agregar Pregunta</span>
-                                </button>
+                                    <button (click)="cargarPreguntasEstandar()"
+                                            type="button"
+                                            class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-200 border border-emerald-400/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+                                        <mat-icon class="text-xs">restore</mat-icon>
+                                        <span>Plantilla ISO 9001</span>
+                                    </button>
+                                </div>
+
+                                <!-- BOTONES DE COMPONENTES RÁPIDOS -->
+                                <div class="pt-2 border-t border-slate-700/60 flex flex-wrap items-center gap-2">
+                                    <span class="text-[11px] font-semibold text-slate-400 mr-1">Añadir:</span>
+                                    
+                                    <button (click)="agregarCampo('matrix')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-blue-600/80 hover:bg-blue-600 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer">
+                                        <mat-icon class="text-xs">table_chart</mat-icon> + Matriz (1-5)
+                                    </button>
+
+                                    <button (click)="agregarCampo('radio')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer">
+                                        <mat-icon class="text-xs">check_circle</mat-icon> + Calificación (0-10)
+                                    </button>
+
+                                    <button (click)="agregarCampo('input')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                        <mat-icon class="text-xs">edit</mat-icon> + Texto
+                                    </button>
+
+                                    <button (click)="agregarCampo('textarea')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                        <mat-icon class="text-xs">notes</mat-icon> + Comentarios
+                                    </button>
+
+                                    <button (click)="agregarCampo('select')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                        <mat-icon class="text-xs">arrow_drop_down_circle</mat-icon> + Select
+                                    </button>
+
+                                    <button (click)="agregarCampo('checkbox')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                        <mat-icon class="text-xs">check_box</mat-icon> + Casillas
+                                    </button>
+
+                                    <button (click)="agregarCampo('section')" type="button"
+                                            class="px-2.5 py-1 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                        <mat-icon class="text-xs">bookmark</mat-icon> + Sección
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- LISTA DE PREGUNTAS -->
                             <div class="space-y-3">
                                 <div *ngFor="let campo of campos; let i = index"
-                                     class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 space-y-3 transition-all hover:border-slate-300 dark:hover:border-slate-600">
+                                     class="bg-white dark:bg-slate-800/90 border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow relative"
+                                     [ngClass]="[
+                                         campo.tipo === 'section' ? 'border-purple-300 dark:border-purple-800/80 bg-purple-50/20' :
+                                         campo.tipo === 'matrix' ? 'border-blue-300 dark:border-blue-800/80 bg-blue-50/20' :
+                                         'border-slate-200 dark:border-slate-700/90'
+                                     ]">
                                     
-                                    <div class="flex items-center justify-between gap-2">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-center">
+                                    <!-- BARRA SUPERIOR DEL CAMPO -->
+                                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-700/50">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center">
                                                 {{ i + 1 }}
                                             </span>
-                                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                                {{ campo.tipo }}
+
+                                            <!-- Badge de Tipo -->
+                                            <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                                                  [ngClass]="campo.tipo === 'section' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' :
+                                                             campo.tipo === 'matrix' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
+                                                             'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'">
+                                                {{ campo.tipo === 'section' ? 'Bloque / Sección' : (campo.tipo === 'matrix' ? 'Matriz Escala 1-5' : (campo.tipo === 'radio' ? 'Calificación / Radio' : campo.tipo)) }}
+                                            </span>
+
+                                            <!-- Badge de Paso Asignado -->
+                                            <span *ngIf="diseno.modoPasos"
+                                                  class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                                                Paso {{ campo.paso || 1 }}
+                                            </span>
+
+                                            <span *ngIf="campo.requerido && campo.tipo !== 'section'" class="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded">
+                                                Obligatorio
                                             </span>
                                         </div>
 
+                                        <!-- Acciones del Campo -->
                                         <div class="flex items-center gap-1">
-                                            <button (click)="moverCampo(i, 'arriba')" [disabled]="i === 0" class="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30">
+                                            <button (click)="moverCampo(i, 'arriba')" [disabled]="i === 0" type="button" class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer" matTooltip="Mover arriba">
                                                 <mat-icon class="text-sm">arrow_upward</mat-icon>
                                             </button>
-                                            <button (click)="moverCampo(i, 'abajo')" [disabled]="i === campos.length - 1" class="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30">
+                                            <button (click)="moverCampo(i, 'abajo')" [disabled]="i === campos.length - 1" type="button" class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer" matTooltip="Mover abajo">
                                                 <mat-icon class="text-sm">arrow_downward</mat-icon>
                                             </button>
-                                            <button (click)="eliminarCampo(i)" class="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg">
+                                            <button (click)="duplicarCampo(i)" type="button" class="p-1 text-slate-400 hover:text-blue-600 cursor-pointer" matTooltip="Duplicar">
+                                                <mat-icon class="text-sm">content_copy</mat-icon>
+                                            </button>
+                                            <button (click)="eliminarCampo(i)" type="button" class="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer" matTooltip="Eliminar">
                                                 <mat-icon class="text-sm">delete</mat-icon>
                                             </button>
                                         </div>
                                     </div>
 
-                                    <!-- TÍTULO DE PREGUNTA -->
-                                    <div>
-                                        <input type="text" [(ngModel)]="campo.etiqueta" placeholder="Escribe el texto de la pregunta..."
-                                               class="w-full px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                    </div>
+                                    <!-- PROPIEDADES DEL CAMPO -->
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 text-xs">
+                                        <!-- Texto de Pregunta -->
+                                        <div [ngClass]="campo.tipo === 'section' ? 'md:col-span-8' : 'md:col-span-6'">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                                                {{ campo.tipo === 'section' ? 'Título de la Sección *' : 'Pregunta / Criterio *' }}
+                                            </label>
+                                            <input [(ngModel)]="campo.etiqueta" type="text"
+                                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                                   [placeholder]="campo.tipo === 'section' ? 'Ej: EVALUACIÓN DE CALIDAD' : 'Escribe el texto de la pregunta...'">
+                                        </div>
 
-                                    <!-- CONFIGURACIÓN RÁPIDA -->
-                                    <div class="grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo de Campo</label>
-                                            <select [(ngModel)]="campo.tipo" class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs">
-                                                <option *ngFor="let tc of tiposCampo" [value]="tc.value">{{ tc.label }}</option>
+                                        <!-- Tipo de Componente -->
+                                        <div class="md:col-span-3">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Tipo</label>
+                                            <select [(ngModel)]="campo.tipo"
+                                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none">
+                                                <option *ngFor="let t of tiposCampo" [value]="t.value">{{ t.label }}</option>
                                             </select>
                                         </div>
 
-                                        <div *ngIf="diseno.modoPasos">
-                                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Paso Asignado</label>
-                                            <select [(ngModel)]="campo.paso" class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs">
-                                                <option *ngFor="let p of diseno.pasos" [value]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
+                                        <!-- Paso Asignado -->
+                                        <div *ngIf="diseno.modoPasos" class="md:col-span-3">
+                                            <label class="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Paso Asignado</label>
+                                            <select [(ngModel)]="campo.paso"
+                                                    class="w-full px-3 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/40 text-slate-900 dark:text-white font-bold outline-none">
+                                                <option *ngFor="let p of diseno.pasos" [ngValue]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
                                             </select>
+                                        </div>
+
+                                        <!-- Placeholder / Subtítulo -->
+                                        <div class="md:col-span-9">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Texto de ayuda o instrucción</label>
+                                            <input [(ngModel)]="campo.placeholder" type="text"
+                                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none"
+                                                   placeholder="Ej: Indique en una escala del 0 al 10...">
+                                        </div>
+
+                                        <!-- Switch Requerido -->
+                                        <div *ngIf="campo.tipo !== 'section'" class="md:col-span-3 flex items-end pb-1.5">
+                                            <mat-slide-toggle [(ngModel)]="campo.requerido" color="primary" class="text-xs">
+                                                Obligatorio
+                                            </mat-slide-toggle>
                                         </div>
                                     </div>
 
-                                    <!-- OPCIONES (SI ES RADIO O SELECT O CHECKBOX) -->
-                                    <div *ngIf="campo.tipo === 'radio' || campo.tipo === 'select' || campo.tipo === 'checkbox'" class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                    <!-- CONFIGURADOR DE MATRIZ LIKERT -->
+                                    <div *ngIf="campo.tipo === 'matrix'" class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-slate-900/60 p-3.5 rounded-xl space-y-3">
                                         <div class="flex items-center justify-between">
-                                            <span class="text-[10px] font-bold uppercase text-slate-400">Opciones de Respuesta</span>
-                                            <button (click)="agregarOpcion(campo)" type="button" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                            <span class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                                                <mat-icon class="text-sm">view_list</mat-icon>
+                                                Criterios / Filas de la Matriz:
+                                            </span>
+                                            <button (click)="agregarFilaMatriz(campo)" type="button" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+                                                + Añadir Criterio
+                                            </button>
+                                        </div>
+
+                                        <div *ngFor="let fila of campo.filasMatriz; let fIdx = index" class="flex items-center gap-2">
+                                            <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+                                                {{ fIdx + 1 }}
+                                            </span>
+                                            <input [(ngModel)]="fila.texto" type="text"
+                                                   class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                                   placeholder="Aspecto o criterio a evaluar...">
+                                            <button (click)="eliminarFilaMatriz(campo, fIdx)" [disabled]="campo.filasMatriz && campo.filasMatriz.length <= 1" type="button" class="text-rose-400 hover:text-rose-600 disabled:opacity-20 cursor-pointer">
+                                                <mat-icon class="text-xs">delete</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- OPCIONES DE RESPUESTA (RADIO / SELECT / CHECKBOX) -->
+                                    <div *ngIf="campo.tipo === 'radio' || campo.tipo === 'select' || campo.tipo === 'checkbox'" 
+                                         class="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[11px] font-bold uppercase text-slate-400">Opciones de Respuesta</span>
+                                            <button (click)="agregarOpcion(campo)" type="button" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
                                                 + Añadir Opción
                                             </button>
                                         </div>
-                                        <div *ngFor="let opt of campo.opciones; let optIdx = index" class="flex items-center gap-1.5">
-                                            <input type="text" [(ngModel)]="campo.opciones![optIdx]" class="w-full px-2.5 py-1 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-                                            <button (click)="eliminarOpcion(campo, optIdx)" class="text-rose-400 hover:text-rose-600">
-                                                <mat-icon class="text-xs">close</mat-icon>
-                                            </button>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <div *ngFor="let opt of campo.opciones; let optIdx = index" class="flex items-center gap-1.5">
+                                                <input type="text" [(ngModel)]="campo.opciones![optIdx]" class="w-full px-2.5 py-1 rounded-lg text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                                <button (click)="eliminarOpcion(campo, optIdx)" type="button" class="text-rose-400 hover:text-rose-600 cursor-pointer">
+                                                    <mat-icon class="text-xs">close</mat-icon>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- TOGGLES -->
-                                    <div class="flex items-center gap-4 text-xs pt-1">
-                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                                            <input type="checkbox" [(ngModel)]="campo.requerido" class="rounded text-emerald-600">
-                                            <span class="font-semibold text-slate-600 dark:text-slate-300">Obligatorio</span>
-                                        </label>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -735,15 +910,46 @@
                     </div>
                 </div>
 
-                <!-- COLUMNA DERECHA: SIMULADOR INTERACTIVO EN TIEMPO REAL -->
-                <div class="hidden lg:flex lg:w-1/2 xl:w-7/12 flex-col items-center justify-center p-6 bg-slate-100 dark:bg-slate-950 overflow-y-auto">
+                <!-- COLUMNA DERECHA: SIMULADOR INTERACTIVO EN TIEMPO REAL (50% en desktop) -->
+                <div class="hidden lg:flex w-full lg:w-1/2 flex-col bg-slate-100/70 dark:bg-slate-900/50 relative overflow-hidden min-w-0">
                     
-                    <div class="transition-all duration-300 w-full flex justify-center"
-                         [ngClass]="{
-                             'max-w-2xl': previewDevice === 'desktop',
-                             'max-w-md': previewDevice === 'tablet',
-                             'max-w-sm': previewDevice === 'mobile'
-                         }">
+                    <!-- BARRA SUPERIOR DEL SIMULADOR -->
+                    <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between flex-shrink-0 z-10">
+                        <div class="flex items-center gap-2">
+                            <mat-icon class="text-emerald-600 text-sm">visibility</mat-icon>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Simulador en Vivo</span>
+                        </div>
+
+                        <!-- Selector de dispositivo -->
+                        <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <button (click)="previewDevice = 'desktop'" [class.active-device]="previewDevice === 'desktop'" class="device-btn" type="button">
+                                <mat-icon class="text-xs">computer</mat-icon>
+                                <span>Desktop</span>
+                            </button>
+                            <button (click)="previewDevice = 'tablet'" [class.active-device]="previewDevice === 'tablet'" class="device-btn" type="button">
+                                <mat-icon class="text-xs">tablet_mac</mat-icon>
+                                <span>Tablet</span>
+                            </button>
+                            <button (click)="previewDevice = 'mobile'" [class.active-device]="previewDevice === 'mobile'" class="device-btn" type="button">
+                                <mat-icon class="text-xs">smartphone</mat-icon>
+                                <span>Móvil</span>
+                            </button>
+                        </div>
+
+                        <button (click)="reiniciarSimulador()" type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer" matTooltip="Reiniciar simulador">
+                            <mat-icon class="text-sm">restart_alt</mat-icon>
+                        </button>
+                    </div>
+
+                    <!-- CONTENEDOR CON SCROLL DEL SIMULADOR -->
+                    <div class="flex-auto p-6 overflow-y-auto flex items-start justify-center custom-scrollbar">
+                        
+                        <div class="transition-all duration-300 w-full flex justify-center py-4"
+                             [ngClass]="{
+                                 'max-w-2xl': previewDevice === 'desktop',
+                                 'max-w-md': previewDevice === 'tablet',
+                                 'max-w-sm': previewDevice === 'mobile'
+                             }">
 
                         <!-- TARJETA DEL SIMULADOR (REFLEJA DISEÑO EN VIVO) -->
                         <div class="w-full overflow-hidden shadow-2xl transition-all duration-300 border"
@@ -759,7 +965,7 @@
                                      'h-36': diseno.alturaPortada === 'medium',
                                      'h-48': diseno.alturaPortada === 'tall'
                                  }">
-                                <img [src]="imagenPortadaUrl || 'assets/images/cards/08-320x200.jpg'" alt=""
+                                <img [src]="imagenPortadaUrl || 'assets/images/surveys/tableros-electricos.jpg'" alt=""
                                      class="w-full h-full object-cover opacity-85">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                                 <div class="absolute bottom-3 left-4 right-4 text-white">

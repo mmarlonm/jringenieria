@@ -1,3 +1,95 @@
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
+
+    &:hover {
+        color: #0f172a;
+    }
+
+    &.active-tab {
+        color: #059669;
+        border-bottom-color: #059669;
+        font-weight: 800;
+    }
+}
+
+:host-context(.dark) .tab-btn {
+    color: #94a3b8;
+
+    &:hover {
+        color: #f8fafc;
+    }
+
+    &.active-tab {
+        color: #34d399;
+        border-bottom-color: #34d399;
+        font-weight: 800;
+    }
+}
+
+.device-btn {
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.5rem;
+    color: #64748b;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    &:hover {
+        color: #0f172a;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    &.active-device {
+        background-color: white;
+        color: #059669;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-weight: 700;
+    }
+}
+
+:host-context(.dark) .device-btn {
+    color: #94a3b8;
+
+    &:hover {
+        color: #f8fafc;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active-device {
+        background-color: #1e293b;
+        color: #34d399;
+    }
+}
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.2) transparent;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(100, 116, 139, 0.2);
+        border-radius: 9999px;
+    }
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -11,25 +103,6 @@
 
 .animate-fade-in {
     animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Custom scrollbars for configurator panels */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.4);
-    border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.6);
 }
 
 .line-clamp-1 {
