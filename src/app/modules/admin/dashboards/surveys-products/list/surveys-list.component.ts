@@ -939,18 +939,75 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
 
 
+    guardarComoNueva(): void {
+        if (!this.titulo.trim()) {
+            this._snackBar.open('El título de la encuesta es obligatorio', 'Cerrar', { duration: 3000 });
+            this.activeTab = 'general';
+            return;
+        }
+
+        const baseSlug = this.slug.replace(/-(copia|[a-z0-9]{4,6})$/gi, '');
+        const nuevoSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 6)}`.toLowerCase();
+
+        this.saving = true;
+
+        const dto: FormularioProductoSaveDto = {
+            id: 0,
+            slug: nuevoSlug,
+            titulo: `${this.titulo.trim()} (Nueva)`,
+            descripcion: this.descripcion.trim(),
+            imagenPortadaUrl: this.imagenPortadaUrl,
+            camposConfigJson: JSON.stringify(this.campos),
+            disenoConfigJson: JSON.stringify(this.diseno),
+            tipo: this.tipo,
+            sucursalId: this.sucursalId,
+            activo: this.activo
+        };
+
+        this._surveyService.guardarFormulario(dto)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    this.saving = false;
+                    this.currentFormId = res.id;
+                    this.slug = res.slug;
+                    this.titulo = res.titulo;
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Nueva Encuesta Creada!',
+                        text: `Se ha guardado como una nueva encuesta con enlace: /${res.slug}`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                    this.cargarListado();
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.saving = false;
+                    Swal.fire('Error', err?.error?.message || 'Error al guardar la nueva encuesta.', 'error');
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
     generarSlugAutomatico(): void {
-
-        const base = this.titulo.toLowerCase()
-
+        let base = this.titulo.toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-
             .replace(/[^a-z0-9]+/g, '-')
-
             .replace(/^-+|-+$/g, '');
 
-        this.slug = base || ('encuesta-' + Math.random().toString(36).substring(2, 6));
+        if (!base) {
+            base = 'encuesta-' + Math.random().toString(36).substring(2, 6);
+        }
 
+        if (this.currentFormId === 0) {
+            const repetido = this.formulariosList.some(f => f.slug.toLowerCase() === base.toLowerCase());
+            if (repetido) {
+                base = `${base}-${Math.random().toString(36).substring(2, 6)}`;
+            }
+        }
+
+        this.slug = base;
     }
 
 
