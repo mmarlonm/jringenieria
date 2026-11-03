@@ -191,11 +191,25 @@ export class DetailComponent implements OnInit {
     }
   }
 
-  get camposDelPasoActual(): CampoConfig[] {
-    if (!this.disenoDinamico?.modoPasos) {
-      return this.camposDinamicos;
+  esCampoVisible(campo: CampoConfig): boolean {
+    if (!campo.dependeDeCampoId) return true;
+    const valorPadre = this.respuestasDinamicas[campo.dependeDeCampoId];
+    if (valorPadre === undefined || valorPadre === null || valorPadre === '') return false;
+
+    const valorEsperado = (campo.dependeDeValor || '').trim().toLowerCase();
+    const valorActualStr = String(valorPadre).trim().toLowerCase();
+
+    if (campo.dependeDeOperador === 'contains') {
+      return valorActualStr.includes(valorEsperado);
     }
-    return this.camposDinamicos.filter(c => (c.paso || 1) === this.pasoActual);
+    return valorActualStr === valorEsperado;
+  }
+
+  get camposDelPasoActual(): CampoConfig[] {
+    return this.camposDinamicos.filter(c => {
+      const matchPaso = !this.disenoDinamico?.modoPasos || (c.paso || 1) === this.pasoActual;
+      return matchPaso && this.esCampoVisible(c);
+    });
   }
 
   get totalPasosDinamicos(): number {

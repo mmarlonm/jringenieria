@@ -296,28 +296,30 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
 
 
+    
+    camposEstandar = [
+        { value: '', label: 'Personalizado (Sin mapeo especial)' },
+        { value: 'cliente_nombre', label: 'Nombre de Empresa / Cliente' },
+        { value: 'evaluador_contacto', label: 'Nombre y Cargo del Evaluador' },
+        { value: 'evaluador_email', label: 'Correo Electrónico' },
+        { value: 'evaluador_telefono', label: 'Teléfono / WhatsApp' },
+        { value: 'proyecto_producto', label: 'Producto o Solución Recibida' },
+        { value: 'nps_satisfaccion', label: 'Calificación NPS / Recomendación' },
+        { value: 'comentarios_mejora', label: 'Comentarios de Mejora ISO 9001' }
+    ];
+
     tiposCampo = [
-
-        { value: 'radio', label: 'Opción única / Calificación (Radio)', icon: 'check_circle' },
-
-        { value: 'matrix', label: 'Matriz de Escala Likert (1 a 5)', icon: 'table_chart' },
-
-        { value: 'select', label: 'Menú Desplegable (Select)', icon: 'arrow_drop_down_circle' },
-
-        { value: 'checkbox', label: 'Múltiple Opción (Casillas)', icon: 'check_box' },
-
-        { value: 'input', label: 'Texto Corto (Input)', icon: 'edit' },
-
-        { value: 'textarea', label: 'Área de Texto (Comentarios/Párrafo)', icon: 'notes' },
-
-        { value: 'number', label: 'Número', icon: 'tag' },
-
-        { value: 'email', label: 'Correo Electrónico', icon: 'email' },
-
+        { value: 'input', label: 'Texto corto (Input)', icon: 'edit' },
+        { value: 'email', label: 'Correo electrónico', icon: 'alternate_email' },
         { value: 'tel', label: 'Teléfono / WhatsApp', icon: 'phone' },
-
-        { value: 'section', label: 'Separador de Sección / Título', icon: 'bookmark' }
-
+        { value: 'number', label: 'Número', icon: 'tag' },
+        { value: 'select', label: 'Menú desplegable (Select)', icon: 'arrow_drop_down_circle' },
+        { value: 'radio', label: 'Opción única (Radio / Calificación)', icon: 'radio_button_checked' },
+        { value: 'checkbox', label: 'Múltiple opción (Casillas)', icon: 'check_box' },
+        { value: 'matrix', label: 'Tabla / Matriz Escala (1 a 5 / Personalizable)', icon: 'table_chart' },
+        { value: 'section', label: 'Bloque / Separador de Sección', icon: 'bookmark' },
+        { value: 'textarea', label: 'Área de texto (Comentarios/Párrafo)', icon: 'notes' },
+        { value: 'file', label: 'Subir Archivo / Fotografía', icon: 'upload_file' }
     ];
 
 
@@ -1421,11 +1423,10 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
 
     get camposSimuladorPasoActual(): CampoConfig[] {
-
-        if (!this.diseno.modoPasos) return this.campos;
-
-        return this.campos.filter(c => Number(c.paso || 1) === Number(this.pasoSimuladorActual));
-
+        return this.campos.filter(c => {
+            const matchesPaso = !this.diseno.modoPasos || Number(c.paso || 1) === Number(this.pasoSimuladorActual);
+            return matchesPaso && this.esCampoVisible(c);
+        });
     }
 
 
@@ -1700,5 +1701,899 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
     }
 
-}
 
+
+    // =========================================================================
+    // IMPORTACIÓN DESDE WORD / GOOGLE DOCS / TEXTO (IGUAL A EVENTOS)
+    // =========================================================================
+
+    modalImportarWordAbierto = false;
+    metodoImportacion: 'link' | 'archivo' | 'texto' = 'link';
+    urlDocumentoWord = 'https://docs.google.com/document/d/1DLdf22suIpN4s8ag-BYxmqPH31oA3iqn/edit';
+    descargandoUrl = false;
+    procesandoArchivoWord = false;
+    archivoWordSeleccionadoNombre = '';
+    textoWordParaImportar = '';
+    reemplazarCamposWord = true;
+    generarPasosWord = true;
+    resumenWordDetectado: { secciones: number; matrices: number; opciones: number; preguntas: number; total: number } | null = null;
+    camposWordPrevisualizados: CampoConfig[] = [];
+    pasosWordDetectados: PasoFormularioConfig[] = [];
+
+    get pasosDisponibles(): PasoFormularioConfig[] {
+        if (!this.diseno.pasos || this.diseno.pasos.length === 0) {
+            this.diseno.pasos = [
+                { numero: 1, titulo: 'Datos Generales', descripcion: 'Información del evaluador' },
+                { numero: 2, titulo: 'Evaluación Técnica', descripcion: 'Criterios y calidad' }
+            ];
+        }
+        return this.diseno.pasos;
+    }
+
+    toggleModoPasos(activo: boolean): void {
+        this.diseno.modoPasos = activo;
+        if (activo) {
+            if (!this.diseno.pasos || this.diseno.pasos.length === 0) {
+                this.diseno.pasos = [
+                    { numero: 1, titulo: 'Datos Generales' },
+                    { numero: 2, titulo: 'Evaluación de Calidad' },
+                    { numero: 3, titulo: 'Comentarios y Mejora' }
+                ];
+            }
+            this.campos.forEach((c, idx) => {
+                if (!c.paso) c.paso = idx < 4 ? 1 : 2;
+            });
+        }
+        this._cdr.markForCheck();
+    }
+
+    agregarPaso(): void {
+        if (!this.diseno.pasos) this.diseno.pasos = [];
+        const nextNum = this.diseno.pasos.length + 1;
+        this.diseno.pasos.push({
+            numero: nextNum,
+            titulo: `Paso ${nextNum}`
+        });
+        this._cdr.markForCheck();
+    }
+
+    eliminarPaso(numero: number): void {
+        if (!this.diseno.pasos || this.diseno.pasos.length <= 1) {
+            this._snackBar.open('Debe haber al menos 1 paso configurado.', 'Cerrar', { duration: 2500 });
+            return;
+        }
+        this.diseno.pasos = this.diseno.pasos.filter(p => p.numero !== numero);
+        this.diseno.pasos.forEach((p, idx) => p.numero = idx + 1);
+        this.campos.forEach(c => {
+            if (c.paso === numero) c.paso = 1;
+            else if (c.paso && c.paso > numero) c.paso -= 1;
+        });
+        if (this.pasoSimuladorActual > this.diseno.pasos.length) {
+            this.pasoSimuladorActual = this.diseno.pasos.length;
+        }
+        this._cdr.markForCheck();
+    }
+
+    // =========================================================================
+    // LÓGICA CONDICIONAL Y RELACIÓN PADRE/HIJO
+    // =========================================================================
+
+    esCampoVisible(campo: CampoConfig): boolean {
+        if (!campo.dependeDeCampoId) return true;
+        const valorPadre = this.respuestasSimulador[campo.dependeDeCampoId];
+        if (valorPadre === undefined || valorPadre === null || valorPadre === '') return false;
+
+        const valorEsperado = (campo.dependeDeValor || '').trim().toLowerCase();
+        const valorActualStr = String(valorPadre).trim().toLowerCase();
+
+        if (campo.dependeDeOperador === 'contains') {
+            return valorActualStr.includes(valorEsperado);
+        }
+        return valorActualStr === valorEsperado;
+    }
+
+    agregarOpcionOtroConCampo(campo: CampoConfig): void {
+        if (!campo.opciones) campo.opciones = [];
+        const existeOtro = campo.opciones.some(o => o.toLowerCase() === 'otro' || o.toLowerCase().startsWith('otro '));
+        if (!existeOtro) {
+            campo.opciones.push('Otro');
+        }
+
+        const nuevoId = 'campo_' + Date.now();
+        const campoCondicional: CampoConfig = {
+            id: nuevoId,
+            tipo: 'input',
+            etiqueta: `Especifique (si seleccionó "Otro" en ${campo.etiqueta.slice(0, 30)}...):`,
+            placeholder: 'Por favor describa en detalle...',
+            requerido: false,
+            ancho: 'full',
+            orden: campo.orden + 1,
+            paso: campo.paso,
+            dependeDeCampoId: campo.id,
+            dependeDeOperador: 'equals',
+            dependeDeValor: 'Otro'
+        };
+
+        const idxPadre = this.campos.findIndex(c => c.id === campo.id);
+        if (idxPadre >= 0) {
+            this.campos.splice(idxPadre + 1, 0, campoCondicional);
+        } else {
+            this.campos.push(campoCondicional);
+        }
+        this.reordenarCampos();
+        this._snackBar.open('¡Campo complementario condicional vinculado a "Otro" creado!', 'Aceptar', { duration: 3000 });
+        this._cdr.markForCheck();
+    }
+
+    moverCampoDebajoDePadre(campo: CampoConfig, mostrarMensaje: boolean | string = false): void {
+        const padreId = typeof mostrarMensaje === 'string' ? mostrarMensaje : campo.dependeDeCampoId;
+        if (!padreId) return;
+        const parentIdx = this.campos.findIndex(c => c.id === padreId);
+        if (parentIdx === -1) return;
+
+        const padre = this.campos[parentIdx];
+        campo.paso = padre.paso;
+        if (padre.tipo === 'checkbox') {
+            campo.dependeDeOperador = 'contains';
+        } else if (!campo.dependeDeOperador) {
+            campo.dependeDeOperador = 'equals';
+        }
+
+        const currIdx = this.campos.indexOf(campo);
+        if (currIdx === -1) return;
+
+        let targetIdx = parentIdx + 1;
+        while (targetIdx < this.campos.length && this.campos[targetIdx].dependeDeCampoId === padre.id && this.campos[targetIdx].id !== campo.id) {
+            targetIdx++;
+        }
+
+        if (currIdx !== targetIdx && currIdx !== targetIdx - 1) {
+            this.campos.splice(currIdx, 1);
+            const finalIdx = currIdx < targetIdx ? targetIdx - 1 : targetIdx;
+            this.campos.splice(finalIdx, 0, campo);
+            this.reordenarCampos();
+            this._snackBar.open(`Pregunta reubicada justo debajo de "${padre.etiqueta}".`, 'Aceptar', { duration: 2500 });
+            this._cdr.markForCheck();
+        }
+    }
+
+    onCambioDependencia(campo: CampoConfig): void {
+        if (!campo.dependeDeCampoId) {
+            campo.dependeDeOperador = undefined;
+            campo.dependeDeValor = undefined;
+            this._cdr.markForCheck();
+            return;
+        }
+
+        if (!campo.dependeDeOperador) campo.dependeDeOperador = 'equals';
+        const padre = this.campos.find(c => c.id === campo.dependeDeCampoId);
+        if (padre && padre.opciones && padre.opciones.length > 0 && !campo.dependeDeValor) {
+            campo.dependeDeValor = padre.opciones[0];
+        }
+        if (padre && padre.paso) {
+            campo.paso = padre.paso;
+        }
+        this._cdr.markForCheck();
+    }
+
+    obtenerOpcionesDeCampo(campoId: string): string[] {
+        const c = this.campos.find(x => x.id === campoId);
+        return c?.opciones || [];
+    }
+
+    obtenerCampoPorId(campoId: string): CampoConfig | undefined {
+        return this.campos.find(x => x.id === campoId);
+    }
+
+    obtenerCampoHijo(padreId: string, valorOpcion?: string): CampoConfig | undefined {
+        if (valorOpcion) {
+            return this.campos.find(c => c.dependeDeCampoId === padreId && c.dependeDeValor === valorOpcion);
+        }
+        return this.campos.find(x => x.dependeDeCampoId === padreId);
+    }
+
+    // =========================================================================
+    // MATRIZ LIKERT: PRESETS Y COLUMNAS
+    // =========================================================================
+
+    aplicarPresetEscala(campo: CampoConfig, preset: string): void {
+        switch (preset) {
+            case '1-5-na':
+                campo.columnasMatriz = [
+                    { valor: '1', etiqueta: '1 - Muy Malo' },
+                    { valor: '2', etiqueta: '2 - Malo' },
+                    { valor: '3', etiqueta: '3 - Regular' },
+                    { valor: '4', etiqueta: '4 - Bueno' },
+                    { valor: '5', etiqueta: '5 - Excelente' },
+                    { valor: 'NA', etiqueta: 'N/A' }
+                ];
+                campo.escalaNotaInferior = '1 = Totalmente insatisfecho / Muy Malo';
+                campo.escalaNotaSuperior = '5 = Totalmente satisfecho / Excelente';
+                break;
+            case '1-5':
+                campo.columnasMatriz = [
+                    { valor: '1', etiqueta: '1' },
+                    { valor: '2', etiqueta: '2' },
+                    { valor: '3', etiqueta: '3' },
+                    { valor: '4', etiqueta: '4' },
+                    { valor: '5', etiqueta: '5' }
+                ];
+                campo.escalaNotaInferior = '1 = Muy insatisfecho';
+                campo.escalaNotaSuperior = '5 = Totalmente satisfecho';
+                break;
+            case '1-10':
+                campo.columnasMatriz = Array.from({ length: 10 }, (_, i) => ({
+                    valor: String(i + 1),
+                    etiqueta: String(i + 1)
+                }));
+                campo.escalaNotaInferior = '1 = Nada probable';
+                campo.escalaNotaSuperior = '10 = Muy probable';
+                break;
+            case '1-3':
+                campo.columnasMatriz = [
+                    { valor: '1', etiqueta: 'Bajo / Insatisfecho' },
+                    { valor: '2', etiqueta: 'Medio / Conforme' },
+                    { valor: '3', etiqueta: 'Alto / Sobresaliente' }
+                ];
+                campo.escalaNotaInferior = '1 = Requiere atención';
+                campo.escalaNotaSuperior = '3 = Cumple totalmente';
+                break;
+            case 'cualitativa':
+                campo.columnasMatriz = [
+                    { valor: 'deficiente', etiqueta: 'Deficiente' },
+                    { valor: 'regular', etiqueta: 'Regular' },
+                    { valor: 'bueno', etiqueta: 'Bueno' },
+                    { valor: 'excelente', etiqueta: 'Excelente' },
+                    { valor: 'na', etiqueta: 'No Aplica' }
+                ];
+                campo.escalaNotaInferior = 'Deficiente';
+                campo.escalaNotaSuperior = 'Excelente';
+                break;
+        }
+        this._snackBar.open(`Escala "${preset}" aplicada a la matriz.`, 'Aceptar', { duration: 2500 });
+        this._cdr.markForCheck();
+    }
+
+    agregarColumnaMatriz(campo: CampoConfig): void {
+        if (!campo.columnasMatriz) campo.columnasMatriz = [];
+        const nextIdx = campo.columnasMatriz.length + 1;
+        campo.columnasMatriz.push({
+            valor: `col_${nextIdx}`,
+            etiqueta: `Opción ${nextIdx}`
+        });
+        this._cdr.markForCheck();
+    }
+
+    eliminarColumnaMatriz(campo: CampoConfig, idx: number): void {
+        if (!campo.columnasMatriz || campo.columnasMatriz.length <= 1) {
+            this._snackBar.open('La matriz debe tener al menos 1 columna.', 'Cerrar', { duration: 2500 });
+            return;
+        }
+        campo.columnasMatriz.splice(idx, 1);
+        this._cdr.markForCheck();
+    }
+
+    cargarPresetMatrizSatisfaccion(campo: CampoConfig): void {
+        campo.filasMatriz = [
+            { id: 'cumplimiento_especificaciones', texto: '1. Cumplimiento de especificaciones y calidad técnica solicitada' },
+            { id: 'atencion_asesor', texto: '2. Atención, soporte técnico y asesoría por parte del equipo JR' },
+            { id: 'tiempos_entrega', texto: '3. Cumplimiento con los tiempos de entrega pactados' },
+            { id: 'calidad_documentacion', texto: '4. Calidad y claridad de entregables, manuales o documentación técnica' },
+            { id: 'relacion_precio_valor', texto: '5. Relación precio - calidad de la solución recibida' }
+        ];
+        if (!campo.columnasMatriz || campo.columnasMatriz.length === 0) {
+            this.aplicarPresetEscala(campo, '1-5-na');
+        }
+        this._snackBar.open('Aspectos de calidad JR cargados en la matriz.', 'Aceptar', { duration: 2500 });
+        this._cdr.markForCheck();
+    }
+
+    cargarPlantillaSatisfaccionEtapas(): void {
+        this.diseno.modoPasos = true;
+        this.diseno.pasos = [
+            { numero: 1, titulo: 'Datos de la Solución', descripcion: 'Identificación del cliente y equipo' },
+            { numero: 2, titulo: 'Evaluación Técnica', descripcion: 'Matriz de satisfacción ISO 9001' },
+            { numero: 3, titulo: 'Experiencia y Recomendación', descripcion: 'NPS, observaciones y mejora continua' }
+        ];
+
+        this.campos = [
+            {
+                id: 'sec_1',
+                tipo: 'section',
+                etiqueta: 'Paso 1: Información General del Cliente y Solución',
+                placeholder: 'Datos de trazabilidad del proyecto',
+                requerido: false,
+                orden: 1,
+                paso: 1,
+                ancho: 'full'
+            },
+            {
+                id: 'cliente_nombre',
+                tipo: 'input',
+                etiqueta: 'Nombre de la Empresa / Cliente',
+                placeholder: 'Ej: Industrias Metálicas S.A. de C.V.',
+                requerido: true,
+                orden: 2,
+                paso: 1,
+                ancho: 'full'
+            },
+            {
+                id: 'evaluador_contacto',
+                tipo: 'input',
+                etiqueta: 'Nombre y Cargo del Evaluador',
+                placeholder: 'Ej: Ing. Carlos Pérez - Gerente de Planta',
+                requerido: true,
+                orden: 3,
+                paso: 1,
+                ancho: 'half'
+            },
+            {
+                id: 'evaluador_email',
+                tipo: 'email',
+                etiqueta: 'Correo Electrónico de Contacto',
+                placeholder: 'carlos.perez@empresa.com',
+                requerido: true,
+                orden: 4,
+                paso: 1,
+                ancho: 'half'
+            },
+            {
+                id: 'tipo_solucion',
+                tipo: 'radio',
+                etiqueta: 'Tipo de Solución / Proyecto Entregado',
+                opciones: ['Equipo / Tablero Fabricado', 'Servicio de Mantenimiento / Puesta en Marcha', 'Integración y Automatización PLC', 'Otro'],
+                requerido: true,
+                orden: 5,
+                paso: 1,
+                ancho: 'full'
+            },
+            {
+                id: 'tipo_solucion_otro',
+                tipo: 'input',
+                etiqueta: 'Especifique el tipo de solución recibida:',
+                placeholder: 'Describa el producto o servicio recibido...',
+                requerido: false,
+                orden: 6,
+                paso: 1,
+                ancho: 'full',
+                dependeDeCampoId: 'tipo_solucion',
+                dependeDeOperador: 'equals',
+                dependeDeValor: 'Otro'
+            },
+            {
+                id: 'sec_2',
+                tipo: 'section',
+                etiqueta: 'Paso 2: Evaluación Técnica y Calidad del Servicio (Escala 1 al 5)',
+                placeholder: 'Califique cada aspecto con base en su experiencia',
+                requerido: false,
+                orden: 7,
+                paso: 2,
+                ancho: 'full'
+            },
+            {
+                id: 'matriz_satisfaccion',
+                tipo: 'matrix',
+                etiqueta: 'Matriz de Evaluación de Calidad y Servicio JR',
+                placeholder: '1 = Totalmente insatisfecho | 5 = Totalmente satisfecho | NA = No Aplica',
+                requerido: true,
+                orden: 8,
+                paso: 2,
+                ancho: 'full',
+                escalaNotaInferior: '1 = Totalmente insatisfecho / Deficiente',
+                escalaNotaSuperior: '5 = Totalmente satisfecho / Excelente',
+                columnasMatriz: [
+                    { valor: '1', etiqueta: '1 - Muy Malo' },
+                    { valor: '2', etiqueta: '2 - Malo' },
+                    { valor: '3', etiqueta: '3 - Regular' },
+                    { valor: '4', etiqueta: '4 - Bueno' },
+                    { valor: '5', etiqueta: '5 - Excelente' },
+                    { valor: 'NA', etiqueta: 'N/A' }
+                ],
+                filasMatriz: [
+                    { id: 'f1', texto: '1. Calidad y apego a especificaciones del producto / servicio entregado' },
+                    { id: 'f2', texto: '2. Soporte técnico, rapidez y asesoría del equipo de ingeniería' },
+                    { id: 'f3', texto: '3. Cumplimiento de los tiempos de entrega e instalación comprometidos' },
+                    { id: 'f4', texto: '4. Claridad en manuales, certificados y documentación técnica entregada' },
+                    { id: 'f5', texto: '5. Seguridad y orden durante las labores en campo o taller' }
+                ]
+            },
+            {
+                id: 'sec_3',
+                tipo: 'section',
+                etiqueta: 'Paso 3: Recomendación y Acciones de Mejora',
+                placeholder: 'Su opinión es vital para nuestro proceso de mejora continua ISO 9001',
+                requerido: false,
+                orden: 9,
+                paso: 3,
+                ancho: 'full'
+            },
+            {
+                id: 'nps_recomienda',
+                tipo: 'radio',
+                etiqueta: '¿Qué tan probable es que recomiende a JR Ingeniería con colegas o clientes de su industria?',
+                opciones: ['10 - Definitivamente sí', '9', '8', '7', '6', '5 - Neutral', '4', '3', '2', '1 - Definitivamente no'],
+                requerido: true,
+                orden: 10,
+                paso: 3,
+                ancho: 'full'
+            },
+            {
+                id: 'comentarios_mejora',
+                tipo: 'textarea',
+                etiqueta: 'Comentarios, sugerencias o áreas de oportunidad para JR Ingeniería:',
+                placeholder: 'Compártanos cualquier comentario que nos ayude a seguir optimizando nuestras soluciones...',
+                requerido: false,
+                orden: 11,
+                paso: 3,
+                ancho: 'full'
+            }
+        ];
+
+        this.reiniciarSimulador();
+        this._snackBar.open('¡Plantilla integral (3 Pasos + Matriz 1-5 + Lógica Condicional) cargada!', 'Aceptar', { duration: 4000 });
+        this._cdr.markForCheck();
+    }
+
+    // =========================================================================
+    // MODAL IMPORTADOR DE WORD / DOCS / TEXTO
+    // =========================================================================
+
+    abrirModalImportarWord(): void {
+        this.modalImportarWordAbierto = true;
+        this.textoWordParaImportar = '';
+        this.archivoWordSeleccionadoNombre = '';
+        this.resumenWordDetectado = null;
+        this.camposWordPrevisualizados = [];
+        this.pasosWordDetectados = [];
+        this._cdr.markForCheck();
+    }
+
+    cerrarModalImportarWord(): void {
+        this.modalImportarWordAbierto = false;
+        this._cdr.markForCheck();
+    }
+
+    cargarEjemploWord(): void {
+        this.textoWordParaImportar = `SECCIÓN 1: DATOS GENERALES DEL CLIENTE
+1. Nombre de la empresa o cliente evaluador *
+2. Correo electrónico de contacto *
+3. Teléfono de contacto
+4. Tipo de producto recibido *
+( ) Tablero de Control y Automatización
+( ) Subestación o Transformador
+( ) Servicio de Mantenimiento Preventivo
+( ) Otro
+
+5. Si seleccionó Otro, por favor especifique
+
+SECCIÓN 2: EVALUACIÓN DE CALIDAD TÉCNICA
+6. Matriz de Satisfacción del Proyecto *
+[1 - Muy Malo | 2 - Malo | 3 - Regular | 4 - Bueno | 5 - Excelente | NA]
+- Cumplimiento de especificaciones y pruebas de fábrica
+- Tiempos de entrega y respuesta del equipo
+- Soporte técnico y atención personalizada
+- Calidad de documentación técnica y diagramas unifilares
+
+SECCIÓN 3: RECOMENDACIÓN Y MEJORA CONTINUA
+7. ¿Recomendaría a JR Ingeniería para futuros proyectos? *
+( ) Definitivamente sí
+( ) Probablemente sí
+( ) Poco probable
+( ) No
+
+8. Comentarios adicionales y sugerencias de mejora`;
+
+        this.metodoImportacion = 'texto';
+        this.analizarTextoWord();
+        this._cdr.markForCheck();
+    }
+
+    analizarTextoWord(): void {
+        if (!this.textoWordParaImportar || !this.textoWordParaImportar.trim()) {
+            this._snackBar.open('Ingresa o descarga el texto del documento para analizarlo.', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        const lineas = this.textoWordParaImportar.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const camposGenerados: CampoConfig[] = [];
+        const pasosGenerados: PasoFormularioConfig[] = [];
+
+        let pasoActual = 1;
+        let campoActual: Partial<CampoConfig> | null = null;
+        let idCounter = 1;
+
+        const regexSeccion = /^(secci[oó]n|etapa|paso|bloque|m[oó]dulo)\s*([0-9ivx]*)\s*[:.-]?\s*(.*)$/i;
+        const regexPregunta = /^([0-9]+|[a-z]\))\s*[\.\-\)]?\s*(.*)$/i;
+        const regexOpcion = /^(\([x\s*]?\)|\[[x\s*]?\]|[-*•])\s*(.*)$/i;
+        const regexMatrizEscala = /^\[(.*)\]$/;
+        const regexFilaMatriz = /^[-*•]\s*(.*)$/;
+
+        for (let i = 0; i < lineas.length; i++) {
+            const linea = lineas[i];
+
+            if (regexSeccion.test(linea)) {
+                if (campoActual && campoActual.etiqueta) {
+                    camposGenerados.push(campoActual as CampoConfig);
+                    campoActual = null;
+                }
+
+                const matchSec = linea.match(regexSeccion);
+                const tituloSec = matchSec && matchSec[3] ? matchSec[3].trim() : linea;
+
+                if (pasosGenerados.length === 0 || pasosGenerados[pasosGenerados.length - 1].titulo !== tituloSec) {
+                    pasoActual = pasosGenerados.length + 1;
+                    pasosGenerados.push({
+                        numero: pasoActual,
+                        titulo: tituloSec || `Paso ${pasoActual}`
+                    });
+                }
+
+                camposGenerados.push({
+                    id: `sec_${idCounter++}`,
+                    tipo: 'section',
+                    etiqueta: tituloSec || linea,
+                    requerido: false,
+                    orden: camposGenerados.length + 1,
+                    paso: pasoActual,
+                    ancho: 'full'
+                });
+                continue;
+            }
+
+            if (linea.toLowerCase().includes('matriz de') || linea.toLowerCase().includes('evaluación de aspectos') || linea.toLowerCase().includes('califique los siguientes aspectos')) {
+                if (campoActual && campoActual.etiqueta) {
+                    camposGenerados.push(campoActual as CampoConfig);
+                }
+
+                const requerido = linea.includes('*');
+                const etiqueta = linea.replace('*', '').trim();
+
+                campoActual = {
+                    id: `matriz_${idCounter++}`,
+                    tipo: 'matrix',
+                    etiqueta,
+                    requerido,
+                    orden: camposGenerados.length + 1,
+                    paso: pasoActual,
+                    ancho: 'full',
+                    columnasMatriz: [
+                        { valor: '1', etiqueta: '1' },
+                        { valor: '2', etiqueta: '2' },
+                        { valor: '3', etiqueta: '3' },
+                        { valor: '4', etiqueta: '4' },
+                        { valor: '5', etiqueta: '5' },
+                        { valor: 'NA', etiqueta: 'N/A' }
+                    ],
+                    filasMatriz: []
+                };
+                continue;
+            }
+
+            if (campoActual && campoActual.tipo === 'matrix') {
+                if (regexMatrizEscala.test(linea)) {
+                    const contenidoEscala = linea.replace('[', '').replace(']', '').trim();
+                    const cols = contenidoEscala.split('|').map(c => c.trim()).filter(c => c.length > 0);
+                    if (cols.length > 0) {
+                        campoActual.columnasMatriz = cols.map((col, idx) => ({
+                            valor: String(idx + 1),
+                            etiqueta: col
+                        }));
+                    }
+                    continue;
+                }
+
+                if (regexFilaMatriz.test(linea)) {
+                    const matchFila = linea.match(regexFilaMatriz);
+                    const textoFila = matchFila ? matchFila[1].trim() : linea;
+                    if (!campoActual.filasMatriz) campoActual.filasMatriz = [];
+                    campoActual.filasMatriz.push({
+                        id: `f_${Date.now()}_${campoActual.filasMatriz.length + 1}`,
+                        texto: textoFila
+                    });
+                    continue;
+                }
+            }
+
+            if (regexOpcion.test(linea)) {
+                const matchOp = linea.match(regexOpcion);
+                const textoOpcion = matchOp ? matchOp[2].trim() : linea;
+
+                if (!campoActual) {
+                    campoActual = {
+                        id: `campo_${idCounter++}`,
+                        tipo: linea.startsWith('[') ? 'checkbox' : 'radio',
+                        etiqueta: 'Pregunta de opción múltiple',
+                        requerido: false,
+                        orden: camposGenerados.length + 1,
+                        paso: pasoActual,
+                        ancho: 'full',
+                        opciones: []
+                    };
+                } else if (campoActual.tipo !== 'radio' && campoActual.tipo !== 'checkbox' && campoActual.tipo !== 'select') {
+                    campoActual.tipo = linea.startsWith('[') ? 'checkbox' : 'radio';
+                    campoActual.opciones = [];
+                }
+
+                if (!campoActual.opciones) campoActual.opciones = [];
+                campoActual.opciones.push(textoOpcion);
+                continue;
+            }
+
+            if (regexPregunta.test(linea) || linea.endsWith('?') || linea.endsWith(':') || linea.includes('*')) {
+                if (campoActual && campoActual.etiqueta) {
+                    camposGenerados.push(campoActual as CampoConfig);
+                    campoActual = null;
+                }
+
+                const matchPreg = linea.match(regexPregunta);
+                let etiqueta = matchPreg ? matchPreg[2].trim() : linea;
+                const requerido = etiqueta.includes('*');
+                etiqueta = etiqueta.replace('*', '').trim();
+
+                let tipoSugerido: CampoConfig['tipo'] = 'input';
+                const lower = etiqueta.toLowerCase();
+
+                if (lower.includes('correo') || lower.includes('email')) {
+                    tipoSugerido = 'email';
+                } else if (lower.includes('teléfono') || lower.includes('telefono') || lower.includes('whatsapp') || lower.includes('móvil') || lower.includes('celular')) {
+                    tipoSugerido = 'tel';
+                } else if (lower.includes('comentarios') || lower.includes('sugerencias') || lower.includes('observaciones') || lower.includes('describa') || lower.includes('detalle')) {
+                    tipoSugerido = 'textarea';
+                } else if (lower.includes('adjuntar') || lower.includes('archivo') || lower.includes('foto') || lower.includes('evidencia') || lower.includes('subir')) {
+                    tipoSugerido = 'file';
+                }
+
+                campoActual = {
+                    id: `campo_${idCounter++}`,
+                    tipo: tipoSugerido,
+                    etiqueta,
+                    requerido,
+                    orden: camposGenerados.length + 1,
+                    paso: pasoActual,
+                    ancho: (tipoSugerido === 'email' || tipoSugerido === 'tel') ? 'half' : 'full',
+                    placeholder: tipoSugerido === 'textarea' ? 'Escriba aquí...' : ''
+                };
+                continue;
+            }
+
+            if (campoActual) {
+                if (campoActual.tipo === 'input' && linea.length > 50) {
+                    campoActual.tipo = 'textarea';
+                    campoActual.placeholder = linea;
+                } else if (!campoActual.placeholder) {
+                    campoActual.placeholder = linea;
+                }
+            }
+        }
+
+        if (campoActual && campoActual.etiqueta) {
+            camposGenerados.push(campoActual as CampoConfig);
+        }
+
+        if (pasosGenerados.length === 0) {
+            pasosGenerados.push(
+                { numero: 1, titulo: 'Datos Iniciales' },
+                { numero: 2, titulo: 'Evaluación y Calidad' }
+            );
+        }
+
+        this.camposWordPrevisualizados = camposGenerados;
+        this.pasosWordDetectados = pasosGenerados;
+
+        const matrices = camposGenerados.filter(c => c.tipo === 'matrix').length;
+        const secciones = camposGenerados.filter(c => c.tipo === 'section').length;
+        const opciones = camposGenerados.filter(c => c.tipo === 'radio' || c.tipo === 'checkbox' || c.tipo === 'select').length;
+        const preguntas = camposGenerados.length - matrices - secciones;
+
+        this.resumenWordDetectado = {
+            secciones,
+            matrices,
+            opciones,
+            preguntas,
+            total: camposGenerados.length
+        };
+
+        this._snackBar.open(`¡Documento analizado con éxito! Detectados ${camposGenerados.length} componentes.`, 'Aceptar', { duration: 3500 });
+        this._cdr.markForCheck();
+    }
+
+    onArchivoWordSeleccionado(event: any): void {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        this.archivoWordSeleccionadoNombre = file.name;
+        this.procesandoArchivoWord = true;
+        this._cdr.markForCheck();
+
+        if (file.name.endsWith('.txt')) {
+            const reader = new FileReader();
+            reader.onload = (e: any) => {
+                this.procesandoArchivoWord = false;
+                this.textoWordParaImportar = e.target.result || '';
+                this.analizarTextoWord();
+                this._cdr.markForCheck();
+            };
+            reader.readAsText(file);
+        } else {
+            this._surveyService.extraerContenidoArchivo(file)
+                .pipe(takeUntil(this._destroy$))
+                .subscribe({
+                    next: (res) => {
+                        this.procesandoArchivoWord = false;
+                        this.textoWordParaImportar = res.contenido || '';
+                        this.analizarTextoWord();
+                        this._cdr.markForCheck();
+                    },
+                    error: () => {
+                        this.procesandoArchivoWord = false;
+                        this._snackBar.open('No se pudo procesar el archivo Word en el servidor. Puedes copiar el texto y pegarlo en la pestaña "Texto Copiado".', 'Cerrar', { duration: 4500 });
+                        this._cdr.markForCheck();
+                    }
+                });
+        }
+    }
+
+    descargarUrlGoogleDocs(): void {
+        if (!this.urlDocumentoWord || !this.urlDocumentoWord.trim()) {
+            this._snackBar.open('Ingresa el enlace del documento de Google Docs.', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        this.descargandoUrl = true;
+        this._cdr.markForCheck();
+
+        this._surveyService.descargarContenidoUrl(this.urlDocumentoWord.trim())
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    this.descargandoUrl = false;
+                    this.textoWordParaImportar = res.contenido || '';
+                    this.analizarTextoWord();
+                    this._snackBar.open('¡Documento descargado y analizado con éxito desde Google Docs!', 'Aceptar', { duration: 3500 });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.descargandoUrl = false;
+                    const msg = err?.error?.mensaje || 'Error al descargar el contenido del enlace. Verifica que el documento tenga permisos de acceso público o compartido.';
+                    this._snackBar.open(msg, 'Cerrar', { duration: 4000 });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    confirmarImportacionWord(): void {
+        if (!this.camposWordPrevisualizados || this.camposWordPrevisualizados.length === 0) {
+            this._snackBar.open('Primero analiza el documento para generar los componentes.', 'Cerrar', { duration: 3000 });
+            return;
+        }
+
+        if (this.reemplazarCamposWord) {
+            this.campos = [...this.camposWordPrevisualizados];
+        } else {
+            const startOrden = this.campos.length;
+            this.camposWordPrevisualizados.forEach((c, idx) => c.orden = startOrden + idx + 1);
+            this.campos = [...this.campos, ...this.camposWordPrevisualizados];
+        }
+
+        if (this.generarPasosWord && this.pasosWordDetectados && this.pasosWordDetectados.length > 1) {
+            this.diseno.modoPasos = true;
+            this.diseno.pasos = [...this.pasosWordDetectados];
+        }
+
+        this.reordenarCampos();
+        this.reiniciarSimulador();
+        this.cerrarModalImportarWord();
+
+        if (this.vistaActual === 'listado') {
+            this.vistaActual = 'editor';
+            this.activeTab = 'campos';
+        }
+
+        this._snackBar.open(`¡Se importaron ${this.camposWordPrevisualizados.length} preguntas correctamente!`, 'Aceptar', { duration: 3500 });
+        this._cdr.markForCheck();
+    }
+
+    simuladorSeleccionarMatriz(campoId: string, filaId: string, valor: string): void {
+        const key = `${campoId}_${filaId}`;
+        this.respuestasSimulador[key] = valor;
+        this._cdr.markForCheck();
+    }
+
+    obtenerValorMatrizSimulador(campoId: string, filaId: string): string {
+        const key = `${campoId}_${filaId}`;
+        return this.respuestasSimulador[key] || '';
+    }
+
+    trackByIndex(index: number): number {
+        return index;
+    }
+
+    moverArriba(index: number): void {
+        this.moverCampo(index, 'arriba');
+    }
+
+    moverAbajo(index: number): void {
+        this.moverCampo(index, 'abajo');
+    }
+
+    onTipoCampoChange(campo: CampoConfig): void {
+        if (campo.tipo === 'matrix') {
+            if (!campo.columnasMatriz || campo.columnasMatriz.length === 0) {
+                this.aplicarPresetEscala(campo, '1-5-na');
+            }
+            if (!campo.filasMatriz || campo.filasMatriz.length === 0) {
+                this.cargarPresetMatrizSatisfaccion(campo);
+            }
+        } else if (campo.tipo === 'radio' || campo.tipo === 'select' || campo.tipo === 'checkbox') {
+            if (!campo.opciones || campo.opciones.length === 0) {
+                campo.opciones = ['Opción 1', 'Opción 2', 'Opción 3'];
+            }
+        }
+        this._cdr.markForCheck();
+    }
+
+    simuladorCheckboxSeleccionado(campoId: string, opt: string): boolean {
+        const val = this.respuestasSimulador[campoId];
+        if (Array.isArray(val)) return val.includes(opt);
+        if (typeof val === 'string') return val.split(',').map(s => s.trim()).includes(opt);
+        return false;
+    }
+
+    simuladorToggleCheckbox(campoId: string, opt: string): void {
+        let current = this.respuestasSimulador[campoId];
+        let arr: string[] = [];
+        if (Array.isArray(current)) {
+            arr = [...current];
+        } else if (typeof current === 'string' && current.length > 0) {
+            arr = current.split(',').map(s => s.trim());
+        }
+        const idx = arr.indexOf(opt);
+        if (idx >= 0) {
+            arr.splice(idx, 1);
+        } else {
+            arr.push(opt);
+        }
+        this.respuestasSimulador[campoId] = arr;
+        this._cdr.markForCheck();
+    }
+
+    crearCampoCondicionalParaOpcion(campo: CampoConfig, opcion: string, tipo: CampoConfig['tipo'] = 'input'): void {
+        const hijoExistente = this.campos.find(c => c.dependeDeCampoId === campo.id && c.dependeDeValor === opcion);
+        if (hijoExistente) {
+            this.moverCampoDebajoDePadre(hijoExistente, true);
+            return;
+        }
+
+        const nuevoId = 'campo_' + Date.now().toString(36);
+        const parentIdx = this.campos.indexOf(campo);
+
+        const etiquetaDefault = /^otro/i.test(opcion.trim())
+            ? '¿Cuál? / Especifique otro...'
+            : `Especifique o detalle sobre: ${opcion}`;
+
+        const nuevoCampo: CampoConfig = {
+            id: nuevoId,
+            tipo: tipo,
+            etiqueta: etiquetaDefault,
+            placeholder: 'Ingresa la información...',
+            requerido: false,
+            ancho: 'full',
+            paso: campo.paso || 1,
+            dependeDeCampoId: campo.id,
+            dependeDeOperador: campo.tipo === 'checkbox' ? 'contains' : 'equals',
+            dependeDeValor: opcion,
+            orden: parentIdx + 2
+        };
+
+        let targetIdx = parentIdx + 1;
+        while (targetIdx < this.campos.length && this.campos[targetIdx].dependeDeCampoId === campo.id) {
+            targetIdx++;
+        }
+
+        this.campos.splice(targetIdx, 0, nuevoCampo);
+        this.reordenarCampos();
+        this._snackBar.open(`¡Opción "${opcion}" con campo condicional creada!`, 'Aceptar', { duration: 3000 });
+        this._cdr.markForCheck();
+    }
+
+}
