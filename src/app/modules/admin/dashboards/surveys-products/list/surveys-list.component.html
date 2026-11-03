@@ -48,6 +48,14 @@
                         <span>Actualizar</span>
                     </button>
 
+                    <button (click)="abrirModalImportarWord()"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer"
+                            matTooltip="Importa automáticamente desde Google Docs, Word (.docx) o Texto">
+                        <mat-icon class="text-sm text-blue-600 dark:text-blue-400">cloud_download</mat-icon>
+                        <span>Importar (Word / Enlace)</span>
+                    </button>
+
                     <div class="flex items-center gap-2">
                         <button (click)="nuevoFormulario('producto')"
                                 type="button"
@@ -867,81 +875,128 @@
 
                         </div>
 
-                        <!-- PESTAÑA: CAMPOS (PREGUNTAS DINÁMICAS) -->
-
+                                                <!-- PESTAÑA: CAMPOS (PREGUNTAS DINÁMICAS - CONFIGURACIÓN INTEGRAL JR) -->
                         <div *ngIf="activeTab === 'campos'" class="space-y-4 animate-fade-in">
 
-                            <!-- BARRA SUPERIOR: AGREGADO RÁPIDO DE PREGUNTAS -->
-
-                            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-700/80 space-y-3">
-
+                            <!-- GESTIÓN DE FORMULARIO POR PASOS (WIZARD MULTI-PASO) -->
+                            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-700/80 space-y-3">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-
-                                    <div>
-                                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                            <mat-icon class="text-emerald-400 text-base">format_list_bulleted</mat-icon>
-                                            Preguntas y Criterios de Evaluación
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                                                {{ campos.length }} preguntas
-                                            </span>
-                                        </h3>
-                                        <p class="text-xs text-slate-300 mt-0.5">
-                                            Personaliza o añade preguntas para evaluar la satisfacción de tus clientes.
-                                        </p>
-
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center flex-shrink-0">
+                                            <mat-icon>format_list_numbered</mat-icon>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                                Formulario por Pasos (Wizard Multi-Paso)
+                                                <span *ngIf="diseno.modoPasos" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                                    Activo ({{ pasosDisponibles.length }} pasos)
+                                                </span>
+                                            </h3>
+                                            <p class="text-xs text-slate-300">
+                                                Divide las preguntas en etapas secuenciales (Paso 1, Paso 2...) y asigna qué preguntas van en cada paso.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <button (click)="cargarPreguntasEstandar()"
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-200 border border-emerald-400/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0">
-                                        <mat-icon class="text-xs">restore</mat-icon>
-                                        <span>Plantilla ISO 9001</span>
-                                    </button>
 
+                                    <div class="flex items-center gap-2">
+                                        <mat-slide-toggle [ngModel]="diseno.modoPasos"
+                                                          (ngModelChange)="toggleModoPasos($event)"
+                                                          color="primary"
+                                                          class="text-xs font-semibold">
+                                            {{ diseno.modoPasos ? 'Desactivar Pasos' : 'Activar Modo Pasos' }}
+                                        </mat-slide-toggle>
+                                    </div>
                                 </div>
 
-                                <!-- BOTONES DE COMPONENTES RÁPIDOS -->
+                                <!-- GESTIÓN DETALLADA DE PASOS SI ESTÁ ACTIVO -->
+                                <div *ngIf="diseno.modoPasos" class="pt-3 border-t border-slate-700/60 space-y-2.5">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold text-slate-300">Pasos configurados:</span>
+                                        <button (click)="agregarPaso()" type="button"
+                                                class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm transition-all flex items-center gap-1 cursor-pointer">
+                                            <mat-icon class="text-[14px]">add</mat-icon>
+                                            <span>Agregar Nuevo Paso</span>
+                                        </button>
+                                    </div>
 
-                                <div class="pt-2 border-t border-slate-700/60 flex flex-wrap items-center gap-2">
-                                    <span class="text-[11px] font-semibold text-slate-400 mr-1">Añadir:</span>
-                                    <button (click)="agregarCampo('matrix')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-blue-600">table_chart</mat-icon> Matriz (1-5)
-                                    </button>
-                                    <button (click)="agregarCampo('radio')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-emerald-600">check_circle</mat-icon> Calificación (0-10)
-                                    </button>
-                                    <button (click)="agregarCampo('input')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-slate-500">edit</mat-icon> Texto
-                                    </button>
-                                    <button (click)="agregarCampo('textarea')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-slate-500">notes</mat-icon> Comentarios
-                                    </button>
-                                    <button (click)="agregarCampo('select')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-slate-500">arrow_drop_down_circle</mat-icon> Desplegable
-                                    </button>
-                                    <button (click)="agregarCampo('checkbox')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-slate-500">check_box</mat-icon> Casillas
-                                    </button>
-                                    <button (click)="agregarCampo('section')" type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                                        <mat-icon class="text-xs text-purple-600">bookmark</mat-icon> Sección
-                                    </button>
-
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                        <div *ngFor="let paso of pasosDisponibles; let pIdx = index"
+                                             class="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                                                    {{ paso.numero }}
+                                                </span>
+                                                <input [(ngModel)]="paso.titulo" type="text"
+                                                       class="w-full px-2 py-1 rounded bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium truncate"
+                                                       [placeholder]="'Título del paso ' + paso.numero">
+                                            </div>
+                                            <button (click)="eliminarPaso(paso.numero)"
+                                                    [disabled]="pasosDisponibles.length <= 1"
+                                                    mat-icon-button
+                                                    class="!w-7 !h-7 text-slate-400 hover:text-rose-400 disabled:opacity-20 flex-shrink-0"
+                                                    matTooltip="Eliminar paso">
+                                                <mat-icon class="text-xs">delete</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-
                             </div>
 
-                            <!-- LISTA DE PREGUNTAS -->
+                            <!-- BARRA DE ACCIONES DE PREGUNTAS Y PLANTILLA RÁPIDA -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Preguntas y Componentes</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Total: <strong>{{ campos.length }}</strong> elementos en la encuesta.</p>
+                                </div>
 
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <!-- Botón Plantilla Rápida -->
+                                    <button (click)="cargarPlantillaSatisfaccionEtapas()"
+                                            type="button"
+                                            class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                                            matTooltip="Carga con 1 clic: 3 Pasos secuenciales, Matriz Likert 1 al 5 y preguntas condicionales">
+                                        <mat-icon class="text-sm">bolt</mat-icon>
+                                        <span>⚡ Plantilla Etapas + Matriz 1-5</span>
+                                    </button>
+
+                                    <!-- Botón Importar desde Word / Enlace / Texto -->
+                                    <button (click)="abrirModalImportarWord()"
+                                            type="button"
+                                            class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                                            matTooltip="Importa preguntas automáticamente desde Enlace (Google Docs), Archivo (.docx/.txt) o Texto copiado">
+                                        <mat-icon class="text-sm">cloud_download</mat-icon>
+                                        <span>📄 Importar (Enlace / Archivo / Texto)</span>
+                                    </button>
+
+                                    <!-- Menú Agregar Campo Rápido -->
+                                    <button (click)="agregarCampo('input')" mat-flat-button color="primary" class="rounded-xl text-xs py-1 px-2.5">
+                                        <mat-icon class="text-xs mr-1">add</mat-icon> Texto
+                                    </button>
+                                    <button (click)="agregarCampo('matrix')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                        <mat-icon class="text-xs mr-1 text-blue-600">table_chart</mat-icon> Matriz (1-5)
+                                    </button>
+                                    <button (click)="agregarCampo('section')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+                                        <mat-icon class="text-xs mr-1 text-purple-600">bookmark</mat-icon> Sección
+                                    </button>
+                                    <button (click)="agregarCampo('checkbox')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
+                                        <mat-icon class="text-xs mr-1">check_box</mat-icon> Casillas
+                                    </button>
+                                    <button (click)="agregarCampo('radio')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
+                                        <mat-icon class="text-xs mr-1">radio_button_checked</mat-icon> Radio
+                                    </button>
+                                    <button (click)="agregarCampo('select')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
+                                        <mat-icon class="text-xs mr-1">arrow_drop_down_circle</mat-icon> Select
+                                    </button>
+                                    <button (click)="agregarCampo('textarea')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
+                                        <mat-icon class="text-xs mr-1">notes</mat-icon> Párrafo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- LISTA DE PREGUNTAS DINÁMICAS -->
                             <div class="space-y-3">
-
                                 <div *ngFor="let campo of campos; let i = index"
-                                     class="bg-white dark:bg-slate-800/90 border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow relative"
+                                     class="bg-white dark:bg-slate-800/90 border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow relative group"
                                      [ngClass]="[
                                          campo.tipo === 'section' ? 'border-purple-300 dark:border-purple-800/80 bg-purple-50/20' :
                                          campo.tipo === 'matrix' ? 'border-blue-300 dark:border-blue-800/80 bg-blue-50/20' :
@@ -949,11 +1004,9 @@
                                      ]">
 
                                     <!-- BARRA SUPERIOR DEL CAMPO -->
-
                                     <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-700/50">
-
                                         <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center">
+                                            <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center justify-center">
                                                 {{ i + 1 }}
                                             </span>
 
@@ -970,150 +1023,353 @@
                                                   class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                                                 Paso {{ campo.paso || 1 }}
                                             </span>
+
                                             <span *ngIf="campo.requerido && campo.tipo !== 'section'" class="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded">
                                                 Obligatorio
                                             </span>
 
+                                            <span *ngIf="campo.dependeDeCampoId" class="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                <mat-icon class="text-[11px]">alt_route</mat-icon> Condicional
+                                            </span>
                                         </div>
 
-                                        <!-- Acciones del Campo -->
-
+                                        <!-- Acciones de Reordenamiento y Eliminar -->
                                         <div class="flex items-center gap-1">
-                                            <button (click)="moverCampo(i, 'arriba')" [disabled]="i === 0" type="button" class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer" matTooltip="Mover arriba">
+                                            <button (click)="moverArriba(i)" [disabled]="i === 0" mat-icon-button class="text-slate-400 hover:text-slate-700 disabled:opacity-30" matTooltip="Mover arriba">
                                                 <mat-icon class="text-sm">arrow_upward</mat-icon>
                                             </button>
-                                            <button (click)="moverCampo(i, 'abajo')" [disabled]="i === campos.length - 1" type="button" class="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer" matTooltip="Mover abajo">
+                                            <button (click)="moverAbajo(i)" [disabled]="i === campos.length - 1" mat-icon-button class="text-slate-400 hover:text-slate-700 disabled:opacity-30" matTooltip="Mover abajo">
                                                 <mat-icon class="text-sm">arrow_downward</mat-icon>
                                             </button>
-                                            <button (click)="duplicarCampo(i)" type="button" class="p-1 text-slate-400 hover:text-blue-600 cursor-pointer" matTooltip="Duplicar">
+                                            <button (click)="duplicarCampo(i)" mat-icon-button class="text-slate-400 hover:text-blue-600" matTooltip="Duplicar pregunta">
                                                 <mat-icon class="text-sm">content_copy</mat-icon>
                                             </button>
-                                            <button (click)="eliminarCampo(i)" type="button" class="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer" matTooltip="Eliminar">
+                                            <button (click)="eliminarCampo(i)" mat-icon-button class="text-slate-400 hover:text-rose-600" matTooltip="Eliminar pregunta">
                                                 <mat-icon class="text-sm">delete</mat-icon>
                                             </button>
-
                                         </div>
-
                                     </div>
 
-                                    <!-- PROPIEDADES DEL CAMPO -->
-
+                                    <!-- FILA DE PROPIEDADES DEL CAMPO -->
                                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 text-xs">
-
-                                        <!-- Texto de Pregunta -->
-
-                                        <div [ngClass]="campo.tipo === 'section' ? 'md:col-span-8' : 'md:col-span-6'">
+                                        <!-- Etiqueta / Label -->
+                                        <div [ngClass]="campo.tipo === 'section' ? 'md:col-span-8' : 'md:col-span-5'">
                                             <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                                                {{ campo.tipo === 'section' ? 'Título de la Sección *' : 'Pregunta / Criterio *' }}
+                                                {{ campo.tipo === 'section' ? 'Título del Bloque / Sección *' : 'Pregunta / Criterio *' }}
                                             </label>
                                             <input [(ngModel)]="campo.etiqueta" type="text"
-                                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
-                                                   [placeholder]="campo.tipo === 'section' ? 'Ej: EVALUACIÓN DE CALIDAD' : 'Escribe el texto de la pregunta...'">
-
+                                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-2 focus:ring-emerald-500 outline-none font-semibold text-slate-900 dark:text-white"
+                                                   [placeholder]="campo.tipo === 'section' ? 'Ej: EVALUACIÓN DE CALIDAD' : 'Ej: Calidad técnica del equipo'">
                                         </div>
 
-                                        <!-- Tipo de Componente -->
-
+                                        <!-- Tipo de Campo -->
                                         <div class="md:col-span-3">
-                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Tipo</label>
-                                            <select [(ngModel)]="campo.tipo"
-                                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Tipo de Componente</label>
+                                            <select [(ngModel)]="campo.tipo" (ngModelChange)="onTipoCampoChange(campo)"
+                                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white">
                                                 <option *ngFor="let t of tiposCampo" [value]="t.value">{{ t.label }}</option>
                                             </select>
-
                                         </div>
 
-                                        <!-- Paso Asignado -->
-
-                                        <div *ngIf="diseno.modoPasos" class="md:col-span-3">
-                                            <label class="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Paso Asignado</label>
+                                        <!-- Asignar Paso (Si Wizard está activo) -->
+                                        <div *ngIf="diseno.modoPasos" class="md:col-span-2">
+                                            <label class="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Paso asignado</label>
                                             <select [(ngModel)]="campo.paso"
-                                                    class="w-full px-3 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/40 text-slate-900 dark:text-white font-bold outline-none">
-                                                <option *ngFor="let p of diseno.pasos" [ngValue]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
+                                                    class="w-full px-3 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/40 text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white">
+                                                <option *ngFor="let p of pasosDisponibles" [ngValue]="p.numero">Paso {{ p.numero }}: {{ p.titulo }}</option>
                                             </select>
+                                        </div>
 
+                                        <!-- Ancho (Full / Half) -->
+                                        <div *ngIf="campo.tipo !== 'section' && campo.tipo !== 'matrix'" class="md:col-span-2">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Distribución</label>
+                                            <select [(ngModel)]="campo.ancho"
+                                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white">
+                                                <option value="full">100% (Ancho completo)</option>
+                                                <option value="half">50% (Media fila)</option>
+                                            </select>
                                         </div>
 
                                         <!-- Placeholder / Subtítulo -->
-
-                                        <div class="md:col-span-9">
-                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Texto de ayuda o instrucción</label>
+                                        <div [ngClass]="campo.tipo === 'section' ? 'md:col-span-12' : (campo.tipo === 'matrix' ? 'md:col-span-12' : 'md:col-span-5')">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                                                {{ campo.tipo === 'section' ? 'Descripción o subtítulo del bloque' : 'Instrucciones / Texto de ayuda' }}
+                                            </label>
                                             <input [(ngModel)]="campo.placeholder" type="text"
-                                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none"
-                                                   placeholder="Ej: Indique en una escala del 0 al 10...">
-
+                                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white"
+                                                   [placeholder]="campo.tipo === 'section' ? 'Subtítulo explicativo que acompaña a la sección...' : 'Ej: Califique de 1 a 5...'">
                                         </div>
 
-                                        <!-- Switch Requerido -->
+                                        <!-- Mapeo CRM / Campo Estándar -->
+                                        <div *ngIf="campo.tipo !== 'section' && campo.tipo !== 'matrix'" class="md:col-span-5">
+                                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Mapeo a CRM / Cliente</label>
+                                            <select [(ngModel)]="campo.campoEstandar"
+                                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white">
+                                                <option *ngFor="let m of camposEstandar" [value]="m.value">{{ m.label }}</option>
+                                            </select>
+                                        </div>
 
-                                        <div *ngIf="campo.tipo !== 'section'" class="md:col-span-3 flex items-end pb-1.5">
+                                        <!-- Toggle Obligatorio -->
+                                        <div *ngIf="campo.tipo !== 'section'" class="md:col-span-2 flex items-end pb-1">
                                             <mat-slide-toggle [(ngModel)]="campo.requerido" color="primary" class="text-xs">
                                                 Obligatorio
                                             </mat-slide-toggle>
-
                                         </div>
-
                                     </div>
 
-                                    <!-- CONFIGURADOR DE MATRIZ LIKERT -->
+                                    <!-- CONFIGURADOR ESPECÍFICO PARA TABLA / MATRIZ LIKERT (ESCALA 1 AL 5 / PERSONALIZABLE) -->
+                                    <div *ngIf="campo.tipo === 'matrix'"
+                                         class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800/60 bg-blue-50/50 dark:bg-slate-900/60 p-3.5 rounded-xl space-y-4">
 
-                                    <div *ngIf="campo.tipo === 'matrix'" class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-slate-900/60 p-3.5 rounded-xl space-y-3">
-
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                                                <mat-icon class="text-sm">view_list</mat-icon>
-                                                Criterios / Filas de la Matriz:
-                                            </span>
-                                            <button (click)="agregarFilaMatriz(campo)" type="button" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                                                + Añadir Criterio
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div>
+                                                <span class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                                                    <mat-icon class="text-sm text-blue-600">tune</mat-icon>
+                                                    Aspectos a Evaluar y Escala de Calificación Likert
+                                                </span>
+                                                <p class="text-[11px] text-slate-500">Define los aspectos o criterios (filas) y personaliza las calificaciones o escala (columnas).</p>
+                                            </div>
+                                            <button (click)="cargarPresetMatrizSatisfaccion(campo)" type="button"
+                                                    class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-sm flex items-center gap-1 cursor-pointer">
+                                                <mat-icon class="text-[13px]">playlist_add_check</mat-icon> Cargar Criterios Calidad JR
                                             </button>
-
                                         </div>
 
-                                        <div *ngFor="let fila of campo.filasMatriz; let fIdx = index" class="flex items-center gap-2">
-                                            <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                                                {{ fIdx + 1 }}
-                                            </span>
-                                            <input [(ngModel)]="fila.texto" type="text"
-                                                   class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
-                                                   placeholder="Aspecto o criterio a evaluar...">
-                                            <button (click)="eliminarFilaMatriz(campo, fIdx)" [disabled]="campo.filasMatriz && campo.filasMatriz.length <= 1" type="button" class="text-rose-400 hover:text-rose-600 disabled:opacity-20 cursor-pointer">
-                                                <mat-icon class="text-xs">delete</mat-icon>
-                                            </button>
-
-                                        </div>
-
-                                    </div>
-
-                                    <!-- OPCIONES DE RESPUESTA (RADIO / SELECT / CHECKBOX) -->
-
-                                    <div *ngIf="campo.tipo === 'radio' || campo.tipo === 'select' || campo.tipo === 'checkbox'" 
-                                         class="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
-
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-[11px] font-bold uppercase text-slate-400">Opciones de Respuesta</span>
-                                            <button (click)="agregarOpcion(campo)" type="button" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
-                                                + Añadir Opción
-                                            </button>
-
-                                        </div>
-
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
-                                            <div *ngFor="let opt of campo.opciones; let optIdx = index" class="flex items-center gap-1.5">
-                                                <input type="text" [(ngModel)]="campo.opciones![optIdx]" class="w-full px-2.5 py-1 rounded-lg text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                                                <button (click)="eliminarOpcion(campo, optIdx)" type="button" class="text-rose-400 hover:text-rose-600 cursor-pointer">
-                                                    <mat-icon class="text-xs">close</mat-icon>
-                                                </button>
-
+                                        <!-- SECTOR 1: CONFIGURACIÓN DE ESCALA / COLUMNAS DE CALIFICACIÓN -->
+                                        <div class="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-blue-200/80 dark:border-blue-900/60 space-y-2.5">
+                                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                                    <mat-icon class="text-xs text-blue-500">view_column</mat-icon>
+                                                    Escala y Columnas de Evaluación:
+                                                </span>
+                                                <!-- Presets rápidos de escala -->
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="text-[10px] text-slate-400 font-semibold">Presets:</span>
+                                                    <button type="button" (click)="aplicarPresetEscala(campo, '1-5-na')"
+                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-950 dark:text-blue-300 transition-colors">
+                                                        1 al 5 + N/A
+                                                    </button>
+                                                    <button type="button" (click)="aplicarPresetEscala(campo, '1-5')"
+                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 transition-colors">
+                                                        1 al 5
+                                                    </button>
+                                                    <button type="button" (click)="aplicarPresetEscala(campo, '1-10')"
+                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 transition-colors">
+                                                        1 al 10
+                                                    </button>
+                                                    <button type="button" (click)="aplicarPresetEscala(campo, '1-3')"
+                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 transition-colors">
+                                                        1 al 3
+                                                    </button>
+                                                    <button type="button" (click)="aplicarPresetEscala(campo, 'cualitativa')"
+                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 hover:bg-purple-200 text-purple-800 dark:bg-purple-950 dark:text-purple-300 transition-colors">
+                                                        Cualitativa
+                                                    </button>
+                                                </div>
                                             </div>
 
+                                            <!-- Chips de Columnas Editables -->
+                                            <div class="flex flex-wrap items-center gap-2 pt-1">
+                                                <div *ngFor="let col of campo.columnasMatriz; let cIdx = index"
+                                                     class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 shadow-xs">
+                                                    <span class="text-[10px] text-slate-400 font-mono font-bold">{{ cIdx + 1 }}</span>
+                                                    <input [(ngModel)]="col.etiqueta" (ngModelChange)="col.valor = col.etiqueta" type="text"
+                                                           class="w-16 px-1 py-0.5 text-xs text-center font-bold text-slate-800 dark:text-white bg-transparent border-0 outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                                                           [placeholder]="'Col ' + (cIdx + 1)">
+                                                    <button type="button" (click)="eliminarColumnaMatriz(campo, cIdx)" [disabled]="campo.columnasMatriz && campo.columnasMatriz.length <= 1"
+                                                            class="text-slate-400 hover:text-rose-500 disabled:opacity-20 cursor-pointer ml-0.5"
+                                                            matTooltip="Eliminar columna">
+                                                        <mat-icon class="!w-3.5 !h-3.5 text-[14px]">close</mat-icon>
+                                                    </button>
+                                                </div>
+
+                                                <button type="button" (click)="agregarColumnaMatriz(campo)"
+                                                        class="px-2.5 py-1 rounded-lg border border-dashed border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold flex items-center gap-1 cursor-pointer">
+                                                    <mat-icon class="!w-3.5 !h-3.5 text-[14px]">add</mat-icon>
+                                                    <span>Nueva Columna</span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Leyendas Explicativas de Escala -->
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                                                <div>
+                                                    <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Leyenda Escala Inferior (ej. 1)</label>
+                                                    <input [(ngModel)]="campo.escalaNotaInferior" type="text"
+                                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                                           placeholder="1 = Totalmente insatisfecho">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Leyenda Escala Superior (ej. 5 o 10)</label>
+                                                    <input [(ngModel)]="campo.escalaNotaSuperior" type="text"
+                                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                                           placeholder="5 = Totalmente satisfecho">
+                                                </div>
+                                            </div>
                                         </div>
 
+                                        <!-- SECTOR 2: FILAS (ASPECTOS A CALIFICAR Y QUÉ EVALUAR) -->
+                                        <div class="space-y-2 pt-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                                    <mat-icon class="text-xs text-blue-500">format_list_bulleted</mat-icon>
+                                                    Aspectos a calificar (Filas de la Matriz):
+                                                </span>
+                                                <button (click)="agregarFilaMatriz(campo)" mat-button class="text-xs text-blue-600 dark:text-blue-400 py-0.5 px-2">
+                                                    <mat-icon class="text-xs mr-1">add_circle</mat-icon> Agregar Aspecto
+                                                </button>
+                                            </div>
+
+                                            <div *ngFor="let fila of campo.filasMatriz; let fIdx = index"
+                                                 class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-1.5 shadow-xs">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-5 text-[11px] font-bold text-slate-400 text-right">{{ fIdx + 1 }}.</span>
+                                                    <input [(ngModel)]="fila.texto" type="text"
+                                                           class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white"
+                                                           placeholder="Aspecto (ej. Cumplimiento de especificaciones)">
+                                                    <button (click)="eliminarFilaMatriz(campo, fIdx)" [disabled]="campo.filasMatriz && campo.filasMatriz.length <= 1"
+                                                            mat-icon-button class="text-slate-400 hover:text-rose-500 disabled:opacity-20 !w-7 !h-7"
+                                                            matTooltip="Eliminar fila">
+                                                        <mat-icon class="text-xs">close</mat-icon>
+                                                    </button>
+                                                </div>
+                                                <div class="flex items-center gap-2 pl-7">
+                                                    <input [(ngModel)]="fila.subtexto" type="text"
+                                                           class="flex-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400"
+                                                           placeholder="Detalle de qué evaluar (opcional, ej. Pruebas de funcionamiento, acabado)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- LÓGICA CONDICIONAL: APARECER SEGÚN RESPUESTA ANTERIOR -->
+                                    <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl"
+                                         [ngClass]="{'ring-1 ring-amber-400 bg-amber-50/40 dark:bg-amber-950/30': campo.dependeDeCampoId}">
+                                        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                                <mat-icon class="text-[14px] text-amber-500">alt_route</mat-icon>
+                                                Visibilidad Condicional (Mostrar sólo si se cumple una respuesta):
+                                            </span>
+                                            <button *ngIf="campo.dependeDeCampoId"
+                                                    (click)="moverCampoDebajoDePadre(campo, true)"
+                                                    type="button"
+                                                    class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-900 px-2 py-0.5 rounded-lg border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer transition-colors"
+                                                    matTooltip="Reubicar inmediatamente debajo de la pregunta padre">
+                                                <mat-icon class="text-[12px] text-amber-600">vertical_align_bottom</mat-icon>
+                                                Reubicar debajo de la pregunta padre
+                                            </button>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end text-xs">
+                                            <div class="md:col-span-5">
+                                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Mostrar solo si la pregunta:</label>
+                                                <select [(ngModel)]="campo.dependeDeCampoId"
+                                                        (ngModelChange)="onCambioDependencia(campo)"
+                                                        class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none font-medium text-slate-900 dark:text-white">
+                                                    <option [ngValue]="undefined">Sin condición (Siempre visible)</option>
+                                                    <ng-container *ngFor="let otro of campos">
+                                                        <option *ngIf="otro.id !== campo.id" [value]="otro.id">{{ otro.etiqueta || 'Pregunta #' + otro.orden }}</option>
+                                                    </ng-container>
+                                                </select>
+                                            </div>
+
+                                            <div class="md:col-span-3" *ngIf="campo.dependeDeCampoId">
+                                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Operador de condición:</label>
+                                                <select [(ngModel)]="campo.dependeDeOperador"
+                                                        class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none text-slate-900 dark:text-white">
+                                                    <option value="contains">Contiene la opción (Casillas múltiples)</option>
+                                                    <option value="equals">Es exactamente igual a</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="md:col-span-4" *ngIf="campo.dependeDeCampoId">
+                                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">Opción o valor esperado:</label>
+                                                <!-- Selector rápido si el campo padre cuenta con opciones definidas -->
+                                                <div *ngIf="obtenerOpcionesDeCampo(campo.dependeDeCampoId).length > 0" class="flex gap-1.5">
+                                                    <select [(ngModel)]="campo.dependeDeValor"
+                                                            class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none font-medium text-slate-900 dark:text-white">
+                                                        <option value="" disabled>Selecciona una opción...</option>
+                                                        <option *ngFor="let opt of obtenerOpcionesDeCampo(campo.dependeDeCampoId)" [value]="opt">{{ opt }}</option>
+                                                    </select>
+                                                    <input [(ngModel)]="campo.dependeDeValor" type="text"
+                                                           class="w-24 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none text-slate-900 dark:text-white"
+                                                           placeholder="O escribe...">
+                                                </div>
+
+                                                <!-- Input libre si el padre es de texto o sin opciones -->
+                                                <input *ngIf="obtenerOpcionesDeCampo(campo.dependeDeCampoId).length === 0"
+                                                       [(ngModel)]="campo.dependeDeValor" type="text"
+                                                       class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs outline-none text-slate-900 dark:text-white"
+                                                       placeholder="Ej: Otro">
+                                            </div>
+                                        </div>
+
+                                        <!-- Aviso visual de vinculación -->
+                                        <div *ngIf="campo.dependeDeCampoId" class="mt-2 text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-1.5 flex-wrap">
+                                            <mat-icon class="text-xs text-amber-500">info</mat-icon>
+                                            <span>
+                                                Esta pregunta depende de <strong>{{ obtenerCampoPorId(campo.dependeDeCampoId)?.etiqueta }}</strong> y se mostrará dinámicamente cuando el usuario elija esa opción.
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- OPCIONES PARA SELECT / RADIO / CHECKBOX -->
+                                    <div *ngIf="campo.tipo === 'select' || campo.tipo === 'radio' || campo.tipo === 'checkbox'"
+                                         class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl">
+                                        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                                                <mat-icon class="text-[14px] text-emerald-600">checklist</mat-icon>
+                                                Opciones de respuesta:
+                                            </span>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <button (click)="agregarOpcion(campo)" mat-button class="text-xs text-emerald-600 py-0.5 px-2">
+                                                    <mat-icon class="text-xs mr-1">add_circle</mat-icon> Agregar Opción
+                                                </button>
+                                                <!-- BOTÓN INTUITIVO PARA AGREGAR 'OTRO' CON CAMPO CONDICIONAL DEBAJO -->
+                                                <button (click)="agregarOpcionOtroConCampo(campo)"
+                                                        type="button"
+                                                        class="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 py-1 px-2.5 rounded-xl border border-amber-300 dark:border-amber-700 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                                                        matTooltip="Agrega la opción 'Otro' y genera automáticamente una pregunta condicional ('¿Cuál? / Especifique...') colocada justo debajo">
+                                                    <mat-icon class="text-xs text-amber-600">playlist_add</mat-icon>
+                                                    <span>+ Opción "Otro" con campo condicional</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            <div *ngFor="let opt of campo.opciones; let optIdx = index; trackBy: trackByIndex"
+                                                 class="flex items-center gap-2 bg-white dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <mat-icon class="text-slate-400 text-xs">drag_handle</mat-icon>
+                                                <input [(ngModel)]="campo.opciones![optIdx]" type="text"
+                                                       class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs focus:ring-1 focus:ring-emerald-500 outline-none font-medium text-slate-900 dark:text-white"
+                                                       [placeholder]="'Opción ' + (optIdx + 1)">
+
+                                                <!-- BOTÓN / BADGE PARA VINCULAR O VER PREGUNTA CONDICIONAL PARA ESTA OPCIÓN -->
+                                                <ng-container *ngIf="obtenerCampoHijo(campo.id, opt) as hijoVinculado; else sinHijo">
+                                                    <span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                                        <mat-icon class="text-[12px] text-emerald-600">call_split</mat-icon>
+                                                        Detona: {{ hijoVinculado.etiqueta | slice:0:18 }}...
+                                                    </span>
+                                                </ng-container>
+                                                <ng-template #sinHijo>
+                                                    <button (click)="crearCampoCondicionalParaOpcion(campo, opt)"
+                                                            type="button"
+                                                            class="text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-amber-700 bg-slate-100 hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-950/80 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-600 flex items-center gap-1 transition-colors cursor-pointer"
+                                                            matTooltip="Crear una pregunta que se muestre cuando el cliente seleccione esta opción">
+                                                        <mat-icon class="text-[12px] text-amber-500">add_link</mat-icon>
+                                                        <span>+ Detonar pregunta</span>
+                                                    </button>
+                                                </ng-template>
+
+                                                <button (click)="eliminarOpcion(campo, optIdx)" type="button"
+                                                        class="p-1 text-slate-400 hover:text-rose-500 cursor-pointer"
+                                                        matTooltip="Eliminar opción">
+                                                    <mat-icon class="text-xs">close</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                 </div>
-
                             </div>
 
                         </div>
@@ -1426,26 +1682,25 @@
 
                             </div>
 
-                            <!-- CUERPO DE PREGUNTAS DEL SIMULADOR -->
-
+                                                        <!-- CUERPO DE PREGUNTAS DEL SIMULADOR INTERACTIVO -->
                             <div *ngIf="!simuladorEnviado" class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
 
                                 <div *ngFor="let campo of camposSimuladorPasoActual" class="space-y-1.5">
 
                                     <!-- SEPARADOR DE SECCIÓN -->
-
-                                    <div *ngIf="campo.tipo === 'section'" class="pt-2 pb-1 border-b border-slate-200 dark:border-slate-700">
+                                    <div *ngIf="campo.tipo === 'section'" class="pt-3 pb-1 border-b border-slate-200 dark:border-slate-700">
                                         <h4 class="text-sm font-black text-slate-900 dark:text-white">{{ campo.etiqueta }}</h4>
-
+                                        <p *ngIf="campo.placeholder" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ campo.placeholder }}</p>
                                     </div>
 
                                     <!-- PREGUNTAS REGULARES -->
-
                                     <div *ngIf="campo.tipo !== 'section'">
                                         <label class="block text-xs font-bold text-slate-800 dark:text-slate-200">
                                             {{ campo.etiqueta }}
                                             <span *ngIf="campo.requerido" class="text-rose-500">*</span>
                                         </label>
+                                        <p *ngIf="campo.placeholder && campo.tipo !== 'input' && campo.tipo !== 'textarea' && campo.tipo !== 'matrix'"
+                                           class="text-[11px] text-slate-400 mb-1">{{ campo.placeholder }}</p>
 
                                         <!-- INPUT TEXTO / EMAIL / TEL / NUMBER -->
                                         <input *ngIf="campo.tipo === 'input' || campo.tipo === 'email' || campo.tipo === 'tel' || campo.tipo === 'number'"
@@ -1463,10 +1718,8 @@
                                                   class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1"
                                                   [style.focus-ring-color]="diseno.colorPrimario"></textarea>
 
-                                        <!-- RADIO / CARITAS / ESCALAS -->
-
-                                        <div *ngIf="campo.tipo === 'radio'" class="grid grid-cols-2 sm:grid-cols-2 gap-1.5 pt-1">
-
+                                        <!-- RADIO / CALIFICACIÓN -->
+                                        <div *ngIf="campo.tipo === 'radio'" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
                                             <div *ngFor="let opt of campo.opciones"
                                                  (click)="simuladorSeleccionarRating(campo.id, opt)"
                                                  class="px-2.5 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all flex items-center gap-1.5"
@@ -1478,17 +1731,29 @@
 
                                                 <div class="w-3.5 h-3.5 rounded-full border flex items-center justify-center flex-shrink-0"
                                                      [style.border-color]="respuestasSimulador[campo.id] === opt ? diseno.colorPrimario : '#94a3b8'">
-
                                                     <div *ngIf="respuestasSimulador[campo.id] === opt"
                                                          class="w-2 h-2 rounded-full"
-
                                                          [style.background-color]="diseno.colorPrimario"></div>
-
                                                 </div>
                                                 <span class="truncate">{{ opt }}</span>
-
                                             </div>
+                                        </div>
 
+                                        <!-- CHECKBOX / MÚLTIPLE SELECCIÓN -->
+                                        <div *ngIf="campo.tipo === 'checkbox'" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                                            <label *ngFor="let opt of campo.opciones"
+                                                   class="px-2.5 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all flex items-center gap-2"
+                                                   [class.border-slate-200]="!simuladorCheckboxSeleccionado(campo.id, opt)"
+                                                   [class.dark:border-slate-700]="!simuladorCheckboxSeleccionado(campo.id, opt)"
+                                                   [style.border-color]="simuladorCheckboxSeleccionado(campo.id, opt) ? diseno.colorPrimario : ''"
+                                                   [style.background-color]="simuladorCheckboxSeleccionado(campo.id, opt) ? (diseno.colorPrimario + '15') : ''">
+                                                <input type="checkbox"
+                                                       [checked]="simuladorCheckboxSeleccionado(campo.id, opt)"
+                                                       (change)="simuladorToggleCheckbox(campo.id, opt)"
+                                                       class="rounded w-3.5 h-3.5 cursor-pointer"
+                                                       [style.accent-color]="diseno.colorPrimario">
+                                                <span class="truncate">{{ opt }}</span>
+                                            </label>
                                         </div>
 
                                         <!-- SELECT -->
@@ -1498,6 +1763,50 @@
                                             <option value="">Selecciona una opción...</option>
                                             <option *ngFor="let opt of campo.opciones" [value]="opt">{{ opt }}</option>
                                         </select>
+
+                                        <!-- MATRIZ LIKERT (EVALUACIÓN MULTI-CRITERIO) -->
+                                        <div *ngIf="campo.tipo === 'matrix'" class="space-y-2 pt-1">
+                                            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+                                                <table class="w-full text-left text-xs border-collapse">
+                                                    <thead>
+                                                        <tr class="bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                                                            <th class="p-2.5 min-w-[140px] text-xs">Aspecto</th>
+                                                            <th *ngFor="let col of campo.columnasMatriz" class="p-2 text-center text-[11px] font-bold min-w-[50px]">
+                                                                {{ col.etiqueta }}
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                                        <tr *ngFor="let fila of campo.filasMatriz" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                                            <td class="p-2.5">
+                                                                <div class="font-bold text-slate-800 dark:text-white text-xs">{{ fila.texto }}</div>
+                                                                <div *ngIf="fila.subtexto" class="text-[10px] text-slate-400 mt-0.5">{{ fila.subtexto }}</div>
+                                                            </td>
+                                                            <td *ngFor="let col of campo.columnasMatriz" class="p-2 text-center">
+                                                                <input type="radio"
+                                                                       [name]="'sim_matrix_' + campo.id + '_' + fila.id"
+                                                                       [value]="col.valor"
+                                                                       [checked]="obtenerValorMatrizSimulador(campo.id, fila.id) === col.valor"
+                                                                       (change)="simuladorSeleccionarMatriz(campo.id, fila.id, col.valor)"
+                                                                       class="w-4 h-4 cursor-pointer"
+                                                                       [style.accent-color]="diseno.colorPrimario">
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <!-- Leyendas al pie de la matriz -->
+                                            <div *ngIf="campo.escalaNotaInferior || campo.escalaNotaSuperior" class="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400 px-1 pt-0.5">
+                                                <span *ngIf="campo.escalaNotaInferior"><strong>Escala:</strong> {{ campo.escalaNotaInferior }}</span>
+                                                <span *ngIf="campo.escalaNotaSuperior">{{ campo.escalaNotaSuperior }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- FILE / FOTO -->
+                                        <div *ngIf="campo.tipo === 'file'" class="border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 text-center bg-slate-50 dark:bg-slate-800/40">
+                                            <mat-icon class="text-slate-400 text-lg">upload_file</mat-icon>
+                                            <div class="text-[11px] text-slate-500 mt-0.5">Subir archivo o comprobante (Simulación)</div>
+                                        </div>
 
                                     </div>
 
@@ -1722,6 +2031,317 @@
                     Cerrar Detalle
                 </button>
 
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- MODAL: IMPORTADOR INTELIGENTE (ENLACE GOOGLE DOCS / ARCHIVO WORD / TEXTO)  -->
+    <!-- ========================================================================= -->
+    <div *ngIf="modalImportarWordAbierto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-md animate-fade-in">
+
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden">
+
+            <!-- HEADER DEL MODAL -->
+            <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white dark:from-slate-900 dark:to-slate-900/90 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
+                        <mat-icon class="text-2xl">auto_fix_high</mat-icon>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-lg font-black text-slate-900 dark:text-white">Importador Inteligente de Encuestas</h2>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                3 Métodos
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Arma tu encuesta automáticamente a partir de un Enlace (Google Docs), Archivo (.docx/.txt) o Texto copiado.
+                        </p>
+                    </div>
+                </div>
+                <button (click)="cerrarModalImportarWord()"
+                        type="button"
+                        class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer">
+                    <mat-icon class="text-base">close</mat-icon>
+                </button>
+            </div>
+
+            <!-- CUERPO SCROLLABLE DEL MODAL -->
+            <div class="p-6 overflow-y-auto space-y-5 flex-1 min-h-0 bg-slate-50/40 dark:bg-slate-900/40">
+
+                <!-- SELECTOR DE MÉTODO (3 PESTAÑAS: LINK / ARCHIVO / TEXTO) -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                        Elige la fuente de origen del cuestionario:
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+
+                        <!-- TAB 1: ENLACE / LINK -->
+                        <button type="button"
+                                (click)="metodoImportacion = 'link'"
+                                class="p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer"
+                                [ngClass]="metodoImportacion === 'link' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20 ring-2 ring-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                 [ngClass]="metodoImportacion === 'link' ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'">
+                                <mat-icon class="text-xl">link</mat-icon>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-xs font-bold leading-tight">1. Por Enlace / Link</div>
+                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'link' ? 'text-blue-100' : 'text-slate-400'">Google Docs o Web</div>
+                            </div>
+                        </button>
+
+                        <!-- TAB 2: ARCHIVO WORD -->
+                        <button type="button"
+                                (click)="metodoImportacion = 'archivo'"
+                                class="p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer"
+                                [ngClass]="metodoImportacion === 'archivo' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20 ring-2 ring-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                 [ngClass]="metodoImportacion === 'archivo' ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'">
+                                <mat-icon class="text-xl">upload_file</mat-icon>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-xs font-bold leading-tight">2. Por Archivo</div>
+                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'archivo' ? 'text-blue-100' : 'text-slate-400'">Documento .docx / .txt</div>
+                            </div>
+                        </button>
+
+                        <!-- TAB 3: TEXTO DIRECTO -->
+                        <button type="button"
+                                (click)="metodoImportacion = 'texto'"
+                                class="p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer"
+                                [ngClass]="metodoImportacion === 'texto' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20 ring-2 ring-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                 [ngClass]="metodoImportacion === 'texto' ? 'bg-white/20 text-white' : 'bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400'">
+                                <mat-icon class="text-xl">content_paste</mat-icon>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-xs font-bold leading-tight">3. Por Texto</div>
+                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'texto' ? 'text-blue-100' : 'text-slate-400'">Pegar con Ctrl+V</div>
+                            </div>
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- CONTENIDO DEL MÉTODO 1: ENLACE / LINK (GOOGLE DOCS) -->
+                <div *ngIf="metodoImportacion === 'link'" class="bg-white dark:bg-slate-800/90 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 animate-fade-in shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <mat-icon class="text-sm text-blue-600">link</mat-icon>
+                            Enlace de Google Docs o Documento Web:
+                        </span>
+                        <span class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+                            ⚡ Descarga y parseo instantáneo
+                        </span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-1">
+                            <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">link</mat-icon>
+                            <input type="url"
+                                   [(ngModel)]="urlDocumentoWord"
+                                   placeholder="https://docs.google.com/document/d/..."
+                                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <button (click)="descargarUrlGoogleDocs()"
+                                [disabled]="descargandoUrl || !urlDocumentoWord"
+                                type="button"
+                                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0">
+                            <span *ngIf="descargandoUrl" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            <mat-icon *ngIf="!descargandoUrl" class="text-sm">bolt</mat-icon>
+                            <span>{{ descargandoUrl ? 'Descargando documento...' : 'Descargar y Analizar Enlace' }}</span>
+                        </button>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-200 flex items-start gap-2">
+                        <mat-icon class="text-sm text-blue-600 flex-shrink-0 mt-0.5">info</mat-icon>
+                        <div>
+                            <strong>¿Cómo funciona?</strong> Pega el enlace de tu documento de Google Docs (con permisos de acceso compartido o público). Nuestro servidor obtiene el contenido estructurado y detecta automáticamente las secciones, matrices Likert y preguntas.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTENIDO DEL MÉTODO 2: SUBIDA DE ARCHIVO (.DOCX O .TXT) -->
+                <div *ngIf="metodoImportacion === 'archivo'" class="bg-white dark:bg-slate-800/90 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 animate-fade-in shadow-xs">
+                    <div class="border-2 border-dashed border-blue-300 dark:border-blue-700/60 rounded-2xl p-6 bg-blue-50/30 dark:bg-blue-950/10 text-center flex flex-col items-center justify-center gap-3">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
+                            <mat-icon class="text-3xl">upload_file</mat-icon>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                Sube tu archivo de Word (.docx) o texto plano (.txt)
+                            </h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                                Nuestro extractor lee directamente el archivo preservando párrafos, tablas de escala y listas.
+                            </p>
+                        </div>
+
+                        <label class="cursor-pointer px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer mt-1">
+                            <mat-icon class="text-sm">folder_open</mat-icon>
+                            <span>Seleccionar Archivo (.docx / .txt)</span>
+                            <input type="file" (change)="onArchivoWordSeleccionado($event)" accept=".docx,.txt" class="hidden">
+                        </label>
+
+                        <div *ngIf="procesandoArchivoWord" class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 mt-2">
+                            <span class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                            <span>Procesando archivo Word y extrayendo estructura...</span>
+                        </div>
+
+                        <div *ngIf="archivoWordSeleccionadoNombre && !procesandoArchivoWord" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800 mt-1">
+                            <mat-icon class="text-xs text-emerald-600">check_circle</mat-icon>
+                            <span>Archivo cargado: {{ archivoWordSeleccionadoNombre }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTENIDO DEL MÉTODO 3: TEXTO DIRECTO (CTRL+V) -->
+                <div *ngIf="metodoImportacion === 'texto'" class="bg-white dark:bg-slate-800/90 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 animate-fade-in shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                            Pega aquí el texto de tu cuestionario (Ctrl+C en Word y Ctrl+V aquí):
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button (click)="cargarEjemploWord()" type="button"
+                                    class="px-2.5 py-1 rounded-lg bg-slate-200/80 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-[11px] font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer">
+                                Pegar Texto de Ejemplo
+                            </button>
+                            <button *ngIf="textoWordParaImportar" (click)="textoWordParaImportar = ''" type="button"
+                                    class="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-[11px] font-semibold transition-colors cursor-pointer">
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <textarea [(ngModel)]="textoWordParaImportar" rows="8"
+                              class="w-full px-3.5 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 transition-all leading-relaxed"
+                              placeholder="Ejemplo:
+SECCIÓN 1: DATOS GENERALES DEL CLIENTE
+1. Nombre de la empresa o cliente evaluador *
+2. Correo electrónico de contacto *
+
+SECCIÓN 2: EVALUACIÓN DE CALIDAD TÉCNICA
+3. Matriz de Satisfacción del Proyecto *
+[1 - Muy Malo | 2 - Malo | 3 - Regular | 4 - Bueno | 5 - Excelente | NA]
+- Cumplimiento de especificaciones y pruebas de fábrica
+- Tiempos de entrega y respuesta del equipo
+- Soporte técnico y atención personalizada..."></textarea>
+
+                    <div class="flex justify-end">
+                        <button (click)="analizarTextoWord()" type="button"
+                                [disabled]="!textoWordParaImportar || !textoWordParaImportar.trim()"
+                                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-40 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer">
+                            <mat-icon class="text-sm">auto_fix_high</mat-icon>
+                            <span>Analizar Texto Copiado</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VISTA PREVIA DEL TEXTO EXTRAÍDO (SI PROVIENE DE LINK O ARCHIVO) -->
+                <div *ngIf="textoWordParaImportar && metodoImportacion !== 'texto'" class="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <mat-icon class="text-xs text-blue-600">article</mat-icon>
+                            Texto extraído del documento ({{ textoWordParaImportar.length }} caracteres)
+                        </span>
+                        <button (click)="analizarTextoWord()" type="button"
+                                class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1">
+                            <mat-icon class="text-xs">refresh</mat-icon>
+                            <span>Re-analizar</span>
+                        </button>
+                    </div>
+                    <div class="max-h-24 overflow-y-auto p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-[11px] font-mono text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                        {{ textoWordParaImportar | slice:0:500 }}...
+                    </div>
+                </div>
+
+                <!-- OPCIONES DE IMPORTACIÓN -->
+                <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Opciones de configuración de la encuesta:
+                    </span>
+                    <div class="flex items-center gap-4">
+                        <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" [(ngModel)]="reemplazarCamposWord" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                            <span>Reemplazar preguntas actuales</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" [(ngModel)]="generarPasosWord" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                            <span>Crear pasos automáticamente (Wizard)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- RESUMEN DE COMPONENTES DETECTADOS -->
+                <div *ngIf="resumenWordDetectado" class="space-y-3 animate-fade-in pt-1">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        <div class="p-3 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-xl text-center">
+                            <span class="block text-lg font-black text-purple-700 dark:text-purple-300">{{ resumenWordDetectado.secciones }}</span>
+                            <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400">Bloques / Secciones</span>
+                        </div>
+                        <div class="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl text-center">
+                            <span class="block text-lg font-black text-blue-700 dark:text-blue-300">{{ resumenWordDetectado.matrices }}</span>
+                            <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400">Tablas Matriz (1-5)</span>
+                        </div>
+                        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center">
+                            <span class="block text-lg font-black text-emerald-700 dark:text-emerald-300">{{ resumenWordDetectado.opciones }}</span>
+                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Opción / Casillas</span>
+                        </div>
+                        <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-center">
+                            <span class="block text-lg font-black text-amber-700 dark:text-amber-300">{{ resumenWordDetectado.preguntas }}</span>
+                            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400">Preguntas Abiertas</span>
+                        </div>
+                        <div class="p-3 bg-slate-900 text-white rounded-xl text-center flex flex-col justify-center">
+                            <span class="block text-lg font-black">{{ resumenWordDetectado.total }}</span>
+                            <span class="text-[10px] font-bold text-slate-300">Total Detectados</span>
+                        </div>
+                    </div>
+
+                    <!-- Lista Previa de Campos Detectados -->
+                    <div class="max-h-52 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 space-y-1.5 bg-white dark:bg-slate-950/50 shadow-inner">
+                        <div *ngFor="let c of camposWordPrevisualizados; let idx = index"
+                             class="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                            <div class="flex items-center gap-2 truncate">
+                                <span class="w-5 font-bold text-slate-400">{{ idx + 1 }}.</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                                      [ngClass]="c.tipo === 'section' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' : (c.tipo === 'matrix' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300')">
+                                    {{ c.tipo }}
+                                </span>
+                                <span class="font-semibold text-slate-800 dark:text-white truncate">{{ c.etiqueta }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">Paso {{ c.paso || 1 }}</span>
+                                <span *ngIf="c.dependeDeCampoId" class="text-[10px] text-amber-600 font-bold flex items-center gap-0.5 truncate max-w-[200px]" [title]="'Condicional si seleccionó: ' + (c.dependeDeValor || '')">
+                                    <mat-icon class="text-[12px]">alt_route</mat-icon> Si: {{ c.dependeDeValor }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER DEL MODAL -->
+            <div class="px-6 py-4 bg-slate-100/90 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 flex-shrink-0">
+                <button (click)="cerrarModalImportarWord()"
+                        mat-button
+                        class="rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400">
+                    Cancelar
+                </button>
+
+                <button (click)="confirmarImportacionWord()"
+                        [disabled]="!camposWordPrevisualizados || camposWordPrevisualizados.length === 0"
+                        mat-flat-button color="primary"
+                        class="rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5 disabled:opacity-40">
+                    <mat-icon class="text-sm mr-1">check_circle</mat-icon>
+                    <span>Aplicar e Importar al Formulario ({{ camposWordPrevisualizados.length }})</span>
+                </button>
             </div>
 
         </div>

@@ -43,33 +43,23 @@ export interface PasoFormularioConfig {
 
 
 export interface CampoConfig {
-
     id: string;
-
-    tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel' | 'matrix' | 'section';
-
+    tipo: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'tel' | 'matrix' | 'section' | 'file';
     etiqueta: string;
-
     placeholder?: string;
-
     requerido: boolean;
-
     opciones?: string[];
-
     ancho?: 'full' | 'half';
-
     orden: number;
-
     paso?: number;
-
     escalaNotaInferior?: string;
-
     escalaNotaSuperior?: string;
-
     filasMatriz?: FilaMatrizConfig[];
-
     columnasMatriz?: ColumnaMatrizConfig[];
-
+    dependeDeCampoId?: string;
+    dependeDeOperador?: 'equals' | 'contains';
+    dependeDeValor?: string;
+    campoEstandar?: string;
 }
 
 
@@ -459,11 +449,8 @@ export class SurveysProductsService {
 
 
     /** Obtiene las respuestas registradas para un formulario */
-
     getRespuestasFormulario(id: number): Observable<FormularioProductoRespuestaDetalleDto[]> {
-
         return this._http.get<{ code: number; message: string; data: FormularioProductoRespuestaDetalleDto[] }>(
-
             `${this.apiUrl}/productos/formularios/${id}/respuestas`
 
         ).pipe(
@@ -1133,5 +1120,33 @@ export class SurveysProductsService {
         this.guardarEnStorage(lista);
 
     }
+
+
+    /** Descarga y extrae el texto estructurado de una URL de Google Docs o enlace web */
+    descargarContenidoUrl(url: string): Observable<{ contenido: string; urlProcesada?: string }> {
+        return this._http.post<{ contenido: string; urlProcesada?: string }>(
+            `${environment.apiUrl}/FormulariosRegistro/descargar-contenido-url`, { url }
+        ).pipe(
+            catchError(err => {
+                console.error('Error al descargar contenido URL:', err);
+                throw err;
+            })
+        );
+    }
+
+    /** Extrae el texto estructurado de un archivo subido (.docx o .txt) */
+    extraerContenidoArchivo(archivo: File): Observable<{ contenido: string; nombreArchivo?: string }> {
+        const formData = new FormData();
+        formData.append('archivo', archivo, archivo.name);
+        return this._http.post<{ contenido: string; nombreArchivo?: string }>(
+            `${environment.apiUrl}/FormulariosRegistro/extraer-contenido-archivo`, formData
+        ).pipe(
+            catchError(err => {
+                console.error('Error al extraer contenido de archivo:', err);
+                throw err;
+            })
+        );
+    }
+
 
 }
