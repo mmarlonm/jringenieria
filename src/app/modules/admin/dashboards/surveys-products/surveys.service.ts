@@ -216,6 +216,16 @@ export class SurveysProductsService {
      */
     readonly recuperados$ = new Subject<{ titulos: string[]; pendientes: number }>();
 
+    /** Avisa cuando no se pudo leer la lista del servidor y lo que se muestra es la copia guardada en este navegador. */
+    readonly servidorNoDisponible$ = new Subject<void>();
+
+    /** Antes de reemplazar la copia del navegador por la lista del servidor se respalda lo que difiera (últimas 5 veces). */
+    private readonly STORAGE_RESPALDO_KEY = 'jr_formularios_productos_respaldo';
+    private readonly MAX_RESPALDOS = 5;
+
+    /** Firmas de lo último que se copió DEL servidor: sirven para distinguir una copia del servidor de una edición hecha en el navegador. */
+    private readonly STORAGE_SINCRONIZADO_KEY = 'jr_formularios_productos_sincronizado';
+
 
 
     // =========================================================================
@@ -241,12 +251,16 @@ export class SurveysProductsService {
                     return this.subirFormulariosLocales(servidor, locales);
                 }
                 if (servidor.length > 0) {
-                    this.guardarEnStorage(servidor);
+                    this.reemplazarCopiaConLaDelServidor(servidor);
                     return of(servidor);
                 }
                 return of(this.obtenerPredeterminadosStorage());
             }),
-            catchError(() => of(this.obtenerPredeterminadosStorage()))
+            catchError(() => {
+                // Antes se mostraba la copia del navegador sin decir nada; ahora la pantalla avisa que el servidor no respondió.
+                this.servidorNoDisponible$.next();
+                return of(this.obtenerPredeterminadosStorage());
+            })
         );
     }
 
@@ -1086,12 +1100,55 @@ export class SurveysProductsService {
             toArray(),
             map(() => {
                 const lista = [...servidor, ...creados];
-                this.guardarEnStorage(lista);
+                this.reemplazarCopiaConLaDelServidor(lista);
                 this.guardarPendientes(fallidos);
                 this.recuperados$.next({ titulos: creados.map(c => c.titulo), pendientes: fallidos.length });
                 return lista;
             })
         );
+    }
+
+    private firmaDeFormulario(f: FormularioProductoDto): string {
+        return JSON.stringify([
+            this.claveSlug(f.slug), f.titulo, f.descripcion, f.activo, f.tipo, f.camposConfigJson, f.disenoConfigJson, f.imagenPortadaUrl
+        ]);
+    }
+
+    private leerJsonLocal<T>(clave: string): T[] {
+        try {
+            const datos = JSON.parse(localStorage.getItem(clave) || '[]');
+            return Array.isArray(datos) ? datos : [];
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Reemplaza la copia del navegador por la lista del servidor, pero primero respalda (máx. 5 veces) lo de la copia
+     * que no es idéntico a lo del servidor ni es una copia anterior del servidor: es decir, lo creado o editado en este navegador.
+     * El respaldo es un extra: si falla (almacenamiento lleno), la carga de la lista continúa.
+     */
+    private reemplazarCopiaConLaDelServidor(lista: FormularioProductoDto[]): void {
+        const firmasDelServidor = lista.map(f => this.firmaDeFormulario(f));
+        try {
+            const noLoDelServidor = new Set([...firmasDelServidor, ...this.leerJsonLocal<string>(this.STORAGE_SINCRONIZADO_KEY)]);
+            // Sin excepciones para las plantillas predeterminadas: respaldar de más cuesta un hueco de los 5; respaldar de menos, perder trabajo.
+            const enRiesgo = this.leerListaLocal(this.STORAGE_KEY).filter(
+                f => !!this.claveSlug(f.slug) && !noLoDelServidor.has(this.firmaDeFormulario(f))
+            );
+            if (enRiesgo.length > 0) {
+                const respaldos = [{ fecha: new Date().toISOString(), formularios: enRiesgo }, ...this.leerJsonLocal<unknown>(this.STORAGE_RESPALDO_KEY)];
+                localStorage.setItem(this.STORAGE_RESPALDO_KEY, JSON.stringify(respaldos.slice(0, this.MAX_RESPALDOS)));
+            }
+        } catch {
+            /* sin espacio para el respaldo: no impide cargar la lista */
+        }
+        this.guardarEnStorage(lista);
+        try {
+            localStorage.setItem(this.STORAGE_SINCRONIZADO_KEY, JSON.stringify(firmasDelServidor));
+        } catch {
+            /* sin espacio: solo habrá un respaldo de más la próxima vez */
+        }
     }
 
     private guardarEnStorage(lista: FormularioProductoDto[]): void {

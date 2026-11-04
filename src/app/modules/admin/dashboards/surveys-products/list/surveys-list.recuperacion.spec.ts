@@ -11,7 +11,10 @@ import { SurveysListComponent } from './surveys-list.component';
  * Ahora la pantalla avisa de lo que recupera y muestra el error cuando el servidor no pudo hacer lo pedido.
  */
 describe('SurveysListComponent: recuperación y errores visibles', () => {
-    let servicio: jasmine.SpyObj<SurveysProductsService> & { recuperados$: Subject<{ titulos: string[]; pendientes: number }> };
+    let servicio: jasmine.SpyObj<SurveysProductsService> & {
+        recuperados$: Subject<{ titulos: string[]; pendientes: number }>;
+        servidorNoDisponible$: Subject<void>;
+    };
     let avisos: jasmine.Spy;
     let componente: SurveysListComponent;
 
@@ -27,7 +30,10 @@ describe('SurveysListComponent: recuperación y errores visibles', () => {
             jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
                 'getFormularios', 'getSurveys', 'guardarFormulario', 'eliminarFormulario'
             ]),
-            { recuperados$: new Subject<{ titulos: string[]; pendientes: number }>() }
+            {
+                recuperados$: new Subject<{ titulos: string[]; pendientes: number }>(),
+                servidorNoDisponible$: new Subject<void>()
+            }
         );
         servicio.getFormularios.and.returnValue(of([]));
         servicio.getSurveys.and.returnValue(of({ code: 200, message: '', data: [] }));
@@ -77,6 +83,17 @@ describe('SurveysListComponent: recuperación y errores visibles', () => {
             expect(opciones.html).toContain('2 más no se pudieron subir');
         });
 
+        it('si solo quedaron pendientes (ninguna se pudo subir), el aviso lo dice claro sin hablar de "más"', () => {
+            componente.ngOnInit();
+
+            servicio.recuperados$.next({ titulos: [], pendientes: 2 });
+
+            const opciones = avisos.calls.mostRecent().args[0];
+            expect(opciones.icon).toBe('warning');
+            expect(opciones.html).toContain('2 encuesta(s) guardada(s) solo en este navegador no se pudieron subir');
+            expect(opciones.html).not.toContain('más');
+        });
+
         it('el título de una encuesta nunca se interpreta como código HTML', () => {
             componente.ngOnInit();
 
@@ -85,6 +102,21 @@ describe('SurveysListComponent: recuperación y errores visibles', () => {
             const html: string = avisos.calls.mostRecent().args[0].html;
             expect(html).not.toContain('<img');
             expect(html).toContain('&lt;img');
+        });
+    });
+
+    describe('servidor sin respuesta al cargar la lista', () => {
+        it('avisa que se muestra la copia guardada en este navegador y que no se guardará nada hasta que responda', () => {
+            // El componente importa MatSnackBarModule y trae su propia instancia: se espía esa, no la de la raíz.
+            const abrirAviso = spyOn(componente['_snackBar'] as MatSnackBar, 'open');
+            componente.ngOnInit();
+
+            servicio.servidorNoDisponible$.next();
+
+            expect(abrirAviso).toHaveBeenCalledTimes(1);
+            const mensaje = abrirAviso.calls.mostRecent().args[0];
+            expect(mensaje).toContain('copia guardada en este navegador');
+            expect(mensaje).toContain('no se guardará');
         });
     });
 

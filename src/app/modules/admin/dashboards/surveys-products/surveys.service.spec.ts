@@ -12,6 +12,8 @@ describe('SurveysProductsService: encuestas guardadas solo en el navegador', () 
     const URL = `${environment.apiUrl}/Encuesta/productos/formularios`;
     const CLAVE_COPIA = 'jr_formularios_productos_cache';
     const CLAVE_PENDIENTES = 'jr_formularios_productos_pendientes';
+    const CLAVE_RESPALDO = 'jr_formularios_productos_respaldo';
+    const CLAVE_SINCRONIZADO = 'jr_formularios_productos_sincronizado';
 
     let servicio: SurveysProductsService;
     let http: HttpTestingController;
@@ -47,6 +49,8 @@ describe('SurveysProductsService: encuestas guardadas solo en el navegador', () 
     beforeEach(() => {
         localStorage.removeItem(CLAVE_COPIA);
         localStorage.removeItem(CLAVE_PENDIENTES);
+        localStorage.removeItem(CLAVE_RESPALDO);
+        localStorage.removeItem(CLAVE_SINCRONIZADO);
         TestBed.configureTestingModule({ imports: [HttpClientTestingModule] });
         servicio = TestBed.inject(SurveysProductsService);
         http = TestBed.inject(HttpTestingController);
@@ -56,6 +60,8 @@ describe('SurveysProductsService: encuestas guardadas solo en el navegador', () 
         http.verify();
         localStorage.removeItem(CLAVE_COPIA);
         localStorage.removeItem(CLAVE_PENDIENTES);
+        localStorage.removeItem(CLAVE_RESPALDO);
+        localStorage.removeItem(CLAVE_SINCRONIZADO);
     });
 
     it('si no hay nada guardado solo en el navegador, pide la lista y no hace nada más', () => {
@@ -194,6 +200,94 @@ describe('SurveysProductsService: encuestas guardadas solo en el navegador', () 
         expect(resultado.map((f) => f.slug)).toEqual(['taller-a']);
         expect(localStorage.getItem(CLAVE_COPIA)).toBe(antes);
         expect(localStorage.getItem(CLAVE_PENDIENTES)).toBeNull();
+    });
+
+    it('si no se puede leer la lista del servidor, lo avisa (ya no se muestra la copia del navegador en silencio)', () => {
+        guardarCopiaLocal([encuesta(3, 'taller-a')]);
+        let avisos = 0;
+        servicio.servidorNoDisponible$.subscribe(() => avisos++);
+
+        servicio.getFormularios().subscribe();
+        http.expectOne((r) => r.method === 'GET').flush({}, { status: 502, statusText: 'Bad Gateway' });
+
+        expect(avisos).toBe(1);
+    });
+
+    it('si el servidor responde bien, no avisa que esté caído', () => {
+        let avisos = 0;
+        servicio.servidorNoDisponible$.subscribe(() => avisos++);
+
+        servicio.getFormularios().subscribe();
+        listaDelServidor([encuesta(1, 'satisfaccion-productos')]);
+
+        expect(avisos).toBe(0);
+    });
+
+    describe('respaldo de lo que la lista del servidor reemplazaría en la copia del navegador', () => {
+        const respaldo = (): { fecha: string; formularios: FormularioProductoDto[] }[] =>
+            JSON.parse(localStorage.getItem(CLAVE_RESPALDO) || '[]');
+
+        it('si la copia tiene una versión distinta de una encuesta que también está en el servidor, queda respaldada', () => {
+            const editadaEnElNavegador = encuesta(1, 'satisfaccion-productos', {
+                titulo: 'Título editado en el navegador', fechaModificacion: '2026-11-04T09:00:00.000Z'
+            });
+            guardarCopiaLocal([editadaEnElNavegador]);
+            let resultado: FormularioProductoDto[] = [];
+
+            servicio.getFormularios().subscribe((l) => (resultado = l));
+            listaDelServidor([encuesta(1, 'satisfaccion-productos')]);
+
+            expect(resultado[0].titulo).toBe('Encuesta satisfaccion-productos'); // sigue mandando el servidor
+            expect(respaldo().length).toBe(1);
+            expect(respaldo()[0].formularios.map((f) => f.titulo)).toEqual(['Título editado en el navegador']);
+            expect(respaldo()[0].fecha).toBeTruthy();
+        });
+
+        it('una copia que venía del servidor y luego cambió en el servidor no genera respaldo (no es trabajo del navegador)', () => {
+            servicio.getFormularios().subscribe();
+            listaDelServidor([encuesta(1, 'satisfaccion-productos')]);
+
+            // alguien edita la encuesta desde otra PC; esta recarga la lista
+            servicio.getFormularios().subscribe();
+            listaDelServidor([encuesta(1, 'satisfaccion-productos', { titulo: 'Editada en otra PC' })]);
+
+            expect(localStorage.getItem(CLAVE_RESPALDO)).toBeNull();
+        });
+
+        it('si la copia ya es idéntica a la del servidor, no se crea ningún respaldo', () => {
+            guardarCopiaLocal([encuesta(1, 'satisfaccion-productos')]);
+
+            servicio.getFormularios().subscribe();
+            listaDelServidor([encuesta(1, 'satisfaccion-productos')]);
+
+            expect(localStorage.getItem(CLAVE_RESPALDO)).toBeNull();
+        });
+
+        it('guarda como máximo los 5 respaldos más recientes', () => {
+            for (let i = 1; i <= 7; i++) {
+                guardarCopiaLocal([encuesta(1, 'satisfaccion-productos', { titulo: `versión ${i}` })]);
+                servicio.getFormularios().subscribe();
+                listaDelServidor([encuesta(1, 'satisfaccion-productos')]);
+            }
+
+            expect(respaldo().length).toBe(5);
+            expect(respaldo()[0].formularios[0].titulo).toBe('versión 7'); // el más reciente primero
+        });
+
+        it('si el respaldo no se puede escribir (almacenamiento lleno), la lista carga igual', () => {
+            guardarCopiaLocal([encuesta(1, 'satisfaccion-productos', { titulo: 'distinta' })]);
+            const original = Storage.prototype.setItem;
+            spyOn(Storage.prototype, 'setItem').and.callFake(function (this: Storage, clave: string, valor: string) {
+                if (clave === CLAVE_RESPALDO) throw new DOMException('lleno', 'QuotaExceededError');
+                return original.call(this, clave, valor);
+            });
+            let resultado: FormularioProductoDto[] = [];
+
+            servicio.getFormularios().subscribe((l) => (resultado = l));
+            listaDelServidor([encuesta(1, 'satisfaccion-productos')]);
+
+            expect(resultado.map((f) => f.slug)).toEqual(['satisfaccion-productos']);
+        });
     });
 
     it('una copia del navegador dañada no rompe la carga ni sube nada', () => {
