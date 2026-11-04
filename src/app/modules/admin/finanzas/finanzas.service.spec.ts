@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { environment } from 'environments/environment';
 import { FinanzasService } from './finanzas.service';
+import { CreditoGuardar, CreditoPagoGuardar } from './finanzas.types';
 
 describe('FinanzasService', () => {
     let service: FinanzasService;
@@ -222,6 +223,97 @@ describe('FinanzasService', () => {
         expect(req.request.method).toBe('GET');
         expect(req.request.params.has('empresaId')).toBeFalse();
         req.flush({});
+    });
+
+    it('creditos_manda_solo_los_filtros_con_valor', () => {
+        service.creditos({ empresaId: 2, sentido: 'Recibido', estado: null }).subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${base}/creditos`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys().sort()).toEqual(['empresaId', 'sentido']);
+        expect(req.request.params.get('empresaId')).toBe('2');
+        expect(req.request.params.get('sentido')).toBe('Recibido');
+        req.flush([]);
+    });
+
+    it('crearCredito_actualizarCredito_y_eliminarCredito_usan_su_verbo_y_ruta', () => {
+        const dto: CreditoGuardar = {
+            empresaId: 1,
+            sentido: 'Recibido',
+            tipo: 'Simple',
+            contraparte: 'Banco Santander',
+            moneda: 'MXN',
+            montoOriginal: 100000,
+            saldoCapital: 80000,
+            tasaAnual: 0.12,
+            vencimientoFinal: '2028-12-31',
+            cuentaId: 5,
+            estado: 'Activo',
+            notas: 'Crédito simple'
+        };
+
+        service.crearCredito(dto).subscribe();
+        const postReq = httpMock.expectOne(`${base}/creditos`);
+        expect(postReq.request.method).toBe('POST');
+        expect(postReq.request.body).toEqual(dto);
+        postReq.flush({ creditoId: 10, ...dto });
+
+        service.actualizarCredito(10, dto).subscribe();
+        const putReq = httpMock.expectOne(`${base}/creditos/10`);
+        expect(putReq.request.method).toBe('PUT');
+        expect(putReq.request.body).toEqual(dto);
+        putReq.flush({ creditoId: 10, ...dto });
+
+        service.eliminarCredito(10).subscribe();
+        const delReq = httpMock.expectOne(`${base}/creditos/10`);
+        expect(delReq.request.method).toBe('DELETE');
+        delReq.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('las_cuotas_usan_las_rutas_anidadas', () => {
+        const cuotaDto: CreditoPagoGuardar = {
+            vencimiento: '2026-11-15',
+            capital: 10000,
+            interes: 1200,
+            estado: 'Pendiente',
+            fechaPago: null
+        };
+
+        service.pagosCredito(10).subscribe();
+        const getReq = httpMock.expectOne(`${base}/creditos/10/pagos`);
+        expect(getReq.request.method).toBe('GET');
+        getReq.flush([]);
+
+        service.agregarPagoCredito(10, cuotaDto).subscribe();
+        const postReq = httpMock.expectOne(`${base}/creditos/10/pagos`);
+        expect(postReq.request.method).toBe('POST');
+        expect(postReq.request.body).toEqual(cuotaDto);
+        postReq.flush({ pagoId: 1, creditoId: 10, total: 11200, ...cuotaDto });
+
+        service.actualizarPagoCredito(10, 1, cuotaDto).subscribe();
+        const putReq = httpMock.expectOne(`${base}/creditos/10/pagos/1`);
+        expect(putReq.request.method).toBe('PUT');
+        expect(putReq.request.body).toEqual(cuotaDto);
+        putReq.flush({ pagoId: 1, creditoId: 10, total: 11200, ...cuotaDto });
+
+        service.eliminarPagoCredito(10, 1).subscribe();
+        const delReq = httpMock.expectOne(`${base}/creditos/10/pagos/1`);
+        expect(delReq.request.method).toBe('DELETE');
+        delReq.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('balanceCreditos_manda_empresaId_solo_si_viene', () => {
+        service.balanceCreditos().subscribe();
+        const req1 = httpMock.expectOne((r) => r.url === `${base}/creditos/balance`);
+        expect(req1.request.method).toBe('GET');
+        expect(req1.request.params.has('empresaId')).toBeFalse();
+        req1.flush({ empresaId: null, empresasIncluidas: 2, monedas: [] });
+
+        service.balanceCreditos(3).subscribe();
+        const req2 = httpMock.expectOne((r) => r.url === `${base}/creditos/balance`);
+        expect(req2.request.method).toBe('GET');
+        expect(req2.request.params.get('empresaId')).toBe('3');
+        req2.flush({ empresaId: 3, empresasIncluidas: 1, monedas: [] });
     });
 
     it('dashboard_con_empresa_manda_empresaId', () => {

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { Cuenta, MovimientoConciliacion, ResultadoImportacion } from './finanzas.types';
-import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD } from './finanzas.utils';
+import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD, etiquetaTipoCredito, formatearTasa, fechaVencida } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -296,6 +296,31 @@ describe('finanzas.utils', () => {
         });
     });
 
+
+    describe('creditos utils', () => {
+        it('etiquetaTipoCredito_traduce_los_cuatro_tipos_y_deja_pasar_otro_valor', () => {
+            expect(etiquetaTipoCredito('Simple')).toBe('Crédito simple');
+            expect(etiquetaTipoCredito('Arrendamiento')).toBe('Arrendamiento');
+            expect(etiquetaTipoCredito('Mercancia')).toBe('Línea de proveedor (mercancía)');
+            expect(etiquetaTipoCredito('Otro')).toBe('Otro');
+            expect(etiquetaTipoCredito('Desconocido')).toBe('Desconocido');
+        });
+
+        it('formatearTasa_da_dos_decimales_y_el_simbolo', () => {
+            expect(formatearTasa(0.155)).toBe('15.50%');
+            expect(formatearTasa(0)).toBe('0.00%');
+            expect(formatearTasa(1)).toBe('100.00%');
+        });
+
+        it('fechaVencida_compara_solo_la_fecha', () => {
+            const hoy5Oct = new Date(2026, 9, 5);
+            const hoy6Oct = new Date(2026, 9, 6);
+
+            expect(fechaVencida('2026-10-05T00:00:00', hoy5Oct)).toBeFalse();
+            expect(fechaVencida('2026-10-05T00:00:00', hoy6Oct)).toBeTrue();
+            expect(fechaVencida('texto no fecha', hoy6Oct)).toBeFalse();
+        });
+    });
 
     describe('dashboard utils', () => {
         it('formatearMonto formatea con moneda o devuelve el numero como texto si es null', () => {
