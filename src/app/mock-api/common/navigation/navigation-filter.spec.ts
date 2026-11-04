@@ -49,6 +49,13 @@ describe('filtro del menú por vistas', () => {
             expect(ids(menu)).not.toContain('eventos.dashboard');
         });
 
+        it('Quien_tiene_finanzas_creditos_ve_ese_hijo_y_no_los_demas', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['finanzas.creditos']);
+
+            expect(hijosDeFinanzas(menu)).toEqual(['finanzas.creditos']);
+            expect(ids(menu)).not.toContain('eventos.dashboard');
+        });
+
         it('el grupo Finanzas lista sus hijos en el orden del proceso', () => {
             const todas = ['finanzas.despacho', 'finanzas.cfdi', 'finanzas.dashboard', 'finanzas.conciliacion', 'finanzas.bancos'];
 
