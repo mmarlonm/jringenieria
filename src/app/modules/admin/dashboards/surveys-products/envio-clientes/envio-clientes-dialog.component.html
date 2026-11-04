@@ -1,0 +1,322 @@
+<div class="flex flex-col max-h-[90vh] w-full max-w-5xl bg-white dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden text-gray-800 dark:text-gray-100">
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-850">
+        <div>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Enviar encuesta a clientes
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                «{{ data.titulo }}»
+            </p>
+        </div>
+        <button
+            mat-icon-button
+            [disabled]="enviando()"
+            (click)="cerrar()"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Error dentro del diálogo -->
+    <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md text-sm flex items-center justify-between">
+        <span>{{ error() }}</span>
+        <button mat-button color="warn" (click)="cargarDestinatarios()" *ngIf="lista().length === 0">
+            Reintentar
+        </button>
+    </div>
+
+    <!-- Vista de Envoi en Proceso -->
+    <div *ngIf="enviando()" class="p-8 flex flex-col items-center justify-center space-y-4">
+        <mat-spinner diameter="48"></mat-spinner>
+        <div class="text-center">
+            <h3 class="text-base font-medium">Enviando encuestas por correo...</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" *ngIf="progreso()">
+                Lote {{ progreso()?.lote }} de {{ progreso()?.total }}
+            </p>
+        </div>
+        <div class="w-full max-w-md">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+        <p class="text-xs text-gray-400">Por favor, no cierres este diálogo mientras se completa el envío.</p>
+    </div>
+
+    <!-- Vista de Resultados -->
+    <div *ngIf="resultado() && !enviando()" class="flex-1 overflow-y-auto p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-center">
+                <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ resultado()?.totalProcesados }}</div>
+                <div class="text-xs font-medium text-gray-500 uppercase mt-1">Total Procesados</div>
+            </div>
+            <div class="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-center">
+                <div class="text-2xl font-bold text-green-700 dark:text-green-400">{{ resultado()?.enviados }}</div>
+                <div class="text-xs font-medium text-green-600 uppercase mt-1">Enviados</div>
+            </div>
+            <div class="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 text-center">
+                <div class="text-2xl font-bold text-amber-700 dark:text-amber-400">{{ resultado()?.omitidos }}</div>
+                <div class="text-xs font-medium text-amber-600 uppercase mt-1">Omitidos</div>
+            </div>
+            <div class="p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800 text-center">
+                <div class="text-2xl font-bold text-red-700 dark:text-red-400">{{ resultado()?.fallidos }}</div>
+                <div class="text-xs font-medium text-red-600 uppercase mt-1">Fallidos</div>
+            </div>
+        </div>
+
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 font-medium text-sm">
+                Detalle del envío
+            </div>
+            <div class="max-h-64 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <div *ngFor="let item of resultado()?.detalle" class="p-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-medium text-gray-900 dark:text-gray-100">{{ item.nombre }}</div>
+                        <div *ngIf="item.motivo" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.motivo }}</div>
+                    </div>
+                    <div>
+                        <span *ngIf="item.resultado === 'enviado'" class="px-2 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                            Enviado
+                        </span>
+                        <span *ngIf="item.resultado === 'omitido'" class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                            Omitido
+                        </span>
+                        <span *ngIf="item.resultado === 'fallido'" class="px-2 py-0.5 text-xs font-semibold rounded bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                            Fallido
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de Confirmación -->
+    <div *ngIf="confirmando() && !enviando() && !resultado()" class="p-8 space-y-6">
+        <div class="p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h3 class="text-base font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                Confirmación de envío
+            </h3>
+            <p class="text-sm text-blue-800 dark:text-blue-300">
+                {{ textoConfirmacion() }}
+            </p>
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                A cada dirección de correo se le enviará una sola vez. Los envíos se procesarán en secuencia en lotes de 10.
+            </p>
+        </div>
+        <div class="flex justify-end space-x-3">
+            <button mat-button (click)="cancelarConfirmacion()">
+                Regresar y editar
+            </button>
+            <button mat-flat-button color="primary" (click)="enviar()">
+                Confirmar y enviar
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenido Principal: Pestañas -->
+    <div *ngIf="!enviando() && !resultado() && !confirmando()" class="flex-1 flex flex-col overflow-hidden">
+        <mat-tab-group class="flex-1 overflow-hidden" animationDuration="0ms">
+            <!-- Pestaña 1: Clientes -->
+            <mat-tab label="Clientes">
+                <div class="p-6 flex flex-col h-full space-y-4 overflow-y-auto">
+                    <!-- Controles y Filtros -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="inline-flex rounded-md shadow-sm border border-gray-300 dark:border-gray-700 overflow-hidden">
+                            <button
+                                type="button"
+                                class="px-4 py-1.5 text-xs font-medium transition-colors"
+                                [ngClass]="estado() === 'activos' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50'"
+                                (click)="cambiarEstado('activos')">
+                                Activos ({{ contadores().activos }})
+                            </button>
+                            <button
+                                type="button"
+                                class="px-4 py-1.5 text-xs font-medium border-l border-gray-300 dark:border-gray-700 transition-colors"
+                                [ngClass]="estado() === 'inactivos' ? 'bg-primary text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50'"
+                                (click)="cambiarEstado('inactivos')">
+                                Inactivos ({{ contadores().inactivos }})
+                            </button>
+                        </div>
+
+                        <div class="flex-1 min-w-[200px] max-w-sm">
+                            <input
+                                type="text"
+                                [ngModel]="texto()"
+                                (ngModelChange)="cambiarTexto($event)"
+                                placeholder="Buscar por nombre, empresa o correo..."
+                                class="w-full px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <mat-checkbox
+                                [ngModel]="soloConCorreo()"
+                                (ngModelChange)="cambiarSoloConCorreo($event)"
+                                class="text-sm">
+                                Solo con correo
+                            </mat-checkbox>
+
+                            <button
+                                mat-button
+                                class="text-xs"
+                                [disabled]="seleccion().size === 0"
+                                (click)="limpiarSeleccion()">
+                                Limpiar selección ({{ seleccion().size }})
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Spinner de carga inicial -->
+                    <div *ngIf="cargando()" class="py-12 flex justify-center">
+                        <mat-spinner diameter="36"></mat-spinner>
+                    </div>
+
+                    <!-- Tabla de clientes -->
+                    <div *ngIf="!cargando()" class="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto min-h-[300px]">
+                        <table class="w-full text-left text-sm divide-y divide-gray-200 dark:divide-gray-800">
+                            <thead class="bg-gray-50 dark:bg-gray-800 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <tr>
+                                    <th class="w-12 px-4 py-3">
+                                        <mat-checkbox
+                                            [checked]="todosVisiblesSeleccionados()"
+                                            [indeterminate]="algunosVisiblesSeleccionados()"
+                                            (change)="alternarTodosVisibles()"
+                                            aria-label="Seleccionar todos los visibles">
+                                        </mat-checkbox>
+                                    </th>
+                                    <th class="px-4 py-3">Nombre</th>
+                                    <th class="px-4 py-3">Empresa</th>
+                                    <th class="px-4 py-3">Correo</th>
+                                    <th class="px-4 py-3 text-right">Estado del correo</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                                <tr *ngFor="let row of visiblesPaginados()" class="hover:bg-gray-50 dark:hover:bg-gray-850">
+                                    <td class="px-4 py-2.5">
+                                        <mat-checkbox
+                                            [checked]="seleccion().has(row.clienteId)"
+                                            [disabled]="!esFilaSeleccionable(row)"
+                                            (change)="alternarSeleccion(row.clienteId)"
+                                            [matTooltip]="!esFilaSeleccionable(row) ? (row.estadoCorreo === 'sinCorreo' ? 'Sin correo' : 'Correo inválido') : ''">
+                                        </mat-checkbox>
+                                    </td>
+                                    <td class="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">
+                                        {{ row.nombre }}
+                                    </td>
+                                    <td class="px-4 py-2.5 text-gray-500 dark:text-gray-400">
+                                        {{ row.empresa || '—' }}
+                                    </td>
+                                    <td class="px-4 py-2.5 text-gray-600 dark:text-gray-300 font-mono text-xs">
+                                        {{ row.correo || '—' }}
+                                    </td>
+                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                        <span
+                                            *ngIf="row.estadoCorreo === 'valido' && !row.correoRepetido"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300">
+                                            Con correo
+                                        </span>
+                                        <span
+                                            *ngIf="row.correoRepetido"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                                            matTooltip="Esta dirección la comparten dos o más clientes">
+                                            Correo repetido
+                                        </span>
+                                        <span
+                                            *ngIf="row.estadoCorreo === 'sinCorreo'"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                            Sin correo
+                                        </span>
+                                        <span
+                                            *ngIf="row.estadoCorreo === 'invalido'"
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                                            Correo inválido
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="visiblesPaginados().length === 0">
+                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                        No se encontraron clientes que coincidan con los filtros aplicados.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginador -->
+                    <mat-paginator
+                        [length]="ordenados().length"
+                        [pageSize]="tamanoPagina()"
+                        [pageIndex]="pagina()"
+                        [pageSizeOptions]="[25, 50, 100]"
+                        (page)="onPageChange($event)"
+                        class="bg-transparent">
+                    </mat-paginator>
+                </div>
+            </mat-tab>
+
+            <!-- Pestaña 2: Otros correos -->
+            <mat-tab label="Otros correos">
+                <div class="p-6 flex flex-col space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Correos adicionales (personas que no son clientes)
+                        </label>
+                        <textarea
+                            data-testid="correos-libres"
+                            rows="6"
+                            [ngModel]="correosLibresTexto()"
+                            (ngModelChange)="correosLibresTexto.set($event)"
+                            placeholder="juan@empresa.com, direccion2@proveedor.com; persona3@correo.com..."
+                            class="w-full p-3 font-mono text-sm border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Escribe o pega correos separados por coma, punto y coma, espacio o salto de línea.
+                        </p>
+                    </div>
+
+                    <!-- Resumen en vivo de correos libres -->
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center space-x-2 text-green-700 dark:text-green-400">
+                            <mat-icon class="icon-size-4">check_circle</mat-icon>
+                            <span>{{ analisisLibres().validos.length }} correos válidos</span>
+                        </div>
+
+                        <div *ngIf="analisisLibres().repetidos > 0" class="flex items-center space-x-2 text-amber-700 dark:text-amber-400">
+                            <mat-icon class="icon-size-4">info</mat-icon>
+                            <span>{{ analisisLibres().repetidos }} correos repetidos ignorados</span>
+                        </div>
+
+                        <div *ngIf="analisisLibres().invalidos.length > 0" class="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-xs">
+                            <div class="font-semibold mb-1">Direcciones no válidas (no se les enviará):</div>
+                            <div class="font-mono break-all">{{ analisisLibres().invalidos.join(', ') }}</div>
+                        </div>
+
+                        <div *ngIf="maximoCorreosSuperado()" class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded text-amber-800 dark:text-amber-300 text-xs font-semibold">
+                            Has superado el límite máximo de 200 correos escritos. Por favor reduce la lista.
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+
+    <!-- Pie Fijo Visible en Ambas Pestañas -->
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-850">
+        <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{ resumen().clientes }} clientes + {{ resumen().correosLibres }} correos escritos = {{ resumen().destinatariosUnicos }} destinatarios únicos
+        </div>
+        <div class="flex items-center space-x-3">
+            <button
+                mat-button
+                [disabled]="enviando()"
+                (click)="cerrar()">
+                {{ resultado() ? 'Cerrar' : 'Cancelar' }}
+            </button>
+            <button
+                *ngIf="!resultado()"
+                mat-flat-button
+                color="primary"
+                [disabled]="enviando() || resumen().destinatariosUnicos === 0 || maximoCorreosSuperado()"
+                (click)="confirmar()">
+                Enviar
+            </button>
+        </div>
+    </div>
+</div>
+
