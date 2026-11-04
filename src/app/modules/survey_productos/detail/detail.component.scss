@@ -1,3 +1,10 @@
+/* layout.component.scss hace display:flex a todo componente que carga como ruta; en una fila flex el contenedor del
+   formulario se encogía a su contenido y salía pegado a la izquierda. Como bloque, ocupa todo el ancho y mx-auto lo centra. */
+:host {
+  display: block;
+  width: 100%;
+}
+
 mat-form-field {
   width: 100%;
 }
