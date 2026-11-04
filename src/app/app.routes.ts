@@ -1,8 +1,8 @@
 import { Route } from '@angular/router';
 import { initialDataResolver } from 'app/app.resolvers';
 import { AuthGuard } from 'app/core/auth/guards/auth.guard';
-import { NoAuthGuard } from 'app/core/auth/guards/noAuth.guard';
 import { LayoutComponent } from 'app/layout/layout.component';
+import { rutasDeInvitados } from 'app/app.routes.invitados';
 
 // @formatter:off
 /* eslint-disable max-len */
@@ -19,29 +19,8 @@ export const appRoutes: Route[] = [
     // location. This is a small convenience to keep all main routes together here on this file.
     { path: 'signed-in-redirect', pathMatch: 'full', redirectTo: '/dashboards/analytics' },
 
-    // Auth routes for guests
-    {
-        path: '',
-        canActivate: [NoAuthGuard],
-        canActivateChild: [NoAuthGuard],
-        component: LayoutComponent,
-        data: {
-            layout: 'empty'
-        },
-        children: [
-            { path: 'confirmation-required', loadChildren: () => import('app/modules/auth/confirmation-required/confirmation-required.routes') },
-            { path: 'forgot-password', loadChildren: () => import('app/modules/auth/forgot-password/forgot-password.routes') },
-            { path: 'reset-password', loadChildren: () => import('app/modules/auth/reset-password/reset-password.routes') },
-            { path: 'sign-in', loadChildren: () => import('app/modules/auth/sign-in/sign-in.routes') },
-            { path: 'sign-up', loadChildren: () => import('app/modules/auth/sign-up/sign-up.routes') },
-            { path: 'survey', loadChildren: () => import('app/modules/survey/survey.routes') }, // Survey module route
-            { path: 'survey-productos', loadChildren: () => import('app/modules/survey_productos/survey_productos.routes') }, // Survey module route
-            { path: 'public/cuestionario-proveedor/:id', loadComponent: () => import('app/modules/public/cuestionario-proveedor/cuestionario-proveedor.component').then(m => m.PublicCuestionarioProveedorComponent) },
-            { path: 'eventos/ver-pase', loadComponent: () => import('app/modules/public/ver-pase/ver-pase.component').then(m => m.PublicVerPaseComponent) },
-            { path: 'eventos/ver-pase/:token', loadComponent: () => import('app/modules/public/ver-pase/ver-pase.component').then(m => m.PublicVerPaseComponent) },
-            { path: 'public/registro-staff/:eventoId', loadComponent: () => import('app/modules/public/registro-staff/registro-staff.component').then(m => m.RegistroStaffComponent) }
-        ]
-    },
+    // Auth routes for guests (acceso y páginas públicas; ver app.routes.invitados.ts)
+    ...rutasDeInvitados(LayoutComponent),
 
     // Auth routes for authenticated users
     {
