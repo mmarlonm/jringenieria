@@ -108,8 +108,10 @@ export class EnvioClientesDialogComponent implements OnInit {
         resumen(this.lista(), this.seleccion(), this.analisisLibres().validos)
     );
 
+    // «Todos los visibles» = todo lo que cumple el filtro y la búsqueda actuales, no solo la página que se está viendo
+    // (con 170 clientes activos con correo, la página de 50 dejaba la mayoría sin marcar).
     readonly todosVisiblesSeleccionados = computed(() => {
-        const seleccionables = this.visiblesPaginados().filter(esSeleccionable);
+        const seleccionables = this.ordenados().filter(esSeleccionable);
         if (seleccionables.length === 0) {
             return false;
         }
@@ -117,7 +119,7 @@ export class EnvioClientesDialogComponent implements OnInit {
     });
 
     readonly algunosVisiblesSeleccionados = computed(() => {
-        const seleccionables = this.visiblesPaginados().filter(esSeleccionable);
+        const seleccionables = this.ordenados().filter(esSeleccionable);
         const marcados = seleccionables.filter((d) => this.seleccion().has(d.clienteId));
         return marcados.length > 0 && marcados.length < seleccionables.length;
     });
@@ -182,7 +184,7 @@ export class EnvioClientesDialogComponent implements OnInit {
     }
 
     alternarTodosVisibles(): void {
-        const nuevo = alternarTodos(this.visiblesPaginados(), this.seleccion());
+        const nuevo = alternarTodos(this.ordenados(), this.seleccion());
         this.seleccion.set(nuevo);
     }
 
@@ -232,7 +234,10 @@ export class EnvioClientesDialogComponent implements OnInit {
                         .enviar(this.data.formularioId, lote.clienteIds, lote.correosLibres)
                         .pipe(
                             catchError((err) => {
-                                const mensajeError = err?.error?.mensaje || err?.message || 'No se pudo enviar el lote';
+                                // Nunca se muestra err.message: en un error HTTP trae la URL completa de la petición.
+                                const mensajeError =
+                                    err?.error?.mensaje ||
+                                    (err?.status === 0 ? 'No hay conexión con el servidor.' : 'No se pudo enviar el lote.');
                                 const detalleFallidos: EnvioEncuestaDetalle[] = [
                                     ...lote.clienteIds.map((id) => {
                                         const c = this.lista().find((cli) => cli.clienteId === id);

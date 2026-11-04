@@ -568,5 +568,69 @@ describe('EnvioClientesDialogComponent', () => {
 
         expect(component.maximoCorreosSuperado()).toBeTrue();
     });
+
+    describe('revisión de Claude', () => {
+        const sesentaClientes = (): DestinatarioClienteDto[] =>
+            Array.from({ length: 60 }, (_, i) => ({
+                clienteId: i + 1,
+                nombre: `Cliente ${String(i + 1).padStart(2, '0')}`,
+                empresa: null,
+                correo: `c${i + 1}@test.com`,
+                estadoCorreo: 'valido' as const,
+                correoRepetido: false,
+                activo: true,
+            }));
+
+        it('seleccionar_todos_marca_todo_lo_que_cumple_el_filtro_aunque_este_en_otra_pagina', () => {
+            inicializarConDatos(sesentaClientes());
+            expect(component.visiblesPaginados().length).toBe(50); // la página actual solo muestra 50
+
+            component.alternarTodosVisibles();
+
+            expect(component.seleccion().size).toBe(60);
+            expect(component.todosVisiblesSeleccionados()).toBeTrue();
+
+            component.alternarTodosVisibles(); // al repetir, desmarca los mismos
+            expect(component.seleccion().size).toBe(0);
+        });
+
+        it('seleccionar_todos_no_marca_a_los_que_oculta_la_busqueda', () => {
+            inicializarConDatos(sesentaClientes());
+            component.cambiarTexto('Cliente 5'); // Cliente 50 al 59
+
+            component.alternarTodosVisibles();
+
+            expect(component.seleccion().size).toBe(10);
+            expect([...component.seleccion()].every((id) => id >= 50 && id <= 59)).toBeTrue();
+        });
+
+        it('un_lote_sin_respuesta_del_servidor_dice_que_no_hay_conexion_sin_mostrar_la_url', () => {
+            inicializarConDatos();
+            component.alternarSeleccion(1);
+
+            component.enviar();
+            httpMock
+                .expectOne(`${environment.apiUrl}/EncuestaEnvio/formularios/7/enviar`)
+                .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+
+            const motivo = component.resultado()?.detalle[0].motivo ?? '';
+            expect(motivo).toBe('No hay conexión con el servidor.');
+            expect(motivo).not.toContain('http');
+        });
+
+        it('un_lote_con_error_del_servidor_sin_mensaje_muestra_un_texto_claro_sin_la_url', () => {
+            inicializarConDatos();
+            component.alternarSeleccion(1);
+
+            component.enviar();
+            httpMock
+                .expectOne(`${environment.apiUrl}/EncuestaEnvio/formularios/7/enviar`)
+                .flush({}, { status: 500, statusText: 'Server Error' });
+
+            const motivo = component.resultado()?.detalle[0].motivo ?? '';
+            expect(motivo).toBe('No se pudo enviar el lote.');
+            expect(motivo).not.toContain('http');
+        });
+    });
 });
 
