@@ -347,6 +347,13 @@
                                             matTooltip="Abrir formulario en nueva pestaña">
                                         <mat-icon class="text-sm">open_in_new</mat-icon>
                                     </button>
+                                    <button *ngIf="form.activo"
+                                            (click)="abrirEnvioClientes(form)"
+                                            type="button"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                            matTooltip="Enviar encuesta">
+                                        <mat-icon class="text-sm">forward_to_inbox</mat-icon>
+                                    </button>
                                     <button (click)="duplicarFormulario(form)"
                                             type="button"
                                             class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
@@ -533,6 +540,14 @@
                         class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                     <mat-icon class="text-xs">open_in_new</mat-icon>
                     <span>Ver</span>
+                </button>
+                <button *ngIf="currentFormId > 0 && activo"
+                        (click)="abrirEnvioClientes()"
+                        type="button"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-xs transition-colors cursor-pointer"
+                        matTooltip="Enviar encuesta">
+                    <mat-icon class="text-sm">forward_to_inbox</mat-icon>
+                    <span>Enviar encuesta</span>
                 </button>
                 <button (click)="guardarFormulario()"
                         [disabled]="saving"

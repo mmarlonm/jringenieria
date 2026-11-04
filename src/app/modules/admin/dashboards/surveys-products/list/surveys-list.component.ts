@@ -20,7 +20,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { EnvioClientesDialogComponent } from '../envio-clientes/envio-clientes-dialog.component';
 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
@@ -99,6 +100,10 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     private _cdr = inject(ChangeDetectorRef);
 
     private _snackBar = inject(MatSnackBar);
+
+    private _dialog = inject(MatDialog);
+
+    dialogoEnvioAbierto = false;
 
     private _destroy$ = new Subject<void>();
 
@@ -1142,6 +1147,27 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         this.modalQrAbierto = false;
 
         this.formularioQrSeleccionado = null;
+    }
+
+    abrirEnvioClientes(form?: FormularioProductoDto | { id: number; titulo: string; activo: boolean }): void {
+        const target = form ?? (this.currentFormId > 0 && this.activo ? { id: this.currentFormId, titulo: this.titulo, activo: this.activo } : null);
+        if (!target || !target.activo || target.id <= 0 || this.dialogoEnvioAbierto) {
+            return;
+        }
+
+        this.dialogoEnvioAbierto = true;
+        const dialogRef = this._dialog.open(EnvioClientesDialogComponent, {
+            data: {
+                formularioId: target.id,
+                titulo: target.titulo,
+            },
+            width: '1000px',
+            maxWidth: '96vw',
+        });
+
+        dialogRef.afterClosed().subscribe(() => {
+            this.dialogoEnvioAbierto = false;
+        });
 
     }
 
