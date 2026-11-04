@@ -10,6 +10,8 @@ import { of } from 'rxjs';
 import { environment } from 'environments/environment';
 import { CreditosComponent } from './creditos.component';
 import { Credito, Empresa } from '../finanzas.types';
+import { BalanceCreditosComponent } from './balance/balance.component';
+import { CuotasDialogComponent } from './cuotas-dialog/cuotas-dialog.component';
 
 describe('CreditosComponent', () => {
     let fixture: ComponentFixture<CreditosComponent>;
@@ -90,6 +92,12 @@ describe('CreditosComponent', () => {
     });
 
     afterEach(() => {
+        const reqsBalance = httpMock.match((r) => r.url === `${base}/creditos/balance`);
+        for (const req of reqsBalance) {
+            if (!req.cancelled) {
+                req.flush({ empresaId: null, empresasIncluidas: 1, monedas: [] });
+            }
+        }
         httpMock.verify();
     });
 
@@ -319,6 +327,49 @@ describe('CreditosComponent', () => {
         const lista2 = componente.filasCreditos();
         expect(lista1).toBe(lista2); // misma referencia
     });
+
+    it('Ver_calendario_abre_el_dialogo_y_si_hubo_cambios_recarga_la_lista', () => {
+        const dialog = TestBed.inject(MatDialog);
+        const spyDialog = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(true) } as never);
+
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([creditoVencido]);
+        fixture.detectChanges();
+
+        componente.verCalendario(creditoVencido);
+
+        expect(spyDialog).toHaveBeenCalled();
+        const config = spyDialog.calls.mostRecent().args[1] as { data?: { credito?: Credito } };
+        expect(config.data?.credito).toEqual(creditoVencido);
+
+        // Recarga la lista
+        httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([creditoVencido]);
+    });
+
+    it('El_balance_sigue_a_la_empresa_elegida', () => {
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([]);
+
+        // Balance inicial sin empresa
+        const reqBalInicial = httpMock.expectOne((r) => r.url === `${base}/creditos/balance`);
+        expect(reqBalInicial.request.params.has('empresaId')).toBeFalse();
+        reqBalInicial.flush({ empresaId: null, empresasIncluidas: 2, monedas: [] });
+
+        // Elegir empresa 2
+        componente.elegirEmpresa(2);
+        fixture.detectChanges();
+
+        httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([]);
+        const reqBalEmpresa2 = httpMock.expectOne((r) => r.url === `${base}/creditos/balance`);
+        expect(reqBalEmpresa2.request.params.get('empresaId')).toBe('2');
+        reqBalEmpresa2.flush({ empresaId: 2, empresasIncluidas: 1, monedas: [] });
+
+        const balanceComp = fixture.debugElement.query(By.directive(BalanceCreditosComponent));
+        expect(balanceComp).toBeTruthy();
+        expect(balanceComp.componentInstance.empresaId).toBe(2);
+    });
 });
 
 describe('CreditosComponent - deteccion automatica y animaciones reales', () => {
@@ -356,6 +407,12 @@ describe('CreditosComponent - deteccion automatica y animaciones reales', () => 
     });
 
     afterEach(() => {
+        const reqsBalance = httpMock.match((r) => r.url === `${base}/creditos/balance`);
+        for (const req of reqsBalance) {
+            if (!req.cancelled) {
+                req.flush({ empresaId: null, empresasIncluidas: 1, monedas: [] });
+            }
+        }
         httpMock.verify();
     });
 
@@ -366,6 +423,8 @@ describe('CreditosComponent - deteccion automatica y animaciones reales', () => 
         for (const r of reqs) {
             if (r.request.url.includes('/empresas')) {
                 r.flush(mockEmpresas);
+            } else if (r.request.url.includes('/creditos/balance')) {
+                r.flush({ empresaId: null, empresasIncluidas: 2, monedas: [] });
             } else if (r.request.url.includes('/creditos')) {
                 r.flush([]);
             }

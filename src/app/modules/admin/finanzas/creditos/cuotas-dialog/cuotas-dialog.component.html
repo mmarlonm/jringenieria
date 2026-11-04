@@ -1,0 +1,134 @@
+<h2 mat-dialog-title>Calendario de pagos — {{ credito.contraparte }}</h2>
+
+<mat-dialog-content class="flex flex-col gap-4 py-4 min-w-0">
+    <!-- Fila de captura de nueva cuota -->
+    <div class="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-4 border flex flex-col md:flex-row items-end gap-3">
+        <mat-form-field appearance="outline" class="w-full md:w-40" subscriptSizing="dynamic">
+            <mat-label>Vencimiento</mat-label>
+            <input matInput type="date" [ngModel]="nuevaVencimiento()" (ngModelChange)="nuevaVencimiento.set($event)">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full md:w-36" subscriptSizing="dynamic">
+            <mat-label>Capital</mat-label>
+            <input matInput type="number" min="0" step="0.01" [ngModel]="nuevaCapital()" (ngModelChange)="nuevaCapital.set($event)">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full md:w-36" subscriptSizing="dynamic">
+            <mat-label>Interés</mat-label>
+            <input matInput type="number" min="0" step="0.01" [ngModel]="nuevaInteres()" (ngModelChange)="nuevaInteres.set($event)">
+        </mat-form-field>
+
+        <div class="flex flex-col justify-center px-3 py-2 bg-card dark:bg-default rounded-lg border text-sm w-full md:w-auto">
+            <span class="text-xs text-secondary font-medium">Total cuota</span>
+            <span class="font-bold text-gray-900 dark:text-gray-100">{{ formatearMonto(totalNueva(), credito.moneda) }}</span>
+        </div>
+
+        <button
+            mat-flat-button
+            color="primary"
+            class="w-full md:w-auto"
+            [disabled]="guardandoNueva() || !nuevaVencimiento() || totalNueva() <= 0"
+            (click)="agregarCuota()">
+            <mat-icon class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+            <span>Agregar cuota</span>
+        </button>
+    </div>
+
+    <!-- Error -->
+    @if (error(); as mensajeError) {
+        <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm font-semibold text-rose-800">
+            {{ mensajeError }}
+        </div>
+    }
+
+    <!-- Cargando -->
+    @if (cargando()) {
+        <div class="flex items-center justify-center py-8">
+            <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+        </div>
+    } @else if (cuotas().length === 0) {
+        <div class="rounded-xl border border-dashed p-8 text-center text-secondary">
+            No hay cuotas registradas para este crédito. Agrega la primera arriba.
+        </div>
+    } @else {
+        <!-- Tabla de cuotas -->
+        <div class="border rounded-xl overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="border-b bg-gray-50 dark:bg-gray-800/50 text-secondary text-xs font-semibold uppercase tracking-wider">
+                        <th class="py-2.5 px-3">Vencimiento</th>
+                        <th class="py-2.5 px-3 text-right">Capital</th>
+                        <th class="py-2.5 px-3 text-right">Interés</th>
+                        <th class="py-2.5 px-3 text-right">Total</th>
+                        <th class="py-2.5 px-3 text-center">Estado</th>
+                        <th class="py-2.5 px-3 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @for (p of cuotas(); track p.pagoId) {
+                        <tr data-testid="fila-cuota" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                            @if (editandoPagoId() === p.pagoId) {
+                                <!-- Modo edición inline -->
+                                <td class="py-2 px-3">
+                                    <input type="date" class="border rounded px-2 py-1 text-sm bg-card" [ngModel]="editVencimiento()" (ngModelChange)="editVencimiento.set($event)">
+                                </td>
+                                <td class="py-2 px-3 text-right">
+                                    <input type="number" step="0.01" class="border rounded px-2 py-1 text-sm w-28 text-right bg-card" [ngModel]="editCapital()" (ngModelChange)="editCapital.set($event)">
+                                </td>
+                                <td class="py-2 px-3 text-right">
+                                    <input type="number" step="0.01" class="border rounded px-2 py-1 text-sm w-28 text-right bg-card" [ngModel]="editInteres()" (ngModelChange)="editInteres.set($event)">
+                                </td>
+                                <td class="py-2 px-3 text-right font-bold">
+                                    {{ formatearMonto(totalEdit(), credito.moneda) }}
+                                </td>
+                                <td class="py-2 px-3 text-center">
+                                    <select class="border rounded px-2 py-1 text-sm bg-card" [ngModel]="editEstado()" (ngModelChange)="editEstado.set($event)">
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Pagada">Pagada</option>
+                                    </select>
+                                </td>
+                                <td class="py-2 px-3 text-right whitespace-nowrap">
+                                    <button mat-button color="primary" (click)="guardarEdicion(p)">Guardar</button>
+                                    <button mat-button (click)="cancelarEdicion()">Cancelar</button>
+                                </td>
+                            } @else {
+                                <!-- Modo visualización -->
+                                <td class="py-2.5 px-3 font-medium whitespace-nowrap">{{ fechaIsoACorta(p.vencimiento) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(p.capital, credito.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(p.interes, credito.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right font-bold whitespace-nowrap">{{ formatearMonto(p.total, credito.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                                          [class.bg-amber-100]="p.estado === 'Pendiente'"
+                                          [class.text-amber-800]="p.estado === 'Pendiente'"
+                                          [class.bg-emerald-100]="p.estado === 'Pagada'"
+                                          [class.text-emerald-800]="p.estado === 'Pagada'">
+                                        {{ p.estado }}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                    @if (p.estado !== 'Pagada') {
+                                        <button mat-stroked-button color="primary" class="mr-2" (click)="marcarPagada(p)">
+                                            Marcar pagada
+                                        </button>
+                                    }
+                                    <button mat-icon-button (click)="iniciarEdicion(p)" title="Editar cuota">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" (click)="eliminarCuota(p)" title="Eliminar cuota">
+                                        <mat-icon class="icon-size-5 text-rose-600" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    </button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-flat-button color="primary" type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>
+

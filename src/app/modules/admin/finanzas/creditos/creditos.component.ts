@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +15,8 @@ import { FinanzasService } from '../finanzas.service';
 import { Credito, Empresa } from '../finanzas.types';
 import { etiquetaTipoCredito, fechaIsoACorta, fechaVencida, formatearMonto, formatearTasa, mensajeDeError } from '../finanzas.utils';
 import { CreditoDialogComponent } from './credito-dialog/credito-dialog.component';
+import { CuotasDialogComponent } from './cuotas-dialog/cuotas-dialog.component';
+import { BalanceCreditosComponent } from './balance/balance.component';
 
 @Component({
     selector: 'app-finanzas-creditos',
@@ -26,7 +28,8 @@ import { CreditoDialogComponent } from './credito-dialog/credito-dialog.componen
         MatFormFieldModule,
         MatIconModule,
         MatProgressSpinnerModule,
-        MatSelectModule
+        MatSelectModule,
+        BalanceCreditosComponent
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -37,6 +40,8 @@ export class CreditosComponent implements OnInit {
     private readonly _snackBar = inject(MatSnackBar);
     private readonly _destroyRef = inject(DestroyRef);
     private _subCreditos?: Subscription;
+
+    @ViewChild(BalanceCreditosComponent) balanceComp?: BalanceCreditosComponent;
 
     readonly TODAS = 0;
     readonly empresas = signal<Empresa[]>([]);
@@ -138,6 +143,7 @@ export class CreditosComponent implements OnInit {
             .subscribe((res) => {
                 if (res) {
                     this.cargar();
+                    this.balanceComp?.cargar();
                 }
             });
     }
@@ -154,6 +160,7 @@ export class CreditosComponent implements OnInit {
             .subscribe((res) => {
                 if (res) {
                     this.cargar();
+                    this.balanceComp?.cargar();
                 }
             });
     }
@@ -182,6 +189,7 @@ export class CreditosComponent implements OnInit {
                     this.eliminando.set(null);
                     this._snackBar.open('Crédito eliminado.', 'Cerrar', { duration: 5000 });
                     this.cargar();
+                    this.balanceComp?.cargar();
                 },
                 error: (e) => {
                     this.eliminando.set(null);
@@ -191,7 +199,19 @@ export class CreditosComponent implements OnInit {
     }
 
     verCalendario(c: Credito): void {
-        // En Q7 abrirá CuotasDialogComponent
+        this._dialog
+            .open<CuotasDialogComponent, { credito: Credito }, boolean>(CuotasDialogComponent, {
+                width: '56rem',
+                maxWidth: '95vw',
+                data: { credito: c }
+            })
+            .afterClosed()
+            .pipe(takeUntilDestroyed(this._destroyRef))
+            .subscribe((cambio) => {
+                if (cambio) {
+                    this.cargar();
+                    this.balanceComp?.cargar();
+                }
+            });
     }
 }
-
