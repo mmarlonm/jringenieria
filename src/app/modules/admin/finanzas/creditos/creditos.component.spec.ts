@@ -6,7 +6,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSelect } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { environment } from 'environments/environment';
 import { CreditosComponent } from './creditos.component';
 import { Credito, Empresa } from '../finanzas.types';
@@ -369,6 +369,25 @@ describe('CreditosComponent', () => {
         const balanceComp = fixture.debugElement.query(By.directive(BalanceCreditosComponent));
         expect(balanceComp).toBeTruthy();
         expect(balanceComp.componentInstance.empresaId).toBe(2);
+    });
+    it('Nuevo_editar_y_calendario_abren_un_solo_dialogo_a_la_vez_y_se_puede_abrir_otro_al_cerrar', () => {
+        const dialog = TestBed.inject(MatDialog);
+        const cierre = new Subject<undefined>();
+        const spyDialog = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => cierre.asObservable() } as never);
+
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([creditoVencido]);
+
+        componente.nuevo();
+        componente.nuevo();
+        componente.editar(creditoVencido);
+        componente.verCalendario(creditoVencido);
+        expect(spyDialog).toHaveBeenCalledTimes(1);
+
+        cierre.next(undefined); // se cierra sin cambios
+        componente.nuevo();
+        expect(spyDialog).toHaveBeenCalledTimes(2);
     });
 });
 

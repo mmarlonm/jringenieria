@@ -277,5 +277,110 @@ describe('CuotasDialogComponent', () => {
         componente.cerrar();
         expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
     });
+
+    describe('doble clic', () => {
+        const cargarCuotas = () => {
+            fixture.detectChanges();
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        };
+
+        it('Un_doble_clic_en_Agregar_cuota_manda_una_sola_peticion', () => {
+            cargarCuotas();
+            componente.nuevaVencimiento.set('2027-01-15');
+            componente.nuevaCapital.set(4000);
+            componente.nuevaInteres.set(400);
+
+            componente.agregarCuota();
+            componente.agregarCuota();
+
+            const posts = httpMock.match((r) => r.method === 'POST');
+            expect(posts.length).toBe(1);
+            posts[0].flush({ ...mockPagos[0], pagoId: 3 });
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        });
+
+        it('Un_doble_clic_en_Marcar_pagada_manda_un_solo_PUT', () => {
+            cargarCuotas();
+
+            componente.marcarPagada(mockPagos[0]);
+            componente.marcarPagada(mockPagos[0]);
+
+            const puts = httpMock.match((r) => r.method === 'PUT');
+            expect(puts.length).toBe(1);
+            puts[0].flush({ ...mockPagos[0], estado: 'Pagada' });
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        });
+
+        it('Un_doble_clic_en_Eliminar_cuota_manda_un_solo_DELETE', () => {
+            cargarCuotas();
+
+            componente.eliminarCuota(mockPagos[0]);
+            componente.eliminarCuota(mockPagos[0]);
+
+            const deletes = httpMock.match((r) => r.method === 'DELETE');
+            expect(deletes.length).toBe(1);
+            deletes[0].flush(null);
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        });
+
+        it('Si_el_API_rechaza_marcar_pagada_se_puede_reintentar', () => {
+            cargarCuotas();
+
+            componente.marcarPagada(mockPagos[0]);
+            httpMock.expectOne((r) => r.method === 'PUT').flush({ mensaje: 'caído' }, { status: 500, statusText: 'Server Error' });
+            expect(componente.error()).toBe('caído');
+
+            componente.marcarPagada(mockPagos[0]);
+            const reintento = httpMock.expectOne((r) => r.method === 'PUT');
+            reintento.flush({ ...mockPagos[0], estado: 'Pagada' });
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        });
+
+        it('Si_se_cancela_la_confirmacion_de_eliminar_se_puede_volver_a_intentar', () => {
+            cargarCuotas();
+            confirmSpy.and.returnValue({ afterClosed: () => of('cancelled') } as never);
+
+            componente.eliminarCuota(mockPagos[0]);
+            expect(httpMock.match((r) => r.method === 'DELETE').length).toBe(0);
+
+            confirmSpy.and.returnValue({ afterClosed: () => of('confirmed') } as never);
+            componente.eliminarCuota(mockPagos[0]);
+            httpMock.expectOne((r) => r.method === 'DELETE').flush(null);
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        });
+    });
+
+
+    it('Las_acciones_de_cada_cuota_estan_en_la_primera_columna', () => {
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        fixture.detectChanges();
+
+        const primeras = fixture.debugElement.queryAll(By.css('tbody tr td:first-child'));
+        expect(primeras.length).toBe(mockPagos.length);
+        for (const celda of primeras) {
+            const titulos = Array.from((celda.nativeElement as HTMLElement).querySelectorAll('button')).map(
+                (b) => b.getAttribute('title') || b.textContent?.trim()
+            );
+            expect(titulos).toContain('Editar cuota');
+            expect(titulos).toContain('Eliminar cuota');
+        }
+    });
+
+    it('Mientras_se_procesa_una_accion_los_botones_de_la_fila_quedan_deshabilitados', () => {
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        fixture.detectChanges();
+
+        componente.marcarPagada(mockPagos[0]);
+        fixture.detectChanges();
+
+        const botones = fixture.debugElement.queryAll(By.css('tbody tr td:first-child button'));
+        expect(botones.length).toBeGreaterThan(0);
+        expect(botones.every((b) => (b.nativeElement as HTMLButtonElement).disabled)).toBeTrue();
+
+        httpMock.expectOne((r) => r.method === 'PUT').flush({ ...mockPagos[0], estado: 'Pagada' });
+        httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+    });
 });
 

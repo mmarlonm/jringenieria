@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
-import { filter, switchMap } from 'rxjs/operators';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { FinanzasService } from '../../finanzas.service';
 import { Credito, CreditoPago, CreditoPagoGuardar, EstadoPagoCredito } from '../../finanzas.types';
 import { fechaIsoACorta, fechaLocalISO, formatearMonto, mensajeDeError } from '../../finanzas.utils';
@@ -47,6 +47,8 @@ export class CuotasDialogComponent implements OnInit {
     readonly error = signal<string | null>(null);
     readonly huboCambios = signal(false);
     readonly guardandoNueva = signal(false);
+    /** Una sola acción a la vez (agregar, marcar pagada, guardar o eliminar): un doble clic no manda dos peticiones. */
+    readonly ocupado = signal(false);
 
     // Fila de alta
     readonly nuevaVencimiento = signal<string>('');
@@ -89,6 +91,9 @@ export class CuotasDialogComponent implements OnInit {
     }
 
     agregarCuota(): void {
+        if (this.ocupado()) {
+            return;
+        }
         const capital = Number(this.nuevaCapital() || 0);
         const interes = Number(this.nuevaInteres() || 0);
         const vencimiento = this.nuevaVencimiento();
@@ -97,6 +102,7 @@ export class CuotasDialogComponent implements OnInit {
             return;
         }
 
+        this.ocupado.set(true);
         this.guardandoNueva.set(true);
         this.error.set(null);
 
@@ -113,6 +119,7 @@ export class CuotasDialogComponent implements OnInit {
             .pipe(takeUntilDestroyed(this._destroyRef))
             .subscribe({
                 next: () => {
+                    this.ocupado.set(false);
                     this.guardandoNueva.set(false);
                     this.huboCambios.set(true);
                     this.nuevaVencimiento.set('');
@@ -121,6 +128,7 @@ export class CuotasDialogComponent implements OnInit {
                     this.cargar();
                 },
                 error: (e) => {
+                    this.ocupado.set(false);
                     this.guardandoNueva.set(false);
                     this.error.set(mensajeDeError(e));
                 }
@@ -128,6 +136,10 @@ export class CuotasDialogComponent implements OnInit {
     }
 
     marcarPagada(p: CreditoPago): void {
+        if (this.ocupado()) {
+            return;
+        }
+        this.ocupado.set(true);
         const hoy = fechaLocalISO(new Date());
         const dto: CreditoPagoGuardar = {
             vencimiento: p.vencimiento ? p.vencimiento.slice(0, 10) : hoy,
@@ -142,10 +154,14 @@ export class CuotasDialogComponent implements OnInit {
             .pipe(takeUntilDestroyed(this._destroyRef))
             .subscribe({
                 next: () => {
+                    this.ocupado.set(false);
                     this.huboCambios.set(true);
                     this.cargar();
                 },
-                error: (e) => this.error.set(mensajeDeError(e))
+                error: (e) => {
+                    this.ocupado.set(false);
+                    this.error.set(mensajeDeError(e));
+                }
             });
     }
 
@@ -159,12 +175,16 @@ export class CuotasDialogComponent implements OnInit {
     }
 
     guardarEdicion(p: CreditoPago): void {
+        if (this.ocupado()) {
+            return;
+        }
         const capital = Number(this.editCapital() || 0);
         const interes = Number(this.editInteres() || 0);
         if (capital < 0 || interes < 0 || capital + interes <= 0 || !this.editVencimiento()) {
             return;
         }
 
+        this.ocupado.set(true);
         const dto: CreditoPagoGuardar = {
             vencimiento: this.editVencimiento(),
             capital,
@@ -178,11 +198,15 @@ export class CuotasDialogComponent implements OnInit {
             .pipe(takeUntilDestroyed(this._destroyRef))
             .subscribe({
                 next: () => {
+                    this.ocupado.set(false);
                     this.huboCambios.set(true);
                     this.editandoPagoId.set(null);
                     this.cargar();
                 },
-                error: (e) => this.error.set(mensajeDeError(e))
+                error: (e) => {
+                    this.ocupado.set(false);
+                    this.error.set(mensajeDeError(e));
+                }
             });
     }
 
@@ -191,6 +215,11 @@ export class CuotasDialogComponent implements OnInit {
     }
 
     eliminarCuota(p: CreditoPago): void {
+        if (this.ocupado()) {
+            return;
+        }
+        // Ocupado desde que se abre la confirmación: un doble clic no abre dos confirmaciones ni manda dos DELETE.
+        this.ocupado.set(true);
         this._confirmacion
             .open({
                 title: 'Eliminar cuota',
@@ -200,16 +229,25 @@ export class CuotasDialogComponent implements OnInit {
             })
             .afterClosed()
             .pipe(
+                tap((res) => {
+                    if (res !== 'confirmed') {
+                        this.ocupado.set(false);
+                    }
+                }),
                 filter((res) => res === 'confirmed'),
                 switchMap(() => this._service.eliminarPagoCredito(this.credito.creditoId, p.pagoId)),
                 takeUntilDestroyed(this._destroyRef)
             )
             .subscribe({
                 next: () => {
+                    this.ocupado.set(false);
                     this.huboCambios.set(true);
                     this.cargar();
                 },
-                error: (e) => this.error.set(mensajeDeError(e))
+                error: (e) => {
+                    this.ocupado.set(false);
+                    this.error.set(mensajeDeError(e));
+                }
             });
     }
 

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { Cuenta, MovimientoConciliacion, ResultadoImportacion } from './finanzas.types';
-import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD, etiquetaTipoCredito, formatearTasa, fechaVencida } from './finanzas.utils';
+import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD, etiquetaTipoCredito, formatearTasa, fechaVencida, fraccionAPorcentaje, porcentajeAFraccion } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -344,5 +344,32 @@ describe('finanzas.utils', () => {
             expect(ORDEN_TARJETAS_DASHBOARD[0]).toBe('SaldoBancos');
             expect(ORDEN_TARJETAS_DASHBOARD[7]).toBe('Saldo13Semanas');
         });
+    });
+});
+
+describe('conversión de tasa entre porcentaje y fracción', () => {
+    it('ida_y_vuelta_de_todos_los_porcentajes_de_dos_decimales_no_deja_decimales_de_mas', () => {
+        const malos: string[] = [];
+        for (let centesimas = 0; centesimas <= 10000; centesimas++) {
+            const porcentaje = centesimas / 100;
+            const vuelta = fraccionAPorcentaje(porcentajeAFraccion(porcentaje));
+            if (vuelta !== porcentaje) {
+                malos.push(porcentaje + ' -> ' + vuelta);
+            }
+        }
+        expect(malos).toEqual([]);
+    });
+
+    it('porcentajeAFraccion_no_arrastra_error_de_punto_flotante', () => {
+        expect(porcentajeAFraccion(7.35)).toBe(0.0735);
+        expect(porcentajeAFraccion(15.5)).toBe(0.155);
+        expect(porcentajeAFraccion(0)).toBe(0);
+        expect(porcentajeAFraccion(100)).toBe(1);
+    });
+
+    it('fraccionAPorcentaje_no_arrastra_error_de_punto_flotante', () => {
+        expect(fraccionAPorcentaje(0.0735)).toBe(7.35);
+        expect(fraccionAPorcentaje(0.0023)).toBe(0.23);
+        expect(fraccionAPorcentaje(0.155)).toBe(15.5);
     });
 });

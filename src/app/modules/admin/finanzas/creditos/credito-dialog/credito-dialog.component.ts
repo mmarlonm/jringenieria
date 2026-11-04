@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { FinanzasService } from '../../finanzas.service';
 import { Credito, CreditoGuardar, Cuenta, Empresa, EstadoCredito, SentidoCredito, TipoCredito } from '../../finanzas.types';
-import { mensajeDeError } from '../../finanzas.utils';
+import { fraccionAPorcentaje, mensajeDeError, porcentajeAFraccion } from '../../finanzas.utils';
 
 export interface CreditoDialogData {
     credito?: Credito;
@@ -55,7 +55,7 @@ export class CreditoDialogComponent implements OnInit {
         montoOriginal: [this.data?.credito?.montoOriginal ?? (null as number | null), [Validators.required, Validators.min(0.01)]],
         saldoCapital: [this.data?.credito?.saldoCapital ?? (null as number | null), [Validators.required, Validators.min(0)]],
         tasaAnual: [
-            this.data?.credito ? this.data.credito.tasaAnual * 100 : (null as number | null),
+            this.data?.credito ? fraccionAPorcentaje(this.data.credito.tasaAnual) : (null as number | null),
             [Validators.required, Validators.min(0), Validators.max(100)]
         ],
         vencimientoFinal: [this.data?.credito?.vencimientoFinal ? this.data.credito.vencimientoFinal.slice(0, 10) : ''],
@@ -134,7 +134,7 @@ export class CreditoDialogComponent implements OnInit {
             moneda: raw.moneda!,
             montoOriginal: Number(raw.montoOriginal),
             saldoCapital: Number(raw.saldoCapital),
-            tasaAnual: Number(raw.tasaAnual) / 100, // porcentaje a fracción
+            tasaAnual: porcentajeAFraccion(Number(raw.tasaAnual)), // porcentaje a fracción (a 6 decimales, como la guarda el API)
             vencimientoFinal: raw.vencimientoFinal && raw.vencimientoFinal.trim() !== '' ? raw.vencimientoFinal : null,
             cuentaId: raw.cuentaId ?? null,
             estado: raw.estado!,

@@ -221,5 +221,31 @@ describe('CreditoDialogComponent', () => {
         expect(componente.error()).toBe('Error al guardar crédito');
         expect(dialogRefSpy.close).not.toHaveBeenCalled();
     });
+
+    it('Editar_una_tasa_de_0_0626_la_muestra_como_6_26_sin_decimales_de_mas', () => {
+        configurar({ credito: { ...mockCredito, tasaAnual: 0.0626 } });
+        fixture.detectChanges();
+
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/cuentas` && r.params.get('empresaId') === '1').flush(mockCuentasEmpresa1);
+
+        expect(componente.form.controls.tasaAnual.value).toBe(6.26);
+    });
+
+    it('Crear_con_5_05_por_ciento_manda_exactamente_0_0505', () => {
+        configurar();
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+
+        componente.form.patchValue({ empresaId: 1, contraparte: 'Banco Ficticio', montoOriginal: 1000, saldoCapital: 1000, tasaAnual: 5.05 });
+        httpMock.expectOne((r) => r.url === `${base}/cuentas` && r.params.get('empresaId') === '1').flush(mockCuentasEmpresa1);
+
+        componente.guardar();
+
+        const req = httpMock.expectOne(`${base}/creditos`);
+        expect(req.request.body.tasaAnual).toBe(0.0505);
+        req.flush(mockCredito);
+    });
+
 });
 

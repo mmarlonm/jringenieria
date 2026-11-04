@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, comp
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
+import { ComponentType } from '@angular/cdk/portal';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Subscription } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, finalize, switchMap, take, tap } from 'rxjs/operators';
 import { FinanzasService } from '../finanzas.service';
 import { Credito, Empresa } from '../finanzas.types';
 import { etiquetaTipoCredito, fechaIsoACorta, fechaVencida, formatearMonto, formatearTasa, mensajeDeError } from '../finanzas.utils';
@@ -131,38 +132,49 @@ export class CreditosComponent implements OnInit {
             });
     }
 
-    nuevo(): void {
+    /** Un solo diálogo a la vez: un doble clic en un botón no apila dos (podría guardar el mismo crédito dos veces). */
+    private _dialogoAbierto = false;
+
+    private _abrirDialogo<C, D, R>(componente: ComponentType<C>, config: MatDialogConfig<D>, alCerrar: (resultado: R | undefined) => void): void {
+        if (this._dialogoAbierto) {
+            return;
+        }
+        this._dialogoAbierto = true;
         this._dialog
-            .open<CreditoDialogComponent, { credito?: Credito }, Credito>(CreditoDialogComponent, {
-                width: '40rem',
-                maxWidth: '95vw',
-                data: {}
-            })
+            .open<C, D, R>(componente, config)
             .afterClosed()
-            .pipe(takeUntilDestroyed(this._destroyRef))
-            .subscribe((res) => {
+            .pipe(
+                take(1),
+                finalize(() => (this._dialogoAbierto = false)),
+                takeUntilDestroyed(this._destroyRef)
+            )
+            .subscribe(alCerrar);
+    }
+
+    nuevo(): void {
+        this._abrirDialogo<CreditoDialogComponent, { credito?: Credito }, Credito>(
+            CreditoDialogComponent,
+            { width: '40rem', maxWidth: '95vw', data: {} },
+            (res) => {
                 if (res) {
                     this.cargar();
                     this.balanceComp?.cargar();
                 }
-            });
+            }
+        );
     }
 
     editar(c: Credito): void {
-        this._dialog
-            .open<CreditoDialogComponent, { credito?: Credito }, Credito>(CreditoDialogComponent, {
-                width: '40rem',
-                maxWidth: '95vw',
-                data: { credito: c }
-            })
-            .afterClosed()
-            .pipe(takeUntilDestroyed(this._destroyRef))
-            .subscribe((res) => {
+        this._abrirDialogo<CreditoDialogComponent, { credito?: Credito }, Credito>(
+            CreditoDialogComponent,
+            { width: '40rem', maxWidth: '95vw', data: { credito: c } },
+            (res) => {
                 if (res) {
                     this.cargar();
                     this.balanceComp?.cargar();
                 }
-            });
+            }
+        );
     }
 
     eliminar(c: Credito): void {
@@ -199,19 +211,15 @@ export class CreditosComponent implements OnInit {
     }
 
     verCalendario(c: Credito): void {
-        this._dialog
-            .open<CuotasDialogComponent, { credito: Credito }, boolean>(CuotasDialogComponent, {
-                width: '56rem',
-                maxWidth: '95vw',
-                data: { credito: c }
-            })
-            .afterClosed()
-            .pipe(takeUntilDestroyed(this._destroyRef))
-            .subscribe((cambio) => {
+        this._abrirDialogo<CuotasDialogComponent, { credito: Credito }, boolean>(
+            CuotasDialogComponent,
+            { width: '56rem', maxWidth: '95vw', data: { credito: c } },
+            (cambio) => {
                 if (cambio) {
                     this.cargar();
                     this.balanceComp?.cargar();
                 }
-            });
+            }
+        );
     }
 }

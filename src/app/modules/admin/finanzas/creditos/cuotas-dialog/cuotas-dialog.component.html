@@ -56,12 +56,12 @@
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
                     <tr class="border-b bg-gray-50 dark:bg-gray-800/50 text-secondary text-xs font-semibold uppercase tracking-wider">
+                        <th class="py-2.5 px-3">Acciones</th>
                         <th class="py-2.5 px-3">Vencimiento</th>
                         <th class="py-2.5 px-3 text-right">Capital</th>
                         <th class="py-2.5 px-3 text-right">Interés</th>
                         <th class="py-2.5 px-3 text-right">Total</th>
                         <th class="py-2.5 px-3 text-center">Estado</th>
-                        <th class="py-2.5 px-3 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -69,6 +69,10 @@
                         <tr data-testid="fila-cuota" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                             @if (editandoPagoId() === p.pagoId) {
                                 <!-- Modo edición inline -->
+                                <td class="py-2 px-3 whitespace-nowrap">
+                                    <button mat-button color="primary" [disabled]="ocupado()" (click)="guardarEdicion(p)">Guardar</button>
+                                    <button mat-button [disabled]="ocupado()" (click)="cancelarEdicion()">Cancelar</button>
+                                </td>
                                 <td class="py-2 px-3">
                                     <input type="date" class="border rounded px-2 py-1 text-sm bg-card" [ngModel]="editVencimiento()" (ngModelChange)="editVencimiento.set($event)">
                                 </td>
@@ -87,12 +91,21 @@
                                         <option value="Pagada">Pagada</option>
                                     </select>
                                 </td>
-                                <td class="py-2 px-3 text-right whitespace-nowrap">
-                                    <button mat-button color="primary" (click)="guardarEdicion(p)">Guardar</button>
-                                    <button mat-button (click)="cancelarEdicion()">Cancelar</button>
-                                </td>
                             } @else {
                                 <!-- Modo visualización -->
+                                <td class="py-2.5 px-3 whitespace-nowrap">
+                                    @if (p.estado !== 'Pagada') {
+                                        <button mat-stroked-button color="primary" class="mr-2" [disabled]="ocupado()" (click)="marcarPagada(p)">
+                                            Marcar pagada
+                                        </button>
+                                    }
+                                    <button mat-icon-button [disabled]="ocupado()" (click)="iniciarEdicion(p)" title="Editar cuota">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" [disabled]="ocupado()" (click)="eliminarCuota(p)" title="Eliminar cuota">
+                                        <mat-icon class="icon-size-5 text-rose-600" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                    </button>
+                                </td>
                                 <td class="py-2.5 px-3 font-medium whitespace-nowrap">{{ fechaIsoACorta(p.vencimiento) }}</td>
                                 <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(p.capital, credito.moneda) }}</td>
                                 <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(p.interes, credito.moneda) }}</td>
@@ -105,19 +118,6 @@
                                           [class.text-emerald-800]="p.estado === 'Pagada'">
                                         {{ p.estado }}
                                     </span>
-                                </td>
-                                <td class="py-2.5 px-3 text-right whitespace-nowrap">
-                                    @if (p.estado !== 'Pagada') {
-                                        <button mat-stroked-button color="primary" class="mr-2" (click)="marcarPagada(p)">
-                                            Marcar pagada
-                                        </button>
-                                    }
-                                    <button mat-icon-button (click)="iniciarEdicion(p)" title="Editar cuota">
-                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
-                                    </button>
-                                    <button mat-icon-button color="warn" (click)="eliminarCuota(p)" title="Eliminar cuota">
-                                        <mat-icon class="icon-size-5 text-rose-600" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
-                                    </button>
                                 </td>
                             }
                         </tr>
