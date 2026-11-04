@@ -39,38 +39,36 @@
 
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2.5">
                     <button (click)="cargarListado(); cargarRespuestas()"
-                            mat-stroked-button
-                            class="rounded-2xl border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 py-2"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
                             matTooltip="Actualizar datos">
-                        <mat-icon [class.animate-spin]="cargandoListado" class="text-sm mr-1.5">refresh</mat-icon>
+                        <mat-icon [class.animate-spin]="cargandoListado" class="text-sm">refresh</mat-icon>
                         <span>Actualizar</span>
                     </button>
 
                     <button (click)="abrirModalImportarWord()"
                             type="button"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer"
-                            matTooltip="Importa automáticamente desde Google Docs, Word (.docx) o Texto">
-                        <mat-icon class="text-sm text-blue-600 dark:text-blue-400">cloud_download</mat-icon>
-                        <span>Importar (Word / Enlace)</span>
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
+                            matTooltip="Importar preguntas desde Google Docs, Word o texto copiado">
+                        <mat-icon class="text-sm text-slate-500">upload_file</mat-icon>
+                        <span>Importar Doc</span>
                     </button>
 
-                    <div class="flex items-center gap-2">
-                        <button (click)="nuevoFormulario('producto')"
-                                type="button"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-sm transition-colors cursor-pointer">
-                            <mat-icon class="text-sm">add</mat-icon>
-                            <span>Nueva Encuesta Producto</span>
-                        </button>
-                        <button (click)="nuevoFormulario('servicio')"
-                                type="button"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition-colors cursor-pointer">
-                            <mat-icon class="text-sm text-purple-600 dark:text-purple-400">engineering</mat-icon>
-                            <span>Nueva Encuesta Servicio</span>
-                        </button>
-                    </div>
+                    <button (click)="nuevoFormulario('producto')"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-2xs transition-colors cursor-pointer">
+                        <mat-icon class="text-sm">add</mat-icon>
+                        <span>Nueva Encuesta Producto</span>
+                    </button>
 
+                    <button (click)="nuevoFormulario('servicio')"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-2xs transition-colors cursor-pointer">
+                        <mat-icon class="text-sm text-purple-600 dark:text-purple-400">engineering</mat-icon>
+                        <span>Nueva Encuesta Servicio</span>
+                    </button>
                 </div>
 
             </div>
@@ -330,52 +328,45 @@
                             </div>
 
                             <!-- ACCIONES DE TARJETA -->
-
                             <div class="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-2">
-
-                                <div class="flex items-center gap-1.5">
+                                <div class="flex items-center gap-1">
                                     <button (click)="copiarEnlacePublico(form.slug, form.id)"
-                                            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                             matTooltip="Copiar enlace público">
                                         <mat-icon class="text-sm">
                                             {{ copiadoId === form.id ? 'check' : 'content_copy' }}
                                         </mat-icon>
                                     </button>
                                     <button (click)="abrirModalQr(form)"
-                                            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                             matTooltip="Código QR para escanear">
                                         <mat-icon class="text-sm">qr_code</mat-icon>
                                     </button>
                                     <button (click)="abrirEnNuevaPestana(form.slug)"
-                                            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                             matTooltip="Abrir formulario en nueva pestaña">
                                         <mat-icon class="text-sm">open_in_new</mat-icon>
                                     </button>
-
-                                </div>
-
-                                <div class="flex items-center gap-1.5">
                                     <button (click)="duplicarFormulario(form)"
                                             type="button"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                             matTooltip="Duplicar encuesta">
-                                        <mat-icon class="text-sm">content_copy</mat-icon>
-                                        <span class="hidden sm:inline">Duplicar</span>
+                                        <mat-icon class="text-sm">control_point_duplicate</mat-icon>
                                     </button>
                                     <button (click)="eliminarFormulario(form)"
                                             type="button"
-                                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                                             matTooltip="Eliminar encuesta">
                                         <mat-icon class="text-sm">delete_outline</mat-icon>
                                     </button>
-                                    <button (click)="editarFormulario(form)"
-                                            type="button"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 shadow-xs transition-colors">
-                                        <mat-icon class="text-xs">tune</mat-icon>
-                                        <span>Configurar</span>
-                                    </button>
                                 </div>
 
+                                <button (click)="editarFormulario(form)"
+                                        type="button"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-2xs transition-colors flex-shrink-0 cursor-pointer">
+                                    <mat-icon class="text-xs">tune</mat-icon>
+                                    <span>Editar</span>
+                                </button>
                             </div>
 
                         </div>
@@ -518,32 +509,7 @@
 
             </div>
 
-            <!-- CONTROLES CENTRALES: SWITCHER DE DISPOSITIVO PARA SIMULADOR -->
 
-            <div class="hidden md:flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 flex-shrink-0">
-                <button (click)="previewDevice = 'desktop'"
-                        [class.active-device]="previewDevice === 'desktop'"
-                        class="device-btn"
-                        matTooltip="Vista Escritorio">
-                    <mat-icon class="text-sm">computer</mat-icon>
-                    <span>Desktop</span>
-                </button>
-                <button (click)="previewDevice = 'tablet'"
-                        [class.active-device]="previewDevice === 'tablet'"
-                        class="device-btn"
-                        matTooltip="Vista Tablet">
-                    <mat-icon class="text-sm">tablet_mac</mat-icon>
-                    <span>Tablet</span>
-                </button>
-                <button (click)="previewDevice = 'mobile'"
-                        [class.active-device]="previewDevice === 'mobile'"
-                        class="device-btn"
-                        matTooltip="Vista Móvil">
-                    <mat-icon class="text-sm">smartphone</mat-icon>
-                    <span>Móvil</span>
-                </button>
-
-            </div>
 
             <!-- ACCIONES DERECHA -->
             <div class="flex items-center gap-2 flex-shrink-0">
@@ -879,61 +845,63 @@
                         <div *ngIf="activeTab === 'campos'" class="space-y-4 animate-fade-in">
 
                             <!-- GESTIÓN DE FORMULARIO POR PASOS (WIZARD MULTI-PASO) -->
-                            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-700/80 space-y-3">
+                            <div class="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xs space-y-4">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center flex-shrink-0">
-                                            <mat-icon>format_list_numbered</mat-icon>
+                                        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center flex-shrink-0 border border-slate-200/80 dark:border-slate-700">
+                                            <mat-icon class="text-slate-600 dark:text-slate-300">format_list_numbered</mat-icon>
                                         </div>
                                         <div>
-                                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                                Formulario por Pasos (Wizard Multi-Paso)
-                                                <span *ngIf="diseno.modoPasos" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                                                    Activo ({{ pasosDisponibles.length }} pasos)
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                                                    Formulario por Pasos (Wizard)
+                                                </h3>
+                                                <span *ngIf="diseno.modoPasos" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                                                    {{ pasosDisponibles.length }} pasos activos
                                                 </span>
-                                            </h3>
-                                            <p class="text-xs text-slate-300">
-                                                Divide las preguntas en etapas secuenciales (Paso 1, Paso 2...) y asigna qué preguntas van en cada paso.
+                                            </div>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                Organiza la encuesta en etapas secuenciales para mejorar la tasa de respuesta.
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center gap-2">
-                                        <mat-slide-toggle [ngModel]="diseno.modoPasos"
-                                                          (ngModelChange)="toggleModoPasos($event)"
-                                                          color="primary"
-                                                          class="text-xs font-semibold">
-                                            {{ diseno.modoPasos ? 'Desactivar Pasos' : 'Activar Modo Pasos' }}
-                                        </mat-slide-toggle>
-                                    </div>
+                                    <mat-slide-toggle [ngModel]="diseno.modoPasos"
+                                                      (ngModelChange)="toggleModoPasos($event)"
+                                                      color="primary"
+                                                      class="text-xs font-medium">
+                                        <span class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                            {{ diseno.modoPasos ? 'Modo Pasos activo' : 'Activar Modo Pasos' }}
+                                        </span>
+                                    </mat-slide-toggle>
                                 </div>
 
                                 <!-- GESTIÓN DETALLADA DE PASOS SI ESTÁ ACTIVO -->
-                                <div *ngIf="diseno.modoPasos" class="pt-3 border-t border-slate-700/60 space-y-2.5">
+                                <div *ngIf="diseno.modoPasos" class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
                                     <div class="flex items-center justify-between text-xs">
-                                        <span class="font-bold text-slate-300">Pasos configurados:</span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Etapas configuradas:</span>
                                         <button (click)="agregarPaso()" type="button"
-                                                class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm transition-all flex items-center gap-1 cursor-pointer">
-                                            <mat-icon class="text-[14px]">add</mat-icon>
-                                            <span>Agregar Nuevo Paso</span>
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs shadow-2xs transition-colors cursor-pointer">
+                                            <mat-icon class="text-sm">add</mat-icon>
+                                            <span>Agregar Etapa</span>
                                         </button>
                                     </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         <div *ngFor="let paso of pasosDisponibles; let pIdx = index"
-                                             class="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 flex items-center justify-between gap-2">
-                                            <div class="flex items-center gap-2 min-w-0 flex-1">
-                                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                                             class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-2.5 shadow-2xs">
+                                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                                <span class="w-6 h-6 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs">
                                                     {{ paso.numero }}
                                                 </span>
                                                 <input [(ngModel)]="paso.titulo" type="text"
-                                                       class="w-full px-2 py-1 rounded bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium truncate"
+                                                       class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400 font-medium truncate"
                                                        [placeholder]="'Título del paso ' + paso.numero">
                                             </div>
                                             <button (click)="eliminarPaso(paso.numero)"
                                                     [disabled]="pasosDisponibles.length <= 1"
                                                     mat-icon-button
-                                                    class="!w-7 !h-7 text-slate-400 hover:text-rose-400 disabled:opacity-20 flex-shrink-0"
+                                                    class="!w-7 !h-7 text-slate-400 hover:text-rose-600 disabled:opacity-20 flex-shrink-0"
                                                     matTooltip="Eliminar paso">
                                                 <mat-icon class="text-xs">delete</mat-icon>
                                             </button>
@@ -942,53 +910,69 @@
                                 </div>
                             </div>
 
-                            <!-- BARRA DE ACCIONES DE PREGUNTAS Y PLANTILLA RÁPIDA -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80">
-                                <div>
-                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Preguntas y Componentes</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">Total: <strong>{{ campos.length }}</strong> elementos en la encuesta.</p>
+                            <!-- BARRA DE ACCIONES DE PREGUNTAS Y PALETA DE COMPONENTES -->
+                            <div class="bg-white dark:bg-slate-850 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-xs space-y-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Preguntas del Formulario</h3>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                {{ campos.length }} preguntas
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Añade, organiza o configura condiciones lógicas para cada pregunta.
+                                        </p>
+                                    </div>
+
+                                    <!-- Acciones Rápidas -->
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <button (click)="cargarPlantillaSatisfaccionEtapas()"
+                                                type="button"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-2xs transition-colors cursor-pointer"
+                                                matTooltip="Carga una estructura recomendada: 3 Pasos, Matriz Likert 1-5 y NPS">
+                                            <mat-icon class="text-sm text-slate-500">auto_stories</mat-icon>
+                                            <span>Plantilla Recomendada</span>
+                                        </button>
+
+                                        <button (click)="abrirModalImportarWord()"
+                                                type="button"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-2xs transition-colors cursor-pointer"
+                                                matTooltip="Importar preguntas desde Google Docs, Word o texto plano">
+                                            <mat-icon class="text-sm text-slate-500">cloud_download</mat-icon>
+                                            <span>Importar Documento</span>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <!-- Botón Plantilla Rápida -->
-                                    <button (click)="cargarPlantillaSatisfaccionEtapas()"
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                                            matTooltip="Carga con 1 clic: 3 Pasos secuenciales, Matriz Likert 1 al 5 y preguntas condicionales">
-                                        <mat-icon class="text-sm">bolt</mat-icon>
-                                        <span>⚡ Plantilla Etapas + Matriz 1-5</span>
+                                <!-- Paleta de Componentes (Estilo Linear / Stripe) -->
+                                <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1">
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex-shrink-0 mr-1">
+                                        Añadir:
+                                    </span>
+                                    <button (click)="agregarCampo('input')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-slate-500">short_text</mat-icon> Texto Corto
                                     </button>
-
-                                    <!-- Botón Importar desde Word / Enlace / Texto -->
-                                    <button (click)="abrirModalImportarWord()"
-                                            type="button"
-                                            class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                                            matTooltip="Importa preguntas automáticamente desde Enlace (Google Docs), Archivo (.docx/.txt) o Texto copiado">
-                                        <mat-icon class="text-sm">cloud_download</mat-icon>
-                                        <span>📄 Importar (Enlace / Archivo / Texto)</span>
+                                    <button (click)="agregarCampo('textarea')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-slate-500">notes</mat-icon> Párrafo
                                     </button>
-
-                                    <!-- Menú Agregar Campo Rápido -->
-                                    <button (click)="agregarCampo('input')" mat-flat-button color="primary" class="rounded-xl text-xs py-1 px-2.5">
-                                        <mat-icon class="text-xs mr-1">add</mat-icon> Texto
+                                    <button (click)="agregarCampo('radio')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-slate-500">radio_button_checked</mat-icon> Opción Única
                                     </button>
-                                    <button (click)="agregarCampo('matrix')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                                        <mat-icon class="text-xs mr-1 text-blue-600">table_chart</mat-icon> Matriz (1-5)
+                                    <button (click)="agregarCampo('checkbox')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-slate-500">check_box</mat-icon> Casillas
                                     </button>
-                                    <button (click)="agregarCampo('section')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
-                                        <mat-icon class="text-xs mr-1 text-purple-600">bookmark</mat-icon> Sección
+                                    <button (click)="agregarCampo('matrix')" type="button" class="component-pill font-semibold">
+                                        <mat-icon class="text-xs text-blue-500">table_chart</mat-icon> Matriz Likert
                                     </button>
-                                    <button (click)="agregarCampo('checkbox')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
-                                        <mat-icon class="text-xs mr-1">check_box</mat-icon> Casillas
+                                    <button (click)="agregarCampo('select')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-slate-500">arrow_drop_down_circle</mat-icon> Desplegable
                                     </button>
-                                    <button (click)="agregarCampo('radio')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
-                                        <mat-icon class="text-xs mr-1">radio_button_checked</mat-icon> Radio
+                                    <button (click)="agregarCampo('section')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-purple-500">bookmark</mat-icon> Sección
                                     </button>
-                                    <button (click)="agregarCampo('select')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
-                                        <mat-icon class="text-xs mr-1">arrow_drop_down_circle</mat-icon> Select
-                                    </button>
-                                    <button (click)="agregarCampo('textarea')" mat-stroked-button class="rounded-xl text-xs py-1 px-2.5">
-                                        <mat-icon class="text-xs mr-1">notes</mat-icon> Párrafo
+                                    <button (click)="agregarCampo('file')" type="button" class="component-pill">
+                                        <mat-icon class="text-xs text-slate-500">upload_file</mat-icon> Archivo
                                     </button>
                                 </div>
                             </div>
@@ -1011,24 +995,21 @@
                                             </span>
 
                                             <!-- Badge de Tipo -->
-                                            <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
-                                                  [ngClass]="campo.tipo === 'section' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' :
-                                                             campo.tipo === 'matrix' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
-                                                             'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'">
-                                                {{ campo.tipo === 'section' ? 'Bloque / Sección' : (campo.tipo === 'matrix' ? 'Matriz Escala 1-5' : (campo.tipo === 'radio' ? 'Calificación / Radio' : campo.tipo)) }}
+                                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                {{ campo.tipo === 'section' ? 'Bloque / Sección' : (campo.tipo === 'matrix' ? 'Matriz Likert' : (campo.tipo === 'radio' ? 'Opción Única' : (campo.tipo === 'checkbox' ? 'Casillas' : campo.tipo))) }}
                                             </span>
 
                                             <!-- Badge de Paso Asignado -->
                                             <span *ngIf="diseno.modoPasos"
-                                                  class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                                                  class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                                                 Paso {{ campo.paso || 1 }}
                                             </span>
 
-                                            <span *ngIf="campo.requerido && campo.tipo !== 'section'" class="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded">
+                                            <span *ngIf="campo.requerido && campo.tipo !== 'section'" class="text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-200/60 dark:border-rose-900/40 flex items-center gap-1">
                                                 Obligatorio
                                             </span>
 
-                                            <span *ngIf="campo.dependeDeCampoId" class="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                                            <span *ngIf="campo.dependeDeCampoId" class="text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-900/40 flex items-center gap-1">
                                                 <mat-icon class="text-[11px]">alt_route</mat-icon> Condicional
                                             </span>
                                         </div>
@@ -1119,50 +1100,50 @@
 
                                     <!-- CONFIGURADOR ESPECÍFICO PARA TABLA / MATRIZ LIKERT (ESCALA 1 AL 5 / PERSONALIZABLE) -->
                                     <div *ngIf="campo.tipo === 'matrix'"
-                                         class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800/60 bg-blue-50/50 dark:bg-slate-900/60 p-3.5 rounded-xl space-y-4">
+                                         class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl space-y-4">
 
                                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                             <div>
-                                                <span class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                                                    <mat-icon class="text-sm text-blue-600">tune</mat-icon>
-                                                    Aspectos a Evaluar y Escala de Calificación Likert
+                                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                                    <mat-icon class="text-sm text-slate-500">tune</mat-icon>
+                                                    Criterios y Escala de Evaluación Likert
                                                 </span>
-                                                <p class="text-[11px] text-slate-500">Define los aspectos o criterios (filas) y personaliza las calificaciones o escala (columnas).</p>
+                                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Define los aspectos o criterios (filas) y personaliza las calificaciones o escala (columnas).</p>
                                             </div>
                                             <button (click)="cargarPresetMatrizSatisfaccion(campo)" type="button"
-                                                    class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-sm flex items-center gap-1 cursor-pointer">
-                                                <mat-icon class="text-[13px]">playlist_add_check</mat-icon> Cargar Criterios Calidad JR
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
+                                                <mat-icon class="text-sm text-slate-500">playlist_add_check</mat-icon> Cargar Criterios Calidad JR
                                             </button>
                                         </div>
 
                                         <!-- SECTOR 1: CONFIGURACIÓN DE ESCALA / COLUMNAS DE CALIFICACIÓN -->
-                                        <div class="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-blue-200/80 dark:border-blue-900/60 space-y-2.5">
+                                        <div class="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2.5 shadow-2xs">
                                             <div class="flex items-center justify-between flex-wrap gap-2">
-                                                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                                                    <mat-icon class="text-xs text-blue-500">view_column</mat-icon>
-                                                    Escala y Columnas de Evaluación:
+                                                <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                                    <mat-icon class="text-xs text-slate-500">view_column</mat-icon>
+                                                    Escala y Columnas:
                                                 </span>
                                                 <!-- Presets rápidos de escala -->
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     <span class="text-[10px] text-slate-400 font-semibold">Presets:</span>
                                                     <button type="button" (click)="aplicarPresetEscala(campo, '1-5-na')"
-                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-950 dark:text-blue-300 transition-colors">
+                                                            class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors">
                                                         1 al 5 + N/A
                                                     </button>
                                                     <button type="button" (click)="aplicarPresetEscala(campo, '1-5')"
-                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 transition-colors">
+                                                            class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors">
                                                         1 al 5
                                                     </button>
                                                     <button type="button" (click)="aplicarPresetEscala(campo, '1-10')"
-                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 transition-colors">
+                                                            class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors">
                                                         1 al 10
                                                     </button>
                                                     <button type="button" (click)="aplicarPresetEscala(campo, '1-3')"
-                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 transition-colors">
+                                                            class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors">
                                                         1 al 3
                                                     </button>
                                                     <button type="button" (click)="aplicarPresetEscala(campo, 'cualitativa')"
-                                                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 hover:bg-purple-200 text-purple-800 dark:bg-purple-950 dark:text-purple-300 transition-colors">
+                                                            class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors">
                                                         Cualitativa
                                                     </button>
                                                 </div>
@@ -1171,10 +1152,10 @@
                                             <!-- Chips de Columnas Editables -->
                                             <div class="flex flex-wrap items-center gap-2 pt-1">
                                                 <div *ngFor="let col of campo.columnasMatriz; let cIdx = index"
-                                                     class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 shadow-xs">
+                                                     class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 shadow-2xs">
                                                     <span class="text-[10px] text-slate-400 font-mono font-bold">{{ cIdx + 1 }}</span>
                                                     <input [(ngModel)]="col.etiqueta" (ngModelChange)="col.valor = col.etiqueta" type="text"
-                                                           class="w-16 px-1 py-0.5 text-xs text-center font-bold text-slate-800 dark:text-white bg-transparent border-0 outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                                                           class="w-16 px-1 py-0.5 text-xs text-center font-semibold text-slate-800 dark:text-white bg-transparent border-0 outline-none focus:ring-1 focus:ring-slate-400 rounded"
                                                            [placeholder]="'Col ' + (cIdx + 1)">
                                                     <button type="button" (click)="eliminarColumnaMatriz(campo, cIdx)" [disabled]="campo.columnasMatriz && campo.columnasMatriz.length <= 1"
                                                             class="text-slate-400 hover:text-rose-500 disabled:opacity-20 cursor-pointer ml-0.5"
@@ -1184,7 +1165,7 @@
                                                 </div>
 
                                                 <button type="button" (click)="agregarColumnaMatriz(campo)"
-                                                        class="px-2.5 py-1 rounded-lg border border-dashed border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold flex items-center gap-1 cursor-pointer">
+                                                        class="px-2.5 py-1 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1 cursor-pointer">
                                                     <mat-icon class="!w-3.5 !h-3.5 text-[14px]">add</mat-icon>
                                                     <span>Nueva Columna</span>
                                                 </button>
@@ -1195,13 +1176,13 @@
                                                 <div>
                                                     <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Leyenda Escala Inferior (ej. 1)</label>
                                                     <input [(ngModel)]="campo.escalaNotaInferior" type="text"
-                                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                                                            placeholder="1 = Totalmente insatisfecho">
                                                 </div>
                                                 <div>
                                                     <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Leyenda Escala Superior (ej. 5 o 10)</label>
                                                     <input [(ngModel)]="campo.escalaNotaSuperior" type="text"
-                                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                                                            placeholder="5 = Totalmente satisfecho">
                                                 </div>
                                             </div>
@@ -1242,20 +1223,19 @@
                                     </div>
 
                                     <!-- LÓGICA CONDICIONAL: APARECER SEGÚN RESPUESTA ANTERIOR -->
-                                    <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 rounded-xl"
-                                         [ngClass]="{'ring-1 ring-amber-400 bg-amber-50/40 dark:bg-amber-950/30': campo.dependeDeCampoId}">
+                                    <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl space-y-3">
                                         <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
-                                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                                                <mat-icon class="text-[14px] text-amber-500">alt_route</mat-icon>
+                                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                <mat-icon class="text-[14px] text-slate-500">alt_route</mat-icon>
                                                 Visibilidad Condicional (Mostrar sólo si se cumple una respuesta):
                                             </span>
                                             <button *ngIf="campo.dependeDeCampoId"
                                                     (click)="moverCampoDebajoDePadre(campo, true)"
                                                     type="button"
-                                                    class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-900 px-2 py-0.5 rounded-lg border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer transition-colors"
+                                                    class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer transition-colors"
                                                     matTooltip="Reubicar inmediatamente debajo de la pregunta padre">
-                                                <mat-icon class="text-[12px] text-amber-600">vertical_align_bottom</mat-icon>
-                                                Reubicar debajo de la pregunta padre
+                                                <mat-icon class="text-xs text-slate-500">vertical_align_bottom</mat-icon>
+                                                Reubicar debajo de la pregunta detonante
                                             </button>
                                         </div>
 
@@ -1327,9 +1307,9 @@
                                                 <!-- BOTÓN INTUITIVO PARA AGREGAR 'OTRO' CON CAMPO CONDICIONAL DEBAJO -->
                                                 <button (click)="agregarOpcionOtroConCampo(campo)"
                                                         type="button"
-                                                        class="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 py-1 px-2.5 rounded-xl border border-amber-300 dark:border-amber-700 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                                                        class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
                                                         matTooltip="Agrega la opción 'Otro' y genera automáticamente una pregunta condicional ('¿Cuál? / Especifique...') colocada justo debajo">
-                                                    <mat-icon class="text-xs text-amber-600">playlist_add</mat-icon>
+                                                    <mat-icon class="text-xs text-slate-500">playlist_add</mat-icon>
                                                     <span>+ Opción "Otro" con campo condicional</span>
                                                 </button>
                                             </div>
@@ -1378,49 +1358,7 @@
 
                         <div *ngIf="activeTab === 'diseno'" class="space-y-5 animate-fade-in">
 
-                            <!-- MODO PASOS / WIZARD -->
 
-                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-
-                                <div class="flex items-center justify-between">
-
-                                    <div>
-
-                                        <div class="text-sm font-bold text-slate-900 dark:text-white">Formulario por Pasos (Wizard)</div>
-
-                                        <div class="text-xs text-slate-500">Divide la encuesta en secciones guiadas paso a paso.</div>
-
-                                    </div>
-                                    <mat-slide-toggle [(ngModel)]="diseno.modoPasos" color="primary"></mat-slide-toggle>
-
-                                </div>
-
-                                <div *ngIf="diseno.modoPasos" class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
-
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Pasos Configurados</span>
-                                        <button (click)="agregarPasoWizard()" type="button" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-                                            + Agregar Paso
-                                        </button>
-
-                                    </div>
-
-                                    <div *ngFor="let p of diseno.pasos; let pIdx = index" class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-
-                                        <div class="flex items-center gap-2 flex-auto">
-                                            <span class="font-bold text-xs text-slate-400">#{{ p.numero }}</span>
-                                            <input type="text" [(ngModel)]="p.titulo" placeholder="Título del paso..." class="w-full text-xs font-bold bg-transparent border-none focus:outline-none">
-
-                                        </div>
-                                        <button (click)="eliminarPasoWizard(p.numero)" [disabled]="diseno.pasos.length <= 1" class="text-rose-400 hover:text-rose-600 disabled:opacity-30">
-                                            <mat-icon class="text-xs">delete</mat-icon>
-                                        </button>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
 
                             <!-- PALETAS DE COLOR -->
 
@@ -1836,22 +1774,22 @@
 
                             <!-- FOOTER / BOTONES DE NAVEGACIÓN EN SIMULADOR -->
 
-                            <div *ngIf="!simuladorEnviado" class="p-4 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div *ngIf="!simuladorEnviado" class="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                 <button *ngIf="diseno.modoPasos && pasoSimuladorActual > 1"
                                         (click)="simuladorPasoAnterior()"
                                         type="button"
-                                        class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200">
-                                    ← Anterior
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer">
+                                    <mat-icon class="text-sm">arrow_back</mat-icon> Anterior
                                 </button>
 
                                 <div *ngIf="!diseno.modoPasos || pasoSimuladorActual === 1"></div>
                                 <button (click)="simuladorSiguientePaso()"
                                         type="button"
-                                        class="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all ml-auto"
+                                        class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-semibold text-white shadow-sm transition-all ml-auto hover:brightness-105 active:scale-[0.99] cursor-pointer"
                                         [style.background-color]="diseno.colorPrimario">
-                                    {{ (diseno.modoPasos && pasoSimuladorActual < (diseno.pasos?.length || 1)) ? 'Siguiente Paso →' : diseno.botonTexto }}
+                                    <span>{{ (diseno.modoPasos && pasoSimuladorActual < (diseno.pasos?.length || 1)) ? 'Siguiente Paso' : diseno.botonTexto }}</span>
+                                    <mat-icon *ngIf="diseno.modoPasos && pasoSimuladorActual < (diseno.pasos?.length || 1)" class="text-sm">arrow_forward</mat-icon>
                                 </button>
-
                             </div>
 
                         </div>
@@ -2047,20 +1985,20 @@
         <div class="relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden">
 
             <!-- HEADER DEL MODAL -->
-            <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white dark:from-slate-900 dark:to-slate-900/90 flex-shrink-0">
+            <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 flex-shrink-0">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
-                        <mat-icon class="text-2xl">auto_fix_high</mat-icon>
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0">
+                        <mat-icon class="text-xl">upload_file</mat-icon>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h2 class="text-lg font-black text-slate-900 dark:text-white">Importador Inteligente de Encuestas</h2>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                                3 Métodos
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white">Importador Inteligente de Encuestas</h2>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                Google Docs / Word / Texto
                             </span>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            Arma tu encuesta automáticamente a partir de un Enlace (Google Docs), Archivo (.docx/.txt) o Texto copiado.
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Extrae preguntas, secciones y matrices Likert automáticamente desde documentos.
                         </p>
                     </div>
                 </div>
@@ -2084,45 +2022,45 @@
                         <!-- TAB 1: ENLACE / LINK -->
                         <button type="button"
                                 (click)="metodoImportacion = 'link'"
-                                class="p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer"
-                                [ngClass]="metodoImportacion === 'link' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20 ring-2 ring-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                                 [ngClass]="metodoImportacion === 'link' ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'">
-                                <mat-icon class="text-xl">link</mat-icon>
+                                class="p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer"
+                                [ngClass]="metodoImportacion === 'link' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                 [ngClass]="metodoImportacion === 'link' ? 'bg-white/10 dark:bg-slate-900/10 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+                                <mat-icon class="text-lg">link</mat-icon>
                             </div>
                             <div class="min-w-0">
-                                <div class="text-xs font-bold leading-tight">1. Por Enlace / Link</div>
-                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'link' ? 'text-blue-100' : 'text-slate-400'">Google Docs o Web</div>
+                                <div class="text-xs font-semibold leading-tight">1. Enlace Web</div>
+                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'link' ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'">Google Docs o URL</div>
                             </div>
                         </button>
 
                         <!-- TAB 2: ARCHIVO WORD -->
                         <button type="button"
                                 (click)="metodoImportacion = 'archivo'"
-                                class="p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer"
-                                [ngClass]="metodoImportacion === 'archivo' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20 ring-2 ring-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                                 [ngClass]="metodoImportacion === 'archivo' ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'">
-                                <mat-icon class="text-xl">upload_file</mat-icon>
+                                class="p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer"
+                                [ngClass]="metodoImportacion === 'archivo' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                 [ngClass]="metodoImportacion === 'archivo' ? 'bg-white/10 dark:bg-slate-900/10 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+                                <mat-icon class="text-lg">upload_file</mat-icon>
                             </div>
                             <div class="min-w-0">
-                                <div class="text-xs font-bold leading-tight">2. Por Archivo</div>
-                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'archivo' ? 'text-blue-100' : 'text-slate-400'">Documento .docx / .txt</div>
+                                <div class="text-xs font-semibold leading-tight">2. Archivo</div>
+                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'archivo' ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'">Documento .docx / .txt</div>
                             </div>
                         </button>
 
                         <!-- TAB 3: TEXTO DIRECTO -->
                         <button type="button"
                                 (click)="metodoImportacion = 'texto'"
-                                class="p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer"
-                                [ngClass]="metodoImportacion === 'texto' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20 ring-2 ring-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                                 [ngClass]="metodoImportacion === 'texto' ? 'bg-white/20 text-white' : 'bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400'">
-                                <mat-icon class="text-xl">content_paste</mat-icon>
+                                class="p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer"
+                                [ngClass]="metodoImportacion === 'texto' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300'">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                 [ngClass]="metodoImportacion === 'texto' ? 'bg-white/10 dark:bg-slate-900/10 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+                                <mat-icon class="text-lg">content_paste</mat-icon>
                             </div>
                             <div class="min-w-0">
-                                <div class="text-xs font-bold leading-tight">3. Por Texto</div>
-                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'texto' ? 'text-blue-100' : 'text-slate-400'">Pegar con Ctrl+V</div>
+                                <div class="text-xs font-semibold leading-tight">3. Texto Copiado</div>
+                                <div class="text-[11px] truncate mt-0.5" [ngClass]="metodoImportacion === 'texto' ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'">Pegar texto directo</div>
                             </div>
                         </button>
 
@@ -2137,7 +2075,7 @@
                             Enlace de Google Docs o Documento Web:
                         </span>
                         <span class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
-                            ⚡ Descarga y parseo instantáneo
+                            Descarga y análisis automático
                         </span>
                     </div>
 
@@ -2153,10 +2091,10 @@
                         <button (click)="descargarUrlGoogleDocs()"
                                 [disabled]="descargandoUrl || !urlDocumentoWord"
                                 type="button"
-                                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0">
-                            <span *ngIf="descargandoUrl" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                            <mat-icon *ngIf="!descargandoUrl" class="text-sm">bolt</mat-icon>
-                            <span>{{ descargandoUrl ? 'Descargando documento...' : 'Descargar y Analizar Enlace' }}</span>
+                                class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 disabled:opacity-50 text-white font-semibold text-xs shadow-2xs transition-colors flex items-center justify-center gap-2 cursor-pointer flex-shrink-0">
+                            <span *ngIf="descargandoUrl" class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                            <mat-icon *ngIf="!descargandoUrl" class="text-sm">cloud_download</mat-icon>
+                            <span>{{ descargandoUrl ? 'Descargando...' : 'Descargar y Analizar' }}</span>
                         </button>
                     </div>
 
@@ -2236,8 +2174,8 @@ SECCIÓN 2: EVALUACIÓN DE CALIDAD TÉCNICA
                     <div class="flex justify-end">
                         <button (click)="analizarTextoWord()" type="button"
                                 [disabled]="!textoWordParaImportar || !textoWordParaImportar.trim()"
-                                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-40 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer">
-                            <mat-icon class="text-sm">auto_fix_high</mat-icon>
+                                class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 disabled:opacity-40 text-white font-semibold text-xs shadow-2xs transition-colors flex items-center gap-2 cursor-pointer">
+                            <mat-icon class="text-sm">search</mat-icon>
                             <span>Analizar Texto Copiado</span>
                         </button>
                     </div>
