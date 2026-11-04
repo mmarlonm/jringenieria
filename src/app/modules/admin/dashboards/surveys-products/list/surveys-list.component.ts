@@ -326,10 +326,43 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
 
+        // Antes de cargar: el servicio avisa durante la propia carga si encontró encuestas guardadas solo en este navegador.
+        this._surveyService.recuperados$
+            .pipe(takeUntil(this._destroy$))
+            .subscribe(recuperado => this.avisarEncuestasRecuperadas(recuperado.titulos, recuperado.pendientes));
+
         this.cargarListado();
 
         this.cargarRespuestas();
 
+    }
+
+    private avisarEncuestasRecuperadas(titulos: string[], pendientes: number): void {
+        const escapar = (texto: string) => texto
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+        let html = '';
+        if (titulos.length > 0) {
+            const lista = titulos.map(t => `<li>${escapar(t)}</li>`).join('');
+            html += `<p>Estaban guardadas solo en este navegador y se subieron al servidor:</p><ul style="text-align:left;margin:8px 0 0 24px;list-style:disc">${lista}</ul>`;
+        }
+        if (pendientes > 0) {
+            html += `<p style="margin-top:12px">${pendientes} más no se pudieron subir todavía; se conservan en este navegador y se reintentará al abrir esta pantalla.</p>`;
+        }
+
+        Swal.fire({
+            icon: pendientes > 0 ? 'warning' : 'success',
+            title: titulos.length > 0
+                ? (titulos.length === 1 ? 'Se recuperó 1 encuesta' : `Se recuperaron ${titulos.length} encuestas`)
+                : 'Encuestas pendientes de subir',
+            html,
+            confirmButtonText: 'Entendido'
+        });
+    }
+
+    private mostrarErrorDelServidor(titulo: string, err: any, mensajePorDefecto: string): void {
+        Swal.fire(titulo, err?.error?.message || mensajePorDefecto, 'error');
+        this._cdr.markForCheck();
     }
 
 
@@ -716,7 +749,9 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
                     this.cargarListado();
 
-                }
+                },
+
+                error: (err) => this.mostrarErrorDelServidor('No se pudo duplicar', err, 'El servidor no respondió. La encuesta no se duplicó; intenta de nuevo en unos minutos.')
 
             });
 
@@ -760,7 +795,9 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
                             this.cargarListado();
 
-                        }
+                        },
+
+                        error: (err) => this.mostrarErrorDelServidor('No se pudo eliminar', err, 'El servidor no respondió. La encuesta no se eliminó; intenta de nuevo en unos minutos.')
 
                     });
 
@@ -812,6 +849,15 @@ export class SurveysListComponent implements OnInit, OnDestroy {
                     this.actualizarMetricas();
 
                     this._snackBar.open(`Encuesta ${form.activo ? 'activada' : 'desactivada'}`, 'Cerrar', { duration: 2500 });
+
+                },
+
+                error: (err) => {
+
+                    // El servidor no lo guardó: el interruptor vuelve a su valor real para no mostrar algo que no es cierto.
+                    form.activo = !form.activo;
+
+                    this.mostrarErrorDelServidor('No se pudo cambiar el estado', err, 'El servidor no respondió. La encuesta quedó como estaba; intenta de nuevo en unos minutos.');
 
                 }
 

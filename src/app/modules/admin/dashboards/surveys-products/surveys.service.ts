@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 
 import { HttpClient } from '@angular/common/http';
 
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, Subject, catchError, concatMap, from, map, of, switchMap, toArray } from 'rxjs';
 
 import { environment } from 'environments/environment';
 
@@ -204,6 +204,18 @@ export class SurveysProductsService {
 
     private readonly STORAGE_RESPUESTAS_KEY = 'jr_respuestas_productos_cache';
 
+    /** Encuestas que solo existen en este navegador y todavía no se pudieron subir al servidor. */
+    private readonly STORAGE_PENDIENTES_KEY = 'jr_formularios_productos_pendientes';
+
+    /** Las dos plantillas que la pantalla ofrece de inicio; mientras nadie las modifique no son datos de nadie. */
+    private readonly SLUGS_PREDETERMINADOS = ['satisfaccion-productos', 'satisfaccion-servicios'];
+
+    /**
+     * Avisa cuando se encontraron encuestas guardadas solo en este navegador (por una falla anterior del servidor).
+     * Emite únicamente si había algo que recuperar o quedó algo pendiente; si no hay nada, no emite.
+     */
+    readonly recuperados$ = new Subject<{ titulos: string[]; pendientes: number }>();
+
 
 
     // =========================================================================
@@ -217,35 +229,25 @@ export class SurveysProductsService {
     /** Obtiene todos los formularios de encuestas de productos configurados */
 
     getFormularios(): Observable<FormularioProductoDto[]> {
-
         return this._http.get<{ code: number; message: string; data: FormularioProductoDto[] }>(
-
             `${this.apiUrl}/productos/formularios`
-
         ).pipe(
+            switchMap(res => {
+                const servidor = res?.data ?? [];
+                const locales = this.formulariosSoloLocales(servidor);
 
-            map(res => {
-
-                if (res && res.data && res.data.length > 0) {
-
-                    this.guardarEnStorage(res.data);
-
-                    return res.data;
-
+                // Antes la copia del navegador se sobrescribía con la lista del servidor: lo que solo existía en el navegador se perdía.
+                if (locales.length > 0) {
+                    return this.subirFormulariosLocales(servidor, locales);
                 }
-
-                return this.obtenerPredeterminadosStorage();
-
-            }),
-
-            catchError(() => {
-
+                if (servidor.length > 0) {
+                    this.guardarEnStorage(servidor);
+                    return of(servidor);
+                }
                 return of(this.obtenerPredeterminadosStorage());
-
-            })
-
+            }),
+            catchError(() => of(this.obtenerPredeterminadosStorage()))
         );
-
     }
 
 
@@ -307,79 +309,17 @@ export class SurveysProductsService {
     /** Guarda o actualiza un formulario */
 
     guardarFormulario(dto: FormularioProductoSaveDto): Observable<FormularioProductoDto> {
-
+        // Sin plan B local: si el servidor falla, quien guarda debe enterarse. Guardar "en silencio" solo en el navegador
+        // hacía parecer guardada una encuesta que luego desaparecía al recargar la lista.
         return this._http.post<{ code: number; message: string; data: FormularioProductoDto }>(
-
             `${this.apiUrl}/productos/formularios`, dto
-
         ).pipe(
-
             map(res => {
-
                 const saved = res.data;
-
                 this.actualizarStorage(saved);
-
                 return saved;
-
-            }),
-
-            catchError(() => {
-
-                // Fallback local
-
-                const lista = this.obtenerPredeterminadosStorage();
-
-                let saved: FormularioProductoDto;
-
-                if (dto.id > 0) {
-
-                    const idx = lista.findIndex(x => x.id === dto.id);
-
-                    saved = {
-
-                        ...dto,
-
-                        fechaCreacion: idx !== -1 ? lista[idx].fechaCreacion : new Date().toISOString(),
-
-                        fechaModificacion: new Date().toISOString(),
-
-                        totalRespuestas: idx !== -1 ? lista[idx].totalRespuestas : 0
-
-                    };
-
-                    if (idx !== -1) lista[idx] = saved;
-
-                    else lista.unshift(saved);
-
-                } else {
-
-                    const nuevoId = lista.length > 0 ? Math.max(...lista.map(x => x.id)) + 1 : 1;
-
-                    saved = {
-
-                        ...dto,
-
-                        id: nuevoId,
-
-                        fechaCreacion: new Date().toISOString(),
-
-                        totalRespuestas: 0
-
-                    };
-
-                    lista.unshift(saved);
-
-                }
-
-                this.guardarEnStorage(lista);
-
-                return of(saved);
-
             })
-
         );
-
     }
 
 
@@ -387,27 +327,12 @@ export class SurveysProductsService {
     /** Elimina un formulario por ID */
 
     eliminarFormulario(id: number): Observable<any> {
-
         return this._http.delete(`${this.apiUrl}/productos/formularios/${id}`).pipe(
-
             map(() => {
-
                 this.eliminarDeStorage(id);
-
                 return { code: 200, message: 'Eliminado correctamente' };
-
-            }),
-
-            catchError(() => {
-
-                this.eliminarDeStorage(id);
-
-                return of({ code: 200, message: 'Eliminado localmente' });
-
             })
-
         );
-
     }
 
 
@@ -1082,6 +1007,92 @@ export class SurveysProductsService {
     }
 
 
+
+    private leerListaLocal(clave: string): FormularioProductoDto[] {
+        try {
+            const datos = JSON.parse(localStorage.getItem(clave) || '[]');
+            return Array.isArray(datos) ? datos.filter(f => f && typeof f === 'object') : [];
+        } catch {
+            return [];
+        }
+    }
+
+    private claveSlug(slug?: string): string {
+        return (slug || '').trim().toLowerCase();
+    }
+
+    /** Encuestas del navegador (copia y pendientes) cuyo enlace no está en el servidor, sin las plantillas que nadie modificó. */
+    private formulariosSoloLocales(servidor: FormularioProductoDto[]): FormularioProductoDto[] {
+        const enServidor = new Set(servidor.map(f => this.claveSlug(f.slug)));
+        const vistos = new Set<string>();
+        const candidatos = [...this.leerListaLocal(this.STORAGE_PENDIENTES_KEY), ...this.leerListaLocal(this.STORAGE_KEY)];
+
+        return candidatos.filter(f => {
+            const slug = this.claveSlug(f.slug);
+            if (!slug || !f.titulo || enServidor.has(slug) || vistos.has(slug)) return false;
+            vistos.add(slug);
+            const plantillaSinModificar = this.SLUGS_PREDETERMINADOS.includes(slug) && !f.fechaModificacion;
+            return !plantillaSinModificar;
+        });
+    }
+
+    private guardarPendientes(lista: FormularioProductoDto[]): void {
+        if (lista.length === 0) localStorage.removeItem(this.STORAGE_PENDIENTES_KEY);
+        else localStorage.setItem(this.STORAGE_PENDIENTES_KEY, JSON.stringify(lista));
+    }
+
+    private paraSubir(f: FormularioProductoDto): FormularioProductoSaveDto {
+        return {
+            id: 0, // en el servidor es nueva: el id del navegador era inventado
+            slug: f.slug,
+            titulo: f.titulo,
+            descripcion: f.descripcion,
+            imagenPortadaUrl: f.imagenPortadaUrl,
+            camposConfigJson: f.camposConfigJson || '[]',
+            disenoConfigJson: f.disenoConfigJson || '{}',
+            tipo: f.tipo === 'servicio' ? 'servicio' : 'producto',
+            sucursalId: f.sucursalId,
+            activo: !!f.activo
+        };
+    }
+
+    /**
+     * Sube, una tras otra, las encuestas que solo existen en el navegador. Antes de empezar las respalda como pendientes:
+     * las que no se puedan subir se conservan y se reintentan en la siguiente carga.
+     */
+    private subirFormulariosLocales(
+        servidor: FormularioProductoDto[],
+        locales: FormularioProductoDto[]
+    ): Observable<FormularioProductoDto[]> {
+        this.guardarPendientes(locales);
+        const creados: FormularioProductoDto[] = [];
+        const fallidos: FormularioProductoDto[] = [];
+
+        return from(locales).pipe(
+            concatMap(local =>
+                this._http.post<{ code: number; message: string; data: FormularioProductoDto }>(
+                    `${this.apiUrl}/productos/formularios`, this.paraSubir(local)
+                ).pipe(
+                    map(res => {
+                        if (res?.data) creados.push(res.data);
+                        else fallidos.push(local);
+                    }),
+                    catchError(() => {
+                        fallidos.push(local);
+                        return of(undefined);
+                    })
+                )
+            ),
+            toArray(),
+            map(() => {
+                const lista = [...servidor, ...creados];
+                this.guardarEnStorage(lista);
+                this.guardarPendientes(fallidos);
+                this.recuperados$.next({ titulos: creados.map(c => c.titulo), pendientes: fallidos.length });
+                return lista;
+            })
+        );
+    }
 
     private guardarEnStorage(lista: FormularioProductoDto[]): void {
 
