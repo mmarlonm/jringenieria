@@ -1,0 +1,132 @@
+<h2 mat-dialog-title>{{ esEdicion ? 'Editar crédito' : 'Nuevo crédito' }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="guardar()">
+    <mat-dialog-content class="flex flex-col gap-4 py-4">
+        <!-- Empresa -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Empresa</mat-label>
+            <mat-select formControlName="empresaId">
+                @for (e of empresas(); track e.empresaId) {
+                    <mat-option [value]="e.empresaId">{{ e.nombre }} · {{ e.rfc }}</mat-option>
+                }
+            </mat-select>
+            <mat-error>Elige la empresa.</mat-error>
+        </mat-form-field>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Sentido -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Sentido</mat-label>
+                <mat-select formControlName="sentido">
+                    @for (s of sentidos; track s) {
+                        <mat-option [value]="s">{{ s }}</mat-option>
+                    }
+                </mat-select>
+                <mat-error>Elige el sentido.</mat-error>
+            </mat-form-field>
+
+            <!-- Tipo -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Tipo</mat-label>
+                <mat-select formControlName="tipo">
+                    @for (t of tipos; track t.valor) {
+                        <mat-option [value]="t.valor">{{ t.texto }}</mat-option>
+                    }
+                </mat-select>
+                <mat-error>Elige el tipo.</mat-error>
+            </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Contraparte -->
+            <mat-form-field appearance="outline" class="w-full sm:col-span-2">
+                <mat-label>Contraparte (banco, financiera o proveedor)</mat-label>
+                <input matInput formControlName="contraparte" maxlength="200" autocomplete="off">
+                <mat-error>Indica la contraparte (máx. 200 caracteres).</mat-error>
+            </mat-form-field>
+
+            <!-- Moneda -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Moneda</mat-label>
+                <mat-select formControlName="moneda">
+                    @for (m of monedas; track m) {
+                        <mat-option [value]="m">{{ m }}</mat-option>
+                    }
+                </mat-select>
+                <mat-error>Elige la moneda.</mat-error>
+            </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Monto original -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Monto original</mat-label>
+                <input matInput type="number" formControlName="montoOriginal" min="0.01" step="0.01">
+                <mat-error>Monto mayor a 0.</mat-error>
+            </mat-form-field>
+
+            <!-- Saldo capital -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Saldo capital</mat-label>
+                <input matInput type="number" formControlName="saldoCapital" min="0" step="0.01">
+                <mat-error>Saldo capital mayor o igual a 0.</mat-error>
+            </mat-form-field>
+
+            <!-- Tasa anual (%) -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Tasa anual (%)</mat-label>
+                <input matInput type="number" formControlName="tasaAnual" min="0" max="100" step="0.01">
+                <mat-hint>Porcentaje (p. ej. 15.5)</mat-hint>
+                <mat-error>Tasa entre 0 y 100.</mat-error>
+            </mat-form-field>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Vencimiento final -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Vencimiento final</mat-label>
+                <input matInput type="date" formControlName="vencimientoFinal">
+            </mat-form-field>
+
+            <!-- Cuenta asociada -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Cuenta bancaria asociada (opcional)</mat-label>
+                <mat-select formControlName="cuentaId">
+                    <mat-option [value]="null">Sin cuenta asociada</mat-option>
+                    @for (c of cuentas(); track c.cuentaId) {
+                        <mat-option [value]="c.cuentaId">{{ c.alias }} ····{{ c.terminacion }} ({{ c.moneda }})</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <!-- Estado -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="estado">
+                @for (est of estados; track est) {
+                    <mat-option [value]="est">{{ est }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+
+        <!-- Notas -->
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Notas (opcional)</mat-label>
+            <textarea matInput formControlName="notas" rows="2" maxlength="500"></textarea>
+            <mat-hint align="end">{{ form.controls.notas.value?.length || 0 }}/500</mat-hint>
+        </mat-form-field>
+
+        @if (error(); as mensaje) {
+            <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm font-semibold text-rose-800">
+                {{ mensaje }}
+            </div>
+        }
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-stroked-button type="button" mat-dialog-close [disabled]="guardando()">Cancelar</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || guardando()">Guardar</button>
+    </mat-dialog-actions>
+</form>
+

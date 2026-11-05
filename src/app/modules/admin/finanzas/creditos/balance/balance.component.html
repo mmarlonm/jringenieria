@@ -1,0 +1,99 @@
+<div class="mt-8 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold tracking-tight">Balance de créditos</h2>
+            <p class="text-secondary text-sm">Resumen por moneda de créditos recibidos (pasivo) vs. otorgados (activo).</p>
+        </div>
+    </div>
+
+    <!-- Error -->
+    @if (error(); as err) {
+        <div data-testid="error-balance" class="rounded-xl bg-rose-50 border border-rose-200 p-4 text-sm font-semibold text-rose-800">
+            {{ err }}
+        </div>
+    }
+
+    <!-- Cargando -->
+    @if (cargando()) {
+        <div class="flex items-center justify-center py-8">
+            <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+        </div>
+    } @else if (!balance() || balance()?.monedas?.length === 0) {
+        <!-- Estado vacio -->
+        <div data-testid="balance-vacio" class="rounded-xl border border-dashed p-8 text-center text-secondary">
+            Sin créditos activos
+        </div>
+    } @else {
+        <!-- Tablas por moneda -->
+        @for (m of balance()?.monedas; track m.moneda) {
+            <div data-testid="balance-moneda" class="bg-card dark:bg-default rounded-2xl shadow-sm border p-6 flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg font-bold">{{ m.moneda }}</span>
+                        <span class="text-xs text-secondary font-mono">({{ m.moneda === 'MXN' ? 'Pesos mexicanos' : 'Dólares estadounidenses' }})</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b bg-gray-50 dark:bg-gray-800/50 text-secondary text-xs font-semibold uppercase tracking-wider">
+                                <th class="py-2.5 px-3">Concepto</th>
+                                <th class="py-2.5 px-3 text-right">Capital original</th>
+                                <th class="py-2.5 px-3 text-right">Saldo actual</th>
+                                <th class="py-2.5 px-3 text-right">Pago próximo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            <!-- 1. Recibidos financieros -->
+                            <tr>
+                                <td class="py-2.5 px-3 font-medium">Recibidos financieros</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidosFinancieros.capitalOriginal, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidosFinancieros.saldoActual, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidosFinancieros.proximoPago, m.moneda) }}</td>
+                            </tr>
+                            <!-- 2. Recibidos de proveedores -->
+                            <tr>
+                                <td class="py-2.5 px-3 font-medium">Recibidos de proveedores</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidosProveedores.capitalOriginal, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidosProveedores.saldoActual, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidosProveedores.proximoPago, m.moneda) }}</td>
+                            </tr>
+                            <!-- 3. Créditos recibidos (pasivo) -->
+                            <tr class="bg-gray-50/40 dark:bg-gray-800/20 font-semibold">
+                                <td class="py-2.5 px-3">Créditos recibidos (pasivo)</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidos.capitalOriginal, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidos.saldoActual, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.recibidos.proximoPago, m.moneda) }}</td>
+                            </tr>
+                            <!-- 4. Créditos otorgados (activo) -->
+                            <tr class="font-semibold text-emerald-700 dark:text-emerald-400">
+                                <td class="py-2.5 px-3">Créditos otorgados (activo)</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.otorgados.capitalOriginal, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.otorgados.saldoActual, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.otorgados.proximoPago, m.moneda) }}</td>
+                            </tr>
+                            <!-- 5. Diferencia neta -->
+                            <tr class="bg-gray-100/60 dark:bg-gray-800/40 font-bold border-t-2 border-gray-200 dark:border-gray-700">
+                                <td class="py-2.5 px-3">Diferencia neta</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.diferencia.capitalOriginal, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.diferencia.saldoActual, m.moneda) }}</td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">{{ formatearMonto(m.diferencia.proximoPago, m.moneda) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div data-testid="balance-relacion" class="mt-2 text-sm font-medium text-secondary">
+                    Relación otorgados/recibidos: {{ formatearRelacion(m.relacion) }}
+                </div>
+            </div>
+        }
+
+        <!-- Texto fijo al pie -->
+        <p class="text-xs text-secondary mt-2">
+            Deudas por pagar son pasivos; créditos otorgados generan derechos de cobro. No es un balance general contable; verificar que no duplique la cartera de ventas.
+        </p>
+    }
+</div>
+

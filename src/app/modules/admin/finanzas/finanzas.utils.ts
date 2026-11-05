@@ -233,3 +233,37 @@ export function fechaIsoACorta(iso: string): string {
     const [yyyy, mm, dd] = iso.slice(0, 10).split('-');
     return `${dd}/${mm}/${yyyy}`;
 }
+
+
+export function etiquetaTipoCredito(t: string): string {
+    switch (t) {
+        case 'Simple': return 'Crédito simple';
+        case 'Arrendamiento': return 'Arrendamiento';
+        case 'Mercancia': return 'Línea de proveedor (mercancía)';
+        case 'Otro': return 'Otro';
+        default: return t;
+    }
+}
+
+export function formatearTasa(fraccion: number): string {
+    return `${(fraccion * 100).toFixed(2)}%`;
+}
+
+/** 7.35 (%) → 0.0735. El API guarda la tasa con 6 decimales: se redondea aquí para no mandar 0.07350000000000001. */
+export function porcentajeAFraccion(porcentaje: number): number {
+    return Number((porcentaje / 100).toFixed(6));
+}
+
+/** 0.0735 → 7.35 (%). Sin esto, 0.0735 * 100 se mostraría como 7.3500000000000005. */
+export function fraccionAPorcentaje(fraccion: number): number {
+    return Number((fraccion * 100).toFixed(4));
+}
+
+export function fechaVencida(iso: string, hoy: Date): boolean {
+    if (!iso || typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(iso)) {
+        return false;
+    }
+    const fecha = iso.slice(0, 10);
+    const fechaHoy = fechaLocalISO(hoy);
+    return fecha < fechaHoy;
+}

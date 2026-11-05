@@ -1,0 +1,201 @@
+<div class="flex flex-col flex-auto min-w-0">
+    <!-- Encabezado y barra de filtros -->
+    <div class="bg-card dark:bg-default border-b px-6 py-6 sm:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight leading-none">Créditos</h1>
+                <p class="text-secondary mt-1 text-sm">
+                    Registro de financiamientos recibidos y otorgados con calendario de pagos.
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button
+                    mat-flat-button
+                    color="primary"
+                    data-testid="boton-nuevo-credito"
+                    (click)="nuevo()">
+                    <mat-icon class="icon-size-5 mr-1" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                    <span>Nuevo crédito</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <!-- Empresa -->
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                <mat-label>Empresa</mat-label>
+                <mat-select
+                    data-testid="selector-empresa"
+                    [value]="empresaId() ?? TODAS"
+                    (selectionChange)="elegirEmpresa($event.value)">
+                    <mat-option [value]="TODAS">Todas las empresas (suma)</mat-option>
+                    @for (e of empresas(); track e.empresaId) {
+                        <mat-option [value]="e.empresaId">{{ e.nombre }} · {{ e.rfc }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <!-- Sentido -->
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                <mat-label>Sentido</mat-label>
+                <mat-select
+                    data-testid="filtro-sentido"
+                    [value]="sentido()"
+                    (selectionChange)="cambiarSentido($event.value)">
+                    <mat-option value="">Todos los sentidos</mat-option>
+                    <mat-option value="Recibido">Recibidos (pasivo)</mat-option>
+                    <mat-option value="Otorgado">Otorgados (activo)</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <!-- Estado -->
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                <mat-label>Estado</mat-label>
+                <mat-select
+                    data-testid="filtro-estado"
+                    [value]="estado()"
+                    (selectionChange)="cambiarEstado($event.value)">
+                    <mat-option value="">Todos los estados</mat-option>
+                    <mat-option value="Activo">Activos</mat-option>
+                    <mat-option value="Liquidado">Liquidados</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="p-6 sm:p-8 flex-auto">
+        <!-- Error de carga -->
+        @if (error(); as mensajeError) {
+            <div data-testid="error-creditos" class="rounded-xl bg-rose-50 border border-rose-200 p-4 mb-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <mat-icon class="text-rose-600" [svgIcon]="'heroicons_outline:exclamation-circle'"></mat-icon>
+                    <span class="text-sm font-semibold text-rose-800">{{ mensajeError }}</span>
+                </div>
+                <button mat-stroked-button color="warn" data-testid="boton-reintentar" (click)="cargar()">
+                    Reintentar
+                </button>
+            </div>
+        }
+
+        <!-- Cargando -->
+        @if (cargando()) {
+            <div data-testid="cargando" class="flex flex-col items-center justify-center py-16">
+                <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+                <span class="text-secondary mt-4 text-sm font-medium">Cargando créditos...</span>
+            </div>
+        } @else if (!error() && filasCreditos().length === 0) {
+            <!-- Estado vacio -->
+            <div class="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12 text-center my-6">
+                <mat-icon class="icon-size-12 text-gray-400" [svgIcon]="'heroicons_outline:currency-dollar'"></mat-icon>
+                <h3 class="mt-4 text-base font-semibold text-gray-900 dark:text-gray-100">Aún no hay créditos con estos filtros</h3>
+                <p class="mt-1 text-sm text-gray-500">Puedes registrar un nuevo financiamiento con el botón «Nuevo crédito».</p>
+            </div>
+        } @else if (!error()) {
+            <!-- Tabla de creditos -->
+            <div class="bg-card dark:bg-default rounded-2xl shadow-sm border overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b bg-gray-50 dark:bg-gray-800/50 text-secondary text-xs font-semibold uppercase tracking-wider">
+                            <th class="py-3 px-4">Acciones</th>
+                            <th class="py-3 px-4">Contraparte</th>
+                            <th class="py-3 px-4">Tipo</th>
+                            <th class="py-3 px-4">Sentido</th>
+                            <th class="py-3 px-4">Moneda</th>
+                            <th class="py-3 px-4 text-right">Monto original</th>
+                            <th class="py-3 px-4 text-right">Saldo capital</th>
+                            <th class="py-3 px-4">Próximo pago</th>
+                            <th class="py-3 px-4">Vencimiento final</th>
+                            <th class="py-3 px-4 text-right">Tasa</th>
+                            <th class="py-3 px-4 text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        @for (c of filasCreditos(); track c.creditoId) {
+                            <tr data-testid="fila-credito" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                                <!-- Primera columna: Acciones -->
+                                <td class="py-3 px-4 whitespace-nowrap" data-testid="acciones-credito">
+                                    <div class="flex items-center gap-1">
+                                        <button
+                                            mat-icon-button
+                                            aria-label="Ver calendario de pagos"
+                                            title="Ver calendario de pagos"
+                                            (click)="verCalendario(c)">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:calendar'"></mat-icon>
+                                        </button>
+                                        <button
+                                            mat-icon-button
+                                            aria-label="Editar crédito"
+                                            title="Editar crédito"
+                                            (click)="editar(c)">
+                                            <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                                        </button>
+                                        <button
+                                            mat-icon-button
+                                            color="warn"
+                                            aria-label="Eliminar crédito"
+                                            title="Eliminar crédito"
+                                            [disabled]="eliminando() === c.creditoId"
+                                            (click)="eliminar(c)">
+                                            <mat-icon class="icon-size-5 text-rose-600" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ c.contraparte }}
+                                    @if (c.notas) {
+                                        <span class="block text-xs font-normal text-secondary truncate max-w-xs" [title]="c.notas">{{ c.notas }}</span>
+                                    }
+                                </td>
+                                <td class="py-3 px-4 text-secondary whitespace-nowrap">{{ etiquetaTipo(c.tipo) }}</td>
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                          [class.bg-blue-50]="c.sentido === 'Recibido'"
+                                          [class.text-blue-700]="c.sentido === 'Recibido'"
+                                          [class.bg-emerald-50]="c.sentido === 'Otorgado'"
+                                          [class.text-emerald-700]="c.sentido === 'Otorgado'">
+                                        {{ c.sentido }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 font-mono text-xs">{{ c.moneda }}</td>
+                                <td class="py-3 px-4 text-right font-medium whitespace-nowrap">{{ formatearMonto(c.montoOriginal, c.moneda) }}</td>
+                                <td class="py-3 px-4 text-right font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ formatearMonto(c.saldoCapital, c.moneda) }}</td>
+                                <td class="py-3 px-4 whitespace-nowrap" data-testid="proximo-pago">
+                                    @if (c.proximoVencimiento && c.proximoPago != null) {
+                                        <span class="font-medium">{{ fechaIsoACorta(c.proximoVencimiento) }}</span>
+                                        <span class="text-secondary ml-1">· {{ formatearMonto(c.proximoPago, c.moneda) }}</span>
+                                        @if (fechaVencida(c.proximoVencimiento, hoy)) {
+                                            <span data-testid="etiqueta-vencida" class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+                                                Vencida
+                                            </span>
+                                        }
+                                    } @else {
+                                        <span class="text-secondary">—</span>
+                                    }
+                                </td>
+                                <td class="py-3 px-4 text-secondary whitespace-nowrap">
+                                    {{ c.vencimientoFinal ? fechaIsoACorta(c.vencimientoFinal) : '—' }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono whitespace-nowrap">{{ formatearTasa(c.tasaAnual) }}</td>
+                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                                          [class.bg-emerald-100]="c.estado === 'Activo'"
+                                          [class.text-emerald-800]="c.estado === 'Activo'"
+                                          [class.bg-gray-100]="c.estado === 'Liquidado'"
+                                          [class.text-gray-700]="c.estado === 'Liquidado'">
+                                        {{ c.estado }}
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Balance de creditos -->
+        <app-finanzas-balance-creditos [empresaId]="empresaId()"></app-finanzas-balance-creditos>
+    </div>
+</div>
+

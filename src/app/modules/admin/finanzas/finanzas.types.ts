@@ -189,3 +189,87 @@ export interface IndicadorDashboard {
     disponible: boolean; pendienteDe: string | null; valores: ValorIndicador[]; datosAl: string | null; calidad: string[];
 }
 export interface Dashboard { fechaCorte: string; empresaId: number | null; empresasIncluidas: number; indicadores: IndicadorDashboard[]; }
+
+export type SentidoCredito = 'Recibido' | 'Otorgado';
+export type TipoCredito = 'Simple' | 'Arrendamiento' | 'Mercancia' | 'Otro';
+export type EstadoCredito = 'Activo' | 'Liquidado';
+export type EstadoPagoCredito = 'Pendiente' | 'Pagada';
+
+export interface Credito {
+    creditoId: number;
+    empresaId: number;
+    sentido: SentidoCredito;
+    tipo: TipoCredito;
+    contraparte: string;
+    moneda: string;
+    montoOriginal: number;
+    saldoCapital: number;
+    tasaAnual: number;
+    vencimientoFinal: string | null;
+    cuentaId: number | null;
+    estado: EstadoCredito;
+    notas: string | null;
+    fechaActualizacion: string;
+    proximoVencimiento: string | null;
+    proximoPago: number | null;
+    pagosPendientes: number;
+    pagosTotales: number;
+}
+
+export interface CreditoGuardar {
+    empresaId: number;
+    sentido: SentidoCredito;
+    tipo: TipoCredito;
+    contraparte: string;
+    moneda: string;
+    montoOriginal: number;
+    saldoCapital: number;
+    tasaAnual: number;
+    vencimientoFinal: string | null;
+    cuentaId: number | null;
+    estado?: EstadoCredito;
+    notas?: string | null;
+}
+
+export interface CreditoPago {
+    pagoId: number;
+    creditoId: number;
+    vencimiento: string;
+    capital: number;
+    interes: number;
+    total: number;
+    estado: EstadoPagoCredito;
+    fechaPago: string | null;
+}
+
+export interface CreditoPagoGuardar {
+    vencimiento: string;
+    capital: number;
+    interes: number;
+    estado?: EstadoPagoCredito;
+    fechaPago?: string | null;
+}
+
+export interface BalanceLinea {
+    creditos: number;
+    capitalOriginal: number;
+    saldoActual: number;
+    proximoPago: number;
+}
+
+export interface BalanceMoneda {
+    moneda: string;
+    recibidos: BalanceLinea;
+    recibidosFinancieros: BalanceLinea;
+    recibidosProveedores: BalanceLinea;
+    otorgados: BalanceLinea;
+    diferencia: BalanceLinea;
+    relacion: number | null;
+}
+
+export interface BalanceCreditos {
+    empresaId: number | null;
+    empresasIncluidas: number;
+    monedas: BalanceMoneda[];
+}
+

@@ -6,7 +6,8 @@ import {
     Cfdi, CfdiCandidato, ClaseSugerida, ClasificarMovimientos, Cuenta, CuentaGuardar, Empresa, EmpresaGuardar,
     FiltroCfdi, FiltroClases, FiltroConciliacion, FiltroImportaciones, FiltroMovimientos, HojaInfo, Importacion,
     ManualConciliacion, Movimiento, MovimientoConciliacion, Pagina, ResultadoClasificar, ResultadoImportacion,
-    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete, Dashboard, ResultadoEliminarCuenta
+    GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete, Dashboard, ResultadoEliminarCuenta,
+    BalanceCreditos, Credito, CreditoGuardar, CreditoPago, CreditoPagoGuardar
 } from './finanzas.types';
 
 @Injectable({
@@ -149,6 +150,44 @@ export class FinanzasService {
     dashboard(empresaId?: number): Observable<Dashboard> {
         const params = this._query({ empresaId });
         return this._http.get<Dashboard>(`${this._api}/dashboard`, { params });
+    }
+
+    creditos(filtro?: { empresaId?: number | null; sentido?: string | null; estado?: string | null }): Observable<Credito[]> {
+        return this._http.get<Credito[]>(`${this._api}/creditos`, { params: this._query(filtro ?? {}) });
+    }
+
+    crearCredito(dto: CreditoGuardar): Observable<Credito> {
+        return this._http.post<Credito>(`${this._api}/creditos`, dto);
+    }
+
+    actualizarCredito(id: number, dto: CreditoGuardar): Observable<Credito> {
+        return this._http.put<Credito>(`${this._api}/creditos/${id}`, dto);
+    }
+
+    eliminarCredito(id: number): Observable<void> {
+        return this._http.delete<void>(`${this._api}/creditos/${id}`);
+    }
+
+    pagosCredito(id: number): Observable<CreditoPago[]> {
+        return this._http.get<CreditoPago[]>(`${this._api}/creditos/${id}/pagos`);
+    }
+
+    agregarPagoCredito(id: number, dto: CreditoPagoGuardar): Observable<CreditoPago> {
+        return this._http.post<CreditoPago>(`${this._api}/creditos/${id}/pagos`, dto);
+    }
+
+    actualizarPagoCredito(id: number, pagoId: number, dto: CreditoPagoGuardar): Observable<CreditoPago> {
+        return this._http.put<CreditoPago>(`${this._api}/creditos/${id}/pagos/${pagoId}`, dto);
+    }
+
+    eliminarPagoCredito(id: number, pagoId: number): Observable<void> {
+        return this._http.delete<void>(`${this._api}/creditos/${id}/pagos/${pagoId}`);
+    }
+
+    balanceCreditos(empresaId?: number): Observable<BalanceCreditos> {
+        return this._http.get<BalanceCreditos>(`${this._api}/creditos/balance`, {
+            params: this._query({ empresaId })
+        });
     }
 
     /** Multipart con los nombres que enlaza el controlador; `hoja` solo viaja si se eligió una. */
