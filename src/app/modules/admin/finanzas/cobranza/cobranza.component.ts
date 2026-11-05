@@ -8,11 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
+import { finalize, take } from 'rxjs/operators';
 import { FinanzasService } from '../finanzas.service';
-import { Cobranza, Empresa, EstadoCobranza, EstatusCobranza, FacturaCobranza, FiltroCobranza } from '../finanzas.types';
+import { Cobranza, Empresa, EstadoCobranza, EstatusCobranza, FacturaCobranza, FiltroCobranza, Seguimiento } from '../finanzas.types';
 import { etiquetaEstatusCobranza, formatearMonto, formatearProbabilidad, mensajeDeError, referenciaCfdi } from '../finanzas.utils';
 import { PaginadorComponent } from '../shared/paginador/paginador.component';
+import { SeguimientoDialogComponent } from './seguimiento-dialog/seguimiento-dialog.component';
 
 @Component({
     selector: 'app-finanzas-cobranza',
@@ -33,8 +36,10 @@ import { PaginadorComponent } from '../shared/paginador/paginador.component';
 })
 export class CobranzaComponent implements OnInit {
     private readonly _service = inject(FinanzasService);
+    private readonly _dialog = inject(MatDialog);
     private readonly _destroyRef = inject(DestroyRef);
     private _subCobranza?: Subscription;
+    private _dialogoAbierto = false;
 
     readonly TODAS = 0;
     readonly empresas = signal<Empresa[]>([]);
@@ -148,6 +153,27 @@ export class CobranzaComponent implements OnInit {
 
     editar(f: FacturaCobranza): void {
         this.facturaSeleccionada.set(f);
+        if (this._dialogoAbierto) {
+            return;
+        }
+        this._dialogoAbierto = true;
+        this._dialog
+            .open<SeguimientoDialogComponent, { factura: FacturaCobranza }, Seguimiento>(SeguimientoDialogComponent, {
+                width: '36rem',
+                maxWidth: '95vw',
+                data: { factura: f }
+            })
+            .afterClosed()
+            .pipe(
+                take(1),
+                finalize(() => (this._dialogoAbierto = false)),
+                takeUntilDestroyed(this._destroyRef)
+            )
+            .subscribe((res) => {
+                if (res) {
+                    this.cargarLista(this.paginaActual());
+                }
+            });
     }
 
     cambiarPagina(pagina: number): void {

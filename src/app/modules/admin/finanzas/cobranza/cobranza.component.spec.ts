@@ -3,9 +3,11 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { provideNoopAnimations, provideAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { MatSelect } from '@angular/material/select';
+import { MatDialog } from '@angular/material/dialog';
+import { Subject, of } from 'rxjs';
 import { environment } from 'environments/environment';
 import { CobranzaComponent } from './cobranza.component';
-import { Cobranza, Empresa, FacturaCobranza } from '../finanzas.types';
+import { Cobranza, Empresa, FacturaCobranza, Seguimiento } from '../finanzas.types';
 
 describe('CobranzaComponent', () => {
     let fixture: ComponentFixture<CobranzaComponent>;
@@ -94,7 +96,13 @@ describe('CobranzaComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CobranzaComponent, HttpClientTestingModule],
-            providers: [provideNoopAnimations()]
+            providers: [
+                provideNoopAnimations(),
+                {
+                    provide: MatDialog,
+                    useValue: { open: () => ({ afterClosed: () => of(undefined) }) }
+                }
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(CobranzaComponent);
@@ -300,6 +308,58 @@ describe('CobranzaComponent', () => {
         expect(req.request.params.get('estado')).toBe('Todas');
         req.flush(mockCobranza);
     });
+
+    it('Editar_abre_el_dialogo_y_si_se_guardo_recarga_la_pagina_actual_con_los_mismos_filtros', () => {
+        const dialog = TestBed.inject(MatDialog);
+        const seguimientoMock: Seguimiento = {
+            cfdiId: facturaAtrasada.cfdiId,
+            fechaVencimiento: '2026-11-30',
+            cobroEsperado: '2026-11-25',
+            estatus: 'Programado',
+            responsable: 'Juan',
+            probabilidad: 0.8,
+            observaciones: 'Listo',
+            fechaActualizacion: '2026-11-04T00:00:00Z'
+        };
+        const spyDialog = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(seguimientoMock) } as never);
+
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/cobranza`).flush(mockCobranza);
+
+        componente.empresaId.set(2);
+        componente.cambiarPagina(2);
+        httpMock.expectOne((r) => r.url === `${base}/cobranza`).flush({ ...mockCobranza, facturas: { ...mockCobranza.facturas, pagina: 2 } });
+
+        componente.editar(facturaAtrasada);
+
+        expect(spyDialog).toHaveBeenCalled();
+        const config = spyDialog.calls.mostRecent().args[1] as { data?: { factura?: FacturaCobranza } };
+        expect(config.data?.factura).toEqual(facturaAtrasada);
+
+        const reqRecarga = httpMock.expectOne((r) => r.url === `${base}/cobranza`);
+        expect(reqRecarga.request.params.get('pagina')).toBe('2');
+        expect(reqRecarga.request.params.get('empresaId')).toBe('2');
+        reqRecarga.flush(mockCobranza);
+    });
+
+    it('Un_doble_clic_en_Editar_abre_un_solo_dialogo', () => {
+        const dialog = TestBed.inject(MatDialog);
+        const cierre = new Subject<Seguimiento | undefined>();
+        const spyDialog = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => cierre.asObservable() } as never);
+
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/cobranza`).flush(mockCobranza);
+
+        componente.editar(facturaAtrasada);
+        componente.editar(facturaAtrasada);
+        expect(spyDialog).toHaveBeenCalledTimes(1);
+
+        cierre.next(undefined);
+        componente.editar(facturaAtrasada);
+        expect(spyDialog).toHaveBeenCalledTimes(2);
+    });
 });
 
 describe('CobranzaComponent - deteccion automatica y animaciones reales', () => {
@@ -315,7 +375,13 @@ describe('CobranzaComponent - deteccion automatica y animaciones reales', () => 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CobranzaComponent, HttpClientTestingModule],
-            providers: [provideAnimations()]
+            providers: [
+                provideAnimations(),
+                {
+                    provide: MatDialog,
+                    useValue: { open: () => ({ afterClosed: () => of(undefined) }) }
+                }
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(CobranzaComponent);

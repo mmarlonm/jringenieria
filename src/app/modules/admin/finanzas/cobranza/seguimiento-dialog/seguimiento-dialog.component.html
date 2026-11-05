@@ -1,0 +1,87 @@
+<h2 mat-dialog-title class="flex items-center gap-2">
+  <mat-icon [svgIcon]="'heroicons_outline:pencil-square'" class="text-blue-600 mr-2"></mat-icon>
+  Seguimiento de cobranza
+</h2>
+
+<form [formGroup]="form" (ngSubmit)="guardar()">
+  <mat-dialog-content class="dialogo-alto flex flex-col gap-4 py-2">
+    <!-- Resumen de la factura -->
+    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div>
+        <span class="text-gray-500 block">Factura</span>
+        <span class="font-bold text-gray-800">{{ referencia }}</span>
+      </div>
+      <div>
+        <span class="text-gray-500 block">Cliente</span>
+        <span class="font-bold text-gray-800">{{ data.factura.cliente }}</span>
+      </div>
+      <div>
+        <span class="text-gray-500 block">Saldo</span>
+        <span class="font-black text-indigo-700">{{ formatearMonto(data.factura.saldo, data.factura.moneda) }}</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Vencimiento -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Fecha de vencimiento</mat-label>
+        <input matInput type="date" formControlName="fechaVencimiento">
+      </mat-form-field>
+
+      <!-- Cobro esperado -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Cobro esperado</mat-label>
+        <input matInput type="date" formControlName="cobroEsperado">
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Estatus -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Estatus de cobranza</mat-label>
+        <mat-select formControlName="estatus">
+          <mat-option value="PorCobrar">Por cobrar</mat-option>
+          <mat-option value="Programado">Programado</mat-option>
+          <mat-option value="EnGestion">En gestión</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Probabilidad -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Probabilidad (%)</mat-label>
+        <input matInput type="number" formControlName="probabilidad" min="0" max="100" placeholder="0 - 100">
+        <span matSuffix class="text-gray-500 mr-2">%</span>
+      </mat-form-field>
+    </div>
+
+    <!-- Responsable -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Responsable</mat-label>
+      <input matInput formControlName="responsable" maxlength="100" autocomplete="off">
+      <mat-hint align="end">{{ form.controls.responsable.value?.length || 0 }}/100</mat-hint>
+    </mat-form-field>
+
+    <!-- Observaciones -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="observaciones" rows="3" maxlength="500"></textarea>
+      <mat-hint align="end">{{ form.controls.observaciones.value?.length || 0 }}/500</mat-hint>
+    </mat-form-field>
+
+    @if (error(); as mensaje) {
+      <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm font-semibold text-rose-800">
+        {{ mensaje }}
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="gap-2">
+    <button mat-stroked-button type="button" (click)="cancelar()" [disabled]="guardando()">Cancelar</button>
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || guardando()">
+      @if (guardando()) {
+        <mat-spinner diameter="18" strokeWidth="2" class="mr-2"></mat-spinner>
+      }
+      Guardar
+    </button>
+  </mat-dialog-actions>
+</form>
