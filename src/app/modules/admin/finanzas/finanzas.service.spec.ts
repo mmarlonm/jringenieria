@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { environment } from 'environments/environment';
 import { FinanzasService } from './finanzas.service';
-import { CreditoGuardar, CreditoPagoGuardar } from './finanzas.types';
+import { CreditoGuardar, CreditoPagoGuardar, SeguimientoGuardar } from './finanzas.types';
 
 describe('FinanzasService', () => {
     let service: FinanzasService;
@@ -314,6 +314,45 @@ describe('FinanzasService', () => {
         expect(req2.request.method).toBe('GET');
         expect(req2.request.params.get('empresaId')).toBe('3');
         req2.flush({ empresaId: 3, empresasIncluidas: 1, monedas: [] });
+    });
+
+    it('cobranza_manda_solo_los_filtros_con_valor', () => {
+        service.cobranza({ empresaId: 2, estado: 'Abiertas', estatus: '', q: 'CL01' }).subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${base}/cobranza`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys().sort()).toEqual(['empresaId', 'estado', 'q']);
+        expect(req.request.params.get('empresaId')).toBe('2');
+        expect(req.request.params.get('estado')).toBe('Abiertas');
+        expect(req.request.params.get('q')).toBe('CL01');
+        req.flush({ hoy: '2026-11-04', empresaId: 2, empresasIncluidas: 1, resumen: [], facturas: { pagina: 1, tamano: 50, total: 0, items: [] } });
+    });
+
+    it('cobranza_sin_filtro_pide_la_ruta_sin_parametros', () => {
+        service.cobranza().subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${base}/cobranza`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.keys()).toEqual([]);
+        req.flush({ hoy: '2026-11-04', empresaId: null, empresasIncluidas: 2, resumen: [], facturas: { pagina: 1, tamano: 50, total: 0, items: [] } });
+    });
+
+    it('guardarSeguimiento_hace_PUT_con_el_cuerpo_exacto', () => {
+        const dto: SeguimientoGuardar = {
+            fechaVencimiento: '2026-11-30',
+            cobroEsperado: '2026-11-25',
+            estatus: 'Programado',
+            responsable: 'Juan Pérez',
+            probabilidad: 0.85,
+            observaciones: 'Promesa de pago'
+        };
+
+        service.guardarSeguimiento(42, dto).subscribe();
+
+        const req = httpMock.expectOne(`${base}/cobranza/42/seguimiento`);
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ cfdiId: 42, ...dto, fechaActualizacion: '2026-11-04T12:00:00Z' });
     });
 
     it('dashboard_con_empresa_manda_empresaId', () => {

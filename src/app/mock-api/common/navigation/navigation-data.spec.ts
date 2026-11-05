@@ -54,7 +54,7 @@ describe('Navigation Data (mock-api)', () => {
                 expect(cincoAntes).toEqual(idsCincoEtapas, `Las 5 etapas deben preceder a control-ejecucion en ${nombre}`);
             });
 
-            it('debe tener el grupo finanzas con Dashboard, Bancos, CFDI, Créditos, Conciliación y Despacho, en el orden del proceso, inmediatamente después de rrhh', () => {
+            it('debe tener el grupo finanzas con Dashboard, Bancos, CFDI, Créditos, Cobranza, Conciliación y Despacho, en el orden del proceso, inmediatamente después de rrhh', () => {
                 const indiceRrhh = nav.findIndex((i) => i.id === 'rrhh');
                 expect(indiceRrhh).toBeGreaterThanOrEqual(0, `No existe el grupo rrhh en ${nombre}`);
 
@@ -63,7 +63,7 @@ describe('Navigation Data (mock-api)', () => {
                 expect(nav.filter((i) => i.id === 'finanzas').length).toBe(1);
 
                 const hijos = finanzas.children ?? [];
-                expect(hijos.map((h) => h.id)).toEqual(['finanzas.dashboard', 'finanzas.bancos', 'finanzas.cfdi', 'finanzas.creditos', 'finanzas.conciliacion', 'finanzas.despacho']);
+                expect(hijos.map((h) => h.id)).toEqual(['finanzas.dashboard', 'finanzas.bancos', 'finanzas.cfdi', 'finanzas.creditos', 'finanzas.cobranza', 'finanzas.conciliacion', 'finanzas.despacho']);
                 hijos.forEach((h) => expect(h.link).toMatch(/^\/finanzas\//));
             });
         });

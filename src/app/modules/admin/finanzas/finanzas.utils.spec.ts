@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { Cuenta, MovimientoConciliacion, ResultadoImportacion } from './finanzas.types';
-import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD, etiquetaTipoCredito, formatearTasa, fechaVencida, fraccionAPorcentaje, porcentajeAFraccion } from './finanzas.utils';
+import { CLASES_MOVIMIENTO, ESTADOS_MOVIMIENTO, MESES, altasPendientes, clasesDeConfianza, descargarBlob, etiquetaClase, etiquetaCuenta, etiquetaEstadoMovimiento, etiquetaRegla, fechaLocalISO, fechaUtc, hayAdvertencias, mensajeDeError, mensajeDeErrorBlob, mesAnteriorA, motivoArchivoInvalido, nombrePaquete, partir, periodoValido, primerDiaDelMes, referenciaCfdi, textoResumen, textoSugerir , formatearMonto, fechaIsoACorta, ORDEN_TARJETAS_DASHBOARD, etiquetaTipoCredito, formatearTasa, fechaVencida, fraccionAPorcentaje, porcentajeAFraccion, etiquetaEstatusCobranza, formatearProbabilidad } from './finanzas.utils';
 
 function resultado(parcial: Partial<ResultadoImportacion>): ResultadoImportacion {
     return {
@@ -296,6 +296,22 @@ describe('finanzas.utils', () => {
         });
     });
 
+
+    describe('cobranza utils', () => {
+        it('etiquetaEstatusCobranza_traduce_los_tres_estatus', () => {
+            expect(etiquetaEstatusCobranza('PorCobrar')).toBe('Por cobrar');
+            expect(etiquetaEstatusCobranza('Programado')).toBe('Programado');
+            expect(etiquetaEstatusCobranza('EnGestion')).toBe('En gestión');
+            expect(etiquetaEstatusCobranza('Desconocido')).toBe('Desconocido');
+        });
+
+        it('formatearProbabilidad_muestra_porcentaje_o_guion', () => {
+            expect(formatearProbabilidad(0.85)).toBe('85 %');
+            expect(formatearProbabilidad(0)).toBe('0 %');
+            expect(formatearProbabilidad(1)).toBe('100 %');
+            expect(formatearProbabilidad(null)).toBe('—');
+        });
+    });
 
     describe('creditos utils', () => {
         it('etiquetaTipoCredito_traduce_los_cuatro_tipos_y_deja_pasar_otro_valor', () => {

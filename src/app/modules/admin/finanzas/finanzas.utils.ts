@@ -267,3 +267,17 @@ export function fechaVencida(iso: string, hoy: Date): boolean {
     const fechaHoy = fechaLocalISO(hoy);
     return fecha < fechaHoy;
 }
+
+export function etiquetaEstatusCobranza(e: string): string {
+    switch (e) {
+        case 'PorCobrar': return 'Por cobrar';
+        case 'Programado': return 'Programado';
+        case 'EnGestion': return 'En gestión';
+        default: return e;
+    }
+}
+
+export function formatearProbabilidad(fraccion: number | null): string {
+    if (fraccion === null || fraccion === undefined) return '—';
+    return `${fraccionAPorcentaje(fraccion)} %`;
+}

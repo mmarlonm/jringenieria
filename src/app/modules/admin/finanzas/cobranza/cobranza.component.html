@@ -1,0 +1,265 @@
+<div class="w-full min-h-screen bg-gray-50 p-3 sm:p-6 space-y-8 font-sans">
+
+  <!-- Encabezado -->
+  <div class="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
+    <div class="flex flex-col">
+      <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="icon-size-10 mr-4 text-blue-600" [svgIcon]="'heroicons_outline:banknotes'"></mat-icon>
+        Cobranza
+      </h1>
+      <p class="text-secondary text-xs font-bold mt-1 uppercase tracking-[0.2em] ml-14 opacity-70">
+        Cartera de facturas por cobrar y cobros esperados
+      </p>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <!-- Selector de Empresa -->
+      <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+        <mat-label>Empresa</mat-label>
+        <mat-select data-testid="selector-empresa" [value]="empresaId() ?? TODAS" (selectionChange)="elegirEmpresa($event.value)"
+                    [disabled]="cargandoEmpresas() || cargando()">
+          <mat-option [value]="TODAS">Todas las empresas (suma)</mat-option>
+          @for (e of empresas(); track e.empresaId) {
+            <mat-option [value]="e.empresaId">{{ e.nombre }} · {{ e.rfc }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Selector de Estado -->
+      <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+        <mat-label>Estado de cobro</mat-label>
+        <mat-select [value]="estado()" (selectionChange)="cambiarEstado($event.value)" [disabled]="cargando()">
+          <mat-option value="Abiertas">Abiertas</mat-option>
+          <mat-option value="Pagadas">Pagadas</mat-option>
+          <mat-option value="Todas">Todas</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Selector de Estatus de gestión -->
+      <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+        <mat-label>Estatus de gestión</mat-label>
+        <mat-select [value]="estatus()" (selectionChange)="cambiarEstatus($event.value)" [disabled]="cargando()">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="PorCobrar">Por cobrar</mat-option>
+          <mat-option value="Programado">Programado</mat-option>
+          <mat-option value="EnGestion">En gestión</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Caja de búsqueda -->
+      <mat-form-field appearance="outline" class="w-full fuse-mat-no-subscript">
+        <mat-label>Buscar (cliente, RFC, serie, folio o UUID)</mat-label>
+        <input matInput type="search" [ngModel]="q()" (ngModelChange)="q.set($event)" (keyup.enter)="buscar()" autocomplete="off">
+        <button matSuffix mat-icon-button type="button" aria-label="Buscar" (click)="buscar()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    @if (hayFiltros()) {
+      <div class="flex justify-end pt-2">
+        <button mat-button type="button" class="text-blue-600 font-bold hover:bg-blue-50 rounded-xl text-xs" (click)="limpiar()">
+          <mat-icon class="mr-1 icon-size-4">clear</mat-icon>
+          Limpiar filtros
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Resumen por moneda (Tarjetas) -->
+  @if (resumen().length > 0) {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      @for (r of resumen(); track r.moneda) {
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 flex flex-col justify-between"
+             data-testid="tarjeta-resumen">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+            <div>
+              <span class="text-xs font-black uppercase tracking-widest text-indigo-600">{{ r.moneda }}</span>
+              <h3 class="text-2xl font-black text-gray-900 mt-1">{{ formatearMonto(r.saldoAbierto, r.moneda) }}</h3>
+            </div>
+            <span class="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full">
+              {{ r.facturas }} {{ r.facturas === 1 ? 'factura abierta' : 'facturas abiertas' }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <!-- Atrasado (en rojo) -->
+            <div class="bg-rose-50/60 p-3 rounded-xl border border-rose-100">
+              <span class="text-rose-700 font-bold block mb-1">Atrasado</span>
+              <span class="font-black text-rose-900 text-sm">{{ formatearMonto(r.atrasado, r.moneda) }}</span>
+            </div>
+
+            <!-- Próximos 30 días -->
+            <div class="bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+              <span class="text-emerald-700 font-bold block mb-1">Próximos 30 días</span>
+              <span class="font-black text-emerald-900 text-sm">{{ formatearMonto(r.proximos30, r.moneda) }}</span>
+            </div>
+
+            <!-- Después -->
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+              <span class="text-gray-600 font-bold block mb-1">Después</span>
+              <span class="font-black text-gray-800 text-sm">{{ formatearMonto(r.despues, r.moneda) }}</span>
+            </div>
+
+            <!-- Sin fecha -->
+            <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-100">
+              <span class="text-amber-700 font-bold block mb-1">Sin fecha</span>
+              <span class="font-black text-amber-900 text-sm">{{ formatearMonto(r.sinFecha, r.moneda) }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error al cargar lista -->
+  @if (error(); as mensaje) {
+    <div class="bg-rose-50 border border-rose-200 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+         data-testid="error-cobranza">
+      <div class="flex items-center gap-3">
+        <mat-icon class="text-rose-600">error_outline</mat-icon>
+        <span class="text-sm font-semibold text-rose-800">{{ mensaje }}</span>
+      </div>
+      <button mat-flat-button color="warn" class="rounded-xl font-bold" data-testid="boton-reintentar"
+              (click)="cargarLista(paginaActual())">Reintentar</button>
+    </div>
+  }
+
+  <!-- Spinner cargando -->
+  @if (cargando()) {
+    <div class="flex flex-col items-center justify-center py-20">
+      <mat-spinner diameter="48" strokeWidth="4" color="primary"></mat-spinner>
+      <p class="mt-4 text-gray-500 font-bold tracking-[0.3em] uppercase animate-pulse text-xs">Cargando cartera…</p>
+    </div>
+  } @else if (!error()) {
+    <!-- Tabla de facturas -->
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sm:p-8">
+      @if (filas().length === 0) {
+        <div class="py-16 flex flex-col items-center justify-center text-center" data-testid="vacio-cobranza">
+          <div class="p-4 bg-slate-100 text-slate-400 rounded-2xl mb-4 border border-gray-200">
+            <mat-icon class="icon-size-8" [svgIcon]="'heroicons_outline:inbox'"></mat-icon>
+          </div>
+          <h4 class="text-lg font-black text-slate-800 mb-1">
+            {{ hayFiltros() ? 'Ninguna factura coincide con los filtros' : 'No hay facturas en la cartera de cobranza' }}
+          </h4>
+          <p class="text-sm text-slate-500">Prueba ajustando los filtros o realizando búsquedas diferentes.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">
+                <th class="p-3 w-12"><span class="sr-only">Acciones</span></th>
+                <th class="p-3">Cliente</th>
+                <th class="p-3">Factura</th>
+                <th class="p-3">Emisión</th>
+                <th class="p-3 text-right">Total</th>
+                <th class="p-3 text-right">Cobrado</th>
+                <th class="p-3 text-right">Saldo</th>
+                <th class="p-3">Vencimiento</th>
+                <th class="p-3">Cobro esperado</th>
+                <th class="p-3">Estatus</th>
+                <th class="p-3">Responsable</th>
+                <th class="p-3 text-right">Probabilidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of filas(); track f.cfdiId) {
+                <tr class="border-b last:border-b-0 align-top hover:bg-gray-50/50 transition-colors" data-testid="fila-factura">
+                  <!-- Acciones en la primera columna -->
+                  <td class="p-2 w-12 whitespace-nowrap" data-testid="acciones-cobranza">
+                    <button mat-icon-button type="button" color="primary" aria-label="Editar seguimiento" title="Editar seguimiento"
+                            (click)="editar(f)">
+                      <mat-icon [svgIcon]="'heroicons_outline:pencil-square'"></mat-icon>
+                    </button>
+                  </td>
+
+                  <!-- Cliente -->
+                  <td class="p-3">
+                    <div class="font-medium text-gray-900">{{ f.cliente }}</div>
+                    <div class="text-[11px] text-gray-500 font-mono">{{ f.rfcCliente }}</div>
+                  </td>
+
+                  <!-- Factura -->
+                  <td class="p-3 whitespace-nowrap">
+                    <div class="font-medium text-gray-900">{{ referenciaCfdi(f) }}</div>
+                    <div class="text-[11px] text-gray-400 font-mono">{{ f.uuid.substring(0, 8) }}</div>
+                  </td>
+
+                  <!-- Emisión -->
+                  <td class="p-3 whitespace-nowrap text-gray-700">
+                    {{ f.fechaEmision | date: 'dd/MM/yyyy' }}
+                  </td>
+
+                  <!-- Total -->
+                  <td class="p-3 text-right whitespace-nowrap font-medium text-gray-800">
+                    {{ formatearMonto(f.total, f.moneda) }}
+                  </td>
+
+                  <!-- Cobrado -->
+                  <td class="p-3 text-right whitespace-nowrap text-emerald-700 font-medium">
+                    {{ formatearMonto(f.cobrado, f.moneda) }}
+                  </td>
+
+                  <!-- Saldo -->
+                  <td class="p-3 text-right whitespace-nowrap">
+                    <div class="font-bold text-gray-900">{{ formatearMonto(f.saldo, f.moneda) }}</div>
+                    @if (f.notasCredito > 0) {
+                      <div class="text-[11px] text-gray-500">NC: {{ formatearMonto(f.notasCredito, f.moneda) }}</div>
+                    }
+                  </td>
+
+                  <!-- Vencimiento -->
+                  <td class="p-3 whitespace-nowrap text-gray-700">
+                    {{ f.fechaVencimiento ? (f.fechaVencimiento | date: 'dd/MM/yyyy') : '—' }}
+                  </td>
+
+                  <!-- Cobro esperado y atraso -->
+                  <td class="p-3 whitespace-nowrap">
+                    <div>{{ f.cobroEsperado ? (f.cobroEsperado | date: 'dd/MM/yyyy') : '—' }}</div>
+                    @if (f.atrasada) {
+                      <span class="mt-1 inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800"
+                            data-testid="etiqueta-atrasada">
+                        Atrasada {{ f.diasAtraso }} d
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Estatus -->
+                  <td class="p-3 whitespace-nowrap">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+                          [ngClass]="{
+                            'bg-blue-50 text-blue-700': f.estatus === 'Programado',
+                            'bg-amber-50 text-amber-700': f.estatus === 'EnGestion',
+                            'bg-gray-100 text-gray-700': f.estatus === 'PorCobrar'
+                          }">
+                      {{ etiquetaEstatus(f.estatus) }}
+                    </span>
+                  </td>
+
+                  <!-- Responsable -->
+                  <td class="p-3 text-gray-700">
+                    {{ f.responsable || '—' }}
+                  </td>
+
+                  <!-- Probabilidad -->
+                  <td class="p-3 text-right whitespace-nowrap font-medium text-gray-800">
+                    {{ formatearProbabilidad(f.probabilidad) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginador -->
+        <app-finanzas-paginador [pagina]="paginaActual()" [tamano]="tamanoPagina()" [total]="totalFacturas()"
+                                [deshabilitado]="cargando()" (cambio)="cambiarPagina($event)"></app-finanzas-paginador>
+      }
+    </div>
+  }
+</div>
