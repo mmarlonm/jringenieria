@@ -89,16 +89,9 @@ export class FuseVerticalNavigationCollapsableItemComponent
         this._fuseVerticalNavigationComponent =
             this._fuseNavigationService.getComponent(this.name);
 
-        // If the item has a children that has a matching url with the current url, expand...
-        if (this._hasActiveChild(this.item, this._router.url)) {
-            this.expand();
-        }
-        // Otherwise...
-        else {
-            // If the autoCollapse is on, collapse...
-            if (this.autoCollapse) {
-                this.collapse();
-            }
+        // Los grupos inician siempre cerrados: solo se abren cuando el usuario los despliega
+        if (this.autoCollapse) {
+            this.collapse();
         }
 
         // Listen for the onCollapsableItemCollapsed from the service
@@ -156,9 +149,10 @@ export class FuseVerticalNavigationCollapsableItemComponent
                 takeUntil(this._unsubscribeAll)
             )
             .subscribe((event: NavigationEnd) => {
-                // If the item has a children that has a matching url with the current url, expand...
+                // Si el grupo contiene la página actual se queda como está; nunca se abre solo
+                // (así no se abren varios grupos cuando una opción se repite en otros módulos)
                 if (this._hasActiveChild(this.item, event.urlAfterRedirects)) {
-                    this.expand();
+                    return;
                 }
                 // Otherwise...
                 else {
