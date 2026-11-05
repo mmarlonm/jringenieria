@@ -314,6 +314,17 @@ ngx-extended-pdf-viewer {
   max-height: none !important;
 }
 
+/* Diálogos altos (formularios largos, tablas): el contenido hace scroll propio y los botones no se salen de la pantalla.
+   El parche de arriba quita el max-height de Material, y sin tope un diálogo más alto que el celular se corta y no se puede
+   desplazar. Se usa como `<mat-dialog-content class="dialogo-alto">`. Doble clase + !important para ganarle al parche.
+   dvh = alto realmente visible en el celular (con la barra del navegador); vh va primero de respaldo. */
+.mat-mdc-dialog-content.dialogo-alto {
+  max-height: calc(100vh - 16rem) !important;
+  max-height: calc(100dvh - 16rem) !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 /* Forzar que los diálogos de Material se muestren encima del modo pantalla completa de Gantt */
 .high-z-index-dialog {
   z-index: 9999999 !important;

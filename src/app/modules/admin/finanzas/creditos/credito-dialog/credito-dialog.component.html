@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>{{ esEdicion ? 'Editar crédito' : 'Nuevo crédito' }}</h2>
 
 <form [formGroup]="form" (ngSubmit)="guardar()">
-    <mat-dialog-content class="flex flex-col gap-4 py-4">
+    <mat-dialog-content class="dialogo-alto flex flex-col gap-4 py-4">
         <!-- Empresa -->
         <mat-form-field appearance="outline" class="w-full">
             <mat-label>Empresa</mat-label>
