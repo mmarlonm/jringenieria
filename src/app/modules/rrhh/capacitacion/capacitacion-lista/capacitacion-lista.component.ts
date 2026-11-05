@@ -14,7 +14,7 @@ import { CapacitacionService } from '../capacitacion.service';
 import {
     CapacitacionResumen,
     ESTATUS_CAPACITACION,
-    SEMAFOROS_VENCIMIENTO
+    configSemaforo
 } from '../capacitacion.types';
 import { DialogoCapacitacionComponent } from '../dialogos/dialogo-capacitacion.component';
 import { DialogoEstatusCapacitacionComponent } from '../dialogos/dialogo-estatus-capacitacion.component';
@@ -50,7 +50,6 @@ export class CapacitacionListaComponent implements OnInit {
     buscarTexto = '';
 
     estatuses = ESTATUS_CAPACITACION;
-    semaforoConfig = SEMAFOROS_VENCIMIENTO;
 
     // Métricas calculadas
     totalHoras = 0;
@@ -127,10 +126,10 @@ export class CapacitacionListaComponent implements OnInit {
     }
 
     obtenerClaseSemaforo(semaforo: string): string {
-        return (this.semaforoConfig as any)[semaforo]?.class || 'bg-gray-100 text-gray-800';
+        return configSemaforo(semaforo)?.class || 'bg-gray-100 text-gray-800';
     }
 
     obtenerLabelSemaforo(semaforo: string): string {
-        return (this.semaforoConfig as any)[semaforo]?.label || semaforo;
+        return configSemaforo(semaforo)?.label || semaforo;
     }
 }

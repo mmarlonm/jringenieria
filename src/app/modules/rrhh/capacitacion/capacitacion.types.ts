@@ -122,3 +122,13 @@ export const SEMAFOROS_VENCIMIENTO = {
     Verde: { label: 'Vigente', class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
     SinVigencia: { label: 'Sin Vigencia', class: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400' }
 } as const;
+
+export type SemaforoVencimiento = keyof typeof SEMAFOROS_VENCIMIENTO;
+
+/** Configuración visual del semáforo; undefined si el valor no es un semáforo conocido. */
+export function configSemaforo(semaforo: string): (typeof SEMAFOROS_VENCIMIENTO)[SemaforoVencimiento] | undefined {
+    return Object.prototype.hasOwnProperty.call(SEMAFOROS_VENCIMIENTO, semaforo)
+        ? SEMAFOROS_VENCIMIENTO[semaforo as SemaforoVencimiento]
+        : undefined;
+}
+

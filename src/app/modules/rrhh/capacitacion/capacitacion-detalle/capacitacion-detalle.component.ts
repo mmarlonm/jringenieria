@@ -10,7 +10,7 @@ import { CapacitacionService } from '../capacitacion.service';
 import {
     CapacitacionDetalle,
     CapacitacionParticipante,
-    SEMAFOROS_VENCIMIENTO
+    configSemaforo
 } from '../capacitacion.types';
 import { DialogoCapacitacionComponent } from '../dialogos/dialogo-capacitacion.component';
 import { DialogoEficaciaComponent } from '../dialogos/dialogo-eficacia.component';
@@ -41,7 +41,6 @@ export class CapacitacionDetalleComponent implements OnInit {
     capacitacion: CapacitacionDetalle | null = null;
     cargando = true;
 
-    semaforoConfig = SEMAFOROS_VENCIMIENTO;
 
     ngOnInit(): void {
         const idParam = this._route.snapshot.paramMap.get('id');
@@ -146,11 +145,11 @@ export class CapacitacionDetalleComponent implements OnInit {
 
     obtenerClaseSemaforo(semaforo?: string): string {
         if (!semaforo) return 'bg-gray-100 text-gray-800';
-        return (this.semaforoConfig as any)[semaforo]?.class || 'bg-gray-100 text-gray-800';
+        return configSemaforo(semaforo)?.class || 'bg-gray-100 text-gray-800';
     }
 
     obtenerLabelSemaforo(semaforo?: string): string {
         if (!semaforo) return '';
-        return (this.semaforoConfig as any)[semaforo]?.label || semaforo;
+        return configSemaforo(semaforo)?.label || semaforo;
     }
 }
