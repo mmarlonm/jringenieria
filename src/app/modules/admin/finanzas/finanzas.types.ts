@@ -25,7 +25,7 @@ export interface ResultadoImportacion {
     ultimoSaldoGuardado: number | null;
 }
 
-/** Paginado genÃ©rico de Finanzas; el API recorta el tamaÃ±o de pÃ¡gina a 200. */
+/** Paginado genérico de Finanzas; el API recorta el tamaño de página a 200. */
 export interface Pagina<T> {
     pagina: number;
     tamano: number;
@@ -59,7 +59,7 @@ export interface Cuenta {
     activa: boolean;
 }
 
-/** Lo que borrÃ³ (o dejÃ³ anulado) la eliminaciÃ³n de una cuenta: sus movimientos, las conciliaciones no confirmadas de esos movimientos y sus importaciones. */
+/** Lo que borró (o dejó anulado) la eliminación de una cuenta: sus movimientos, las conciliaciones no confirmadas de esos movimientos y sus importaciones. */
 export interface ResultadoEliminarCuenta { movimientos: number; conciliaciones: number; importaciones: number; }
 
 export interface CuentaGuardar {
@@ -92,7 +92,7 @@ export interface Cfdi {
     revisar: boolean;
 }
 
-/** Los nombres son los de la query string; null/undefined/'' no se envÃ­an. */
+/** Los nombres son los de la query string; null/undefined/'' no se envían. */
 export interface FiltroCfdi {
     empresaId: number;
     direccion?: string | null;
