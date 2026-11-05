@@ -7,7 +7,8 @@ import {
     FiltroCfdi, FiltroClases, FiltroConciliacion, FiltroImportaciones, FiltroMovimientos, HojaInfo, Importacion,
     ManualConciliacion, Movimiento, MovimientoConciliacion, Pagina, ResultadoClasificar, ResultadoImportacion,
     GenerarPaquete, PaqueteDespacho, ResultadoLote, ResultadoSugerir, ResumenConciliacion, SugerirConciliacion, Vinculo, VistaPreviaPaquete, Dashboard, ResultadoEliminarCuenta,
-    BalanceCreditos, Credito, CreditoGuardar, CreditoPago, CreditoPagoGuardar
+    BalanceCreditos, Credito, CreditoGuardar, CreditoPago, CreditoPagoGuardar,
+    Cobranza, FiltroCobranza, Seguimiento, SeguimientoGuardar
 } from './finanzas.types';
 
 @Injectable({
@@ -182,6 +183,14 @@ export class FinanzasService {
 
     eliminarPagoCredito(id: number, pagoId: number): Observable<void> {
         return this._http.delete<void>(`${this._api}/creditos/${id}/pagos/${pagoId}`);
+    }
+
+    cobranza(filtro?: FiltroCobranza): Observable<Cobranza> {
+        return this._http.get<Cobranza>(`${this._api}/cobranza`, { params: this._query(filtro ?? {}) });
+    }
+
+    guardarSeguimiento(cfdiId: number, dto: SeguimientoGuardar): Observable<Seguimiento> {
+        return this._http.put<Seguimiento>(`${this._api}/cobranza/${cfdiId}/seguimiento`, dto);
     }
 
     balanceCreditos(empresaId?: number): Observable<BalanceCreditos> {

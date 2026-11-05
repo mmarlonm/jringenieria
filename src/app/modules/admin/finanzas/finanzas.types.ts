@@ -25,7 +25,7 @@ export interface ResultadoImportacion {
     ultimoSaldoGuardado: number | null;
 }
 
-/** Paginado genérico de Finanzas; el API recorta el tamaño de página a 200. */
+/** Paginado genÃ©rico de Finanzas; el API recorta el tamaÃ±o de pÃ¡gina a 200. */
 export interface Pagina<T> {
     pagina: number;
     tamano: number;
@@ -59,7 +59,7 @@ export interface Cuenta {
     activa: boolean;
 }
 
-/** Lo que borró (o dejó anulado) la eliminación de una cuenta: sus movimientos, las conciliaciones no confirmadas de esos movimientos y sus importaciones. */
+/** Lo que borrÃ³ (o dejÃ³ anulado) la eliminaciÃ³n de una cuenta: sus movimientos, las conciliaciones no confirmadas de esos movimientos y sus importaciones. */
 export interface ResultadoEliminarCuenta { movimientos: number; conciliaciones: number; importaciones: number; }
 
 export interface CuentaGuardar {
@@ -92,7 +92,7 @@ export interface Cfdi {
     revisar: boolean;
 }
 
-/** Los nombres son los de la query string; null/undefined/'' no se envían. */
+/** Los nombres son los de la query string; null/undefined/'' no se envÃ­an. */
 export interface FiltroCfdi {
     empresaId: number;
     direccion?: string | null;
@@ -271,5 +271,80 @@ export interface BalanceCreditos {
     empresaId: number | null;
     empresasIncluidas: number;
     monedas: BalanceMoneda[];
+}
+
+export type EstatusCobranza = 'PorCobrar' | 'Programado' | 'EnGestion';
+export type EstadoCobranza = 'Abiertas' | 'Pagadas' | 'Todas';
+
+export interface FacturaCobranza {
+    cfdiId: number;
+    uuid: string;
+    serie: string | null;
+    folio: string | null;
+    fechaEmision: string;
+    cliente: string;
+    rfcCliente: string;
+    moneda: string;
+    total: number;
+    cobrado: number;
+    notasCredito: number;
+    saldo: number;
+    estadoPago: string;
+    fechaVencimiento: string | null;
+    cobroEsperado: string | null;
+    fechaEfectiva: string | null;
+    atrasada: boolean;
+    diasAtraso: number | null;
+    estatus: string;
+    responsable: string | null;
+    probabilidad: number | null;
+    observaciones: string | null;
+}
+
+export interface ResumenCobranzaMoneda {
+    moneda: string;
+    facturas: number;
+    saldoAbierto: number;
+    atrasado: number;
+    proximos30: number;
+    despues: number;
+    sinFecha: number;
+}
+
+export interface Cobranza {
+    hoy: string;
+    empresaId: number | null;
+    empresasIncluidas: number;
+    resumen: ResumenCobranzaMoneda[];
+    facturas: Pagina<FacturaCobranza>;
+}
+
+export interface FiltroCobranza {
+    empresaId?: number | null;
+    estado?: EstadoCobranza;
+    estatus?: EstatusCobranza | '';
+    q?: string;
+    pagina?: number;
+    tamano?: number;
+}
+
+export interface SeguimientoGuardar {
+    fechaVencimiento: string | null;
+    cobroEsperado: string | null;
+    estatus: EstatusCobranza;
+    responsable: string | null;
+    probabilidad: number | null;
+    observaciones: string | null;
+}
+
+export interface Seguimiento {
+    cfdiId: number;
+    fechaVencimiento: string | null;
+    cobroEsperado: string | null;
+    estatus: EstatusCobranza;
+    responsable: string | null;
+    probabilidad: number | null;
+    observaciones: string | null;
+    fechaActualizacion: string;
 }
 
