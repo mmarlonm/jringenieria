@@ -11,7 +11,7 @@
 <!-- MODO DINÁMICO: FORMULARIO CONFIGURADO -->
 <!-- ========================================================================= -->
 <div *ngIf="!loading && isDynamic"
-     class="min-h-screen py-8 px-4 sm:px-6 transition-colors duration-300"
+     class="encuesta-dinamica-pagina min-h-screen py-4 sm:py-8 px-2 sm:px-6 transition-colors duration-300"
      [ngClass]="disenoDinamico?.temaOscuro ? 'bg-slate-950 text-slate-100 dark-theme' : 'bg-slate-100 text-slate-800'"
      [ngStyle]="{'--theme-primary': disenoDinamico?.colorPrimario || '#1e8449'}">
 
@@ -63,7 +63,7 @@
   <div *ngIf="formDinamicoConfig && formDinamicoConfig.activo && !enviadoConExito" class="max-w-4xl mx-auto space-y-6">
 
     <!-- HERO / BANNER PRINCIPAL -->
-    <div class="overflow-hidden shadow-xl"
+    <div class="encuesta-hero-card overflow-hidden shadow-xl"
          [ngClass]="[
            disenoDinamico?.radioBorde || 'rounded-3xl',
            disenoDinamico?.estiloCard === 'glassmorphism' ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800'
@@ -91,11 +91,11 @@
       </div>
 
       <!-- Cabecera de Texto -->
-      <div class="p-6 sm:p-8">
-        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight">
+      <div class="encuesta-hero-cabecera p-4 sm:p-8">
+        <h1 class="encuesta-hero-titulo text-xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight">
           {{ formDinamicoConfig.titulo }}
         </h1>
-        <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+        <p class="text-xs sm:text-base text-slate-600 dark:text-slate-300 mt-1 sm:mt-2 leading-relaxed">
           {{ formDinamicoConfig.descripcion }}
         </p>
       </div>
@@ -125,7 +125,7 @@
     </div>
 
     <!-- CUERPO DE PREGUNTAS DEL PASO ACTUAL -->
-    <div class="p-6 sm:p-8 shadow-xl transition-all"
+    <div class="encuesta-tarjeta-preguntas p-3 sm:p-8 shadow-xl transition-all"
          [ngClass]="[
            disenoDinamico?.radioBorde || 'rounded-3xl',
            disenoDinamico?.estiloCard === 'glassmorphism' ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800'
