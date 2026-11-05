@@ -338,6 +338,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 children: [
 
                     { id: 'dashboards.surveys-products', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' },
+                    { id: 'marketing.reporte-encuestas-productos', title: 'Reporte de productos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/dashboards/reporte-encuestas/productos' },
+                    { id: 'marketing.reporte-encuestas-servicios', title: 'Reporte de servicios', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/dashboards/reporte-encuestas/servicios' },
                     { id: 'catalogs.clients', title: 'Clientes', type: 'basic', icon: 'heroicons_outline:user', link: '/catalogs/clients' },
                     { id: 'dashboards.analytics', title: 'Mapa de prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' }
                 ]
@@ -501,7 +503,19 @@ export const compactNavigation: FuseNavigationItem[] = [
         tooltip: 'Marketing',
         type: 'collapsable',
         icon: 'heroicons_outline:megaphone',
-        children: []
+        children: [
+            {
+                id: 'marketing.encuestas',
+                title: 'ENCUESTAS',
+                type: 'collapsable',
+                icon: 'heroicons_outline:clipboard-document-list',
+                children: [
+                    { id: 'dashboards.surveys-products', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' },
+                    { id: 'marketing.reporte-encuestas-productos', title: 'Reporte de productos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/dashboards/reporte-encuestas/productos' },
+                    { id: 'marketing.reporte-encuestas-servicios', title: 'Reporte de servicios', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/dashboards/reporte-encuestas/servicios' }
+                ]
+            }
+        ]
     },
     {
         id: 'rrhh',
@@ -629,7 +643,24 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'comercializacion.requerimientos', title: 'Requerimientos', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' }
         ]
     },
-    { id: 'marketing', title: 'MARKETING', type: 'collapsable', children: [] },
+    {
+        id: 'marketing',
+        title: 'MARKETING',
+        type: 'collapsable',
+        children: [
+            {
+                id: 'marketing.encuestas',
+                title: 'ENCUESTAS',
+                type: 'collapsable',
+                icon: 'heroicons_outline:clipboard-document-list',
+                children: [
+                    { id: 'dashboards.surveys-products', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' },
+                    { id: 'marketing.reporte-encuestas-productos', title: 'Reporte de productos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/dashboards/reporte-encuestas/productos' },
+                    { id: 'marketing.reporte-encuestas-servicios', title: 'Reporte de servicios', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/dashboards/reporte-encuestas/servicios' }
+                ]
+            }
+        ]
+    },
     {
         id: 'rrhh',
         title: 'RECURSOS HUMANOS',
@@ -746,7 +777,25 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'comercializacion.requerimientos', title: 'Requerimientos', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' }
         ]
     },
-    { id: 'marketing', title: 'Marketing', type: 'group', icon: 'heroicons_outline:megaphone', children: [] },
+    {
+        id: 'marketing',
+        title: 'Marketing',
+        type: 'group',
+        icon: 'heroicons_outline:megaphone',
+        children: [
+            {
+                id: 'marketing.encuestas',
+                title: 'ENCUESTAS',
+                type: 'collapsable',
+                icon: 'heroicons_outline:clipboard-document-list',
+                children: [
+                    { id: 'dashboards.surveys-products', title: 'Encuestas', type: 'basic', icon: 'heroicons_outline:clipboard-document-check', link: '/dashboards/surveys-products' },
+                    { id: 'marketing.reporte-encuestas-productos', title: 'Reporte de productos', type: 'basic', icon: 'heroicons_outline:presentation-chart-bar', link: '/dashboards/reporte-encuestas/productos' },
+                    { id: 'marketing.reporte-encuestas-servicios', title: 'Reporte de servicios', type: 'basic', icon: 'heroicons_outline:chart-bar', link: '/dashboards/reporte-encuestas/servicios' }
+                ]
+            }
+        ]
+    },
     {
         id: 'rrhh',
         title: 'Recursos Humanos',

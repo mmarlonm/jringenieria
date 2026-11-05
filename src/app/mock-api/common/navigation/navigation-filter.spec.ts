@@ -63,6 +63,20 @@ describe('filtro del menú por vistas', () => {
             expect(ids(menu)).not.toContain('eventos.dashboard');
         });
 
+        it('Quien_tiene_la_vista_de_productos_ve_solo_ese_reporte', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['marketing.reporte-encuestas-productos']);
+            const idsMenu = ids(menu);
+            expect(idsMenu).toContain('marketing.reporte-encuestas-productos');
+            expect(idsMenu).not.toContain('marketing.reporte-encuestas-servicios');
+        });
+
+        it('Quien_tiene_la_vista_de_servicios_ve_solo_ese_reporte', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['marketing.reporte-encuestas-servicios']);
+            const idsMenu = ids(menu);
+            expect(idsMenu).toContain('marketing.reporte-encuestas-servicios');
+            expect(idsMenu).not.toContain('marketing.reporte-encuestas-productos');
+        });
+
         it('el grupo Finanzas lista sus hijos en el orden del proceso', () => {
             const todas = ['finanzas.despacho', 'finanzas.cfdi', 'finanzas.dashboard', 'finanzas.conciliacion', 'finanzas.bancos'];
 

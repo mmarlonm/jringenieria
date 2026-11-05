@@ -71,6 +71,21 @@ export const appRoutes: Route[] = [
                     { path: 'tasks', loadChildren: () => import('app/modules/admin/dashboards/tasks/tasks.routes') },
                     { path: 'surveys', redirectTo: 'surveys-products', pathMatch: 'full' },
                     { path: 'surveys-products', loadChildren: () => import('app/modules/admin/dashboards/surveys-products/surveys.routes') },
+                    {
+                        path: 'reporte-encuestas',
+                        children: [
+                            {
+                                path: 'productos',
+                                loadComponent: () => import('app/modules/admin/dashboards/reporte-encuestas/reporte-encuesta.component').then(m => m.ReporteEncuestaComponent),
+                                data: { tipo: 'producto' }
+                            },
+                            {
+                                path: 'servicios',
+                                loadComponent: () => import('app/modules/admin/dashboards/reporte-encuestas/reporte-encuesta.component').then(m => m.ReporteEncuestaComponent),
+                                data: { tipo: 'servicio' }
+                            }
+                        ]
+                    },
                     { path: 'transfer-management', loadChildren: () => import('app/modules/admin/dashboards/transfer-management/transfer-management.routes') },
                     { path: 'expenses', loadChildren: () => import('app/modules/admin/dashboards/expenses/expenses.routes') },
                     { path: 'roadmap', loadChildren: () => import('app/modules/admin/dashboards/roadmap/roadmap.routes') },

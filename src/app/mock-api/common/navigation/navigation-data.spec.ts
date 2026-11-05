@@ -66,6 +66,27 @@ describe('Navigation Data (mock-api)', () => {
                 expect(hijos.map((h) => h.id)).toEqual(['finanzas.dashboard', 'finanzas.bancos', 'finanzas.cfdi', 'finanzas.creditos', 'finanzas.cobranza', 'finanzas.conciliacion', 'finanzas.despacho']);
                 hijos.forEach((h) => expect(h.link).toMatch(/^\/finanzas\//));
             });
+
+            it('debe tener los reportes de encuestas de productos y servicios dentro de marketing.encuestas', () => {
+                function buscarItem(items: FuseNavigationItem[], id: string): FuseNavigationItem | undefined {
+                    for (const item of items) {
+                        if (item.id === id) return item;
+                        if (item.children) {
+                            const enc = buscarItem(item.children, id);
+                            if (enc) return enc;
+                        }
+                    }
+                    return undefined;
+                }
+
+                const prod = buscarItem(nav, 'marketing.reporte-encuestas-productos');
+                const serv = buscarItem(nav, 'marketing.reporte-encuestas-servicios');
+
+                expect(prod).toBeDefined(`Debe existir reporte productos en ${nombre}`);
+                expect(serv).toBeDefined(`Debe existir reporte servicios en ${nombre}`);
+                expect(prod?.link).toBe('/dashboards/reporte-encuestas/productos');
+                expect(serv?.link).toBe('/dashboards/reporte-encuestas/servicios');
+            });
         });
     });
 });
