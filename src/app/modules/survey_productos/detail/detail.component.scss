@@ -81,4 +81,152 @@ textarea {
 
 .animate-fade-in {
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+}
+
+/* ==========================================================================
+   MATRIZ RESPONSIVA (Móvil en tarjetas envolventes y escritorio con sticky)
+   ========================================================================== */
+.matriz-contenedor {
+  width: 100%;
+  container-type: inline-size;
+}
+
+/* Base móvil (< 640px) */
+.matriz-tarjetas-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.matriz-tabla-desktop {
+  display: none;
+}
+
+.matriz-fila-tarjeta {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &.matriz-fila-error {
+    border-color: #f43f5e;
+    background-color: #fff1f2;
+  }
+}
+
+.matriz-fila-titulo {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: #1e293b;
+}
+
+.matriz-fila-subtexto {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+}
+
+.matriz-opciones-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  width: 100%;
+  overflow-x: visible;
+}
+
+.matriz-opcion-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: #f1f5f9;
+  }
+
+  &.matriz-opcion-activa {
+    background-color: #059669;
+    border-color: #047857;
+    box-shadow: 0 1px 3px rgba(5, 150, 105, 0.3);
+
+    .matriz-opcion-texto {
+      color: #ffffff;
+      font-weight: 700;
+    }
+  }
+}
+
+.matriz-radio-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  min-width: 40px;
+  min-height: 40px;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  top: 0;
+  left: 0;
+}
+
+.matriz-opcion-texto {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+}
+
+/* Tabla de escritorio con columnas fijas */
+.matriz-tabla {
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f1f5f9;
+  }
+
+  th.matriz-columna-fija {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background-color: #f1f5f9;
+  }
+
+  tbody td.matriz-columna-fija {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: #ffffff;
+  }
+}
+
+/* ==========================================================================
+   ADAPTACIÓN A ESCRITORIO (>= 640px)
+   ========================================================================== */
+@container (min-width: 640px) {
+  .matriz-tarjetas-mobile {
+    display: none !important;
+  }
+  .matriz-tabla-desktop {
+    display: block !important;
+  }
+}
