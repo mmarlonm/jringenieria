@@ -213,7 +213,8 @@ export class CreditosComponent implements OnInit {
     verCalendario(c: Credito): void {
         this._abrirDialogo<CuotasDialogComponent, { credito: Credito }, boolean>(
             CuotasDialogComponent,
-            { width: '56rem', maxWidth: '95vw', data: { credito: c } },
+            // disableClose: el diálogo se cierra solo por sus propias vías (botón, clic fuera, Escape) y siempre devuelve si hubo cambios.
+            { width: '56rem', maxWidth: '95vw', disableClose: true, data: { credito: c } },
             (cambio) => {
                 if (cambio) {
                     this.cargar();

@@ -69,6 +69,16 @@ export class CuotasDialogComponent implements OnInit {
     readonly formatearMonto = formatearMonto;
 
     ngOnInit(): void {
+        // El padre lo abre con disableClose: así el clic fuera y Escape no cierran con `undefined` (la lista y el balance se quedarían
+        // con el «próximo pago» viejo tras editar cuotas). Aquí se cierran devolviendo si hubo cambios, igual que el botón «Cerrar».
+        this._dialogRef.backdropClick().pipe(takeUntilDestroyed(this._destroyRef)).subscribe(() => this.cerrar());
+        this._dialogRef
+            .keydownEvents()
+            .pipe(
+                filter((e) => e.key === 'Escape'),
+                takeUntilDestroyed(this._destroyRef)
+            )
+            .subscribe(() => this.cerrar());
         this.cargar();
     }
 

@@ -347,6 +347,21 @@ describe('CreditosComponent', () => {
         httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([creditoVencido]);
     });
 
+    it('Ver_calendario_abre_el_dialogo_sin_cierre_automatico_para_recibir_siempre_si_hubo_cambios', () => {
+        const dialog = TestBed.inject(MatDialog);
+        const spyDialog = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(false) } as never);
+
+        fixture.detectChanges();
+        httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);
+        httpMock.expectOne((r) => r.url === `${base}/creditos`).flush([creditoVencido]);
+        fixture.detectChanges();
+
+        componente.verCalendario(creditoVencido);
+
+        const config = spyDialog.calls.mostRecent().args[1] as { disableClose?: boolean };
+        expect(config.disableClose).toBeTrue();
+    });
+
     it('El_balance_sigue_a_la_empresa_elegida', () => {
         fixture.detectChanges();
         httpMock.expectOne(`${base}/empresas`).flush(mockEmpresas);

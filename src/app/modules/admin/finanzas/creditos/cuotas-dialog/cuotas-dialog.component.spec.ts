@@ -4,7 +4,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { environment } from 'environments/environment';
 import { CuotasDialogComponent } from './cuotas-dialog.component';
 import { Credito, CreditoPago } from '../../finanzas.types';
@@ -15,6 +15,8 @@ describe('CuotasDialogComponent', () => {
     let componente: CuotasDialogComponent;
     let httpMock: HttpTestingController;
     let dialogRefSpy: jasmine.SpyObj<MatDialogRef<CuotasDialogComponent, boolean>>;
+    let clicFuera$: Subject<MouseEvent>;
+    let teclas$: Subject<KeyboardEvent>;
     let confirmSpy: jasmine.Spy;
     const base = `${environment.apiUrl}/Finanzas`;
 
@@ -63,7 +65,11 @@ describe('CuotasDialogComponent', () => {
     ];
 
     beforeEach(async () => {
-        dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
+        dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close', 'backdropClick', 'keydownEvents']);
+        clicFuera$ = new Subject<MouseEvent>();
+        teclas$ = new Subject<KeyboardEvent>();
+        dialogRefSpy.backdropClick.and.returnValue(clicFuera$.asObservable());
+        dialogRefSpy.keydownEvents.and.returnValue(teclas$.asObservable());
         const confirmServiceMock = {
             open: () => ({ afterClosed: () => of('confirmed') })
         };
@@ -276,6 +282,43 @@ describe('CuotasDialogComponent', () => {
         componente.huboCambios.set(true);
         componente.cerrar();
         expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
+    });
+
+    // El padre abre este diálogo con disableClose: el clic fuera y Escape ya no cierran solos (devolverían undefined y la lista
+    // y el balance se quedarían con el «próximo pago» viejo), así que el diálogo los cierra devolviendo si hubo cambios.
+    describe('cierre con clic fuera o Escape', () => {
+        const cargarCuotas = () => {
+            fixture.detectChanges();
+            httpMock.expectOne(`${base}/creditos/10/pagos`).flush(mockPagos);
+        };
+
+        it('Clic_fuera_cierra_devolviendo_si_hubo_cambios', () => {
+            cargarCuotas();
+            componente.huboCambios.set(true);
+
+            clicFuera$.next(new MouseEvent('click'));
+
+            expect(dialogRefSpy.close).toHaveBeenCalledOnceWith(true);
+        });
+
+        it('Clic_fuera_sin_cambios_devuelve_false', () => {
+            cargarCuotas();
+
+            clicFuera$.next(new MouseEvent('click'));
+
+            expect(dialogRefSpy.close).toHaveBeenCalledOnceWith(false);
+        });
+
+        it('Escape_cierra_devolviendo_si_hubo_cambios_y_otras_teclas_no_hacen_nada', () => {
+            cargarCuotas();
+            componente.huboCambios.set(true);
+
+            teclas$.next(new KeyboardEvent('keydown', { key: 'Enter' }));
+            expect(dialogRefSpy.close).not.toHaveBeenCalled();
+
+            teclas$.next(new KeyboardEvent('keydown', { key: 'Escape' }));
+            expect(dialogRefSpy.close).toHaveBeenCalledOnceWith(true);
+        });
     });
 
     describe('doble clic', () => {
