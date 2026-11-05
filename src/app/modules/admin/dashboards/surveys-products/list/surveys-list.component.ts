@@ -2600,7 +2600,11 @@ SECCIÓN 3: RECOMENDACIÓN Y MEJORA CONTINUA
     }
 
     onTipoCampoChange(campo: CampoConfig): void {
-        if (campo.tipo === 'matrix') {
+        if (campo.tipo === 'section') {
+            // Un bloque es solo un título: no se responde. Si venía de una pregunta requerida, el interruptor «Obligatorio» queda
+            // oculto y el valor se quedaba en true para siempre (la encuesta pública no dejaba avanzar).
+            campo.requerido = false;
+        } else if (campo.tipo === 'matrix') {
             if (!campo.columnasMatriz || campo.columnasMatriz.length === 0) {
                 this.aplicarPresetEscala(campo, '1-5-na');
             }

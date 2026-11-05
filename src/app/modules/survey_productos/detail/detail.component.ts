@@ -183,18 +183,42 @@ export class DetailComponent implements OnInit {
     this.pasoActual = 1;
     this.respuestasDinamicas = {};
 
-    // Valores por defecto
+    // Valores por defecto: un grupo de casillas guarda la lista de opciones marcadas; una casilla sola, sí/no
     for (const c of this.camposDinamicos) {
       if (c.tipo === 'checkbox') {
-        this.respuestasDinamicas[c.id] = false;
+        this.respuestasDinamicas[c.id] = this.esGrupoDeCasillas(c) ? [] : false;
       }
     }
+  }
+
+  /** Una casilla con opciones es un grupo de opción múltiple (una casilla por opción); sin opciones es una sola casilla de sí/no. */
+  esGrupoDeCasillas(campo: CampoConfig): boolean {
+    return Array.isArray(campo.opciones) && campo.opciones.length > 0;
+  }
+
+  opcionMarcada(campoId: string, opcion: string): boolean {
+    const valor = this.respuestasDinamicas[campoId];
+    return Array.isArray(valor) && valor.includes(opcion);
+  }
+
+  /** Marca o desmarca una opción del grupo. Crea una lista nueva cada vez (no muta la anterior). */
+  alternarOpcion(campoId: string, opcion: string): void {
+    const actual = this.respuestasDinamicas[campoId];
+    const lista: string[] = Array.isArray(actual) ? [...actual] : [];
+    const posicion = lista.indexOf(opcion);
+    if (posicion >= 0) {
+      lista.splice(posicion, 1);
+    } else {
+      lista.push(opcion);
+    }
+    this.respuestasDinamicas[campoId] = lista;
   }
 
   esCampoVisible(campo: CampoConfig): boolean {
     if (!campo.dependeDeCampoId) return true;
     const valorPadre = this.respuestasDinamicas[campo.dependeDeCampoId];
     if (valorPadre === undefined || valorPadre === null || valorPadre === '') return false;
+    if (Array.isArray(valorPadre) && valorPadre.length === 0) return false;
 
     const valorEsperado = (campo.dependeDeValor || '').trim().toLowerCase();
     const valorActualStr = String(valorPadre).trim().toLowerCase();
@@ -254,6 +278,10 @@ export class DetailComponent implements OnInit {
     const camposActuales = this.camposDelPasoActual;
 
     for (const campo of camposActuales) {
+      // Un bloque «section» es solo un título: no tiene nada que llenar aunque haya quedado guardado como requerido
+      // (p. ej. un campo que se convirtió en sección). Eventos ya lo omite igual.
+      if (campo.tipo === 'section') continue;
+
       if (campo.requerido) {
         if (campo.tipo === 'matrix') {
           if (campo.filasMatriz && campo.filasMatriz.length > 0) {
@@ -263,6 +291,11 @@ export class DetailComponent implements OnInit {
                 break;
               }
             }
+          }
+        } else if (campo.tipo === 'checkbox' && this.esGrupoDeCasillas(campo)) {
+          const val = this.respuestasDinamicas[campo.id];
+          if (!Array.isArray(val) || val.length === 0) {
+            this.erroresPaso.push(`El campo "${campo.etiqueta}" es obligatorio.`);
           }
         } else {
           const val = this.respuestasDinamicas[campo.id];
