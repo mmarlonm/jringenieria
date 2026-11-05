@@ -222,5 +222,70 @@ describe('SurveysListComponent — Respuestas unificadas (Tarea C1)', () => {
         const primeraLinea = texto.split('\n')[0].replace(/^\uFEFF/, '').trim();
         expect(primeraLinea).toBe('ID,Tipo,Formulario,Cliente,Empresa,Correo,Teléfono,Cargo,Calificación,Fecha');
     });
+
+    // ---- Revisión de Claude: carreras, botón real, medianoche y sin camino al endpoint viejo ----
+
+    it('Un_cambio_de_filtro_cancela_la_peticion_anterior', () => {
+        const lenta = new Subject<EncuestaRespuestaResumenDto[]>();
+        const rapida = new Subject<EncuestaRespuestaResumenDto[]>();
+        servicio.obtenerRespuestasUnificadas.and.returnValues(lenta, rapida);
+
+        component.cambiarFiltroTipoRespuesta('producto'); // queda pendiente
+        component.cambiarFiltroTipoRespuesta('servicio'); // la reemplaza
+        rapida.next([respHeredadaAnonima]);
+        lenta.next([respDinamica]); // llega tarde: no debe pisar la lista actual
+
+        expect(component.respuestasList).toEqual([respHeredadaAnonima]);
+    });
+
+    it('Abrir_otro_detalle_cancela_la_carga_del_anterior', () => {
+        const lento = new Subject<EncuestaRespuestaDetalleDto>();
+        const rapido = new Subject<EncuestaRespuestaDetalleDto>();
+        servicio.obtenerDetalleRespuestaUnificada.and.returnValues(lento, rapido);
+        const otro: EncuestaRespuestaDetalleDto = {
+            ...detalleMock,
+            id: 99,
+            respuestas: [{ campoId: 'x', etiqueta: 'Otra pregunta', tipo: 'input', valor: 'Otra respuesta' }]
+        };
+
+        component.abrirDetalleRespuesta(respDinamica);
+        component.cerrarDetalleRespuesta();
+        component.abrirDetalleRespuesta({ ...respDinamica, id: 99 });
+        rapido.next(otro);
+        lento.next(detalleMock); // llega tarde: es de otra respuesta
+
+        expect(component.detalleRespuestaCompleto?.id).toBe(99);
+    });
+
+    it('El_boton_Reintentar_vuelve_a_pedir_las_respuestas', () => {
+        servicio.obtenerRespuestasUnificadas.and.returnValue(throwError(() => new Error('sin conexión')));
+        component.cargarRespuestas();
+        fixture.detectChanges();
+        servicio.obtenerRespuestasUnificadas.calls.reset();
+        servicio.obtenerRespuestasUnificadas.and.returnValue(of([respDinamica]));
+
+        const boton = fixture.nativeElement.querySelector('button.btn-reintentar-respuestas') as HTMLButtonElement | null;
+        expect(boton).withContext('debe haber un botón Reintentar visible').not.toBeNull();
+        boton!.click();
+        fixture.detectChanges();
+
+        expect(servicio.obtenerRespuestasUnificadas).toHaveBeenCalledTimes(1);
+        expect(component.errorCargaRespuestas).toBeFalse();
+        expect(component.respuestasList).toEqual([respDinamica]);
+    });
+
+    it('La_hora_de_medianoche_se_muestra_como_00_y_no_como_24', () => {
+        // 2026-11-05T06:05:00Z = 00:05 del 5 de noviembre en la Ciudad de México
+        expect(component.formatearFechaMexico('2026-11-05T06:05:00Z')).toBe('05/11/2026 00:05');
+    });
+
+    it('No_hay_camino_al_endpoint_viejo_de_respuestas', () => {
+        servicio.getSurveys.calls.reset();
+
+        component.cargarRespuestas();
+
+        expect(servicio.getSurveys).not.toHaveBeenCalled();
+        expect(servicio.obtenerRespuestasUnificadas).toHaveBeenCalled();
+    });
 });
 

@@ -25,7 +25,7 @@ import { EnvioClientesDialogComponent } from '../envio-clientes/envio-clientes-d
 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 
 import Swal from 'sweetalert2';
 
@@ -99,6 +99,9 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     dialogoEnvioAbierto = false;
 
     private _destroy$ = new Subject<void>();
+    // Solo cuenta la última petición de cada tipo: una respuesta tardía no debe pisar a la actual.
+    private _subRespuestas?: Subscription;
+    private _subDetalleRespuesta?: Subscription;
 
 
 
@@ -1582,22 +1585,11 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         this.cargandoRespuestas = true;
         this.errorCargaRespuestas = false;
 
-        const llamada$ = typeof this._surveyService.obtenerRespuestasUnificadas === 'function'
-            ? this._surveyService.obtenerRespuestasUnificadas(this.filtroTipoRespuesta)
-            : (typeof this._surveyService.getSurveys === 'function'
-                ? this._surveyService.getSurveys()
-                : null);
-
-        if (!llamada$) {
-            this.cargandoRespuestas = false;
-            return;
-        }
-
-        llamada$
+        this._subRespuestas?.unsubscribe();
+        this._subRespuestas = this._surveyService.obtenerRespuestasUnificadas(this.filtroTipoRespuesta)
             .pipe(takeUntil(this._destroy$))
             .subscribe({
-                next: (res: any) => {
-                    const datos = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+                next: (datos) => {
                     this.respuestasList = datos;
                     this.cargandoRespuestas = false;
                     this._cdr.markForCheck();
@@ -1660,7 +1652,8 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
         const origen = item.origen || 'dinamica';
         const id = item.id;
-        this._surveyService.obtenerDetalleRespuestaUnificada(origen, id)
+        this._subDetalleRespuesta?.unsubscribe();
+        this._subDetalleRespuesta = this._surveyService.obtenerDetalleRespuestaUnificada(origen, id)
             .pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (detalle) => {
@@ -1682,6 +1675,7 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     }
 
     cerrarDetalleRespuesta(): void {
+        this._subDetalleRespuesta?.unsubscribe();
         this.modalDetalleAbierto = false;
         this.respuestaDetalleResumen = null;
         this.respuestaDetalleSeleccionada = null;

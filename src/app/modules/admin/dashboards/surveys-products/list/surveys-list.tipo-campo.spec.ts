@@ -17,11 +17,11 @@ describe('SurveysListComponent: cambiar el tipo de un campo', () => {
 
     beforeEach(() => {
         const servicio = Object.assign(
-            jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', ['getFormularios', 'getSurveys', 'guardarFormulario', 'eliminarFormulario']),
+            jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', ['getFormularios', 'obtenerRespuestasUnificadas', 'guardarFormulario', 'eliminarFormulario']),
             { recuperados$: new Subject<{ titulos: string[]; pendientes: number }>(), servidorNoDisponible$: new Subject<void>() }
         );
         servicio.getFormularios.and.returnValue(of([]));
-        servicio.getSurveys.and.returnValue(of({ code: 200, message: '', data: [] }));
+        servicio.obtenerRespuestasUnificadas.and.returnValue(of([]));
 
         TestBed.configureTestingModule({
             imports: [SurveysListComponent, NoopAnimationsModule],

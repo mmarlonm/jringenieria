@@ -28,7 +28,7 @@ describe('SurveysListComponent: recuperación y errores visibles', () => {
     beforeEach(() => {
         servicio = Object.assign(
             jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
-                'getFormularios', 'getSurveys', 'guardarFormulario', 'eliminarFormulario'
+                'getFormularios', 'obtenerRespuestasUnificadas', 'guardarFormulario', 'eliminarFormulario'
             ]),
             {
                 recuperados$: new Subject<{ titulos: string[]; pendientes: number }>(),
@@ -36,7 +36,7 @@ describe('SurveysListComponent: recuperación y errores visibles', () => {
             }
         );
         servicio.getFormularios.and.returnValue(of([]));
-        servicio.getSurveys.and.returnValue(of({ code: 200, message: '', data: [] }));
+        servicio.obtenerRespuestasUnificadas.and.returnValue(of([]));
         avisos = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: false } as any));
 
         TestBed.configureTestingModule({

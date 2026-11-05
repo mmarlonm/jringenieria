@@ -49,7 +49,7 @@ describe('SurveysListComponent — Envío de encuesta a clientes', () => {
         servicio = Object.assign(
             jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
                 'getFormularios',
-                'getSurveys',
+                'obtenerRespuestasUnificadas',
                 'guardarFormulario',
                 'eliminarFormulario',
             ]),
@@ -59,7 +59,7 @@ describe('SurveysListComponent — Envío de encuesta a clientes', () => {
             }
         );
         servicio.getFormularios.and.returnValue(of([encuestaActiva, encuestaInactiva]));
-        servicio.getSurveys.and.returnValue(of({ code: 200, message: '', data: [] }));
+        servicio.obtenerRespuestasUnificadas.and.returnValue(of([]));
 
         await TestBed.configureTestingModule({
             imports: [SurveysListComponent, NoopAnimationsModule, HttpClientTestingModule],
