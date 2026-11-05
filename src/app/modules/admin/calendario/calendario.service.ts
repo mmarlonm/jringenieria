@@ -26,6 +26,17 @@ export interface EventoGoogle {
     color: string;
 }
 
+/** Datos para crear un nuevo evento en Google Calendar. */
+export interface EventoNuevo {
+    calendarioId: string;
+    titulo: string;
+    inicio: string;
+    fin: string;
+    todoElDia: boolean;
+    ubicacion?: string | null;
+    descripcion?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CalendarioService {
     private readonly base = `${environment.apiUrl}/mi-calendario`;
@@ -34,6 +45,10 @@ export class CalendarioService {
 
     calendarios(): Observable<CalendarioGoogle[]> {
         return this.http.get<CalendarioGoogle[]>(`${this.base}/calendarios`);
+    }
+
+    crearEvento(evento: EventoNuevo): Observable<EventoGoogle> {
+        return this.http.post<EventoGoogle>(`${this.base}/eventos`, evento);
     }
 
     eventos(desde: Date, hasta: Date, calendarioIds: string[]): Observable<EventoGoogle[]> {

@@ -8,13 +8,14 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ChatIaService } from 'app/core/services/chat-ia.service';
 import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
+import { CalendarioService, EventoNuevo } from 'app/modules/admin/calendario/calendario.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TextFieldModule } from '@angular/cdk/text-field';
@@ -109,7 +110,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
         private _chatIaService: ChatIaService,
         private _userService: UserService,
         private _taskService: TaskService,
-        private _permisosEspeciales: PermisosEspecialesService
+        private _permisosEspeciales: PermisosEspecialesService,
+        private _calendarioService: CalendarioService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -350,64 +352,57 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
         let contextObs$;
         if (userId) {
-            console.log('[Rayito IA Debug] Fetching tasks and calendar for userId:', userId);
             contextObs$ = forkJoin({
                 tasks: this._taskService.getTasks(Number(userId)).pipe(
-                    map(tasks => {
-                        const mappedTasks = (tasks || []).map(t => ({
-                            titulo: t.title || t.nombre || t.descripcion,
-                            estado: t.status || t.estatus,
-                            vence: t.dueDate || t.fechaVencimiento || t.fechaLimite,
-                            prioridad: t.priority
-                        }));
-                        console.log('[Rayito IA Debug] Mapped CRM tasks:', mappedTasks);
-                        return mappedTasks;
-                    }),
-                    catchError((err) => {
-                        console.error('[Rayito IA Debug] Error fetching CRM tasks:', err);
-                        return of([]);
-                    })
+                    map(tasks => (tasks || []).map(t => ({
+                        titulo: t.title || t.nombre || t.descripcion,
+                        estado: t.status || t.estatus,
+                        vence: t.dueDate || t.fechaVencimiento || t.fechaLimite,
+                        prioridad: t.priority
+                    }))),
+                    catchError(() => of([]))
                 ),
                 calendar: this._userService.getCalendar(Number(userId)).pipe(
                     map(res => {
-                        console.log('[Rayito IA Debug] Raw Google Calendar response:', res);
                         const items = res?.items || res?.Items || [];
-                        const mapped = items.map(e => ({
+                        return items.map(e => ({
                             id: e.id,
                             titulo: e.summary || e.titulo || e.nombre,
                             inicio: e.start?.dateTime || e.start?.date,
                             fin: e.end?.dateTime || e.end?.date,
                             ubicacion: e.location || e.ubicacion
                         }));
-                        console.log('[Rayito IA Debug] Mapped calendar events:', mapped);
-                        return mapped;
                     }),
-                    catchError((err) => {
-                        console.error('[Rayito IA Debug] Error fetching Google Calendar:', err);
-                        return of([]);
-                    })
+                    catchError(() => of([]))
+                ),
+                calendariosEscribibles: this._calendarioService.calendarios().pipe(
+                    map(cals => (cals || [])
+                        .filter(c => c.rol === 'owner' || c.rol === 'writer')
+                        .map(c => ({ id: c.id, nombre: c.nombre }))
+                    ),
+                    catchError(() => of([]))
                 )
             });
         } else {
-            console.warn('[Rayito IA Debug] No userId found in localStorage.');
-            contextObs$ = of({ tasks: [], calendar: [] });
+            contextObs$ = of({ tasks: [], calendar: [], calendariosEscribibles: [] });
         }
 
         contextObs$.subscribe({
             next: (extraContext) => {
                 let contexto = this.currentModuleDataJson || '';
                 
-                // Si cargamos contexto extra del calendario/tareas, lo inyectamos al JSON
-                if (extraContext.tasks.length > 0 || extraContext.calendar.length > 0) {
+                if (extraContext.tasks.length > 0 || extraContext.calendar.length > 0 || extraContext.calendariosEscribibles.length > 0) {
                     try {
                         const parsedContext = contexto ? JSON.parse(contexto) : {};
                         parsedContext.tareasCRM = extraContext.tasks;
                         parsedContext.calendarioGoogle = extraContext.calendar;
+                        parsedContext.calendariosEscribibles = extraContext.calendariosEscribibles;
                         contexto = JSON.stringify(parsedContext);
-                    } catch (e) {
+                    } catch {
                         contexto = JSON.stringify({
                             tareasCRM: extraContext.tasks,
                             calendarioGoogle: extraContext.calendar,
+                            calendariosEscribibles: extraContext.calendariosEscribibles,
                             mensajeErrorParsing: 'Error parsing active module context'
                         });
                     }
@@ -492,36 +487,90 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private crearEventoGoogleCalendarDesdeChat(paramsStr: string, userId: number): void {
         const parts = paramsStr.split('|').map(p => p.trim());
         const title = parts[0] || 'Reunión desde Rayito IA';
-        const startStr = parts[1]; // e.g. "2026-08-17T10:00:00"
-        const endStr = parts[2];   // e.g. "2026-08-17T11:00:00"
+        const startStr = parts[1];
+        const endStr = parts[2];
         const location = parts[3] || '';
         const body = parts[4] || '';
+        const calParam = parts[5] || '';
 
-        const eventDto = {
-            title: title,
-            start: startStr ? new Date(startStr) : new Date(Date.now() + 3600000), // por defecto en 1 hora
-            end: endStr ? new Date(endStr) : new Date(Date.now() + 7200000), // duración 1 hora por defecto
-            location: location,
-            body: body,
-            usuarioId: userId,
-            calendarId: 'primary'
-        };
+        this._calendarioService.calendarios().subscribe({
+            next: (cals) => {
+                const escribibles = (cals || []).filter(c => c.rol === 'owner' || c.rol === 'writer');
+                let targetCal = escribibles.find(c => c.esPrincipal);
 
-        this._userService.createEvent(eventDto).subscribe({
-            next: (res) => {
-                console.log('Evento creado exitosamente en Google Calendar', res);
-                this.chatMessages.push({
-                    sender: 'ia',
-                    text: `📢 Hecho. He agendado la reunión "${title}" en tu Google Calendar para el ${new Date(eventDto.start).toLocaleString()}.`,
-                    timestamp: new Date()
+                if (calParam) {
+                    const porId = escribibles.find(c => c.id.toLowerCase() === calParam.toLowerCase());
+                    const porNombre = escribibles.find(c => c.nombre.trim().toLowerCase() === calParam.trim().toLowerCase());
+                    if (porId) {
+                        targetCal = porId;
+                    } else if (porNombre) {
+                        targetCal = porNombre;
+                    } else {
+                        const noEscribible = (cals || []).find(c =>
+                            c.id.toLowerCase() === calParam.toLowerCase() ||
+                            c.nombre.trim().toLowerCase() === calParam.trim().toLowerCase()
+                        );
+                        if (noEscribible) {
+                            this.chatMessages.push({
+                                sender: 'ia',
+                                text: `⚠️ No tienes permiso de escritura en el calendario "${noEscribible.nombre}".`,
+                                timestamp: new Date()
+                            });
+                            setTimeout(() => this.scrollToBottom(), 50);
+                            return;
+                        }
+                    }
+                }
+
+                if (!targetCal) {
+                    targetCal = escribibles.length > 0
+                        ? escribibles[0]
+                        : { id: 'primary', nombre: 'Principal', color: '', rol: 'owner', esPrincipal: true, seleccionado: true };
+                }
+
+                const inicioDate = startStr ? new Date(startStr) : new Date(Date.now() + 3600000);
+                const finDate = endStr ? new Date(endStr) : new Date(Date.now() + 7200000);
+
+                const pad = (n: number) => String(n).padStart(2, '0');
+                const aFechaLocalIso = (d: Date) =>
+                    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+                const eventoNuevo: EventoNuevo = {
+                    calendarioId: targetCal.id,
+                    titulo: title,
+                    inicio: aFechaLocalIso(inicioDate),
+                    fin: aFechaLocalIso(finDate),
+                    todoElDia: false,
+                    ubicacion: location || null,
+                    descripcion: body || null
+                };
+
+                this._calendarioService.crearEvento(eventoNuevo).subscribe({
+                    next: () => {
+                        this.chatMessages.push({
+                            sender: 'ia',
+                            text: `📢 Hecho. He agendado la reunión "${title}" en el calendario "${targetCal?.nombre}" para el ${inicioDate.toLocaleString()}.`,
+                            timestamp: new Date()
+                        });
+                        setTimeout(() => this.scrollToBottom(), 50);
+                    },
+                    error: (err: HttpErrorResponse) => {
+                        const mensaje = err.error?.mensaje || (err.status === 403
+                            ? 'No tienes permiso de escritura en ese calendario.'
+                            : 'No pude agregar el evento a tu Google Calendar.');
+                        this.chatMessages.push({
+                            sender: 'ia',
+                            text: `⚠️ ${mensaje}`,
+                            timestamp: new Date()
+                        });
+                        setTimeout(() => this.scrollToBottom(), 50);
+                    }
                 });
-                setTimeout(() => this.scrollToBottom(), 50);
             },
-            error: (err) => {
-                console.error('Error al crear evento desde chat:', err);
+            error: () => {
                 this.chatMessages.push({
                     sender: 'ia',
-                    text: '⚠️ No pude agregar el evento a tu Google Calendar automáticamente. Por favor, asegúrate de haber verificado tu sesión de Google en el panel superior.',
+                    text: '⚠️ No pude consultar tus calendarios de Google. Verifica que tu cuenta esté conectada.',
                     timestamp: new Date()
                 });
                 setTimeout(() => this.scrollToBottom(), 50);

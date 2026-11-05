@@ -3,8 +3,11 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CalendarioGoogle, CalendarioService, EventoGoogle } from './calendario.service';
 import { agruparPorDia, claveDia, guardarSeleccion, horaCorta, inicioSemana, leerSeleccion, sumarDias } from './calendario.utils';
+import { NuevoEventoDialogComponent } from './nuevo-evento-dialog/nuevo-evento-dialog.component';
 
 interface DiaSemana {
     fecha: Date;
@@ -16,7 +19,7 @@ interface DiaSemana {
 @Component({
     selector: 'calendario-page',
     standalone: true,
-    imports: [CommonModule, MatButtonModule, MatIconModule],
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatDialogModule, MatSnackBarModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './calendario.component.html',
 })
@@ -29,10 +32,51 @@ export class CalendarioComponent implements OnInit {
     horaCorta = horaCorta;
     claveHoy = claveDia(new Date());
 
-    constructor(private calendario: CalendarioService, private cdr: ChangeDetectorRef) {}
+    constructor(
+        private calendario: CalendarioService,
+        private cdr: ChangeDetectorRef,
+        private dialog: MatDialog,
+        private snackBar: MatSnackBar
+    ) {}
 
     abrirEvento(evento: EventoGoogle): void {
         if (evento.enlace) window.open(evento.enlace, '_blank', 'noopener');
+    }
+
+    obtenerCalendarioPorDefecto(): string {
+        const escribiblesMis = this.calendarios.filter(c => c.seleccionado && c.rol === 'owner');
+        if (escribiblesMis.length > 0) return escribiblesMis[0].id;
+
+        const escribiblesOtros = this.calendarios.filter(c => c.seleccionado && (c.rol === 'owner' || c.rol === 'writer'));
+        if (escribiblesOtros.length > 0) return escribiblesOtros[0].id;
+
+        const todos = this.calendarios.filter(c => c.rol === 'owner' || c.rol === 'writer');
+        return todos.length > 0 ? todos[0].id : '';
+    }
+
+    abrirNuevoEvento(fechaBase?: Date): void {
+        let fechaInicio: Date | undefined;
+        if (fechaBase) {
+            fechaInicio = new Date(fechaBase);
+            fechaInicio.setHours(9, 0, 0, 0);
+        }
+
+        const ref = this.dialog.open(NuevoEventoDialogComponent, {
+            width: '32rem',
+            maxWidth: '95vw',
+            data: {
+                calendarios: this.calendarios,
+                calendarioPorDefectoId: this.obtenerCalendarioPorDefecto(),
+                fechaInicio,
+            },
+        });
+
+        ref.afterClosed().subscribe((creado) => {
+            if (creado) {
+                this.snackBar.open('Evento creado exitosamente.', 'Cerrar', { duration: 3000 });
+                this.cargarEventos();
+            }
+        });
     }
 
     ngOnInit(): void {

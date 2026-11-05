@@ -1,0 +1,84 @@
+<div class="p-6 max-w-lg w-full">
+    <h2 mat-dialog-title class="text-xl font-bold mb-4 flex items-center gap-2">
+        <mat-icon [svgIcon]="'heroicons_outline:calendar'" class="text-primary"></mat-icon>
+        Nuevo evento
+    </h2>
+
+    <form [formGroup]="form" (ngSubmit)="guardar()">
+        <mat-dialog-content class="flex flex-col gap-4 !p-0">
+            <!-- Calendario -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Calendario</mat-label>
+                <mat-select formControlName="calendarioId">
+                    <mat-option *ngFor="let c of calendariosEscribibles" [value]="c.id">
+                        <span class="inline-block w-3 h-3 rounded-sm mr-2 align-middle" [style.background]="c.color"></span>
+                        {{ c.nombre }}
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="form.get('calendarioId')?.hasError('required')">El calendario es requerido</mat-error>
+            </mat-form-field>
+
+            <!-- Título -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Título</mat-label>
+                <input matInput formControlName="titulo" maxlength="200" placeholder="Título del evento">
+                <mat-error *ngIf="form.get('titulo')?.hasError('required')">El título es requerido</mat-error>
+                <mat-error *ngIf="form.get('titulo')?.hasError('maxlength')">Máximo 200 caracteres</mat-error>
+            </mat-form-field>
+
+            <!-- Todo el día -->
+            <div class="flex items-center pb-2">
+                <mat-slide-toggle formControlName="todoElDia" (change)="alCambiarTodoElDia($event.checked)">
+                    Todo el día
+                </mat-slide-toggle>
+            </div>
+
+            <!-- Inicio y Fin -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Inicio</mat-label>
+                    <input matInput [type]="form.get('todoElDia')?.value ? 'date' : 'datetime-local'" formControlName="inicio">
+                    <mat-error *ngIf="form.get('inicio')?.hasError('required')">Requerido</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Fin</mat-label>
+                    <input matInput [type]="form.get('todoElDia')?.value ? 'date' : 'datetime-local'" formControlName="fin">
+                    <mat-error *ngIf="form.get('fin')?.hasError('required')">Requerido</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div *ngIf="finInvalido" class="text-xs text-rose-600 -mt-2">
+                La fecha de fin debe ser posterior a la fecha de inicio.
+            </div>
+
+            <!-- Ubicación -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Ubicación</mat-label>
+                <input matInput formControlName="ubicacion" placeholder="Opcional">
+            </mat-form-field>
+
+            <!-- Descripción -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Descripción</mat-label>
+                <textarea matInput formControlName="descripcion" rows="3" placeholder="Opcional"></textarea>
+            </mat-form-field>
+
+            <!-- Error -->
+            <div *ngIf="error" class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm font-semibold text-rose-800">
+                {{ error }}
+            </div>
+        </mat-dialog-content>
+
+        <mat-dialog-actions align="end" class="gap-2 mt-4 !p-0">
+            <button mat-stroked-button type="button" (click)="cancelar()" [disabled]="guardando">
+                Cancelar
+            </button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || finInvalido || guardando">
+                <span *ngIf="guardando" class="mr-2">⏳</span>
+                Crear
+            </button>
+        </mat-dialog-actions>
+    </form>
+</div>
+

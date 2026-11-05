@@ -34,7 +34,13 @@
                 </button>
             </div>
             <div class="text-lg font-semibold capitalize">{{ rangoTexto }}</div>
-            <div class="text-sm text-gray-500" *ngIf="cargando">Cargando…</div>
+            <div class="flex items-center gap-3">
+                <div class="text-sm text-gray-500" *ngIf="cargando">Cargando…</div>
+                <button mat-flat-button color="primary" (click)="abrirNuevoEvento()">
+                    <mat-icon [svgIcon]="'heroicons_outline:plus'" class="mr-1"></mat-icon>
+                    Nuevo evento
+                </button>
+            </div>
         </header>
 
         <div *ngIf="error" class="m-6 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 p-4 text-sm">
@@ -49,11 +55,12 @@
                     <div class="text-xl font-bold">{{ d.fecha.getDate() }}</div>
                 </div>
 
-                <div class="p-2 space-y-2 overflow-y-auto flex-auto">
+                <div class="p-2 space-y-2 overflow-y-auto flex-auto cursor-pointer"
+                     (click)="abrirNuevoEvento(d.fecha)">
                     <div *ngFor="let e of d.eventos"
                          class="rounded-lg px-2.5 py-2 text-sm shadow-sm bg-gray-50 dark:bg-gray-800 border-l-4 cursor-pointer"
                          [style.border-left-color]="e.color"
-                         (click)="e.enlace && abrirEvento(e)">
+                         (click)="abrirEvento(e); $event.stopPropagation()">
                         <div class="font-mono text-xs text-gray-500" *ngIf="!e.esTodoElDia">
                             {{ horaCorta(e.inicio) }} – {{ horaCorta(e.fin) }}
                         </div>
