@@ -25,6 +25,7 @@ import {
   PasoFormularioConfig,
   FormularioProductoDto
 } from '../../admin/dashboards/surveys-products/surveys.service';
+import { extraerContacto } from './contacto-respuesta';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -324,11 +325,12 @@ export class DetailComponent implements OnInit {
     if (!this.formDinamicoConfig) return;
 
     // Extraer datos principales
-    const nombre = this.respuestasDinamicas['nombre'] || this.respuestasDinamicas['nombreCompleto'] || this.respuestasDinamicas['cliente'] || '';
-    const email = this.respuestasDinamicas['email'] || this.respuestasDinamicas['correo'] || '';
-    const telefono = this.respuestasDinamicas['telefono'] || this.respuestasDinamicas['celular'] || '';
-    const empresa = this.respuestasDinamicas['empresa'] || this.respuestasDinamicas['razonSocial'] || '';
-    const cargo = this.respuestasDinamicas['cargo'] || this.respuestasDinamicas['puesto'] || '';
+    const contacto = extraerContacto(this.camposDinamicos, this.respuestasDinamicas);
+    const nombre = contacto.nombre || '';
+    const email = contacto.email || '';
+    const telefono = contacto.telefono || '';
+    const empresa = contacto.empresa || '';
+    const cargo = contacto.cargo || '';
     const sucursalVal = Number(this.respuestasDinamicas['sucursal']) || this.formDinamicoConfig.sucursalId || 1;
 
     // Calcular satisfacción general
