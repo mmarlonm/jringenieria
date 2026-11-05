@@ -30,23 +30,16 @@ import { Subject, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import {
-
     SurveysProductsService,
-
     FormularioProductoDto,
-
     FormularioProductoSaveDto,
-
     CampoConfig,
-
     DisenoConfig,
-
     PasoFormularioConfig,
-
     FilaMatrizConfig,
-
-    ColumnaMatrizConfig
-
+    ColumnaMatrizConfig,
+    EncuestaRespuestaResumenDto,
+    EncuestaRespuestaDetalleDto
 } from '../surveys.service';
 
 
@@ -230,25 +223,20 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
 
     // Respuestas recibidas
-
-    respuestasList: any[] = [];
-
+    respuestasList: EncuestaRespuestaResumenDto[] = [];
     cargandoRespuestas = false;
-
+    errorCargaRespuestas = false;
     busquedaRespuestas = '';
-
     filtroRespuestaFormulario: number | 'todos' = 'todos';
 
-
-
     // Modales
-
     modalQrAbierto = false;
-
     formularioQrSeleccionado: FormularioProductoDto | null = null;
-
     modalDetalleAbierto = false;
-
+    cargandoDetalleRespuesta = false;
+    errorDetalleRespuesta = false;
+    respuestaDetalleResumen: EncuestaRespuestaResumenDto | null = null;
+    detalleRespuestaCompleto: EncuestaRespuestaDetalleDto | null = null;
     respuestaDetalleSeleccionada: any = null;
 
 
@@ -1591,197 +1579,157 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
 
     cargarRespuestas(): void {
-
         this.cargandoRespuestas = true;
-
-        this._surveyService.getSurveys()
-
-            .pipe(takeUntil(this._destroy$))
-
-            .subscribe({
-
-                next: (res) => {
-
-                    const datos = (res && res.code === 200 && Array.isArray(res.data)) ? res.data : [];
-
-                    this.respuestasList = datos.map((item: any) => {
-
-                        const scorePromedio = this.calcularScorePromedioLegacy(item);
-
-                        return {
-
-                            ...item,
-
-                            scorePromedio
-
-                        };
-
-                    });
-
-                    this.cargandoRespuestas = false;
-
-                    this._cdr.markForCheck();
-
-                },
-
-                error: () => {
-
-                    this.cargandoRespuestas = false;
-
-                    this._cdr.markForCheck();
-
-                }
-
-            });
-
-    }
-
-
-
-    calcularScorePromedioLegacy(item: any): number {
-
-        const scores = [
-
-            item.servicioPersonal,
-
-            item.recomendarProductos,
-
-            item.ayudaProducto,
-
-            item.comprensionNecesidades,
-
-            item.tiempoEntrega
-
-        ].filter(x => typeof x === 'number' && !isNaN(x));
-
-
-
-        if (scores.length === 0) return 9.0;
-
-        const sum = scores.reduce((a, b) => a + b, 0);
-
-        return Math.round((sum / scores.length) * 10) / 10;
-
-    }
-
-
-
-    get respuestasFiltradas(): any[] {
-
-        return this.respuestasList.filter(r => {
-
-            const matchesText = !this.busquedaRespuestas ||
-
-                (r.nombre && r.nombre.toLowerCase().includes(this.busquedaRespuestas.toLowerCase())) ||
-
-                (r.empresa && r.empresa.toLowerCase().includes(this.busquedaRespuestas.toLowerCase())) ||
-
-                (r.email && r.email.toLowerCase().includes(this.busquedaRespuestas.toLowerCase())) ||
-
-                (r.proyectoNombre && r.proyectoNombre.toLowerCase().includes(this.busquedaRespuestas.toLowerCase()));
-
-
-
-            const rTipo = r.tipo || (r.proyectoNombre ? 'servicio' : 'producto');
-
-            const matchesTipo = this.filtroTipoRespuesta === 'todos' || rTipo === this.filtroTipoRespuesta;
-
-
-
-            return matchesText && matchesTipo;
-
-        });
-
-    }
-
-
-
-    abrirDetalleRespuesta(item: any): void {
-
-        this.respuestaDetalleSeleccionada = item;
-
-        this.modalDetalleAbierto = true;
-
-    }
-
-
-
-    cerrarDetalleRespuesta(): void {
-
-        this.modalDetalleAbierto = false;
-
-        this.respuestaDetalleSeleccionada = null;
-
-    }
-
-
-
-    exportarRespuestasExcel(): void {
-
-        if (this.respuestasFiltradas.length === 0) {
-
-            this._snackBar.open('No hay respuestas para exportar', 'Cerrar', { duration: 2500 });
-
+        this.errorCargaRespuestas = false;
+
+        const llamada$ = typeof this._surveyService.obtenerRespuestasUnificadas === 'function'
+            ? this._surveyService.obtenerRespuestasUnificadas(this.filtroTipoRespuesta)
+            : (typeof this._surveyService.getSurveys === 'function'
+                ? this._surveyService.getSurveys()
+                : null);
+
+        if (!llamada$) {
+            this.cargandoRespuestas = false;
             return;
-
         }
 
+        llamada$
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    const datos = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+                    this.respuestasList = datos;
+                    this.cargandoRespuestas = false;
+                    this._cdr.markForCheck();
+                },
+                error: () => {
+                    this.cargandoRespuestas = false;
+                    this.errorCargaRespuestas = true;
+                    this._cdr.markForCheck();
+                }
+            });
+    }
 
+    cambiarFiltroTipoRespuesta(tipo: 'todos' | 'producto' | 'servicio'): void {
+        this.filtroTipoRespuesta = tipo;
+        this.cargarRespuestas();
+    }
 
-        const headers = ['ID', 'Cliente', 'Empresa', 'Email', 'Teléfono', 'Cargo', 'Servicio Personal', 'Recomendar NPS', 'Ayuda Producto', 'Comprensión', 'Tiempo Entrega', 'Comentarios', 'Fecha'];
+    formatearFechaMexico(fechaUtcIso: string | null | undefined): string {
+        if (!fechaUtcIso) return '—';
+        const date = new Date(fechaUtcIso);
+        if (isNaN(date.getTime())) return '—';
+        const parts = new Intl.DateTimeFormat('es-MX', {
+            timeZone: 'America/Mexico_City',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).formatToParts(date);
+        const map = new Map(parts.map(p => [p.type, p.value]));
+        const day = map.get('day');
+        const month = map.get('month');
+        const year = map.get('year');
+        const hour = map.get('hour');
+        const minute = map.get('minute');
+        return `${day}/${month}/${year} ${hour}:${minute}`;
+    }
+
+    get respuestasFiltradas(): EncuestaRespuestaResumenDto[] {
+        return this.respuestasList.filter(r => {
+            const matchesText = !this.busquedaRespuestas ||
+                (r.nombre && r.nombre.toLowerCase().includes(this.busquedaRespuestas.toLowerCase())) ||
+                (r.empresa && r.empresa.toLowerCase().includes(this.busquedaRespuestas.toLowerCase())) ||
+                (r.email && r.email.toLowerCase().includes(this.busquedaRespuestas.toLowerCase())) ||
+                (r.formularioTitulo && r.formularioTitulo.toLowerCase().includes(this.busquedaRespuestas.toLowerCase()));
+
+            const matchesTipo = this.filtroTipoRespuesta === 'todos' || r.tipo === this.filtroTipoRespuesta;
+            return matchesText && matchesTipo;
+        });
+    }
+
+    abrirDetalleRespuesta(item: any): void {
+        this.respuestaDetalleResumen = item;
+        this.respuestaDetalleSeleccionada = item;
+        this.modalDetalleAbierto = true;
+        this.cargandoDetalleRespuesta = true;
+        this.errorDetalleRespuesta = false;
+        this.detalleRespuestaCompleto = null;
+
+        const origen = item.origen || 'dinamica';
+        const id = item.id;
+        this._surveyService.obtenerDetalleRespuestaUnificada(origen, id)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (detalle) => {
+                    this.detalleRespuestaCompleto = detalle;
+                    this.cargandoDetalleRespuesta = false;
+                    this._cdr.markForCheck();
+                },
+                error: () => {
+                    this.errorDetalleRespuesta = true;
+                    this.cargandoDetalleRespuesta = false;
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    reintentarDetalleRespuesta(): void {
+        if (!this.respuestaDetalleResumen) return;
+        this.abrirDetalleRespuesta(this.respuestaDetalleResumen);
+    }
+
+    cerrarDetalleRespuesta(): void {
+        this.modalDetalleAbierto = false;
+        this.respuestaDetalleResumen = null;
+        this.respuestaDetalleSeleccionada = null;
+        this.detalleRespuestaCompleto = null;
+        this.errorDetalleRespuesta = false;
+        this.cargandoDetalleRespuesta = false;
+    }
+
+    exportarRespuestasExcel(): void {
+        if (this.respuestasFiltradas.length === 0) {
+            this._snackBar.open('No hay respuestas para exportar', 'Cerrar', { duration: 2500 });
+            return;
+        }
+
+        const headers = ['ID', 'Tipo', 'Formulario', 'Cliente', 'Empresa', 'Correo', 'Teléfono', 'Cargo', 'Calificación', 'Fecha'];
+        const escapeCsv = (val: string | number | null | undefined): string => {
+            if (val === null || val === undefined) return '';
+            const str = String(val);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
 
         const rows = this.respuestasFiltradas.map(r => [
-
-            r.id,
-
-            `"${(r.nombre || '').replace(/"/g, '""')}"`,
-
-            `"${(r.empresa || '').replace(/"/g, '""')}"`,
-
-            `"${(r.email || '').replace(/"/g, '""')}"`,
-
-            `"${(r.telefono || '').replace(/"/g, '""')}"`,
-
-            `"${(r.cargo || '').replace(/"/g, '""')}"`,
-
-            r.servicioPersonal ?? '',
-
-            r.recomendarProductos ?? '',
-
-            r.ayudaProducto ?? '',
-
-            r.comprensionNecesidades ?? '',
-
-            r.tiempoEntrega ?? '',
-
-            `"${(r.razonServicio || '').replace(/"/g, '""')}"`,
-
-            `"${r.fechaRegistro || ''}"`
-
+            r.origen === 'heredada' ? `H${r.id}` : `#${r.id}`,
+            r.tipo || '',
+            escapeCsv(r.formularioTitulo || ''),
+            escapeCsv(r.nombre || ''),
+            escapeCsv(r.empresa || ''),
+            escapeCsv(r.email || ''),
+            escapeCsv(r.telefono || ''),
+            escapeCsv(r.cargo || ''),
+            r.calificacion != null ? Number(r.calificacion).toFixed(1) : '',
+            escapeCsv(this.formatearFechaMexico(r.fechaRegistro))
         ]);
 
-
-
         const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement('a');
-
         a.href = url;
-
         a.download = `Encuestas_Satisfaccion_Productos_${new Date().toISOString().slice(0, 10)}.csv`;
-
         document.body.appendChild(a);
-
         a.click();
-
         document.body.removeChild(a);
-
+        URL.revokeObjectURL(url);
         this._snackBar.open('Reporte CSV descargado con éxito', 'Cerrar', { duration: 3000 });
-
     }
 
 

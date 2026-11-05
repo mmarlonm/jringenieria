@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 import { Observable, Subject, catchError, concatMap, from, map, of, switchMap, toArray } from 'rxjs';
 
@@ -182,6 +182,32 @@ export interface FormularioProductoRespuestaDetalleDto {
 
     ipOrigen?: string;
 
+}
+
+export interface EncuestaRespuestaResumenDto {
+    origen: 'dinamica' | 'heredada';
+    id: number;
+    formularioId?: number | null;
+    formularioTitulo?: string | null;
+    tipo: 'producto' | 'servicio';
+    nombre?: string | null;
+    empresa?: string | null;
+    email?: string | null;
+    telefono?: string | null;
+    cargo?: string | null;
+    calificacion?: number | null;
+    fechaRegistro: string;
+}
+
+export interface EncuestaRespuestaCampoDto {
+    campoId: string;
+    etiqueta: string;
+    tipo: string;
+    valor: string;
+}
+
+export interface EncuestaRespuestaDetalleDto extends EncuestaRespuestaResumenDto {
+    respuestas: EncuestaRespuestaCampoDto[];
 }
 
 
@@ -400,6 +426,17 @@ export class SurveysProductsService {
 
         );
 
+    }
+
+    /** Obtiene el listado unificado de respuestas (dinámicas y heredadas) */
+    obtenerRespuestasUnificadas(tipo: string = 'todos'): Observable<EncuestaRespuestaResumenDto[]> {
+        const params = new HttpParams().set('tipo', tipo || 'todos');
+        return this._http.get<EncuestaRespuestaResumenDto[]>(`${environment.apiUrl}/EncuestaRespuestas`, { params });
+    }
+
+    /** Obtiene el detalle unificado de una respuesta (dinámica o heredada) */
+    obtenerDetalleRespuestaUnificada(origen: string, id: number): Observable<EncuestaRespuestaDetalleDto> {
+        return this._http.get<EncuestaRespuestaDetalleDto>(`${environment.apiUrl}/EncuestaRespuestas/${origen}/${id}`);
     }
 
 
