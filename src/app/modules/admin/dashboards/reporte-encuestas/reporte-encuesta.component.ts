@@ -183,13 +183,10 @@ export class ReporteEncuestaComponent implements OnInit, OnDestroy {
         if (!f) {
             return '—';
         }
+        // viene en hora de México sin zona (igual que el reporte de Eventos): se lee y se muestra tal cual, sin convertir de zona
         const d = new Date(f);
         if (isNaN(d.getTime())) return f;
-        return d.toLocaleString('es-MX', {
-            timeZone: 'America/Mexico_City',
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        });
+        return d.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
     }
 
     get totalPreguntas(): number {

@@ -40,7 +40,7 @@ describe('ReporteEncuestaComponent (Tarea C2)', () => {
                 totalRespuestas: 42,
                 completitudPromedio: 100,
                 tasaRespuesta: null,
-                ultimaRespuesta: '2026-11-05T03:00:00Z',
+                ultimaRespuesta: '2026-11-04T21:00:00', // el API la manda sin zona y ya en hora de México
                 porDia: [
                     { fecha: '2026-11-04', total: 20 },
                     { fecha: '2026-11-05', total: 22 }
@@ -157,6 +157,29 @@ describe('ReporteEncuestaComponent (Tarea C2)', () => {
         expect(texto).toContain('42');
         expect(texto).toContain('8.7 / 10');
         expect(texto).toContain('2026');
+    });
+
+    it('La_ultima_respuesta_ya_viene_en_hora_de_Mexico_y_se_muestra_sin_convertir_de_zona', async () => {
+        await crearModulo('producto');
+        const fixture = TestBed.createComponent(ReporteEncuestaComponent);
+        fixture.detectChanges();
+
+        // El API manda esta fecha sin zona y ya en hora de México (igual que el reporte de Eventos). Convertirla con
+        // timeZone la movería en un navegador que no esté en México.
+        fixture.componentInstance.reporteDetalle = {
+            ...reporteDetalleMock,
+            reporte: {
+                ...reporteDetalleMock.reporte,
+                resumen: { ...reporteDetalleMock.reporte.resumen, ultimaRespuesta: '2026-11-05T10:59:39' }
+            }
+        };
+        const espia = spyOn(Date.prototype, 'toLocaleString').and.callThrough();
+
+        const texto = fixture.componentInstance.ultimaRespuestaTexto;
+
+        expect(texto).toContain('10:59');
+        const opciones = espia.calls.mostRecent().args[1] as Intl.DateTimeFormatOptions;
+        expect(opciones.timeZone).withContext('no debe convertir de zona una hora que ya es de México').toBeUndefined();
     });
 
     it('Sin_respuestas_muestra_el_aviso', async () => {
