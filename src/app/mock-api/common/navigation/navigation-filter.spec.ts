@@ -56,6 +56,13 @@ describe('filtro del menú por vistas', () => {
             expect(ids(menu)).not.toContain('eventos.dashboard');
         });
 
+        it('Cobranza_solo_aparece_con_la_vista_finanzas_cobranza', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['finanzas.cobranza']);
+
+            expect(hijosDeFinanzas(menu)).toEqual(['finanzas.cobranza']);
+            expect(ids(menu)).not.toContain('eventos.dashboard');
+        });
+
         it('el grupo Finanzas lista sus hijos en el orden del proceso', () => {
             const todas = ['finanzas.despacho', 'finanzas.cfdi', 'finanzas.dashboard', 'finanzas.conciliacion', 'finanzas.bancos'];
 
