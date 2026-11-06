@@ -1,0 +1,365 @@
+﻿<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8" *ngIf="capacitacion">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
+        <div>
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                <a routerLink="/rrhh/capacitacion" class="flex items-center gap-1 hover:text-primary transition-colors">
+                    <mat-icon svgIcon="heroicons_outline:arrow-left" class="icon-size-4"></mat-icon>
+                    <span>Volver a Capacitaciones</span>
+                </a>
+                <span>•</span>
+                <span class="font-semibold text-gray-700 dark:text-gray-300">{{ capacitacion.folio }}</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                    {{ capacitacion.competencia }}
+                </h1>
+
+                <!-- Estatus Badge -->
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+                    [ngClass]="{
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': capacitacion.estatus === 'Programada',
+                        'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400': capacitacion.estatus === 'EnCurso',
+                        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': capacitacion.estatus === 'Completada',
+                        'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300': capacitacion.estatus === 'Cancelada'
+                    }">
+                    {{ capacitacion.estatus }}
+                </span>
+
+                <!-- Semáforo Vigencia -->
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="obtenerClaseSemaforo(capacitacion.semaforoVencimiento)">
+                    Semáforo: {{ obtenerLabelSemaforo(capacitacion.semaforoVencimiento) }}
+                </span>
+
+                <!-- DC-3 Badge -->
+                <span *ngIf="capacitacion.dc3Emitida" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    Emite DC-3
+                </span>
+            </div>
+            <div class="text-sm text-gray-500 mt-1">
+                {{ capacitacion.areaOProceso }} • Puesto: {{ capacitacion.puestoImpactado }} • {{ capacitacion.razonSocial }}
+            </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex flex-wrap items-center gap-3">
+            <button mat-stroked-button (click)="cambiarEstatus()">
+                <mat-icon svgIcon="heroicons_outline:arrow-path"></mat-icon>
+                <span class="ml-1.5">Cambiar Estatus</span>
+            </button>
+
+            <button mat-stroked-button (click)="evaluarEficacia()">
+                <mat-icon svgIcon="heroicons_outline:check-badge"></mat-icon>
+                <span class="ml-1.5">Evaluar Eficacia</span>
+            </button>
+
+            <button mat-flat-button color="primary" (click)="editarCurso()">
+                <mat-icon svgIcon="heroicons_outline:pencil-square"></mat-icon>
+                <span class="ml-1.5">Editar Curso</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Banner si está cancelada -->
+    <div *ngIf="capacitacion.estatus === 'Cancelada'" class="my-6 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-xl flex items-start gap-3">
+        <mat-icon class="text-red-500 mt-0.5" svgIcon="heroicons_outline:x-circle"></mat-icon>
+        <div>
+            <h4 class="text-sm font-bold text-red-800 dark:text-red-300">Capacitación Cancelada</h4>
+            <p class="text-sm text-red-700 dark:text-red-400 mt-0.5">
+                Motivo: {{ capacitacion.motivoCancelacion || 'No especificado' }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Grid de Fichas Informativas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-6">
+        <!-- Ficha Técnica -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="text-sm font-bold text-gray-900 dark:text-gray-100 pb-3 mb-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <span>Ficha del Curso</span>
+                    <mat-icon class="text-primary icon-size-5" svgIcon="heroicons_outline:identification"></mat-icon>
+                </div>
+
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Instructor/Proveedor:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200 text-right">{{ capacitacion.proveedorOInstructor }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Modalidad / Tipo:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ capacitacion.tipo }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Origen de Necesidad:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ capacitacion.origen }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Duración:</span>
+                        <span class="font-bold text-gray-800 dark:text-gray-200">{{ capacitacion.duracionHoras }} horas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400">
+                Registrado el: {{ capacitacion.creadoEn | date:'dd/MM/yyyy' }}
+            </div>
+        </div>
+
+        <!-- Programa, Fechas y Costos -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="text-sm font-bold text-gray-900 dark:text-gray-100 pb-3 mb-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <span>Cronograma y Costos</span>
+                    <mat-icon class="text-green-600 icon-size-5" svgIcon="heroicons_outline:calendar"></mat-icon>
+                </div>
+
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Fecha Programada:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ capacitacion.fechaProgramada | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Fecha de Término:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">
+                            {{ capacitacion.fechaTermino ? (capacitacion.fechaTermino | date:'dd/MM/yyyy') : 'Pendiente' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Costo Estimado:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">
+                            {{ capacitacion.costoEstimado != null ? (capacitacion.costoEstimado | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Costo Real:</span>
+                        <span class="font-bold text-gray-900 dark:text-gray-100">
+                            {{ capacitacion.costoReal != null ? (capacitacion.costoReal | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400">
+                Inversión por participante:
+                <span class="font-semibold text-gray-700 dark:text-gray-300">
+                    {{ (capacitacion.totalParticipantes > 0 && capacitacion.costoReal != null) ? ((capacitacion.costoReal / capacitacion.totalParticipantes) | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Vigencia y Normativa STPS -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="text-sm font-bold text-gray-900 dark:text-gray-100 pb-3 mb-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <span>Normativa STPS & Vigencia</span>
+                    <mat-icon class="text-purple-600 icon-size-5" svgIcon="heroicons_outline:shield-check"></mat-icon>
+                </div>
+
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Agente DC-5 STPS:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ capacitacion.agenteCapacitadorDc5 || 'No aplica' }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Vigencia Constancia:</span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200">
+                            {{ capacitacion.vigenciaMeses ? capacitacion.vigenciaMeses + ' meses' : 'Sin vigencia límite' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Fecha de Vencimiento:</span>
+                        <span class="font-bold text-gray-900 dark:text-gray-100">
+                            {{ capacitacion.fechaVencimiento ? (capacitacion.fechaVencimiento | date:'dd/MM/yyyy') : 'N/A' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">Estado de Vigencia:</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold"
+                            [ngClass]="obtenerClaseSemaforo(capacitacion.semaforoVencimiento)">
+                            {{ obtenerLabelSemaforo(capacitacion.semaforoVencimiento) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400">
+                Alerta configurada a 30 días de vencimiento
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluación de Eficacia (ISO 9001) & Objetivo -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Evaluación de Eficacia -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <mat-icon class="text-amber-500 icon-size-5" svgIcon="heroicons_outline:star"></mat-icon>
+                    <span class="text-sm font-bold text-gray-900 dark:text-gray-100">Evaluación de Eficacia (ISO 9001:2015)</span>
+                </div>
+                <button mat-button color="primary" class="h-8 text-xs" (click)="evaluarEficacia()">
+                    Actualizar Evaluación
+                </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-6">
+                <!-- Porcentaje Badge Circular/Card -->
+                <div class="flex flex-col items-center justify-center p-4 rounded-xl min-w-[130px]"
+                    [ngClass]="{
+                        'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300': capacitacion.resultadoEficacia === 'Eficaz',
+                        'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300': capacitacion.resultadoEficacia === 'NoEficaz',
+                        'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400': capacitacion.resultadoEficacia === 'Pendiente'
+                    }">
+                    <div class="text-3xl font-black">
+                        {{ capacitacion.evaluacionEficaciaPorcentaje != null ? capacitacion.evaluacionEficaciaPorcentaje + '%' : '--' }}
+                    </div>
+                    <div class="text-xs font-bold uppercase mt-1">
+                        {{ capacitacion.resultadoEficacia }}
+                    </div>
+                </div>
+
+                <div class="flex-1 text-sm text-gray-600 dark:text-gray-300 space-y-2">
+                    <p class="font-medium text-gray-900 dark:text-gray-100">Retroalimentación del Desempeño:</p>
+                    <p class="italic text-gray-500 bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                        {{ capacitacion.retroalimentacionColaborador || 'No se han capturado observaciones de eficacia.' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objetivo -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="text-sm font-bold text-gray-900 dark:text-gray-100 pb-3 mb-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <span>Objetivo del Curso</span>
+                    <mat-icon class="text-gray-400 icon-size-5" svgIcon="heroicons_outline:document-text"></mat-icon>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                    {{ capacitacion.objetivo || 'Sin objetivo detallado.' }}
+                </p>
+            </div>
+            <div class="text-xs text-gray-400 mt-4">
+                Competencia asociada al módulo de matriz de competencias y desempeño.
+            </div>
+        </div>
+    </div>
+
+    <!-- Participantes Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- Section Header -->
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <div class="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <mat-icon class="text-primary icon-size-5" svgIcon="heroicons_outline:users"></mat-icon>
+                    <span>Participantes y Calificaciones ({{ capacitacion.participantes.length }})</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                    Registro de asistencia, aprobación, calificaciones y entrega de formatos DC-3
+                </div>
+            </div>
+
+            <button mat-flat-button color="primary" (click)="agregarParticipante()">
+                <mat-icon svgIcon="heroicons_outline:user-plus"></mat-icon>
+                <span class="ml-1.5">Agregar Participante</span>
+            </button>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="capacitacion.participantes.length === 0" class="p-12 text-center text-gray-500">
+            <mat-icon class="icon-size-12 text-gray-300 mb-2" svgIcon="heroicons_outline:user-group"></mat-icon>
+            <p class="text-base font-semibold">No hay participantes registrados</p>
+            <p class="text-sm text-gray-400">Agrega colaboradores al curso para registrar asistencia y calificaciones.</p>
+        </div>
+
+        <!-- Participants Table -->
+        <div *ngIf="capacitacion.participantes.length > 0" class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                        <th class="py-3 px-4">Colaborador</th>
+                        <th class="py-3 px-4 text-center">Asistió</th>
+                        <th class="py-3 px-4 text-center">Calificación</th>
+                        <th class="py-3 px-4 text-center">Aprobado</th>
+                        <th class="py-3 px-4 text-center">Constancia</th>
+                        <th class="py-3 px-4 text-center">DC-3 STPS</th>
+                        <th class="py-3 px-4">Observaciones</th>
+                        <th class="py-3 px-4 text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr *ngFor="let p of capacitacion.participantes" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="py-3 px-4 font-semibold text-gray-800 dark:text-gray-200">
+                            {{ p.colaboradorNombre }}
+                        </td>
+
+                        <!-- Asistió -->
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="p.asistio" class="inline-flex text-green-600">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:check-circle"></mat-icon>
+                            </span>
+                            <span *ngIf="!p.asistio" class="inline-flex text-red-500">
+                                <mat-icon class="icon-size-5" svgIcon="heroicons_outline:x-circle"></mat-icon>
+                            </span>
+                        </td>
+
+                        <!-- Calificación -->
+                        <td class="py-3 px-4 text-center font-bold">
+                            {{ p.calificacion != null ? p.calificacion : '--' }}
+                        </td>
+
+                        <!-- Aprobado -->
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="p.aprobado === true" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                Aprobado
+                            </span>
+                            <span *ngIf="p.aprobado === false" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                No Aprobado
+                            </span>
+                            <span *ngIf="p.aprobado === null" class="text-xs text-gray-400">
+                                Pendiente
+                            </span>
+                        </td>
+
+                        <!-- Constancia -->
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="p.constanciaEntregada" class="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                                Entregada
+                            </span>
+                            <span *ngIf="!p.constanciaEntregada" class="text-xs text-gray-400">
+                                Pendiente
+                            </span>
+                        </td>
+
+                        <!-- DC-3 STPS -->
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="p.dc3Entregada" class="text-xs font-semibold text-green-600 dark:text-green-400">
+                                Entregada
+                            </span>
+                            <span *ngIf="!p.dc3Entregada" class="text-xs text-gray-400">
+                                Pendiente
+                            </span>
+                        </td>
+
+                        <!-- Observaciones -->
+                        <td class="py-3 px-4 text-xs text-gray-500">
+                            {{ p.observaciones || '--' }}
+                        </td>
+
+                        <!-- Acción -->
+                        <td class="py-3 px-4 text-right">
+                            <button mat-icon-button (click)="editarParticipante(p)" matTooltip="Editar participante">
+                                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:pencil"></mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" (click)="eliminarParticipante(p)" matTooltip="Eliminar participante">
+                                <mat-icon class="icon-size-4 text-red-500" svgIcon="heroicons_outline:trash"></mat-icon>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

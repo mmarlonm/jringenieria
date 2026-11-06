@@ -1,0 +1,135 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
+        <div>
+            <div class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                Reclutamiento y Selección
+            </div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                Gestión de requisiciones de personal, candidatos calificados y flujo de selección
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button mat-flat-button color="primary" (click)="nuevaRequisicion()">
+                <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+                <span class="ml-2">Nueva Requisición</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="flex flex-col sm:flex-row items-center gap-4 my-6">
+        <mat-form-field appearance="outline" class="w-full sm:w-80" subscriptSizing="dynamic">
+            <mat-icon matPrefix svgIcon="heroicons_outline:magnifying-glass" class="mr-2 text-gray-400"></mat-icon>
+            <input matInput [(ngModel)]="buscarTexto" (keyup.enter)="cargar()" placeholder="Buscar puesto, folio, área..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-56" subscriptSizing="dynamic">
+            <mat-label>Estatus</mat-label>
+            <mat-select [(ngModel)]="filtroEstatus" (selectionChange)="cargar()">
+                <mat-option value="">Todos los estatus</mat-option>
+                <mat-option value="Borrador">Borrador</mat-option>
+                <mat-option value="EnAprobacion">En Aprobación</mat-option>
+                <mat-option value="Aprobada">Aprobada</mat-option>
+                <mat-option value="Publicada">Publicada</mat-option>
+                <mat-option value="Cubierta">Cubierta</mat-option>
+                <mat-option value="Cancelada">Cancelada</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="cargar()" class="h-12">
+            <mat-icon svgIcon="heroicons_outline:arrow-path"></mat-icon>
+            <span class="ml-1">Actualizar</span>
+        </button>
+    </div>
+
+    <!-- Requisitions List / Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div *ngIf="cargando" class="p-8 text-center text-gray-500">
+            Cargando requisiciones...
+        </div>
+
+        <div *ngIf="!cargando && requisiciones.length === 0" class="p-12 text-center text-gray-500">
+            <mat-icon class="icon-size-12 text-gray-400 mb-2" svgIcon="heroicons_outline:clipboard-document-list"></mat-icon>
+            <p class="text-base font-semibold">No se encontraron requisiciones</p>
+            <p class="text-sm text-gray-400">Crea una nueva requisición para iniciar el proceso de selección.</p>
+        </div>
+
+        <div *ngIf="!cargando && requisiciones.length > 0" class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                        <th class="py-3 px-4">Folio / Vacante</th>
+                        <th class="py-3 px-4">Área / Sucursal</th>
+                        <th class="py-3 px-4 text-center">Plazas</th>
+                        <th class="py-3 px-4 text-center">Días Proceso</th>
+                        <th class="py-3 px-4">Aprobaciones</th>
+                        <th class="py-3 px-4 text-center">Estatus</th>
+                        <th class="py-3 px-4 text-center">Candidatos</th>
+                        <th class="py-3 px-4 text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr *ngFor="let req of requisiciones" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="py-3 px-4">
+                            <a [routerLink]="['/rrhh/reclutamiento', req.requisicionId]" class="font-bold text-primary hover:underline text-base block">
+                                {{ req.puesto }}
+                            </a>
+                            <span class="text-xs text-gray-400">{{ req.folio }} • {{ req.tipo }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-medium text-gray-800 dark:text-gray-200 block">{{ req.areaOSolicitante }}</span>
+                            <span class="text-xs text-gray-400">{{ req.sucursalNombre || 'Sin sucursal' }}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-semibold">{{ req.plazasCubiertas }} / {{ req.numeroPlazas }}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="px-2 py-0.5 rounded text-xs font-bold"
+                                  [ngClass]="req.diasEnProceso > 30 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'">
+                                {{ req.diasEnProceso }} d
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-1.5 text-[11px]">
+                                <span class="px-1.5 py-0.5 rounded font-medium"
+                                      [ngClass]="req.aprobacionAdminGeneral ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'"
+                                      [matTooltip]="'Aprobación Admin General: ' + (req.aprobacionAdminGeneral ? 'Sí' : 'Pendiente')">
+                                    AG
+                                </span>
+                                <span class="px-1.5 py-0.5 rounded font-medium"
+                                      [ngClass]="req.aprobacionDireccion ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'"
+                                      [matTooltip]="'Aprobación Dirección: ' + (req.aprobacionDireccion ? 'Sí' : 'Pendiente')">
+                                    DIR
+                                </span>
+                                <span class="px-1.5 py-0.5 rounded font-medium"
+                                      [ngClass]="req.validacionRrhh ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'"
+                                      [matTooltip]="'Validación RRHH: ' + (req.validacionRrhh ? 'Sí' : 'Pendiente')">
+                                    RH
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide"
+                                  [ngClass]="estatusClase(req.estatus)">
+                                {{ req.estatus }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full font-bold text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                                {{ req.totalCandidatos }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <a mat-stroked-button color="primary" [routerLink]="['/rrhh/reclutamiento', req.requisicionId]">
+                                <span>Ver vacante</span>
+                                <mat-icon svgIcon="heroicons_mini:arrow-right"></mat-icon>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

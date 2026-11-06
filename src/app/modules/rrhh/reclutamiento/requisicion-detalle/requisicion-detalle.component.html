@@ -1,0 +1,287 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8" *ngIf="requisicion">
+    <!-- Breadcrumb & Back -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <a routerLink="/rrhh/reclutamiento" class="hover:underline flex items-center gap-1">
+            <mat-icon class="icon-size-4" svgIcon="heroicons_mini:arrow-left"></mat-icon>
+            <span>Reclutamiento</span>
+        </a>
+        <span>/</span>
+        <span class="font-medium text-gray-700 dark:text-gray-200">{{ requisicion.folio }}</span>
+    </div>
+
+    <!-- Vacancy Header Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col gap-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-black text-gray-900 dark:text-gray-100">{{ requisicion.puesto }}</h1>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wide"
+                          [ngClass]="estatusClase(requisicion.estatus)">
+                        {{ requisicion.estatus }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-600">
+                        {{ requisicion.folio }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {{ requisicion.areaOSolicitante }} • {{ requisicion.sucursalNombre || 'Sin sucursal' }} • {{ requisicion.tipo }} • {{ requisicion.razonSocial }}
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button mat-stroked-button (click)="abrirEditarRequisicion()">
+                    <mat-icon svgIcon="heroicons_outline:pencil-square"></mat-icon>
+                    <span class="ml-1">Editar</span>
+                </button>
+                <button mat-flat-button color="primary" (click)="publicar()"
+                        [disabled]="requisicion.estatus === 'Publicada' || !requisicion.aprobacionAdminGeneral || !requisicion.aprobacionDireccion || !requisicion.validacionRrhh">
+                    <mat-icon svgIcon="heroicons_outline:globe-alt"></mat-icon>
+                    <span class="ml-1">Publicar Vacante</span>
+                </button>
+                <button mat-icon-button [matMenuTriggerFor]="menuMas" matTooltip="Más opciones">
+                    <mat-icon svgIcon="heroicons_mini:ellipsis-vertical"></mat-icon>
+                </button>
+                <mat-menu #menuMas="matMenu">
+                    <button mat-menu-item class="text-red-600" (click)="cancelar()" *ngIf="requisicion.estatus !== 'Cancelada'">
+                        <mat-icon svgIcon="heroicons_outline:no-symbol" class="text-red-600"></mat-icon>
+                        <span>Cancelar Requisición</span>
+                    </button>
+                </mat-menu>
+            </div>
+        </div>
+
+        <!-- Badges & Approval Pipeline -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 text-sm">
+            <div>
+                <span class="text-xs text-gray-400 block font-medium">Plazas Requeridas</span>
+                <span class="font-bold text-gray-800 dark:text-gray-100 text-lg">
+                    {{ requisicion.plazasCubiertas }} / {{ requisicion.numeroPlazas }} cubiertas
+                </span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block font-medium">Tiempo en Proceso</span>
+                <span class="font-bold text-gray-800 dark:text-gray-100 text-lg">
+                    {{ requisicion.diasEnProceso }} días
+                </span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block font-medium">Salario Propuesto</span>
+                <span class="font-bold text-gray-800 dark:text-gray-100 text-lg">
+                    {{ requisicion.salarioPropuesto ? (requisicion.salarioPropuesto | currency:'MXN':'symbol-narrow':'1.2-2') : 'No especificado' }}
+                </span>
+            </div>
+            <div>
+                <span class="text-xs text-gray-400 block font-medium">Fecha de Solicitud</span>
+                <span class="font-bold text-gray-800 dark:text-gray-100 text-lg">
+                    {{ requisicion.fechaSolicitud | date:'dd/MM/yyyy' }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Approvals Checkpoints -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-400">
+                Aprobaciones Obligatorias para Publicación
+            </span>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Admin General -->
+                <button mat-stroked-button
+                        (click)="alternarAprobacion('AdminGeneral', requisicion.aprobacionAdminGeneral)"
+                        [ngClass]="requisicion.aprobacionAdminGeneral ? 'border-green-500 bg-green-50/50 text-green-700' : 'border-gray-300 text-gray-500'">
+                    <mat-icon [svgIcon]="requisicion.aprobacionAdminGeneral ? 'heroicons_mini:check-circle' : 'heroicons_mini:clock'"></mat-icon>
+                    <span class="ml-1">Admin General: {{ requisicion.aprobacionAdminGeneral ? 'Aprobado' : 'Pendiente' }}</span>
+                </button>
+
+                <!-- Dirección -->
+                <button mat-stroked-button
+                        (click)="alternarAprobacion('Direccion', requisicion.aprobacionDireccion)"
+                        [ngClass]="requisicion.aprobacionDireccion ? 'border-green-500 bg-green-50/50 text-green-700' : 'border-gray-300 text-gray-500'">
+                    <mat-icon [svgIcon]="requisicion.aprobacionDireccion ? 'heroicons_mini:check-circle' : 'heroicons_mini:clock'"></mat-icon>
+                    <span class="ml-1">Dirección: {{ requisicion.aprobacionDireccion ? 'Aprobado' : 'Pendiente' }}</span>
+                </button>
+
+                <!-- RRHH -->
+                <button mat-stroked-button
+                        (click)="alternarAprobacion('Rrhh', requisicion.validacionRrhh)"
+                        [ngClass]="requisicion.validacionRrhh ? 'border-green-500 bg-green-50/50 text-green-700' : 'border-gray-300 text-gray-500'">
+                    <mat-icon [svgIcon]="requisicion.validacionRrhh ? 'heroicons_mini:check-circle' : 'heroicons_mini:clock'"></mat-icon>
+                    <span class="ml-1">Validación RRHH: {{ requisicion.validacionRrhh ? 'Validado' : 'Pendiente' }}</span>
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="requisicion.perfilRequerido" class="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <strong>Perfil Requerido:</strong> {{ requisicion.perfilRequerido }}
+        </div>
+    </div>
+
+    <!-- Candidates Section / Ranking -->
+    <div class="mt-8 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <mat-icon class="text-primary" svgIcon="heroicons_outline:trophy"></mat-icon>
+                    Ranking de Candidatos
+                </h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Ordenados automáticamente por Calificación Ponderada (desempate: fecha de primer contacto)
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button mat-stroked-button color="primary"
+                        (click)="analizarElegiblesIa()"
+                        [disabled]="analizandoElegibles || requisicion.candidatos.length === 0"
+                        matTooltip="Ejecuta la preselección con IA en lote para todos los candidatos elegibles">
+                    <mat-icon [svgIcon]="analizandoElegibles ? 'heroicons_outline:arrow-path' : 'heroicons_outline:sparkles'"
+                              [class.animate-spin]="analizandoElegibles"></mat-icon>
+                    <span class="ml-1.5">{{ analizandoElegibles ? 'Analizando...' : 'Analizar elegibles' }}</span>
+                </button>
+
+                <button mat-flat-button color="primary" (click)="abrirNuevoCandidato()">
+                    <mat-icon svgIcon="heroicons_outline:user-plus"></mat-icon>
+                    <span class="ml-2">Registrar Candidato</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtro por sugerencia de IA: solo cambia la vista, no el estatus de nadie -->
+        <div *ngIf="requisicion.candidatos.length > 0" class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ver:</span>
+            <button mat-stroked-button type="button" (click)="filtroIa = 'todos'"
+                    [color]="filtroIa === 'todos' ? 'primary' : undefined">Todos</button>
+            <button mat-stroked-button type="button" (click)="filtroIa = 'sugeridos'"
+                    [color]="filtroIa === 'sugeridos' ? 'primary' : undefined"
+                    [matTooltip]="'Candidatos con puntaje de IA de ' + umbralSugerenciaIa.toFixed(1) + ' o más. Es una sugerencia; la decisión es de RRHH.'">
+                Sugeridos por IA (≥ {{ umbralSugerenciaIa.toFixed(1) }})
+            </button>
+            <button mat-stroked-button type="button" (click)="filtroIa = 'sinAnalizar'"
+                    [color]="filtroIa === 'sinAnalizar' ? 'primary' : undefined">Sin analizar</button>
+        </div>
+
+        <!-- Table / Cards of Candidates -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div *ngIf="requisicion.candidatos.length === 0" class="p-12 text-center text-gray-500">
+                <mat-icon class="icon-size-12 text-gray-400 mb-2" svgIcon="heroicons_outline:user-group"></mat-icon>
+                <p class="text-base font-semibold">No hay candidatos postulados</p>
+                <p class="text-sm text-gray-400">Registra candidatos para evaluar entrevistas y pruebas psicométricas / prácticas.</p>
+            </div>
+
+            <div *ngIf="requisicion.candidatos.length > 0" class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                        <tr>
+                            <th class="py-3 px-4 text-center w-12">#</th>
+                            <th class="py-3 px-4">Candidato</th>
+                            <th class="py-3 px-4 text-center">Calificación (1-5)</th>
+                            <th class="py-3 px-4 text-center">Preselección IA</th>
+                            <th class="py-3 px-4">Desglose de Componentes</th>
+                            <th class="py-3 px-4 text-center">Privacidad</th>
+                            <th class="py-3 px-4 text-center">Estatus</th>
+                            <th class="py-3 px-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr *ngFor="let c of candidatosVisibles"
+                            (click)="abrirFichaCandidato(c)"
+                            class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors">
+                            <td class="py-3 px-4 text-center font-bold text-gray-400">
+                                {{ posicionRanking(c) }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="font-bold text-gray-900 dark:text-gray-100 block text-base">{{ c.nombre }}</span>
+                                <span class="text-xs text-gray-400">
+                                    {{ c.fuente }} • 1er contacto: {{ c.fechaPrimerContacto | date:'dd/MM/yyyy' }}
+                                    <span *ngIf="c.telefono"> • {{ c.telefono }}</span>
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-black text-sm"
+                                     [ngClass]="c.calificacionGeneral ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'">
+                                    <span>{{ c.calificacionGeneral !== null && c.calificacionGeneral !== undefined ? c.calificacionGeneral.toFixed(1) : '-' }}</span>
+                                    <span class="text-[10px] opacity-70">/ 5.0</span>
+                                </div>
+                                <span *ngIf="c.calificacionIncompleta"
+                                      class="block text-[10px] text-amber-600 font-semibold mt-0.5">
+                                    Incompleta
+                                </span>
+                            </td>
+                            <!-- Preselección IA -->
+                            <td class="py-3 px-4 text-center">
+                                <div *ngIf="c.puntajeIa !== null && c.puntajeIa !== undefined"
+                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                                     [matTooltip]="c.preseleccionIa?.justificacion || 'Evaluación de preselección IA completada'">
+                                    <mat-icon class="icon-size-3.5 text-indigo-500" svgIcon="heroicons_mini:sparkles"></mat-icon>
+                                    <span>{{ c.puntajeIa.toFixed(1) }}</span>
+                                    <span class="text-[10px] opacity-70">/ 5.0</span>
+                                </div>
+                                <span *ngIf="c.puntajeIa === null || c.puntajeIa === undefined"
+                                      class="text-xs text-gray-400 italic">
+                                    Sin análisis
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium"
+                                          [matTooltip]="'Entrevistas RH y técnica (40%): ' + (c.promedioEntrevistas ? c.promedioEntrevistas.toFixed(1) : 'Sin calificar')">
+                                        Ent: <strong>{{ c.promedioEntrevistas !== null && c.promedioEntrevistas !== undefined ? c.promedioEntrevistas.toFixed(1) : '-' }}</strong>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium"
+                                          [matTooltip]="'Psicométrica (30%): ' + (c.promedioPsicometrica ? c.promedioPsicometrica.toFixed(1) : 'Sin calificar')">
+                                        Psico: <strong>{{ c.promedioPsicometrica !== null && c.promedioPsicometrica !== undefined ? c.promedioPsicometrica.toFixed(1) : '-' }}</strong>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium"
+                                          [matTooltip]="'Práctica (30%): ' + (c.promedioPractica ? c.promedioPractica.toFixed(1) : 'Sin calificar')">
+                                        Prác: <strong>{{ c.promedioPractica !== null && c.promedioPractica !== undefined ? c.promedioPractica.toFixed(1) : '-' }}</strong>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span *ngIf="c.avisoPrivacidadAceptado"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-800">
+                                    <mat-icon class="icon-size-3" svgIcon="heroicons_mini:check"></mat-icon>
+                                    Sí
+                                </span>
+                                <span *ngIf="!c.avisoPrivacidadAceptado"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800"
+                                      matTooltip="Debe aceptar aviso de privacidad antes de entrevista o evaluación">
+                                    <mat-icon class="icon-size-3" svgIcon="heroicons_mini:x-mark"></mat-icon>
+                                    No
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                                      [ngClass]="candidatoEstatusClase(c.estatus)">
+                                    {{ c.estatus }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right" (click)="$event.stopPropagation()">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button mat-icon-button (click)="abrirEntrevista(c, $event)"
+                                            [disabled]="!c.avisoPrivacidadAceptado"
+                                            matTooltip="Registrar entrevista">
+                                        <mat-icon svgIcon="heroicons_outline:chat-bubble-left-right"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button (click)="abrirEvaluacion(c, 'Psicometrica', $event)"
+                                            [disabled]="!c.avisoPrivacidadAceptado"
+                                            matTooltip="Registrar evaluación">
+                                        <mat-icon svgIcon="heroicons_outline:clipboard-document-check"></mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" (click)="abrirDescarte(c, $event)"
+                                            *ngIf="c.estatus !== 'Descartado'"
+                                            matTooltip="Descartar candidato">
+                                        <mat-icon svgIcon="heroicons_outline:user-minus"></mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div *ngIf="candidatosVisibles.length === 0" class="p-8 text-center text-sm text-gray-500">
+                    Ningún candidato coincide con este filtro.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

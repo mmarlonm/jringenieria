@@ -384,6 +384,8 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' }, // Conservado
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.reclutamiento', title: 'Reclutamiento', type: 'basic', icon: 'heroicons_outline:user-plus', link: '/rrhh/reclutamiento' },
+            { id: 'rrhh.capacitacion', title: 'Capacitación', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/rrhh/capacitacion' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
@@ -526,6 +528,8 @@ export const compactNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.reclutamiento', title: 'Reclutamiento', type: 'basic', icon: 'heroicons_outline:user-plus', link: '/rrhh/reclutamiento' },
+            { id: 'rrhh.capacitacion', title: 'Capacitación', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/rrhh/capacitacion' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
@@ -669,6 +673,8 @@ export const futuristicNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.reclutamiento', title: 'Reclutamiento', type: 'basic', icon: 'heroicons_outline:user-plus', link: '/rrhh/reclutamiento' },
+            { id: 'rrhh.capacitacion', title: 'Capacitación', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/rrhh/capacitacion' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
@@ -804,6 +810,8 @@ export const horizontalNavigation: FuseNavigationItem[] = [
         children: [
             { id: 'rrhh.personal-management', title: 'Personal', type: 'basic', icon: 'heroicons_outline:user-group', link: '/rrhh/personal-management' },
             { id: 'rrhh.report-entrada-salida', title: 'Reporte de Entradas y Salidas', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/rrhh/report-entrada-salida' },
+            { id: 'rrhh.reclutamiento', title: 'Reclutamiento', type: 'basic', icon: 'heroicons_outline:user-plus', link: '/rrhh/reclutamiento' },
+            { id: 'rrhh.capacitacion', title: 'Capacitación', type: 'basic', icon: 'heroicons_outline:academic-cap', link: '/rrhh/capacitacion' },
             { id: 'rrhh.colaboradores', title: 'Colaboradores', type: 'basic', icon: 'heroicons_outline:identification', link: '/rrhh/colaboradores' },
             { id: 'rrhh.parametros', title: 'Parámetros RRHH', type: 'basic', icon: 'heroicons_outline:adjustments-horizontal', link: '/rrhh/parametros' },
             { id: 'rrhh.mi-expediente', title: 'Mi expediente', type: 'basic', icon: 'heroicons_outline:folder-open', link: '/rrhh/mi-expediente' },
