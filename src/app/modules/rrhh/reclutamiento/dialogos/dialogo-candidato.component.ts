@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TEXTO_CONSENTIMIENTO_IA } from '../reclutamiento.constants';
 import { ReclutamientoService } from '../reclutamiento.service';
 import { Candidato } from '../reclutamiento.types';
 
@@ -81,6 +82,23 @@ import { Candidato } from '../reclutamiento.types';
                     <textarea matInput formControlName="notas" rows="2" placeholder="Observaciones iniciales del candidato..."></textarea>
                 </mat-form-field>
 
+                <!-- Currículum Vitae en texto -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Currículum Vitae (Texto)</mat-label>
+                    <textarea matInput formControlName="cvTexto" rows="4" maxlength="12000"
+                              placeholder="Pega aquí el texto del CV del candidato para análisis de preselección con IA..."></textarea>
+                    <mat-hint align="end">{{ (form.get('cvTexto')?.value?.length || 0) }} / 12,000</mat-hint>
+                </mat-form-field>
+
+                <!-- Consentimiento IA -->
+                <div class="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/50">
+                    <mat-checkbox formControlName="consentimientoIa" color="primary">
+                        <span class="font-medium text-indigo-950 dark:text-indigo-200 text-xs">
+                            {{ textoConsentimientoIa }}
+                        </span>
+                    </mat-checkbox>
+                </div>
+
                 <!-- Aviso de privacidad -->
                 <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50">
                     <mat-checkbox formControlName="avisoPrivacidadAceptado" color="primary">
@@ -110,6 +128,7 @@ export class DialogoCandidatoComponent implements OnInit {
 
     form!: FormGroup;
     guardando = false;
+    readonly textoConsentimientoIa = TEXTO_CONSENTIMIENTO_IA;
 
     constructor(@Inject(MAT_DIALOG_DATA) public data: { requisicionId: number; candidato?: Candidato }) {}
 
@@ -121,6 +140,8 @@ export class DialogoCandidatoComponent implements OnInit {
             fuente: [this.data?.candidato?.fuente || 'LinkedIn', [Validators.required]],
             expectativaSalarial: [this.data?.candidato?.expectativaSalarial || null],
             notas: [this.data?.candidato?.notas || ''],
+            cvTexto: [this.data?.candidato?.cvTexto || '', [Validators.maxLength(12000)]],
+            consentimientoIa: [this.data?.candidato?.consentimientoIa || false],
             avisoPrivacidadAceptado: [this.data?.candidato?.avisoPrivacidadAceptado || false]
         });
     }

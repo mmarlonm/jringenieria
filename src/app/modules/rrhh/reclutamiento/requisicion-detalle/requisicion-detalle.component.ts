@@ -38,6 +38,7 @@ export class RequisicionDetalleComponent implements OnInit {
     requisicionId!: number;
     requisicion: RequisicionDetalle | null = null;
     cargando = false;
+    analizandoElegibles = false;
 
     ngOnInit(): void {
         this.requisicionId = Number(this._route.snapshot.paramMap.get('id'));
@@ -90,6 +91,29 @@ export class RequisicionDetalleComponent implements OnInit {
         this._service.cancelarRequisicion(this.requisicionId, motivo.trim()).subscribe({
             next: () => this.cargar(),
             error: (err) => alert(err?.error?.mensaje || 'Error al cancelar la requisición')
+        });
+    }
+
+    analizarElegiblesIa(): void {
+        if (!this.requisicion) return;
+        this.analizandoElegibles = true;
+        this._service.analizarRequisicionIa(this.requisicionId).subscribe({
+            next: (res) => {
+                this.analizandoElegibles = false;
+                let mensaje = `Análisis de preselección con IA completado.\n\n` +
+                    `• Analizados exitosamente: ${res.analizados}\n` +
+                    `• Candidatos omitidos: ${res.omitidos}`;
+                if (res.detallesOmitidos && res.detallesOmitidos.length > 0) {
+                    mensaje += '\n\nDetalle de omisiones:\n' +
+                        res.detallesOmitidos.map((o) => `• ${o.nombre}: ${o.motivo}`).join('\n');
+                }
+                alert(mensaje);
+                this.cargar();
+            },
+            error: (err) => {
+                this.analizandoElegibles = false;
+                alert(err?.error?.mensaje || 'Error al ejecutar el análisis de preselección con IA');
+            }
         });
     }
 

@@ -128,10 +128,21 @@
                 </p>
             </div>
 
-            <button mat-flat-button color="primary" (click)="abrirNuevoCandidato()">
-                <mat-icon svgIcon="heroicons_outline:user-plus"></mat-icon>
-                <span class="ml-2">Registrar Candidato</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button mat-stroked-button color="primary"
+                        (click)="analizarElegiblesIa()"
+                        [disabled]="analizandoElegibles || requisicion.candidatos.length === 0"
+                        matTooltip="Ejecuta la preselección con IA en lote para todos los candidatos elegibles">
+                    <mat-icon [svgIcon]="analizandoElegibles ? 'heroicons_outline:arrow-path' : 'heroicons_outline:sparkles'"
+                              [class.animate-spin]="analizandoElegibles"></mat-icon>
+                    <span class="ml-1.5">{{ analizandoElegibles ? 'Analizando...' : 'Analizar elegibles' }}</span>
+                </button>
+
+                <button mat-flat-button color="primary" (click)="abrirNuevoCandidato()">
+                    <mat-icon svgIcon="heroicons_outline:user-plus"></mat-icon>
+                    <span class="ml-2">Registrar Candidato</span>
+                </button>
+            </div>
         </div>
 
         <!-- Table / Cards of Candidates -->
@@ -149,6 +160,7 @@
                             <th class="py-3 px-4 text-center w-12">#</th>
                             <th class="py-3 px-4">Candidato</th>
                             <th class="py-3 px-4 text-center">Calificación (1-5)</th>
+                            <th class="py-3 px-4 text-center">Preselección IA</th>
                             <th class="py-3 px-4">Desglose de Componentes</th>
                             <th class="py-3 px-4 text-center">Privacidad</th>
                             <th class="py-3 px-4 text-center">Estatus</th>
@@ -178,6 +190,20 @@
                                 <span *ngIf="c.calificacionIncompleta"
                                       class="block text-[10px] text-amber-600 font-semibold mt-0.5">
                                     Incompleta
+                                </span>
+                            </td>
+                            <!-- Preselección IA -->
+                            <td class="py-3 px-4 text-center">
+                                <div *ngIf="c.puntajeIa !== null && c.puntajeIa !== undefined"
+                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                                     [matTooltip]="c.preseleccionIa?.justificacion || 'Evaluación de preselección IA completada'">
+                                    <mat-icon class="icon-size-3.5 text-indigo-500" svgIcon="heroicons_mini:sparkles"></mat-icon>
+                                    <span>{{ c.puntajeIa.toFixed(1) }}</span>
+                                    <span class="text-[10px] opacity-70">/ 5.0</span>
+                                </div>
+                                <span *ngIf="c.puntajeIa === null || c.puntajeIa === undefined"
+                                      class="text-xs text-gray-400 italic">
+                                    Sin análisis
                                 </span>
                             </td>
                             <td class="py-3 px-4">

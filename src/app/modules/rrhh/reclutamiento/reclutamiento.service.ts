@@ -11,10 +11,12 @@ import {
     CrearRequisicionDto,
     Entrevista,
     Evaluacion,
+    PreseleccionIa,
     RegistrarEntrevistaDto,
     RegistrarEvaluacionDto,
     RequisicionDetalle,
-    RequisicionResumen
+    RequisicionResumen,
+    ResumenAnalisisRequisicionIa
 } from './reclutamiento.types';
 
 @Injectable({ providedIn: 'root' })
@@ -91,6 +93,19 @@ export class ReclutamientoService {
 
     registrarEvaluacion(dto: RegistrarEvaluacionDto): Observable<Evaluacion> {
         return this._http.post<Evaluacion>(`${this._api}/evaluaciones`, dto);
+    }
+
+    // Preselección IA
+    analizarCandidatoIa(candidatoId: number): Observable<PreseleccionIa> {
+        return this._http.post<PreseleccionIa>(`${this._api}/candidatos/${candidatoId}/preseleccion-ia`, {});
+    }
+
+    analizarRequisicionIa(requisicionId: number): Observable<ResumenAnalisisRequisicionIa> {
+        return this._http.post<ResumenAnalisisRequisicionIa>(`${this._api}/requisiciones/${requisicionId}/preseleccion-ia`, {});
+    }
+
+    obtenerPreseleccionIa(candidatoId: number): Observable<PreseleccionIa> {
+        return this._http.get<PreseleccionIa>(`${this._api}/candidatos/${candidatoId}/preseleccion-ia`);
     }
 
     // Catálogos

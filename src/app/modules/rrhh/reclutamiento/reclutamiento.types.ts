@@ -69,6 +69,11 @@ export interface Candidato {
     promedioPsicometrica?: number | null;
     promedioPractica?: number | null;
     notas?: string | null;
+    cvTexto?: string | null;
+    consentimientoIa?: boolean;
+    fechaConsentimientoIa?: string | null;
+    puntajeIa?: number | null;
+    preseleccionIa?: PreseleccionIa | null;
     creadoEn: string;
     entrevistas: Entrevista[];
     evaluaciones: Evaluacion[];
@@ -85,6 +90,8 @@ export interface CrearCandidatoDto {
     fechaPrimerContacto?: string | null;
     expectativaSalarial?: number | null;
     notas?: string | null;
+    cvTexto?: string | null;
+    consentimientoIa?: boolean;
 }
 
 export interface ActualizarCandidatoDto {
@@ -96,6 +103,8 @@ export interface ActualizarCandidatoDto {
     fechaAvisoPrivacidad?: string | null;
     expectativaSalarial?: number | null;
     notas?: string | null;
+    cvTexto?: string | null;
+    consentimientoIa?: boolean;
 }
 
 export interface CambiarEstatusCandidatoDto {
@@ -159,5 +168,29 @@ export interface CatalogosReclutamiento {
     tiposRequisicion: string[];
     estatusRequisicion: string[];
     estatusCandidato: string[];
+}
+
+export interface PreseleccionIa {
+    preseleccionIaId: number;
+    candidatoId: number;
+    puntaje: number;
+    fortalezas: string[];
+    brechas: string[];
+    justificacion: string;
+    modelo: string;
+    fechaAnalisis: string;
+}
+
+export interface CandidatoOmitidoIa {
+    candidatoId: number;
+    nombre: string;
+    motivo: string;
+}
+
+export interface ResumenAnalisisRequisicionIa {
+    requisicionId: number;
+    analizados: number;
+    omitidos: number;
+    detallesOmitidos: CandidatoOmitidoIa[];
 }
 
