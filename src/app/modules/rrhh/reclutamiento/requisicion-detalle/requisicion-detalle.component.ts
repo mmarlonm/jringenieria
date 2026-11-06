@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ChatIaService } from 'app/core/services/chat-ia.service';
 import { DialogoCandidatoFichaComponent } from '../dialogos/dialogo-candidato-ficha.component';
 import { DialogoCandidatoComponent } from '../dialogos/dialogo-candidato.component';
 import { DialogoDescarteComponent } from '../dialogos/dialogo-descarte.component';
@@ -13,6 +14,7 @@ import { DialogoEntrevistaComponent } from '../dialogos/dialogo-entrevista.compo
 import { DialogoEvaluacionComponent } from '../dialogos/dialogo-evaluacion.component';
 import { DialogoRequisicionComponent } from '../dialogos/dialogo-requisicion.component';
 import { ReclutamientoService } from '../reclutamiento.service';
+import { construirContextoChat, FiltroSugerenciaIa, filtrarPorSugerenciaIa, UMBRAL_SUGERENCIA_IA } from '../reclutamiento-ia.utils';
 import { Candidato, RequisicionDetalle } from '../reclutamiento.types';
 
 @Component({
@@ -29,16 +31,19 @@ import { Candidato, RequisicionDetalle } from '../reclutamiento.types';
     ],
     templateUrl: './requisicion-detalle.component.html'
 })
-export class RequisicionDetalleComponent implements OnInit {
+export class RequisicionDetalleComponent implements OnInit, OnDestroy {
     private readonly _route = inject(ActivatedRoute);
     private readonly _router = inject(Router);
     private readonly _service = inject(ReclutamientoService);
     private readonly _dialog = inject(MatDialog);
+    private readonly _chat = inject(ChatIaService);
 
     requisicionId!: number;
     requisicion: RequisicionDetalle | null = null;
     cargando = false;
     analizandoElegibles = false;
+    filtroIa: FiltroSugerenciaIa = 'todos';
+    readonly umbralSugerenciaIa = UMBRAL_SUGERENCIA_IA;
 
     ngOnInit(): void {
         this.requisicionId = Number(this._route.snapshot.paramMap.get('id'));
@@ -51,6 +56,8 @@ export class RequisicionDetalleComponent implements OnInit {
             next: (data) => {
                 this.requisicion = data;
                 this.cargando = false;
+                // El chat de IA (Rayito) conoce esta vacante; solo recibe candidatos con consentimiento de IA
+                this._chat.setContext(`Reclutamiento: ${data.folio} - ${data.puesto}`, construirContextoChat(data));
             },
             error: (err) => {
                 this.cargando = false;
@@ -58,6 +65,19 @@ export class RequisicionDetalleComponent implements OnInit {
                 this._router.navigate(['/rrhh/reclutamiento']);
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        this._chat.clearContext();
+    }
+
+    /** Candidatos que se muestran según el filtro de sugerencia de IA (el orden del ranking no cambia). */
+    get candidatosVisibles(): Candidato[] {
+        return this.requisicion ? filtrarPorSugerenciaIa(this.requisicion.candidatos, this.filtroIa) : [];
+    }
+
+    posicionRanking(c: Candidato): number {
+        return (this.requisicion?.candidatos.indexOf(c) ?? -1) + 1;
     }
 
     abrirEditarRequisicion(): void {
@@ -101,11 +121,11 @@ export class RequisicionDetalleComponent implements OnInit {
             next: (res) => {
                 this.analizandoElegibles = false;
                 let mensaje = `Análisis de preselección con IA completado.\n\n` +
-                    `• Analizados exitosamente: ${res.analizados}\n` +
-                    `• Candidatos omitidos: ${res.omitidos}`;
-                if (res.detallesOmitidos && res.detallesOmitidos.length > 0) {
+                    `• Analizados exitosamente: ${res.totalAnalizados}\n` +
+                    `• Candidatos omitidos: ${res.totalOmitidos}`;
+                if (res.omitidos && res.omitidos.length > 0) {
                     mensaje += '\n\nDetalle de omisiones:\n' +
-                        res.detallesOmitidos.map((o) => `• ${o.nombre}: ${o.motivo}`).join('\n');
+                        res.omitidos.map((o) => `• ${o.nombre}: ${o.motivo}`).join('\n');
                 }
                 alert(mensaje);
                 this.cargar();

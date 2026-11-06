@@ -145,6 +145,20 @@
             </div>
         </div>
 
+        <!-- Filtro por sugerencia de IA: solo cambia la vista, no el estatus de nadie -->
+        <div *ngIf="requisicion.candidatos.length > 0" class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ver:</span>
+            <button mat-stroked-button type="button" (click)="filtroIa = 'todos'"
+                    [color]="filtroIa === 'todos' ? 'primary' : undefined">Todos</button>
+            <button mat-stroked-button type="button" (click)="filtroIa = 'sugeridos'"
+                    [color]="filtroIa === 'sugeridos' ? 'primary' : undefined"
+                    [matTooltip]="'Candidatos con puntaje de IA de ' + umbralSugerenciaIa.toFixed(1) + ' o más. Es una sugerencia; la decisión es de RRHH.'">
+                Sugeridos por IA (≥ {{ umbralSugerenciaIa.toFixed(1) }})
+            </button>
+            <button mat-stroked-button type="button" (click)="filtroIa = 'sinAnalizar'"
+                    [color]="filtroIa === 'sinAnalizar' ? 'primary' : undefined">Sin analizar</button>
+        </div>
+
         <!-- Table / Cards of Candidates -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div *ngIf="requisicion.candidatos.length === 0" class="p-12 text-center text-gray-500">
@@ -168,11 +182,11 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <tr *ngFor="let c of requisicion.candidatos; let i = index"
+                        <tr *ngFor="let c of candidatosVisibles"
                             (click)="abrirFichaCandidato(c)"
                             class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors">
                             <td class="py-3 px-4 text-center font-bold text-gray-400">
-                                {{ i + 1 }}
+                                {{ posicionRanking(c) }}
                             </td>
                             <td class="py-3 px-4">
                                 <span class="font-bold text-gray-900 dark:text-gray-100 block text-base">{{ c.nombre }}</span>
@@ -263,6 +277,9 @@
                         </tr>
                     </tbody>
                 </table>
+                <div *ngIf="candidatosVisibles.length === 0" class="p-8 text-center text-sm text-gray-500">
+                    Ningún candidato coincide con este filtro.
+                </div>
             </div>
         </div>
     </div>

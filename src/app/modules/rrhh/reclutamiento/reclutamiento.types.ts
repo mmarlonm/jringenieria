@@ -189,8 +189,10 @@ export interface CandidatoOmitidoIa {
 
 export interface ResumenAnalisisRequisicionIa {
     requisicionId: number;
-    analizados: number;
-    omitidos: number;
-    detallesOmitidos: CandidatoOmitidoIa[];
+    totalCandidatos: number;
+    totalAnalizados: number;
+    totalOmitidos: number;
+    omitidos: CandidatoOmitidoIa[];
+    resultados: PreseleccionIa[];
 }
 
