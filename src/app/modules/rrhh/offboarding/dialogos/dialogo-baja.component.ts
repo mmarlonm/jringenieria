@@ -48,6 +48,7 @@ import { aFechaInput, etiquetaCausa, hoyIso } from '../offboarding.utils';
                             {{ c.nombre }} — {{ c.puesto || 'Sin puesto' }}
                         </mat-option>
                     </mat-select>
+                    <mat-hint *ngIf="colaboradoresCargados && colaboradores.length === 0" class="!text-amber-700">No hay colaboradores activos. Solo se da de baja a quien ya está activo: actívalo en RRHH › Colaboradores.</mat-hint>
                     <mat-error>Selecciona al colaborador</mat-error>
                 </mat-form-field>
 
@@ -107,6 +108,7 @@ export class DialogoBajaComponent implements OnInit {
     form!: FormGroup;
     guardando = false;
     colaboradores: ColaboradorBaja[] = [];
+    colaboradoresCargados = false;
     causas: CausaBaja[] = [];
     readonly etiquetaCausa = etiquetaCausa;
 
@@ -130,7 +132,10 @@ export class DialogoBajaComponent implements OnInit {
         if (!b) {
             this._service.catalogos().subscribe({ next: (c) => (this.causas = c.causas) });
             this._service.colaboradores().subscribe({
-                next: (lista) => (this.colaboradores = lista),
+                next: (lista) => {
+                    this.colaboradores = lista;
+                    this.colaboradoresCargados = true;
+                },
                 error: () => alert('No se pudo cargar la lista de colaboradores')
             });
         }

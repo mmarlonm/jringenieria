@@ -33,6 +33,7 @@ import { aFechaInput, claseClasificacion, etiquetaClasificacion, etiquetaEstatus
                     <mat-select formControlName="colaboradorId">
                         <mat-option *ngFor="let c of colaboradores" [value]="c.colaboradorId">{{ c.nombre }} — {{ c.puesto || 'Sin puesto' }}</mat-option>
                     </mat-select>
+                    <mat-hint *ngIf="colaboradoresCargados && colaboradores.length === 0" class="!text-amber-700">No hay colaboradores disponibles. Dalos de alta en RRHH › Colaboradores.</mat-hint>
                     <mat-error>Selecciona al colaborador</mat-error>
                 </mat-form-field>
 
@@ -124,6 +125,7 @@ export class DialogoEvaluacionCompetenciaComponent implements OnInit {
     form!: FormGroup;
     guardando = false;
     colaboradores: ColaboradorDesempeno[] = [];
+    colaboradoresCargados = false;
     readonly niveles = [0, 1, 2, 3, 4];
     readonly estatuses = ['Pendiente', 'EnProceso', 'Cerrada'];
     readonly etiquetaEstatus = etiquetaEstatus;
@@ -162,7 +164,10 @@ export class DialogoEvaluacionCompetenciaComponent implements OnInit {
 
         if (!e) {
             this._service.colaboradores().subscribe({
-                next: (lista) => (this.colaboradores = lista),
+                next: (lista) => {
+                    this.colaboradores = lista;
+                    this.colaboradoresCargados = true;
+                },
                 error: () => alert('No se pudo cargar la lista de colaboradores')
             });
         }

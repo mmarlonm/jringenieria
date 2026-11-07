@@ -49,6 +49,7 @@ import { ETIQUETAS_GRAVEDAD } from '../actas.utils';
                             {{ c.nombre }} — {{ c.puesto || 'Sin puesto' }}
                         </mat-option>
                     </mat-select>
+                    <mat-hint *ngIf="colaboradoresCargados && colaboradores.length === 0" class="!text-amber-700">No hay colaboradores disponibles. Dalos de alta en RRHH › Colaboradores.</mat-hint>
                     <mat-error>Selecciona al colaborador</mat-error>
                 </mat-form-field>
 
@@ -128,6 +129,7 @@ export class DialogoActaComponent implements OnInit {
     form!: FormGroup;
     guardando = false;
     colaboradores: ColaboradorActa[] = [];
+    colaboradoresCargados = false;
     gravedades = ['Leve', 'Grave', 'CausalRescision'];
 
     constructor(@Inject(MAT_DIALOG_DATA) public data: { acta?: ActaDetalle }) {}
@@ -149,7 +151,10 @@ export class DialogoActaComponent implements OnInit {
 
         if (!a) {
             this._service.colaboradores().subscribe({
-                next: (lista) => (this.colaboradores = lista),
+                next: (lista) => {
+                    this.colaboradores = lista;
+                    this.colaboradoresCargados = true;
+                },
                 error: () => alert('No se pudo cargar la lista de colaboradores')
             });
         }
