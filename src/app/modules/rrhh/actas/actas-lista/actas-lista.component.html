@@ -1,0 +1,140 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8">
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
+        <div>
+            <div class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-3">
+                <mat-icon class="icon-size-8 text-primary" svgIcon="heroicons_outline:document-text"></mat-icon>
+                <span>Actas administrativas</span>
+            </div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                Historial disciplinario con hechos objetivos, dos testigos y descargos antes de sancionar. El patrón tiene 30 días desde que conoce los hechos (Art. 517 LFT).
+            </div>
+        </div>
+        <button mat-flat-button color="primary" (click)="nuevaActa()">
+            <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+            <span class="ml-2">Nueva acta</span>
+        </button>
+    </div>
+
+    <div *ngIf="!verTodas"
+         class="mt-4 p-3 rounded-lg text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+        Aquí ves las actas que tú iniciaste. RRHH las cita, sanciona y cierra.
+    </div>
+
+    <!-- Alertas del plazo del Art. 517 -->
+    <div *ngIf="alertas.length > 0" class="mt-6 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4">
+        <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+            <mat-icon class="icon-size-5" svgIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+            <span>{{ alertas.length }} {{ alertas.length === 1 ? 'acta' : 'actas' }} con el plazo de 30 días por cerrar</span>
+        </div>
+        <ul class="mt-2 flex flex-col gap-1">
+            <li *ngFor="let a of alertas" class="flex flex-wrap items-center gap-2 text-sm">
+                <a [routerLink]="['/rrhh/actas', a.actaId]" class="font-semibold text-primary hover:underline">{{ a.folio }}</a>
+                <span class="text-gray-700 dark:text-gray-300">{{ a.colaboradorNombre }}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" [ngClass]="claseAlerta(a.alertaNivel)">
+                    {{ textoAlerta(a.alertaNivel, a.diasRestantes) }}
+                </span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-col sm:flex-row items-center gap-4 my-6">
+        <mat-form-field appearance="outline" class="w-full sm:w-80" subscriptSizing="dynamic">
+            <mat-icon matPrefix svgIcon="heroicons_outline:magnifying-glass" class="mr-2 text-gray-400"></mat-icon>
+            <input matInput [(ngModel)]="buscarTexto" (keyup.enter)="cargar()" placeholder="Buscar folio, colaborador o falta..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-56" subscriptSizing="dynamic">
+            <mat-label>Estatus</mat-label>
+            <mat-select [(ngModel)]="filtroEstatus" (selectionChange)="cargar()">
+                <mat-option value="">Todos los estatus</mat-option>
+                <mat-option *ngFor="let e of estatuses" [value]="e">{{ etiquetaEstatus(e) }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-56" subscriptSizing="dynamic">
+            <mat-label>Plazo (Art. 517)</mat-label>
+            <mat-select [(ngModel)]="filtroAlerta" (selectionChange)="cargar()">
+                <mat-option value="">Todos</mat-option>
+                <mat-option value="EnPlazo">En plazo</mat-option>
+                <mat-option value="Cerrar">Por cerrar (desde el día 20)</mat-option>
+                <mat-option value="PlazoVencido">Plazo vencido</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="cargar()" class="h-12">
+            <mat-icon svgIcon="heroicons_outline:arrow-path"></mat-icon>
+            <span class="ml-1">Actualizar</span>
+        </button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div *ngIf="cargando" class="p-8 text-center text-gray-500">Cargando actas...</div>
+
+        <div *ngIf="!cargando && errorCarga" class="p-8 text-center text-red-600">
+            No se pudieron cargar las actas.
+            <button mat-button color="primary" (click)="cargar()">Reintentar</button>
+        </div>
+
+        <div *ngIf="!cargando && !errorCarga && actas.length === 0" class="p-12 text-center text-gray-500">
+            <mat-icon class="icon-size-12 text-gray-400 mb-2" svgIcon="heroicons_outline:document-text"></mat-icon>
+            <p class="text-base font-semibold">No hay actas que mostrar</p>
+            <p class="text-sm text-gray-400">Inicia un acta cuando ocurra una falta para dejar constancia de los hechos.</p>
+        </div>
+
+        <div *ngIf="!cargando && actas.length > 0" class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                        <th class="py-3 px-4">Folio / Colaborador</th>
+                        <th class="py-3 px-4">Falta</th>
+                        <th class="py-3 px-4">Conocimiento</th>
+                        <th class="py-3 px-4 text-center">Plazo</th>
+                        <th class="py-3 px-4">Sanción</th>
+                        <th class="py-3 px-4 text-center">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr *ngFor="let a of actas" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="py-3 px-4">
+                            <a [routerLink]="['/rrhh/actas', a.actaId]" class="font-bold text-primary hover:underline text-base block">
+                                {{ a.colaboradorNombre }}
+                            </a>
+                            <span class="text-xs text-gray-400">{{ a.folio }}<span *ngIf="a.puestoArea"> • {{ a.puestoArea }}</span></span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-gray-800 dark:text-gray-200">{{ a.tipoFalta }}</div>
+                            <div class="text-xs text-gray-400">{{ etiquetaGravedad(a.gravedad) }}</div>
+                        </td>
+                        <td class="py-3 px-4">{{ a.fechaConocimiento | date:'dd/MM/yyyy' }}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="a.alertaNivel !== 'Ninguna'"
+                                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                                  [ngClass]="claseAlerta(a.alertaNivel)">
+                                {{ textoAlerta(a.alertaNivel, a.diasRestantes) }}
+                            </span>
+                            <div *ngIf="a.diasTranscurridos !== null && a.diasTranscurridos !== undefined" class="text-[11px] text-gray-400 mt-0.5">
+                                {{ a.diasTranscurridos }} días transcurridos
+                            </div>
+                            <span *ngIf="a.alertaNivel === 'Ninguna'" class="text-gray-400">—</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            {{ etiquetaSancion(a.sancion) }}
+                            <div *ngIf="textoValidacion(a.validacion)" class="text-[11px] text-red-600 dark:text-red-400 mt-0.5"
+                                 [matTooltip]="textoValidacion(a.validacion)">
+                                {{ textoValidacion(a.validacion) }}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="claseEstatus(a.estatus)">
+                                {{ etiquetaEstatus(a.estatus) }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

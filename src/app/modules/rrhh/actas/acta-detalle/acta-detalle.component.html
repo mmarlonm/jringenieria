@@ -1,0 +1,165 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8 gap-6">
+    <div *ngIf="cargando" class="p-12 text-center text-gray-500">Cargando acta...</div>
+
+    <ng-container *ngIf="acta">
+        <!-- Encabezado -->
+        <div class="flex flex-col gap-3 pb-4 border-b border-gray-200 dark:border-gray-800">
+            <a routerLink="/rrhh/actas" class="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:arrow-left"></mat-icon>
+                Actas administrativas
+            </a>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <div class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">{{ acta.colaboradorNombre }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ acta.folio }}<span *ngIf="acta.puestoArea"> • {{ acta.puestoArea }}</span><span *ngIf="acta.razonSocial"> • {{ acta.razonSocial }}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" [ngClass]="claseEstatus(acta.estatus)">
+                            {{ etiquetaEstatus(acta.estatus) }}
+                        </span>
+                        <span *ngIf="acta.alertaNivel !== 'Ninguna'"
+                              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
+                              [ngClass]="claseAlerta(acta.alertaNivel)">
+                            {{ textoAlerta(acta.alertaNivel, acta.diasRestantes) }}
+                        </span>
+                        <span *ngIf="acta.diasTranscurridos !== null && acta.diasTranscurridos !== undefined" class="text-xs text-gray-400">
+                            {{ acta.diasTranscurridos }} días desde que se conocieron los hechos
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button *ngFor="let a of acciones"
+                            mat-stroked-button
+                            [color]="a === 'anular' ? 'warn' : 'primary'"
+                            [disabled]="ocupado"
+                            (click)="ejecutar(a)">
+                        <mat-icon [svgIcon]="iconoAccion(a)"></mat-icon>
+                        <span class="ml-1.5">{{ etiquetaAccion(a) }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acta anulada -->
+        <div *ngIf="acta.estatus === 'Anulada'"
+             class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
+            <span class="font-bold">Acta anulada.</span> {{ acta.motivoAnulacion }}
+        </div>
+
+        <!-- Avance del procedimiento -->
+        <div *ngIf="acta.estatus !== 'Anulada'" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 overflow-x-auto">
+            <ol class="flex items-center min-w-max gap-2">
+                <li *ngFor="let p of pasos; let i = index" class="flex items-center gap-2">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                          [ngClass]="i <= pasoActual ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'">
+                        {{ i + 1 }}
+                    </span>
+                    <span class="text-sm" [ngClass]="i === pasoActual ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500'">
+                        {{ etiquetaEstatus(p) }}
+                    </span>
+                    <mat-icon *ngIf="i < pasos.length - 1" class="icon-size-4 text-gray-300" svgIcon="heroicons_outline:chevron-right"></mat-icon>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Validación -->
+        <div *ngIf="textoValidacion(acta.validacion)"
+             class="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm flex items-center gap-2">
+            <mat-icon class="icon-size-5" svgIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+            {{ textoValidacion(acta.validacion) }}
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Hechos -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Hechos</h3>
+                <dl class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <dt class="text-xs uppercase text-gray-400">Fecha y hora de los hechos</dt>
+                        <dd class="font-medium">{{ acta.fechaHechos | date:'dd/MM/yyyy HH:mm' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase text-gray-400">Se conocieron el</dt>
+                        <dd class="font-medium">{{ acta.fechaConocimiento | date:'dd/MM/yyyy' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase text-gray-400">Lugar</dt>
+                        <dd class="font-medium">{{ acta.lugar }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase text-gray-400">Gravedad</dt>
+                        <dd class="font-medium">{{ etiquetaGravedad(acta.gravedad) }}</dd>
+                    </div>
+                    <div class="col-span-2">
+                        <dt class="text-xs uppercase text-gray-400">Tipo de falta</dt>
+                        <dd class="font-medium">{{ acta.tipoFalta }}</dd>
+                    </div>
+                </dl>
+                <div>
+                    <div class="text-xs uppercase text-gray-400 mb-1">Narración objetiva</div>
+                    <p class="text-sm whitespace-pre-line text-gray-800 dark:text-gray-200">{{ acta.narracion }}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <div class="text-xs uppercase text-gray-400">Testigo 1</div>
+                        <div class="font-medium">{{ acta.testigo1 || '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs uppercase text-gray-400">Testigo 2</div>
+                        <div class="font-medium">{{ acta.testigo2 || '—' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <!-- Citatorio y audiencia -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Citatorio y audiencia</h3>
+                    <dl class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <dt class="text-xs uppercase text-gray-400">Citatorio</dt>
+                            <dd class="font-medium">{{ acta.fechaCitatorio ? (acta.fechaCitatorio | date:'dd/MM/yyyy') : 'Sin citar' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs uppercase text-gray-400">Audiencia</dt>
+                            <dd class="font-medium">{{ acta.fechaAudiencia ? (acta.fechaAudiencia | date:'dd/MM/yyyy') : 'Pendiente' }}</dd>
+                        </div>
+                    </dl>
+                    <div>
+                        <div class="text-xs uppercase text-gray-400 mb-1">Descargos del colaborador</div>
+                        <p class="text-sm whitespace-pre-line text-gray-800 dark:text-gray-200">{{ acta.descargos || 'Aún no se registran.' }}</p>
+                    </div>
+                </div>
+
+                <!-- Sanción y firma -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Sanción y firma</h3>
+                    <dl class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <dt class="text-xs uppercase text-gray-400">Sanción</dt>
+                            <dd class="font-medium">{{ etiquetaSancion(acta.sancion) }}</dd>
+                        </div>
+                        <div *ngIf="acta.diasSuspension">
+                            <dt class="text-xs uppercase text-gray-400">Días de suspensión</dt>
+                            <dd class="font-medium">{{ acta.diasSuspension }}</dd>
+                        </div>
+                        <div class="col-span-2" *ngIf="acta.fundamento">
+                            <dt class="text-xs uppercase text-gray-400">Fundamento</dt>
+                            <dd class="font-medium">{{ acta.fundamento }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs uppercase text-gray-400">Firma del colaborador</dt>
+                            <dd class="font-medium">{{ etiquetaFirma(acta.resultadoFirma) }}</dd>
+                        </div>
+                        <div *ngIf="acta.fechaCierre">
+                            <dt class="text-xs uppercase text-gray-400">Cerrada el</dt>
+                            <dd class="font-medium">{{ acta.fechaCierre | date:'dd/MM/yyyy' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

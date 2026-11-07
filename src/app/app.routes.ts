@@ -123,6 +123,7 @@ export const appRoutes: Route[] = [
                     { path: 'report-entrada-salida', loadChildren: () => import('app/modules/rrhh/reports/report-entrada-salida/report-entrada-salida.routes') },
                     { path: 'reclutamiento', loadChildren: () => import('app/modules/rrhh/reclutamiento/reclutamiento.routes') },
                     { path: 'capacitacion', loadChildren: () => import('app/modules/rrhh/capacitacion/capacitacion.routes') },
+                    { path: 'actas', loadChildren: () => import('app/modules/rrhh/actas/actas.routes') },
                     { path: 'colaboradores', loadChildren: () => import('app/modules/rrhh/colaboradores/colaboradores.routes') },
                     { path: 'parametros', loadChildren: () => import('app/modules/rrhh/parametros/parametros.routes') },
                     { path: 'mi-expediente', loadChildren: () => import('app/modules/rrhh/expediente/mi-expediente.routes') },
