@@ -1,0 +1,129 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8">
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
+        <div>
+            <div class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-3">
+                <mat-icon class="icon-size-8 text-primary" svgIcon="heroicons_outline:arrow-right-on-rectangle"></mat-icon>
+                <span>Offboarding</span>
+            </div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                Rutas de baja y checklist por responsable. Ninguna tarea condiciona la salida del colaborador a firmas.
+            </div>
+        </div>
+        <button mat-flat-button color="primary" (click)="nuevaBaja()">
+            <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+            <span class="ml-2">Nueva baja</span>
+        </button>
+    </div>
+
+    <!-- Resumen -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Casos en proceso</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-gray-100 mt-1">{{ enProceso }}</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">Baja IMSS vencida</div>
+            <div class="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{{ conImssVencida }}</div>
+            <div class="text-xs text-gray-400 mt-1">Pasaron los 5 días hábiles sin registrar la baja</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total de casos</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-gray-100 mt-1">{{ bajas.length }}</div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-col sm:flex-row items-center gap-4 mb-6">
+        <mat-form-field appearance="outline" class="w-full sm:w-80" subscriptSizing="dynamic">
+            <mat-icon matPrefix svgIcon="heroicons_outline:magnifying-glass" class="mr-2 text-gray-400"></mat-icon>
+            <input matInput [(ngModel)]="buscarTexto" (keyup.enter)="cargar()" placeholder="Buscar folio o colaborador..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-56" subscriptSizing="dynamic">
+            <mat-label>Estatus</mat-label>
+            <mat-select [(ngModel)]="filtroEstatus" (selectionChange)="cargar()">
+                <mat-option value="">Todos los estatus</mat-option>
+                <mat-option *ngFor="let e of estatuses" [value]="e">{{ etiquetaEstatus(e) }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="cargar()" class="h-12">
+            <mat-icon svgIcon="heroicons_outline:arrow-path"></mat-icon>
+            <span class="ml-1">Actualizar</span>
+        </button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div *ngIf="cargando" class="p-8 text-center text-gray-500">Cargando bajas...</div>
+
+        <div *ngIf="!cargando && errorCarga" class="p-8 text-center text-red-600">
+            No se pudieron cargar las bajas.
+            <button mat-button color="primary" (click)="cargar()">Reintentar</button>
+        </div>
+
+        <div *ngIf="!cargando && !errorCarga && bajas.length === 0" class="p-12 text-center text-gray-500">
+            <mat-icon class="icon-size-12 text-gray-400 mb-2" svgIcon="heroicons_outline:arrow-right-on-rectangle"></mat-icon>
+            <p class="text-base font-semibold">No hay casos de baja</p>
+            <p class="text-sm text-gray-400">Abre un caso cuando un colaborador deje la empresa para seguir su checklist.</p>
+        </div>
+
+        <div *ngIf="!cargando && bajas.length > 0" class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                        <th class="py-3 px-4">Folio / Colaborador</th>
+                        <th class="py-3 px-4">Causa</th>
+                        <th class="py-3 px-4">Último día</th>
+                        <th class="py-3 px-4">Avance del checklist</th>
+                        <th class="py-3 px-4 text-center">Baja IMSS</th>
+                        <th class="py-3 px-4 text-center">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr *ngFor="let b of bajas" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                        <td class="py-3 px-4">
+                            <a [routerLink]="['/rrhh/offboarding', b.bajaId]" class="font-bold text-primary hover:underline text-base block">
+                                {{ b.colaboradorNombre }}
+                            </a>
+                            <span class="text-xs text-gray-400">{{ b.folio }}<span *ngIf="b.puestoArea"> • {{ b.puestoArea }}</span></span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-gray-800 dark:text-gray-200">{{ etiquetaCausa(b.causa) }}</div>
+                            <div class="text-xs text-gray-400">Ruta {{ b.ruta }}</div>
+                        </td>
+                        <td class="py-3 px-4">{{ b.ultimoDiaLaborado | date:'dd/MM/yyyy' }}</td>
+                        <td class="py-3 px-4 min-w-[180px]">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-auto h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                    <div class="h-2 bg-primary" [style.width.%]="porcentajeAvance(b.tareasTotal, b.tareasResueltas)"></div>
+                                </div>
+                                <span class="text-xs font-semibold">{{ b.tareasResueltas }}/{{ b.tareasTotal }}</span>
+                            </div>
+                            <div *ngIf="b.tareasVencidas > 0" class="text-[11px] text-red-600 dark:text-red-400 mt-0.5">
+                                {{ b.tareasVencidas }} {{ b.tareasVencidas === 1 ? 'tarea vencida' : 'tareas vencidas' }}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span *ngIf="b.alertaBajaImss !== 'Ninguna'"
+                                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                                  [ngClass]="claseAlertaImss(b.alertaBajaImss)">
+                                {{ textoAlertaImss(b.alertaBajaImss) }}
+                            </span>
+                            <div class="text-[11px] text-gray-400 mt-0.5" *ngIf="b.alertaBajaImss !== 'Registrada' && b.alertaBajaImss !== 'Ninguna'">
+                                Límite: {{ b.limiteBajaImss | date:'dd/MM/yyyy' }}
+                            </div>
+                            <span *ngIf="b.alertaBajaImss === 'Ninguna'" class="text-gray-400">—</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="claseEstatus(b.estatus)">
+                                {{ etiquetaEstatus(b.estatus) }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

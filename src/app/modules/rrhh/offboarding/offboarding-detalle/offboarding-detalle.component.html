@@ -1,0 +1,181 @@
+<div class="flex flex-col flex-auto min-w-0 p-6 md:p-8 gap-6">
+    <div *ngIf="cargando" class="p-12 text-center text-gray-500">Cargando caso de baja...</div>
+
+    <ng-container *ngIf="baja">
+        <!-- Encabezado -->
+        <div class="flex flex-col gap-3 pb-4 border-b border-gray-200 dark:border-gray-800">
+            <a routerLink="/rrhh/offboarding" class="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                <mat-icon class="icon-size-4" svgIcon="heroicons_outline:arrow-left"></mat-icon>
+                Offboarding
+            </a>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <div class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">{{ baja.colaboradorNombre }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {{ baja.folio }}<span *ngIf="baja.puestoArea"> • {{ baja.puestoArea }}</span><span *ngIf="baja.razonSocial"> • {{ baja.razonSocial }}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" [ngClass]="claseEstatus(baja.estatus)">
+                            {{ etiquetaEstatus(baja.estatus) }}
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            Ruta {{ baja.ruta }}: {{ etiquetaCausa(baja.causa) }}
+                        </span>
+                        <span *ngIf="baja.alertaBajaImss !== 'Ninguna'"
+                              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
+                              [ngClass]="claseAlertaImss(baja.alertaBajaImss)">
+                            {{ textoAlertaImss(baja.alertaBajaImss) }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button *ngFor="let a of acciones"
+                            mat-stroked-button
+                            [color]="a === 'cancelar' ? 'warn' : 'primary'"
+                            [disabled]="ocupado"
+                            (click)="ejecutar(a)">
+                        <mat-icon [svgIcon]="iconoAccion(a)"></mat-icon>
+                        <span class="ml-1.5">{{ etiquetaAccion(a) }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caso cancelado -->
+        <div *ngIf="baja.estatus === 'Cancelado'"
+             class="p-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm">
+            <span class="font-bold">Caso cancelado.</span> {{ baja.motivoCancelacion }}
+        </div>
+
+        <!-- Lo que falta para poder registrar la baja -->
+        <div *ngIf="baja.motivoBloqueoBaja"
+             class="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm flex items-center gap-2">
+            <mat-icon class="icon-size-5" svgIcon="heroicons_outline:exclamation-triangle"></mat-icon>
+            <span>Para registrar la baja falta: {{ baja.motivoBloqueoBaja }}</span>
+        </div>
+
+        <div *ngIf="baja.tareasVencidas > 0"
+             class="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+            <mat-icon class="icon-size-5" svgIcon="heroicons_outline:clock"></mat-icon>
+            {{ baja.tareasVencidas }} {{ baja.tareasVencidas === 1 ? 'tarea vencida' : 'tareas vencidas' }} (pasó su fecha compromiso).
+            Esto no detiene la baja del colaborador.
+        </div>
+
+        <!-- Avance -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between text-sm mb-2">
+                <span class="font-semibold text-gray-700 dark:text-gray-200">Avance del checklist</span>
+                <span class="text-gray-500">{{ baja.tareasResueltas }} de {{ baja.tareasTotal }} resueltas</span>
+            </div>
+            <div class="h-2.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div class="h-2.5 bg-primary" [style.width.%]="porcentajeAvance(baja.tareasTotal, baja.tareasResueltas)"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Ruta -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ baja.rutaNombre }}</h3>
+                <div>
+                    <div class="text-xs uppercase text-gray-400">Documento que la sustenta</div>
+                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ baja.documento }}</p>
+                </div>
+                <div>
+                    <div class="text-xs uppercase text-gray-400">Conceptos de pago</div>
+                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ baja.conceptosPago }}</p>
+                </div>
+                <div>
+                    <div class="text-xs uppercase text-gray-400">Controles</div>
+                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ baja.controles }}</p>
+                </div>
+            </div>
+
+            <!-- Fechas y requisitos -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-3">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Fechas y requisitos</h3>
+                <dl class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <dt class="text-xs uppercase text-gray-400">Último día laborado</dt>
+                        <dd class="font-medium">{{ baja.ultimoDiaLaborado | date:'dd/MM/yyyy' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase text-gray-400">Baja IMSS</dt>
+                        <dd class="font-medium">
+                            {{ baja.fechaBajaImss ? (baja.fechaBajaImss | date:'dd/MM/yyyy') : 'Límite ' + (baja.limiteBajaImss | date:'dd/MM/yyyy') }}
+                        </dd>
+                    </div>
+                    <div *ngIf="baja.actaFolio">
+                        <dt class="text-xs uppercase text-gray-400">Acta que lo sustenta</dt>
+                        <dd class="font-medium">
+                            <a [routerLink]="['/rrhh/actas', baja.actaId]" class="text-primary hover:underline">{{ baja.actaFolio }}</a>
+                        </dd>
+                    </div>
+                    <div *ngIf="baja.fechaAvisoRescision">
+                        <dt class="text-xs uppercase text-gray-400">Aviso de rescisión</dt>
+                        <dd class="font-medium">
+                            {{ baja.fechaAvisoRescision | date:'dd/MM/yyyy' }}
+                            <span *ngIf="baja.limiteNotificacionTribunal" class="block text-xs text-gray-400">
+                                Tribunal, a más tardar: {{ baja.limiteNotificacionTribunal | date:'dd/MM/yyyy' }}
+                            </span>
+                        </dd>
+                    </div>
+                    <div *ngIf="baja.requiereAutorizacionDireccion">
+                        <dt class="text-xs uppercase text-gray-400">Autorización de Dirección</dt>
+                        <dd class="font-medium">
+                            {{ baja.autorizadaDireccion ? 'Autorizada el ' + (baja.fechaAutorizacion | date:'dd/MM/yyyy') : 'Pendiente' }}
+                        </dd>
+                    </div>
+                    <div *ngIf="baja.requiereValidacionLegal">
+                        <dt class="text-xs uppercase text-gray-400">Validación legal</dt>
+                        <dd class="font-medium">Tarea «Validación legal» del checklist</dd>
+                    </div>
+                    <div *ngIf="baja.recontratable">
+                        <dt class="text-xs uppercase text-gray-400">¿Recontratable?</dt>
+                        <dd class="font-medium">{{ etiquetaRecontratable(baja.recontratable) }}</dd>
+                    </div>
+                    <div *ngIf="baja.fechaRetencionHasta">
+                        <dt class="text-xs uppercase text-gray-400">Conservar expediente hasta</dt>
+                        <dd class="font-medium">{{ baja.fechaRetencionHasta | date:'dd/MM/yyyy' }}</dd>
+                    </div>
+                </dl>
+                <p *ngIf="baja.notas" class="text-sm whitespace-pre-line text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-700 pt-3">{{ baja.notas }}</p>
+            </div>
+        </div>
+
+        <!-- Checklist por responsable -->
+        <div class="flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Checklist por responsable</h2>
+
+            <div *ngFor="let g of grupos" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                    <span class="font-bold text-gray-800 dark:text-gray-100">{{ g.responsable }}</span>
+                    <span class="text-xs font-semibold" [ngClass]="g.pendientes > 0 ? 'text-amber-600' : 'text-emerald-600'">
+                        {{ g.pendientes > 0 ? g.pendientes + ' por resolver' : 'Todo resuelto' }}
+                    </span>
+                </div>
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <li *ngFor="let t of g.tareas" class="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ t.tarea }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {{ t.plazo }} • Evidencia: {{ t.evidencia }}
+                                <span *ngIf="t.fechaCompromiso" [class.text-red-600]="t.vencida" [class.font-semibold]="t.vencida">
+                                    • Compromiso: {{ t.fechaCompromiso | date:'dd/MM/yyyy' }}<span *ngIf="t.vencida"> (vencida)</span>
+                                </span>
+                            </div>
+                            <div *ngIf="t.evidenciaCapturada" class="text-xs text-emerald-700 dark:text-emerald-400 mt-1">Entregado: {{ t.evidenciaCapturada }}</div>
+                            <div *ngIf="t.observaciones" class="text-xs text-gray-500 mt-1">Obs.: {{ t.observaciones }}</div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="claseTarea(t.estatus)">
+                                {{ etiquetaTarea(t.estatus) }}
+                            </span>
+                            <button *ngIf="tareasEditables" mat-stroked-button (click)="editarTarea(t)">Actualizar</button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </ng-container>
+</div>
