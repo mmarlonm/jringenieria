@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { environment } from 'environments/environment';
 import { Observable } from 'rxjs';
 import {
-    Ajuste, AjusteGuardar, CalendarioItem, DiaNoLaborable, Incidencia, IncidenciaGuardar, MensajeApi, Previsualizacion,
+    AprobacionRespuesta, Ajuste, AjusteGuardar, CalendarioItem, DiaNoLaborable, Incidencia, IncidenciaGuardar, MensajeApi, Previsualizacion,
     SaldoVacaciones, SolicitudAusencia, SolicitudGuardar, TipoAusencia
 } from './ausencias.types';
 
@@ -49,8 +49,12 @@ export class AusenciasService {
         return this._http.get<SolicitudAusencia[]>(`${this._api}/aprobaciones`);
     }
 
-    aprobar(solicitudId: number, comentario?: string): Observable<MensajeApi> {
-        return this._http.post<MensajeApi>(`${this._api}/aprobaciones/${solicitudId}/aprobar`, { comentario: comentario ?? null });
+    /** `calendarioId`: calendario de Google de quien aprueba donde registrar la ausencia (solo cuenta en la aprobación final). */
+    aprobar(solicitudId: number, comentario?: string, calendarioId?: string): Observable<AprobacionRespuesta> {
+        return this._http.post<AprobacionRespuesta>(`${this._api}/aprobaciones/${solicitudId}/aprobar`, {
+            comentario: comentario ?? null,
+            calendarioId: calendarioId ?? null
+        });
     }
 
     rechazar(solicitudId: number, motivo: string): Observable<MensajeApi> {

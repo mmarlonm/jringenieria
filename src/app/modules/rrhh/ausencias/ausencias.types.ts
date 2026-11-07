@@ -119,3 +119,9 @@ export interface DiaNoLaborable {
 export interface MensajeApi {
     mensaje: string;
 }
+
+/** Respuesta de aprobar: la solicitud queda aprobada aunque el calendario de Google falle (entonces viene el motivo en `calendarioAviso`). */
+export interface AprobacionRespuesta extends MensajeApi {
+    calendarioEnviado: boolean;
+    calendarioAviso: string | null;
+}

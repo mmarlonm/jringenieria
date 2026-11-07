@@ -6,7 +6,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AusenciasService } from '../ausencias/ausencias.service';
 import { SolicitudAusencia } from '../ausencias/ausencias.types';
+import { PermisosEspecialesService } from 'app/core/permisos-especiales/permisos-especiales.service';
+import { PERMISO_AUSENCIAS } from '../colaboradores/colaboradores.types';
 import { desdeIso, mensajeError } from '../colaboradores/colaboradores.utils';
+import { AprobarDialogComponent, AprobarDialogResultado } from './aprobar-dialog.component';
 import { RechazoDialogComponent } from './rechazo-dialog.component';
 
 @Component({
@@ -19,6 +22,7 @@ export class AprobacionesComponent implements OnInit {
     private readonly _service = inject(AusenciasService);
     private readonly _dialog = inject(MatDialog);
     private readonly _snackBar = inject(MatSnackBar);
+    private readonly _permisos = inject(PermisosEspecialesService);
 
     readonly solicitudes = signal<SolicitudAusencia[]>([]);
     readonly cargando = signal(false);
@@ -47,11 +51,35 @@ export class AprobacionesComponent implements OnInit {
     }
 
     aprobar(solicitud: SolicitudAusencia): void {
+        // Solo RRHH da la aprobación final, que es cuando la ausencia puede ir al calendario de Google: el jefe aprueba directo, como siempre.
+        if (!this._permisos.tiene(PERMISO_AUSENCIAS)) {
+            this.enviarAprobacion(solicitud);
+            return;
+        }
+        this._dialog
+            .open(AprobarDialogComponent, {
+                width: '480px',
+                maxWidth: '95vw',
+                data: { colaborador: solicitud.colaborador, tipo: solicitud.tipo }
+            })
+            .afterClosed()
+            .subscribe((res?: AprobarDialogResultado) => {
+                if (res) this.enviarAprobacion(solicitud, res.calendarioId ?? undefined);
+            });
+    }
+
+    private enviarAprobacion(solicitud: SolicitudAusencia, calendarioId?: string): void {
         this.procesandoId.set(solicitud.solicitudId);
-        this._service.aprobar(solicitud.solicitudId).subscribe({
+        this._service.aprobar(solicitud.solicitudId, undefined, calendarioId).subscribe({
             next: (resp) => {
                 this.procesandoId.set(null);
-                this._snackBar.open(resp.mensaje || 'Solicitud aprobada con éxito.', 'Cerrar', { duration: 5000 });
+                const base = resp.mensaje || 'Solicitud aprobada con éxito.';
+                const texto = resp.calendarioEnviado
+                    ? `${base} Se agregó al calendario de Google.`
+                    : resp.calendarioAviso
+                      ? `${base} No se agregó al calendario: ${resp.calendarioAviso}`
+                      : base;
+                this._snackBar.open(texto, 'Cerrar', { duration: resp.calendarioAviso ? 10000 : 5000 });
                 this.cargar();
             },
             error: (e) => {
