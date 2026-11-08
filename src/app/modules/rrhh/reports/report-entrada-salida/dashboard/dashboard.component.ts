@@ -51,6 +51,7 @@ export class ReportEntradaSalidaDashboardComponent implements OnInit {
         'fecha',
         'nombreUsuario',
         'marcajes',
+        'origen',
         'horaEntrada',
         'ubicacionEntrada',
         'horaSalida',

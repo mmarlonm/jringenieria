@@ -41,6 +41,12 @@
                             <span class="font-mono text-sm text-secondary">
                                 {{ hora(m.hora) }}
                             </span>
+                            @if (m.origen) {
+                                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                                    [ngClass]="m.origen === 'MOVIL' ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'">
+                                    {{ m.origen === 'MOVIL' ? 'Móvil' : 'Web' }}
+                                </span>
+                            }
                         </div>
                         <div class="text-xs text-secondary mt-0.5">
                             @if (m.ubicacion) {

@@ -47,7 +47,8 @@ export class PersonalManagementService {
     ubicacionNombre?: string;
   }): Observable<any> {
     // Mantenemos el POST hacia el endpoint /checador
-    return this._http.post<any>(`${this._apiUrl}/checador`, asistencia);
+    // El CRM marca siempre desde el navegador: se avisa al API para que el reporte distinga web de móvil
+    return this._http.post<any>(`${this._apiUrl}/checador`, { origen: 'WEB', ...asistencia });
   }
 
   /**
@@ -135,7 +136,13 @@ export interface AsistenciaReporteDto {
   // El día sigue siendo una sola fila aunque haya entrado y salido varias veces: aquí va cada marcaje, en el orden en que se hizo
   horasFuera?: number;
   marcajes?: MarcajeAsistenciaDto[];
+  // Desde dónde se hizo la primera entrada y la última salida; null en marcajes anteriores a este dato
+  origenEntrada?: OrigenMarcaje | null;
+  origenSalida?: OrigenMarcaje | null;
 }
+
+/** WEB = CRM en el navegador, MOVIL = app del celular */
+export type OrigenMarcaje = 'WEB' | 'MOVIL';
 
 export interface MarcajeAsistenciaDto {
   tipo: 'ENTRADA' | 'SALIDA';
@@ -143,4 +150,5 @@ export interface MarcajeAsistenciaDto {
   ubicacion?: string;
   latitud?: number;
   longitud?: number;
+  origen?: OrigenMarcaje | null;
 }

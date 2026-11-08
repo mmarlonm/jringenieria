@@ -186,6 +186,31 @@
                     </td>
                 </ng-container>
 
+                <ng-container matColumnDef="origen">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20 text-center">
+                        ORIGEN</th>
+                    <td mat-cell *matCellDef="let row" class="p-2 border-b dark:border-gray-800 text-center">
+                        <div class="flex flex-col items-center gap-1">
+                            @if (row.origenEntrada) {
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                                    [ngClass]="row.origenEntrada === 'MOVIL' ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'">
+                                    Entrada: {{ row.origenEntrada === 'MOVIL' ? 'Móvil' : 'Web' }}
+                                </span>
+                            }
+                            @if (row.origenSalida) {
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap"
+                                    [ngClass]="row.origenSalida === 'MOVIL' ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'">
+                                    Salida: {{ row.origenSalida === 'MOVIL' ? 'Móvil' : 'Web' }}
+                                </span>
+                            }
+                            @if (!row.origenEntrada && !row.origenSalida) {
+                                <span class="text-xs text-secondary" title="Marcaje anterior al registro del origen">—</span>
+                            }
+                        </div>
+                    </td>
+                </ng-container>
+
                 <ng-container matColumnDef="observaciones">
                     <th mat-header-cell *matHeaderCellDef
                         class="!bg-slate-700 !text-white font-bold p-4 text-xs uppercase sticky top-0 z-20">
