@@ -38,8 +38,15 @@ import Swal from 'sweetalert2';
   ],
   templateUrl: './leads.component.html',
   styles: [`
-    .kanban-col {
-      min-height: 500px;
+    :host {
+      display: flex;
+      flex: 1 1 auto;
+      width: 100%;
+    }
+    @media (min-width: 768px) {
+      .kanban-col {
+        min-height: 500px;
+      }
     }
     .sla-alert {
       border: 2px solid #ef4444 !important;

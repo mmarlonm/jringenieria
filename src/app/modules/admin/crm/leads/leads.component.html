@@ -1,16 +1,16 @@
-<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-slate-50 dark:bg-slate-900">
+<div class="relative md:absolute md:inset-0 flex min-w-0 flex-col overflow-y-auto md:overflow-hidden bg-slate-50 dark:bg-slate-900">
   
   <!-- Header -->
-  <div class="flex-none border-b bg-white dark:bg-slate-950 px-6 py-6 md:px-8">
+  <div class="flex-none border-b bg-white dark:bg-slate-950 px-4 py-4 md:px-8 md:py-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
           <mat-icon class="text-primary icon-size-8" svgIcon="heroicons_outline:chat-bubble-left-right"></mat-icon>
-          <h1 class="text-3xl font-extrabold leading-none tracking-tight text-slate-800 dark:text-slate-100">
+          <h1 class="text-2xl md:text-3xl font-extrabold leading-none tracking-tight text-slate-800 dark:text-slate-100">
             CRM / Leads e Inbox
           </h1>
         </div>
-        <p class="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
+        <p class="text-slate-500 dark:text-slate-400 mt-1.5 text-xs md:text-sm">
           Bandeja de entrada para registro en frío y enrutamiento calificado bajo directrices ISO 9001 (Sección 7.4).
         </p>
       </div>
@@ -35,97 +35,97 @@
     </div>
 
     <!-- ISO 9051/9001 KPIs Section -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mt-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4 mt-4 md:mt-6">
       <!-- Total Leads Card -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between shadow-sm">
         <div>
           <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Total Leads</span>
-          <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.totalLeads }}</span>
+          <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.totalLeads }}</span>
         </div>
-        <div class="p-2 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-blue-600 dark:text-blue-400">
-          <mat-icon svgIcon="heroicons_outline:chat-bubble-left-right" class="icon-size-6"></mat-icon>
+        <div class="p-1.5 sm:p-2 bg-blue-50 dark:bg-blue-950/40 rounded-lg sm:rounded-xl text-blue-600 dark:text-blue-400">
+          <mat-icon svgIcon="heroicons_outline:chat-bubble-left-right" class="icon-size-5 sm:icon-size-6"></mat-icon>
         </div>
       </div>
 
       <!-- Conversion Rate Card (Meta >= 35%) -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between shadow-sm"
            [matTooltip]="'Meta sugerida: >= 35%. Gerencia Comercial.'">
         <div>
           <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Conversión (ISO 10.1)</span>
           <div class="flex items-baseline gap-1.5">
-            <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tasaConversion }}%</span>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+            <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tasaConversion }}%</span>
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   [ngClass]="kpis.tasaConversion >= 35 ? 'bg-green-150 text-green-700' : 'bg-amber-100 text-amber-700'">
               {{ kpis.tasaConversion >= 35 ? 'Meta Cumplida' : 'Bajo Meta' }}
             </span>
           </div>
         </div>
-        <div class="p-2 rounded-xl" [ngClass]="kpis.tasaConversion >= 35 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600'">
-          <mat-icon svgIcon="heroicons_outline:arrow-trending-up" class="icon-size-6"></mat-icon>
+        <div class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl" [ngClass]="kpis.tasaConversion >= 35 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600'">
+          <mat-icon svgIcon="heroicons_outline:arrow-trending-up" class="icon-size-5 sm:icon-size-6"></mat-icon>
         </div>
       </div>
 
       <!-- Time Average Initial Contact Card (Meta <= 24h) -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between shadow-sm"
            [matTooltip]="'Meta sugerida: <= 24 horas hábiles. Sucursal.'">
         <div>
           <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Contacto (ISO 10.2)</span>
           <div class="flex items-baseline gap-1.5">
-            <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tiempoPromedioContactoHoras }}h</span>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+            <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tiempoPromedioContactoHoras }}h</span>
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   [ngClass]="kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'bg-green-150 text-green-700' : 'bg-red-100 text-red-700'">
               {{ kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'Meta Cumplida' : 'Fuera SLA' }}
             </span>
           </div>
         </div>
-        <div class="p-2 rounded-xl" [ngClass]="kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-red-50 dark:bg-red-950/40 text-red-600'">
-          <mat-icon svgIcon="heroicons_outline:clock" class="icon-size-6"></mat-icon>
+        <div class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl" [ngClass]="kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-red-50 dark:bg-red-950/40 text-red-600'">
+          <mat-icon svgIcon="heroicons_outline:clock" class="icon-size-5 sm:icon-size-6"></mat-icon>
         </div>
       </div>
 
       <!-- Leads Calificados Card -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between shadow-sm">
         <div>
           <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Calificadas</span>
-          <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.leadsConvertidos }}</span>
+          <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.leadsConvertidos }}</span>
         </div>
-        <div class="p-2 bg-green-50 dark:bg-green-950/40 rounded-xl text-green-600 dark:text-green-400">
-          <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-6"></mat-icon>
+        <div class="p-1.5 sm:p-2 bg-green-50 dark:bg-green-950/40 rounded-lg sm:rounded-xl text-green-600 dark:text-green-400">
+          <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-5 sm:icon-size-6"></mat-icon>
         </div>
       </div>
 
       <!-- KPI 10.5 Descartes con Motivo Card (Meta = 100%) -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between shadow-sm"
            [matTooltip]="'Meta sugerida: 100%. Porcentaje de oportunidades descartadas con motivo documentado (ISO 10.5).'">
         <div>
           <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Descartes OK (ISO 10.5)</span>
           <div class="flex items-baseline gap-1.5">
-            <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.porcentajeDescartesConMotivo }}%</span>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+            <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.porcentajeDescartesConMotivo }}%</span>
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   [ngClass]="kpis.porcentajeDescartesConMotivo >= 100 ? 'bg-green-150 text-green-700' : 'bg-amber-100 text-amber-700'">
               {{ kpis.porcentajeDescartesConMotivo >= 100 ? 'Meta Cumplida' : 'Bajo Meta' }}
             </span>
           </div>
           <span class="text-[10px] text-slate-400 mt-1 block">{{ kpis.descartadosConMotivo }}/{{ kpis.totalDescartados }} documentados</span>
         </div>
-        <div class="p-2 rounded-xl" [ngClass]="kpis.porcentajeDescartesConMotivo >= 100 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600'">
-          <mat-icon svgIcon="heroicons_outline:shield-check" class="icon-size-6"></mat-icon>
+        <div class="p-1.5 sm:p-2 rounded-lg sm:rounded-xl" [ngClass]="kpis.porcentajeDescartesConMotivo >= 100 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600'">
+          <mat-icon svgIcon="heroicons_outline:shield-check" class="icon-size-5 sm:icon-size-6"></mat-icon>
         </div>
       </div>
 
       <!-- KPI 10.4 Distribución por Fuente Card -->
-      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
            (click)="toggleDistribucion()"
            [matTooltip]="'Efectividad por canal de captación. Clic para ver desglose.'">
         <div>
           <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Por Fuente (ISO 10.4)</span>
-          <span class="text-sm font-black text-indigo-600 dark:text-indigo-400 block truncate max-w-[130px]" [title]="topFuente">{{ topFuente }}</span>
+          <span class="text-xs sm:text-sm font-black text-indigo-600 dark:text-indigo-400 block truncate max-w-[130px]" [title]="topFuente">{{ topFuente }}</span>
           <span class="text-[10px] font-bold text-indigo-500 hover:underline mt-1 block">
             {{ mostrarDistribucion ? 'Ocultar' : 'Ver canales' }}
           </span>
         </div>
-        <div class="p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl text-indigo-600 dark:text-indigo-400">
-          <mat-icon svgIcon="heroicons_outline:chart-pie" class="icon-size-6"></mat-icon>
+        <div class="p-1.5 sm:p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg sm:rounded-xl text-indigo-600 dark:text-indigo-400">
+          <mat-icon svgIcon="heroicons_outline:chart-pie" class="icon-size-5 sm:icon-size-6"></mat-icon>
         </div>
       </div>
     </div>
@@ -221,7 +221,7 @@
   </div>
 
   <!-- Main View Area -->
-  <div class="flex-auto overflow-y-auto p-6 md:p-8">
+  <div class="flex-auto overflow-visible md:overflow-y-auto p-4 md:p-8">
 
     <!-- VIEW: KANBAN -->
     <div *ngIf="viewMode === 'kanban'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full items-start">
@@ -238,7 +238,7 @@
           </span>
         </div>
 
-        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] pr-1">
+        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-visible md:overflow-y-auto md:max-h-[60vh] pr-1">
           <div *ngFor="let lead of getLeadsByStatus('Nuevo')"
                class="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative transition-transform hover:-translate-y-0.5 duration-200"
                [class.sla-alert]="isSLAOverdue(lead)">
@@ -308,7 +308,7 @@
           </span>
         </div>
 
-        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] pr-1">
+        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-visible md:overflow-y-auto md:max-h-[60vh] pr-1">
           <div *ngFor="let lead of getLeadsByStatus('Oportunidad')"
                class="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative transition-transform hover:-translate-y-0.5 duration-200">
             
@@ -383,7 +383,7 @@
           </span>
         </div>
 
-        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-y-auto max-h-[60vh] pr-1">
+        <div class="kanban-col flex flex-col gap-4 mt-4 overflow-visible md:overflow-y-auto md:max-h-[60vh] pr-1">
           <div *ngFor="let lead of getLeadsByStatus('Descartado')"
                class="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative transition-transform hover:-translate-y-0.5 duration-200">
             
