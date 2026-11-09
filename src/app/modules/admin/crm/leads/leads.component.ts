@@ -71,8 +71,25 @@ export class LeadsComponent implements OnInit {
     tasaConversion: 0,
     totalLeads: 0,
     leadsConvertidos: 0,
-    tiempoPromedioContactoHoras: 0
+    tiempoPromedioContactoHoras: 0,
+    distribucionPorFuente: [],
+    totalDescartados: 0,
+    descartadosConMotivo: 0,
+    porcentajeDescartesConMotivo: 100
   };
+  mostrarDistribucion = false;
+
+  get topFuente(): string {
+    if (!this.kpis.distribucionPorFuente || this.kpis.distribucionPorFuente.length === 0) {
+      return 'Sin datos';
+    }
+    const top = this.kpis.distribucionPorFuente[0];
+    return `${top.fuente} (${top.porcentaje}%)`;
+  }
+
+  toggleDistribucion(): void {
+    this.mostrarDistribucion = !this.mostrarDistribucion;
+  }
 
   // Filters
   searchControl = new FormControl('');

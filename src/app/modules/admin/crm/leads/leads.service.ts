@@ -49,11 +49,21 @@ export interface LeadSeguimiento {
   fechaRegistro: string;
 }
 
+export interface DistribucionFuenteLead {
+  fuente: string;
+  cantidad: number;
+  porcentaje: number;
+}
+
 export interface LeadKpi {
   tasaConversion: number;
   totalLeads: number;
   leadsConvertidos: number;
   tiempoPromedioContactoHoras: number;
+  distribucionPorFuente: DistribucionFuenteLead[];
+  totalDescartados: number;
+  descartadosConMotivo: number;
+  porcentajeDescartesConMotivo: number;
 }
 
 export interface CreateLeadDto {

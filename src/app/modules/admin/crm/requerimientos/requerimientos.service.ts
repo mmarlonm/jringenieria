@@ -66,12 +66,19 @@ export interface RequerimientoSeguimiento {
   fechaRegistro: string;
 }
 
+export interface DistribucionTipoRequerimiento {
+  tipo: string;
+  cantidad: number;
+  porcentaje: number;
+}
+
 export interface RequerimientoKpi {
   tasaCalificacionCorrecta: number;
   tiempoPromedioCalificacionHoras: number;
   porcentajeDevueltos: number;
   porcentajeCompletos: number;
   totalRequerimientos: number;
+  distribucionPorTipo: DistribucionTipoRequerimiento[];
 }
 
 export interface CreateRequerimientoDto {

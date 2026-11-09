@@ -70,8 +70,22 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     tiempoPromedioCalificacionHoras: 0,
     porcentajeDevueltos: 0,
     porcentajeCompletos: 0,
-    totalRequerimientos: 0
+    totalRequerimientos: 0,
+    distribucionPorTipo: []
   };
+  mostrarDistribucion = false;
+
+  get topTipo(): string {
+    if (!this.kpis.distribucionPorTipo || this.kpis.distribucionPorTipo.length === 0) {
+      return 'Sin datos';
+    }
+    const top = this.kpis.distribucionPorTipo[0];
+    return `${top.tipo} (${top.porcentaje}%)`;
+  }
+
+  toggleDistribucion(): void {
+    this.mostrarDistribucion = !this.mostrarDistribucion;
+  }
 
   // Listas para kanban
   pendientes: Requerimiento[] = [];

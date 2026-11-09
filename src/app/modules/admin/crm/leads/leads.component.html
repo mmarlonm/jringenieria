@@ -35,11 +35,11 @@
     </div>
 
     <!-- ISO 9051/9001 KPIs Section -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mt-6">
       <!-- Total Leads Card -->
       <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
         <div>
-          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Total Leads Registrados</span>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Total Leads</span>
           <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.totalLeads }}</span>
         </div>
         <div class="p-2 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-blue-600 dark:text-blue-400">
@@ -51,7 +51,7 @@
       <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
            [matTooltip]="'Meta sugerida: >= 35%. Gerencia Comercial.'">
         <div>
-          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Tasa de Conversión (ISO 10.1)</span>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Conversión (ISO 10.1)</span>
           <div class="flex items-baseline gap-1.5">
             <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tasaConversion }}%</span>
             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
@@ -69,12 +69,12 @@
       <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
            [matTooltip]="'Meta sugerida: <= 24 horas hábiles. Sucursal.'">
         <div>
-          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Contacto Inicial (ISO 10.2)</span>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Contacto (ISO 10.2)</span>
           <div class="flex items-baseline gap-1.5">
             <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.tiempoPromedioContactoHoras }}h</span>
             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   [ngClass]="kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'bg-green-150 text-green-700' : 'bg-red-100 text-red-700'">
-              {{ kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'Meta Cumplida' : 'Fuera de SLA' }}
+              {{ kpis.tiempoPromedioContactoHoras <= 24 && kpis.tiempoPromedioContactoHoras > 0 ? 'Meta Cumplida' : 'Fuera SLA' }}
             </span>
           </div>
         </div>
@@ -86,13 +86,86 @@
       <!-- Leads Calificados Card -->
       <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
         <div>
-          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Oportunidades Calificadas</span>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Calificadas</span>
           <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.leadsConvertidos }}</span>
         </div>
         <div class="p-2 bg-green-50 dark:bg-green-950/40 rounded-xl text-green-600 dark:text-green-400">
           <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-6"></mat-icon>
         </div>
       </div>
+
+      <!-- KPI 10.5 Descartes con Motivo Card (Meta = 100%) -->
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+           [matTooltip]="'Meta sugerida: 100%. Porcentaje de oportunidades descartadas con motivo documentado (ISO 10.5).'">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Descartes OK (ISO 10.5)</span>
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-2xl font-black text-slate-800 dark:text-slate-100">{{ kpis.porcentajeDescartesConMotivo }}%</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  [ngClass]="kpis.porcentajeDescartesConMotivo >= 100 ? 'bg-green-150 text-green-700' : 'bg-amber-100 text-amber-700'">
+              {{ kpis.porcentajeDescartesConMotivo >= 100 ? 'Meta Cumplida' : 'Bajo Meta' }}
+            </span>
+          </div>
+          <span class="text-[10px] text-slate-400 mt-1 block">{{ kpis.descartadosConMotivo }}/{{ kpis.totalDescartados }} documentados</span>
+        </div>
+        <div class="p-2 rounded-xl" [ngClass]="kpis.porcentajeDescartesConMotivo >= 100 ? 'bg-green-50 dark:bg-green-950/40 text-green-600' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600'">
+          <mat-icon svgIcon="heroicons_outline:shield-check" class="icon-size-6"></mat-icon>
+        </div>
+      </div>
+
+      <!-- KPI 10.4 Distribución por Fuente Card -->
+      <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+           (click)="toggleDistribucion()"
+           [matTooltip]="'Efectividad por canal de captación. Clic para ver desglose.'">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Por Fuente (ISO 10.4)</span>
+          <span class="text-sm font-black text-indigo-600 dark:text-indigo-400 block truncate max-w-[130px]" [title]="topFuente">{{ topFuente }}</span>
+          <span class="text-[10px] font-bold text-indigo-500 hover:underline mt-1 block">
+            {{ mostrarDistribucion ? 'Ocultar' : 'Ver canales' }}
+          </span>
+        </div>
+        <div class="p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl text-indigo-600 dark:text-indigo-400">
+          <mat-icon svgIcon="heroicons_outline:chart-pie" class="icon-size-6"></mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Distribución por Fuente (ISO 10.4) -->
+    <div *ngIf="mostrarDistribucion" class="mt-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 shadow-sm transition-all space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <mat-icon class="text-indigo-600 icon-size-5" svgIcon="heroicons_outline:chart-pie"></mat-icon>
+            10.4 Distribución de Leads por Fuente (Canal de Captación)
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Objetivo: Identificar efectividad por canal de captación · Fórmula: (Leads de una fuente / Leads totales) * 100 · Meta: Informativa / de análisis
+          </p>
+        </div>
+        <button mat-icon-button type="button" (click)="toggleDistribucion()" aria-label="Cerrar panel">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div *ngIf="kpis.distribucionPorFuente && kpis.distribucionPorFuente.length > 0; else sinFuentes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div *ngFor="let item of kpis.distribucionPorFuente" class="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-slate-700 dark:text-slate-200 truncate" [title]="item.fuente">{{ item.fuente }}</span>
+            <span class="text-xs font-black text-indigo-600 dark:text-indigo-400">{{ item.porcentaje }}%</span>
+          </div>
+          <div class="mt-2">
+            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+              <div class="bg-indigo-500 h-2 rounded-full transition-all duration-500" [style.width.%]="item.porcentaje"></div>
+            </div>
+            <span class="text-[10px] text-slate-400 mt-1 block">{{ item.cantidad }} {{ item.cantidad === 1 ? 'lead' : 'leads' }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #sinFuentes>
+        <div class="text-center py-4 text-slate-400 text-xs">
+          No hay leads registrados aún con fuente.
+        </div>
+      </ng-template>
     </div>
 
     <!-- Filters Section -->

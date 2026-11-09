@@ -1,23 +1,23 @@
 ﻿<div class="flex flex-col flex-auto min-w-0 bg-gray-100 dark:bg-card p-6 md:p-8 space-y-6">
 
     <!-- KPI Header Dashboard Panel -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- KPI 1 -->
         <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-blue-500">
-            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">CalificaciÃ³n Correcta</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Calificación Correcta</span>
             <div class="flex items-baseline space-x-2">
                 <span class="text-3xl font-bold tracking-tight text-blue-600 dark:text-blue-400">{{ kpis.tasaCalificacionCorrecta }}%</span>
             </div>
-            <span class="text-[10px] text-gray-500 mt-2">Aceptados sin devoluciÃ³n (Meta SGC: >=90%)</span>
+            <span class="text-[10px] text-gray-500 mt-2">Aceptados sin devolución (Meta SGC: >=90%)</span>
         </div>
 
         <!-- KPI 2 -->
         <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-green-500">
-            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Tiempo CalificaciÃ³n</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Tiempo Calificación</span>
             <div class="flex items-baseline space-x-2">
                 <span class="text-3xl font-bold tracking-tight text-green-600 dark:text-green-400">{{ kpis.tiempoPromedioCalificacionHoras }}h</span>
             </div>
-            <span class="text-[10px] text-gray-500 mt-2">Promedio horas de resoluciÃ³n (Meta: <=24h)</span>
+            <span class="text-[10px] text-gray-500 mt-2">Promedio horas de resolución (Meta: <=24h)</span>
         </div>
 
         <!-- KPI 3 -->
@@ -29,14 +29,71 @@
             <span class="text-[10px] text-gray-500 mt-2">Requerimientos incompletos recibidos (Meta: <=10%)</span>
         </div>
 
-        <!-- KPI 4 -->
+        <!-- KPI 4 (ISO 10.4) -->
         <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-purple-500">
-            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Campos MÃ­nimos OK</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Campos Mínimos (ISO 10.4)</span>
             <div class="flex items-baseline space-x-2">
                 <span class="text-3xl font-bold tracking-tight text-purple-600 dark:text-purple-400">{{ kpis.porcentajeCompletos }}%</span>
             </div>
-            <span class="text-[10px] text-gray-500 mt-2">Integridad documental en el registro inicial (Meta: 100%)</span>
+            <span class="text-[10px] text-gray-500 mt-2">Integridad documental en el registro (Meta: 100%)</span>
         </div>
+
+        <!-- KPI 5: Distribución por Tipo (ISO 10.5) -->
+        <div class="flex flex-col bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-l-4 border-l-teal-500 cursor-pointer hover:shadow-md transition-shadow"
+             (click)="toggleDistribucion()"
+             [matTooltip]="'Meta: Informativa / de análisis. Clic para ver desglose por línea de negocio.'">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">Por Tipo (ISO 10.5)</span>
+                <mat-icon class="icon-size-4 text-teal-600 dark:text-teal-400" svgIcon="heroicons_outline:chart-pie"></mat-icon>
+            </div>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-xl font-bold tracking-tight text-teal-600 dark:text-teal-400 truncate" [title]="topTipo">{{ topTipo }}</span>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+                <span class="text-[10px] text-gray-500">Demanda por línea de negocio</span>
+                <span class="text-[10px] font-bold text-teal-600 hover:underline">
+                    {{ mostrarDistribucion ? 'Ocultar' : 'Ver desglose' }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Distribución por Tipo (ISO 10.5) -->
+    <div *ngIf="mostrarDistribucion" class="bg-card dark:bg-gray-800/40 p-6 rounded-2xl shadow border border-teal-200 dark:border-teal-900/40 space-y-4 transition-all">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
+            <div>
+                <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <mat-icon class="text-teal-600 icon-size-5" svgIcon="heroicons_outline:chart-pie"></mat-icon>
+                    10.5 Distribución de Requerimientos por Tipo (Demanda por Línea de Negocio)
+                </h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Objetivo: Analizar demanda por línea de negocio · Fórmula: (Requerimientos de un tipo / Requerimientos totales) * 100 · Meta: Informativa / de análisis
+                </p>
+            </div>
+            <button mat-icon-button type="button" (click)="toggleDistribucion()" aria-label="Cerrar panel">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <div *ngIf="kpis.distribucionPorTipo && kpis.distribucionPorTipo.length > 0; else sinTipos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div *ngFor="let item of kpis.distribucionPorTipo" class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm text-gray-700 dark:text-gray-200 truncate" [title]="item.tipo">{{ item.tipo }}</span>
+                    <span class="text-xs font-black text-teal-600 dark:text-teal-400">{{ item.porcentaje }}%</span>
+                </div>
+                <div class="mt-2">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                        <div class="bg-teal-500 h-2 rounded-full transition-all duration-500" [style.width.%]="item.porcentaje"></div>
+                    </div>
+                    <span class="text-[11px] text-gray-400 mt-1 block">{{ item.cantidad }} {{ item.cantidad === 1 ? 'requerimiento' : 'requerimientos' }}</span>
+                </div>
+            </div>
+        </div>
+        <ng-template #sinTipos>
+            <div class="text-center py-6 text-gray-400 text-sm">
+                No hay requerimientos calificados con tipo / naturaleza todavía.
+            </div>
+        </ng-template>
     </div>
 
     <!-- Toolbar and Filter Panel -->
