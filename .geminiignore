@@ -1,0 +1,10 @@
+*.pem
+.env*
+appsettings*.json
+graphify-out/
+.claude/
+.agents/
+*.xlsx
+*.xls
+*.pdf
+
