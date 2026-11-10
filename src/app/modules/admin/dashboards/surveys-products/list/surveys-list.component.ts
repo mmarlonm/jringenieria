@@ -163,6 +163,8 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
     filtroTipoRespuesta: 'todos' | 'producto' | 'servicio' = 'todos';
 
+    filtroFormularioId: number | 'todos' = 'todos';
+
 
 
     // Estados del Editor
@@ -432,7 +434,9 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
         this.totalActivosGeneral = this.formulariosList.filter(f => f.activo).length;
 
-        this.totalRespuestasGeneral = this.formulariosList.reduce((acc, f) => acc + (f.totalRespuestas || 0), 0);
+        const totalForms = this.formulariosList.reduce((acc, f) => acc + (f.totalRespuestas || 0), 0);
+
+        this.totalRespuestasGeneral = Math.max(totalForms, this.respuestasList?.length || 0);
 
         this.totalProductosGeneral = this.formulariosList.filter(f => (f.tipo || 'producto') === 'producto').length;
 
@@ -1591,6 +1595,7 @@ export class SurveysListComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (datos) => {
                     this.respuestasList = datos;
+                    this.actualizarMetricas();
                     this.cargandoRespuestas = false;
                     this._cdr.markForCheck();
                 },
@@ -1638,8 +1643,28 @@ export class SurveysListComponent implements OnInit, OnDestroy {
                 (r.formularioTitulo && r.formularioTitulo.toLowerCase().includes(this.busquedaRespuestas.toLowerCase()));
 
             const matchesTipo = this.filtroTipoRespuesta === 'todos' || r.tipo === this.filtroTipoRespuesta;
-            return matchesText && matchesTipo;
+
+            const matchesFormulario = this.filtroFormularioId === 'todos' ||
+                (this.filtroFormularioId === 0 && r.origen === 'heredada') ||
+                (r.formularioId === this.filtroFormularioId);
+
+            return matchesText && matchesTipo && matchesFormulario;
         });
+    }
+
+    filtrarPorEncuesta(form: FormularioProductoDto): void {
+        this.subTabListado = 'respuestas';
+        this.filtroFormularioId = form.id;
+        this.busquedaRespuestas = '';
+        this._cdr.markForCheck();
+    }
+
+    contarRespuestasDeFormulario(formId: number): number {
+        return this.respuestasList.filter(r => r.formularioId === formId).length;
+    }
+
+    contarRespuestasHeredadas(): number {
+        return this.respuestasList.filter(r => r.origen === 'heredada').length;
     }
 
     abrirDetalleRespuesta(item: any): void {

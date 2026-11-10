@@ -120,8 +120,8 @@ describe('SurveysListComponent — Respuestas unificadas (Tarea C1)', () => {
         const filas = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLTableRowElement>;
         expect(filas.length).toBeGreaterThanOrEqual(2);
 
-        const celdaCal1 = filas[0].querySelectorAll('td')[4]?.textContent?.trim() || '';
-        const celdaCal2 = filas[1].querySelectorAll('td')[4]?.textContent?.trim() || '';
+        const celdaCal1 = filas[0].querySelectorAll('td')[5]?.textContent?.trim() || '';
+        const celdaCal2 = filas[1].querySelectorAll('td')[5]?.textContent?.trim() || '';
 
         expect(celdaCal1).toContain('8.5');
         expect(celdaCal2).toBe('—');
@@ -141,7 +141,7 @@ describe('SurveysListComponent — Respuestas unificadas (Tarea C1)', () => {
         expect(idFila1).toBe('#12');
         expect(idFila2).toBe('H5');
 
-        const fechaFila1 = filas[0].querySelectorAll('td')[5]?.textContent?.trim() || '';
+        const fechaFila1 = filas[0].querySelectorAll('td')[6]?.textContent?.trim() || '';
         // 2026-11-05T03:00:00Z en America/Mexico_City es 2026-11-04 21:00
         expect(fechaFila1).toContain('04/11/2026');
         expect(fechaFila1).toContain('21:00');
@@ -286,6 +286,61 @@ describe('SurveysListComponent — Respuestas unificadas (Tarea C1)', () => {
 
         expect(servicio.getSurveys).not.toHaveBeenCalled();
         expect(servicio.obtenerRespuestasUnificadas).toHaveBeenCalled();
+    });
+
+    it('Filtra_respuestas_por_formulario_especifico_y_por_heredadas', () => {
+        const respForm2: EncuestaRespuestaResumenDto = {
+            ...respDinamica,
+            id: 13,
+            formularioId: 2,
+            formularioTitulo: 'Encuesta de Satisfacción'
+        };
+        component.respuestasList = [respDinamica, respForm2, respHeredadaAnonima];
+
+        // Todos
+        component.filtroFormularioId = 'todos';
+        expect(component.respuestasFiltradas.length).toBe(3);
+
+        // Solo Formulario 1
+        component.filtroFormularioId = 1;
+        expect(component.respuestasFiltradas.length).toBe(1);
+        expect(component.respuestasFiltradas[0].id).toBe(12);
+
+        // Solo Formulario 2
+        component.filtroFormularioId = 2;
+        expect(component.respuestasFiltradas.length).toBe(1);
+        expect(component.respuestasFiltradas[0].id).toBe(13);
+
+        // Solo Heredadas (valor 0)
+        component.filtroFormularioId = 0;
+        expect(component.respuestasFiltradas.length).toBe(1);
+        expect(component.respuestasFiltradas[0].origen).toBe('heredada');
+    });
+
+    it('filtrarPorEncuesta_cambia_a_la_pestana_de_respuestas_y_establece_el_filtro', () => {
+        const formMock = { id: 2, titulo: 'Encuesta de Satisfacción' } as any;
+        component.subTabListado = 'formularios';
+        component.filtroFormularioId = 'todos';
+
+        component.filtrarPorEncuesta(formMock);
+
+        expect(component.subTabListado).toBe('respuestas');
+        expect<any>(component.filtroFormularioId).toBe(2);
+    });
+
+    it('contarRespuestasDeFormulario_cuenta_unicamente_las_de_ese_formulario', () => {
+        const respForm2: EncuestaRespuestaResumenDto = {
+            ...respDinamica,
+            id: 13,
+            formularioId: 2,
+            formularioTitulo: 'Encuesta de Satisfacción'
+        };
+        component.respuestasList = [respDinamica, respForm2, respHeredadaAnonima];
+
+        expect(component.contarRespuestasDeFormulario(1)).toBe(1);
+        expect(component.contarRespuestasDeFormulario(2)).toBe(1);
+        expect(component.contarRespuestasDeFormulario(99)).toBe(0);
+        expect(component.contarRespuestasHeredadas()).toBe(1);
     });
 });
 

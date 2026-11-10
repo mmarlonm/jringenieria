@@ -305,9 +305,13 @@
                             <!-- CONTADOR DE RESPUESTAS -->
 
                             <div class="absolute bottom-3 left-3 text-white flex items-center gap-2">
-                                <span class="text-xs font-bold bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-lg border border-white/20">
-                                    {{ form.totalRespuestas || 0 }} respuestas
-                                </span>
+                                <button type="button"
+                                        (click)="filtrarPorEncuesta(form)"
+                                        class="text-xs font-bold bg-white/20 hover:bg-white/35 backdrop-blur-md px-2.5 py-0.5 rounded-lg border border-white/20 transition-all cursor-pointer flex items-center gap-1 text-white"
+                                        matTooltip="Clic para ver las respuestas de esta encuesta">
+                                    <mat-icon class="text-xs">reviews</mat-icon>
+                                    <span>{{ form.totalRespuestas || 0 }} respuestas</span>
+                                </button>
 
                             </div>
 
@@ -341,6 +345,12 @@
                                             class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                             matTooltip="Código QR para escanear">
                                         <mat-icon class="text-sm">qr_code</mat-icon>
+                                    </button>
+                                    <button (click)="filtrarPorEncuesta(form)"
+                                            type="button"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                                            matTooltip="Ver respuestas recibidas de esta encuesta">
+                                        <mat-icon class="text-sm">reviews</mat-icon>
                                     </button>
                                     <button (click)="abrirEnNuevaPestana(form.slug)"
                                             class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
@@ -429,7 +439,22 @@
 
                         </div>
 
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- FILTRO POR ENCUESTA / FORMULARIO ESPECÍFICO -->
+                            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <mat-icon class="text-xs text-slate-400">category</mat-icon>
+                                <select [(ngModel)]="filtroFormularioId"
+                                        class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer pr-2">
+                                    <option [ngValue]="'todos'">Todas las encuestas ({{ respuestasList.length }})</option>
+                                    <option *ngFor="let f of formulariosList" [ngValue]="f.id">
+                                        {{ f.titulo }} ({{ contarRespuestasDeFormulario(f.id) }})
+                                    </option>
+                                    <option *ngIf="contarRespuestasHeredadas() > 0" [ngValue]="0">
+                                        Respuestas Históricas / Anteriores ({{ contarRespuestasHeredadas() }})
+                                    </option>
+                                </select>
+                            </div>
+
                             <!-- FILTRO DE TIPO: TODOS / PRODUCTO / SERVICIO -->
                             <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
                                 <button type="button"
@@ -469,6 +494,7 @@
                             <thead class="bg-slate-100/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-slate-700">
                                 <tr>
                                     <th class="p-3.5">ID</th>
+                                    <th class="p-3.5">Encuesta</th>
                                     <th class="p-3.5">Cliente / Evaluador</th>
                                     <th class="p-3.5">Empresa</th>
                                     <th class="p-3.5">Contacto</th>
@@ -481,6 +507,19 @@
                                 <tr *ngFor="let r of respuestasFiltradas" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                                     <td class="p-3.5 font-mono text-slate-400">
                                         {{ r.origen === 'heredada' ? 'H' + r.id : '#' + r.id }}
+                                    </td>
+                                    <td class="p-3.5">
+                                        <span *ngIf="r.formularioTitulo"
+                                              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold"
+                                              [ngClass]="r.tipo === 'servicio' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300' : 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300'">
+                                            <mat-icon class="text-xs">{{ r.tipo === 'servicio' ? 'engineering' : 'inventory_2' }}</mat-icon>
+                                            <span class="truncate max-w-[160px]" [title]="r.formularioTitulo">{{ r.formularioTitulo }}</span>
+                                        </span>
+                                        <span *ngIf="!r.formularioTitulo"
+                                              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                            <mat-icon class="text-xs">history</mat-icon>
+                                            <span>Histórica / Anterior</span>
+                                        </span>
                                     </td>
                                     <td class="p-3.5 font-bold text-slate-900 dark:text-white">{{ r.nombre || 'Anónimo' }}</td>
                                     <td class="p-3.5 text-slate-600 dark:text-slate-300">{{ r.empresa || '—' }}</td>
@@ -510,7 +549,7 @@
                                     </td>
                                 </tr>
                                 <tr *ngIf="respuestasFiltradas.length === 0">
-                                    <td colspan="7" class="p-8 text-center text-slate-400">
+                                    <td colspan="8" class="p-8 text-center text-slate-400">
                                         No hay respuestas registradas que coincidan con la búsqueda.
                                     </td>
                                 </tr>
