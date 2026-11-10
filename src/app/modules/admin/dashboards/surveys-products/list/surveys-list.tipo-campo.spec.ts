@@ -16,10 +16,9 @@ describe('SurveysListComponent: cambiar el tipo de un campo', () => {
         ({ id: 'c1', tipo, etiqueta: 'Datos de contacto', requerido, orden: 1, paso: 1 }) as CampoConfig;
 
     beforeEach(() => {
-        const servicio = Object.assign(
-            jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', ['getFormularios', 'obtenerRespuestasUnificadas', 'guardarFormulario', 'eliminarFormulario']),
-            { recuperados$: new Subject<{ titulos: string[]; pendientes: number }>(), servidorNoDisponible$: new Subject<void>() }
-        );
+        const servicio = jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
+            'getFormularios', 'obtenerRespuestasUnificadas', 'guardarFormulario', 'eliminarFormulario'
+        ]);
         servicio.getFormularios.and.returnValue(of([]));
         servicio.obtenerRespuestasUnificadas.and.returnValue(of([]));
 

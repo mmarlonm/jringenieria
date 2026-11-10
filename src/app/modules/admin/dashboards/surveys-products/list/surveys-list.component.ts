@@ -324,49 +324,10 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
 
-        // Antes de cargar: el servicio avisa durante la propia carga si encontró encuestas guardadas solo en este navegador.
-        this._surveyService.recuperados$
-            .pipe(takeUntil(this._destroy$))
-            .subscribe(recuperado => this.avisarEncuestasRecuperadas(recuperado.titulos, recuperado.pendientes));
-
-        this._surveyService.servidorNoDisponible$
-            .pipe(takeUntil(this._destroy$))
-            .subscribe(() => this._snackBar.open(
-                'No se pudo leer la lista del servidor. Se muestra la copia guardada en este navegador; lo que cambies no se guardará hasta que el servidor responda.',
-                'Cerrar',
-                { duration: 8000 }
-            ));
-
         this.cargarListado();
 
         this.cargarRespuestas();
 
-    }
-
-    private avisarEncuestasRecuperadas(titulos: string[], pendientes: number): void {
-        const escapar = (texto: string) => texto
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-        let html = '';
-        if (titulos.length > 0) {
-            const lista = titulos.map(t => `<li>${escapar(t)}</li>`).join('');
-            html += `<p>Estaban guardadas solo en este navegador y se subieron al servidor:</p><ul style="text-align:left;margin:8px 0 0 24px;list-style:disc">${lista}</ul>`;
-        }
-        if (pendientes > 0) {
-            const detalle = titulos.length > 0
-                ? `${pendientes} más no se pudieron subir todavía; se conservan en este navegador y se reintentará al abrir esta pantalla.`
-                : `${pendientes} encuesta(s) guardada(s) solo en este navegador no se pudieron subir al servidor. Se conservan aquí y se reintentará al abrir esta pantalla.`;
-            html += `<p style="margin-top:12px">${detalle}</p>`;
-        }
-
-        Swal.fire({
-            icon: pendientes > 0 ? 'warning' : 'success',
-            title: titulos.length > 0
-                ? (titulos.length === 1 ? 'Se recuperó 1 encuesta' : `Se recuperaron ${titulos.length} encuestas`)
-                : 'Encuestas pendientes de subir',
-            html,
-            confirmButtonText: 'Entendido'
-        });
     }
 
     private mostrarErrorDelServidor(titulo: string, err: any, mensajePorDefecto: string): void {

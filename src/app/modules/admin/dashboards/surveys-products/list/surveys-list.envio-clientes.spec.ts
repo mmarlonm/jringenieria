@@ -14,10 +14,7 @@ describe('SurveysListComponent — Envío de encuesta a clientes', () => {
     let dialog: MatDialog;
     let dialogOpenSpy: jasmine.Spy;
     let mockAfterClosed$: Subject<any>;
-    let servicio: jasmine.SpyObj<SurveysProductsService> & {
-        recuperados$: Subject<{ titulos: string[]; pendientes: number }>;
-        servidorNoDisponible$: Subject<void>;
-    };
+    let servicio: jasmine.SpyObj<SurveysProductsService>;
 
     const encuestaActiva: FormularioProductoDto = {
         id: 1,
@@ -46,18 +43,12 @@ describe('SurveysListComponent — Envío de encuesta a clientes', () => {
     beforeEach(async () => {
         mockAfterClosed$ = new Subject<any>();
 
-        servicio = Object.assign(
-            jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
-                'getFormularios',
-                'obtenerRespuestasUnificadas',
-                'guardarFormulario',
-                'eliminarFormulario',
-            ]),
-            {
-                recuperados$: new Subject<{ titulos: string[]; pendientes: number }>(),
-                servidorNoDisponible$: new Subject<void>(),
-            }
-        );
+        servicio = jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
+            'getFormularios',
+            'obtenerRespuestasUnificadas',
+            'guardarFormulario',
+            'eliminarFormulario',
+        ]);
         servicio.getFormularios.and.returnValue(of([encuestaActiva, encuestaInactiva]));
         servicio.obtenerRespuestasUnificadas.and.returnValue(of([]));
 

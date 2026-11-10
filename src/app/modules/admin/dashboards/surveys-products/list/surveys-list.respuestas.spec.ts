@@ -14,10 +14,7 @@ import { SurveysListComponent } from './surveys-list.component';
 describe('SurveysListComponent — Respuestas unificadas (Tarea C1)', () => {
     let component: SurveysListComponent;
     let fixture: ComponentFixture<SurveysListComponent>;
-    let servicio: jasmine.SpyObj<SurveysProductsService> & {
-        recuperados$: Subject<{ titulos: string[]; pendientes: number }>;
-        servidorNoDisponible$: Subject<void>;
-    };
+    let servicio: jasmine.SpyObj<SurveysProductsService>;
 
     const respDinamica: EncuestaRespuestaResumenDto = {
         origen: 'dinamica',
@@ -58,20 +55,14 @@ describe('SurveysListComponent — Respuestas unificadas (Tarea C1)', () => {
     };
 
     beforeEach(async () => {
-        servicio = Object.assign(
-            jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
-                'getFormularios',
-                'getSurveys',
-                'guardarFormulario',
-                'eliminarFormulario',
-                'obtenerRespuestasUnificadas',
-                'obtenerDetalleRespuestaUnificada'
-            ]),
-            {
-                recuperados$: new Subject<{ titulos: string[]; pendientes: number }>(),
-                servidorNoDisponible$: new Subject<void>()
-            }
-        );
+        servicio = jasmine.createSpyObj<SurveysProductsService>('SurveysProductsService', [
+            'getFormularios',
+            'getSurveys',
+            'guardarFormulario',
+            'eliminarFormulario',
+            'obtenerRespuestasUnificadas',
+            'obtenerDetalleRespuestaUnificada'
+        ]);
 
         servicio.getFormularios.and.returnValue(of([]));
         servicio.getSurveys.and.returnValue(of({ code: 200, message: '', data: [] }));
