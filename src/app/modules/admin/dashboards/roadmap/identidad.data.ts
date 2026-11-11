@@ -401,10 +401,12 @@ export function buildTextLines(
 }
 
 // -----------------------------------------------------------------------------
-// ORBITAL: «DIAGRAMA ESTRUCTURAL – JR INGENIERÍA ELÉCTRICA»
+// ORBITAL: «DIAGRAMA ESTRUCTURAL FUTURO – JR INGENIERÍA ELÉCTRICA»
 // Las posiciones se midieron sobre la imagen del diagrama (coordenadas de imagen) y `aLienzo` las lleva al lienzo del
 // orbital. Los conectores y los enfoques por área se calculan a partir de ellas, así que mover o agregar una burbuja
 // no obliga a redibujar líneas ni a recalcular zooms a mano.
+// Las coordenadas están en una imagen de 1500 px de ancho; la imagen publicada mide 1440 px, así que lo que se mida en
+// ella se multiplica por 1500/1440 (1.0417).
 // -----------------------------------------------------------------------------
 
 /** Lienzo del orbital (el HTML usa el mismo viewBox 1100×1000). (cx, cy) es el centro del anillo de Dirección General. */
@@ -493,7 +495,7 @@ const AREAS: Area[] = [
         puestos: [
             puesto('com-gerente', 'com-hub', 'Gerente de|Desarrollo|Comercial', 535, 325, 52, ['Fermin'], 'FERMIN P'),
             puesto('com-marketing', 'com-gerente', 'Responsable de|Marketing', 399, 342, 35, ['Evelyn'], 'EVELYN M'),
-            puesto('com-aux-marketing', 'com-marketing', 'Auxiliar de|Marketing', 398, 258, 35, ['Johanna M'])
+            puesto('com-aux-marketing', 'com-marketing', 'Auxiliar de|Marketing', 398, 258, 35, ['Monserrath'], 'MONSE D')
         ]
     },
     {
@@ -511,20 +513,22 @@ const AREAS: Area[] = [
         hub: { id: 'ing-hub', rol: 'Dirección de Área', lineas: ['Ingeniería'], x: 591, y: 843, r: 87 },
         puestos: [
             puesto('ing-gerente', 'ing-hub', 'Gerente de|ingeniería', 420, 886.5, 53, ['Jimena'], 'JIMENA C'),
-            puesto('ing-integ-tableros', 'ing-gerente', 'Coordinador de|integración de|Tableros', 379, 782.6, 41, ['Jimena'], 'JIMENA C'),
-            puesto('ing-sup-logistica', 'ing-integ-tableros', 'Supervisor de|Logística', 348, 691, 37, ['Rafa']),
-            puesto('ing-sup-tableros', 'ing-integ-tableros', 'Supervisor de|Tableros', 284, 769.6, 37),
-            puesto('ing-tableristas', 'ing-sup-tableros', 'Tableristas', 241, 679, 37),
-            puesto('ing-coord-proyectos', 'ing-gerente', 'Coordinador de|Proyectos', 356, 966, 37, ['Omar'], 'OMAR M'),
-            puesto('ing-admin', 'ing-gerente', 'administrador de|ingeniería', 442, 983.5, 37),
-            puesto('ing-proyectista', 'ing-coord-proyectos', 'proyectista', 273.5, 982.6, 35, ['Diego'], 'DIEGO B'),
+            puesto('ing-integ-tableros', 'ing-gerente', 'Coordinador de|Tableros', 389, 790.7, 35, ['Jimena'], 'JIMENA C'),
+            puesto('ing-sup-tableros', 'ing-integ-tableros', 'Supervisor de|Tableros', 299.5, 778.2, 40),
+            puesto('ing-disenador', 'ing-sup-tableros', 'Diseñador|eléctrico', 241.1, 714.7, 37),
+            puesto('ing-programador', 'ing-disenador', 'Programador', 208.8, 626.2, 37),
+            puesto('ing-tableristas', 'ing-programador', 'Tableristas', 166.1, 547, 37),
+            puesto('ing-instrumentista', 'ing-tableristas', 'Instrumentista', 147.4, 457.4, 37),
+            puesto('ing-coord-proyectos', 'ing-gerente', 'Coordinador de|Proyectos de|ingeniería y|construcción', 356, 966, 37, ['Omar'], 'OMAR M'),
+            puesto('ing-admin', 'ing-gerente', 'Asistente de|ingeniería', 442, 983.5, 37),
+            puesto('ing-proyectista', 'ing-coord-proyectos', 'Proyectista de|ingeniería', 273.5, 982.6, 35, ['Diego'], 'DIEGO B'),
             puesto('ing-pruebas', 'ing-coord-proyectos', 'Ingeniero de|Pruebas y|Estudios', 321, 1050, 40, ['Osvaldo'], 'OSVALDO R'),
             puesto('ing-sup-proyectos', 'ing-proyectista', 'Supervisor de|Proyectos', 213, 934, 36, ['Rosendo']),
             puesto('ing-sobrestante', 'ing-sup-proyectos', 'Sobrestante|eléctrico', 157.4, 870.4, 33, ['Rosendo']),
             puesto('ing-cabo', 'ing-sobrestante', 'Cabo|eléctrico', 130, 798, 33, ['Rosendo']),
             puesto('ing-tecnico', 'ing-cabo', 'Técnico|electricista', 96.5, 712.6, 33, ['Andrés', 'Angel'], 'ANDRES F / ANGEL T'),
             puesto('ing-oficial', 'ing-tecnico', 'Oficial|electricista', 85.5, 644, 32, ['Alí'], 'ALI G'),
-            puesto('ing-ayudante', 'ing-oficial', 'Ayudante|electricista', 85.5, 575.7, 32, ['Luis Eduardo', 'Alan'], 'LUIS EDUARDO / ALAN M')
+            puesto('ing-ayudante', 'ing-oficial', 'Ayudante|electricista', 85.5, 575.7, 32, ['Luis Eduardo', 'Alan', 'Luis Angel'], 'LUIS EDUARDO / ALAN M / LUIS ANGEL')
         ]
     },
     {
@@ -534,7 +538,7 @@ const AREAS: Area[] = [
             puesto('pue-gerente', 'pue-hub', 'Gerente de|Sucursal', 1066.8, 675, 53, ['Jaime']),
             puesto('pue-admin', 'pue-gerente', 'Administrador|de Sucursal', 1137.8, 598, 37, ['Karem'], 'KAREM DILL'),
             puesto('pue-asesor', 'pue-admin', 'Asesor comercial|de mostrador', 1158.9, 515, 37, ['Adrian', 'Gibran'], 'ADRIAN Q / GIBRAN'),
-            puesto('pue-almacen', 'pue-admin', 'Responsable de|almacén e|inventarios', 1232, 614.8, 38, ['Valentin']),
+            puesto('pue-almacen', 'pue-admin', 'Responsable de|almacén e|inventarios', 1232, 614.8, 38, ['Gibran']),
             puesto('pue-rep', 'pue-gerente', 'Representante|Regional de|Ventas', 1158.9, 735.4, 37, ['Fermin', 'Marco'], 'FERMIN P / MARCO D')
         ]
     },
@@ -555,9 +559,9 @@ const AREAS: Area[] = [
         puestos: [
             puesto('qro-gerente', 'qro-hub', 'Gerente de|Sucursal', 710, 1030, 53, ['Yair'], 'YAIR M'),
             puesto('qro-rep', 'qro-gerente', 'Representante|Regional de|Ventas', 634, 1105.8, 37, ['Angel'], 'ANGEL S'),
-            puesto('qro-admin', 'qro-gerente', 'Administrador|de Sucursal', 805.7, 1085.2, 37, ['Monserrat'], 'MONSE D'),
-            puesto('qro-asesor', 'qro-admin', 'Asesor comercial|de mostrador', 764.6, 1178.9, 37, ['Monserrat'], 'MONSE D'),
-            puesto('qro-almacen', 'qro-admin', 'Responsable de|almacén e|inventarios', 877, 1171, 37, ['Monserrat'], 'MONSE D')
+            puesto('qro-admin', 'qro-gerente', 'Administrador|de Sucursal', 805.7, 1085.2, 37, ['Monserrath'], 'MONSE D'),
+            puesto('qro-asesor', 'qro-admin', 'Asesor comercial|de mostrador', 764.6, 1178.9, 37, ['Monserrath'], 'MONSE D'),
+            puesto('qro-almacen', 'qro-admin', 'Responsable de|almacén e|inventarios', 877, 1171, 37, ['Monserrath', 'Hugo'], 'MONSE D / HUGO')
         ]
     }
 ];
@@ -719,7 +723,7 @@ const DATOS_AREAS: DatosArea[] = [
     {
         id: 'ingenieria', name: 'Ingeniería', icon: 'heroicons_outline:wrench-screwdriver',
         leader: 'Gerente de Ingeniería: Jimena',
-        description: 'Proyectos, integración y supervisión de tableros, logística, pruebas y estudios, y cuadrilla de técnicos electricistas.'
+        description: 'Proyectos, coordinación de tableros (diseño eléctrico, programación e instrumentación), pruebas y estudios, y cuadrilla de técnicos electricistas.'
     },
     {
         id: 'calidad', name: 'Calidad', icon: 'heroicons_outline:check-badge',
