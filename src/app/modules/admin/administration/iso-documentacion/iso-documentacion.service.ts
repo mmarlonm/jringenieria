@@ -124,5 +124,16 @@ export class IsoDocumentacionService {
             nuevoNombre
         }, { params });
     }
+
+    renombrarCarpeta(apartado: string, subcarpetaActual?: string, nuevoNombre?: string, usuario?: string): Observable<any> {
+        let params = new HttpParams();
+        if (usuario) params = params.set('usuario', usuario);
+
+        return this._http.post<any>(`${this._apiUrl}/renombrar-carpeta`, {
+            apartado,
+            subcarpetaActual: subcarpetaActual || null,
+            nuevoNombre: nuevoNombre || ''
+        }, { params });
+    }
 }
 

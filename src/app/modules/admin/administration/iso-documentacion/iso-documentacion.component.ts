@@ -385,6 +385,58 @@ export class IsoDocumentacionComponent implements OnInit {
         });
     }
 
+    renombrarApartado(nombreActual: string): void {
+        if (!this.permisos.agregarCarpetas) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para renombrar apartados o carpetas.'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Renombrar Apartado',
+            text: `Ingrese el nuevo nombre para el apartado "${nombreActual}":`,
+            input: 'text',
+            inputValue: nombreActual,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#4f46e5',
+            inputValidator: (value) => {
+                if (!value || !value.trim()) {
+                    return 'El nombre del apartado no puede estar vacío';
+                }
+                if (value.includes('/') || value.includes('\\')) {
+                    return 'El nombre no puede contener barras diagonales (/) o (\\)';
+                }
+                return null;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const nuevoNombre = result.value.trim();
+                if (nuevoNombre === nombreActual) return;
+
+                const usuario = this.obtenerUsuarioActual();
+                this._isoService.renombrarCarpeta(nombreActual, undefined, nuevoNombre, usuario).subscribe({
+                    next: () => {
+                        if (this.activeSubcarpetas[nombreActual]) {
+                            this.activeSubcarpetas[nuevoNombre] = this.activeSubcarpetas[nombreActual];
+                            delete this.activeSubcarpetas[nombreActual];
+                        }
+                        this.loadFiles();
+                        this._snackBar.open(`Apartado renombrado a "${nuevoNombre}" exitosamente.`, 'OK', { duration: 3000 });
+                    },
+                    error: (err) => {
+                        console.error('Error al renombrar apartado:', err);
+                        Swal.fire('Error', err?.error?.message || err?.error || 'No se pudo renombrar el apartado.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
     eliminarApartado(categoryName: string): void {
         if (!this.permisos.eliminar) {
             Swal.fire({
@@ -465,6 +517,57 @@ export class IsoDocumentacionComponent implements OnInit {
                     error: (err) => {
                         console.error('Error al crear subcarpeta:', err);
                         this._snackBar.open('Error al crear la subcarpeta.', 'Cerrar', { duration: 4000 });
+                    }
+                });
+            }
+        });
+    }
+
+    renombrarSubcarpeta(categoryName: string, folder: string): void {
+        if (!this.permisos.agregarCarpetas) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permiso denegado',
+                text: 'No tienes permisos para renombrar subcarpetas.'
+            });
+            return;
+        }
+
+        const activeSub = this.activeSubcarpetas[categoryName];
+        const subcarpetaRelativa = activeSub ? `${activeSub}/${folder}` : folder;
+
+        Swal.fire({
+            title: 'Renombrar Subcarpeta',
+            text: `Ingrese el nuevo nombre para "${folder}":`,
+            input: 'text',
+            inputValue: folder,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#4f46e5',
+            inputValidator: (value) => {
+                if (!value || !value.trim()) {
+                    return 'El nombre de la subcarpeta no puede estar vacío';
+                }
+                if (value.includes('/') || value.includes('\\')) {
+                    return 'El nombre no puede contener barras diagonales (/) o (\\)';
+                }
+                return null;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const nuevoNombre = result.value.trim();
+                if (nuevoNombre === folder) return;
+
+                const usuario = this.obtenerUsuarioActual();
+                this._isoService.renombrarCarpeta(categoryName, subcarpetaRelativa, nuevoNombre, usuario).subscribe({
+                    next: () => {
+                        this.loadFiles();
+                        this._snackBar.open(`Subcarpeta renombrada a "${nuevoNombre}" exitosamente.`, 'OK', { duration: 3000 });
+                    },
+                    error: (err) => {
+                        console.error('Error al renombrar subcarpeta:', err);
+                        Swal.fire('Error', err?.error?.message || err?.error || 'No se pudo renombrar la subcarpeta.', 'error');
                     }
                 });
             }
