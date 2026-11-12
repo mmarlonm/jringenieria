@@ -337,16 +337,30 @@ export class DetailComponent implements OnInit {
     let sumaCalif = 0;
     let countCalif = 0;
     for (const c of this.camposDinamicos) {
-      if (c.tipo === 'radio' && c.escalaNotaInferior) {
-        const val = Number(this.respuestasDinamicas[c.id]);
-        if (!isNaN(val)) {
+      if ((c.tipo === 'radio' || c.tipo === 'select') && (c.escalaNotaInferior || c.escalaNotaSuperior)) {
+        const rawVal = this.respuestasDinamicas[c.id];
+        let val: number | null = null;
+        if (typeof rawVal === 'number') {
+          val = rawVal;
+        } else if (typeof rawVal === 'string') {
+          const match = rawVal.match(/^\s*(\d+(\.\d+)?)/);
+          if (match) val = Number(match[1]);
+        }
+        if (val !== null && !isNaN(val) && val >= 0 && val <= 10) {
           sumaCalif += val;
           countCalif++;
         }
       } else if (c.tipo === 'matrix') {
         for (const f of c.filasMatriz || []) {
-          const v = Number(this.obtenerValorMatriz(c.id, f.id));
-          if (!isNaN(v) && v > 0) {
+          const rawVal = this.obtenerValorMatriz(c.id, f.id);
+          let v: number | null = null;
+          if (typeof rawVal === 'number') {
+            v = rawVal;
+          } else if (typeof rawVal === 'string') {
+            const match = rawVal.match(/^\s*(\d+(\.\d+)?)/);
+            if (match) v = Number(match[1]);
+          }
+          if (v !== null && !isNaN(v) && v > 0) {
             sumaCalif += v;
             countCalif++;
           }
@@ -363,6 +377,7 @@ export class DetailComponent implements OnInit {
       cargoCliente: String(cargo),
       sucursal: sucursalVal,
       calificacionGeneral: califGeneral,
+      respuestas: this.respuestasDinamicas,
       respuestasJson: JSON.stringify(this.respuestasDinamicas)
     };
 

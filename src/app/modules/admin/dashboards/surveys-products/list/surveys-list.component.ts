@@ -655,11 +655,85 @@ export class SurveysListComponent implements OnInit, OnDestroy {
 
         reader.onload = (e: any) => {
 
-            this.imagenPortadaUrl = e.target.result;
+            const rawDataUrl = e.target.result as string;
 
-            this._snackBar.open('¡Foto cargada exitosamente como portada!', 'Aceptar', { duration: 2500 });
+            try {
 
-            this._cdr.markForCheck();
+                const img = new Image();
+
+                img.onload = () => {
+
+                    const maxDim = 1600;
+
+                    let width = img.width;
+
+                    let height = img.height;
+
+                    if (width > maxDim || height > maxDim) {
+
+                        if (width > height) {
+
+                            height = Math.round((height * maxDim) / width);
+
+                            width = maxDim;
+
+                        } else {
+
+                            width = Math.round((width * maxDim) / height);
+
+                            height = maxDim;
+
+                        }
+
+                    }
+
+                    const canvas = document.createElement('canvas');
+
+                    canvas.width = width;
+
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+
+                    if (ctx) {
+
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        this.imagenPortadaUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                    } else {
+
+                        this.imagenPortadaUrl = rawDataUrl;
+
+                    }
+
+                    this._snackBar.open('¡Foto cargada exitosamente como portada!', 'Aceptar', { duration: 2500 });
+
+                    this._cdr.markForCheck();
+
+                };
+
+                img.onerror = () => {
+
+                    this.imagenPortadaUrl = rawDataUrl;
+
+                    this._snackBar.open('¡Foto cargada exitosamente como portada!', 'Aceptar', { duration: 2500 });
+
+                    this._cdr.markForCheck();
+
+                };
+
+                img.src = rawDataUrl;
+
+            } catch {
+
+                this.imagenPortadaUrl = rawDataUrl;
+
+                this._snackBar.open('¡Foto cargada exitosamente como portada!', 'Aceptar', { duration: 2500 });
+
+                this._cdr.markForCheck();
+
+            }
 
         };
 
