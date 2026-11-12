@@ -303,6 +303,133 @@
                     </div>
                 </div>
             </mat-tab>
+            <!-- TAB 4: ETAPAS ANTERIORES (solo consulta, de la etapa 2 en adelante) -->
+            <mat-tab *ngIf="etapaNumero > 1" label="Etapas anteriores ({{ etapasAnteriores.length }})">
+                <div class="py-4 space-y-3">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Lo que se capturó en las etapas previas de este caso. Solo consulta: aquí no se puede modificar.
+                    </p>
+
+                    <p *ngIf="errorArchivosAnteriores" class="text-xs font-semibold text-red-600">
+                        No se pudieron cargar los archivos de las etapas anteriores.
+                    </p>
+
+                    <details
+                        *ngFor="let ea of etapasAnteriores"
+                        [attr.data-etapa-anterior]="ea.etapa"
+                        [open]="!etapaNoAplica(ea)"
+                        class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-sm"
+                    >
+                        <summary class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none">
+                            <span class="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                Etapa {{ ea.etapa }}: {{ tituloEtapa(ea.etapa) }}
+                            </span>
+                            <span
+                                [class]="ea.estatus === 3 ? 'px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'px-2 py-0.5 rounded text-[11px] font-bold bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'"
+                            >
+                                {{ nombreEstatus(ea.estatus) }}
+                            </span>
+                        </summary>
+
+                        <div *ngIf="etapaNoAplica(ea)" class="px-4 pb-4 text-xs text-slate-400">
+                            Esta etapa se omitió en este caso.
+                        </div>
+
+                        <div *ngIf="!etapaNoAplica(ea)" class="px-4 pb-4 space-y-3">
+                            <!-- Datos -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 rounded-lg bg-slate-50/60 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 text-xs">
+                                <div>
+                                    <span class="text-slate-400 block font-semibold uppercase tracking-wider">Responsable</span>
+                                    <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">
+                                        {{ ea.responsableNombre || 'Sin asignar' }}
+                                        <span *ngIf="ea.esAliado" class="text-xs text-slate-400">(Aliado)</span>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block font-semibold uppercase tracking-wider">Autorizador</span>
+                                    <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">{{ ea.autorizaNombre || '-' }}</span>
+                                </div>
+                                <div *ngIf="usaInformacion(ea.etapa)">
+                                    <span class="text-slate-400 block font-semibold uppercase tracking-wider">{{ etiquetaInformacionDe(ea.etapa) }}</span>
+                                    <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">{{ nombreInformacion(ea.informacionSuficiente) }}</span>
+                                </div>
+                                <div *ngIf="usaFechaProgramada(ea.etapa)">
+                                    <span class="text-slate-400 block font-semibold uppercase tracking-wider">Fecha programada</span>
+                                    <span class="text-slate-700 dark:text-slate-200 font-medium text-sm">
+                                        {{ ea.fechaProgramada ? (ea.fechaProgramada | date:'dd/MM/yyyy') : '-' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div *ngIf="ea.observacionesInformacion" class="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 whitespace-pre-line">
+                                <span class="font-semibold block text-slate-400">Observaciones de la información:</span>
+                                {{ ea.observacionesInformacion }}
+                            </div>
+
+                            <!-- Revisiones -->
+                            <div
+                                *ngFor="let rev of ea.revisiones"
+                                class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2"
+                            >
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2.5 py-0.5 rounded-md font-mono text-xs font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                                            Revisión {{ rev.numero }}
+                                        </span>
+                                        <span class="text-[11px] font-semibold text-slate-500">{{ nombreEstatus(rev.resultado) }}</span>
+                                    </div>
+                                    <span class="text-xs text-slate-400">
+                                        Elaborada: {{ rev.fechaElaboracion ? (rev.fechaElaboracion | date:'dd/MM/yyyy HH:mm') : '-' }}
+                                        <span *ngIf="rev.elaboradoPorNombre"> por {{ rev.elaboradoPorNombre }}</span>
+                                    </span>
+                                </div>
+
+                                <div *ngIf="rev.queCambio" class="text-xs text-slate-600 dark:text-slate-300">
+                                    <span class="font-semibold text-slate-400">Qué cambió:</span> {{ rev.queCambio }}
+                                </div>
+
+                                <div
+                                    *ngIf="rev.observacionesAutorizacion"
+                                    [class]="rev.resultado === 4 ? 'text-xs text-rose-600 dark:text-rose-400' : 'text-xs text-slate-600 dark:text-slate-300'"
+                                >
+                                    <span class="font-semibold">{{ rev.resultado === 4 ? 'Motivo de rechazo:' : 'Observaciones de autorización:' }}</span>
+                                    {{ rev.observacionesAutorizacion }}
+                                </div>
+
+                                <div *ngIf="rev.autorizadoPorNombre" class="text-xs text-slate-500">
+                                    {{ rev.resultado === 4 ? 'Rechazó' : 'Autorizó' }}: <strong>{{ rev.autorizadoPorNombre }}</strong>
+                                    <span *ngIf="rev.fechaAutorizacion"> · {{ rev.fechaAutorizacion | date:'dd/MM/yyyy HH:mm' }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Archivos de la etapa: solo descarga -->
+                            <div>
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Archivos y evidencias</span>
+                                <p *ngIf="archivosDeEtapaAnterior(ea.etapa).length === 0" class="text-xs text-slate-400 mt-1">
+                                    No se subieron archivos en esta etapa.
+                                </p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                                    <div
+                                        *ngFor="let a of archivosDeEtapaAnterior(ea.etapa)"
+                                        class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60"
+                                    >
+                                        <div class="flex items-center gap-2 overflow-hidden">
+                                            <mat-icon class="text-blue-500 scale-90">description</mat-icon>
+                                            <span class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate" [title]="a.nombreArchivo">
+                                                {{ a.nombreArchivo }}
+                                            </span>
+                                            <span class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black shrink-0">R{{ a.revision }}</span>
+                                        </div>
+                                        <button mat-icon-button type="button" (click)="descargarArchivoAnterior(a)" [matTooltip]="'Descargar'">
+                                            <mat-icon class="scale-90 text-slate-500">download</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </mat-tab>
         </mat-tab-group>
     </div>
 

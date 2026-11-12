@@ -22,7 +22,9 @@ import {
     CotizacionEtapaDto,
     CotizacionEtapasRevisionDto,
     CotizacionEtapasArchivoDto,
+    CotizacionEtapasArchivoCasoDto,
     ESTATUS_ETAPA,
+    INFORMACION,
     GuardarEtapaDto,
     CambiarEstatusDto
 } from '../cotizacion-etapas.models';
@@ -77,6 +79,10 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     revisionSeleccionadaArchivos: number = 1;
     archivosLista: CotizacionEtapasArchivoDto[] = [];
     cargandoArchivos = false;
+
+    // Etapas anteriores (solo consulta): archivos de todas las etapas previas del caso
+    archivosAnteriores: CotizacionEtapasArchivoCasoDto[] = [];
+    errorArchivosAnteriores = false;
 
     // Modales internos simples para autorizar / rechazar / cancelar
     modalAutorizarAbierto = false;
@@ -158,6 +164,58 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     /** La etapa 1 recibe lo que el cliente brindó; la 2 es lo que se recabó en campo. */
     get etiquetaInformacion(): string {
         return this.etapaNumero === 2 ? 'Información recabada' : 'Información brindada por el cliente';
+    }
+
+    /** Etapas previas a la que se abrió, para consultarlas sin poder modificarlas. */
+    get etapasAnteriores(): CotizacionEtapaDto[] {
+        return (this.detalle?.etapas || [])
+            .filter((e) => e.etapa < this.etapaNumero)
+            .sort((a, b) => a.etapa - b.etapa);
+    }
+
+    tituloEtapa(numero: number): string {
+        return obtenerEtapaConfig(numero)?.titulo ?? `Etapa ${numero}`;
+    }
+
+    usaInformacion(numero: number): boolean {
+        return !!obtenerEtapaConfig(numero)?.usaInformacion;
+    }
+
+    usaFechaProgramada(numero: number): boolean {
+        return !!obtenerEtapaConfig(numero)?.usaFechaProgramada;
+    }
+
+    etiquetaInformacionDe(numero: number): string {
+        return numero === 2 ? 'Información recabada' : 'Información brindada por el cliente';
+    }
+
+    nombreEstatus(estatus: number): string {
+        switch (estatus) {
+            case ESTATUS_ETAPA.Pendiente: return 'Pendiente';
+            case ESTATUS_ETAPA.EnProceso: return 'En proceso';
+            case ESTATUS_ETAPA.Autorizada: return 'Autorizada';
+            case ESTATUS_ETAPA.Rechazada: return 'Rechazada';
+            case ESTATUS_ETAPA.NoAplica: return 'No aplica';
+            default: return '-';
+        }
+    }
+
+    nombreInformacion(valor?: number | null): string {
+        switch (valor) {
+            case INFORMACION.Suficiente: return 'Suficiente';
+            case INFORMACION.Insuficiente: return 'Insuficiente';
+            case INFORMACION.NoHay: return 'No hay';
+            default: return 'No especificado';
+        }
+    }
+
+    /** Una etapa que se saltó no tiene nada que mostrar. */
+    etapaNoAplica(etapa: CotizacionEtapaDto): boolean {
+        return etapa.estatus === ESTATUS_ETAPA.NoAplica;
+    }
+
+    archivosDeEtapaAnterior(numero: number): CotizacionEtapasArchivoCasoDto[] {
+        return this.archivosAnteriores.filter((a) => a.etapa === numero);
     }
 
     get puedeAutorizarAccion(): boolean {
@@ -252,6 +310,10 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                     this.cargando = false;
                     this.detalle = det;
                     this.etapaActualDto = det.etapas?.find((e) => e.etapa === this.etapaNumero);
+
+                    if (this.etapaNumero > 1) {
+                        this._cargarArchivosAnteriores();
+                    }
 
                     if (this.etapaActualDto) {
                         const esAliado = !!this.etapaActualDto.esAliado;
@@ -567,8 +629,31 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
             });
     }
 
+    private _cargarArchivosAnteriores(): void {
+        this.errorArchivosAnteriores = false;
+        this._service.archivosDelCaso(this.idSeguimiento)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: (archivos) => {
+                    this.archivosAnteriores = (archivos || []).filter((a) => a.etapa < this.etapaNumero);
+                },
+                error: (err) => {
+                    this.errorArchivosAnteriores = true;
+                    console.error('Error cargando archivos de etapas anteriores', err);
+                }
+            });
+    }
+
     descargarArchivo(nombre: string): void {
-        this._service.descargarArchivo(this.idSeguimiento, this.etapaNumero, this.revisionSeleccionadaArchivos, nombre)
+        this._descargar(this.etapaNumero, this.revisionSeleccionadaArchivos, nombre);
+    }
+
+    descargarArchivoAnterior(archivo: CotizacionEtapasArchivoCasoDto): void {
+        this._descargar(archivo.etapa, archivo.revision, archivo.nombreArchivo);
+    }
+
+    private _descargar(etapa: number, revision: number, nombre: string): void {
+        this._service.descargarArchivo(this.idSeguimiento, etapa, revision, nombre)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
                 next: (blob) => {

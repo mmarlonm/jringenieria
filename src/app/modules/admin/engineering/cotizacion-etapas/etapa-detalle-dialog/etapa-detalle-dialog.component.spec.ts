@@ -74,6 +74,7 @@ describe('EtapaDetalleDialogComponent', () => {
             'reactivar',
             'eliminar',
             'archivos',
+            'archivosDelCaso',
             'subirArchivos',
             'descargarArchivo',
             'eliminarArchivo'
@@ -84,6 +85,7 @@ describe('EtapaDetalleDialogComponent', () => {
 
         serviceMock.obtener.and.returnValue(of(mockDetalle));
         serviceMock.archivos.and.returnValue(of([]));
+        serviceMock.archivosDelCaso.and.returnValue(of([]));
         usersMock.getUsers.and.returnValue(of([]));
         subcontratacionMock.getPersonal.and.returnValue(of([]));
 
@@ -443,5 +445,83 @@ describe('EtapaDetalleDialogComponent', () => {
         fixture.detectChanges();
         compiled = fixture.nativeElement as HTMLElement;
         expect(compiled.querySelector('input[formcontrolname="fechaElaboracion"]')).not.toBeNull();
+    });
+
+    // ───── Etapas anteriores: solo consulta ─────
+
+    function abrirEnEtapa3ConAnteriores(): void {
+        const etapa1 = { ...mockDetalle.etapas[0], estatus: ESTATUS_ETAPA.Autorizada };
+        serviceMock.obtener.and.returnValue(of({
+            ...mockDetalle,
+            etapaActual: 3,
+            etapas: [
+                { ...etapa1, etapa: 3, estatus: ESTATUS_ETAPA.EnProceso },
+                { ...etapa1, etapa: 2, estatus: ESTATUS_ETAPA.NoAplica, revisiones: [] },
+                etapa1,
+                { ...etapa1, etapa: 4, estatus: ESTATUS_ETAPA.Pendiente, revisiones: [] }
+            ]
+        }));
+        serviceMock.archivosDelCaso.and.returnValue(of([
+            { etapa: 1, revision: 1, nombreArchivo: 'plano.pdf' },
+            { etapa: 3, revision: 1, nombreArchivo: 'calculo.xlsx' }
+        ]));
+        component.etapaNumero = 3;
+        component.etapaConfig = obtenerEtapaConfig(3);
+        component.cargarDetalle();
+        fixture.detectChanges();
+    }
+
+    function etiquetasDePestanas(): string[] {
+        return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]')).map((t) => (t.textContent || '').trim());
+    }
+
+    it('en la etapa 1 no hay pestaña de etapas anteriores ni se piden sus archivos', () => {
+        expect(component.etapasAnteriores).toEqual([]);
+        expect(etiquetasDePestanas().some((t) => t.includes('Etapas anteriores'))).toBeFalse();
+        expect(serviceMock.archivosDelCaso).not.toHaveBeenCalled();
+    });
+
+    it('en la etapa 3 se consultan la 1 y la 2, en orden, con solo los archivos de esas etapas', () => {
+        abrirEnEtapa3ConAnteriores();
+
+        expect(component.etapasAnteriores.map((e) => e.etapa)).toEqual([1, 2]);
+        expect(etiquetasDePestanas().some((t) => t.includes('Etapas anteriores (2)'))).toBeTrue();
+        expect(serviceMock.archivosDelCaso).toHaveBeenCalledWith(10);
+        expect(component.archivosAnteriores.map((a) => a.nombreArchivo)).toEqual(['plano.pdf']);
+        expect(component.archivosDeEtapaAnterior(1).length).toBe(1);
+        expect(component.archivosDeEtapaAnterior(2).length).toBe(0);
+        expect(component.etapaNoAplica(component.etapasAnteriores[1])).toBeTrue();
+    });
+
+    it('la pestaña de etapas anteriores muestra los datos sin campos editables ni botones de subir o eliminar', async () => {
+        abrirEnEtapa3ConAnteriores();
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Etapas anteriores'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const paneles = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-etapa-anterior]');
+        expect(paneles.length).toBe(2);
+        const etapa1 = paneles[0];
+        expect(etapa1.textContent).toContain('Solicitud del cliente');
+        expect(etapa1.textContent).toContain('Autorizada');
+        expect(etapa1.textContent).toContain('Observaciones iniciales');
+        expect(etapa1.textContent).toContain('Responsable 5');
+        expect(etapa1.textContent).toContain('plano.pdf');
+        expect(etapa1.querySelectorAll('input, textarea, select, mat-select').length).toBe(0);
+        expect(etapa1.textContent).not.toContain('Subir');
+        expect(etapa1.querySelectorAll('button').length).toBe(1); // solo descargar
+        expect(paneles[1].textContent).toContain('No aplica');
+        expect(paneles[1].textContent).toContain('se omitió');
+    });
+
+    it('descargar un archivo de una etapa anterior pide el de su etapa y revisión, no el de la etapa abierta', () => {
+        abrirEnEtapa3ConAnteriores();
+        serviceMock.descargarArchivo.and.returnValue(of(new Blob(['x'])));
+
+        component.descargarArchivoAnterior({ etapa: 1, revision: 2, nombreArchivo: 'plano.pdf' });
+
+        expect(serviceMock.descargarArchivo).toHaveBeenCalledOnceWith(10, 1, 2, 'plano.pdf');
     });
 });
