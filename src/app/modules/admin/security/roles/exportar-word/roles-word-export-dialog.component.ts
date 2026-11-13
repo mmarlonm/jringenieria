@@ -49,7 +49,7 @@ export interface DialogDataRolesWord {
                         <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
                             <mat-icon class="icon-size-5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
                         </div>
-                        <span class="truncate">Descargar Autorizaciones y Permisos en Word</span>
+                        <span class="truncate">Exportar Autorizaciones y Permisos</span>
                     </div>
                     <div class="mt-0.5 ml-10 text-xs text-slate-500 dark:text-slate-400">
                         Genera un documento editable en Microsoft Word (.docx) con derechos de acceso y privilegios por módulo.
@@ -165,14 +165,14 @@ export interface DialogDataRolesWord {
                     Formato: Documento Microsoft Word (.docx)
                 </span>
                 <div class="flex items-center gap-2">
-                    <button mat-button type="button" (click)="cerrar()" [disabled]="descargando">
+                    <button mat-button type="button" (click)="cerrar()" [disabled]="exportando">
                         Cancelar
                     </button>
-                    <button mat-flat-button color="primary" type="button" (click)="descargarWord()" [disabled]="cargando || descargando || !puedeDescargar"
+                    <button mat-flat-button color="primary" type="button" (click)="exportarWord()" [disabled]="cargando || exportando || !puedeDescargar"
                             class="!rounded-xl !px-5 font-bold shadow-xs">
-                        <mat-icon *ngIf="!descargando" class="icon-size-4 mr-1.5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
-                        <mat-spinner *ngIf="descargando" [diameter]="18" class="mr-2 inline-block"></mat-spinner>
-                        <span>{{ descargando ? 'Generando Word…' : 'Descargar Word' }}</span>
+                        <mat-icon *ngIf="!exportando" class="icon-size-4 mr-1.5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                        <mat-spinner *ngIf="exportando" [diameter]="18" class="mr-2 inline-block"></mat-spinner>
+                        <span>{{ exportando ? 'Exportando…' : 'Exportar' }}</span>
                     </button>
                 </div>
             </div>
@@ -193,7 +193,7 @@ export class RolesWordExportDialogComponent implements OnInit {
     catalogo: PermisoCatalogo[] = [];
 
     cargando = true;
-    descargando = false;
+    exportando = false;
     error: string | null = null;
 
     constructor(
@@ -254,10 +254,10 @@ export class RolesWordExportDialogComponent implements OnInit {
         return this.roles.length > 0;
     }
 
-    async descargarWord(): Promise<void> {
+    async exportarWord(): Promise<void> {
         if (!this.puedeDescargar) return;
 
-        this.descargando = true;
+        this.exportando = true;
         this._cdr.markForCheck();
 
         try {
@@ -295,7 +295,7 @@ export class RolesWordExportDialogComponent implements OnInit {
                 );
             }
 
-            this.descargando = false;
+            this.exportando = false;
             this.dialogRef.close();
 
             Swal.fire({
@@ -308,7 +308,7 @@ export class RolesWordExportDialogComponent implements OnInit {
             });
         } catch (err) {
             console.error('Error generando documento Word:', err);
-            this.descargando = false;
+            this.exportando = false;
             this._cdr.markForCheck();
             Swal.fire('Error', 'Ocurrió un error al generar el documento Word.', 'error');
         }

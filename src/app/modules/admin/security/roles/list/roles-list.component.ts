@@ -97,7 +97,7 @@ export class RolesListComponent implements OnInit, OnDestroy {
         });
     }
 
-    abrirDescargaWord(): void {
+    abrirExportar(): void {
         this._dialog.open(RolesWordExportDialogComponent, {
             width: '580px',
             maxWidth: '95vw',

@@ -528,7 +528,7 @@ export class RolesWordExportService {
         // Empaquetar y descargar
         const blob = await Packer.toBlob(doc);
         const nombreArchivo = `Cedula_Autorizaciones_${nombreRol.replace(/[^a-zA-Z0-9_-]/g, '_')}_${this.formatearFechaArchivo(new Date())}.docx`;
-        saveAs(blob, nombreArchivo);
+        this.guardarArchivoWord(blob, nombreArchivo);
     }
 
     /**
@@ -862,7 +862,29 @@ export class RolesWordExportService {
 
         const blob = await Packer.toBlob(doc);
         const nombreArchivo = `Matriz_Autorizaciones_Roles_${this.formatearFechaArchivo(new Date())}.docx`;
-        saveAs(blob, nombreArchivo);
+        this.guardarArchivoWord(blob, nombreArchivo);
+    }
+
+    private guardarArchivoWord(blob: Blob, nombreArchivo: string): void {
+        const wordBlob = new Blob([blob], {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document;charset=utf-8'
+        });
+
+        try {
+            const url = window.URL.createObjectURL(wordBlob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 300);
+        } catch {
+            saveAs(wordBlob, nombreArchivo);
+        }
     }
 
     // =========================================================================

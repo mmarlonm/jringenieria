@@ -30,15 +30,15 @@
                     </div>
                 </div>
 
-                <!-- Botón Descargar Word de este rol -->
+                <!-- Botón Exportar de este rol -->
                 <div class="flex-none self-start sm:self-center">
                     <button mat-stroked-button type="button" class="!h-10 !rounded-xl"
-                            (click)="descargarWord()"
-                            [disabled]="descargandoWord || esNuevo"
-                            matTooltip="Descargar cédula en Word (.docx) con los permisos y autorizaciones de este rol">
-                        <mat-icon *ngIf="!descargandoWord" class="icon-size-4 mr-1.5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
-                        <mat-spinner *ngIf="descargandoWord" [diameter]="16" class="mr-2 inline-block"></mat-spinner>
-                        <span>{{ descargandoWord ? 'Generando Word…' : 'Descargar Word' }}</span>
+                            (click)="exportarWord()"
+                            [disabled]="exportandoWord || esNuevo"
+                            matTooltip="Exportar cédula de autorizaciones en Word (.docx)">
+                        <mat-icon *ngIf="!exportandoWord" class="icon-size-4 mr-1.5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                        <mat-spinner *ngIf="exportandoWord" [diameter]="16" class="mr-2 inline-block"></mat-spinner>
+                        <span>{{ exportandoWord ? 'Exportando…' : 'Exportar' }}</span>
                     </button>
                 </div>
             </div>

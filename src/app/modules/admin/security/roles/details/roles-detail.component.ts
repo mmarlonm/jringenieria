@@ -33,7 +33,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     navigation: FuseNavigationItem[] = [];
     loadError: string | null = null;
     guardando = false;
-    descargandoWord = false;
+    exportandoWord = false;
 
     nombre = '';
     private nombreOriginal = '';
@@ -140,7 +140,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
 
     // ------------------------------------------------------------------ exportar Word
 
-    descargarWord(): void {
+    exportarWord(): void {
         if (this.esNuevo) {
             Swal.fire({
                 icon: 'info',
@@ -151,7 +151,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.descargandoWord = true;
+        this.exportandoWord = true;
         this._changeDetectorRef.markForCheck();
 
         forkJoin({
@@ -176,7 +176,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
                         { seleccionOverride: this.seleccion }
                     );
 
-                    this.descargandoWord = false;
+                    this.exportandoWord = false;
                     this._changeDetectorRef.markForCheck();
 
                     Swal.fire({
@@ -189,14 +189,14 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
                     });
                 } catch (err) {
                     console.error('[RolesDetail] Error generando Word:', err);
-                    this.descargandoWord = false;
+                    this.exportandoWord = false;
                     this._changeDetectorRef.markForCheck();
                     Swal.fire('Error', 'No se pudo generar el documento Word.', 'error');
                 }
             },
             error: (err) => {
                 console.error('[RolesDetail] Error cargando datos para Word:', err);
-                this.descargandoWord = false;
+                this.exportandoWord = false;
                 this._changeDetectorRef.markForCheck();
                 Swal.fire('Error', 'No se pudieron cargar los datos para generar el documento Word.', 'error');
             }
