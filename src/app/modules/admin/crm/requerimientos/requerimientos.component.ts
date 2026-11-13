@@ -106,7 +106,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
 
   displayedColumns = [
     'folio', 'nombreContacto', 'empresa', 'sucursal',
-    'fechaRecepcion', 'estatus', 'viabilidad', 'rutaAtencion', 'acciones'
+    'fechaRecepcion', 'archivos', 'estatus', 'viabilidad', 'rutaAtencion', 'acciones'
   ];
 
   private sortableInstances: Sortable[] = [];

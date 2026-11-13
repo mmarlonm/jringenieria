@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -10,10 +10,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable, map } from 'rxjs';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
-import { RequerimientosService, Requerimiento } from '../requerimientos.service';
-import { CATEGORIA_GENERAL, iconoArchivo, temaArchivo, validarArchivos } from '../requerimiento-archivos.utils';
+import { RequerimientosService, Requerimiento, RequerimientoArchivo } from '../requerimientos.service';
+import { CATEGORIA_GENERAL, etiquetaCategoria, iconoArchivo, temaArchivo, validarArchivos } from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -30,7 +31,8 @@ import Swal from 'sweetalert2';
     MatIconModule,
     MatTooltipModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatProgressBarModule
   ],
   templateUrl: './requerimiento-dialog.component.html'
 })
@@ -40,18 +42,24 @@ export class RequerimientoDialogComponent implements OnInit {
   usuarios: any[] = [];
   sucursales = ['Pachuca', 'Puebla', 'Querétaro', 'Corporativo'];
 
-  /** Archivos elegidos: se suben al guardar, cuando el requerimiento ya tiene folio. */
+  /** Archivos guardados previamente en el requerimiento (en modo edición). */
+  archivosExistentes: RequerimientoArchivo[] = [];
+  cargandoArchivos = false;
+
+  /** Nuevos archivos elegidos en el diálogo: se suben al guardar. */
   archivosSeleccionados: File[] = [];
   guardando = false;
 
   readonly iconoArchivo = iconoArchivo;
   readonly temaArchivo = temaArchivo;
   readonly tamano = formatearTamano;
+  readonly etiquetaCategoria = etiquetaCategoria;
 
   constructor(
     private fb: FormBuilder,
     private reqService: RequerimientosService,
     private dialogRef: MatDialogRef<RequerimientoDialogComponent>,
+    private cdr: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) public data: { requerimiento?: Requerimiento; users: any[] }
   ) {
     this.isEditMode = !!data.requerimiento;
@@ -69,7 +77,32 @@ export class RequerimientoDialogComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.isEditMode && this.data.requerimiento?.id) {
+      if (this.data.requerimiento.archivos && this.data.requerimiento.archivos.length > 0) {
+        this.archivosExistentes = [...this.data.requerimiento.archivos];
+      }
+      this.cargarArchivosExistentes(this.data.requerimiento.id);
+    }
+  }
+
+  cargarArchivosExistentes(reqId: number): void {
+    this.cargandoArchivos = true;
+    this.reqService.getArchivos(reqId).subscribe({
+      next: (archivos) => {
+        this.archivosExistentes = archivos || [];
+        if (this.data.requerimiento) {
+          this.data.requerimiento.archivos = this.archivosExistentes;
+        }
+        this.cargandoArchivos = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.cargandoArchivos = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -88,10 +121,64 @@ export class RequerimientoDialogComponent implements OnInit {
     // Sin repetir el mismo archivo (mismo nombre y tamaño) si se elige dos veces
     const nuevos = validos.filter(f => !this.archivosSeleccionados.some(a => a.name === f.name && a.size === f.size));
     this.archivosSeleccionados = [...this.archivosSeleccionados, ...nuevos];
+    this.cdr.markForCheck();
   }
 
   quitarArchivo(indice: number): void {
     this.archivosSeleccionados = this.archivosSeleccionados.filter((_, i) => i !== indice);
+    this.cdr.markForCheck();
+  }
+
+  verArchivo(archivo: RequerimientoArchivo): void {
+    const reqId = this.data.requerimiento?.id;
+    if (!reqId) return;
+    const url = this.reqService.descargarArchivoUrl(reqId, archivo.id);
+    window.open(url, '_blank');
+  }
+
+  descargarArchivo(archivo: RequerimientoArchivo): void {
+    const reqId = this.data.requerimiento?.id;
+    if (!reqId) return;
+    const url = this.reqService.descargarArchivoUrl(reqId, archivo.id);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = archivo.nombreArchivo;
+    a.click();
+  }
+
+  eliminarArchivo(archivo: RequerimientoArchivo): void {
+    const reqId = this.data.requerimiento?.id;
+    if (!reqId) return;
+
+    Swal.fire({
+      title: '¿Eliminar archivo?',
+      text: `Se eliminará permanentemente «${archivo.nombreArchivo}». Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+
+      this.reqService.eliminarArchivo(reqId, archivo.id).subscribe({
+        next: () => {
+          this.archivosExistentes = this.archivosExistentes.filter(a => a.id !== archivo.id);
+          if (this.data.requerimiento) {
+            this.data.requerimiento.archivos = this.archivosExistentes;
+          }
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Archivo eliminado',
+            showConfirmButton: false,
+            timer: 2000
+          });
+          this.cdr.markForCheck();
+        },
+        error: (err) => Swal.fire('No se pudo eliminar', this.mensajeDe(err), 'error')
+      });
+    });
   }
 
   onSubmit(): void {
@@ -131,7 +218,7 @@ export class RequerimientoDialogComponent implements OnInit {
         Swal.fire({
           icon: 'warning',
           title: this.isEditMode ? 'Cambios guardados' : 'Requerimiento registrado',
-          text: `${folio} se guardó, pero los archivos no se pudieron subir (${this.mensajeDe(err)}). Puedes subirlos desde «Calificar → Archivos y planos».`,
+          text: `${folio} se guardó, pero los archivos nuevos no se pudieron subir (${this.mensajeDe(err)}). Puedes subirlos desde «Calificar → Archivos y planos».`,
         }).then(() => this.dialogRef.close(true));
       }
     });
