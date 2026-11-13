@@ -11,6 +11,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { LeadsService, Lead, UpdateLeadDto, LeadKpi } from './leads.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { LeadDialogComponent } from './lead-dialog/lead-dialog.component';
@@ -34,7 +36,9 @@ import Swal from 'sweetalert2';
     MatTableModule,
     MatTooltipModule,
     MatButtonToggleModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   templateUrl: './leads.component.html',
   styles: [`
@@ -103,6 +107,7 @@ export class LeadsComponent implements OnInit {
   fuenteControl = new FormControl('Todos');
   sucursalControl = new FormControl('Todos');
   agenteControl = new FormControl('Todos');
+  fechaControl = new FormControl<Date | null>(null);
 
   displayedColumns = [
     'id', 'nombreContacto', 'empresa', 'telefono', 'email', 
@@ -127,6 +132,7 @@ export class LeadsComponent implements OnInit {
     this.fuenteControl.valueChanges.subscribe(() => this.applyFilters());
     this.sucursalControl.valueChanges.subscribe(() => this.applyFilters());
     this.agenteControl.valueChanges.subscribe(() => this.applyFilters());
+    this.fechaControl.valueChanges.subscribe(() => this.applyFilters());
   }
 
   loadLeads(): void {
@@ -164,6 +170,15 @@ export class LeadsComponent implements OnInit {
     const fuente = this.fuenteControl.value || 'Todos';
     const sucursal = this.sucursalControl.value || 'Todos';
     const agente = this.agenteControl.value || 'Todos';
+    const fechaFiltro = this.fechaControl.value;
+    let fechaFiltroStr = '';
+    if (fechaFiltro) {
+      const d = new Date(fechaFiltro);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      fechaFiltroStr = `${year}-${month}-${day}`;
+    }
 
     this.filteredLeads = this.leads.filter(lead => {
       // Search matches
@@ -183,7 +198,10 @@ export class LeadsComponent implements OnInit {
       // Agente matches
       const matchesAgente = agente === 'Todos' || lead.idUsuarioAsignado === parseInt(agente);
 
-      return matchesSearch && matchesFuente && matchesSucursal && matchesAgente;
+      // Fecha matches
+      const matchesFecha = !fechaFiltroStr || (lead.fechaRegistro && lead.fechaRegistro.startsWith(fechaFiltroStr));
+
+      return matchesSearch && matchesFuente && matchesSucursal && matchesAgente && matchesFecha;
     });
     this.cdr.markForCheck();
   }
@@ -209,9 +227,23 @@ export class LeadsComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.action === 'create') {
         this.leadsService.createLead(result.data).subscribe({
-          next: () => {
-            this.showSnackBar('Lead registrado exitosamente en la Bandeja', 'OK', 'bg-green-600 text-white');
-            this.loadLeads();
+          next: (createdLead) => {
+            if (result.archivos && result.archivos.length > 0) {
+              this.leadsService.subirArchivosLead(createdLead.id, result.categoria || 'General', result.archivos).subscribe({
+                next: () => {
+                  this.showSnackBar('Lead y documentos registrados exitosamente', 'OK', 'bg-green-600 text-white');
+                  this.loadLeads();
+                },
+                error: (err) => {
+                  console.error('Error al subir archivos:', err);
+                  this.showSnackBar('Lead registrado, pero ocurrió un problema al guardar los documentos', 'Cerrar', 'bg-amber-600 text-white');
+                  this.loadLeads();
+                }
+              });
+            } else {
+              this.showSnackBar('Lead registrado exitosamente en la Bandeja', 'OK', 'bg-green-600 text-white');
+              this.loadLeads();
+            }
           },
           error: () => this.showSnackBar('Error al registrar lead', 'Cerrar', 'bg-red-600 text-white')
         });
@@ -231,8 +263,22 @@ export class LeadsComponent implements OnInit {
         const dto: UpdateLeadDto = result.data;
         this.leadsService.updateLead(lead.id, dto).subscribe({
           next: () => {
-            this.showSnackBar('Lead actualizado exitosamente', 'OK', 'bg-green-600 text-white');
-            this.loadLeads();
+            if (result.archivos && result.archivos.length > 0) {
+              this.leadsService.subirArchivosLead(lead.id, result.categoria || 'General', result.archivos).subscribe({
+                next: () => {
+                  this.showSnackBar('Lead y documentos actualizados exitosamente', 'OK', 'bg-green-600 text-white');
+                  this.loadLeads();
+                },
+                error: (err) => {
+                  console.error('Error al subir archivos:', err);
+                  this.showSnackBar('Lead actualizado, pero ocurrió un problema al guardar los documentos', 'Cerrar', 'bg-amber-600 text-white');
+                  this.loadLeads();
+                }
+              });
+            } else {
+              this.showSnackBar('Lead actualizado exitosamente', 'OK', 'bg-green-600 text-white');
+              this.loadLeads();
+            }
           },
           error: () => this.showSnackBar('Error al actualizar el lead', 'Cerrar', 'bg-red-600 text-white')
         });

@@ -11,6 +11,9 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 import { LeadsService, LeadArchivo } from '../leads.service';
 
 @Component({
@@ -29,7 +32,9 @@ import { LeadsService, LeadArchivo } from '../leads.service';
     MatStepperModule,
     MatProgressBarModule,
     MatTooltipModule,
-    MatChipsModule
+    MatChipsModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   templateUrl: './lead-dialog.component.html'
 })
@@ -39,6 +44,8 @@ export class LeadDialogComponent implements OnInit {
   convertForm: FormGroup;
   discardForm: FormGroup;
   users: any[] = [];
+
+  readonly tamano = formatearTamano;
 
   // --- Archivos ---
   archivos: LeadArchivo[] = [];
@@ -88,7 +95,8 @@ export class LeadDialogComponent implements OnInit {
       fuenteLead: [lead?.fuenteLead || 'WhatsApp', Validators.required],
       necesidadInicial: [lead?.necesidadInicial || '', Validators.required],
       sucursalQueRecibe: [lead?.sucursalQueRecibe || 'Pachuca', Validators.required],
-      idUsuarioAsignado: [lead?.idUsuarioAsignado || null, Validators.required]
+      idUsuarioAsignado: [lead?.idUsuarioAsignado || null, Validators.required],
+      fechaRegistro: [lead?.fechaRegistro ? new Date(lead.fechaRegistro) : new Date(), Validators.required]
     });
 
     // Formulario para Calificar y Convertir a Oportunidad (ISO 9001)
@@ -129,9 +137,17 @@ export class LeadDialogComponent implements OnInit {
 
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.archivosSeleccionados = Array.from(input.files);
-    }
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (files.length === 0) return;
+    const nuevos = files.filter(f => !this.archivosSeleccionados.some(a => a.name === f.name && a.size === f.size));
+    this.archivosSeleccionados = [...this.archivosSeleccionados, ...nuevos];
+    this.cdr.markForCheck();
+  }
+
+  quitarArchivo(index: number): void {
+    this.archivosSeleccionados.splice(index, 1);
+    this.cdr.markForCheck();
   }
 
   subirArchivos(): void {
@@ -222,9 +238,23 @@ export class LeadDialogComponent implements OnInit {
 
   onSubmit(): void {
     if (this.action === 'create' && this.leadForm.valid) {
-      this.dialogRef.close({ action: 'create', data: this.leadForm.value });
+      const data = { ...this.leadForm.value };
+      if (data.fechaRegistro instanceof Date) data.fechaRegistro = data.fechaRegistro.toISOString();
+      this.dialogRef.close({
+        action: 'create',
+        data: data,
+        archivos: this.archivosSeleccionados,
+        categoria: this.categoriaArchivo
+      });
     } else if (this.action === 'edit' && this.leadForm.valid) {
-      this.dialogRef.close({ action: 'edit', data: this.leadForm.value });
+      const data = { ...this.leadForm.value };
+      if (data.fechaRegistro instanceof Date) data.fechaRegistro = data.fechaRegistro.toISOString();
+      this.dialogRef.close({
+        action: 'edit',
+        data: data,
+        archivos: this.archivosSeleccionados,
+        categoria: this.categoriaArchivo
+      });
     } else if (this.action === 'convert' && this.convertForm.valid) {
       this.dialogRef.close({ action: 'convert', data: this.convertForm.value });
     } else if (this.action === 'discard' && this.discardForm.valid) {

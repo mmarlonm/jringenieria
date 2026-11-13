@@ -11,6 +11,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { RequerimientosService, Requerimiento, RequerimientoKpi } from './requerimientos.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { RequerimientoDialogComponent } from './requerimiento-dialog/requerimiento-dialog.component';
@@ -36,6 +38,8 @@ import Sortable from 'sortablejs';
     MatTooltipModule,
     MatButtonToggleModule,
     MatSnackBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
   ],
   templateUrl: './requerimientos.component.html',
   encapsulation: ViewEncapsulation.None,
@@ -98,6 +102,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
   sucursalControl = new FormControl('Todos');
   estatusControl = new FormControl('Todos');
   agenteControl = new FormControl('Todos');
+  fechaControl = new FormControl<Date | null>(null);
 
   displayedColumns = [
     'folio', 'nombreContacto', 'empresa', 'sucursal',
@@ -124,6 +129,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     this.sucursalControl.valueChanges.subscribe(() => this.applyFilters());
     this.estatusControl.valueChanges.subscribe(() => this.applyFilters());
     this.agenteControl.valueChanges.subscribe(() => this.applyFilters());
+    this.fechaControl.valueChanges.subscribe(() => this.applyFilters());
   }
 
   ngAfterViewInit(): void {
@@ -237,6 +243,15 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     const sucursal = this.sucursalControl.value || 'Todos';
     const estatus = this.estatusControl.value || 'Todos';
     const agente = this.agenteControl.value || 'Todos';
+    const fechaFiltro = this.fechaControl.value;
+    let fechaFiltroStr = '';
+    if (fechaFiltro) {
+      const d = new Date(fechaFiltro);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      fechaFiltroStr = `${year}-${month}-${day}`;
+    }
 
     this.filteredRequerimientos = this.requerimientos.filter(r => {
       const matchesSearch = !search ||
@@ -247,7 +262,8 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       const matchesSucursal = sucursal === 'Todos' || r.sucursal === sucursal;
       const matchesEstatus = estatus === 'Todos' || r.estatus === estatus;
       const matchesAgente = agente === 'Todos' || r.usuarioAsignadoId === +agente;
-      return matchesSearch && matchesSucursal && matchesEstatus && matchesAgente;
+      const matchesFecha = !fechaFiltroStr || (r.fechaRecepcion && r.fechaRecepcion.startsWith(fechaFiltroStr));
+      return matchesSearch && matchesSucursal && matchesEstatus && matchesAgente && matchesFecha;
     });
 
     this.pendientes = this.filteredRequerimientos.filter(r => r.estatus === 'Pendiente');

@@ -169,7 +169,7 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mt-6">
       <!-- Search Input -->
       <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
         <mat-icon matPrefix svgIcon="heroicons_solid:magnifying-glass" class="icon-size-5"></mat-icon>
@@ -211,6 +211,17 @@
             {{ user.nombreUsuario }}
           </mat-option>
         </mat-select>
+      </mat-form-field>
+
+      <!-- Date Filter -->
+      <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+        <mat-label>Fecha</mat-label>
+        <input matInput [matDatepicker]="pickerLeadFiltro" [formControl]="fechaControl" placeholder="Filtrar fecha">
+        <mat-datepicker-toggle matSuffix [for]="pickerLeadFiltro"></mat-datepicker-toggle>
+        <mat-datepicker #pickerLeadFiltro></mat-datepicker>
+        <button *ngIf="fechaControl.value" matSuffix mat-icon-button (click)="fechaControl.setValue(null); $event.stopPropagation()" class="w-6 h-6 min-h-6 text-gray-400 hover:text-gray-600">
+          <mat-icon class="icon-size-4">close</mat-icon>
+        </button>
       </mat-form-field>
 
       <!-- Quick Metrics Info -->

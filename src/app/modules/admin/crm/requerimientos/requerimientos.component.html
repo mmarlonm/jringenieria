@@ -112,7 +112,7 @@
                     <mat-option value="Todos">Todas las Sucursales</mat-option>
                     <mat-option value="Pachuca">Pachuca</mat-option>
                     <mat-option value="Puebla">Puebla</mat-option>
-                    <mat-option value="QuerÃ©taro">QuerÃ©taro</mat-option>
+                    <mat-option value="Querétaro">Querétaro</mat-option>
                     <mat-option value="Corporativo">Corporativo</mat-option>
                 </mat-select>
             </mat-form-field>
@@ -123,6 +123,16 @@
                     <mat-option value="Todos">Todos los Agentes</mat-option>
                     <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">{{ user.nombreUsuario }}</mat-option>
                 </mat-select>
+            </mat-form-field>
+
+            <!-- Date Filter -->
+            <mat-form-field appearance="outline" class="w-full sm:w-44 max-h-12" subscriptSizing="dynamic">
+                <input matInput [matDatepicker]="pickerReqFiltro" [formControl]="fechaControl" placeholder="Filtrar por fecha">
+                <mat-datepicker-toggle matSuffix [for]="pickerReqFiltro"></mat-datepicker-toggle>
+                <mat-datepicker #pickerReqFiltro></mat-datepicker>
+                <button *ngIf="fechaControl.value" matSuffix mat-icon-button (click)="fechaControl.setValue(null); $event.stopPropagation()" class="w-6 h-6 min-h-6 text-gray-400 hover:text-gray-600">
+                    <mat-icon class="icon-size-4">close</mat-icon>
+                </button>
             </mat-form-field>
         </div>
 
@@ -346,7 +356,7 @@
 
             <!-- Fecha Recepcion -->
             <ng-container matColumnDef="fechaRecepcion">
-                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Fecha RecepciÃ³n</th>
+                <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Fecha Recepción</th>
                 <td mat-cell *matCellDef="let r" class="text-xs text-gray-500">{{ r.fechaRecepcion | date:'dd/MM/yyyy HH:mm' }}</td>
             </ng-container>
 

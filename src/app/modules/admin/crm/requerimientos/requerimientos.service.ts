@@ -91,6 +91,7 @@ export interface CreateRequerimientoDto {
   sucursal?: string;
   descripcion: string;
   usuarioAsignadoId?: number;
+  fechaRecepcion?: string;
 }
 
 export interface UpdateRequerimientoDto {
@@ -101,6 +102,7 @@ export interface UpdateRequerimientoDto {
   sucursal?: string;
   descripcion: string;
   usuarioAsignadoId?: number;
+  fechaRecepcion?: string;
 }
 
 export interface CalificarRequerimientoDto {

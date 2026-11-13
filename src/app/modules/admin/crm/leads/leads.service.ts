@@ -75,6 +75,7 @@ export interface CreateLeadDto {
   necesidadInicial: string;
   sucursalQueRecibe: string;
   idUsuarioAsignado: number;
+  fechaRegistro?: string;
 }
 
 export interface UpdateLeadDto {
@@ -86,6 +87,7 @@ export interface UpdateLeadDto {
   necesidadInicial: string;
   sucursalQueRecibe: string;
   idUsuarioAsignado: number;
+  fechaRegistro?: string;
 }
 
 export interface ConvertLeadDto {

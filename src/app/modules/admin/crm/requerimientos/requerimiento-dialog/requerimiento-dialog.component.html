@@ -58,6 +58,14 @@
                         <mat-option *ngFor="let user of usuarios" [value]="user.usuarioId">{{ user.nombreUsuario }}</mat-option>
                     </mat-select>
                 </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Fecha de Recepción</mat-label>
+                    <input matInput [matDatepicker]="pickerFecha" formControlName="fechaRecepcion" required>
+                    <mat-datepicker-toggle matSuffix [for]="pickerFecha"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFecha></mat-datepicker>
+                    <mat-error *ngIf="reqForm.get('fechaRecepcion')?.hasError('required')">La fecha es obligatoria</mat-error>
+                </mat-form-field>
             </div>
 
             <mat-form-field appearance="outline" class="w-full">

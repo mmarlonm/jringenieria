@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { Observable, map } from 'rxjs';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 import { RequerimientosService, Requerimiento } from '../requerimientos.service';
@@ -26,7 +28,9 @@ import Swal from 'sweetalert2';
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   templateUrl: './requerimiento-dialog.component.html'
 })
@@ -60,7 +64,8 @@ export class RequerimientoDialogComponent implements OnInit {
       email: [data.requerimiento?.email || '', [Validators.email]],
       sucursal: [data.requerimiento?.sucursal || 'Pachuca', [Validators.required]],
       descripcion: [data.requerimiento?.descripcion || '', [Validators.required]],
-      usuarioAsignadoId: [data.requerimiento?.usuarioAsignadoId || null]
+      usuarioAsignadoId: [data.requerimiento?.usuarioAsignadoId || null],
+      fechaRecepcion: [data.requerimiento?.fechaRecepcion ? new Date(data.requerimiento.fechaRecepcion) : new Date(), [Validators.required]]
     });
   }
 
@@ -93,7 +98,11 @@ export class RequerimientoDialogComponent implements OnInit {
     if (this.reqForm.invalid || this.guardando) return;
 
     this.guardando = true;
-    const val = this.reqForm.value;
+    const rawVal = this.reqForm.value;
+    const val = {
+      ...rawVal,
+      fechaRecepcion: rawVal.fechaRecepcion instanceof Date ? rawVal.fechaRecepcion.toISOString() : (rawVal.fechaRecepcion || new Date().toISOString())
+    };
     const original = this.data.requerimiento;
 
     const guardado$: Observable<{ id: number; folio: string }> = this.isEditMode && original
