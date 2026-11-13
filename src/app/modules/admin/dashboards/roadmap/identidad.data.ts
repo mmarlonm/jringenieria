@@ -539,7 +539,7 @@ const AREAS: Area[] = [
             puesto('pue-admin', 'pue-gerente', 'Administrador|de Sucursal', 1137.8, 598, 37, ['Karem'], 'KAREM DILL'),
             puesto('pue-asesor', 'pue-admin', 'Asesor comercial|de mostrador', 1158.9, 515, 37, ['Adrian', 'Gibran'], 'ADRIAN Q / GIBRAN'),
             puesto('pue-almacen', 'pue-admin', 'Responsable de|almacén e|inventarios', 1232, 614.8, 38, ['Gibran']),
-            puesto('pue-rep', 'pue-gerente', 'Representante|Regional de|Ventas', 1158.9, 735.4, 37, ['Fermin', 'Marco'], 'FERMIN P / MARCO D')
+            puesto('pue-rep', 'pue-gerente', 'Representante|Regional de|Ventas', 1158.9, 735.4, 37, ['Fermin'], 'FERMIN P')
         ]
     },
     {

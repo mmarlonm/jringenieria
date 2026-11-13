@@ -95,7 +95,7 @@ export interface SectorGeometry {
 export class RoadmapComponent implements OnInit {
 
     // Main Active Navigation Tab
-    activeTab: 'mision-vision' | 'valores' | 'organigrama' | 'roadmap' = 'organigrama';
+    activeTab: 'mision-vision' | 'valores' | 'organigrama' | 'roadmap' | 'politica-calidad' = 'organigrama';
 
     // Data references
     mision: MisionVisionItem = MISION_DATA;
@@ -112,6 +112,7 @@ export class RoadmapComponent implements OnInit {
     misionVisionMode: 'cards' | 'original' = 'cards';
     valoresViewMode: 'wheel' | 'grid' | 'original' = 'wheel';
     organigramaViewMode: 'orbital' | 'directory' | 'original' = 'orbital';
+    politicaCalidadMode: 'documento' | 'original' = 'documento';
 
     // Valores state
     selectedValor: ValorItem = VALORES_LIST[0];
