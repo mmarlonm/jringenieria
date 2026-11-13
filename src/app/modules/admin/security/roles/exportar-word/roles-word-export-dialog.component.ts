@@ -17,15 +17,15 @@ import { defaultNavigation } from 'app/mock-api/common/navigation/data';
 import { FuseNavigationItem } from '@fuse/components/navigation';
 import { RolService } from '../roles.service';
 import { ModuloRol, PermisoCatalogo, Seleccion, construirModulos } from '../roles-permisos.utils';
-import { RolesPdfExportService } from '../roles-pdf-export.service';
+import { RolesWordExportService } from '../roles-word-export.service';
 
-export interface DialogDataRolesPdf {
+export interface DialogDataRolesWord {
     rolSeleccionadoId?: number | null;
     seleccionActual?: Seleccion | null;
 }
 
 @Component({
-    selector: 'roles-pdf-export-dialog',
+    selector: 'roles-word-export-dialog',
     standalone: true,
     imports: [
         CommonModule,
@@ -46,13 +46,13 @@ export interface DialogDataRolesPdf {
             <div class="flex-none flex items-center justify-between border-b px-6 py-4 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 <div class="min-w-0">
                     <div class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 flex items-center justify-center shrink-0">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
                             <mat-icon class="icon-size-5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
                         </div>
-                        <span class="truncate">Descargar Autorizaciones y Permisos en PDF</span>
+                        <span class="truncate">Descargar Autorizaciones y Permisos en Word</span>
                     </div>
                     <div class="mt-0.5 ml-10 text-xs text-slate-500 dark:text-slate-400">
-                        Genera un documento oficial con los derechos de acceso y permisos asignados por módulo.
+                        Genera un documento editable en Microsoft Word (.docx) con derechos de acceso y privilegios por módulo.
                     </div>
                 </div>
                 <button mat-icon-button type="button" (click)="cerrar()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Cerrar">
@@ -79,12 +79,12 @@ export interface DialogDataRolesPdf {
                 <!-- 1. Alcance del Reporte -->
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                        1. Tipo de Reporte
+                        1. Tipo de Documento
                     </label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all"
-                               [ngClass]="tipoReporte === 'rol-individual' ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 text-slate-800 dark:text-slate-100 shadow-2xs' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/40 text-slate-600 dark:text-slate-400'">
-                            <input type="radio" name="tipoReporte" value="rol-individual" [(ngModel)]="tipoReporte" class="mt-0.5 text-sky-600 focus:ring-sky-500">
+                               [ngClass]="tipoReporte === 'rol-individual' ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 text-slate-800 dark:text-slate-100 shadow-2xs' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/40 text-slate-600 dark:text-slate-400'">
+                            <input type="radio" name="tipoReporte" value="rol-individual" [(ngModel)]="tipoReporte" class="mt-0.5 text-blue-600 focus:ring-blue-500">
                             <div class="min-w-0">
                                 <div class="text-xs font-bold">Cédula por Rol Individual</div>
                                 <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -94,8 +94,8 @@ export interface DialogDataRolesPdf {
                         </label>
 
                         <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all"
-                               [ngClass]="tipoReporte === 'matriz-general' ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 text-slate-800 dark:text-slate-100 shadow-2xs' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/40 text-slate-600 dark:text-slate-400'">
-                            <input type="radio" name="tipoReporte" value="matriz-general" [(ngModel)]="tipoReporte" class="mt-0.5 text-sky-600 focus:ring-sky-500">
+                               [ngClass]="tipoReporte === 'matriz-general' ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 text-slate-800 dark:text-slate-100 shadow-2xs' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/40 text-slate-600 dark:text-slate-400'">
+                            <input type="radio" name="tipoReporte" value="matriz-general" [(ngModel)]="tipoReporte" class="mt-0.5 text-blue-600 focus:ring-blue-500">
                             <div class="min-w-0">
                                 <div class="text-xs font-bold">Matriz General (Todos los Roles)</div>
                                 <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -160,18 +160,19 @@ export interface DialogDataRolesPdf {
 
             <!-- Pie / Acciones -->
             <div class="flex-none flex items-center justify-between border-t px-6 py-4 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                <span class="text-[11px] text-slate-400">
-                    Formato: PDF vectorial A4 de alta fidelidad
+                <span class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                    Formato: Documento Microsoft Word (.docx)
                 </span>
                 <div class="flex items-center gap-2">
                     <button mat-button type="button" (click)="cerrar()" [disabled]="descargando">
                         Cancelar
                     </button>
-                    <button mat-flat-button color="primary" type="button" (click)="descargarPdf()" [disabled]="cargando || descargando || !puedeDescargar"
+                    <button mat-flat-button color="primary" type="button" (click)="descargarWord()" [disabled]="cargando || descargando || !puedeDescargar"
                             class="!rounded-xl !px-5 font-bold shadow-xs">
                         <mat-icon *ngIf="!descargando" class="icon-size-4 mr-1.5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
                         <mat-spinner *ngIf="descargando" [diameter]="18" class="mr-2 inline-block"></mat-spinner>
-                        <span>{{ descargando ? 'Generando PDF…' : 'Descargar PDF' }}</span>
+                        <span>{{ descargando ? 'Generando Word…' : 'Descargar Word' }}</span>
                     </button>
                 </div>
             </div>
@@ -179,7 +180,7 @@ export interface DialogDataRolesPdf {
         </div>
     `
 })
-export class RolesPdfExportDialogComponent implements OnInit {
+export class RolesWordExportDialogComponent implements OnInit {
 
     tipoReporte: 'rol-individual' | 'matriz-general' = 'rol-individual';
     rolIdSeleccionado: number | null = null;
@@ -196,12 +197,12 @@ export class RolesPdfExportDialogComponent implements OnInit {
     error: string | null = null;
 
     constructor(
-        public dialogRef: MatDialogRef<RolesPdfExportDialogComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: DialogDataRolesPdf,
+        public dialogRef: MatDialogRef<RolesWordExportDialogComponent>,
+        @Inject(MAT_DIALOG_DATA) public data: DialogDataRolesWord,
         private _rolService: RolService,
-        private _rolesPdfExportService: RolesPdfExportService,
+        private _rolesWordExportService: RolesWordExportService,
         private _cdr: ChangeDetectorRef
-    ) { }
+    ) {}
 
     ngOnInit(): void {
         this.cargarDatos();
@@ -228,7 +229,6 @@ export class RolesPdfExportDialogComponent implements OnInit {
                     : (rawNav?.default || defaultNavigation);
                 this.modulos = construirModulos(navigationData);
 
-                // Preseleccionar rol si se recibió o si hay roles disponibles
                 if (this.data?.rolSeleccionadoId && this.roles.some((r) => r.rolId === Number(this.data.rolSeleccionadoId))) {
                     this.rolIdSeleccionado = Number(this.data.rolSeleccionadoId);
                 } else if (this.roles.length > 0) {
@@ -239,8 +239,8 @@ export class RolesPdfExportDialogComponent implements OnInit {
                 this._cdr.markForCheck();
             },
             error: (err) => {
-                console.error('[RolesPdfExportDialog] Error al cargar catálogos:', err);
-                this.error = 'No se pudieron cargar los datos necesarios para generar el reporte.';
+                console.error('[RolesWordExportDialog] Error al cargar datos:', err);
+                this.error = 'No se pudieron cargar los datos necesarios para generar el documento Word.';
                 this.cargando = false;
                 this._cdr.markForCheck();
             }
@@ -254,7 +254,7 @@ export class RolesPdfExportDialogComponent implements OnInit {
         return this.roles.length > 0;
     }
 
-    descargarPdf(): void {
+    async descargarWord(): Promise<void> {
         if (!this.puedeDescargar) return;
 
         this.descargando = true;
@@ -267,12 +267,11 @@ export class RolesPdfExportDialogComponent implements OnInit {
                     throw new Error('Rol no encontrado');
                 }
 
-                // Si es el rol actualmente abierto y tiene cambios en vivo, se usa el override
                 const seleccionOverride = (this.data?.rolSeleccionadoId === this.rolIdSeleccionado && this.data?.seleccionActual)
                     ? this.data.seleccionActual
                     : undefined;
 
-                this._rolesPdfExportService.exportarRolPdf(
+                await this._rolesWordExportService.exportarRolWord(
                     rol,
                     this.modulos,
                     this.catalogo,
@@ -284,7 +283,7 @@ export class RolesPdfExportDialogComponent implements OnInit {
                     }
                 );
             } else {
-                this._rolesPdfExportService.exportarMatrizTodosRolesPdf(
+                await this._rolesWordExportService.exportarMatrizTodosRolesWord(
                     this.roles,
                     this.modulos,
                     this.catalogo,
@@ -303,15 +302,15 @@ export class RolesPdfExportDialogComponent implements OnInit {
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: 'PDF de autorizaciones descargado exitosamente',
+                title: 'Documento Word (.docx) descargado exitosamente',
                 showConfirmButton: false,
                 timer: 3000
             });
         } catch (err) {
-            console.error('Error generando PDF:', err);
+            console.error('Error generando documento Word:', err);
             this.descargando = false;
             this._cdr.markForCheck();
-            Swal.fire('Error', 'Ocurrió un error al generar el PDF de autorizaciones.', 'error');
+            Swal.fire('Error', 'Ocurrió un error al generar el documento Word.', 'error');
         }
     }
 
@@ -319,3 +318,4 @@ export class RolesPdfExportDialogComponent implements OnInit {
         this.dialogRef.close();
     }
 }
+

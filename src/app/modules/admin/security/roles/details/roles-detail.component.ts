@@ -14,7 +14,7 @@ import { defaultNavigation } from 'app/mock-api/common/navigation/data';
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
 import { RoleNavigationModule } from '../rol-navigation/rol-navigation.module';
 import { Seleccion, contarCambios, construirModulos, seleccionDeRol, vistasParaGuardar } from '../roles-permisos.utils';
-import { RolesPdfExportService } from '../roles-pdf-export.service';
+import { RolesWordExportService } from '../roles-word-export.service';
 
 @Component({
     selector: 'roles-details',
@@ -33,7 +33,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     navigation: FuseNavigationItem[] = [];
     loadError: string | null = null;
     guardando = false;
-    descargandoPdf = false;
+    descargandoWord = false;
 
     nombre = '';
     private nombreOriginal = '';
@@ -47,7 +47,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
         private _rolService: RolService,
-        private _rolesPdfExportService: RolesPdfExportService,
+        private _rolesWordExportService: RolesWordExportService,
         private _router: Router,
         private _activatedRoute: ActivatedRoute
     ) { }
@@ -138,9 +138,9 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         this._changeDetectorRef.markForCheck();
     }
 
-    // ------------------------------------------------------------------ exportar PDF
+    // ------------------------------------------------------------------ exportar Word
 
-    descargarPdf(): void {
+    descargarWord(): void {
         if (this.esNuevo) {
             Swal.fire({
                 icon: 'info',
@@ -151,7 +151,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.descargandoPdf = true;
+        this.descargandoWord = true;
         this._changeDetectorRef.markForCheck();
 
         forkJoin({
@@ -161,37 +161,44 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
                 catchError(() => of(defaultNavigation))
             )
         }).subscribe({
-            next: ({ catalogo, nav }) => {
+            next: async ({ catalogo, nav }) => {
                 const rawNav: any = nav;
                 const navItems = this.navigation && this.navigation.length > 0
                     ? this.navigation
                     : (rawNav?.default || (Array.isArray(rawNav) ? rawNav : defaultNavigation));
                 const modulos = construirModulos(navItems);
 
-                this._rolesPdfExportService.exportarRolPdf(
-                    { ...this.rol, nombreRol: this.nombre || this.rol.nombreRol },
-                    modulos,
-                    catalogo,
-                    { seleccionOverride: this.seleccion }
-                );
+                try {
+                    await this._rolesWordExportService.exportarRolWord(
+                        { ...this.rol, nombreRol: this.nombre || this.rol.nombreRol },
+                        modulos,
+                        catalogo,
+                        { seleccionOverride: this.seleccion }
+                    );
 
-                this.descargandoPdf = false;
-                this._changeDetectorRef.markForCheck();
+                    this.descargandoWord = false;
+                    this._changeDetectorRef.markForCheck();
 
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Cédula PDF descargada exitosamente',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Documento Word (.docx) descargado exitosamente',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } catch (err) {
+                    console.error('[RolesDetail] Error generando Word:', err);
+                    this.descargandoWord = false;
+                    this._changeDetectorRef.markForCheck();
+                    Swal.fire('Error', 'No se pudo generar el documento Word.', 'error');
+                }
             },
             error: (err) => {
-                console.error('[RolesDetail] Error generando PDF:', err);
-                this.descargandoPdf = false;
+                console.error('[RolesDetail] Error cargando datos para Word:', err);
+                this.descargandoWord = false;
                 this._changeDetectorRef.markForCheck();
-                Swal.fire('Error', 'No se pudo generar el documento PDF.', 'error');
+                Swal.fire('Error', 'No se pudieron cargar los datos para generar el documento Word.', 'error');
             }
         });
     }

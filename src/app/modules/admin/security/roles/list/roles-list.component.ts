@@ -9,7 +9,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from 
 import { Subject, filter, fromEvent, takeUntil } from 'rxjs';
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
 import { RolesAsignacionMasivaDialogComponent } from '../asignacion-masiva/roles-asignacion-masiva-dialog.component';
-import { RolesPdfExportDialogComponent } from '../exportar-pdf/roles-pdf-export-dialog.component';
+import { RolesWordExportDialogComponent } from '../exportar-word/roles-word-export-dialog.component';
 
 @Component({
     selector: 'roles-list',
@@ -97,8 +97,8 @@ export class RolesListComponent implements OnInit, OnDestroy {
         });
     }
 
-    abrirDescargaPdf(): void {
-        this._dialog.open(RolesPdfExportDialogComponent, {
+    abrirDescargaWord(): void {
+        this._dialog.open(RolesWordExportDialogComponent, {
             width: '580px',
             maxWidth: '95vw',
             autoFocus: false,
