@@ -1,16 +1,23 @@
 <div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden bg-slate-50 dark:bg-transparent">
 
     <!-- Encabezado -->
-    <div class="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b bg-white dark:bg-transparent px-6 py-5">
+    <div
+        class="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b bg-white dark:bg-transparent px-6 py-5">
         <div>
             <div class="text-3xl font-extrabold leading-none tracking-tight">Roles y permisos</div>
             <div class="mt-1 font-medium text-secondary">
-                {{ roles.length }} {{ roles.length === 1 ? 'rol' : 'roles' }} · elige uno para ver y editar lo que puede hacer
+                {{ roles.length }} {{ roles.length === 1 ? 'rol' : 'roles' }} · elige uno para ver y editar lo que puede
+                hacer
             </div>
         </div>
         <div class="flex items-center gap-2">
+            <button mat-stroked-button type="button" class="!h-10 !rounded-xl" (click)="abrirDescargaPdf()"
+                matTooltip="Descargar reporte en PDF de autorizaciones y permisos de módulos">
+                <mat-icon class="icon-size-5 mr-1" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                Descargar PDF
+            </button>
             <button mat-stroked-button type="button" class="!h-10 !rounded-xl" (click)="abrirAsignacionMasiva()"
-                    matTooltip="Da o quita los permisos de un módulo a varios roles a la vez">
+                matTooltip="Da o quita los permisos de un módulo a varios roles a la vez">
                 <mat-icon class="icon-size-5 mr-1" svgIcon="heroicons_outline:users"></mat-icon>
                 Asignar a varios roles
             </button>
@@ -25,21 +32,23 @@
 
         <!-- Lista de roles -->
         <aside class="flex-none w-full md:w-80 lg:w-96 flex-col border-r bg-white dark:bg-transparent"
-               [ngClass]="selectedId !== null ? 'hidden md:flex' : 'flex'">
+            [ngClass]="selectedId !== null ? 'hidden md:flex' : 'flex'">
             <div class="flex-none p-4 border-b border-slate-100 dark:border-slate-800">
                 <div class="relative">
-                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-5 text-slate-400" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
-                    <input type="text" [(ngModel)]="busqueda" (ngModelChange)="filtrar()" placeholder="Buscar rol…" autocomplete="off"
-                           class="w-full h-10 pl-10 pr-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 icon-size-5 text-slate-400"
+                        svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
+                    <input type="text" [(ngModel)]="busqueda" (ngModelChange)="filtrar()" placeholder="Buscar rol…"
+                        autocomplete="off"
+                        class="w-full h-10 pl-10 pr-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 </div>
             </div>
 
             <div class="flex-auto overflow-y-auto">
                 <a *ngFor="let rol of filtrados; trackBy: trackByFn" [routerLink]="['./', rol.rolId]"
-                   class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 cursor-pointer transition-colors"
-                   [ngClass]="selectedId === '' + rol.rolId ? 'bg-primary/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                    class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 cursor-pointer transition-colors"
+                    [ngClass]="selectedId === '' + rol.rolId ? 'bg-primary/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'">
                     <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
-                         [ngClass]="selectedId === '' + rol.rolId ? 'bg-primary text-on-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'">
+                        [ngClass]="selectedId === '' + rol.rolId ? 'bg-primary text-on-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'">
                         <mat-icon class="icon-size-5" svgIcon="heroicons_outline:user-group"></mat-icon>
                     </div>
                     <div class="min-w-0 flex-auto">
@@ -47,11 +56,13 @@
                             {{ rol.rolId === 0 ? (rol.nombreRol || 'Rol nuevo') : rol.nombreRol }}
                         </div>
                         <div class="text-xs"
-                             [ngClass]="rol.rolId === 0 ? 'text-amber-600' : (totalVistas(rol) ? 'text-slate-500' : 'text-slate-400')">
-                            {{ rol.rolId === 0 ? 'Sin guardar' : (totalVistas(rol) ? totalVistas(rol) + (totalVistas(rol) === 1 ? ' vista' : ' vistas') : 'Sin permisos') }}
+                            [ngClass]="rol.rolId === 0 ? 'text-amber-600' : (totalVistas(rol) ? 'text-slate-500' : 'text-slate-400')">
+                            {{ rol.rolId === 0 ? 'Sin guardar' : (totalVistas(rol) ? totalVistas(rol) +
+                            (totalVistas(rol) === 1 ? ' vista' : ' vistas') : 'Sin permisos') }}
                         </div>
                     </div>
-                    <mat-icon class="icon-size-4 shrink-0 text-slate-300" svgIcon="heroicons_outline:chevron-right"></mat-icon>
+                    <mat-icon class="icon-size-4 shrink-0 text-slate-300"
+                        svgIcon="heroicons_outline:chevron-right"></mat-icon>
                 </a>
 
                 <div *ngIf="filtrados.length === 0" class="p-8 text-center text-sm text-slate-400">
@@ -64,12 +75,14 @@
         <section class="flex-auto min-w-0 min-h-0 flex-col" [ngClass]="selectedId !== null ? 'flex' : 'hidden md:flex'">
             <router-outlet></router-outlet>
 
-            <div *ngIf="selectedId === null" class="flex-auto flex flex-col items-center justify-center gap-3 p-8 text-center text-slate-400">
+            <div *ngIf="selectedId === null"
+                class="flex-auto flex flex-col items-center justify-center gap-3 p-8 text-center text-slate-400">
                 <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                     <mat-icon class="icon-size-8" svgIcon="heroicons_outline:lock-closed"></mat-icon>
                 </div>
                 <div class="text-lg font-bold text-slate-600 dark:text-slate-300">Selecciona un rol</div>
-                <p class="max-w-sm text-sm">Verás los módulos y vistas a los que tiene acceso y podrás cambiarlos. Para dar un módulo a varios roles a la vez usa «Asignar a varios roles».</p>
+                <p class="max-w-sm text-sm">Verás los módulos y vistas a los que tiene acceso y podrás cambiarlos. Para
+                    dar un módulo a varios roles a la vez usa «Asignar a varios roles».</p>
             </div>
         </section>
     </div>

@@ -4,15 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, catchError, forkJoin, of, take, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { FuseNavigationItem } from '@fuse/components/navigation';
 import { defaultNavigation } from 'app/mock-api/common/navigation/data';
 import { RolService } from 'app/modules/admin/security/roles/roles.service';
 import { RoleNavigationModule } from '../rol-navigation/rol-navigation.module';
-import { Seleccion, contarCambios, seleccionDeRol, vistasParaGuardar } from '../roles-permisos.utils';
+import { Seleccion, contarCambios, construirModulos, seleccionDeRol, vistasParaGuardar } from '../roles-permisos.utils';
+import { RolesPdfExportService } from '../roles-pdf-export.service';
 
 @Component({
     selector: 'roles-details',
@@ -23,7 +25,7 @@ import { Seleccion, contarCambios, seleccionDeRol, vistasParaGuardar } from '../
     // La app convierte todo lo que sigue a un <router-outlet> en un contenedor flex en columna: el detalle debe llenar el alto
     // que le deja la lista y poder encogerse (min-h-0), o su contenido se desborda y no hay forma de bajar.
     host: { class: 'flex flex-col flex-auto min-h-0 min-w-0' },
-    imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, RouterLink, RoleNavigationModule],
+    imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule, RouterLink, RoleNavigationModule],
 })
 export class RolesDetailsComponent implements OnInit, OnDestroy {
 
@@ -31,6 +33,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     navigation: FuseNavigationItem[] = [];
     loadError: string | null = null;
     guardando = false;
+    descargandoPdf = false;
 
     nombre = '';
     private nombreOriginal = '';
@@ -44,6 +47,7 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
         private _rolService: RolService,
+        private _rolesPdfExportService: RolesPdfExportService,
         private _router: Router,
         private _activatedRoute: ActivatedRoute
     ) { }
@@ -132,6 +136,64 @@ export class RolesDetailsComponent implements OnInit, OnDestroy {
         this.nombre = this.nombreOriginal;
         this.seleccion = { ...this.seleccionOriginal };
         this._changeDetectorRef.markForCheck();
+    }
+
+    // ------------------------------------------------------------------ exportar PDF
+
+    descargarPdf(): void {
+        if (this.esNuevo) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Rol aún sin guardar',
+                text: 'Guarda primero el rol para generar su cédula oficial de autorizaciones.',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
+
+        this.descargandoPdf = true;
+        this._changeDetectorRef.markForCheck();
+
+        forkJoin({
+            catalogo: this._rolService.getCatalogoPermisos().pipe(take(1)),
+            nav: this._rolService.getNavigation().pipe(
+                take(1),
+                catchError(() => of(defaultNavigation))
+            )
+        }).subscribe({
+            next: ({ catalogo, nav }) => {
+                const rawNav: any = nav;
+                const navItems = this.navigation && this.navigation.length > 0
+                    ? this.navigation
+                    : (rawNav?.default || (Array.isArray(rawNav) ? rawNav : defaultNavigation));
+                const modulos = construirModulos(navItems);
+
+                this._rolesPdfExportService.exportarRolPdf(
+                    { ...this.rol, nombreRol: this.nombre || this.rol.nombreRol },
+                    modulos,
+                    catalogo,
+                    { seleccionOverride: this.seleccion }
+                );
+
+                this.descargandoPdf = false;
+                this._changeDetectorRef.markForCheck();
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Cédula PDF descargada exitosamente',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            },
+            error: (err) => {
+                console.error('[RolesDetail] Error generando PDF:', err);
+                this.descargandoPdf = false;
+                this._changeDetectorRef.markForCheck();
+                Swal.fire('Error', 'No se pudo generar el documento PDF.', 'error');
+            }
+        });
     }
 
     // ------------------------------------------------------------------ guardar
