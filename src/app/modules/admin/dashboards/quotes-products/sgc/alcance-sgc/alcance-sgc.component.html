@@ -1,0 +1,155 @@
+<div class="p-6 flex flex-col gap-6 overflow-auto max-w-5xl" [formGroup]="formGroup">
+  <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-200 dark:border-gray-700">
+    <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 border-b pb-2">
+      Alcance técnico y Presupuesto base (SGC 7.4.2)
+    </h3>
+
+    <!-- 7 textareas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Alcance técnico (máx. 2000 caracteres)
+        </label>
+        <textarea
+          formControlName="alcanceTecnico"
+          rows="3"
+          maxlength="2000"
+          placeholder="Describa el alcance de los trabajos o servicios a realizar..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Recursos requeridos
+        </label>
+        <textarea
+          formControlName="recursosRequeridos"
+          rows="2"
+          maxlength="1000"
+          placeholder="Equipos, herramientas, consumibles..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Personal involucrado
+        </label>
+        <textarea
+          formControlName="personalInvolucrado"
+          rows="2"
+          maxlength="1000"
+          placeholder="Perfiles, cuadrillas, especialistas..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Tiempos estimados
+        </label>
+        <textarea
+          formControlName="tiemposEstimados"
+          rows="2"
+          maxlength="1000"
+          placeholder="Cronograma estimado, etapas, hitos..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Supuestos operativos
+        </label>
+        <textarea
+          formControlName="supuestosOperativos"
+          rows="2"
+          maxlength="1000"
+          placeholder="Supuestos de obra, accesos, libranzas..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Condiciones de ejecución
+        </label>
+        <textarea
+          formControlName="condicionesEjecucion"
+          rows="2"
+          maxlength="1000"
+          placeholder="Horarios, libranzas, condiciones en sitio..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Riesgos o limitaciones
+        </label>
+        <textarea
+          formControlName="riesgosLimitaciones"
+          rows="2"
+          maxlength="1000"
+          placeholder="Riesgos identificados, factores externos..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entregables -->
+  <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-200 dark:border-gray-700">
+    <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-2 border-b pb-2">
+      Entregables (SGC 7.6)
+    </h3>
+    <p class="text-xs text-gray-500 mb-3">Seleccione los entregables que formarán parte de la propuesta:</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div *ngFor="let ent of catalogos?.entregables" class="flex items-center">
+        <mat-checkbox
+          [checked]="isEntregableChecked(ent.codigo)"
+          (change)="onEntregableChange(ent.codigo, $event.checked)"
+        >
+          <span class="text-xs">[{{ ent.codigo }}] {{ ent.nombre }}</span>
+        </mat-checkbox>
+      </div>
+    </div>
+  </div>
+
+  <!-- Costos indirectos y Margen autorizado -->
+  <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-200 dark:border-gray-700">
+    <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-2 border-b pb-2">
+      Costos Indirectos y Margen Autorizado
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Costos indirectos (monto)
+        </label>
+        <input
+          type="number"
+          formControlName="costosIndirectos"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">
+          Margen autorizado (%)
+        </label>
+        <input
+          type="number"
+          formControlName="margenAutorizadoPorcentaje"
+          min="0"
+          max="100"
+          step="0.01"
+          placeholder="Ej. 25"
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
+        />
+      </div>
+    </div>
+  </div>
+</div>

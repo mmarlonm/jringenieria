@@ -170,6 +170,11 @@
       ></app-partidas-sgc>
     </mat-tab>
 
+    <!-- Pestaña Alcance técnico (solo CT o CE) -->
+    <mat-tab *ngIf="sgcForm.get('tipo')?.value === 'CT' || sgcForm.get('tipo')?.value === 'CE'" label="Alcance técnico">
+      <app-alcance-sgc [formGroup]="sgcForm" [catalogos]="catalogos"></app-alcance-sgc>
+    </mat-tab>
+
     <mat-tab label="Resumen">
       <div class="p-6 flex flex-col gap-6 overflow-auto">
         <div *ngIf="folio" class="text-lg font-semibold">
@@ -189,6 +194,35 @@
           <div class="flex justify-between py-1 border-t mt-2 pt-2 text-lg font-bold">
             <span>Total:</span>
             <span>{{ total | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Bloque Costos y Margen (CT/CE con al menos un costo) -->
+        <div *ngIf="(sgcForm.get('tipo')?.value === 'CT' || sgcForm.get('tipo')?.value === 'CE') && totales.utilidad !== null" class="bloque-margen bg-gray-50 dark:bg-gray-800 p-4 rounded shadow-sm max-w-md border border-gray-200 dark:border-gray-700">
+          <h3 class="text-base font-bold mb-3 border-b pb-1">Costos y Margen ({{ sgcForm.get('moneda')?.value || 'MXN' }})</h3>
+
+          <div *ngIf="totales.margenBajo" class="franja-margen-bajo bg-red-100 text-red-800 p-2 rounded mb-3 text-xs font-semibold">
+            Margen por debajo del autorizado
+          </div>
+
+          <div class="flex justify-between py-1">
+            <span>Costo directo:</span>
+            <span class="font-medium">{{ totales.costoDirecto | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span>Costos indirectos:</span>
+            <span class="font-medium">{{ (sgcForm.get('costosIndirectos')?.value || 0) | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span>Utilidad:</span>
+            <span class="font-medium">{{ totales.utilidad | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-t mt-2 pt-2 text-base font-bold">
+            <span>Margen:</span>
+            <span>{{ totales.margenPorcentaje }}%</span>
+          </div>
+          <div *ngIf="totales.partidasSinCosto > 0" class="text-xs text-amber-600 mt-2">
+            Partidas sin costo: {{ totales.partidasSinCosto }}
           </div>
         </div>
 

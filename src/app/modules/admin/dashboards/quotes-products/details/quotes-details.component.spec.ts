@@ -453,4 +453,161 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(component.catalogoError).toBeFalse();
     expect(component.catalogos).toEqual(mockCatalogos);
   });
+
+  it('La_pestana_Alcance_tecnico_solo_aparece_en_CT_y_CE', async () => {
+    component.sgcForm.get('tipo')?.setValue('CS');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    let compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('Alcance técnico');
+
+    component.sgcForm.get('tipo')?.setValue('CT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Alcance técnico');
+
+    component.sgcForm.get('tipo')?.setValue('CE');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Alcance técnico');
+  });
+
+  it('Cambiar_a_CS_oculta_la_pestana_sin_borrar_lo_capturado', async () => {
+    component.sgcForm.get('tipo')?.setValue('CT');
+    component.sgcForm.get('alcanceTecnico')?.setValue('Detalle técnico de ingeniería avanzada');
+    component.sgcForm.get('costosIndirectos')?.setValue(2500);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    let compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Alcance técnico');
+
+    component.sgcForm.get('tipo')?.setValue('CS');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('Alcance técnico');
+    expect(component.sgcForm.get('alcanceTecnico')?.value).toBe('Detalle técnico de ingeniería avanzada');
+    expect(component.sgcForm.get('costosIndirectos')?.value).toBe(2500);
+  });
+
+  it('Marcar_entregables_guarda_sus_codigos', () => {
+    expect(component.sgcForm.get('entregables')?.value).toEqual([]);
+
+    component.toggleEntregable('ENT-01', true);
+    expect(component.sgcForm.get('entregables')?.value).toEqual(['ENT-01']);
+
+    component.toggleEntregable('ENT-02', true);
+    expect(component.sgcForm.get('entregables')?.value).toEqual(['ENT-01', 'ENT-02']);
+
+    component.toggleEntregable('ENT-01', false);
+    expect(component.sgcForm.get('entregables')?.value).toEqual(['ENT-02']);
+  });
+
+  it('El_resumen_muestra_costo_directo_utilidad_y_margen', async () => {
+    component.sgcForm.get('tipo')?.setValue('CT');
+    component.sgcForm.get('costosIndirectos')?.setValue(50);
+    component.sgcForm.get('margenAutorizadoPorcentaje')?.setValue(20);
+
+    component.partidas = [
+      {
+        partida: 1,
+        tipoConcepto: 'Material',
+        materialServicio: 'Cable',
+        unidad: 'M',
+        cantidad: 10,
+        precioUnitario: 100,
+        costoUnitario: 60,
+        descuento: 0,
+      },
+    ];
+    component.calcularTotales();
+
+    // En CT, Resumen es pestaña 4
+    component.selectedTabIndex = 4;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Costo directo');
+    expect(compiled.textContent).toContain('Utilidad');
+    expect(compiled.textContent).toContain('Margen');
+    expect(compiled.textContent).toContain('35'); // (1000 - 600 - 50) / 1000 = 35%
+  });
+
+  it('Sin_costos_no_se_muestra_el_margen', async () => {
+    component.sgcForm.get('tipo')?.setValue('CT');
+    component.partidas = [
+      {
+        partida: 1,
+        tipoConcepto: 'Material',
+        materialServicio: 'Cable',
+        unidad: 'M',
+        cantidad: 10,
+        precioUnitario: 100,
+        costoUnitario: null,
+        descuento: 0,
+      },
+    ];
+    component.calcularTotales();
+
+    component.selectedTabIndex = 4;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.bloque-margen')).toBeNull();
+  });
+
+  it('Un_margen_menor_al_autorizado_muestra_el_aviso', async () => {
+    component.sgcForm.get('tipo')?.setValue('CT');
+    component.sgcForm.get('costosIndirectos')?.setValue(0);
+    component.sgcForm.get('margenAutorizadoPorcentaje')?.setValue(25);
+
+    // Margen real será 10% (Subtotal 100, Costo 90 -> Utilidad 10 -> 10% < 25%)
+    component.partidas = [
+      {
+        partida: 1,
+        tipoConcepto: 'Material',
+        materialServicio: 'Tablero',
+        unidad: 'PZA',
+        cantidad: 1,
+        precioUnitario: 100,
+        costoUnitario: 90,
+        descuento: 0,
+      },
+    ];
+    component.calcularTotales();
+    expect(component.totales.margenBajo).toBeTrue();
+
+    component.selectedTabIndex = 4;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Margen por debajo del autorizado');
+  });
+
+  it('Los_textos_largos_se_muestran_escapados', async () => {
+    component.sgcForm.get('tipo')?.setValue('CT');
+    const xss = '<img src=x onerror=alert(1)>';
+    component.sgcForm.get('alcanceTecnico')?.setValue(xss);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('img[src="x"]')).toBeNull();
+  });
 });

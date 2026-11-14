@@ -43,12 +43,14 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTableDataSource } from "@angular/material/table";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
+import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
 import {
   CatalogosSgc,
   CotizacionSgcCabecera,
   CotizacionSgcDatos,
   GuardarCotizacionSgc,
-  PartidaSgc
+  PartidaSgc,
+  TotalesSgc
 } from "../quotes-products.types";
 import { totalesSgc, roundAwayFromZero } from "../sgc/cotizacion-sgc.utils";
 
@@ -76,6 +78,7 @@ import { totalesSgc, roundAwayFromZero } from "../sgc/cotizacion-sgc.utils";
     MatTableModule,
     CondicionesSgcComponent,
     PartidasSgcComponent,
+    AlcanceSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -144,6 +147,16 @@ export class QuoteDetailsComponent implements OnInit {
   esHeredada: boolean = false;
   partidas: PartidaSgc[] = [];
   partidasFormArray: FormArray;
+  totales: TotalesSgc = {
+    subtotal: 0,
+    iva: 0,
+    total: 0,
+    costoDirecto: 0,
+    utilidad: null,
+    margenPorcentaje: null,
+    margenBajo: false,
+    partidasSinCosto: 0,
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -260,6 +273,14 @@ export class QuoteDetailsComponent implements OnInit {
       this.actualizarValidacionTipoCambio(moneda);
     });
 
+    this.sgcForm.get('costosIndirectos')?.valueChanges.subscribe(() => {
+      this.calcularTotales();
+    });
+
+    this.sgcForm.get('margenAutorizadoPorcentaje')?.valueChanges.subscribe(() => {
+      this.calcularTotales();
+    });
+
     this.partidasFormArray = this.fb.array([]);
     this.partidasFormArray.valueChanges.subscribe(() => {
       this.partidas = this.partidasFormArray.value;
@@ -350,6 +371,7 @@ export class QuoteDetailsComponent implements OnInit {
           }
 
           if (sgcRes.totales) {
+            this.totales = sgcRes.totales;
             this.subtotal = sgcRes.totales.subtotal;
             this.iva = sgcRes.totales.iva;
             this.total = sgcRes.totales.total;
@@ -628,14 +650,33 @@ export class QuoteDetailsComponent implements OnInit {
     });
   }
 
+  toggleEntregable(codigo: string, checked: boolean): void {
+    const list: string[] = [...(this.sgcForm.get('entregables')?.value || [])];
+    if (checked && !list.includes(codigo)) {
+      list.push(codigo);
+    } else if (!checked) {
+      const idx = list.indexOf(codigo);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+      }
+    }
+    this.sgcForm.get('entregables')?.setValue(list);
+    this.sgcForm.get('entregables')?.markAsDirty();
+  }
+
   // Calcular subtotal, iva y total
   calcularTotales() {
-    if (this.partidas && this.partidas.length > 0) {
+    const list = this.partidasFormArray && this.partidasFormArray.length > 0
+      ? this.partidasFormArray.value
+      : (this.partidas && this.partidas.length > 0 ? this.partidas : []);
+
+    if (list && list.length > 0) {
       const tot = totalesSgc(
-        this.partidas,
+        list,
         this.sgcForm?.get("costosIndirectos")?.value,
         this.sgcForm?.get("margenAutorizadoPorcentaje")?.value
       );
+      this.totales = tot;
       this.subtotal = tot.subtotal;
       this.iva = tot.iva;
       this.total = tot.total;
@@ -646,6 +687,16 @@ export class QuoteDetailsComponent implements OnInit {
       );
       this.iva = roundAwayFromZero(this.subtotal * 0.16, 2);
       this.total = roundAwayFromZero(this.subtotal + this.iva, 2);
+      this.totales = {
+        subtotal: this.subtotal,
+        iva: this.iva,
+        total: this.total,
+        costoDirecto: 0,
+        utilidad: null,
+        margenPorcentaje: null,
+        margenBajo: false,
+        partidasSinCosto: 0,
+      };
     }
   }
 
