@@ -20,10 +20,12 @@ import { CommonModule } from "@angular/common";
 import { CurrencyMaskPipe } from "../../../../../pipes/currency-mask.pipe";
 import { ClientsService } from "../../../catalogs/clients/clients.service";
 import { ProspectosService } from "../../prospects/prospects.services";
-import { debounceTime } from "rxjs";
+import { debounceTime, forkJoin } from "rxjs";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
+
+registerLocaleData(localeEs);
 import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { ChangeDetectorRef } from "@angular/core";
 import { MatTabsModule } from "@angular/material/tabs";
@@ -38,6 +40,15 @@ import { MatSlideToggle } from "@angular/material/slide-toggle";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatTableModule } from "@angular/material/table";
 import { MatTableDataSource } from "@angular/material/table";
+import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
+import {
+  CatalogosSgc,
+  CotizacionSgcCabecera,
+  CotizacionSgcDatos,
+  GuardarCotizacionSgc,
+  PartidaSgc
+} from "../quotes-products.types";
+import { totalesSgc, roundAwayFromZero } from "../sgc/cotizacion-sgc.utils";
 
 @Component({
   selector: "app-quotes-details",
@@ -61,6 +72,7 @@ import { MatTableDataSource } from "@angular/material/table";
     MatSlideToggle,
     MatTooltipModule,
     MatTableModule,
+    CondicionesSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -115,6 +127,19 @@ export class QuoteDetailsComponent implements OnInit {
   dataSource = new MatTableDataSource<any>();
 
   cotizacion: any;
+
+  // Propiedades SGC (SGC-PRO-COM-03)
+  sgcForm: FormGroup;
+  selectedTabIndex: number = 0;
+  catalogos: CatalogosSgc | null = null;
+  catalogoError: boolean = false;
+  faltantes: string[] = [];
+  erroresGuardado: string[] = [];
+  guardando: boolean = false;
+  folio: string | null = null;
+  version: number | null = null;
+  esHeredada: boolean = false;
+  partidas: PartidaSgc[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -196,86 +221,222 @@ export class QuoteDetailsComponent implements OnInit {
       ?.valueChanges.subscribe((clienteId: number | null) => {
         this.selectedClienteId = clienteId;
       });
+
+    // Inicialización del formulario SGC
+    this.sgcForm = this.fb.group({
+      tipo: ['CS', [Validators.required]],
+      moneda: ['MXN', [Validators.required]],
+      tipoCambio: [null],
+      vigenciaDias: [15, [Validators.required, Validators.min(1), Validators.max(365)]],
+      penalizacionCancelacion: [null, [Validators.maxLength(500)]],
+      formaPago: [null, [Validators.maxLength(200)]],
+      condicionesPago: [null, [Validators.maxLength(1000)]],
+      puntoEntrega: [null, [Validators.maxLength(300)]],
+      condicionesEntrega: [null, [Validators.maxLength(1000)]],
+      cuentaDeposito: [null, [Validators.maxLength(500)]],
+      exclusiones: [null, [Validators.maxLength(2000)]],
+      observacionesRelevantes: [null, [Validators.maxLength(2000)]],
+      contactoNombre: [null, [Validators.maxLength(200)]],
+      contactoCorreo: [null, [Validators.email, Validators.maxLength(200)]],
+      contactoTelefono: [null, [Validators.maxLength(50)]],
+      anexosTecnicos: [null, [Validators.maxLength(1000)]],
+      alcanceTecnico: [null],
+      recursosRequeridos: [null],
+      personalInvolucrado: [null],
+      tiemposEstimados: [null],
+      supuestosOperativos: [null],
+      condicionesEjecucion: [null],
+      riesgosLimitaciones: [null],
+      entregables: [[]],
+      costosIndirectos: [null, [Validators.min(0)]],
+      margenAutorizadoPorcentaje: [null, [Validators.min(0), Validators.max(100)]],
+    });
+
+    this.sgcForm.get('moneda')?.valueChanges.subscribe((moneda) => {
+      this.actualizarValidacionTipoCambio(moneda);
+    });
+
+    this.cargarCatalogos();
+  }
+
+  actualizarValidacionTipoCambio(moneda: string): void {
+    const tcControl = this.sgcForm.get('tipoCambio');
+    if (moneda === 'USD') {
+      tcControl?.setValidators([Validators.required, Validators.min(0.0001)]);
+    } else {
+      tcControl?.clearValidators();
+      tcControl?.setValue(null, { emitEvent: false });
+    }
+    tcControl?.updateValueAndValidity();
+  }
+
+  cargarCatalogos(): void {
+    this.catalogoError = false;
+    this.quotesService.catalogosSgc().subscribe({
+      next: (cat) => {
+        this.catalogos = cat;
+        this.catalogoError = false;
+      },
+      error: () => {
+        this.catalogoError = true;
+      },
+    });
   }
 
   loadQuotes(id: number): void {
-    this.quotesService.getQuoteById(id).subscribe((res) => {
-      if (res && res.code === 200) {
-        const quotes = res.data;
-        this.productos = quotes.detalles || [];
-        this.cotizacion = quotes;
-        this.quotesForm.patchValue({
-          cotizacionProductosId: quotes.cotizacionProductosId,
-          clienteId: quotes.clienteId,
-          unidadDeNegocioId: quotes.unidadDeNegocioId,
-          usuarioId: quotes.usuarioId,
-          requisitosEspeciales: quotes.requisitosEspeciales,
-          createdDate: quotes.createdDate,
-          updatedDate: quotes.updatedDate,
+    forkJoin({
+      vieja: this.quotesService.getQuoteById(id),
+      sgcRes: this.quotesService.obtenerSgc(id),
+    }).subscribe({
+      next: ({ vieja, sgcRes }) => {
+        if (vieja && vieja.code === 200) {
+          const quotes = vieja.data;
+          this.productos = quotes.detalles || [];
+          this.cotizacion = quotes;
+          this.quotesForm.patchValue({
+            cotizacionProductosId: quotes.cotizacionProductosId,
+            clienteId: quotes.clienteId,
+            unidadDeNegocioId: quotes.unidadDeNegocioId,
+            usuarioId: quotes.usuarioId,
+            requisitosEspeciales: quotes.requisitosEspeciales,
+            createdDate: quotes.createdDate,
+            updatedDate: quotes.updatedDate,
+            nombreCliente: quotes.nombreCliente,
+            nombreEmpresa: quotes.nombreEmpresa,
+            correo: quotes.correo,
+            telefono: quotes.telefono,
+            rfc: quotes.rfc,
+            direccionCompleta: quotes.direccionCompleta,
+            estado: quotes.estado,
+            estatus: quotes.estatus,
+            observaciones: quotes.observaciones,
+          });
+          this.dataSource.data = this.productos;
+        }
 
-          // Datos del cliente desnormalizados
-          nombreCliente: quotes.nombreCliente,
-          nombreEmpresa: quotes.nombreEmpresa,
-          correo: quotes.correo,
-          telefono: quotes.telefono,
-          rfc: quotes.rfc,
-          direccionCompleta: quotes.direccionCompleta,
-          estado: quotes.estado,
-          estatus: quotes.estatus,
-          observaciones: quotes.observaciones,
-        });
-        this.dataSource.data = this.productos; // inicial
-        this.calcularTotales();
-      } else {
-        this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
-      }
+        if (sgcRes) {
+          this.partidas = sgcRes.partidas || [];
+          this.faltantes = sgcRes.faltantes || [];
+
+          if (sgcRes.sgc) {
+            this.esHeredada = false;
+            this.folio = sgcRes.sgc.folio;
+            this.version = sgcRes.sgc.version;
+            this.sgcForm.patchValue(sgcRes.sgc);
+            this.actualizarValidacionTipoCambio(sgcRes.sgc.moneda);
+          } else {
+            this.esHeredada = !!sgcRes.partidasHeredadas;
+            this.folio = null;
+            this.version = null;
+            this.sgcForm.patchValue({
+              tipo: 'CS',
+              moneda: 'MXN',
+              tipoCambio: null,
+              vigenciaDias: 15,
+              entregables: [],
+            });
+            this.actualizarValidacionTipoCambio('MXN');
+          }
+
+          if (sgcRes.totales) {
+            this.subtotal = sgcRes.totales.subtotal;
+            this.iva = sgcRes.totales.iva;
+            this.total = sgcRes.totales.total;
+          } else {
+            this.calcularTotales();
+          }
+        } else {
+          this.calcularTotales();
+        }
+      },
+      error: (err) => {
+        this._chatNotificationService.showError(
+          "Opps",
+          err?.error?.mensaje || "Hubo un error al cargar la cotización.",
+          5000
+        );
+      },
     });
   }
 
   saveQuotes(): void {
-    if (this.quotesForm.invalid) {
-      this._chatNotificationService.showError("Opps", "Por favor, completa los campos obligatorios", 5000);
+    if (this.guardando) {
       return;
     }
 
-    const quotesData: any = {
-      ...this.quotesForm.value,
-      // Detalles de productos
-      detalles: this.productos.map((p) => ({
-        cotizacionProductoDetalleId: p.cotizacionProductoDetalleId ?? null,
-        productoId: p.productoId,
-        cantidad: p.cantidad,
-        precioUnitario: p.precioUnitario,
-        descuento: p.descuento,
-        tiempoEntrega: p.tiempoEntrega ?? null, // Tiempo de entrega opcional
-        notas: p.notas ?? null,
-      })),
+    this.erroresGuardado = [];
+
+    const formVal = this.quotesForm.value;
+    const cotizacion: CotizacionSgcCabecera = {
+      cotizacionProductosId: formVal.cotizacionProductosId || this.quotesId || 0,
+      clienteId: formVal.clienteId || null,
+      unidadDeNegocioId: formVal.unidadDeNegocioId || null,
+      requisitosEspeciales: !!formVal.requisitosEspeciales,
+      nombreCliente: formVal.nombreCliente || null,
+      nombreEmpresa: formVal.nombreEmpresa || null,
+      correo: formVal.correo || null,
+      telefono: formVal.telefono || null,
+      rfc: formVal.rfc || null,
+      direccionCompleta: formVal.direccionCompleta || null,
+      estado: formVal.estado || null,
+      estatus: formVal.estatus || null,
+      observaciones: formVal.observaciones || null,
     };
 
-    if (this.quotesId) {
-      // Actualizar proyecto
-      quotesData.cotizacionProductosId = this.quotesId;
-      this.quotesService.saveQuote(quotesData).subscribe((res) => {
-        if (res.code == 200) {
-          // Redirigir a la lista de proyectos
-          this.router.navigate(["/dashboards/quote-products"]); // O la ruta correspondiente a la lista
-          this._chatNotificationService.showSuccess("Éxito", "Cotizacion actualizada correctamente", 3000);
-        } else {
-          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
-        }
-      });
-    } else {
-      // Crear nuevo proyecto
-      this.quotesService.saveQuote(quotesData).subscribe((res) => {
-        if (res.code == 200) {
-          // Redirigir a la lista de proyectos
-          this.router.navigate(["/dashboards/quote-products"]); // O la ruta correspondiente a la lista
-          this._chatNotificationService.showSuccess("Éxito", "Cotizacion guardada correctamente", 3000);
-        } else {
-          this._chatNotificationService.showError("Opps", "Hubo un error en el sistema, contacte al administrador del sistema.", 5000);
-        }
-      });
+    const sgcVal = this.sgcForm.value;
+    const sgc: CotizacionSgcDatos = {
+      ...sgcVal,
+      entregables: sgcVal.entregables || [],
+    };
+
+    let partidasEnviar: PartidaSgc[] = this.partidas;
+    if ((!partidasEnviar || partidasEnviar.length === 0) && this.productos && this.productos.length > 0) {
+      partidasEnviar = this.productos.map((p, idx) => ({
+        partida: idx + 1,
+        tipoConcepto: 'Material',
+        materialServicio: p.nombreProducto || `Producto ${p.productoId}`,
+        descripcion: null,
+        codigoProducto: null,
+        productoId: p.productoId,
+        unidad: 'PZA',
+        cantidad: p.cantidad,
+        precioUnitario: p.precioUnitario,
+        descuento: p.descuento || 0,
+        tiempoEntregaDias: p.tiempoEntrega ?? null,
+        notas: p.notas ?? null,
+      }));
     }
+
+    const dto: GuardarCotizacionSgc = {
+      cotizacion,
+      sgc,
+      partidas: partidasEnviar || [],
+    };
+
+    this.guardando = true;
+
+    this.quotesService.guardarSgc(dto).subscribe({
+      next: (res) => {
+        this.guardando = false;
+        const folio = res?.data?.folio || '';
+        this._chatNotificationService.showSuccess(
+          'Éxito',
+          `Cotización ${folio} guardada correctamente`,
+          3000
+        );
+        this.router.navigate(['/dashboards/quote-products']);
+      },
+      error: (err) => {
+        this.guardando = false;
+        if (err.status === 400 && err.error?.errores?.length > 0) {
+          this.erroresGuardado = err.error.errores;
+        } else {
+          const msg = err.error?.mensaje || 'No se pudo guardar la cotización.';
+          this.erroresGuardado = [msg];
+          this._chatNotificationService.showError('Opps', msg, 5000);
+        }
+      },
+    });
   }
 
   updateValue(event: Event, controlName: string) {
@@ -427,12 +588,23 @@ export class QuoteDetailsComponent implements OnInit {
 
   // Calcular subtotal, iva y total
   calcularTotales() {
-    this.subtotal = this.productos.reduce(
-      (acc, p) => acc + (p.cantidad * p.precioUnitario - p.descuento),
-      0
-    );
-    this.iva = this.subtotal * 0.16; // IVA 16%
-    this.total = this.subtotal + this.iva;
+    if (this.partidas && this.partidas.length > 0) {
+      const tot = totalesSgc(
+        this.partidas,
+        this.sgcForm?.get("costosIndirectos")?.value,
+        this.sgcForm?.get("margenAutorizadoPorcentaje")?.value
+      );
+      this.subtotal = tot.subtotal;
+      this.iva = tot.iva;
+      this.total = tot.total;
+    } else {
+      this.subtotal = this.productos.reduce(
+        (acc, p) => acc + (p.cantidad * p.precioUnitario - p.descuento),
+        0
+      );
+      this.iva = roundAwayFromZero(this.subtotal * 0.16, 2);
+      this.total = roundAwayFromZero(this.subtotal + this.iva, 2);
+    }
   }
 
   openCotizacionPreview(): void {

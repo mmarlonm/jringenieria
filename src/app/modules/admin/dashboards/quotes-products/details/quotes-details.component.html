@@ -6,7 +6,27 @@
       <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
     </button>
   </h1>
-  <mat-tab-group class="h-full flex-1 overflow-hidden">
+
+  <!-- Alerta de errores de validación del guardado (400 / error) -->
+  <div *ngIf="erroresGuardado.length > 0" class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 text-red-700" role="alert">
+    <p class="font-bold">No se pudo guardar la cotización:</p>
+    <ul class="list-disc pl-5">
+      <li *ngFor="let err of erroresGuardado">{{ err }}</li>
+    </ul>
+  </div>
+
+  <!-- Alerta de error al cargar catálogos con botón Reintentar -->
+  <div *ngIf="catalogoError" class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4 text-yellow-800 flex items-center justify-between">
+    <span>Error al cargar los catálogos del SGC.</span>
+    <button mat-stroked-button color="warn" type="button" (click)="cargarCatalogos()">Reintentar</button>
+  </div>
+
+  <!-- Aviso de cotización heredada de CONTPAQi -->
+  <div *ngIf="esHeredada" class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 text-blue-800">
+    Esta cotización viene de CONTPAQi. Al guardarla se copiarán sus partidas al ERP y los cambios posteriores en CONTPAQi ya no se reflejarán.
+  </div>
+
+  <mat-tab-group animationDuration="0ms" [(selectedIndex)]="selectedTabIndex" class="h-full flex-1 overflow-hidden">
 
     <mat-tab label="Información General">
       <form [formGroup]="quotesForm" class="flex flex-col gap-4 overflow-auto">
@@ -136,6 +156,10 @@
       </form>
     </mat-tab>
 
+    <mat-tab label="Clasificación y condiciones">
+      <app-condiciones-sgc [form]="sgcForm" [catalogos]="catalogos"></app-condiciones-sgc>
+    </mat-tab>
+
     <mat-tab label="Productos">
       <div class="flex flex-col h-full overflow-auto">
         <!-- Botón para agregar producto -->
@@ -225,9 +249,43 @@
       </div>
     </mat-tab>
 
+    <mat-tab label="Resumen">
+      <div class="p-6 flex flex-col gap-6 overflow-auto">
+        <div *ngIf="folio" class="text-lg font-semibold">
+          Folio: <span class="font-bold text-primary">{{ folio }}</span> · Versión: <span>{{ version }}</span>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded shadow-sm max-w-md">
+          <h3 class="text-base font-bold mb-3 border-b pb-1">Totales ({{ sgcForm.get('moneda')?.value || 'MXN' }})</h3>
+          <div class="flex justify-between py-1">
+            <span>Subtotal:</span>
+            <span class="font-medium">{{ subtotal | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span>IVA (16%):</span>
+            <span class="font-medium">{{ iva | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between py-1 border-t mt-2 pt-2 text-lg font-bold">
+            <span>Total:</span>
+            <span>{{ total | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="max-w-xl">
+          <h3 class="text-base font-bold text-amber-700 mb-2">Pendiente para poder emitir</h3>
+          <div *ngIf="faltantes.length === 0" class="text-gray-500 italic">
+            Sin pendientes registrados.
+          </div>
+          <ul *ngIf="faltantes.length > 0" class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+            <li *ngFor="let f of faltantes">{{ f }}</li>
+          </ul>
+        </div>
+      </div>
+    </mat-tab>
+
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
-    <button mat-raised-button color="primary" type="button" (click)="saveQuotes()">
+    <button mat-raised-button color="primary" type="button" [disabled]="guardando" (click)="saveQuotes()">
       Guardar
     </button>
     <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/quote-products'])">

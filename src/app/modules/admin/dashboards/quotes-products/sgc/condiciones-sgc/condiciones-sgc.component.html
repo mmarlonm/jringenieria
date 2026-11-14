@@ -1,0 +1,125 @@
+<div [formGroup]="form" class="flex flex-col gap-4 p-4 overflow-auto">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Tipo de Cotización -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Tipo de Cotización</mat-label>
+      <mat-select formControlName="tipo">
+        <mat-option *ngFor="let t of catalogos?.tipos" [value]="t.codigo">
+          {{ t.codigo }} - {{ t.nombre }}
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="form.get('tipo')?.value === 'CS'">SGC-FOR-COM-01 (Comercial simple)</mat-hint>
+      <mat-hint *ngIf="form.get('tipo')?.value === 'CT'">SGC-FOR-COM-02 (Técnico-comercial)</mat-hint>
+      <mat-hint *ngIf="form.get('tipo')?.value === 'CE'">SGC-FOR-COM-03 (Estratégica)</mat-hint>
+    </mat-form-field>
+
+    <!-- Moneda -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Moneda</mat-label>
+      <mat-select formControlName="moneda">
+        <mat-option *ngFor="let m of catalogos?.monedas" [value]="m.codigo">
+          {{ m.codigo }} - {{ m.nombre }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Tipo de Cambio (solo en USD) -->
+    <mat-form-field *ngIf="form.get('moneda')?.value === 'USD'" appearance="fill" class="w-full">
+      <mat-label>Tipo de Cambio</mat-label>
+      <input matInput type="number" step="0.0001" formControlName="tipoCambio" placeholder="Ej. 20.00" />
+      <mat-error *ngIf="form.get('tipoCambio')?.hasError('required')">El tipo de cambio es obligatorio en USD</mat-error>
+      <mat-error *ngIf="form.get('tipoCambio')?.hasError('min')">Debe ser mayor a cero</mat-error>
+    </mat-form-field>
+
+    <!-- Vigencia en Días -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Vigencia (Días)</mat-label>
+      <input matInput type="number" min="1" max="365" formControlName="vigenciaDias" />
+      <mat-error *ngIf="form.get('vigenciaDias')?.invalid">La vigencia debe estar entre 1 y 365 días</mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Forma de Pago -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Forma de Pago</mat-label>
+      <input matInput formControlName="formaPago" />
+    </mat-form-field>
+
+    <!-- Condiciones de Pago -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Condiciones de Pago</mat-label>
+      <input matInput formControlName="condicionesPago" />
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Penalización por Cancelación -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Penalización por Cancelación</mat-label>
+      <input matInput formControlName="penalizacionCancelacion" />
+    </mat-form-field>
+
+    <!-- Punto de Entrega -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Punto de Entrega</mat-label>
+      <input matInput formControlName="puntoEntrega" />
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Condiciones de Entrega -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Condiciones de Entrega</mat-label>
+      <input matInput formControlName="condicionesEntrega" />
+    </mat-form-field>
+
+    <!-- Cuenta de Depósito -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Cuenta de Depósito</mat-label>
+      <input matInput formControlName="cuentaDeposito" />
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Contacto Responsable: Nombre -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Nombre de Contacto Responsable</mat-label>
+      <input matInput formControlName="contactoNombre" />
+    </mat-form-field>
+
+    <!-- Contacto Responsable: Correo -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Correo de Contacto</mat-label>
+      <input matInput type="email" formControlName="contactoCorreo" />
+    </mat-form-field>
+
+    <!-- Contacto Responsable: Teléfono -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Teléfono de Contacto</mat-label>
+      <input matInput formControlName="contactoTelefono" />
+    </mat-form-field>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Exclusiones -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Exclusiones</mat-label>
+      <textarea matInput rows="3" formControlName="exclusiones"></textarea>
+    </mat-form-field>
+
+    <!-- Observaciones Relevantes -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Observaciones Relevantes</mat-label>
+      <textarea matInput rows="3" formControlName="observacionesRelevantes"></textarea>
+    </mat-form-field>
+  </div>
+
+  <div>
+    <!-- Anexos Técnicos -->
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Anexos Técnicos</mat-label>
+      <textarea matInput rows="2" formControlName="anexosTecnicos"></textarea>
+    </mat-form-field>
+  </div>
+</div>
