@@ -39,6 +39,14 @@ export interface Requerimiento {
 
   usuarioAsignadoId?: number;
   usuarioAsignadoNombre?: string;
+  usuarioCreadorId?: number;
+  usuarioCreadorNombre?: string;
+  solicitanteId?: number;
+  solicitanteNombre?: string;
+  tipoProyecto?: string;
+  titulo?: string;
+  seguimientoProyectoId?: number;
+  fechaAprobacion?: string;
   fechaCalificacion?: string;
   fechaRegistro: string;
 

@@ -194,6 +194,9 @@
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
                         <div class="flex items-center space-x-1">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4.5 text-gray-500"></mat-icon>
+                            </button>
                             <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Calificar Requerimiento" (click)="openCalificarDialog(r)">
                                 <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-blue-500"></mat-icon>
                             </button>
@@ -435,6 +438,9 @@
                 <th mat-header-cell *matHeaderCellDef class="font-bold uppercase tracking-wider text-xs">Acciones</th>
                 <td mat-cell *matCellDef="let r">
                     <div class="flex items-center space-x-1">
+                        <button mat-icon-button matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
+                            <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-5 text-gray-500"></mat-icon>
+                        </button>
                         <button mat-icon-button color="primary" matTooltip="Calificar / Checklist SGC" (click)="openCalificarDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-5"></mat-icon>
                         </button>

@@ -17,6 +17,7 @@ import { RequerimientosService, Requerimiento, RequerimientoKpi } from './requer
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { RequerimientoDialogComponent } from './requerimiento-dialog/requerimiento-dialog.component';
 import { RequerimientoCalificarDialogComponent } from './requerimiento-calificar-dialog/requerimiento-calificar-dialog.component';
+import { RequerimientoVerDialogComponent } from './requerimiento-ver-dialog/requerimiento-ver-dialog.component';
 import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import Sortable from 'sortablejs';
@@ -369,6 +370,21 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
             this.loadKpis();
           }
         });
+      }
+    });
+  }
+
+  openVerDialog(req: Requerimiento): void {
+    const dialogRef = this.dialog.open(RequerimientoVerDialogComponent, {
+      width: '880px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      data: { id: req.id, requerimiento: req, puedeCalificar: this.reqService.puedeCalificar(req) }
+    });
+    dialogRef.afterClosed().subscribe(res => {
+      if (res?.accion === 'calificar' || res === 'calificar') {
+        const target = res?.requerimiento || req;
+        this.openCalificarDialog(target);
       }
     });
   }
