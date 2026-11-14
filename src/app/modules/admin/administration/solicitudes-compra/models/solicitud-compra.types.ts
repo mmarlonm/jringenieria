@@ -172,6 +172,7 @@ export interface ProveedorDto {
 export interface ContpaqiMaterialDto {
     materialServicio: string;
     descripcion: string;
+    codigoProducto?: string;
     unidad: string;
     cantidad: number;
     costoUnitario: number;

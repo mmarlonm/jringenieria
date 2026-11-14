@@ -34,6 +34,10 @@ import {
 } from '../../quotes-products.types';
 import { AddProductDialogComponent } from '../../add-product-dialog/add-product-dialog.component';
 import { importeLinea, totalesSgc } from '../cotizacion-sgc.utils';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { LectorPdfMateriales } from 'app/shared/materiales/lector-pdf-materiales';
+import { ImportarMaterialesDialogComponent } from 'app/modules/admin/administration/solicitudes-compra/form/importar-materiales-dialog/importar-materiales-dialog.component';
+import { ContpaqiMaterialDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 
 @Component({
   selector: 'app-partidas-sgc',
@@ -63,6 +67,7 @@ export class PartidasSgcComponent implements OnInit, OnDestroy {
   entradasManuales: { [index: number]: string | null } = {};
   errorBusqueda: { [index: number]: boolean } = {};
   unidadesDisponibles: string[] = ['PZA', 'CAJA', 'METRO', 'KILO', 'SERVICIO', 'LOTE'];
+  folioContpaqi: string = '';
 
   private _destroy$ = new Subject<void>();
 
@@ -71,7 +76,8 @@ export class PartidasSgcComponent implements OnInit, OnDestroy {
     private quotesService: QuotesService,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef,
-    private elRef: ElementRef
+    private elRef: ElementRef,
+    private chatNotificationService: ChatNotificationService
   ) {}
 
   ngOnInit(): void {
@@ -254,6 +260,147 @@ export class PartidasSgcComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  importarPorFolio(): void {
+    const folio = this.folioContpaqi?.trim();
+    if (!folio) {
+      this.chatNotificationService.showWarning('Atención', 'Ingresa un folio de CONTPAQi para importar');
+      return;
+    }
+
+    this.quotesService.importarPorFolio(folio).subscribe({
+      next: (materiales) => {
+        if (!materiales || materiales.length === 0) {
+          this.chatNotificationService.showWarning(
+            'Sin resultados',
+            'No se encontraron materiales para el folio ingresado'
+          );
+          return;
+        }
+        this.abrirDialogoImportacion(materiales, folio);
+      },
+      error: (err) => {
+        const msg = err?.error?.mensaje ?? (typeof err?.error === 'string' ? err.error : 'Error al consultar CONTPAQi');
+        this.chatNotificationService.showError('Error', msg);
+      },
+    });
+  }
+
+  onPdfFileSelected(event: any): void {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+
+    LectorPdfMateriales.leer(file)
+      .then((materiales) => {
+        if (!materiales || materiales.length === 0) {
+          this.chatNotificationService.showWarning(
+            'Atención',
+            'No se detectaron tablas de materiales legibles en el PDF'
+          );
+          return;
+        }
+        this.abrirDialogoImportacion(materiales, 'PDF Importado');
+      })
+      .catch((err) => {
+        this.chatNotificationService.showError('Error', err?.message || 'Error al procesar el archivo PDF');
+      })
+      .finally(() => {
+        if (event?.target) {
+          event.target.value = '';
+        }
+      });
+  }
+
+  abrirDialogoImportacion(materiales: ContpaqiMaterialDto[], folio: string): void {
+    const dialogRef = this.dialog.open(ImportarMaterialesDialogComponent, {
+      data: { materiales, folio },
+      width: '1000px',
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((materialesSeleccionados: ContpaqiMaterialDto[]) => {
+      if (materialesSeleccionados && materialesSeleccionados.length > 0) {
+        this.procesarMaterialesImportados(materialesSeleccionados);
+      }
+    });
+  }
+
+  procesarMaterialesImportados(materiales: ContpaqiMaterialDto[]): void {
+    if (this.partidas.length > 0) {
+      Swal.fire({
+        title: 'Importar Materiales',
+        text: '¿Deseas sobrescribir los materiales actuales o agregarlos al final?',
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'Agregar al final',
+        denyButtonText: 'Sobrescribir',
+        cancelButtonText: 'Cancelar',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.insertarMateriales(materiales, false);
+        } else if (result.isDenied) {
+          this.insertarMateriales(materiales, true);
+        }
+      });
+    } else {
+      this.insertarMateriales(materiales, true);
+    }
+  }
+
+  insertarMateriales(materiales: ContpaqiMaterialDto[], sobrescribir: boolean): void {
+    if (sobrescribir) {
+      while (this.partidas.length) {
+        this.partidas.removeAt(0);
+      }
+      this.filteredProducts$ = [];
+      this.entradasManuales = {};
+      this.errorBusqueda = {};
+    }
+
+    let huboRecortes = false;
+
+    materiales.forEach((m) => {
+      let materialServicio = (m.materialServicio || '').trim();
+      let descripcion = (m.descripcion || '').trim();
+
+      if (materialServicio.length > 200) {
+        materialServicio = materialServicio.substring(0, 200);
+        huboRecortes = true;
+      }
+      if (descripcion.length > 1000) {
+        descripcion = descripcion.substring(0, 1000);
+        huboRecortes = true;
+      }
+
+      const unidadNorm = LectorPdfMateriales.normalizeUnidad(m.unidad) || m.unidad || 'PZA';
+
+      this.addPartida({
+        materialServicio,
+        descripcion,
+        codigoProducto: m.codigoProducto || null,
+        unidad: unidadNorm,
+        cantidad: m.cantidad || 1,
+        precioUnitario: m.costoUnitario || 0,
+        tipoConcepto: 'Material',
+        descuento: 0,
+        costoUnitario: null,
+        tiempoEntregaDias: null,
+        notas: null,
+      });
+    });
+
+    this.chatNotificationService.showSuccess('Éxito', `${materiales.length} materiales importados correctamente`);
+
+    if (huboRecortes) {
+      this.chatNotificationService.showWarning(
+        'Aviso',
+        'Algunos textos largos fueron recortados para cumplir con los límites del sistema.'
+      );
+    }
+
+    this.cdr.markForCheck();
   }
 
   asegurarUnidad(unidad: string): void {

@@ -9,7 +9,27 @@
     <div class="flex items-center gap-2">
       <span class="font-bold text-lg">Materiales y Servicios ({{ partidas.length }})</span>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 items-center flex-wrap">
+      <!-- Input y botón Folio CONTPAQi -->
+      <div class="flex items-center gap-1">
+        <input
+          type="text"
+          [(ngModel)]="folioContpaqi"
+          placeholder="Folio CONTPAQi..."
+          class="p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs w-36"
+          (keyup.enter)="importarPorFolio()"
+        />
+        <button mat-stroked-button type="button" (click)="importarPorFolio()" title="Importar por folio de CONTPAQi">
+          <mat-icon class="mr-1">download</mat-icon> Importar Folio
+        </button>
+      </div>
+
+      <!-- Botón e input oculto Importar PDF -->
+      <input #pdfInput type="file" accept=".pdf" class="hidden" (change)="onPdfFileSelected($event)" />
+      <button mat-stroked-button type="button" (click)="pdfInput.click()" title="Importar materiales desde PDF">
+        <mat-icon class="mr-1">picture_as_pdf</mat-icon> Importar PDF
+      </button>
+
       <button mat-stroked-button color="primary" type="button" (click)="abrirCatalogoConPrecio()">
         <mat-icon class="mr-1">menu_book</mat-icon> Catálogo con precio
       </button>

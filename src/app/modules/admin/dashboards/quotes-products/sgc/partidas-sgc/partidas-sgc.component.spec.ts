@@ -6,6 +6,10 @@ import { of, throwError } from 'rxjs';
 import { PartidasSgcComponent } from './partidas-sgc.component';
 import { QuotesService } from '../../quotes-products.service';
 import { CatalogosSgc } from '../../quotes-products.types';
+import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
+import { LectorPdfMateriales } from 'app/shared/materiales/lector-pdf-materiales';
+import { ImportarMaterialesDialogComponent } from 'app/modules/admin/administration/solicitudes-compra/form/importar-materiales-dialog/importar-materiales-dialog.component';
+import { ContpaqiMaterialDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 import Swal from 'sweetalert2';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
@@ -18,6 +22,7 @@ describe('PartidasSgcComponent', () => {
   let fb: FormBuilder;
   let mockQuotesService: any;
   let mockDialog: any;
+  let mockChatService: any;
 
   const mockCatalogos: CatalogosSgc = {
     tipos: [
@@ -69,12 +74,19 @@ describe('PartidasSgcComponent', () => {
       }),
     };
 
+    mockChatService = {
+      showSuccess: jasmine.createSpy('showSuccess'),
+      showError: jasmine.createSpy('showError'),
+      showWarning: jasmine.createSpy('showWarning'),
+    };
+
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule, NoopAnimationsModule, PartidasSgcComponent],
       providers: [
         FormBuilder,
         { provide: QuotesService, useValue: mockQuotesService },
         { provide: MatDialog, useValue: mockDialog },
+        { provide: ChatNotificationService, useValue: mockChatService },
       ],
     }).compileComponents();
 
@@ -279,5 +291,231 @@ describe('PartidasSgcComponent', () => {
     // La fila sigue viva y usable
     expect(component.partidas.length).toBe(1);
     expect(control?.value).toBe('cable');
+  }));
+
+  it('Importar_por_folio_abre_el_dialogo_con_lo_encontrado', () => {
+    const fakeMateriales: ContpaqiMaterialDto[] = [
+      {
+        materialServicio: 'Cable Calibre 10',
+        descripcion: 'Cable de cobre uso rudo',
+        codigoProducto: 'CAB-10',
+        unidad: 'M',
+        cantidad: 50,
+        costoUnitario: 25.5,
+        iva: 0,
+        total: 0,
+      },
+    ];
+    mockQuotesService.importarPorFolio.and.returnValue(of(fakeMateriales));
+    component.folioContpaqi = 'FOL-001';
+
+    component.importarPorFolio();
+
+    expect(mockQuotesService.importarPorFolio).toHaveBeenCalledWith('FOL-001');
+    expect(mockDialog.open).toHaveBeenCalledWith(ImportarMaterialesDialogComponent, {
+      data: { materiales: fakeMateriales, folio: 'FOL-001' },
+      width: '1000px',
+      disableClose: true,
+    });
+  });
+
+  it('Sin_folio_avisa_y_no_llama_al_servicio', () => {
+    component.folioContpaqi = '   ';
+    component.importarPorFolio();
+
+    expect(mockQuotesService.importarPorFolio).not.toHaveBeenCalled();
+    expect(mockChatService.showWarning).toHaveBeenCalled();
+  });
+
+  it('Sin_resultados_avisa_y_no_abre_el_dialogo', () => {
+    mockQuotesService.importarPorFolio.and.returnValue(of([]));
+    component.folioContpaqi = 'FOL-VACIO';
+
+    component.importarPorFolio();
+
+    expect(mockQuotesService.importarPorFolio).toHaveBeenCalledWith('FOL-VACIO');
+    expect(mockDialog.open).not.toHaveBeenCalled();
+    expect(mockChatService.showWarning).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.stringMatching(/No se encontraron materiales para el folio ingresado/)
+    );
+  });
+
+  it('Un_error_del_API_al_importar_se_muestra', () => {
+    mockQuotesService.importarPorFolio.and.returnValue(
+      throwError(() => ({ error: { mensaje: 'Error al consultar CONTPAQi' } }))
+    );
+    component.folioContpaqi = 'FOL-ERR';
+
+    component.importarPorFolio();
+
+    expect(mockChatService.showError).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.stringMatching(/Error al consultar CONTPAQi/)
+    );
+  });
+
+  it('Agregar_al_final_conserva_las_partidas_existentes', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+
+    component.addPartida({ materialServicio: 'Partida Inicial' });
+    expect(component.partidas.length).toBe(1);
+
+    const importados: ContpaqiMaterialDto[] = [
+      { materialServicio: 'Importado 1', descripcion: 'D1', unidad: 'PZA', cantidad: 2, costoUnitario: 10, iva: 0, total: 0 },
+      { materialServicio: 'Importado 2', descripcion: 'D2', unidad: 'PZA', cantidad: 3, costoUnitario: 20, iva: 0, total: 0 },
+    ];
+
+    component.procesarMaterialesImportados(importados);
+    tick();
+
+    expect(component.partidas.length).toBe(3);
+    expect(component.partidas.at(0).get('materialServicio')?.value).toBe('Partida Inicial');
+    expect(component.partidas.at(0).get('partida')?.value).toBe(1);
+    expect(component.partidas.at(1).get('materialServicio')?.value).toBe('Importado 1');
+    expect(component.partidas.at(1).get('partida')?.value).toBe(2);
+    expect(component.partidas.at(2).get('materialServicio')?.value).toBe('Importado 2');
+    expect(component.partidas.at(2).get('partida')?.value).toBe(3);
+  }));
+
+  it('Sobrescribir_reemplaza_las_partidas', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isDenied: true } as any));
+
+    component.addPartida({ materialServicio: 'Partida Inicial' });
+    expect(component.partidas.length).toBe(1);
+
+    const importados: ContpaqiMaterialDto[] = [
+      { materialServicio: 'Nuevo 1', descripcion: 'D1', unidad: 'PZA', cantidad: 2, costoUnitario: 15, iva: 0, total: 0 },
+    ];
+
+    component.procesarMaterialesImportados(importados);
+    tick();
+
+    expect(component.partidas.length).toBe(1);
+    expect(component.partidas.at(0).get('materialServicio')?.value).toBe('Nuevo 1');
+    expect(component.partidas.at(0).get('partida')?.value).toBe(1);
+  }));
+
+  it('Cancelar_no_cambia_nada', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isDismissed: true } as any));
+
+    component.addPartida({ materialServicio: 'Partida Inicial' });
+    expect(component.partidas.length).toBe(1);
+
+    const importados: ContpaqiMaterialDto[] = [
+      { materialServicio: 'Nuevo 1', descripcion: 'D1', unidad: 'PZA', cantidad: 2, costoUnitario: 15, iva: 0, total: 0 },
+    ];
+
+    component.procesarMaterialesImportados(importados);
+    tick();
+
+    expect(component.partidas.length).toBe(1);
+    expect(component.partidas.at(0).get('materialServicio')?.value).toBe('Partida Inicial');
+  }));
+
+  it('El_costo_importado_cae_en_precio_unitario', () => {
+    const importados: ContpaqiMaterialDto[] = [
+      {
+        materialServicio: 'Cople 1 pulgada',
+        descripcion: 'Cople galvanizado',
+        codigoProducto: 'COP-01',
+        unidad: 'PZA',
+        cantidad: 10,
+        costoUnitario: 45.75,
+        iva: 0,
+        total: 0,
+      },
+    ];
+
+    component.insertarMateriales(importados, true);
+
+    expect(component.partidas.length).toBe(1);
+    const partida = component.partidas.at(0);
+    expect(partida.get('precioUnitario')?.value).toBe(45.75);
+    expect(partida.get('descuento')?.value).toBe(0);
+    expect(partida.get('tipoConcepto')?.value).toBe('Material');
+  });
+
+  it('Los_textos_largos_importados_se_recortan_y_se_avisa', () => {
+    const largo250 = 'A'.repeat(250);
+    const largo1200 = 'B'.repeat(1200);
+
+    const importados: ContpaqiMaterialDto[] = [
+      {
+        materialServicio: largo250,
+        descripcion: largo1200,
+        unidad: 'PZA',
+        cantidad: 1,
+        costoUnitario: 10,
+        iva: 0,
+        total: 0,
+      },
+    ];
+
+    component.insertarMateriales(importados, true);
+
+    const partida = component.partidas.at(0);
+    expect(partida.get('materialServicio')?.value.length).toBe(200);
+    expect(partida.get('descripcion')?.value.length).toBe(1000);
+    expect(mockChatService.showWarning).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.stringMatching(/recortados/)
+    );
+    expect(mockChatService.showSuccess).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.stringMatching(/1 materiales importados correctamente/)
+    );
+  });
+
+  it('Importar_PDF_usa_el_lector_compartido', fakeAsync(() => {
+    const fakeMateriales: ContpaqiMaterialDto[] = [
+      { materialServicio: 'Material PDF', descripcion: 'Desc PDF', unidad: 'PZA', cantidad: 5, costoUnitario: 100, iva: 0, total: 0 },
+    ];
+    spyOn(LectorPdfMateriales, 'leer').and.returnValue(Promise.resolve(fakeMateriales));
+
+    const fakeFile = new File(['dummy'], 'materiales.pdf', { type: 'application/pdf' });
+    const event = { target: { files: [fakeFile], value: 'fake-path' } };
+
+    component.onPdfFileSelected(event);
+    tick();
+
+    expect(LectorPdfMateriales.leer).toHaveBeenCalledWith(fakeFile);
+    expect(mockDialog.open).toHaveBeenCalledWith(ImportarMaterialesDialogComponent, {
+      data: { materiales: fakeMateriales, folio: 'PDF Importado' },
+      width: '1000px',
+      disableClose: true,
+    });
+    expect(event.target.value).toBe('');
+  }));
+
+  it('Un_PDF_sin_tablas_avisa', fakeAsync(() => {
+    spyOn(LectorPdfMateriales, 'leer').and.returnValue(Promise.resolve([]));
+
+    const fakeFile = new File(['dummy'], 'vacio.pdf', { type: 'application/pdf' });
+    const event = { target: { files: [fakeFile], value: 'fake-path' } };
+
+    component.onPdfFileSelected(event);
+    tick();
+
+    expect(mockDialog.open).not.toHaveBeenCalled();
+    expect(mockChatService.showWarning).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.stringMatching(/No se detectaron tablas de materiales legibles en el PDF/)
+    );
+  }));
+
+  it('Un_error_del_lector_de_PDF_se_muestra', fakeAsync(() => {
+    spyOn(LectorPdfMateriales, 'leer').and.returnValue(Promise.reject(new Error('PDF ilegible')));
+
+    const fakeFile = new File(['dummy'], 'corrupto.pdf', { type: 'application/pdf' });
+    const event = { target: { files: [fakeFile], value: 'fake-path' } };
+
+    component.onPdfFileSelected(event);
+    tick();
+
+    expect(mockChatService.showError).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.stringMatching(/PDF ilegible/)
+    );
   }));
 });
