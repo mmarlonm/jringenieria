@@ -97,6 +97,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
   calificadosComercial: Requerimiento[] = [];
   calificadosTecnico: Requerimiento[] = [];
   noViables: Requerimiento[] = [];
+  aprobados: Requerimiento[] = [];
 
   // Filtros
   searchControl = new FormControl('');
@@ -180,6 +181,11 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
   private onCardMoved(itemId: number, targetEstatus: string, evt: any): void {
     const item = this.requerimientos.find(r => r.id === itemId);
     if (!item || item.estatus === targetEstatus) return;
+
+    if (item.estatus === 'Aprobado para cotización' || targetEstatus === 'Aprobado para cotización') {
+      this.loadRequerimientos();
+      return;
+    }
 
     if (!this.reqService.puedeCalificar(item)) {
       Swal.fire('Sin permiso', `Solo ${item.usuarioAsignadoNombre || 'el responsable asignado'} puede calificar este requerimiento.`, 'info');
@@ -271,6 +277,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     this.calificadosComercial = this.filteredRequerimientos.filter(r => r.estatus === 'Calificado Comercial');
     this.calificadosTecnico = this.filteredRequerimientos.filter(r => r.estatus === 'Calificado Técnico');
     this.noViables = this.filteredRequerimientos.filter(r => r.estatus === 'No Viable');
+    this.aprobados = this.filteredRequerimientos.filter(r => r.estatus === 'Aprobado para cotización');
 
     this.cdr.detectChanges();
     setTimeout(() => this.initSortable(), 100);
@@ -365,7 +372,11 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
         });
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
-            this.snackBar.open('Calificación guardada y registrada.', 'OK', { duration: 3000 });
+            if (result.accion === 'editar' || result === 'editar') {
+              this.openEditDialog(this.requerimientos.find(r => r.id === req.id) || req);
+              return;
+            }
+            this.snackBar.open('Operación registrada con éxito.', 'OK', { duration: 3000 });
             this.loadRequerimientos();
             this.loadKpis();
           }

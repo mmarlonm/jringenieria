@@ -117,6 +117,18 @@
                 </mat-select>
             </mat-form-field>
 
+            <!-- Estatus Filter -->
+            <mat-form-field appearance="outline" class="w-full sm:w-44 max-h-12" subscriptSizing="dynamic">
+                <mat-select [formControl]="estatusControl">
+                    <mat-option value="Todos">Todos los Estatus</mat-option>
+                    <mat-option value="Pendiente">Pendiente</mat-option>
+                    <mat-option value="Calificado Comercial">Calificado Comercial</mat-option>
+                    <mat-option value="Calificado Técnico">Calificado Técnico</mat-option>
+                    <mat-option value="No Viable">No Viable</mat-option>
+                    <mat-option value="Aprobado para cotización">Aprobado para cotización</mat-option>
+                </mat-select>
+            </mat-form-field>
+
             <!-- Agent Filter -->
             <mat-form-field appearance="outline" class="w-full sm:w-44 max-h-12" subscriptSizing="dynamic">
                 <mat-select [formControl]="agenteControl">
@@ -157,7 +169,7 @@
     </div>
 
     <!-- KANBAN VIEW -->
-    <div *ngIf="viewMode === 'kanban'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div *ngIf="viewMode === 'kanban'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         
         <!-- Column 1: Pendiente -->
         <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
@@ -353,6 +365,52 @@
             </div>
         </div>
 
+        <!-- Column 5: Aprobados para cotización -->
+        <div class="flex flex-col bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-sm text-purple-600 uppercase tracking-wider">Aprobados para cotización</span>
+                <span class="px-2 py-0.5 text-xs font-semibold bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-full">
+                    {{ aprobados.length }}
+                </span>
+            </div>
+            <div id="kanban-aprobados" class="space-y-4 kanban-col overflow-y-auto">
+                <div *ngFor="let r of aprobados" [attr.data-id]="r.id"
+                     class="bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-purple-200 dark:border-purple-900/50 hover:shadow-md relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-purple-600">{{ r.folio }}</span>
+                        <div class="flex items-center space-x-1">
+                            <span *ngIf="r.archivos && r.archivos.length > 0"
+                                  class="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center gap-1"
+                                  [matTooltip]="r.archivos.length + (r.archivos.length === 1 ? ' archivo adjunto' : ' archivos adjuntos')">
+                                <mat-icon svgIcon="heroicons_outline:paper-clip" class="icon-size-3"></mat-icon>
+                                {{ r.archivos.length }}
+                            </span>
+                            <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400">
+                                {{ r.sucursal }}
+                            </span>
+                        </div>
+                    </div>
+                    <h4 class="font-semibold text-sm leading-tight">{{ r.empresa }}</h4>
+                    <p class="text-xs text-gray-400 mt-1 truncate">{{ r.nombreContacto }}</p>
+                    <div *ngIf="r.seguimientoProyectoId" class="mt-2 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/30 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                        <span>Folio Ingeniería:</span>
+                        <a href="#/engineering/solicitud-cliente" class="font-bold underline hover:text-purple-900">#{{ r.seguimientoProyectoId }}</a>
+                    </div>
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t">
+                        <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
+                        <div class="flex items-center space-x-1">
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4.5 text-gray-500"></mat-icon>
+                            </button>
+                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver Calificación / Aprobación" (click)="openCalificarDialog(r)">
+                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-purple-600"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- LIST VIEW -->
@@ -414,7 +472,8 @@
                             'bg-gray-100 text-gray-600': r.estatus === 'Pendiente',
                             'bg-green-100 text-green-600': r.estatus === 'Calificado Comercial',
                             'bg-blue-100 text-blue-600': r.estatus === 'Calificado Técnico',
-                            'bg-red-100 text-red-600': r.estatus === 'No Viable'
+                            'bg-red-100 text-red-600': r.estatus === 'No Viable',
+                            'bg-purple-100 text-purple-600': r.estatus === 'Aprobado para cotización'
                           }">
                         {{ r.estatus }}
                     </span>
@@ -444,7 +503,7 @@
                         <button mat-icon-button color="primary" matTooltip="Calificar / Checklist SGC" (click)="openCalificarDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-5"></mat-icon>
                         </button>
-                        <button mat-icon-button (click)="openEditDialog(r)">
+                        <button *ngIf="r.estatus !== 'Aprobado para cotización' && !r.seguimientoProyectoId" mat-icon-button (click)="openEditDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:pencil" class="icon-size-5"></mat-icon>
                         </button>
                     </div>

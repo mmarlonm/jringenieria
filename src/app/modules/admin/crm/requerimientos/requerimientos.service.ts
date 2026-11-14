@@ -129,6 +129,12 @@ export interface UpdateRequerimientoDto {
   titulo?: string;
 }
 
+export interface AprobarRequerimientoResultadoDto {
+  idSeguimiento: number;
+  folio: string;
+  estatus: string;
+}
+
 export interface CalificarRequerimientoDto {
   estatus: string;
   naturaleza?: string;
@@ -194,6 +200,10 @@ export class RequerimientosService {
 
   calificarRequerimiento(id: number, dto: CalificarRequerimientoDto): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/calificar`, dto);
+  }
+
+  aprobarRequerimiento(id: number): Observable<AprobarRequerimientoResultadoDto> {
+    return this.http.post<AprobarRequerimientoResultadoDto>(`${this.apiUrl}/${id}/aprobar`, {});
   }
 
   // Archivos

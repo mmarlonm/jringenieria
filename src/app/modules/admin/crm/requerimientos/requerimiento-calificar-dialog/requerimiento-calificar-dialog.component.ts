@@ -11,13 +11,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
-import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento } from '../requerimientos.service';
+import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto } from '../requerimientos.service';
 import {
   CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, iconoArchivo, temaArchivo, validarArchivos
 } from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
 
-type Pestana = 'clasificacion' | 'checklist' | 'seguimiento' | 'archivos';
+type Pestana = 'clasificacion' | 'checklist' | 'seguimiento' | 'archivos' | 'aprobacion';
 
 @Component({
   selector: 'app-requerimiento-calificar-dialog',
@@ -47,6 +47,8 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
 
   pestana: Pestana = 'clasificacion';
   guardando = false;
+  aprobando = false;
+  aprobadoResultado: AprobarRequerimientoResultadoDto | null = null;
 
   // Colecciones asociadas
   archivos: RequerimientoArchivo[] = [];
@@ -127,6 +129,7 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     { id: 'checklist', titulo: 'Información faltante', icono: 'heroicons_outline:clipboard-document-check' },
     { id: 'seguimiento', titulo: 'Seguimiento', icono: 'heroicons_outline:chat-bubble-left-right' },
     { id: 'archivos', titulo: 'Archivos y planos', icono: 'heroicons_outline:paper-clip' },
+    { id: 'aprobacion', titulo: 'Aprobación', icono: 'heroicons_outline:check-circle' },
   ];
 
   /** Número que acompaña a la pestaña (0 o null = no se muestra). */
@@ -276,6 +279,91 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       error: (err) => {
         this.guardando = false;
         Swal.fire('No se pudo guardar la calificación', this.mensajeDe(err), 'error');
+      }
+    });
+  }
+
+  // ------------------------------------------------------------------ aprobación
+
+  get estaAprobado(): boolean {
+    return !!this.requerimiento.seguimientoProyectoId ||
+           this.requerimiento.estatus === 'Aprobado para cotización' ||
+           !!this.aprobadoResultado;
+  }
+
+  get esEstatusCalificado(): boolean {
+    return this.requerimiento.estatus === 'Calificado Comercial' ||
+           this.requerimiento.estatus === 'Calificado Técnico';
+  }
+
+  get camposFaltantesAprobacion(): string[] {
+    const faltantes: string[] = [];
+    if (!this.requerimiento.solicitanteId && !this.requerimiento.solicitanteNombre) {
+      faltantes.push('Solicitante');
+    }
+    if (!this.requerimiento.tipoProyecto?.trim()) {
+      faltantes.push('Tipo de proyecto');
+    }
+    if (!this.requerimiento.titulo?.trim()) {
+      faltantes.push('Título');
+    }
+    return faltantes;
+  }
+
+  get puedeAprobar(): boolean {
+    return this.puedeCalificar &&
+           !this.estaAprobado &&
+           this.esEstatusCalificado &&
+           this.camposFaltantesAprobacion.length === 0;
+  }
+
+  editarRequerimiento(): void {
+    this.dialogRef.close({ accion: 'editar', requerimiento: this.requerimiento });
+  }
+
+  aprobar(): void {
+    if (!this.puedeAprobar || this.aprobando) return;
+    this.aprobando = true;
+
+    const textoConfirmacion = this.totalFaltantes > 0
+      ? 'El requerimiento tiene información faltante marcada. ¿Deseas aprobarlo de todas formas para generar el folio en Solicitud de cliente?'
+      : 'Se creará el caso en Solicitud de cliente de Ingeniería y se generará un folio. Esta acción no se puede deshacer.';
+
+    Swal.fire({
+      title: '¿Aprobar para cotización?',
+      text: textoConfirmacion,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, aprobar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) {
+        this.aprobando = false;
+        return;
+      }
+      this.ejecutarAprobacion();
+    });
+  }
+
+  private ejecutarAprobacion(): void {
+    if (this.aprobando && this.aprobadoResultado) return;
+    this.aprobando = true;
+    this.reqService.aprobarRequerimiento(this.requerimiento.id).subscribe({
+      next: (res) => {
+        this.aprobando = false;
+        this.aprobadoResultado = res;
+        this.requerimiento.estatus = res.estatus;
+        this.requerimiento.seguimientoProyectoId = res.idSeguimiento;
+        this.calificarForm.get('estatus')?.setValue(res.estatus);
+        Swal.fire({
+          icon: 'success',
+          title: '¡Requerimiento aprobado!',
+          html: `Se generó el folio <b>${this.escapar(res.folio)}</b> en Solicitud de cliente.`
+        });
+      },
+      error: (err) => {
+        this.aprobando = false;
+        Swal.fire('No se pudo aprobar', this.mensajeDe(err), 'error');
       }
     });
   }
