@@ -610,4 +610,37 @@ describe('QuoteDetailsComponent SGC', () => {
 
     expect(fixture.nativeElement.querySelector('img[src="x"]')).toBeNull();
   });
+
+  it('El_PDF_recibe_el_folio_y_la_version_de_la_cotizacion', () => {
+    const dialog = TestBed.inject(MatDialog) as any;
+    component.folio = 'COT-2026-0042';
+    component.version = 1;
+
+    component.openCotizacionPreview();
+
+    const datos = dialog.open.calls.mostRecent().args[1].data;
+    expect(datos.sgc.folio).toBe('COT-2026-0042');
+    expect(datos.sgc.version).toBe(1);
+  });
+
+  it('Exportar_PDF_en_una_cotizacion_nueva_no_falla', () => {
+    const dialog = TestBed.inject(MatDialog) as any;
+    component.cotizacion = undefined;
+
+    expect(() => component.openCotizacionPreview()).not.toThrow();
+    expect(dialog.open).toHaveBeenCalled();
+  });
+
+  it('Vaciar_las_partidas_y_guardar_envia_una_lista_vacia', () => {
+    component.quotesForm.patchValue({ clienteId: 5, unidadDeNegocioId: 2, nombreCliente: 'Cliente A' });
+    component.sincronizarPartidasFormArray([
+      { partida: 1, tipoConcepto: 'Material', materialServicio: 'Cable', unidad: 'M', cantidad: 1, precioUnitario: 10, descuento: 0 } as any,
+    ]);
+    component.partidasFormArray.removeAt(0);
+
+    component.saveQuotes();
+
+    const args = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
+    expect(args.partidas).toEqual([]);
+  });
 });

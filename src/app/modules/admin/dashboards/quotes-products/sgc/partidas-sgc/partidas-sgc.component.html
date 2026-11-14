@@ -109,7 +109,7 @@
                 <mat-option
                   *ngFor="let item of filteredProducts$[i] | async"
                   [value]="item.nombreProducto"
-                  (onSelectionChange)="onProductoSeleccionado(item, i)"
+                  (onSelectionChange)="$event.isUserInput && onProductoSeleccionado(item, i)"
                 >
                   <div class="flex flex-col py-1 text-xs">
                     <span class="font-bold">[{{ item.codigoProducto }}] {{ item.nombreProducto }}</span>

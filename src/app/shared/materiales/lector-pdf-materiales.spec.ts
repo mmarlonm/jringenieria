@@ -36,4 +36,3 @@ describe('LectorPdfMateriales', () => {
         expect(LectorPdfMateriales.getClosestColumn(900, mapping)).toBe('');
     });
 });
-

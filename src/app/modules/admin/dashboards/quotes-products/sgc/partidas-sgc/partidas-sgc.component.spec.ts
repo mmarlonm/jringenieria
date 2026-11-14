@@ -167,6 +167,18 @@ describe('PartidasSgcComponent', () => {
     expect(mockQuotesService.buscarExistencia).toHaveBeenCalledWith('ca');
   }));
 
+  it('Una_busqueda_hace_una_sola_peticion_aunque_el_pipe_async_tambien_se_suscriba', fakeAsync(() => {
+    component.addPartida();
+    // Lo que hace el pipe async de la plantilla cuando el panel del autocompletar esta abierto
+    const sub = component.filteredProducts$[0].subscribe();
+
+    component.partidas.at(0).get('materialServicio')?.setValue('cable');
+    tick(500);
+
+    expect(mockQuotesService.buscarExistencia).toHaveBeenCalledTimes(1);
+    sub.unsubscribe();
+  }));
+
   it('Elegir_una_opcion_llena_material_codigo_descripcion_y_unidad', () => {
     component.addPartida();
     const mockProduct = {

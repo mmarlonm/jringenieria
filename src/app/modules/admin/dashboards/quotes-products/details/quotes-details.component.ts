@@ -31,16 +31,12 @@ import { MAT_DATE_LOCALE } from "@angular/material/core";
 import { ChangeDetectorRef } from "@angular/core";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatIconModule } from "@angular/material/icon";
-import Swal from "sweetalert2";
 import { MatDialog } from "@angular/material/dialog";
 import { ProjectService } from "../../project/project.service";
 import { AddClientComponent } from "../add-client/add-client.component";
-import { AddProductDialogComponent } from "../add-product-dialog/add-product-dialog.component";
 import { QuotePdfDialogComponent } from "../quote-pdf-dialog/quote-pdf-dialog.component";
 import { MatSlideToggle } from "@angular/material/slide-toggle";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { MatTableModule } from "@angular/material/table";
-import { MatTableDataSource } from "@angular/material/table";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
@@ -52,7 +48,7 @@ import {
   PartidaSgc,
   TotalesSgc
 } from "../quotes-products.types";
-import { totalesSgc, roundAwayFromZero } from "../sgc/cotizacion-sgc.utils";
+import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
 
 @Component({
   selector: "app-quotes-details",
@@ -75,7 +71,6 @@ import { totalesSgc, roundAwayFromZero } from "../sgc/cotizacion-sgc.utils";
     MatIconModule,
     MatSlideToggle,
     MatTooltipModule,
-    MatTableModule,
     CondicionesSgcComponent,
     PartidasSgcComponent,
     AlcanceSgcComponent,
@@ -102,35 +97,10 @@ export class QuoteDetailsComponent implements OnInit {
   files: any[] = [];
   selectedClienteId: number | null = null;
 
-  // Columnas para la tabla
-  displayedColumns = [
-    "nombre",
-    "cantidad",
-    "precioUnitario",
-    "descuento",
-    "tiempoEntrega",
-    "subtotal",
-    "acciones",
-  ];
-
-  // Productos agregados a la cotización
-  productos: Array<{
-    cotizacionProductoDetalleId?: number | null; // Puede ser null para nuevos productos
-    productoId: number;
-    nombreProducto: string;
-    cantidad: number;
-    precioUnitario: number;
-    descuento: number;
-    tiempoEntrega?: number; // Tiempo de entrega opcional
-    notas?: string | null;
-  }> = [];
-
   // Totales
   subtotal = 0;
   iva = 0;
   total = 0;
-
-  dataSource = new MatTableDataSource<any>();
 
   cotizacion: any;
 
@@ -190,7 +160,7 @@ export class QuoteDetailsComponent implements OnInit {
       direccionCompleta: [null, [Validators.maxLength(300)]],
       estado: [null, [Validators.maxLength(100)]],
       estatus: [0, [Validators.maxLength(50)]],
-      observaciones: [null, [Validators.maxLength(500)]],
+      observaciones: [null, [Validators.maxLength(300)]],
     });
     this.getEstatus();
     this.getClientes();
@@ -322,7 +292,6 @@ export class QuoteDetailsComponent implements OnInit {
       next: ({ vieja, sgcRes }) => {
         if (vieja && vieja.code === 200) {
           const quotes = vieja.data;
-          this.productos = quotes.detalles || [];
           this.cotizacion = quotes;
           this.quotesForm.patchValue({
             cotizacionProductosId: quotes.cotizacionProductosId,
@@ -342,7 +311,6 @@ export class QuoteDetailsComponent implements OnInit {
             estatus: quotes.estatus,
             observaciones: quotes.observaciones,
           });
-          this.dataSource.data = this.productos;
         }
 
         if (sgcRes) {
@@ -422,27 +390,11 @@ export class QuoteDetailsComponent implements OnInit {
       entregables: sgcVal.entregables || [],
     };
 
-    let partidasEnviar: PartidaSgc[] = [];
-    if (this.partidasFormArray && this.partidasFormArray.length > 0) {
-      partidasEnviar = this.partidasFormArray.value;
-    } else if (this.partidas && this.partidas.length > 0) {
-      partidasEnviar = this.partidas;
-    } else if (this.productos && this.productos.length > 0) {
-      partidasEnviar = this.productos.map((p, idx) => ({
-        partida: idx + 1,
-        tipoConcepto: 'Material',
-        materialServicio: p.nombreProducto || `Producto ${p.productoId}`,
-        descripcion: null,
-        codigoProducto: null,
-        productoId: p.productoId,
-        unidad: 'PZA',
-        cantidad: p.cantidad,
-        precioUnitario: p.precioUnitario,
-        descuento: p.descuento || 0,
-        tiempoEntregaDias: p.tiempoEntrega ?? null,
-        notas: p.notas ?? null,
-      }));
-    }
+    // Siempre lo que hay en la tabla (aunque este vacia): nunca se reponen los detalles heredados de CONTPAQi
+    const partidasEnviar: PartidaSgc[] =
+      this.partidasFormArray && this.partidasFormArray.length > 0
+        ? this.partidasFormArray.value
+        : (this.partidas || []);
 
     const dto: GuardarCotizacionSgc = {
       cotizacion,
@@ -607,49 +559,6 @@ export class QuoteDetailsComponent implements OnInit {
     this.selectedClienteId = null;
   }
 
-  // Abrir diálogo para agregar producto
-  openAddProductDialog() {
-    const dialogRef = this.dialog.open(AddProductDialogComponent, {
-      width: "80vw",
-      maxWidth: "80vw",
-      panelClass: "full-width-dialog",
-      disableClose: true,
-    });
-
-    dialogRef.afterClosed().subscribe((producto) => {
-      if (producto) {
-        this.productos.push(producto);
-        this.dataSource.data = [...this.productos]; // ← forzar refresh
-        this.calcularTotales();
-      }
-    });
-  }
-
-  // Eliminar producto de la lista
-  eliminarProducto(index: number): void {
-    if (index < 0 || index >= this.productos.length) {
-      console.warn("Índice inválido al eliminar producto");
-      return;
-    }
-
-    Swal.fire({
-      title: "¿Eliminar producto?",
-      text: "Esta acción no se puede deshacer.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.productos.splice(index, 1);
-        this.dataSource.data = [...this.productos]; // ← actualizar tabla
-        this.calcularTotales();
-
-        this._chatNotificationService.showSuccess("Éxito", "Producto eliminado correctamente", 2500);
-      }
-    });
-  }
-
   toggleEntregable(codigo: string, checked: boolean): void {
     const list: string[] = [...(this.sgcForm.get('entregables')?.value || [])];
     if (checked && !list.includes(codigo)) {
@@ -664,56 +573,42 @@ export class QuoteDetailsComponent implements OnInit {
     this.sgcForm.get('entregables')?.markAsDirty();
   }
 
-  // Calcular subtotal, iva y total
+  // Calcular subtotal, iva y total (siempre desde las partidas de la tabla)
   calcularTotales() {
     const list = this.partidasFormArray && this.partidasFormArray.length > 0
       ? this.partidasFormArray.value
-      : (this.partidas && this.partidas.length > 0 ? this.partidas : []);
+      : (this.partidas || []);
 
-    if (list && list.length > 0) {
-      const tot = totalesSgc(
-        list,
-        this.sgcForm?.get("costosIndirectos")?.value,
-        this.sgcForm?.get("margenAutorizadoPorcentaje")?.value
-      );
-      this.totales = tot;
-      this.subtotal = tot.subtotal;
-      this.iva = tot.iva;
-      this.total = tot.total;
-    } else {
-      this.subtotal = this.productos.reduce(
-        (acc, p) => acc + (p.cantidad * p.precioUnitario - p.descuento),
-        0
-      );
-      this.iva = roundAwayFromZero(this.subtotal * 0.16, 2);
-      this.total = roundAwayFromZero(this.subtotal + this.iva, 2);
-      this.totales = {
-        subtotal: this.subtotal,
-        iva: this.iva,
-        total: this.total,
-        costoDirecto: 0,
-        utilidad: null,
-        margenPorcentaje: null,
-        margenBajo: false,
-        partidasSinCosto: 0,
-      };
-    }
+    const tot = totalesSgc(
+      list,
+      this.sgcForm?.get("costosIndirectos")?.value,
+      this.sgcForm?.get("margenAutorizadoPorcentaje")?.value
+    );
+    this.totales = tot;
+    this.subtotal = tot.subtotal;
+    this.iva = tot.iva;
+    this.total = tot.total;
   }
 
   openCotizacionPreview(): void {
-    this.cotizacion.subtotal = this.subtotal;
-    this.cotizacion.iva = this.iva;
-    this.cotizacion.total = this.total;
+    // Lo que se ve en el formulario (aunque aun no se guarde); una cotizacion nueva no tiene datos cargados
+    const cotizacion = {
+      ...(this.cotizacion ?? {}),
+      ...this.quotesForm.value,
+      cotizacionProductosId: this.quotesId ?? this.quotesForm.value.cotizacionProductosId ?? null,
+      subtotal: this.subtotal,
+      iva: this.iva,
+      total: this.total,
+    };
 
-    const sgcVal = this.sgcForm?.value;
     const partidasList = this.partidasFormArray && this.partidasFormArray.length > 0
       ? this.partidasFormArray.value
-      : (this.partidas && this.partidas.length > 0 ? this.partidas : (this.cotizacion?.detalles || []));
+      : (this.partidas || []);
 
     this.dialog.open(QuotePdfDialogComponent, {
       data: {
-        cotizacion: this.cotizacion,
-        sgc: sgcVal,
+        cotizacion,
+        sgc: { ...this.sgcForm?.value, folio: this.folio, version: this.version },
         partidas: partidasList,
         totales: this.totales,
       },

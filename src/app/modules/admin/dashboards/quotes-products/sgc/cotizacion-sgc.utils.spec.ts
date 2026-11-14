@@ -11,6 +11,19 @@ describe('CotizacionSgcUtils', () => {
         expect(conDesc).toBe(170);
     });
 
+    it('roundAwayFromZero_coincide_con_el_decimal_del_API_en_puntos_medios', () => {
+        // Casos donde Math.floor(x * 100 + 0.5) de punto flotante se queda un centavo abajo del decimal de C#
+        expect(roundAwayFromZero(1.005)).toBe(1.01);
+        expect(roundAwayFromZero(1.255)).toBe(1.26);
+        expect(roundAwayFromZero(0.285)).toBe(0.29);
+        expect(importeLinea(7, 0.145, 0)).toBe(1.02);
+        expect(importeLinea(1, 1.005, 0)).toBe(1.01);
+        expect(roundAwayFromZero(100.555)).toBe(100.56);
+        expect(roundAwayFromZero(-1.005)).toBe(-1.01);
+        expect(roundAwayFromZero(0.004)).toBe(0);
+        expect(roundAwayFromZero(0.005)).toBe(0.01);
+    });
+
     it('Subtotal_iva_y_total_coinciden_con_el_API', () => {
         const partidas1 = [
             { cantidad: 3, precioUnitario: 0.335, descuento: 0 },

@@ -23,7 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, Subject } from 'rxjs';
-import { debounceTime, switchMap, catchError, takeUntil } from 'rxjs/operators';
+import { debounceTime, switchMap, catchError, takeUntil, shareReplay } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { QuotesService } from '../../quotes-products.service';
 import {
@@ -171,7 +171,9 @@ export class PartidasSgcComponent implements OnInit, OnDestroy {
         }
         this.entradasManuales[index] = null;
         return of([] as ExistenciaMaterial[]);
-      })
+      }),
+      // El pipe async de la plantilla y la suscripcion de abajo comparten UNA sola consulta a CONTPAQi
+      shareReplay({ bufferSize: 1, refCount: true })
     );
 
     this.filteredProducts$[index].subscribe((results) => {

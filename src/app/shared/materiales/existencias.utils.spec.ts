@@ -50,4 +50,3 @@ describe('existencias.utils', () => {
         expect(agruparExistencias({})).toEqual([]);
     });
 });
-

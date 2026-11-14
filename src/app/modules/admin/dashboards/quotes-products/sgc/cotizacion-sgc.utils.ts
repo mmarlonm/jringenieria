@@ -7,10 +7,13 @@ export function roundAwayFromZero(num: number, decimals: number = 2): number {
     if (isNaN(num) || !isFinite(num)) {
         return 0;
     }
-    const factor = Math.pow(10, decimals);
     const sign = num < 0 ? -1 : 1;
-    const abs = Math.abs(num);
-    return sign * (Math.floor(abs * factor + 0.5 + Number.EPSILON) / factor);
+    // toFixed(8) quita el ruido binario (1.005 se guarda como 1.00499999999999989...) y la notacion
+    // exponencial mueve la coma sin multiplicar: asi coincide con el decimal AwayFromZero del API.
+    const limpio = Math.abs(num).toFixed(8);
+    const redondeado = Math.round(Number(limpio + 'e' + decimals));
+    const resultado = Number(redondeado + 'e-' + decimals);
+    return resultado === 0 ? 0 : sign * resultado;
 }
 
 /**

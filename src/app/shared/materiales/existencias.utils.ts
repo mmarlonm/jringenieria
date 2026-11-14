@@ -32,4 +32,3 @@ export function agruparExistencias(raw: any): ProductoBuscadorDto[] {
 
     return Array.from(grouped.values());
 }
-
