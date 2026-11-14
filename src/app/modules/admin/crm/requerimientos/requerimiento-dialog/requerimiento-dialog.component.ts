@@ -13,7 +13,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable, map } from 'rxjs';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
-import { RequerimientosService, Requerimiento, RequerimientoArchivo } from '../requerimientos.service';
+import { RequerimientosService, Requerimiento, RequerimientoArchivo, TIPOS_PROYECTO } from '../requerimientos.service';
+import { EngineeringService, Solicitante } from 'app/modules/admin/engineering/engineering.service';
 import { CATEGORIA_GENERAL, etiquetaCategoria, iconoArchivo, temaArchivo, validarArchivos } from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
 
@@ -42,6 +43,11 @@ export class RequerimientoDialogComponent implements OnInit {
   usuarios: any[] = [];
   sucursales = ['Pachuca', 'Puebla', 'Querétaro', 'Corporativo'];
 
+  solicitantes: Solicitante[] = [];
+  cargandoSolicitantes = false;
+  errorSolicitantes: string | null = null;
+  readonly tiposProyecto = TIPOS_PROYECTO;
+
   /** Archivos guardados previamente en el requerimiento (en modo edición). */
   archivosExistentes: RequerimientoArchivo[] = [];
   cargandoArchivos = false;
@@ -58,6 +64,7 @@ export class RequerimientoDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private reqService: RequerimientosService,
+    private engineeringService: EngineeringService,
     private dialogRef: MatDialogRef<RequerimientoDialogComponent>,
     private cdr: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) public data: { requerimiento?: Requerimiento; users: any[] }
@@ -71,6 +78,9 @@ export class RequerimientoDialogComponent implements OnInit {
       telefono: [data.requerimiento?.telefono || ''],
       email: [data.requerimiento?.email || '', [Validators.email]],
       sucursal: [data.requerimiento?.sucursal || 'Pachuca', [Validators.required]],
+      solicitanteId: [data.requerimiento?.solicitanteId ?? null, [Validators.required]],
+      tipoProyecto: [data.requerimiento?.tipoProyecto ?? '', [Validators.required]],
+      titulo: [data.requerimiento?.titulo ?? '', [Validators.required, Validators.maxLength(500)]],
       descripcion: [data.requerimiento?.descripcion || '', [Validators.required]],
       usuarioAsignadoId: [data.requerimiento?.usuarioAsignadoId || null],
       fechaRecepcion: [data.requerimiento?.fechaRecepcion ? new Date(data.requerimiento.fechaRecepcion) : new Date(), [Validators.required]]
@@ -78,12 +88,30 @@ export class RequerimientoDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.cargarSolicitantes();
     if (this.isEditMode && this.data.requerimiento?.id) {
       if (this.data.requerimiento.archivos && this.data.requerimiento.archivos.length > 0) {
         this.archivosExistentes = [...this.data.requerimiento.archivos];
       }
       this.cargarArchivosExistentes(this.data.requerimiento.id);
     }
+  }
+
+  cargarSolicitantes(): void {
+    this.cargandoSolicitantes = true;
+    this.errorSolicitantes = null;
+    this.engineeringService.getSolicitantes().subscribe({
+      next: (sols) => {
+        this.solicitantes = (sols || []).filter(s => s.activo);
+        this.cargandoSolicitantes = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.cargandoSolicitantes = false;
+        this.errorSolicitantes = 'No se pudieron cargar los solicitantes.';
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   cargarArchivosExistentes(reqId: number): void {

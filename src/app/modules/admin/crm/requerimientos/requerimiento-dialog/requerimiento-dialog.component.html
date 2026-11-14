@@ -60,13 +60,45 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Fecha de Recepción</mat-label>
+                    <mat-label>Fecha de la requisición</mat-label>
                     <input matInput [matDatepicker]="pickerFecha" formControlName="fechaRecepcion" required>
                     <mat-datepicker-toggle matSuffix [for]="pickerFecha"></mat-datepicker-toggle>
                     <mat-datepicker #pickerFecha></mat-datepicker>
                     <mat-error *ngIf="reqForm.get('fechaRecepcion')?.hasError('required')">La fecha es obligatoria</mat-error>
                 </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Solicitante</mat-label>
+                    <mat-select formControlName="solicitanteId" required>
+                        <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
+                            {{ s.nombreCompleto }} ({{ s.empresa }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="reqForm.get('solicitanteId')?.hasError('required')">El solicitante es obligatorio</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Tipo de proyecto</mat-label>
+                    <mat-select formControlName="tipoProyecto" required>
+                        <mat-option *ngFor="let t of tiposProyecto" [value]="t">
+                            {{ t }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="reqForm.get('tipoProyecto')?.hasError('required')">El tipo de proyecto es obligatorio</mat-error>
+                </mat-form-field>
             </div>
+
+            <div *ngIf="errorSolicitantes" class="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-300 text-xs">
+                {{ errorSolicitantes }}
+            </div>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Título del proyecto</mat-label>
+                <input matInput formControlName="titulo" maxlength="500" placeholder="Ej. Modernización de Subestación Eléctrica" required autocomplete="off">
+                <mat-hint align="end">{{ reqForm.get('titulo')?.value?.length || 0 }}/500</mat-hint>
+                <mat-error *ngIf="reqForm.get('titulo')?.hasError('required')">El título es obligatorio</mat-error>
+                <mat-error *ngIf="reqForm.get('titulo')?.hasError('maxlength')">Máximo 500 caracteres</mat-error>
+            </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Descripción de Necesidad (¿Qué y para qué lo necesita?)</mat-label>

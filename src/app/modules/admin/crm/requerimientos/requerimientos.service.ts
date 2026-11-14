@@ -89,6 +89,16 @@ export interface RequerimientoKpi {
   distribucionPorTipo: DistribucionTipoRequerimiento[];
 }
 
+export const TIPOS_PROYECTO: string[] = [
+  'Construcción e instalación',
+  'Ingeniería',
+  'Mantenimiento',
+  'Instalación',
+  'Estudios y Pruebas',
+  'Gestiones y trámites',
+  'Proyectos llave en mano'
+];
+
 export interface CreateRequerimientoDto {
   clienteId?: number;
   leadId?: number;
@@ -100,6 +110,9 @@ export interface CreateRequerimientoDto {
   descripcion: string;
   usuarioAsignadoId?: number;
   fechaRecepcion?: string;
+  solicitanteId?: number;
+  tipoProyecto?: string;
+  titulo?: string;
 }
 
 export interface UpdateRequerimientoDto {
@@ -111,6 +124,9 @@ export interface UpdateRequerimientoDto {
   descripcion: string;
   usuarioAsignadoId?: number;
   fechaRecepcion?: string;
+  solicitanteId?: number;
+  tipoProyecto?: string;
+  titulo?: string;
 }
 
 export interface CalificarRequerimientoDto {
