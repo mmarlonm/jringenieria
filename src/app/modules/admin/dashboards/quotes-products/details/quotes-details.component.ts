@@ -704,8 +704,19 @@ export class QuoteDetailsComponent implements OnInit {
     this.cotizacion.subtotal = this.subtotal;
     this.cotizacion.iva = this.iva;
     this.cotizacion.total = this.total;
+
+    const sgcVal = this.sgcForm?.value;
+    const partidasList = this.partidasFormArray && this.partidasFormArray.length > 0
+      ? this.partidasFormArray.value
+      : (this.partidas && this.partidas.length > 0 ? this.partidas : (this.cotizacion?.detalles || []));
+
     this.dialog.open(QuotePdfDialogComponent, {
-      data: this.cotizacion,
+      data: {
+        cotizacion: this.cotizacion,
+        sgc: sgcVal,
+        partidas: partidasList,
+        totales: this.totales,
+      },
       width: "820px", // un poco más que 794px para márgenes
       panelClass: "dialog-a4",
     });

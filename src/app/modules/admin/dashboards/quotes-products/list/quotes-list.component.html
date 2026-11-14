@@ -58,6 +58,11 @@
     <!-- Cotizaciones list -->
     <div class="flex flex-col min-h-screen h-screen w-full px-3 py-4 sm:px-6 sm:py-6 md:px-8">
 
+      <!-- Aviso de error en resumen SGC -->
+      <div *ngIf="errorResumenSgc" class="aviso-error-resumen bg-amber-50 border-l-4 border-amber-500 p-3 mb-4 text-amber-800 text-xs">
+        No se pudo cargar la información del SGC para las cotizaciones. Mostrando información base.
+      </div>
+
       <!-- CONTENEDOR PRINCIPAL -->
       <div class="mat-elevation-z8 flex flex-col flex-auto overflow-hidden" *ngIf="quotesCount > 0; else noQuotes">
 
@@ -69,17 +74,27 @@
 
           <table mat-table [dataSource]="dataSource" matSort class="min-w-[900px] w-full">
 
-            <!-- ID -->
+            <!-- Folio / ID -->
             <ng-container matColumnDef="cotizacionProductosId">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                ID
+                Folio
                 <button mat-icon-button [matMenuTriggerFor]="filterMenu"
                   (click)="openFilterMenu('cotizacionProductosId')">
                   <mat-icon>filter_list</mat-icon>
                 </button>
               </th>
               <td mat-cell *matCellDef="let quote">
-                {{ quote.cotizacionProductosId }}
+                {{ quote.folio || ('#' + quote.cotizacionProductosId) }}
+              </td>
+            </ng-container>
+
+            <!-- Tipo -->
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Tipo
+              </th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.tipo || '' }}
               </td>
             </ng-container>
 
@@ -139,9 +154,9 @@
 
             <!-- Total -->
             <ng-container matColumnDef="total">
-              <th mat-header-cell *matHeaderCellDef>Monto</th>
+              <th mat-header-cell *matHeaderCellDef>Total</th>
               <td mat-cell *matCellDef="let quote">
-                {{ quote.total | currency:'MXN':'symbol':'1.2-2' }}
+                {{ (quote.totalSgc ?? quote.total) | currency:(quote.moneda || 'MXN'):'symbol':'1.2-2' }}
               </td>
             </ng-container>
 
@@ -210,8 +225,11 @@
         <div class="block sm:hidden space-y-4 overflow-y-auto px-1">
 
           <div *ngFor="let quote of dataSource.data" class="border rounded-xl p-4 shadow-sm bg-white">
-            <div class="text-xs text-gray-500">ID</div>
-            <div class="font-semibold">{{ quote.cotizacionProductosId }}</div>
+            <div class="text-xs text-gray-500">Folio</div>
+            <div class="font-semibold">{{ quote.folio || ('#' + quote.cotizacionProductosId) }}</div>
+
+            <div *ngIf="quote.tipo" class="mt-2 text-xs text-gray-500">Tipo</div>
+            <div *ngIf="quote.tipo" class="font-medium">{{ quote.tipo }}</div>
 
             <div class="mt-2 text-xs text-gray-500">Cliente</div>
             <div>{{ quote.nombreCliente }}</div>
@@ -222,9 +240,9 @@
             <div class="mt-2 text-xs text-gray-500">Fecha</div>
             <div>{{ quote.createdDate | date:'yyyy-MM-dd' }}</div>
 
-            <div class="mt-2 text-xs text-gray-500">Monto</div>
+            <div class="mt-2 text-xs text-gray-500">Total</div>
             <div class="font-bold">
-              {{ quote.total | currency:'MXN' }}
+              {{ (quote.totalSgc ?? quote.total) | currency:(quote.moneda || 'MXN'):'symbol':'1.2-2' }}
             </div>
 
             <div class="mt-2 text-xs text-gray-500">Estatus</div>

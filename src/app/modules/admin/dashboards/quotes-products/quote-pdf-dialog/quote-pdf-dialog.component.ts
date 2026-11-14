@@ -1,40 +1,92 @@
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-import { NgModule } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
-import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import { EMPRESA_COTIZACION } from '../sgc/empresa-cotizacion';
+import { CotizacionSgcDatos } from '../quotes-products.types';
 
 @Component({
   selector: 'app-quote-pdf-dialog',
   templateUrl: './quote-pdf-dialog.component.html',
-  styleUrls: ["./quote-pdf-dialog.component.scss"],
+  styleUrls: ['./quote-pdf-dialog.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
     MatDialogModule,
     MatButtonModule,
-    MatIconModule
-  ]
+    MatIconModule,
+  ],
 })
-export class QuotePdfDialogComponent {
+export class QuotePdfDialogComponent implements OnInit {
+  empresa = EMPRESA_COTIZACION;
+  cotizacion: any;
+  sgc: CotizacionSgcDatos | null = null;
+  partidas: any[] = [];
+  totales: any;
+  esHeredadaSinGuardar: boolean = false;
+
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {}
+
+  ngOnInit(): void {
+    if (this.data?.cotizacion) {
+      this.cotizacion = this.data.cotizacion;
+      this.sgc = this.data.sgc || null;
+      this.partidas = this.data.partidas || [];
+      this.totales = this.data.totales || {
+        subtotal: this.cotizacion?.subtotal || 0,
+        iva: this.cotizacion?.iva || 0,
+        total: this.cotizacion?.total || 0,
+      };
+    } else {
+      this.cotizacion = this.data;
+      this.sgc = null;
+      this.partidas = this.data?.detalles || [];
+      this.totales = {
+        subtotal: this.cotizacion?.subtotal || 0,
+        iva: this.cotizacion?.iva || 0,
+        total: this.cotizacion?.total || 0,
+      };
+    }
+
+    this.esHeredadaSinGuardar = !this.sgc || !this.sgc.tipo;
+  }
+
+  get folioOId(): string {
+    if (this.sgc && (this.sgc as any).folio) {
+      return (this.sgc as any).folio;
+    }
+    if (this.cotizacion?.folio) {
+      return this.cotizacion.folio;
+    }
+    return `#${this.cotizacion?.cotizacionProductosId || ''}`;
+  }
+
+  get moneda(): string {
+    return this.sgc?.moneda || 'MXN';
+  }
+
+  get esTipoConAlcance(): boolean {
+    return this.sgc?.tipo === 'CT' || this.sgc?.tipo === 'CE';
+  }
 
   exportarPDF(): void {
     const element = document.getElementById('pdf-content');
     if (!element) return;
 
-    html2canvas(element).then(canvas => {
+    html2canvas(element).then((canvas) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'pt', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`cotizacion-${this.data?.cotizacionProductosId || 'preview'}.pdf`);
+      const filename = this.folioOId.startsWith('#')
+        ? `cotizacion-${this.cotizacion?.cotizacionProductosId || 'preview'}.pdf`
+        : `cotizacion-${this.folioOId}.pdf`;
+      pdf.save(filename);
     });
   }
 }

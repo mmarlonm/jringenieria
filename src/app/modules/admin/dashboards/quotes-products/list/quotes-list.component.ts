@@ -46,6 +46,7 @@ import moment from 'moment';
 export class QuoteListComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
     'cotizacionProductosId',
+    'tipo',
     'nombreCliente',
     'unidadDeNegocioNombre',
     'createdDate',
@@ -60,6 +61,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   permisosUsuario: any[] = [];
   vistaActual: string = '';
   permisosDisponibles: string[] = [];
+  errorResumenSgc: boolean = false;
 
   // Paginación y Filtro de Fecha
   pageSize: number = 10;
@@ -113,9 +115,44 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
 
         this.filterOptions.unidadDeNegocioNombre = [...new Set(
           quotes
-            .map(quote => quote.unidadDeNegocio?.nombre)
-            .filter(nombre => nombre !== null && nombre !== undefined)
+            .map((quote: any) => quote.unidadDeNegocio?.nombre)
+            .filter((nombre: any) => nombre !== null && nombre !== undefined)
         )];
+
+        const ids = quotes
+          .map((quote: any) => quote.cotizacionProductosId)
+          .filter((id: any) => id != null && id > 0);
+
+        if (ids.length > 0) {
+          this.quotesService.resumenSgc(ids).subscribe({
+            next: (resumenes) => {
+              if (resumenes && resumenes.length > 0) {
+                const mapResumen = new Map(resumenes.map((r) => [r.cotizacionProductosId, r]));
+                quotes.forEach((q: any) => {
+                  const r = mapResumen.get(q.cotizacionProductosId);
+                  if (r) {
+                    q.folio = r.folio;
+                    q.tipo = r.tipo;
+                    q.version = r.version;
+                    q.totalSgc = r.total;
+                    q.moneda = r.moneda;
+                  }
+                });
+                this.dataSource.data = [...quotes];
+                this._changeDetectorRef.markForCheck();
+              }
+            },
+            error: () => {
+              this.errorResumenSgc = true;
+              this._chatNotificationService.showWarning(
+                'Aviso',
+                'No se pudo cargar el resumen del SGC. Mostrando datos locales.'
+              );
+              this._changeDetectorRef.markForCheck();
+            },
+          });
+        }
+
         this._changeDetectorRef.markForCheck();
       }
     });
@@ -280,13 +317,22 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
           return data.createdDate === filter;
         }
 
+        if (column === 'cotizacionProductosId') {
+          const matchId = data.cotizacionProductosId?.toString().toLowerCase().includes(filter);
+          const matchFolio = data.folio?.toString().toLowerCase().includes(filter);
+          return !!(matchId || matchFolio);
+        }
+
         if (this.isTextFilter(column)) {
           return data[column]?.toString().toLowerCase().includes(filter);
         }
 
         return false;
       } else {
-        // Filtro global en todos los campos visibles
+        // Filtro global en todos los campos visibles incluyendo folio
+        if (data.folio?.toString().toLowerCase().includes(filter)) {
+          return true;
+        }
         return this.displayedColumns.some((col) => {
           const value = col === 'unidadDeNegocioNombre'
             ? data.unidadDeNegocio?.nombre

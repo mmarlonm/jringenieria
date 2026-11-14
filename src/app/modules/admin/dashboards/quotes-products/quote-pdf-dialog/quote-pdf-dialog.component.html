@@ -1,105 +1,218 @@
-<!-- cotizacion-preview.component.html -->
 <mat-dialog-content class="p-0">
   <div
     id="pdf-content"
-    class="p-6 inset-0 min-w-0 overflow-auto text-center print:overflow-visible"
+    class="p-6 inset-0 min-w-0 overflow-auto text-left print:overflow-visible bg-white text-gray-800"
     cdkScrollable
   >
-    <!-- Main -->
-    <div class="inline-block p-6 text-left sm:p-1 print:p-0">
-      <!-- Invoice -->
-      <div
-        class="bg-white w-full"
-      >
+    <div class="inline-block p-6 text-left sm:p-1 print:p-0 w-full">
+      <div class="bg-white w-full">
         <!-- Header Info -->
         <div class="flex items-start justify-between">
           <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-            <div class="text-secondary text-4xl tracking-tight">COTIZACION</div>
-            <div class="text-4xl">#{{ data?.cotizacionProductosId }}</div>
+            <div class="text-secondary text-3xl font-bold tracking-tight">COTIZACIÓN</div>
+            <div class="text-3xl font-bold">{{ folioOId }}</div>
+
             <div class="text-secondary font-medium tracking-tight">FECHA</div>
-            <div class="font-medium">{{ data?.createdDate | date:'mediumDate' }}</div>
+            <div class="font-medium">{{ (cotizacion?.createdDate) | date:'mediumDate' }}</div>
+
             <div class="text-secondary font-medium tracking-tight">CLIENTE</div>
-            <div class="font-medium">{{ data?.nombreCliente }}</div>
+            <div class="font-medium">{{ cotizacion?.nombreCliente }}</div>
+
+            <div *ngIf="cotizacion?.nombreEmpresa" class="text-secondary font-medium tracking-tight">RAZÓN SOCIAL</div>
+            <div *ngIf="cotizacion?.nombreEmpresa" class="font-medium">{{ cotizacion?.nombreEmpresa }}</div>
+
+            <div class="text-secondary font-medium tracking-tight">MONEDA</div>
+            <div class="font-medium">{{ moneda }}</div>
+
+            <div *ngIf="moneda === 'USD' && sgc?.tipoCambio" class="text-secondary font-medium tracking-tight">TIPO DE CAMBIO</div>
+            <div *ngIf="moneda === 'USD' && sgc?.tipoCambio" class="font-medium">{{ sgc?.tipoCambio | number:'1.2-4' }} USD</div>
+
             <div class="text-secondary font-medium tracking-tight">TOTAL</div>
-            <div class="font-medium">{{ data?.total | currency:'MXN':'symbol':'1.2-2' }}</div>
+            <div class="font-medium">{{ totales.total | currency:moneda:'symbol':'1.2-2' }}</div>
           </div>
-          <div
-            class="dark -mr-16 grid auto-cols-max grid-flow-col gap-x-8 rounded-l-2xl bg-accent px-8 py-6"
-          >
-            <div class="w-24 place-self-center">
-              <img class="w-24" src="images/logo/JR-PNG-SIN-FONDO.png" />
+
+          <div class="dark -mr-8 grid auto-cols-max grid-flow-col gap-x-6 rounded-l-2xl bg-accent px-6 py-4">
+            <div class="w-20 place-self-center">
+              <img class="w-20" [src]="empresa.logoUrl" alt="Logo" />
             </div>
-            <div class="border-l pl-10 text-md">
-              <div class="font-medium">JR INGENIERÍA ELÉCTRICA</div>
-              <div>Dirección de ejemplo</div>
-              <div>Ciudad, Estado</div>
-              <div>+52 238 135 6972</div>
-              <div>ventas&#64;tuempresa.com</div>
-              <div>www.tuempresa.com</div>
+            <div class="border-l pl-6 text-xs text-gray-200">
+              <div class="font-bold text-white text-sm">{{ empresa.nombre }}</div>
+              <div>{{ empresa.direccion }}</div>
+              <div>{{ empresa.ciudadEstado }}</div>
+              <div>{{ empresa.telefono }}</div>
+              <div>{{ empresa.correo }}</div>
+              <div>{{ empresa.sitioWeb }}</div>
             </div>
           </div>
         </div>
 
-        <!-- Datos del cliente -->
-        <div class="text-md mt-6">
-          <div class="text-xl font-medium">{{ data?.nombreCliente }}</div>
-          <div>{{ data?.direccionCompleta }}</div>
-          <div>{{ data?.correo }}</div>
-          <div>{{ data?.telefono }}</div>
+        <!-- Datos del cliente y contacto -->
+        <div class="text-xs mt-6 border p-3 rounded bg-gray-50 grid grid-cols-2 gap-2">
+          <div>
+            <div class="font-bold text-sm text-gray-900">{{ cotizacion?.nombreCliente }}</div>
+            <div *ngIf="cotizacion?.direccionCompleta">{{ cotizacion?.direccionCompleta }}</div>
+            <div *ngIf="cotizacion?.correo">{{ cotizacion?.correo }}</div>
+            <div *ngIf="cotizacion?.telefono">{{ cotizacion?.telefono }}</div>
+          </div>
+          <div *ngIf="sgc?.contactoNombre || sgc?.contactoCorreo || sgc?.contactoTelefono">
+            <div class="font-bold text-xs text-gray-700 uppercase">Contacto Responsable:</div>
+            <div class="font-medium">{{ sgc?.contactoNombre }}</div>
+            <div *ngIf="sgc?.contactoCorreo">{{ sgc?.contactoCorreo }}</div>
+            <div *ngIf="sgc?.contactoTelefono">{{ sgc?.contactoTelefono }}</div>
+          </div>
         </div>
 
-        <!-- Tabla de productos -->
-        <div class="mt-12 grid grid-cols-12 gap-x-1">
-          <div class="text-secondary col-span-8 text-md font-medium">PRODUCTO</div>
-          <div class="text-secondary text-right text-md font-medium">PRECIO</div>
-          <div class="text-secondary text-right text-md font-medium">CANT</div>
-          <div class="text-secondary col-span-2 text-right text-md font-medium">TOTAL</div>
-
-          <div class="col-span-12 my-4 border-b"></div>
-
-          <ng-container *ngFor="let item of data?.detalles">
-            <div class="col-span-8 text-lg font-medium">{{ item.producto?.nombreProducto }}</div>
-            <div class="self-center text-right">{{ item?.precioUnitario | currency:'MXN':'symbol':'1.2-2' }}</div>
-            <div class="self-center text-right">{{ item?.cantidad }}</div>
-            <div class="col-span-2 self-center text-right">
-              {{ (item?.cantidad * item?.precioUnitario - item?.descuento) | currency:'MXN':'symbol':'1.2-2' }}
-            </div>
-            <div class="col-span-12 my-4 border-b"></div>
-          </ng-container>
-
-          <!-- Resumen -->
-          <div class="col-span-12 mt-16"></div>
-          <div class="text-secondary col-span-10 font-medium tracking-tight">SUBTOTAL</div>
-          <div class="col-span-2 text-right text-lg">{{ data?.subtotal | currency:'MXN':'symbol':'1.2-2' }}</div>
-
-          <div class="col-span-12 my-3 border-b"></div>
-          <div class="text-secondary col-span-10 font-medium tracking-tight">IVA (16%)</div>
-          <div class="col-span-2 text-right text-lg">{{ data?.iva | currency:'MXN':'symbol':'1.2-2' }}</div>
-
-          <div class="col-span-12 my-3 border-b"></div>
-          <div class="text-secondary col-span-10 text-2xl font-medium tracking-tight">TOTAL</div>
-          <div class="col-span-2 text-right text-2xl font-medium">{{ data?.total | currency:'MXN':'symbol':'1.2-2' }}</div>
+        <!-- Tabla de partidas -->
+        <div class="mt-6 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-gray-100 border-b font-semibold text-gray-700">
+              <tr>
+                <th class="p-2 w-8 text-center">#</th>
+                <th class="p-2">Material / Servicio y Descripción</th>
+                <th class="p-2 w-16 text-center">Unidad</th>
+                <th class="p-2 w-16 text-right">Cant.</th>
+                <th class="p-2 w-24 text-right">P. Unitario</th>
+                <th class="p-2 w-20 text-right">Descuento</th>
+                <th class="p-2 w-20 text-center">T. Entrega</th>
+                <th class="p-2 w-24 text-right">Importe</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y text-xs">
+              <tr *ngFor="let p of partidas; let i = index">
+                <td class="p-2 text-center text-gray-500">{{ p.partida || (i + 1) }}</td>
+                <td class="p-2">
+                  <div class="font-bold text-gray-800">
+                    {{ p.materialServicio || p.producto?.nombreProducto || p.nombreProducto }}
+                  </div>
+                  <div *ngIf="p.descripcion" class="text-gray-500 text-[11px]">
+                    {{ p.descripcion }}
+                  </div>
+                </td>
+                <td class="p-2 text-center">{{ p.unidad || p.unidadMedida || 'PZA' }}</td>
+                <td class="p-2 text-right">{{ p.cantidad }}</td>
+                <td class="p-2 text-right">{{ (p.precioUnitario || 0) | currency:moneda:'symbol':'1.2-2' }}</td>
+                <td class="p-2 text-right">{{ (p.descuento || 0) | currency:moneda:'symbol':'1.2-2' }}</td>
+                <td class="p-2 text-center">
+                  {{ p.tiempoEntregaDias ? (p.tiempoEntregaDias + ' d') : (p.tiempoEntrega ? (p.tiempoEntrega + ' d') : '-') }}
+                </td>
+                <td class="p-2 text-right font-medium">
+                  {{ ((p.cantidad * (p.precioUnitario || 0)) - (p.descuento || 0)) | currency:moneda:'symbol':'1.2-2' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <!-- Pie -->
-        <div class="mt-16">
-          <div class="font-medium">
-            Por favor realizar el pago dentro de los siguientes 15 días. Gracias por su preferencia.
-          </div>
-          <div class="mt-4 flex items-start">
-            <img class="mt-2 w-10 flex-0" src="images/logo/JR-PNG-SIN-FONDO.png" />
-            <div class="text-secondary ml-6 text-sm">
-              Este documento es generado automáticamente por el sistema. Para dudas o aclaraciones favor de
-              comunicarse con su asesor de ventas.
+        <!-- Totales -->
+        <div class="mt-4 flex justify-end">
+          <div class="w-72 bg-gray-50 p-3 rounded border text-xs">
+            <div class="flex justify-between py-1">
+              <span class="text-gray-600 font-medium">SUBTOTAL</span>
+              <span class="font-bold">{{ totales.subtotal | currency:moneda:'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-t">
+              <span class="text-gray-600 font-medium">IVA (16%)</span>
+              <span class="font-bold">{{ totales.iva | currency:moneda:'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-t text-sm font-bold text-gray-900 mt-1 pt-1">
+              <span>TOTAL</span>
+              <span>{{ totales.total | currency:moneda:'symbol':'1.2-2' }}</span>
+            </div>
+            <div *ngIf="moneda === 'USD' && sgc?.tipoCambio" class="text-[11px] text-gray-500 mt-1 pt-1 border-t text-right">
+              Tipo de cambio: {{ sgc?.tipoCambio | number:'1.2-4' }}
             </div>
           </div>
+        </div>
+
+        <!-- Condiciones comerciales (si existen datos SGC) -->
+        <div *ngIf="sgc" class="seccion-condiciones mt-6 border-t pt-4 text-xs">
+          <h4 class="font-bold text-gray-800 text-sm mb-2">Condiciones Comerciales</h4>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div *ngIf="sgc.vigenciaDias">
+              <span class="font-semibold text-gray-600">Vigencia:</span> {{ sgc.vigenciaDias }} días
+            </div>
+            <div *ngIf="sgc.penalizacionCancelacion">
+              <span class="font-semibold text-gray-600">Penalización por cancelación:</span> {{ sgc.penalizacionCancelacion }}
+            </div>
+            <div *ngIf="sgc.formaPago">
+              <span class="font-semibold text-gray-600">Forma de pago:</span> {{ sgc.formaPago }}
+            </div>
+            <div *ngIf="sgc.condicionesPago">
+              <span class="font-semibold text-gray-600">Condiciones de pago:</span> {{ sgc.condicionesPago }}
+            </div>
+            <div *ngIf="sgc.puntoEntrega">
+              <span class="font-semibold text-gray-600">Punto de entrega:</span> {{ sgc.puntoEntrega }}
+            </div>
+            <div *ngIf="sgc.condicionesEntrega">
+              <span class="font-semibold text-gray-600">Condiciones de entrega:</span> {{ sgc.condicionesEntrega }}
+            </div>
+            <div *ngIf="sgc.cuentaDeposito" class="col-span-2">
+              <span class="font-semibold text-gray-600">Cuenta de depósito:</span> {{ sgc.cuentaDeposito }}
+            </div>
+            <div *ngIf="sgc.exclusiones" class="col-span-2">
+              <span class="font-semibold text-gray-600">Exclusiones:</span> {{ sgc.exclusiones }}
+            </div>
+            <div *ngIf="sgc.observacionesRelevantes" class="col-span-2">
+              <span class="font-semibold text-gray-600">Observaciones relevantes:</span> {{ sgc.observacionesRelevantes }}
+            </div>
+            <div *ngIf="sgc.anexosTecnicos" class="col-span-2">
+              <span class="font-semibold text-gray-600">Anexos técnicos:</span> {{ sgc.anexosTecnicos }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección Alcance técnico (solo CT o CE) -->
+        <div *ngIf="esTipoConAlcance" class="seccion-alcance mt-6 border-t pt-4 text-xs">
+          <h4 class="font-bold text-gray-800 text-sm mb-2">Alcance Técnico y Entregables</h4>
+          <div class="space-y-2">
+            <div *ngIf="sgc?.alcanceTecnico">
+              <span class="font-semibold text-gray-700">Alcance técnico:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.alcanceTecnico }}</p>
+            </div>
+            <div *ngIf="sgc?.recursosRequeridos">
+              <span class="font-semibold text-gray-700">Recursos requeridos:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.recursosRequeridos }}</p>
+            </div>
+            <div *ngIf="sgc?.personalInvolucrado">
+              <span class="font-semibold text-gray-700">Personal involucrado:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.personalInvolucrado }}</p>
+            </div>
+            <div *ngIf="sgc?.tiemposEstimados">
+              <span class="font-semibold text-gray-700">Tiempos estimados:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.tiemposEstimados }}</p>
+            </div>
+            <div *ngIf="sgc?.supuestosOperativos">
+              <span class="font-semibold text-gray-700">Supuestos operativos:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.supuestosOperativos }}</p>
+            </div>
+            <div *ngIf="sgc?.condicionesEjecucion">
+              <span class="font-semibold text-gray-700">Condiciones de ejecución:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.condicionesEjecucion }}</p>
+            </div>
+            <div *ngIf="sgc?.riesgosLimitaciones">
+              <span class="font-semibold text-gray-700">Riesgos o limitaciones:</span>
+              <p class="mt-0.5 text-gray-600">{{ sgc?.riesgosLimitaciones }}</p>
+            </div>
+            <div *ngIf="sgc?.entregables && sgc?.entregables.length > 0" class="mt-2">
+              <span class="font-semibold text-gray-700">Entregables:</span>
+              <ul class="list-disc pl-5 mt-1 space-y-0.5 text-gray-600">
+                <li *ngFor="let ent of sgc?.entregables">{{ ent }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie de página -->
+        <div class="mt-8 pt-4 border-t flex items-center justify-between text-[11px] text-gray-500">
+          <div>{{ empresa.nombre }} · {{ empresa.sitioWeb }}</div>
+          <div>Este documento es una cotización formal sujeta a los términos y condiciones especificados.</div>
         </div>
       </div>
     </div>
   </div>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end" class="px-1">
+<mat-dialog-actions align="end" class="px-4 py-2 border-t">
   <button mat-stroked-button color="primary" (click)="exportarPDF()">Descargar PDF</button>
   <button mat-button mat-dialog-close>Cerrar</button>
 </mat-dialog-actions>
