@@ -15,7 +15,7 @@ import { Observable, map } from 'rxjs';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 import { RequerimientosService, Requerimiento, RequerimientoArchivo, TIPOS_PROYECTO } from '../requerimientos.service';
 import { EngineeringService, Solicitante } from 'app/modules/admin/engineering/engineering.service';
-import { CATEGORIA_GENERAL, etiquetaCategoria, iconoArchivo, temaArchivo, validarArchivos } from '../requerimiento-archivos.utils';
+import { CATEGORIA_GENERAL, abrirBlobEnPestana, etiquetaCategoria, guardarBlob, iconoArchivo, temaArchivo, validarArchivos } from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -160,18 +160,20 @@ export class RequerimientoDialogComponent implements OnInit {
   verArchivo(archivo: RequerimientoArchivo): void {
     const reqId = this.data.requerimiento?.id;
     if (!reqId) return;
-    const url = this.reqService.descargarArchivoUrl(reqId, archivo.id);
-    window.open(url, '_blank');
+    // Con la sesión (HttpClient lleva el token): abrir la URL directa daría 401.
+    this.reqService.descargarArchivo(reqId, archivo.id).subscribe({
+      next: blob => abrirBlobEnPestana(blob),
+      error: () => { Swal.fire('No se pudo abrir', 'Intenta de nuevo o vuelve a iniciar sesión.', 'error'); }
+    });
   }
 
   descargarArchivo(archivo: RequerimientoArchivo): void {
     const reqId = this.data.requerimiento?.id;
     if (!reqId) return;
-    const url = this.reqService.descargarArchivoUrl(reqId, archivo.id);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = archivo.nombreArchivo;
-    a.click();
+    this.reqService.descargarArchivo(reqId, archivo.id).subscribe({
+      next: blob => guardarBlob(blob, archivo.nombreArchivo),
+      error: () => { Swal.fire('No se pudo descargar', 'Intenta de nuevo o vuelve a iniciar sesión.', 'error'); }
+    });
   }
 
   eliminarArchivo(archivo: RequerimientoArchivo): void {

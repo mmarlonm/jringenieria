@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
+import { guardarBlob } from '../requerimiento-archivos.utils';
+import Swal from 'sweetalert2';
 
 export interface RequerimientoVerDialogData {
   id: number;
@@ -33,7 +35,7 @@ export class RequerimientoVerDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: RequerimientoVerDialogData,
     public dialogRef: MatDialogRef<RequerimientoVerDialogComponent>,
     private reqService: RequerimientosService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargar();
@@ -86,8 +88,12 @@ export class RequerimientoVerDialogComponent implements OnInit {
 
   descargarArchivo(archivoId: number): void {
     if (!this.requerimiento) return;
-    const url = this.reqService.descargarArchivoUrl(this.requerimiento.id, archivoId);
-    window.open(url, '_blank');
+    const nombre = this.requerimiento.archivos?.find(a => a.id === archivoId)?.nombreArchivo ?? `archivo-${archivoId}`;
+    // Con la sesión (HttpClient lleva el token): abrir la URL directa daría 401.
+    this.reqService.descargarArchivo(this.requerimiento.id, archivoId).subscribe({
+      next: blob => guardarBlob(blob, nombre),
+      error: () => { Swal.fire('No se pudo descargar', 'Intenta de nuevo o vuelve a iniciar sesión.', 'error'); }
+    });
   }
 
   calificar(): void {

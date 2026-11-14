@@ -93,3 +93,23 @@ export function temaArchivo(nombre: string): string {
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return 'bg-purple-100 dark:bg-purple-950/30 text-purple-600';
     return 'bg-slate-100 dark:bg-slate-800 text-slate-500';
 }
+
+/** Guarda en el equipo un archivo que ya se descargó con la sesión (ver `RequerimientosService.descargarArchivo`). */
+export function guardarBlob(blob: Blob, nombre: string): void {
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = nombre;
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    URL.revokeObjectURL(url);
+}
+
+/** Abre en otra pestaña un archivo que ya se descargó con la sesión. */
+export function abrirBlobEnPestana(blob: Blob): void {
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    // La pestaña nueva necesita la URL un momento para cargar el archivo.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

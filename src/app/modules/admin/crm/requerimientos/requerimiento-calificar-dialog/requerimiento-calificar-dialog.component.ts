@@ -13,7 +13,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto } from '../requerimientos.service';
 import {
-  CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, iconoArchivo, temaArchivo, validarArchivos
+  CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, guardarBlob, iconoArchivo, temaArchivo, validarArchivos
 } from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
 
@@ -216,10 +216,11 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   }
 
   descargarArchivo(file: RequerimientoArchivo): void {
-    const a = document.createElement('a');
-    a.href = this.reqService.descargarArchivoUrl(this.requerimiento.id, file.id);
-    a.download = file.nombreArchivo;
-    a.click();
+    // Con la sesión (HttpClient lleva el token): una navegación directa a la URL daría 401.
+    this.reqService.descargarArchivo(this.requerimiento.id, file.id).subscribe({
+      next: blob => guardarBlob(blob, file.nombreArchivo),
+      error: () => { Swal.fire('No se pudo descargar', 'Intenta de nuevo o vuelve a iniciar sesión.', 'error'); }
+    });
   }
 
   eliminarArchivo(file: RequerimientoArchivo): void {
@@ -287,13 +288,13 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
 
   get estaAprobado(): boolean {
     return !!this.requerimiento.seguimientoProyectoId ||
-           this.requerimiento.estatus === 'Aprobado para cotización' ||
-           !!this.aprobadoResultado;
+      this.requerimiento.estatus === 'Aprobado para cotización' ||
+      !!this.aprobadoResultado;
   }
 
   get esEstatusCalificado(): boolean {
     return this.requerimiento.estatus === 'Calificado Comercial' ||
-           this.requerimiento.estatus === 'Calificado Técnico';
+      this.requerimiento.estatus === 'Calificado Técnico';
   }
 
   get camposFaltantesAprobacion(): string[] {
@@ -312,9 +313,9 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
 
   get puedeAprobar(): boolean {
     return this.puedeCalificar &&
-           !this.estaAprobado &&
-           this.esEstatusCalificado &&
-           this.camposFaltantesAprobacion.length === 0;
+      !this.estaAprobado &&
+      this.esEstatusCalificado &&
+      this.camposFaltantesAprobacion.length === 0;
   }
 
   editarRequerimiento(): void {
@@ -369,7 +370,8 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.dialogRef.close(false);
+    // Si se aprobó aquí, se cierra con `true`: el tablero solo se recarga con un valor verdadero.
+    this.dialogRef.close(!!this.aprobadoResultado);
   }
 
   // ------------------------------------------------------------------ utilidades

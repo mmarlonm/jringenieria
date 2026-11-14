@@ -32,5 +32,18 @@ describe('RequerimientosService - Aprobación', () => {
     expect(req.request.body).toEqual({});
     req.flush({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' });
   });
+
+  // El API exige sesión: una navegación directa a la URL (<a href>, window.open) no lleva el token y da 401.
+  it('Descargar_un_archivo_lo_pide_como_blob_por_HttpClient_para_llevar_la_sesion', () => {
+    let recibido: Blob | null = null;
+    service.descargarArchivo(8, 5).subscribe(b => (recibido = b));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/Requerimiento/8/archivos/5/descargar`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['contenido']));
+
+    expect(recibido).not.toBeNull();
+  });
 });
 

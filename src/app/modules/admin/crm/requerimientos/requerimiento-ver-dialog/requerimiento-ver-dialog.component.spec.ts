@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { RequerimientosComponent } from '../requerimientos.component';
 import { RequerimientoVerDialogComponent, RequerimientoVerDialogData } from './requerimiento-ver-dialog.component';
+import Swal from 'sweetalert2';
 
 function mockRequerimiento(overrides: Partial<Requerimiento> = {}): Requerimiento {
   return {
@@ -57,7 +58,8 @@ describe('RequerimientoVerDialogComponent', () => {
     mockReqService = jasmine.createSpyObj('RequerimientosService', [
       'getRequerimiento',
       'puedeCalificar',
-      'descargarArchivoUrl'
+      'descargarArchivoUrl',
+      'descargarArchivo'
     ]);
     mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
   });
@@ -229,5 +231,36 @@ describe('RequerimientoVerDialogComponent', () => {
     expect(tituloEl.textContent).toContain('<b>Titulo Peligroso</b>');
     const descEl = fixture.nativeElement.querySelector('[data-testid="campo-descripcion"]');
     expect(descEl.textContent).toContain('<script>alert("xss")</script><img src="x" onerror="evil()">');
+  });
+
+  // Revisión de Claude: el API exige sesión; window.open no lleva el token y daría 401.
+  const conArchivo = () => mockRequerimiento({
+    archivos: [{ id: 7, requerimientoId: 10, nombreArchivo: 'plano.pdf', rutaArchivo: 'x', fechaSubida: '2026-11-13T10:00:00' }]
+  });
+
+  it('Descargar_un_archivo_usa_el_servicio_con_sesion_y_guarda_el_archivo', () => {
+    spyOn(window, 'open').and.returnValue(null);
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:prueba');
+    spyOn(URL, 'revokeObjectURL');
+    const clic = spyOn(HTMLAnchorElement.prototype, 'click');
+    mockReqService.descargarArchivo.and.returnValue(of(new Blob(['contenido'])));
+    configurar({ id: 10 }, of(conArchivo()));
+
+    component.descargarArchivo(7);
+
+    expect(mockReqService.descargarArchivo).toHaveBeenCalledWith(10, 7);
+    expect(clic).toHaveBeenCalled();
+  });
+
+  it('Un_error_al_descargar_un_archivo_se_muestra', () => {
+    spyOn(window, 'open').and.returnValue(null);
+    const aviso = spyOn(Swal, 'fire');
+    mockReqService.descargarArchivo.and.returnValue(throwError(() => ({ status: 401 })));
+    configurar({ id: 10 }, of(conArchivo()));
+
+    component.descargarArchivo(7);
+
+    expect(aviso).toHaveBeenCalled();
+    expect(String(aviso.calls.mostRecent().args[0])).toContain('No se pudo descargar');
   });
 });

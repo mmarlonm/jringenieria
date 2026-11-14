@@ -165,7 +165,7 @@ export interface CalificarRequerimientoDto {
 export class RequerimientosService {
   private apiUrl = `${environment.apiUrl}/Requerimiento`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /** Id del usuario con sesión iniciada. */
   usuarioActualId(): number | null {
@@ -222,6 +222,11 @@ export class RequerimientosService {
 
   descargarArchivoUrl(reqId: number, archivoId: number): string {
     return `${this.apiUrl}/${reqId}/archivos/${archivoId}/descargar`;
+  }
+
+  /** Descarga con la sesión: una navegación directa a la URL no lleva el token y el API (que exige sesión) respondería 401. */
+  descargarArchivo(reqId: number, archivoId: number): Observable<Blob> {
+    return this.http.get(this.descargarArchivoUrl(reqId, archivoId), { responseType: 'blob' });
   }
 
   eliminarArchivo(reqId: number, archivoId: number): Observable<any> {

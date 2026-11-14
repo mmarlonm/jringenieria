@@ -56,6 +56,7 @@ describe('RequerimientoDialogComponent', () => {
       'getArchivos',
       'subirArchivos',
       'descargarArchivoUrl',
+      'descargarArchivo',
       'eliminarArchivo'
     ]);
     mockEngService = jasmine.createSpyObj('EngineeringService', ['getSolicitantes']);
@@ -169,5 +170,33 @@ describe('RequerimientoDialogComponent', () => {
 
     expect(component.errorSolicitantes).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('No se pudieron cargar los solicitantes');
+  });
+
+  // Revisión de Claude: el API exige sesión; window.open / <a href> no llevan el token y darían 401.
+  const archivoExistente = { id: 5, requerimientoId: 15, nombreArchivo: 'plano.pdf', rutaArchivo: 'x', fechaSubida: '2026-11-13T10:00:00' };
+
+  it('Descargar_un_archivo_existente_usa_el_servicio_con_sesion', () => {
+    mockReqService.descargarArchivo.and.returnValue(of(new Blob(['contenido'])));
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:prueba');
+    spyOn(URL, 'revokeObjectURL');
+    const clic = spyOn(HTMLAnchorElement.prototype, 'click');
+    inicializar({ requerimiento: mockRequerimientoAntiguo(), users: [] });
+
+    component.descargarArchivo(archivoExistente);
+
+    expect(mockReqService.descargarArchivo).toHaveBeenCalledWith(15, 5);
+    expect(clic).toHaveBeenCalled();
+  });
+
+  it('Ver_un_archivo_existente_lo_abre_en_otra_pestana_con_sesion', () => {
+    mockReqService.descargarArchivo.and.returnValue(of(new Blob(['contenido'])));
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:prueba');
+    const abrir = spyOn(window, 'open').and.returnValue(null);
+    inicializar({ requerimiento: mockRequerimientoAntiguo(), users: [] });
+
+    component.verArchivo(archivoExistente);
+
+    expect(mockReqService.descargarArchivo).toHaveBeenCalledWith(15, 5);
+    expect(abrir).toHaveBeenCalledWith('blob:prueba', '_blank');
   });
 });

@@ -236,4 +236,55 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(fixture.componentInstance.requerimiento.estatus).toBe('Calificado Comercial');
     expect(fixture.componentInstance.requerimiento.seguimientoProyectoId).toBeUndefined();
   });
+
+  // Revisión de Claude: el API exige sesión; una descarga por <a href> no lleva el token y daría 401.
+  it('Descargar_un_archivo_usa_el_servicio_con_sesion_y_guarda_el_archivo', () => {
+    const descargar = jasmine.createSpy('descargarArchivo').and.returnValue(of(new Blob(['contenido'])));
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:prueba');
+    spyOn(URL, 'revokeObjectURL');
+    const clic = spyOn(HTMLAnchorElement.prototype, 'click');
+    abrir(true, {}, { descargarArchivo: descargar });
+
+    fixture.componentInstance.descargarArchivo({
+      id: 5, requerimientoId: 8, nombreArchivo: 'plano.pdf', rutaArchivo: 'x', fechaSubida: '2026-11-13T10:00:00'
+    });
+
+    expect(descargar).toHaveBeenCalledWith(8, 5);
+    expect(clic).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:prueba');
+  });
+
+  it('Un_error_al_descargar_un_archivo_se_muestra', () => {
+    const aviso = spyOn(Swal, 'fire');
+    abrir(true, {}, { descargarArchivo: () => throwError(() => ({ status: 401 })) });
+
+    fixture.componentInstance.descargarArchivo({
+      id: 5, requerimientoId: 8, nombreArchivo: 'plano.pdf', rutaArchivo: 'x', fechaSubida: '2026-11-13T10:00:00'
+    });
+
+    expect(aviso).toHaveBeenCalled();
+    expect(String(aviso.calls.mostRecent().args[0])).toContain('No se pudo descargar');
+  });
+
+  it('Al_cerrar_despues_de_aprobar_el_tablero_se_recarga', () => {
+    spyOn(Swal, 'fire').and.callFake(() => ({
+      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
+    } as any));
+    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Subestación' });
+
+    fixture.componentInstance.aprobar();
+    expect(fixture.componentInstance.estaAprobado).toBeTrue();
+    fixture.componentInstance.onCancel();
+
+    // El padre solo recarga el tablero si el diálogo se cierra con un valor verdadero.
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
+  });
+
+  it('Cerrar_sin_aprobar_no_recarga_el_tablero', () => {
+    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Subestación' });
+
+    fixture.componentInstance.onCancel();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(false);
+  });
 });
