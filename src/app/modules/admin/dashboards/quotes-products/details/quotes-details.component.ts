@@ -4,6 +4,7 @@ import { QuotesService } from "../quotes-products.service";
 import {
   FormBuilder,
   FormGroup,
+  FormArray,
   Validators,
   ReactiveFormsModule,
   FormsModule,
@@ -41,6 +42,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatTableModule } from "@angular/material/table";
 import { MatTableDataSource } from "@angular/material/table";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
+import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import {
   CatalogosSgc,
   CotizacionSgcCabecera,
@@ -73,6 +75,7 @@ import { totalesSgc, roundAwayFromZero } from "../sgc/cotizacion-sgc.utils";
     MatTooltipModule,
     MatTableModule,
     CondicionesSgcComponent,
+    PartidasSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -140,6 +143,7 @@ export class QuoteDetailsComponent implements OnInit {
   version: number | null = null;
   esHeredada: boolean = false;
   partidas: PartidaSgc[] = [];
+  partidasFormArray: FormArray;
 
   constructor(
     private fb: FormBuilder,
@@ -256,6 +260,12 @@ export class QuoteDetailsComponent implements OnInit {
       this.actualizarValidacionTipoCambio(moneda);
     });
 
+    this.partidasFormArray = this.fb.array([]);
+    this.partidasFormArray.valueChanges.subscribe(() => {
+      this.partidas = this.partidasFormArray.value;
+      this.calcularTotales();
+    });
+
     this.cargarCatalogos();
   }
 
@@ -316,6 +326,7 @@ export class QuoteDetailsComponent implements OnInit {
 
         if (sgcRes) {
           this.partidas = sgcRes.partidas || [];
+          this.sincronizarPartidasFormArray(this.partidas);
           this.faltantes = sgcRes.faltantes || [];
 
           if (sgcRes.sgc) {
@@ -389,8 +400,12 @@ export class QuoteDetailsComponent implements OnInit {
       entregables: sgcVal.entregables || [],
     };
 
-    let partidasEnviar: PartidaSgc[] = this.partidas;
-    if ((!partidasEnviar || partidasEnviar.length === 0) && this.productos && this.productos.length > 0) {
+    let partidasEnviar: PartidaSgc[] = [];
+    if (this.partidasFormArray && this.partidasFormArray.length > 0) {
+      partidasEnviar = this.partidasFormArray.value;
+    } else if (this.partidas && this.partidas.length > 0) {
+      partidasEnviar = this.partidas;
+    } else if (this.productos && this.productos.length > 0) {
       partidasEnviar = this.productos.map((p, idx) => ({
         partida: idx + 1,
         tipoConcepto: 'Material',
@@ -437,6 +452,33 @@ export class QuoteDetailsComponent implements OnInit {
         }
       },
     });
+  }
+
+  sincronizarPartidasFormArray(partidas: PartidaSgc[]): void {
+    if (!this.partidasFormArray) {
+      this.partidasFormArray = this.fb.array([]);
+    }
+    this.partidasFormArray.clear();
+    for (const p of partidas) {
+      this.partidasFormArray.push(
+        this.fb.group({
+          partida: [p.partida],
+          tipoConcepto: [p.tipoConcepto || 'Material'],
+          materialServicio: [p.materialServicio || '', Validators.required],
+          descripcion: [p.descripcion || null],
+          codigoProducto: [p.codigoProducto || null],
+          productoId: [p.productoId || null],
+          unidad: [p.unidad || 'PZA', Validators.required],
+          cantidad: [p.cantidad ?? 1, [Validators.required, Validators.min(0.0001)]],
+          precioUnitario: [p.precioUnitario ?? 0, [Validators.required, Validators.min(0)]],
+          descuento: [p.descuento ?? 0, [Validators.min(0)]],
+          costoUnitario: [p.costoUnitario ?? null],
+          tiempoEntregaDias: [p.tiempoEntregaDias ?? null],
+          notas: [p.notas || null],
+          heredada: [p.heredada || false],
+        })
+      );
+    }
   }
 
   updateValue(event: Event, controlName: string) {

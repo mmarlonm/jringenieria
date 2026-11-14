@@ -94,6 +94,8 @@ export class AddProductDialogComponent implements OnInit {
     this.dialogRef.close({
       productoId: producto.productoId,
       nombreProducto: producto.nombreProducto,
+      codigoProducto: producto.codigoProducto,
+      unidadMedida: producto.unidadMedida,
       cantidad: producto.cantidad,
       precioUnitario: producto.precio,
       descuento: producto.descuento,

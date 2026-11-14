@@ -1,0 +1,236 @@
+<div class="flex flex-col h-full overflow-hidden p-4">
+  <!-- Banner de cotización heredada -->
+  <div *ngIf="heredadas" class="banner-heredadas bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 text-blue-800">
+    Esta cotización viene de CONTPAQi. Al guardarla se copiarán sus partidas al ERP y los cambios posteriores en CONTPAQi ya no se reflejarán.
+  </div>
+
+  <!-- Barra de acciones superior -->
+  <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-lg">Materiales y Servicios ({{ partidas.length }})</span>
+    </div>
+    <div class="flex gap-2">
+      <button mat-stroked-button color="primary" type="button" (click)="abrirCatalogoConPrecio()">
+        <mat-icon class="mr-1">menu_book</mat-icon> Catálogo con precio
+      </button>
+      <button mat-flat-button color="primary" type="button" (click)="addPartida()">
+        <mat-icon class="mr-1">add</mat-icon> Añadir partida
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado vacío si no hay partidas -->
+  <div *ngIf="partidas.length === 0" class="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800 rounded border border-dashed border-gray-300">
+    <mat-icon class="text-gray-400 text-5xl mb-2" style="width: 48px; height: 48px; font-size: 48px;">inventory_2</mat-icon>
+    <p class="text-gray-600 dark:text-gray-400 font-medium text-center">
+      No hay materiales agregados a esta cotización. Puedes agregar partidas manualmente o seleccionarlas del catálogo.
+    </p>
+    <button mat-flat-button color="primary" class="mt-4" type="button" (click)="addPartida()">
+      + Agregar primera partida
+    </button>
+  </div>
+
+  <!-- Tabla de partidas -->
+  <div *ngIf="partidas.length > 0" class="flex-1 overflow-auto border border-gray-200 dark:border-gray-700 rounded shadow-sm">
+    <table class="w-full text-left border-collapse min-w-[1200px]">
+      <thead class="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10 text-xs font-semibold uppercase text-gray-700 dark:text-gray-300 border-b">
+        <tr>
+          <th class="p-2 w-12 text-center">#</th>
+          <th *ngIf="tipo !== 'CS'" class="col-concepto p-2 w-44">Concepto</th>
+          <th class="p-2 min-w-[280px]">Material / Servicio</th>
+          <th class="p-2 min-w-[200px]">Descripción</th>
+          <th class="p-2 w-28">Unidad</th>
+          <th class="p-2 w-24">Cantidad</th>
+          <th class="p-2 w-28">Precio U.</th>
+          <th class="p-2 w-24">Descuento</th>
+          <th *ngIf="tipo !== 'CS'" class="col-costo p-2 w-28">Costo U.</th>
+          <th class="p-2 w-24">T. Entrega</th>
+          <th class="p-2 w-28 text-right">Importe</th>
+          <th class="p-2 min-w-[150px]">Notas</th>
+          <th class="p-2 w-12 text-center"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+        <tr *ngFor="let control of partidas.controls; let i = index" [formGroup]="$any(control)" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+          <!-- # -->
+          <td class="p-2 text-center font-bold text-gray-500">
+            {{ i + 1 }}
+          </td>
+
+          <!-- Concepto (solo CT / CE) -->
+          <td *ngIf="tipo !== 'CS'" class="col-concepto p-2">
+            <select formControlName="tipoConcepto" class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs">
+              <option *ngFor="let c of catalogos?.tiposConcepto" [value]="c.codigo">
+                {{ c.nombre }}
+              </option>
+            </select>
+          </td>
+
+          <!-- Material / Servicio con Autocomplete -->
+          <td class="p-2">
+            <div class="relative">
+              <input
+                matInput
+                type="text"
+                formControlName="materialServicio"
+                [matAutocomplete]="autoProduct"
+                (paste)="onPegarMateriales($event, i, 'materialServicio')"
+                placeholder="Buscar en CONTPAQi..."
+                class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs"
+              />
+              <span *ngIf="control.get('codigoProducto')?.value" class="text-[10px] text-gray-500 block truncate">
+                Código: {{ control.get('codigoProducto')?.value }}
+              </span>
+              <span *ngIf="errorBusqueda[i]" class="text-[10px] text-red-500 block">
+                Error al consultar CONTPAQi
+              </span>
+
+              <mat-autocomplete #autoProduct="matAutocomplete">
+                <mat-option
+                  *ngFor="let item of filteredProducts$[i] | async"
+                  [value]="item.nombreProducto"
+                  (onSelectionChange)="onProductoSeleccionado(item, i)"
+                >
+                  <div class="flex flex-col py-1 text-xs">
+                    <span class="font-bold">[{{ item.codigoProducto }}] {{ item.nombreProducto }}</span>
+                    <span class="text-gray-500 text-[11px]">Unidad: {{ item.unidadMedida }} · Existencia total: {{ item.existencia }}</span>
+                    <div *ngIf="item.existenciasDesglosadas && item.existenciasDesglosadas.length > 0" class="flex gap-2 flex-wrap mt-0.5">
+                      <span
+                        *ngFor="let alm of item.existenciasDesglosadas"
+                        class="text-[10px] px-1 rounded"
+                        [ngClass]="alm.cantidad > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                      >
+                        {{ alm.almacen }}: {{ alm.cantidad }}
+                      </span>
+                    </div>
+                  </div>
+                </mat-option>
+                <mat-option *ngIf="entradasManuales[i]" [value]="entradasManuales[i]" disabled>
+                  <span class="italic text-gray-500 text-xs">Usando entrada manual: "{{ entradasManuales[i] }}"</span>
+                </mat-option>
+              </mat-autocomplete>
+            </div>
+          </td>
+
+          <!-- Descripción -->
+          <td class="p-2">
+            <input
+              type="text"
+              formControlName="descripcion"
+              (paste)="onPegarMateriales($event, i, 'descripcion')"
+              placeholder="Descripción..."
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs"
+            />
+          </td>
+
+          <!-- Unidad -->
+          <td class="p-2">
+            <select formControlName="unidad" class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs">
+              <option *ngFor="let u of unidadesDisponibles" [value]="u">
+                {{ u }}
+              </option>
+            </select>
+          </td>
+
+          <!-- Cantidad -->
+          <td class="p-2">
+            <input
+              type="number"
+              min="0.0001"
+              step="any"
+              formControlName="cantidad"
+              (paste)="onPegarMateriales($event, i, 'cantidad')"
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs text-right"
+            />
+          </td>
+
+          <!-- Precio Unitario -->
+          <td class="p-2">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              formControlName="precioUnitario"
+              (paste)="onPegarMateriales($event, i, 'precioUnitario')"
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs text-right"
+            />
+          </td>
+
+          <!-- Descuento -->
+          <td class="p-2">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              formControlName="descuento"
+              (paste)="onPegarMateriales($event, i, 'descuento')"
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs text-right"
+            />
+          </td>
+
+          <!-- Costo Unitario (solo CT / CE) -->
+          <td *ngIf="tipo !== 'CS'" class="col-costo p-2">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              formControlName="costoUnitario"
+              (paste)="onPegarMateriales($event, i, 'costoUnitario')"
+              placeholder="Opcional"
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs text-right"
+            />
+          </td>
+
+          <!-- Tiempo Entrega -->
+          <td class="p-2">
+            <input
+              type="number"
+              min="0"
+              step="1"
+              formControlName="tiempoEntregaDias"
+              (paste)="onPegarMateriales($event, i, 'tiempoEntregaDias')"
+              placeholder="Días"
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs text-right"
+            />
+          </td>
+
+          <!-- Importe Línea -->
+          <td class="p-2 text-right font-semibold">
+            {{ calcularImporteLinea(i) | currency:moneda:'symbol':'1.2-2' }}
+          </td>
+
+          <!-- Notas -->
+          <td class="p-2">
+            <input
+              type="text"
+              formControlName="notas"
+              (paste)="onPegarMateriales($event, i, 'notas')"
+              placeholder="Notas..."
+              class="w-full p-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-xs"
+            />
+          </td>
+
+          <!-- Eliminar -->
+          <td class="p-2 text-center">
+            <button mat-icon-button color="warn" type="button" (click)="eliminarPartida(i)" title="Eliminar partida">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pie con Totales -->
+  <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-8 text-sm font-semibold rounded">
+    <div>
+      Subtotal: <span class="font-bold">{{ totales.subtotal | currency:moneda:'symbol':'1.2-2' }}</span>
+    </div>
+    <div>
+      IVA (16%): <span class="font-bold">{{ totales.iva | currency:moneda:'symbol':'1.2-2' }}</span>
+    </div>
+    <div class="text-base text-primary">
+      Total: <span class="font-bold">{{ totales.total | currency:moneda:'symbol':'1.2-2' }}</span>
+    </div>
+  </div>
+</div>
