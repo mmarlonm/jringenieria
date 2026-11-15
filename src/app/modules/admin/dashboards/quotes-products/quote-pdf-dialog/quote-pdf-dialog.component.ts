@@ -27,11 +27,34 @@ export class QuotePdfDialogComponent implements OnInit {
   partidas: any[] = [];
   totales: any;
   esHeredadaSinGuardar: boolean = false;
+  esInstantanea: boolean = false;
+  fechaEmisionInstantanea: Date | string | null = null;
+  version: number = 1;
+  etapa: string = 'Borrador';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {}
 
   ngOnInit(): void {
-    if (this.data?.cotizacion) {
+    if (this.data?.instantanea) {
+      this.esInstantanea = true;
+      const snap = this.data.instantanea.snapshot || this.data.instantanea;
+      this.fechaEmisionInstantanea = this.data.instantanea.fechaEmision || snap.fechaEmision;
+      this.version = this.data.instantanea.version || snap.version || 1;
+      this.etapa = this.data.instantanea.etapa || this.data.instantanea.estado || snap.etapa || 'Emitida';
+      this.cotizacion = {
+        folio: snap.folio,
+        nombreCliente: snap.clienteReceptor || snap.nombreCliente,
+        createdDate: this.fechaEmisionInstantanea,
+        ...snap,
+      };
+      this.sgc = snap;
+      this.partidas = snap.partidas || [];
+      this.totales = {
+        subtotal: snap.subtotal || 0,
+        iva: snap.iva || 0,
+        total: snap.total || 0,
+      };
+    } else if (this.data?.cotizacion) {
       this.cotizacion = this.data.cotizacion;
       this.sgc = this.data.sgc || null;
       this.partidas = this.data.partidas || [];
@@ -40,6 +63,8 @@ export class QuotePdfDialogComponent implements OnInit {
         iva: this.cotizacion?.iva || 0,
         total: this.cotizacion?.total || 0,
       };
+      this.version = this.data.sgc?.version || this.cotizacion?.version || 1;
+      this.etapa = this.data.sgc?.etapa || this.cotizacion?.etapa || 'Borrador';
     } else {
       this.cotizacion = this.data;
       this.sgc = null;
@@ -49,6 +74,8 @@ export class QuotePdfDialogComponent implements OnInit {
         iva: this.cotizacion?.iva || 0,
         total: this.cotizacion?.total || 0,
       };
+      this.version = this.cotizacion?.version || 1;
+      this.etapa = this.cotizacion?.etapa || 'Borrador';
     }
 
     this.esHeredadaSinGuardar = !this.sgc || !this.sgc.tipo;
@@ -62,6 +89,24 @@ export class QuotePdfDialogComponent implements OnInit {
       return this.cotizacion.folio;
     }
     return `#${this.cotizacion?.cotizacionProductosId || ''}`;
+  }
+
+  get folioConVersion(): string {
+    const fol = this.folioOId;
+    return this.version > 1 ? `${fol} v${this.version}` : fol;
+  }
+
+  get esBorrador(): boolean {
+    if (this.esInstantanea) return false;
+    const etapasEmitidasOCerradas = ['Emitida', 'Aceptada', 'Rechazada', 'Cancelada', 'Vencida'];
+    return !etapasEmitidasOCerradas.includes(this.etapa);
+  }
+
+  get fechaDocumento(): Date | string | null {
+    if (this.esInstantanea && this.fechaEmisionInstantanea) {
+      return this.fechaEmisionInstantanea;
+    }
+    return this.cotizacion?.createdDate;
   }
 
   get moneda(): string {

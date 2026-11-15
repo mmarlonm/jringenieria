@@ -6,14 +6,19 @@
   >
     <div class="inline-block p-6 text-left sm:p-1 print:p-0 w-full">
       <div class="bg-white w-full">
+        <!-- Franja borrador si aplica -->
+        <div *ngIf="esBorrador" class="franja-borrador w-full bg-red-600 text-white font-bold text-center py-2 px-4 mb-4 tracking-wider uppercase text-xs sm:text-sm shadow">
+          BORRADOR — no válida como cotización emitida
+        </div>
+
         <!-- Header Info -->
         <div class="flex items-start justify-between">
           <div class="grid grid-cols-2 gap-x-4 gap-y-1">
             <div class="text-secondary text-3xl font-bold tracking-tight">COTIZACIÓN</div>
-            <div class="text-3xl font-bold">{{ folioOId }}</div>
+            <div class="text-3xl font-bold">{{ folioConVersion }}</div>
 
             <div class="text-secondary font-medium tracking-tight">FECHA</div>
-            <div class="font-medium">{{ (cotizacion?.createdDate) | date:'mediumDate' }}</div>
+            <div class="font-medium fecha-documento">{{ fechaDocumento | date:'mediumDate' }}</div>
 
             <div class="text-secondary font-medium tracking-tight">CLIENTE</div>
             <div class="font-medium">{{ cotizacion?.nombreCliente }}</div>

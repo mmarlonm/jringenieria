@@ -202,4 +202,64 @@ describe('QuotePdfDialogComponent', () => {
     expect(compiled.textContent).toContain('Foco incandescente');
     expect(compiled.querySelector('.seccion-alcance')).toBeNull();
   });
+
+  it('El_PDF_de_un_borrador_lleva_la_franja_BORRADOR', async () => {
+    const borradorData = {
+      ...mockFullData,
+      cotizacion: { ...mockFullData.cotizacion, etapa: 'Borrador' },
+      sgc: { ...mockFullData.sgc, etapa: 'Borrador', version: 1 },
+    };
+    await createComponent(borradorData);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const franja = compiled.querySelector('.franja-borrador');
+    expect(franja).toBeTruthy();
+    expect(franja?.textContent).toContain('BORRADOR — no válida como cotización emitida');
+  });
+
+  it('El_PDF_de_una_cotizacion_emitida_no_lleva_la_franja_y_muestra_su_version', async () => {
+    const emitidaData = {
+      ...mockFullData,
+      cotizacion: { ...mockFullData.cotizacion, etapa: 'Emitida', version: 2 },
+      sgc: { ...mockFullData.sgc, etapa: 'Emitida', version: 2 },
+    };
+    await createComponent(emitidaData);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const franja = compiled.querySelector('.franja-borrador');
+    expect(franja).toBeNull();
+    expect(compiled.textContent).toContain('COT-2026-0101 v2');
+  });
+
+  it('El_PDF_de_una_instantanea_muestra_la_fecha_de_emision_de_esa_version', async () => {
+    const instantaneaData = {
+      instantanea: {
+        version: 2,
+        etapa: 'Emitida',
+        fechaEmision: new Date('2026-11-20T14:30:00Z'),
+        snapshot: {
+          folio: 'COT-2026-0005',
+          version: 2,
+          etapa: 'Emitida',
+          fechaEmision: new Date('2026-11-20T14:30:00Z'),
+          clienteReceptor: 'Receptor Oficial',
+          tipo: 'CS',
+          moneda: 'MXN',
+          subtotal: 1000,
+          iva: 160,
+          total: 1160,
+          partidas: [],
+        },
+      },
+    };
+    await createComponent(instantaneaData);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const franja = compiled.querySelector('.franja-borrador');
+    expect(franja).toBeNull();
+    expect(compiled.textContent).toContain('COT-2026-0005 v2');
+    const fechaEl = compiled.querySelector('.fecha-documento');
+    expect(fechaEl).toBeTruthy();
+    expect(fechaEl?.textContent).toContain('2026');
+  });
 });
