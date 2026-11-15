@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VersionesSgcComponent } from './versiones-sgc.component';
 import { QuotesService } from '../../quotes-products.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -140,4 +140,3 @@ describe('VersionesSgcComponent', () => {
     expect(fixture.nativeElement.textContent).toContain(xss);
   });
 });
-

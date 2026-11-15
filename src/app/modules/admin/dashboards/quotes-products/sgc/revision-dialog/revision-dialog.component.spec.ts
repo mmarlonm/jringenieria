@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+﻿import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RevisionDialogComponent } from './revision-dialog.component';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { QuotesService } from '../../quotes-products.service';
@@ -153,4 +153,3 @@ describe('RevisionDialogComponent', () => {
     ref.close();
   });
 });
-
