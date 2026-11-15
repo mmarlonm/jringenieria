@@ -1,8 +1,8 @@
 ﻿import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { RevisionDialogComponent } from './revision-dialog.component';
+import { PUNTOS_REQUERIDOS_POR_ROL, PUNTOS_REVISION, RevisionDialogComponent } from './revision-dialog.component';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { QuotesService } from '../../quotes-products.service';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('RevisionDialogComponent', () => {
@@ -151,5 +151,107 @@ describe('RevisionDialogComponent', () => {
       }
     }
     ref.close();
+  });
+});
+
+// Códigos y nombres EXACTOS de CotizacionSgcCatalogos.cs del API (GET sgc/catalogos)
+const PUNTOS_DEL_API = [
+  { codigo: 'CorrespondeAlRequerimiento', nombre: 'Correspondencia con el requerimiento' },
+  { codigo: 'AlcanceClaro', nombre: 'Claridad del alcance' },
+  { codigo: 'CoherenciaTecnica', nombre: 'Coherencia técnica' },
+  { codigo: 'ExactitudDePrecios', nombre: 'Exactitud de precios' },
+  { codigo: 'CodigosYCatalogosValidos', nombre: 'Validez de códigos y catálogos' },
+  { codigo: 'Existencia', nombre: 'Existencia' },
+  { codigo: 'TiemposRazonables', nombre: 'Tiempos de entrega o ejecución razonables' },
+  { codigo: 'CondicionesDePagoCorrectas', nombre: 'Condiciones de pago correctas' },
+  { codigo: 'CondicionesDeEntrega', nombre: 'Condiciones de entrega' },
+  { codigo: 'Vigencia', nombre: 'Vigencia' },
+  { codigo: 'AprobacionInternaSegunNivel', nombre: 'Aprobación interna según nivel definido' },
+];
+const REQUERIDOS_DEL_API = {
+  Comercial: ['CorrespondeAlRequerimiento', 'ExactitudDePrecios', 'CodigosYCatalogosValidos', 'Existencia', 'CondicionesDePagoCorrectas', 'CondicionesDeEntrega', 'Vigencia', 'AprobacionInternaSegunNivel'],
+  Ingenieria: ['CorrespondeAlRequerimiento', 'AlcanceClaro', 'CoherenciaTecnica', 'TiemposRazonables'],
+  Direccion: ['AprobacionInternaSegunNivel'],
+};
+
+describe('RevisionDialogComponent con el catálogo real del API', () => {
+  let mockDialogRef: any;
+  let mockQuotesService: any;
+
+  async function crear(rol: string, conCatalogo: boolean) {
+    mockDialogRef = { close: jasmine.createSpy('close'), disableClose: false };
+    mockQuotesService = { registrarRevision: jasmine.createSpy('registrarRevision').and.returnValue(of({})) };
+    await TestBed.configureTestingModule({
+      imports: [RevisionDialogComponent, NoopAnimationsModule, MatDialogModule],
+      providers: [
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            rol,
+            cotizacionId: 7,
+            catalogos: conCatalogo
+              ? { tipos: [], monedas: [], tiposConcepto: [], entregables: [], ivaTasa: 0.16, puntosRevision: PUNTOS_DEL_API, puntosRequeridosPorRol: REQUERIDOS_DEL_API }
+              : null,
+          },
+        },
+        { provide: MatDialogRef, useValue: mockDialogRef },
+        { provide: QuotesService, useValue: mockQuotesService },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(RevisionDialogComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('Ingenieria_puede_aprobar_y_el_API_recibe_AlcanceClaro_marcado', async () => {
+    const fixture = await crear('Ingenieria', true);
+    const c = fixture.componentInstance;
+
+    expect(c.puntos.map((p) => p.codigo)).toEqual(PUNTOS_DEL_API.map((p) => p.codigo));
+    expect(c.puedeAprobar).toBeFalse();
+
+    for (const codigo of REQUERIDOS_DEL_API.Ingenieria) {
+      c.checklist[codigo] = true;
+    }
+    expect(c.puedeAprobar).toBeTrue();
+
+    c.aprobar();
+    const enviado = mockQuotesService.registrarRevision.calls.mostRecent().args[1];
+    expect(enviado.rol).toBe('Ingenieria');
+    expect(enviado.checklist['AlcanceClaro']).toBeTrue();
+    expect(Object.keys(enviado.checklist).sort()).toEqual(PUNTOS_DEL_API.map((p) => p.codigo).sort());
+  });
+
+  it('Sin_catalogo_el_respaldo_local_usa_los_mismos_codigos_que_el_API', async () => {
+    const fixture = await crear('Ingenieria', false);
+    const c = fixture.componentInstance;
+
+    expect(PUNTOS_REVISION.map((p) => p.codigo)).toEqual(PUNTOS_DEL_API.map((p) => p.codigo));
+    expect(PUNTOS_REQUERIDOS_POR_ROL).toEqual(REQUERIDOS_DEL_API);
+
+    for (const codigo of REQUERIDOS_DEL_API.Ingenieria) {
+      c.checklist[codigo] = true;
+    }
+    expect(c.puedeAprobar).toBeTrue();
+  });
+
+  it('El_titulo_muestra_el_nombre_del_rol_con_acento', async () => {
+    const fixture = await crear('Ingenieria', true);
+    expect(fixture.nativeElement.querySelector('h2').textContent).toContain('Revisión como Ingeniería');
+  });
+
+  it('No_se_puede_cerrar_mientras_se_registra_la_revision_y_se_libera_si_falla', async () => {
+    const fixture = await crear('Direccion', true);
+    const c = fixture.componentInstance;
+    let fallar!: (e: any) => void;
+    mockQuotesService.registrarRevision.and.returnValue(new Observable((o) => { fallar = (e) => o.error(e); }));
+
+    c.checklist['AprobacionInternaSegunNivel'] = true;
+    c.aprobar();
+    expect(mockDialogRef.disableClose).toBeTrue();
+
+    fallar({ status: 409, error: { mensaje: 'Ya registraste esta revisión.' } });
+    expect(mockDialogRef.disableClose).toBeFalse();
+    expect(c.errorMensaje).toBe('Ya registraste esta revisión.');
   });
 });

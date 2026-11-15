@@ -26,7 +26,7 @@
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Medio de envío</mat-label>
         <mat-select formControlName="medioEnvio">
-          <mat-option *ngFor="let m of mediosEnvio" [value]="m">{{ m }}</mat-option>
+          <mat-option *ngFor="let m of mediosEnvio" [value]="m.codigo">{{ m.nombre }}</mat-option>
         </mat-select>
         <mat-error *ngIf="form.get('medioEnvio')?.hasError('required')">El medio de envío es obligatorio</mat-error>
       </mat-form-field>
@@ -36,6 +36,7 @@
         <mat-label>Cliente receptor</mat-label>
         <input matInput formControlName="clienteReceptor" placeholder="Nombre de la persona o cliente que recibe" />
         <mat-error *ngIf="form.get('clienteReceptor')?.hasError('required')">El cliente receptor es obligatorio</mat-error>
+        <mat-error *ngIf="form.get('clienteReceptor')?.hasError('maxlength')">Máximo 200 caracteres</mat-error>
       </mat-form-field>
 
       <!-- Correo receptor -->

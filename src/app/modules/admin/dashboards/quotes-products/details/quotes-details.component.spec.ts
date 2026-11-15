@@ -632,6 +632,18 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(datos.sgc.version).toBe(1);
   });
 
+  it('El_PDF_recibe_la_etapa_para_que_una_cotizacion_emitida_no_salga_como_borrador', () => {
+    const dialog = TestBed.inject(MatDialog) as any;
+    component.folio = 'COT-2026-0042';
+    component.version = 1;
+    component.etapa = 'Emitida';
+
+    component.openCotizacionPreview();
+
+    const datos = dialog.open.calls.mostRecent().args[1].data;
+    expect(datos.sgc.etapa).toBe('Emitida');
+  });
+
   it('Exportar_PDF_en_una_cotizacion_nueva_no_falla', () => {
     const dialog = TestBed.inject(MatDialog) as any;
     component.cotizacion = undefined;
@@ -695,6 +707,26 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(franja).toBeTruthy();
     expect(franja.textContent).toContain('revisión');
     expect(franja.textContent).toContain('2');
+  });
+
+  it('La_franja_usa_el_nombre_legible_de_la_etapa_y_no_su_codigo', () => {
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'EnSeguimiento' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: true },
+      })
+    );
+
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    const franja = fixture.nativeElement.querySelector('.franja-solo-lectura');
+    expect(franja.textContent).toContain('En seguimiento');
+    expect(franja.textContent).not.toContain('EnSeguimiento');
   });
 
   it('Una_cotizacion_en_Borrador_sigue_editable', () => {

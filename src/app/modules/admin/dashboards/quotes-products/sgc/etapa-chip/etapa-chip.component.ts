@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-const NOMBRES_ETAPAS: Record<string, string> = {
+export const NOMBRES_ETAPAS: Record<string, string> = {
   Borrador: 'Borrador',
   EnRevision: 'En revisión',
   Aprobada: 'Aprobada',
@@ -13,6 +13,10 @@ const NOMBRES_ETAPAS: Record<string, string> = {
   Vencida: 'Vencida',
   CerradaSinRespuesta: 'Cerrada sin respuesta',
 };
+
+export function nombreEtapa(etapa: string | null | undefined): string {
+  return (etapa && NOMBRES_ETAPAS[etapa]) || etapa || 'Borrador';
+}
 
 const CLASES_ETAPAS: Record<string, string> = {
   Borrador: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-200',
@@ -37,7 +41,7 @@ export class EtapaChipComponent {
   @Input() etapa: string = 'Borrador';
 
   get nombreLegible(): string {
-    return NOMBRES_ETAPAS[this.etapa] || this.etapa || 'Borrador';
+    return nombreEtapa(this.etapa);
   }
 
   get claseColor(): string {

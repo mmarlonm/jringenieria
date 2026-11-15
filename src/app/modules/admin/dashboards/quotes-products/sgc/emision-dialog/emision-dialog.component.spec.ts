@@ -2,7 +2,7 @@
 import { EmisionDialogComponent, EmisionDialogData } from './emision-dialog.component';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { QuotesService } from '../../quotes-products.service';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('EmisionDialogComponent', () => {
@@ -23,8 +23,9 @@ describe('EmisionDialogComponent', () => {
       ivaTasa: 0.16,
       mediosEnvio: [
         { codigo: 'Correo', nombre: 'Correo' },
-        { codigo: 'WhatsApp', nombre: 'WhatsApp' },
-        { codigo: 'En mano', nombre: 'En mano' },
+        { codigo: 'ERP', nombre: 'ERP' },
+        { codigo: 'DocumentoControlado', nombre: 'Documento controlado' },
+        { codigo: 'Otro', nombre: 'Otro' },
       ],
     },
   };
@@ -63,7 +64,7 @@ describe('EmisionDialogComponent', () => {
     expect(component.form.valid).toBeFalse();
     expect(component.form.get('correoReceptor')?.hasError('required')).toBeTrue();
 
-    component.form.patchValue({ medioEnvio: 'WhatsApp' });
+    component.form.patchValue({ medioEnvio: 'ERP' });
     expect(component.form.valid).toBeTrue();
     expect(component.form.get('correoReceptor')?.hasError('required')).toBeFalse();
   });
@@ -99,7 +100,7 @@ describe('EmisionDialogComponent', () => {
     );
 
     component.form.patchValue({
-      medioEnvio: 'WhatsApp',
+      medioEnvio: 'ERP',
       clienteReceptor: 'Director',
     });
 
@@ -118,13 +119,58 @@ describe('EmisionDialogComponent', () => {
 
     // 2. Éxito
     component.form.patchValue({
-      medioEnvio: 'En mano',
+      medioEnvio: 'Otro',
       clienteReceptor: 'Lic. Martínez',
     });
     component.emitir();
     expect(mockDialogRef.close).toHaveBeenCalledWith(
       jasmine.objectContaining({ guardado: true })
     );
+  });
+
+  it('Emitir_manda_el_codigo_del_catalogo_y_no_el_nombre_visible', () => {
+    const opciones = component.mediosEnvio.map((m) => m.codigo);
+    expect(opciones).toEqual(['Correo', 'ERP', 'DocumentoControlado', 'Otro']);
+
+    component.form.patchValue({ medioEnvio: 'DocumentoControlado', clienteReceptor: 'Lic. Soto' });
+    component.emitir();
+
+    expect(mockQuotesService.emitir).toHaveBeenCalledWith(77, {
+      medioEnvio: 'DocumentoControlado',
+      clienteReceptor: 'Lic. Soto',
+      correoReceptor: null,
+    });
+  });
+
+  it('Sin_catalogo_usa_solo_codigos_que_acepta_el_API', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [EmisionDialogComponent, NoopAnimationsModule, MatDialogModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { cotizacionId: 5, catalogos: null } },
+        { provide: MatDialogRef, useValue: mockDialogRef },
+        { provide: QuotesService, useValue: mockQuotesService },
+      ],
+    }).compileComponents();
+    const f = TestBed.createComponent(EmisionDialogComponent);
+    f.detectChanges();
+
+    expect(f.componentInstance.mediosEnvio.map((m) => m.codigo)).toEqual(['Correo', 'ERP', 'DocumentoControlado', 'Otro']);
+    expect(f.componentInstance.form.value.medioEnvio).toBe('Correo');
+  });
+
+  it('No_se_puede_cerrar_el_dialogo_mientras_se_registra_el_envio_y_se_libera_si_falla', () => {
+    mockDialogRef.disableClose = false;
+    let fallar!: (e: any) => void;
+    mockQuotesService.emitir.and.returnValue(new Observable((o) => { fallar = (e) => o.error(e); }));
+
+    component.form.patchValue({ medioEnvio: 'ERP', clienteReceptor: 'Director' });
+    component.emitir();
+    expect(mockDialogRef.disableClose).toBeTrue();
+
+    fallar({ status: 409, error: { mensaje: 'La cotización ya fue emitida.' } });
+    expect(mockDialogRef.disableClose).toBeFalse();
+    expect(component.errorMensaje).toBe('La cotización ya fue emitida.');
   });
 
   it('Los_dialogos_altos_tienen_scroll_propio_y_botones_visibles', () => {

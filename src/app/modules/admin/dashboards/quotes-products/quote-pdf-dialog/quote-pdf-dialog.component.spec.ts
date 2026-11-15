@@ -231,35 +231,54 @@ describe('QuotePdfDialogComponent', () => {
     expect(compiled.textContent).toContain('COT-2026-0101 v2');
   });
 
-  it('El_PDF_de_una_instantanea_muestra_la_fecha_de_emision_de_esa_version', async () => {
-    const instantaneaData = {
+  it('El_PDF_de_una_version_lee_la_instantanea_real_del_API', async () => {
+    // Forma EXACTA de GET api/CotizacionProductos/{id}/sgc/versiones/{n}
+    const detalleDelApi = {
+      version: 2,
+      estado: 'Vigente',
+      claseCambio: 'Menor',
+      cambioResumen: 'Ajuste de precio por volumen',
+      fechaEmision: '2026-11-20T14:30:00Z',
+      emitidaPorUsuarioId: 3,
+      emitidaPorNombre: 'Ana',
+      medioEnvio: 'Correo',
+      clienteReceptor: 'Receptor Oficial',
+      total: 278400,
+      moneda: 'MXN',
       instantanea: {
+        folio: 'COT-2026-0005',
         version: 2,
-        etapa: 'Emitida',
-        fechaEmision: new Date('2026-11-20T14:30:00Z'),
-        snapshot: {
-          folio: 'COT-2026-0005',
-          version: 2,
-          etapa: 'Emitida',
-          fechaEmision: new Date('2026-11-20T14:30:00Z'),
-          clienteReceptor: 'Receptor Oficial',
-          tipo: 'CS',
-          moneda: 'MXN',
-          subtotal: 1000,
-          iva: 160,
-          total: 1160,
-          partidas: [],
-        },
+        cabecera: { ...mockFullData.cotizacion, folio: undefined, createdDate: undefined },
+        sgc: mockFullData.sgc,
+        partidas: mockFullData.partidas,
+        totales: mockFullData.totales,
       },
     };
-    await createComponent(instantaneaData);
+    await createComponent({ instantanea: detalleDelApi, version: 2 });
     const compiled = fixture.nativeElement as HTMLElement;
 
-    const franja = compiled.querySelector('.franja-borrador');
-    expect(franja).toBeNull();
+    expect(compiled.querySelector('.franja-borrador')).toBeNull();
     expect(compiled.textContent).toContain('COT-2026-0005 v2');
+    expect(compiled.textContent).toContain('Empresa Cliente SA');
+    expect(compiled.textContent).toContain('Transformador 500 kVA');
+    expect(compiled.textContent).toContain('278,400.00');
+    expect(compiled.textContent).toContain('Planta Querétaro');
+    expect(compiled.querySelector('.seccion-alcance')).toBeTruthy();
     const fechaEl = compiled.querySelector('.fecha-documento');
-    expect(fechaEl).toBeTruthy();
     expect(fechaEl?.textContent).toContain('2026');
+  });
+
+  it('La_franja_BORRADOR_solo_sale_en_Borrador_EnRevision_y_Aprobada', async () => {
+    const etapas: [string, boolean][] = [
+      ['Borrador', true], ['EnRevision', true], ['Aprobada', true],
+      ['Emitida', false], ['EnSeguimiento', false], ['Ganada', false],
+      ['Perdida', false], ['Cancelada', false], ['Vencida', false], ['CerradaSinRespuesta', false],
+    ];
+    for (const [etapa, debeLlevarla] of etapas) {
+      TestBed.resetTestingModule();
+      await createComponent({ ...mockFullData, sgc: { ...mockFullData.sgc, etapa, version: 1 } });
+      const franja = (fixture.nativeElement as HTMLElement).querySelector('.franja-borrador');
+      expect(!!franja).withContext(etapa).toBe(debeLlevarla);
+    }
   });
 });

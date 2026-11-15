@@ -41,35 +41,33 @@
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
         <tr
           *ngFor="let v of versiones"
-          [class.version-vigente]="v.esVigente || v.version === versionActual"
-          [class.bg-emerald-50]="v.esVigente || v.version === versionActual"
+          [class.version-vigente]="esVigente(v)"
+          [class.bg-emerald-50]="esVigente(v)"
           class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
         >
           <td class="px-3 py-2.5 font-bold">
             <span class="inline-flex items-center gap-1.5">
               v{{ v.version }}
               <span
-                *ngIf="v.esVigente || v.version === versionActual"
+                *ngIf="esVigente(v)"
                 class="badge-vigente px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
               >
                 Vigente
               </span>
             </span>
           </td>
-          <td class="px-3 py-2.5">
-            <app-etapa-chip [etapa]="v.etapa"></app-etapa-chip>
-          </td>
+          <td class="px-3 py-2.5">{{ v.estado }}</td>
           <td class="px-3 py-2.5 font-medium">{{ v.claseCambio }}</td>
           <td class="px-3 py-2.5 max-w-xs break-words text-slate-700 dark:text-slate-300">
-            {{ v.resumenCambio || '—' }}
+            {{ v.cambioResumen || '—' }}
           </td>
           <td class="px-3 py-2.5">
             {{ v.fechaEmision ? (v.fechaEmision | date:'dd/MM/yyyy HH:mm') : '—' }}
           </td>
-          <td class="px-3 py-2.5">{{ v.medioEnvio || '—' }}</td>
+          <td class="px-3 py-2.5">{{ nombreMedio(v.medioEnvio) }}</td>
           <td class="px-3 py-2.5">{{ v.clienteReceptor || '—' }}</td>
           <td class="px-3 py-2.5 text-right font-medium">
-            {{ v.total | currency:'MXN':'symbol':'1.2-2' }}
+            {{ v.total | currency:(v.moneda || 'MXN'):'symbol':'1.2-2' }}
           </td>
           <td class="px-3 py-2.5 text-center">
             <button

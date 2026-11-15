@@ -187,10 +187,8 @@ export interface EmisionResultado {
 }
 
 export interface NuevaVersionDto {
-    claseCambio?: string;
-    cambioResumen?: string;
-    clase?: string;
-    resumen?: string;
+    claseCambio: string;
+    cambioResumen: string;
 }
 
 export interface NuevaVersionResultado {
@@ -198,25 +196,33 @@ export interface NuevaVersionResultado {
     etapa: string;
 }
 
+// Forma exacta de GET .../sgc/versiones (VersionCotizacionItemDto del API)
 export interface VersionSgcItem {
     version: number;
-    estado: string;
-    etapa?: string;
-    claseCambio: string;
+    estado: string; // 'Vigente' | 'Sustituida'
+    claseCambio: string; // 'Inicial' | 'Menor' | 'Alcance'
     cambioResumen?: string | null;
-    resumenCambio?: string | null;
     fechaEmision: string | Date;
-    emitidaPorUsuarioId?: number;
+    emitidaPorUsuarioId: number;
     emitidaPorNombre?: string | null;
-    medioEnvio?: string;
-    clienteReceptor?: string;
+    medioEnvio: string;
+    clienteReceptor: string;
     total: number;
-    moneda?: string;
-    esVigente?: boolean;
+    moneda: string;
+}
+
+// Lo congelado al emitir: CotizacionInstantaneaDto del API
+export interface InstantaneaSgc {
+    folio: string;
+    version: number;
+    cabecera?: Partial<CotizacionSgcCabecera> | null;
+    sgc?: Partial<CotizacionSgcDatos> | null;
+    partidas?: PartidaSgc[] | null;
+    totales?: TotalesSgc | null;
 }
 
 export interface VersionSgcDetalle extends VersionSgcItem {
-    instantanea?: any;
+    instantanea?: InstantaneaSgc | null;
 }
 
 export interface RespuestaObtenerSgc {

@@ -102,10 +102,10 @@ export class RevisionSgcComponent implements OnInit, OnChanges {
       },
     });
 
+    // El padre recarga la cotización y le pasa las revisiones nuevas: ngOnChanges pide el historial una sola vez
     dialogRef.afterClosed().subscribe((res) => {
       if (res && res.guardado) {
         this.recargar.emit();
-        this.cargarHistorial();
       }
     });
   }
@@ -129,10 +129,14 @@ export class RevisionSgcComponent implements OnInit, OnChanges {
       next: () => {
         this.volviendoBorrador = false;
         this.recargar.emit();
-        this.cargarHistorial();
       },
-      error: () => {
+      error: (err) => {
         this.volviendoBorrador = false;
+        Swal.fire({
+          icon: 'error',
+          title: 'No se pudo volver a borrador',
+          text: err?.error?.mensaje || 'Intenta de nuevo.',
+        });
       },
     });
   }

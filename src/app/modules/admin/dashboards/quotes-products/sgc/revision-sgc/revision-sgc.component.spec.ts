@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { SimpleChange } from '@angular/core';
 import { RevisionSgcComponent } from './revision-sgc.component';
 import { QuotesService } from '../../quotes-products.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import Swal from 'sweetalert2';
@@ -99,6 +100,44 @@ describe('RevisionSgcComponent', () => {
     expect(Swal.fire).toHaveBeenCalled();
     expect(mockQuotesService.volverBorrador).toHaveBeenCalledWith(42);
     expect(component.recargar.emit).toHaveBeenCalled();
+  });
+
+  it('Despues_de_revisar_avisa_al_padre_y_no_pide_el_historial_por_su_cuenta', () => {
+    spyOn(component.recargar, 'emit');
+    mockQuotesService.revisiones.calls.reset();
+
+    component.abrirDialogoRevision('Comercial');
+
+    expect(component.recargar.emit).toHaveBeenCalledTimes(1);
+    expect(mockQuotesService.revisiones).not.toHaveBeenCalled();
+  });
+
+  it('Cuando_el_padre_entrega_revisiones_nuevas_el_historial_se_pide_una_sola_vez', () => {
+    mockQuotesService.revisiones.calls.reset();
+
+    component.revisionesVigentes = [];
+    component.ngOnChanges({ revisionesVigentes: new SimpleChange([], [], false) });
+
+    expect(mockQuotesService.revisiones).toHaveBeenCalledTimes(1);
+  });
+
+  it('Un_error_al_volver_a_borrador_se_muestra_y_no_recarga', async () => {
+    spyOn(Swal, 'fire').and.returnValues(
+      Promise.resolve({ isConfirmed: true } as any),
+      Promise.resolve({} as any)
+    );
+    mockQuotesService.volverBorrador.and.returnValue(
+      throwError(() => ({ status: 409, error: { mensaje: 'La cotización ya no está en revisión.' } }))
+    );
+    spyOn(component.recargar, 'emit');
+
+    await component.onVolverBorrador();
+
+    expect(component.recargar.emit).not.toHaveBeenCalled();
+    expect(Swal.fire).toHaveBeenCalledWith(
+      jasmine.objectContaining({ icon: 'error', text: 'La cotización ya no está en revisión.' })
+    );
+    expect(component.volviendoBorrador).toBeFalse();
   });
 
   it('El_historial_marca_las_revisiones_descartadas', () => {

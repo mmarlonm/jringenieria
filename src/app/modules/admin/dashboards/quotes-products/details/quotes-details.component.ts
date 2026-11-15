@@ -40,7 +40,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
-import { EtapaChipComponent } from "../sgc/etapa-chip/etapa-chip.component";
+import { EtapaChipComponent, nombreEtapa } from "../sgc/etapa-chip/etapa-chip.component";
 import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
 import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component";
 import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
@@ -157,8 +157,7 @@ export class QuoteDetailsComponent implements OnInit {
   };
 
   get mensajeFranjaSoloLectura(): string {
-    const etapaTexto = this.etapa === 'EnRevision' ? 'en revisión' : `en ${this.etapa}`;
-    return `Esta cotización está ${etapaTexto} (v${this.version || 1}) y no se puede editar.`;
+    return `Esta cotización está «${nombreEtapa(this.etapa)}» (v${this.version || 1}) y no se puede editar.`;
   }
 
   constructor(
@@ -781,7 +780,7 @@ export class QuoteDetailsComponent implements OnInit {
     this.dialog.open(QuotePdfDialogComponent, {
       data: {
         cotizacion,
-        sgc: { ...this.sgcForm?.value, folio: this.folio, version: this.version },
+        sgc: { ...this.sgcForm?.value, folio: this.folio, version: this.version, etapa: this.etapa },
         partidas: partidasList,
         totales: this.totales,
       },

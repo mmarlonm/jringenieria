@@ -41,9 +41,10 @@
           rows="3"
           placeholder="Explique el motivo y alcance de esta nueva versión (mínimo 10 caracteres)..."
         ></textarea>
-        <mat-hint align="end">{{ resumenLength }} / 10 caracteres mínimo</mat-hint>
+        <mat-hint align="end">{{ resumenLength }} / 10 caracteres mínimo (máximo 1000)</mat-hint>
         <mat-error *ngIf="form.get('resumen')?.hasError('required')">El resumen del cambio es obligatorio</mat-error>
         <mat-error *ngIf="form.get('resumen')?.hasError('minlength')">Debe contener al menos 10 caracteres</mat-error>
+        <mat-error *ngIf="form.get('resumen')?.hasError('maxlength')">No puede pasar de 1000 caracteres</mat-error>
       </mat-form-field>
     </form>
   </mat-dialog-content>

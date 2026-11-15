@@ -1,6 +1,6 @@
 ﻿import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,6 +12,18 @@ import { NuevaVersionDto } from '../../quotes-products.types';
 
 export interface NuevaVersionDialogData {
   cotizacionId: number;
+}
+
+export const RESUMEN_MIN = 10;
+export const RESUMEN_MAX = 1000;
+
+// El API recorta el texto antes de validarlo: aquí también (diez espacios no son un resumen)
+export function resumenCambioValido(control: AbstractControl): ValidationErrors | null {
+  const largo = (control.value || '').trim().length;
+  if (largo === 0) return { required: true };
+  if (largo < RESUMEN_MIN) return { minlength: true };
+  if (largo > RESUMEN_MAX) return { maxlength: true };
+  return null;
 }
 
 @Component({
@@ -57,12 +69,12 @@ export class NuevaVersionDialogComponent {
   ) {
     this.form = this.fb.group({
       clase: ['Menor', Validators.required],
-      resumen: ['', [Validators.required, Validators.minLength(10)]],
+      resumen: ['', [resumenCambioValido]],
     });
   }
 
   get resumenLength(): number {
-    return this.form.get('resumen')?.value?.length || 0;
+    return (this.form.get('resumen')?.value || '').trim().length;
   }
 
   get puedeCrear(): boolean {
@@ -80,12 +92,13 @@ export class NuevaVersionDialogComponent {
     }
 
     this.guardando = true;
+    this.dialogRef.disableClose = true;
     this.errorMensaje = null;
     this.errores = [];
 
     const dto: NuevaVersionDto = {
-      clase: this.form.value.clase,
-      resumen: this.form.value.resumen.trim(),
+      claseCambio: this.form.value.clase,
+      cambioResumen: this.form.value.resumen.trim(),
     };
 
     this.quotesService.nuevaVersion(this.data.cotizacionId, dto).subscribe({
@@ -95,6 +108,7 @@ export class NuevaVersionDialogComponent {
       },
       error: (err) => {
         this.guardando = false;
+        this.dialogRef.disableClose = false;
         this.errorMensaje = err?.error?.mensaje || 'Error al generar nueva versión.';
         this.errores = err?.error?.errores || [];
       },

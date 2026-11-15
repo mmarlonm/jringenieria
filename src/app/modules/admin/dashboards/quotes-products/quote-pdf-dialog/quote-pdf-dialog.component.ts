@@ -8,6 +8,9 @@ import html2canvas from 'html2canvas';
 import { EMPRESA_COTIZACION } from '../sgc/empresa-cotizacion';
 import { CotizacionSgcDatos } from '../quotes-products.types';
 
+// Mientras la cotización esté en alguna de estas etapas aún no se ha enviado al cliente
+const ETAPAS_BORRADOR = ['Borrador', 'EnRevision', 'Aprobada'];
+
 @Component({
   selector: 'app-quote-pdf-dialog',
   templateUrl: './quote-pdf-dialog.component.html',
@@ -36,24 +39,22 @@ export class QuotePdfDialogComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.data?.instantanea) {
+      // Es la respuesta de GET .../sgc/versiones/{n}: los datos de la versión y, dentro de
+      // `instantanea`, lo congelado al emitir: { folio, version, cabecera, sgc, partidas, totales }
+      const detalle = this.data.instantanea;
+      const snap = detalle.instantanea || {};
       this.esInstantanea = true;
-      const snap = this.data.instantanea.snapshot || this.data.instantanea;
-      this.fechaEmisionInstantanea = this.data.instantanea.fechaEmision || snap.fechaEmision;
-      this.version = this.data.instantanea.version || snap.version || 1;
-      this.etapa = this.data.instantanea.etapa || this.data.instantanea.estado || snap.etapa || 'Emitida';
+      this.fechaEmisionInstantanea = detalle.fechaEmision || null;
+      this.version = detalle.version || snap.version || 1;
+      this.etapa = 'Emitida';
       this.cotizacion = {
+        ...(snap.cabecera || {}),
         folio: snap.folio,
-        nombreCliente: snap.clienteReceptor || snap.nombreCliente,
         createdDate: this.fechaEmisionInstantanea,
-        ...snap,
       };
-      this.sgc = snap;
+      this.sgc = { ...(snap.sgc || {}), folio: snap.folio, version: this.version } as any;
       this.partidas = snap.partidas || [];
-      this.totales = {
-        subtotal: snap.subtotal || 0,
-        iva: snap.iva || 0,
-        total: snap.total || 0,
-      };
+      this.totales = snap.totales || { subtotal: 0, iva: 0, total: detalle.total || 0 };
     } else if (this.data?.cotizacion) {
       this.cotizacion = this.data.cotizacion;
       this.sgc = this.data.sgc || null;
@@ -98,8 +99,7 @@ export class QuotePdfDialogComponent implements OnInit {
 
   get esBorrador(): boolean {
     if (this.esInstantanea) return false;
-    const etapasEmitidasOCerradas = ['Emitida', 'Aceptada', 'Rechazada', 'Cancelada', 'Vencida'];
-    return !etapasEmitidasOCerradas.includes(this.etapa);
+    return ETAPAS_BORRADOR.includes(this.etapa);
   }
 
   get fechaDocumento(): Date | string | null {

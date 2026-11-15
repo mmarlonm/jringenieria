@@ -1,10 +1,13 @@
 ﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SimpleChange } from '@angular/core';
 import { VersionesSgcComponent } from './versiones-sgc.component';
 import { QuotesService } from '../../quotes-products.service';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { QuotePdfDialogComponent } from '../../quote-pdf-dialog/quote-pdf-dialog.component';
+import { VersionSgcItem } from '../../quotes-products.types';
+import Swal from 'sweetalert2';
 
 describe('VersionesSgcComponent', () => {
   let component: VersionesSgcComponent;
@@ -12,40 +15,43 @@ describe('VersionesSgcComponent', () => {
   let mockQuotesService: any;
   let mockDialog: any;
 
-  const mockVersiones = [
+  // Forma EXACTA de GET api/CotizacionProductos/{id}/sgc/versiones (orden descendente por versión)
+  const versionesDelApi: VersionSgcItem[] = [
+    {
+      version: 2,
+      estado: 'Vigente',
+      claseCambio: 'Menor',
+      cambioResumen: 'Descuento 5% comercial',
+      fechaEmision: '2026-11-12T15:30:00Z',
+      emitidaPorUsuarioId: 3,
+      emitidaPorNombre: 'Ana',
+      medioEnvio: 'DocumentoControlado',
+      clienteReceptor: 'Ing. López',
+      total: 14250,
+      moneda: 'MXN',
+    },
     {
       version: 1,
-      estado: 'Emitida',
-      etapa: 'Emitida',
+      estado: 'Sustituida',
       claseCambio: 'Inicial',
-      resumenCambio: 'Versión inicial aprobada',
-      fechaEmision: new Date('2026-11-10T10:00:00Z'),
+      cambioResumen: null,
+      fechaEmision: '2026-11-10T10:00:00Z',
+      emitidaPorUsuarioId: 3,
+      emitidaPorNombre: 'Ana',
       medioEnvio: 'Correo',
       clienteReceptor: 'Ing. López',
       total: 15000,
-      esVigente: false,
-    },
-    {
-      version: 2,
-      estado: 'Emitida',
-      etapa: 'Emitida',
-      claseCambio: 'Menor',
-      resumenCambio: 'Descuento 5% comercial',
-      fechaEmision: new Date('2026-11-12T15:30:00Z'),
-      medioEnvio: 'WhatsApp',
-      clienteReceptor: 'Ing. López',
-      total: 14250,
-      esVigente: true,
+      moneda: 'MXN',
     },
   ];
 
   beforeEach(async () => {
     mockQuotesService = {
-      versiones: jasmine.createSpy('versiones').and.returnValue(of(mockVersiones)),
+      versiones: jasmine.createSpy('versiones').and.returnValue(of(versionesDelApi)),
       version: jasmine.createSpy('version').and.returnValue(
         of({
-          ...mockVersiones[1],
-          snapshot: { folio: 'COT-2026-0001', version: 2 },
+          ...versionesDelApi[0],
+          instantanea: { folio: 'COT-2026-0001', version: 2, cabecera: {}, sgc: {}, partidas: [], totales: { total: 14250 } },
         })
       ),
     };
@@ -68,6 +74,7 @@ describe('VersionesSgcComponent', () => {
     component = fixture.componentInstance;
     component.cotizacionId = 55;
     component.versionActual = 2;
+    component.etapa = 'Emitida';
     component.acciones = {
       editar: false,
       enviarRevision: false,
@@ -79,26 +86,44 @@ describe('VersionesSgcComponent', () => {
     fixture.detectChanges();
   });
 
-  it('La_tabla_de_versiones_destaca_la_vigente', () => {
+  it('La_tabla_de_versiones_destaca_la_vigente_segun_el_estado_del_API', () => {
     const filas = fixture.nativeElement.querySelectorAll('tbody tr');
     expect(filas.length).toBe(2);
 
-    const filaV1 = filas[0];
-    const filaV2 = filas[1];
+    const filaV2 = filas[0];
+    const filaV1 = filas[1];
 
-    expect(filaV1.classList.contains('version-vigente')).toBeFalse();
     expect(filaV2.classList.contains('version-vigente')).toBeTrue();
-
-    const badgeVigente = filaV2.querySelector('.badge-vigente');
-    expect(badgeVigente).toBeTruthy();
-    expect(badgeVigente.textContent.trim()).toBe('Vigente');
+    expect(filaV1.classList.contains('version-vigente')).toBeFalse();
+    expect(filaV2.querySelector('.badge-vigente').textContent.trim()).toBe('Vigente');
+    expect(filaV1.querySelector('.badge-vigente')).toBeNull();
+    expect(filaV1.textContent).toContain('Sustituida');
   });
 
-  it('Ver_PDF_abre_el_dialogo_con_la_instantanea_de_esa_version', () => {
+  it('La_vigente_es_la_que_dice_el_API_aunque_la_version_en_pantalla_sea_un_borrador_nuevo', () => {
+    // Se creó la v3 como borrador: la v2 sigue vigente hasta que se emita la v3
+    component.versionActual = 3;
+    component.etapa = 'Borrador';
+    fixture.detectChanges();
+
+    const filas = fixture.nativeElement.querySelectorAll('tbody tr');
+    expect(filas[0].classList.contains('version-vigente')).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('.badge-vigente').length).toBe(1);
+  });
+
+  it('Muestra_el_resumen_del_cambio_y_el_medio_con_su_nombre', () => {
+    const texto = fixture.nativeElement.textContent as string;
+    expect(texto).toContain('Descuento 5% comercial');
+    expect(texto).toContain('Documento controlado');
+    expect(texto).not.toContain('DocumentoControlado');
+    expect(texto).toContain('Ing. López');
+  });
+
+  it('Ver_PDF_abre_el_dialogo_con_el_detalle_de_esa_version', () => {
     const botonesVerPdf = fixture.nativeElement.querySelectorAll('.btn-ver-pdf');
     expect(botonesVerPdf.length).toBe(2);
 
-    botonesVerPdf[1].click();
+    botonesVerPdf[0].click();
 
     expect(mockQuotesService.version).toHaveBeenCalledWith(55, 2);
     expect(mockDialog.open).toHaveBeenCalledWith(
@@ -108,35 +133,57 @@ describe('VersionesSgcComponent', () => {
           version: 2,
           instantanea: jasmine.objectContaining({
             version: 2,
-            snapshot: { folio: 'COT-2026-0001', version: 2 },
+            instantanea: jasmine.objectContaining({ folio: 'COT-2026-0001' }),
           }),
         }),
       })
     );
   });
 
+  it('Si_falla_la_lectura_de_la_version_avisa_al_usuario', () => {
+    const swal = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({} as any));
+    mockQuotesService.version.and.returnValue(throwError(() => ({ status: 404, error: { mensaje: 'Versión no encontrada.' } })));
+
+    fixture.nativeElement.querySelectorAll('.btn-ver-pdf')[1].click();
+
+    expect(swal).toHaveBeenCalledWith(jasmine.objectContaining({ icon: 'error', text: 'Versión no encontrada.' }));
+    expect(component.cargandoPdf).toBeFalse();
+  });
+
+  it('Al_emitir_o_crear_una_version_la_lista_se_vuelve_a_pedir_una_sola_vez', () => {
+    mockQuotesService.versiones.calls.reset();
+
+    // El padre recarga la cotización: cambian la etapa y la versión en el mismo ciclo
+    component.etapa = 'Borrador';
+    component.versionActual = 3;
+    component.ngOnChanges({
+      etapa: new SimpleChange('Emitida', 'Borrador', false),
+      versionActual: new SimpleChange(2, 3, false),
+    });
+
+    expect(mockQuotesService.versiones).toHaveBeenCalledTimes(1);
+  });
+
+  it('Despues_de_Nueva_version_avisa_al_padre_y_no_pide_la_lista_por_su_cuenta', () => {
+    const recargar = jasmine.createSpy('recargar');
+    component.recargar.subscribe(recargar);
+    mockQuotesService.versiones.calls.reset();
+
+    component.abrirNuevaVersion();
+
+    expect(recargar).toHaveBeenCalledTimes(1);
+    expect(mockQuotesService.versiones).not.toHaveBeenCalled();
+  });
+
   it('Los_textos_del_API_se_muestran_escapados', () => {
     const xss = '<img src=x onerror=alert(1)>';
     component.versiones = [
-      {
-        version: 3,
-        estado: 'Emitida',
-        etapa: 'Emitida',
-        claseCambio: 'Alcance',
-        resumenCambio: xss,
-        fechaEmision: new Date(),
-        medioEnvio: 'Correo',
-        clienteReceptor: 'Receptor <script>alert(1)</script>',
-        total: 100,
-        esVigente: true,
-      },
+      { ...versionesDelApi[0], cambioResumen: xss, clienteReceptor: 'Receptor <script>alert(1)</script>' },
     ];
     fixture.detectChanges();
 
-    const img = fixture.nativeElement.querySelector('img[src="x"]');
-    expect(img).toBeNull();
-    const script = fixture.nativeElement.querySelector('script');
-    expect(script).toBeNull();
+    expect(fixture.nativeElement.querySelector('img[src="x"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('script')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain(xss);
   });
 });

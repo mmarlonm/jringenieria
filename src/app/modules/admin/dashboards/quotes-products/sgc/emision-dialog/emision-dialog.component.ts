@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { QuotesService } from '../../quotes-products.service';
-import { CatalogosSgc, EmitirCotizacionDto } from '../../quotes-products.types';
+import { CatalogoItem, CatalogosSgc, EmitirCotizacionDto } from '../../quotes-products.types';
 
 export interface EmisionDialogData {
   cotizacionId: number;
@@ -38,7 +38,13 @@ export class EmisionDialogComponent implements OnInit {
   errorMensaje: string | null = null;
   errores: string[] = [];
 
-  mediosEnvio: string[] = ['Correo', 'WhatsApp', 'En mano', 'Portal'];
+  // Respaldo con los códigos que acepta el API; lo normal es usar el catálogo recibido
+  mediosEnvio: CatalogoItem[] = [
+    { codigo: 'Correo', nombre: 'Correo' },
+    { codigo: 'ERP', nombre: 'ERP' },
+    { codigo: 'DocumentoControlado', nombre: 'Documento controlado' },
+    { codigo: 'Otro', nombre: 'Otro' },
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -47,16 +53,15 @@ export class EmisionDialogComponent implements OnInit {
     private quotesService: QuotesService
   ) {
     if (this.data?.catalogos?.mediosEnvio && this.data.catalogos.mediosEnvio.length > 0) {
-      this.mediosEnvio = this.data.catalogos.mediosEnvio.map((m: any) =>
-        typeof m === 'string' ? m : m.nombre || m.codigo
-      );
+      this.mediosEnvio = this.data.catalogos.mediosEnvio;
     }
 
-    const medioInicial = this.mediosEnvio.includes('Correo') ? 'Correo' : this.mediosEnvio[0] || 'Correo';
+    // El API valida el CÓDIGO del medio (p. ej. DocumentoControlado), no su nombre
+    const medioInicial = this.mediosEnvio.some((m) => m.codigo === 'Correo') ? 'Correo' : this.mediosEnvio[0]?.codigo || 'Correo';
 
     this.form = this.fb.group({
       medioEnvio: [medioInicial, Validators.required],
-      clienteReceptor: [this.data?.clienteReceptorPorDefecto || '', Validators.required],
+      clienteReceptor: [this.data?.clienteReceptorPorDefecto || '', [Validators.required, Validators.maxLength(200)]],
       correoReceptor: [this.data?.correoPorDefecto || ''],
     });
   }
@@ -89,6 +94,7 @@ export class EmisionDialogComponent implements OnInit {
     }
 
     this.guardando = true;
+    this.dialogRef.disableClose = true;
     this.errorMensaje = null;
     this.errores = [];
 
@@ -105,6 +111,7 @@ export class EmisionDialogComponent implements OnInit {
       },
       error: (err) => {
         this.guardando = false;
+        this.dialogRef.disableClose = false;
         this.errorMensaje = err?.error?.mensaje || 'Error al registrar la emisión de la cotización.';
         this.errores = err?.error?.errores || [];
       },

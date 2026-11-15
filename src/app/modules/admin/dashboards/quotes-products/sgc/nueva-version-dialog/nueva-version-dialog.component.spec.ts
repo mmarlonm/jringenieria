@@ -2,7 +2,7 @@
 import { NuevaVersionDialogComponent, NuevaVersionDialogData } from './nueva-version-dialog.component';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { QuotesService } from '../../quotes-products.service';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('NuevaVersionDialogComponent', () => {
@@ -69,12 +69,51 @@ describe('NuevaVersionDialogComponent', () => {
     component.crearVersion();
 
     expect(mockQuotesService.nuevaVersion).toHaveBeenCalledWith(99, {
-      clase: 'Alcance',
-      resumen: 'Se agregan 2 partidas de cableado estructurado',
+      claseCambio: 'Alcance',
+      cambioResumen: 'Se agregan 2 partidas de cableado estructurado',
     });
     expect(mockDialogRef.close).toHaveBeenCalledWith(
       jasmine.objectContaining({ guardado: true })
     );
+  });
+
+  it('El_resumen_de_solo_espacios_no_vale_y_se_manda_recortado', () => {
+    component.form.patchValue({ clase: 'Menor', resumen: '            ' });
+    expect(component.puedeCrear).toBeFalse();
+    expect(component.resumenLength).toBe(0);
+
+    component.form.patchValue({ resumen: '   Ajuste de precios por volumen   ' });
+    expect(component.puedeCrear).toBeTrue();
+    component.crearVersion();
+    expect(mockQuotesService.nuevaVersion).toHaveBeenCalledWith(99, {
+      claseCambio: 'Menor',
+      cambioResumen: 'Ajuste de precios por volumen',
+    });
+  });
+
+  it('El_resumen_no_puede_pasar_de_1000_caracteres_como_el_API', () => {
+    component.form.patchValue({ clase: 'Menor', resumen: 'x'.repeat(1001) });
+    expect(component.puedeCrear).toBeFalse();
+    component.form.patchValue({ resumen: 'x'.repeat(1000) });
+    expect(component.puedeCrear).toBeTrue();
+  });
+
+  it('Solo_se_ofrecen_las_clases_Menor_y_Alcance', () => {
+    expect(component.clasesDisponibles.map((c) => c.valor)).toEqual(['Menor', 'Alcance']);
+  });
+
+  it('No_se_puede_cerrar_el_dialogo_mientras_se_crea_la_version_y_se_libera_si_falla', () => {
+    mockDialogRef.disableClose = false;
+    let fallar!: (e: any) => void;
+    mockQuotesService.nuevaVersion.and.returnValue(new Observable((o) => { fallar = (e) => o.error(e); }));
+
+    component.form.patchValue({ clase: 'Menor', resumen: 'Ajuste de precio unitario' });
+    component.crearVersion();
+    expect(mockDialogRef.disableClose).toBeTrue();
+
+    fallar({ status: 409, error: { mensaje: 'Solo se puede crear una versión de una cotización emitida.' } });
+    expect(mockDialogRef.disableClose).toBeFalse();
+    expect(component.errorMensaje).toContain('cotización emitida');
   });
 
   it('Los_dialogos_devuelven_su_resultado_por_todas_las_vias_de_cierre', () => {
