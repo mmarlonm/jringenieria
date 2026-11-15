@@ -273,8 +273,24 @@
       </div>
     </mat-tab>
 
+    <!-- Pestaña Versiones -->
+    <mat-tab label="Versiones">
+      <div class="p-6">
+        <app-versiones-sgc
+          [cotizacionId]="quotesId"
+          [versionActual]="version || 1"
+          [acciones]="acciones"
+          (recargar)="loadQuotes(quotesId)"
+        ></app-versiones-sgc>
+      </div>
+    </mat-tab>
+
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
+    <button *ngIf="acciones.emitir" mat-raised-button color="accent" type="button" class="btn-registrar-envio" (click)="abrirEmisionDialog()">
+      <mat-icon class="mr-1">send</mat-icon>
+      Registrar envío
+    </button>
     <button *ngIf="acciones.enviarRevision" mat-raised-button color="accent" type="button" [disabled]="enviandoRevision || guardando" (click)="enviarARevision()">
       Enviar a revisión
     </button>

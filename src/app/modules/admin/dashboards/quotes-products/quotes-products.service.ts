@@ -140,7 +140,11 @@ export class QuotesService {
   }
 
   nuevaVersion(id: number, dto: NuevaVersionDto): Observable<NuevaVersionResultado> {
-    return this.http.post<NuevaVersionResultado>(`${this.apiUrl}/${id}/sgc/nueva-version`, dto);
+    const payload = {
+      claseCambio: dto.claseCambio || dto.clase || '',
+      cambioResumen: dto.cambioResumen || dto.resumen || '',
+    };
+    return this.http.post<NuevaVersionResultado>(`${this.apiUrl}/${id}/sgc/nueva-version`, payload);
   }
 
   revisiones(id: number): Observable<RevisionSgc[]> {

@@ -43,6 +43,8 @@ import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
 import { EtapaChipComponent } from "../sgc/etapa-chip/etapa-chip.component";
 import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
 import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component";
+import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
+import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
 import Swal from 'sweetalert2';
 import {
   AccionesSgc,
@@ -84,6 +86,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     EtapaChipComponent,
     RequerimientoSgcComponent,
     RevisionSgcComponent,
+    VersionesSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -577,6 +580,25 @@ export class QuoteDetailsComponent implements OnInit {
     } else {
       llamarEnviar();
     }
+  }
+
+  abrirEmisionDialog(): void {
+    const dialogRef = this.dialog.open(EmisionDialogComponent, {
+      width: '36rem',
+      maxWidth: '95vw',
+      data: {
+        cotizacionId: this.quotesId,
+        clienteReceptorPorDefecto: this.quotesForm.get('contacto')?.value || this.quotesForm.get('nombreCliente')?.value || '',
+        correoPorDefecto: this.quotesForm.get('correo')?.value || '',
+        catalogos: this.catalogos,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res && res.guardado) {
+        this.loadQuotes(this.quotesId);
+      }
+    });
   }
 
   sincronizarPartidasFormArray(partidas: PartidaSgc[]): void {

@@ -187,8 +187,10 @@ export interface EmisionResultado {
 }
 
 export interface NuevaVersionDto {
-    claseCambio: string;
-    cambioResumen: string;
+    claseCambio?: string;
+    cambioResumen?: string;
+    clase?: string;
+    resumen?: string;
 }
 
 export interface NuevaVersionResultado {
@@ -199,15 +201,18 @@ export interface NuevaVersionResultado {
 export interface VersionSgcItem {
     version: number;
     estado: string;
+    etapa?: string;
     claseCambio: string;
     cambioResumen?: string | null;
+    resumenCambio?: string | null;
     fechaEmision: string | Date;
-    emitidaPorUsuarioId: number;
+    emitidaPorUsuarioId?: number;
     emitidaPorNombre?: string | null;
-    medioEnvio: string;
-    clienteReceptor: string;
+    medioEnvio?: string;
+    clienteReceptor?: string;
     total: number;
-    moneda: string;
+    moneda?: string;
+    esVigente?: boolean;
 }
 
 export interface VersionSgcDetalle extends VersionSgcItem {

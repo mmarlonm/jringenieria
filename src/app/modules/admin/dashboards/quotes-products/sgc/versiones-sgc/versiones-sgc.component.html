@@ -1,0 +1,90 @@
+<div class="versiones-sgc-container space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100">Historial de versiones controladas</h3>
+      <p class="text-xs text-slate-500">Registro histórico de emisiones y cambios de alcance o precio.</p>
+    </div>
+
+    <!-- Botón Nueva versión -->
+    <div *ngIf="acciones?.nuevaVersion">
+      <button mat-flat-button color="primary" class="btn-nueva-version" (click)="abrirNuevaVersion()">
+        <mat-icon class="mr-1">add_circle</mat-icon>
+        Nueva versión
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="cargando" class="text-xs text-slate-400">
+    Cargando versiones...
+  </div>
+
+  <div *ngIf="!cargando && (!versiones || versiones.length === 0)" class="text-xs text-slate-400 italic">
+    No hay versiones adicionales registradas.
+  </div>
+
+  <!-- Tabla de versiones -->
+  <div *ngIf="versiones && versiones.length > 0" class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+    <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+      <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase font-medium">
+        <tr>
+          <th class="px-3 py-2.5">Versión</th>
+          <th class="px-3 py-2.5">Estado</th>
+          <th class="px-3 py-2.5">Clase</th>
+          <th class="px-3 py-2.5">Resumen de cambio</th>
+          <th class="px-3 py-2.5">Fecha de emisión</th>
+          <th class="px-3 py-2.5">Medio</th>
+          <th class="px-3 py-2.5">Receptor</th>
+          <th class="px-3 py-2.5 text-right">Total</th>
+          <th class="px-3 py-2.5 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        <tr
+          *ngFor="let v of versiones"
+          [class.version-vigente]="v.esVigente || v.version === versionActual"
+          [class.bg-emerald-50]="v.esVigente || v.version === versionActual"
+          class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+        >
+          <td class="px-3 py-2.5 font-bold">
+            <span class="inline-flex items-center gap-1.5">
+              v{{ v.version }}
+              <span
+                *ngIf="v.esVigente || v.version === versionActual"
+                class="badge-vigente px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+              >
+                Vigente
+              </span>
+            </span>
+          </td>
+          <td class="px-3 py-2.5">
+            <app-etapa-chip [etapa]="v.etapa"></app-etapa-chip>
+          </td>
+          <td class="px-3 py-2.5 font-medium">{{ v.claseCambio }}</td>
+          <td class="px-3 py-2.5 max-w-xs break-words text-slate-700 dark:text-slate-300">
+            {{ v.resumenCambio || '—' }}
+          </td>
+          <td class="px-3 py-2.5">
+            {{ v.fechaEmision ? (v.fechaEmision | date:'dd/MM/yyyy HH:mm') : '—' }}
+          </td>
+          <td class="px-3 py-2.5">{{ v.medioEnvio || '—' }}</td>
+          <td class="px-3 py-2.5">{{ v.clienteReceptor || '—' }}</td>
+          <td class="px-3 py-2.5 text-right font-medium">
+            {{ v.total | currency:'MXN':'symbol':'1.2-2' }}
+          </td>
+          <td class="px-3 py-2.5 text-center">
+            <button
+              mat-stroked-button
+              class="btn-ver-pdf !px-2 !py-1 text-xs"
+              (click)="verPdf(v.version)"
+              [disabled]="cargandoPdf"
+            >
+              <mat-icon class="mr-1 text-sm text-red-500">picture_as_pdf</mat-icon>
+              Ver PDF
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+

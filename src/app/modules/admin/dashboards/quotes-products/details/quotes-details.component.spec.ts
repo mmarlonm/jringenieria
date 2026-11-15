@@ -90,6 +90,10 @@ describe('QuoteDetailsComponent SGC', () => {
       requerimientosDisponibles: jasmine.createSpy('requerimientosDisponibles').and.returnValue(of([])),
       revisiones: jasmine.createSpy('revisiones').and.returnValue(of([])),
       volverBorrador: jasmine.createSpy('volverBorrador').and.returnValue(of({ etapa: 'Borrador' })),
+      emitir: jasmine.createSpy('emitir').and.returnValue(of({ folio: 'COT-2026-0001', version: 1 })),
+      nuevaVersion: jasmine.createSpy('nuevaVersion').and.returnValue(of({ version: 2, etapa: 'Borrador' })),
+      versiones: jasmine.createSpy('versiones').and.returnValue(of([])),
+      version: jasmine.createSpy('version').and.returnValue(of({})),
     };
 
     mockClientsService = {
@@ -853,6 +857,45 @@ describe('QuoteDetailsComponent SGC', () => {
     fixture.detectChanges();
 
     expect(component.soloLectura).toBeTrue();
+    expect(component.quotesForm.disabled).toBeTrue();
+  });
+
+  it('El_boton_Registrar_envio_solo_aparece_si_acciones_emitir', () => {
+    component.acciones = { editar: true, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
+    fixture.detectChanges();
+    let btnEmitir = fixture.nativeElement.querySelector('.btn-registrar-envio');
+    expect(btnEmitir).toBeNull();
+
+    component.acciones = { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: true, nuevaVersion: false };
+    fixture.detectChanges();
+    btnEmitir = fixture.nativeElement.querySelector('.btn-registrar-envio');
+    expect(btnEmitir).toBeTruthy();
+  });
+
+  it('Despues_de_emitir_se_recarga_y_queda_en_solo_lectura', () => {
+    const mockDialog = TestBed.inject(MatDialog) as any;
+    mockDialog.open.and.returnValue({
+      afterClosed: () => of({ guardado: true, data: { folio: 'COT-01', version: 1 } }),
+    });
+
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 15,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'Emitida' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: true },
+      })
+    );
+
+    component.quotesId = 15;
+    component.abrirEmisionDialog();
+    fixture.detectChanges();
+
+    expect(mockQuotesService.obtenerSgc).toHaveBeenCalledWith(15);
+    expect(component.soloLectura).toBeTrue();
+    expect(component.etapa).toBe('Emitida');
     expect(component.quotesForm.disabled).toBeTrue();
   });
 });

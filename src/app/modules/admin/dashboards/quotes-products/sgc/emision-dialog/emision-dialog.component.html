@@ -1,0 +1,59 @@
+<div class="p-6 max-w-lg">
+  <h2 mat-dialog-title class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+    <mat-icon class="text-primary">send</mat-icon>
+    Registrar envío de cotización
+  </h2>
+
+  <mat-dialog-content class="dialogo-alto">
+    <!-- Texto de ayuda obligatorio -->
+    <div class="p-3 mb-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-300 text-xs leading-relaxed flex items-start gap-2">
+      <mat-icon class="text-blue-500 text-sm mt-0.5">info</mat-icon>
+      <div>
+        Una cotización solo se considera emitida cuando se registra su envío; lo comentado verbalmente no cuenta.
+      </div>
+    </div>
+
+    <!-- Panel de error si falla -->
+    <div *ngIf="errorMensaje" class="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs">
+      <div class="font-semibold">{{ errorMensaje }}</div>
+      <ul *ngIf="errores?.length" class="list-disc pl-4 mt-1 space-y-0.5">
+        <li *ngFor="let e of errores">{{ e }}</li>
+      </ul>
+    </div>
+
+    <form [formGroup]="form" class="space-y-4 pt-2">
+      <!-- Medio de envío -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Medio de envío</mat-label>
+        <mat-select formControlName="medioEnvio">
+          <mat-option *ngFor="let m of mediosEnvio" [value]="m">{{ m }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('medioEnvio')?.hasError('required')">El medio de envío es obligatorio</mat-error>
+      </mat-form-field>
+
+      <!-- Cliente receptor -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Cliente receptor</mat-label>
+        <input matInput formControlName="clienteReceptor" placeholder="Nombre de la persona o cliente que recibe" />
+        <mat-error *ngIf="form.get('clienteReceptor')?.hasError('required')">El cliente receptor es obligatorio</mat-error>
+      </mat-form-field>
+
+      <!-- Correo receptor -->
+      <mat-form-field appearance="outline" class="w-full" *ngIf="form.get('medioEnvio')?.value === 'Correo'">
+        <mat-label>Correo receptor</mat-label>
+        <input matInput type="email" formControlName="correoReceptor" placeholder="ejemplo@cliente.com" />
+        <mat-error *ngIf="form.get('correoReceptor')?.hasError('required')">El correo receptor es obligatorio para envíos por correo</mat-error>
+        <mat-error *ngIf="form.get('correoReceptor')?.hasError('email')">Ingrese un formato de correo válido</mat-error>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="gap-2 pt-4">
+    <button mat-button type="button" (click)="cancelar()" [disabled]="guardando">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" (click)="emitir()" [disabled]="form.invalid || guardando" class="btn-emitir">
+      <mat-icon class="mr-1">send</mat-icon>
+      Registrar emisión
+    </button>
+  </mat-dialog-actions>
+</div>
+
