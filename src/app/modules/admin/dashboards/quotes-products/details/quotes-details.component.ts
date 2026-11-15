@@ -42,6 +42,7 @@ import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
 import { EtapaChipComponent } from "../sgc/etapa-chip/etapa-chip.component";
 import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
+import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component";
 import Swal from 'sweetalert2';
 import {
   AccionesSgc,
@@ -51,6 +52,7 @@ import {
   GuardarCotizacionSgc,
   PartidaSgc,
   RequerimientoResumen,
+  RevisionSgc,
   TotalesSgc
 } from "../quotes-products.types";
 import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
@@ -81,6 +83,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     AlcanceSgcComponent,
     EtapaChipComponent,
     RequerimientoSgcComponent,
+    RevisionSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -130,6 +133,8 @@ export class QuoteDetailsComponent implements OnInit {
     emitir: false,
     nuevaVersion: false,
   };
+  revisionesVigentes: RevisionSgc[] = [];
+  revisionesRequeridas: string[] = [];
   soloLectura: boolean = false;
   requerimientoVinculado: RequerimientoResumen | null = null;
   vinculoRequerimientoRemovido: boolean = false;
@@ -344,6 +349,8 @@ export class QuoteDetailsComponent implements OnInit {
           this.faltantes = sgcRes.faltantes || [];
           this.requerimientoVinculado = sgcRes.requerimiento || null;
           this.vinculoRequerimientoRemovido = false;
+          this.revisionesVigentes = sgcRes.revisiones || [];
+          this.revisionesRequeridas = sgcRes.revisionesRequeridas || [];
 
           this.acciones = sgcRes.acciones || {
             editar: true,

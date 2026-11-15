@@ -88,6 +88,8 @@ describe('QuoteDetailsComponent SGC', () => {
       ),
       enviarRevision: jasmine.createSpy('enviarRevision').and.returnValue(of({ etapa: 'EnRevision' })),
       requerimientosDisponibles: jasmine.createSpy('requerimientosDisponibles').and.returnValue(of([])),
+      revisiones: jasmine.createSpy('revisiones').and.returnValue(of([])),
+      volverBorrador: jasmine.createSpy('volverBorrador').and.returnValue(of({ etapa: 'Borrador' })),
     };
 
     mockClientsService = {

@@ -258,6 +258,21 @@
       ></app-requerimiento-sgc>
     </mat-tab>
 
+    <!-- Pestaña Revisión -->
+    <mat-tab label="Revisión">
+      <div class="p-6">
+        <app-revision-sgc
+          [cotizacionId]="quotesId"
+          [etapa]="etapa"
+          [revisionesRequeridas]="revisionesRequeridas"
+          [revisionesVigentes]="revisionesVigentes"
+          [acciones]="acciones"
+          [catalogos]="catalogos"
+          (recargar)="loadQuotes(quotesId)"
+        ></app-revision-sgc>
+      </div>
+    </mat-tab>
+
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
     <button *ngIf="acciones.enviarRevision" mat-raised-button color="accent" type="button" [disabled]="enviandoRevision || guardando" (click)="enviarARevision()">
