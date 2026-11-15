@@ -41,6 +41,8 @@ import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
 import { EtapaChipComponent } from "../sgc/etapa-chip/etapa-chip.component";
+import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
+import Swal from 'sweetalert2';
 import {
   AccionesSgc,
   CatalogosSgc,
@@ -48,6 +50,7 @@ import {
   CotizacionSgcDatos,
   GuardarCotizacionSgc,
   PartidaSgc,
+  RequerimientoResumen,
   TotalesSgc
 } from "../quotes-products.types";
 import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
@@ -77,6 +80,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     PartidasSgcComponent,
     AlcanceSgcComponent,
     EtapaChipComponent,
+    RequerimientoSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -127,6 +131,9 @@ export class QuoteDetailsComponent implements OnInit {
     nuevaVersion: false,
   };
   soloLectura: boolean = false;
+  requerimientoVinculado: RequerimientoResumen | null = null;
+  vinculoRequerimientoRemovido: boolean = false;
+  enviandoRevision: boolean = false;
   esHeredada: boolean = false;
   partidas: PartidaSgc[] = [];
   partidasFormArray: FormArray;
@@ -335,6 +342,8 @@ export class QuoteDetailsComponent implements OnInit {
           this.partidas = sgcRes.partidas || [];
           this.sincronizarPartidasFormArray(this.partidas);
           this.faltantes = sgcRes.faltantes || [];
+          this.requerimientoVinculado = sgcRes.requerimiento || null;
+          this.vinculoRequerimientoRemovido = false;
 
           this.acciones = sgcRes.acciones || {
             editar: true,
@@ -401,13 +410,19 @@ export class QuoteDetailsComponent implements OnInit {
     });
   }
 
-  saveQuotes(): void {
-    if (this.guardando) {
-      return;
+  onRequerimientoChange(req: RequerimientoResumen | null): void {
+    this.requerimientoVinculado = req;
+    if (req === null) {
+      this.vinculoRequerimientoRemovido = true;
+      this.sgcForm.get('requerimientoId')?.setValue(0);
+    } else {
+      this.vinculoRequerimientoRemovido = false;
+      this.sgcForm.get('requerimientoId')?.setValue(req.id);
     }
+    this.sgcForm.markAsDirty();
+  }
 
-    this.erroresGuardado = [];
-
+  armarDtoGuardar(): GuardarCotizacionSgc {
     const formVal = this.quotesForm.value;
     const cotizacion: CotizacionSgcCabecera = {
       cotizacionProductosId: formVal.cotizacionProductosId || this.quotesId || 0,
@@ -426,23 +441,38 @@ export class QuoteDetailsComponent implements OnInit {
     };
 
     const sgcVal = this.sgcForm.value;
+    let reqId: number | null | undefined = sgcVal.requerimientoId;
+    if (this.vinculoRequerimientoRemovido) {
+      reqId = 0;
+    } else if (this.requerimientoVinculado) {
+      reqId = this.requerimientoVinculado.id;
+    }
+
     const sgc: CotizacionSgcDatos = {
       ...sgcVal,
+      requerimientoId: reqId,
       entregables: sgcVal.entregables || [],
     };
 
-    // Siempre lo que hay en la tabla (aunque este vacia): nunca se reponen los detalles heredados de CONTPAQi
     const partidasEnviar: PartidaSgc[] =
       this.partidasFormArray && this.partidasFormArray.length > 0
         ? this.partidasFormArray.value
         : (this.partidas || []);
 
-    const dto: GuardarCotizacionSgc = {
+    return {
       cotizacion,
       sgc,
       partidas: partidasEnviar || [],
     };
+  }
 
+  saveQuotes(): void {
+    if (this.guardando) {
+      return;
+    }
+
+    this.erroresGuardado = [];
+    const dto = this.armarDtoGuardar();
     this.guardando = true;
 
     this.quotesService.guardarSgc(dto).subscribe({
@@ -467,6 +497,79 @@ export class QuoteDetailsComponent implements OnInit {
         }
       },
     });
+  }
+
+  async enviarARevision(): Promise<void> {
+    if (this.enviandoRevision) {
+      return;
+    }
+
+    this.enviandoRevision = true;
+
+    const confirmacion = await Swal.fire({
+      title: '¿Enviar a revisión?',
+      text: 'Esta cotización pasará al equipo de revisión y no se podrá modificar.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, enviar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (!confirmacion?.isConfirmed) {
+      this.enviandoRevision = false;
+      return;
+    }
+
+    this.erroresGuardado = [];
+
+    const hayCambios = this.quotesForm.dirty || this.sgcForm.dirty || (this.partidasFormArray && this.partidasFormArray.dirty);
+
+    const llamarEnviar = () => {
+      const id = this.quotesId || this.quotesForm.get('cotizacionProductosId')?.value || 0;
+      this.quotesService.enviarRevision(id).subscribe({
+        next: () => {
+          this.enviandoRevision = false;
+          this._chatNotificationService.showSuccess('Éxito', 'Cotización enviada a revisión.', 3000);
+          this.loadQuotes(id);
+        },
+        error: (err) => {
+          this.enviandoRevision = false;
+          if (err.status === 400 && err.error?.errores?.length > 0) {
+            this.erroresGuardado = err.error.errores;
+          } else {
+            const msg = err.error?.mensaje || 'No se pudo enviar la cotización a revisión.';
+            this.erroresGuardado = [msg];
+            this._chatNotificationService.showError('Opps', msg, 5000);
+          }
+        },
+      });
+    };
+
+    if (hayCambios) {
+      const dto = this.armarDtoGuardar();
+      this.quotesService.guardarSgc(dto).subscribe({
+        next: (res) => {
+          const id = this.quotesId || res?.data?.cotizacionProductosId || 0;
+          this.quotesId = id;
+          this.quotesForm.markAsPristine();
+          this.sgcForm.markAsPristine();
+          if (this.partidasFormArray) this.partidasFormArray.markAsPristine();
+          llamarEnviar();
+        },
+        error: (err) => {
+          this.enviandoRevision = false;
+          if (err.status === 400 && err.error?.errores?.length > 0) {
+            this.erroresGuardado = err.error.errores;
+          } else {
+            const msg = err.error?.mensaje || 'No se pudo guardar la cotización antes de enviar a revisión.';
+            this.erroresGuardado = [msg];
+            this._chatNotificationService.showError('Opps', msg, 5000);
+          }
+        },
+      });
+    } else {
+      llamarEnviar();
+    }
   }
 
   sincronizarPartidasFormArray(partidas: PartidaSgc[]): void {

@@ -249,9 +249,21 @@
       </div>
     </mat-tab>
 
+    <!-- Pestaña Requerimiento -->
+    <mat-tab label="Requerimiento">
+      <app-requerimiento-sgc
+        [requerimiento]="requerimientoVinculado"
+        [soloLectura]="soloLectura"
+        (requerimientoChange)="onRequerimientoChange($event)"
+      ></app-requerimiento-sgc>
+    </mat-tab>
+
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
-    <button *ngIf="acciones.editar" mat-raised-button color="primary" type="button" [disabled]="guardando" (click)="saveQuotes()">
+    <button *ngIf="acciones.enviarRevision" mat-raised-button color="accent" type="button" [disabled]="enviandoRevision || guardando" (click)="enviarARevision()">
+      Enviar a revisión
+    </button>
+    <button *ngIf="acciones.editar" mat-raised-button color="primary" type="button" [disabled]="guardando || enviandoRevision" (click)="saveQuotes()">
       Guardar
     </button>
     <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/quote-products'])">
