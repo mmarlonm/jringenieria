@@ -40,7 +40,9 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
+import { EtapaChipComponent } from "../sgc/etapa-chip/etapa-chip.component";
 import {
+  AccionesSgc,
   CatalogosSgc,
   CotizacionSgcCabecera,
   CotizacionSgcDatos,
@@ -74,6 +76,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     CondicionesSgcComponent,
     PartidasSgcComponent,
     AlcanceSgcComponent,
+    EtapaChipComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -114,6 +117,16 @@ export class QuoteDetailsComponent implements OnInit {
   guardando: boolean = false;
   folio: string | null = null;
   version: number | null = null;
+  etapa: string = 'Borrador';
+  acciones: AccionesSgc = {
+    editar: true,
+    enviarRevision: false,
+    volverBorrador: false,
+    revisar: [],
+    emitir: false,
+    nuevaVersion: false,
+  };
+  soloLectura: boolean = false;
   esHeredada: boolean = false;
   partidas: PartidaSgc[] = [];
   partidasFormArray: FormArray;
@@ -127,6 +140,11 @@ export class QuoteDetailsComponent implements OnInit {
     margenBajo: false,
     partidasSinCosto: 0,
   };
+
+  get mensajeFranjaSoloLectura(): string {
+    const etapaTexto = this.etapa === 'EnRevision' ? 'en revisión' : `en ${this.etapa}`;
+    return `Esta cotización está ${etapaTexto} (v${this.version || 1}) y no se puede editar.`;
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -318,16 +336,27 @@ export class QuoteDetailsComponent implements OnInit {
           this.sincronizarPartidasFormArray(this.partidas);
           this.faltantes = sgcRes.faltantes || [];
 
+          this.acciones = sgcRes.acciones || {
+            editar: true,
+            enviarRevision: false,
+            volverBorrador: false,
+            revisar: [],
+            emitir: false,
+            nuevaVersion: false,
+          };
+
           if (sgcRes.sgc) {
             this.esHeredada = false;
             this.folio = sgcRes.sgc.folio;
             this.version = sgcRes.sgc.version;
+            this.etapa = sgcRes.sgc.etapa || 'Borrador';
             this.sgcForm.patchValue(sgcRes.sgc);
             this.actualizarValidacionTipoCambio(sgcRes.sgc.moneda);
           } else {
             this.esHeredada = !!sgcRes.partidasHeredadas;
             this.folio = null;
             this.version = null;
+            this.etapa = 'Borrador';
             this.sgcForm.patchValue({
               tipo: 'CS',
               moneda: 'MXN',
@@ -336,6 +365,18 @@ export class QuoteDetailsComponent implements OnInit {
               entregables: [],
             });
             this.actualizarValidacionTipoCambio('MXN');
+          }
+
+          if (!this.acciones.editar) {
+            this.soloLectura = true;
+            this.quotesForm.disable({ emitEvent: false });
+            this.sgcForm.disable({ emitEvent: false });
+            this.partidasFormArray.disable({ emitEvent: false });
+          } else {
+            this.soloLectura = false;
+            this.quotesForm.enable({ emitEvent: false });
+            this.sgcForm.enable({ emitEvent: false });
+            this.partidasFormArray.enable({ emitEvent: false });
           }
 
           if (sgcRes.totales) {

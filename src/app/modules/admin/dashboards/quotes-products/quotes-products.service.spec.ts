@@ -227,4 +227,73 @@ describe('QuotesService SGC', () => {
         expect(errorCapturado.status).toBe(400);
         expect(errorCapturado.error.mensaje).toBe('Datos inválidos');
     });
+
+    it('requerimientosDisponibles_hace_GET_a_requerimientos-disponibles', () => {
+        service.requerimientosDisponibles('REQ').subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/requerimientos-disponibles?q=REQ`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('enviarRevision_hace_POST_a_sgc_enviar-revision', () => {
+        service.enviarRevision(42).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/enviar-revision`);
+        expect(req.request.method).toBe('POST');
+        req.flush({ etapa: 'EnRevision' });
+    });
+
+    it('volverBorrador_hace_POST_a_sgc_volver-borrador', () => {
+        service.volverBorrador(42).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/volver-borrador`);
+        expect(req.request.method).toBe('POST');
+        req.flush({ etapa: 'Borrador' });
+    });
+
+    it('registrarRevision_hace_POST_a_sgc_revisiones', () => {
+        const dto = { rol: 'Comercial', resultado: 'Aprobada', checklist: { CorrespondeAlRequerimiento: true } };
+        service.registrarRevision(42, dto as any).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/revisiones`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ rol: 'Comercial', resultado: 'Aprobada' });
+    });
+
+    it('emitir_hace_POST_a_sgc_emitir', () => {
+        const dto = { medioEnvio: 'Correo', clienteReceptor: 'Juan', correoReceptor: 'j@test.com' };
+        service.emitir(42, dto).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/emitir`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ folio: 'COT-01', version: 1, fechaEmision: new Date() });
+    });
+
+    it('nuevaVersion_hace_POST_a_sgc_nueva-version', () => {
+        const dto = { claseCambio: 'Menor', cambioResumen: 'Ajuste de precios' };
+        service.nuevaVersion(42, dto).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/nueva-version`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ version: 2, etapa: 'Borrador' });
+    });
+
+    it('revisiones_hace_GET_a_sgc_revisiones', () => {
+        service.revisiones(42).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/revisiones`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('versiones_hace_GET_a_sgc_versiones', () => {
+        service.versiones(42).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/versiones`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('version_hace_GET_a_sgc_versiones_numero', () => {
+        service.version(42, 2).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/versiones/2`);
+        expect(req.request.method).toBe('GET');
+        req.flush({ version: 2 });
+    });
 });

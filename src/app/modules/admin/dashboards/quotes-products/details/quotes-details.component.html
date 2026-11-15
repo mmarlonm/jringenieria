@@ -1,11 +1,22 @@
 <div class="absolute inset-0 flex flex-col overflow-hidden p-6">
-  <h1 class="text-2xl font-bold mb-4">
-    {{ quotesId ? "Editar Cotización" : "Nueva Cotización" }}
+  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <div class="flex items-center gap-3 flex-wrap">
+      <h1 class="text-2xl font-bold flex items-center gap-2 m-0">
+        <span>{{ quotesId ? "Editar Cotización" : "Nueva Cotización" }}</span>
+        <span *ngIf="folio" class="text-gray-500 font-normal text-lg ml-2">{{ folio }} v{{ version || 1 }}</span>
+      </h1>
+      <app-etapa-chip *ngIf="quotesId" [etapa]="etapa" class="etapa-chip-header"></app-etapa-chip>
+    </div>
 
     <button mat-flat-button color="accent" (click)="openCotizacionPreview()">
       <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
     </button>
-  </h1>
+  </div>
+
+  <!-- Franja de sólo lectura cuando la cotización no es editable -->
+  <div *ngIf="soloLectura" class="franja-solo-lectura bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 text-amber-800">
+    {{ mensajeFranjaSoloLectura }}
+  </div>
 
   <!-- Alerta de errores de validación del guardado (400 / error) -->
   <div *ngIf="erroresGuardado.length > 0" class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 text-red-700" role="alert">
@@ -240,7 +251,7 @@
 
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
-    <button mat-raised-button color="primary" type="button" [disabled]="guardando" (click)="saveQuotes()">
+    <button *ngIf="acciones.editar" mat-raised-button color="primary" type="button" [disabled]="guardando" (click)="saveQuotes()">
       Guardar
     </button>
     <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/quote-products'])">

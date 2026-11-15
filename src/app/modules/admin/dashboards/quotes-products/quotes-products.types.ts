@@ -11,6 +11,12 @@ export interface CatalogosSgc {
     tiposConcepto: CatalogoItem[];
     entregables: CatalogoItem[];
     ivaTasa: number;
+    etapas?: CatalogoItem[];
+    mediosEnvio?: CatalogoItem[];
+    roles?: CatalogoItem[];
+    puntosRevision?: CatalogoItem[];
+    puntosRequeridosPorRol?: { [rol: string]: string[] };
+    clasesCambio?: string[];
 }
 
 export interface CotizacionSgcCabecera {
@@ -30,6 +36,7 @@ export interface CotizacionSgcCabecera {
 }
 
 export interface CotizacionSgcDatos {
+    requerimientoId?: number | null;
     tipo: string;
     moneda: string;
     tipoCambio?: number | null;
@@ -61,6 +68,7 @@ export interface CotizacionSgcDatos {
 export interface CotizacionSgcVista extends CotizacionSgcDatos {
     folio: string;
     version: number;
+    etapa: string;
     subtotal: number;
     iva: number;
     total: number;
@@ -68,6 +76,14 @@ export interface CotizacionSgcVista extends CotizacionSgcDatos {
     creadoPorNombre?: string | null;
     fechaCreacion: string | Date;
     fechaModificacion?: string | Date | null;
+    fechaPrimeraEmision?: string | Date | null;
+    fechaEmision?: string | Date | null;
+    fechaVencimiento?: string | Date | null;
+    medioEnvio?: string | null;
+    clienteReceptor?: string | null;
+    correoReceptor?: string | null;
+    claseCambioVersion?: string | null;
+    cambioResumen?: string | null;
 }
 
 export interface PartidaSgc {
@@ -118,6 +134,86 @@ export interface RespuestaGuardadoSgc {
     };
 }
 
+export interface AccionesSgc {
+    editar: boolean;
+    enviarRevision: boolean;
+    volverBorrador: boolean;
+    revisar: string[];
+    emitir: boolean;
+    nuevaVersion: boolean;
+}
+
+export interface RequerimientoResumen {
+    id: number;
+    folio: string;
+    empresa?: string | null;
+    nombreContacto?: string | null;
+    estatus: string;
+    fechaCalificacion?: string | Date | null;
+    descripcion?: string | null;
+}
+
+export interface RegistrarRevisionDto {
+    rol: string;
+    resultado: string;
+    checklist?: { [codigo: string]: boolean };
+    comentarios?: string | null;
+}
+
+export interface RevisionSgc {
+    id: number;
+    version: number;
+    rol: string;
+    resultado: string;
+    usuarioId: number;
+    usuarioNombre?: string | null;
+    fecha: string | Date;
+    comentarios?: string | null;
+    checklist?: { [codigo: string]: boolean };
+    descartada: boolean;
+}
+
+export interface EmitirCotizacionDto {
+    medioEnvio: string;
+    clienteReceptor: string;
+    correoReceptor?: string | null;
+}
+
+export interface EmisionResultado {
+    folio: string;
+    version: number;
+    fechaEmision: string | Date;
+    fechaVencimiento?: string | Date | null;
+}
+
+export interface NuevaVersionDto {
+    claseCambio: string;
+    cambioResumen: string;
+}
+
+export interface NuevaVersionResultado {
+    version: number;
+    etapa: string;
+}
+
+export interface VersionSgcItem {
+    version: number;
+    estado: string;
+    claseCambio: string;
+    cambioResumen?: string | null;
+    fechaEmision: string | Date;
+    emitidaPorUsuarioId: number;
+    emitidaPorNombre?: string | null;
+    medioEnvio: string;
+    clienteReceptor: string;
+    total: number;
+    moneda: string;
+}
+
+export interface VersionSgcDetalle extends VersionSgcItem {
+    instantanea?: any;
+}
+
 export interface RespuestaObtenerSgc {
     cotizacionProductosId: number;
     sgc: CotizacionSgcVista | null;
@@ -125,6 +221,10 @@ export interface RespuestaObtenerSgc {
     partidasHeredadas: boolean;
     totales: TotalesSgc;
     faltantes: string[];
+    requerimiento?: RequerimientoResumen | null;
+    revisionesRequeridas?: string[];
+    revisiones?: RevisionSgc[];
+    acciones?: AccionesSgc;
 }
 
 export interface ResumenSgc {
@@ -134,6 +234,11 @@ export interface ResumenSgc {
     version: number;
     total: number;
     moneda: string;
+    etapa?: string;
+    fechaEmision?: string | Date | null;
+    fechaVencimiento?: string | Date | null;
+    creadoPorNombre?: string | null;
+    requerimientoFolio?: string | null;
 }
 
 export type ExistenciaMaterial = ProductoBuscadorDto;
