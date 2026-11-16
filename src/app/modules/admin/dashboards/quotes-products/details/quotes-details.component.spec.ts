@@ -10,9 +10,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import Swal from 'sweetalert2';
-import { CatalogosSgc, RespuestaObtenerSgc } from '../quotes-products.types';
+import { CatalogosSgc, RespuestaObtenerSgc, EncabezadoCotizacionSgc, CotizacionSgcVista, PartidaSgc } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
+import { By } from '@angular/platform-browser';
+import { MatSelect } from '@angular/material/select';
 
 registerLocaleData(localeEs);
 
@@ -70,6 +72,24 @@ describe('QuoteDetailsComponent SGC', () => {
       obtenerSgc: jasmine.createSpy('obtenerSgc').and.returnValue(
         of({
           cotizacionProductosId: 10,
+          cotizacion: {
+            cotizacionProductosId: 10,
+            clienteId: 1,
+            unidadDeNegocioId: 2,
+            usuarioId: 7,
+            requisitosEspeciales: false,
+            createdDate: '2026-11-13T10:00:00Z',
+            updatedDate: null,
+            nombreCliente: 'Juan Perez',
+            nombreEmpresa: 'Empresa Demo SA',
+            correo: 'juan@empresa.com',
+            telefono: '4421234567',
+            rfc: 'EDM200101AA1',
+            direccionCompleta: 'Av Central 123',
+            estado: 'Querétaro',
+            estatus: 1,
+            observaciones: 'Ninguna',
+          },
           sgc: null,
           partidas: [],
           partidasHeredadas: false,
@@ -316,6 +336,15 @@ describe('QuoteDetailsComponent SGC', () => {
 
     const mockRes: RespuestaObtenerSgc = {
       cotizacionProductosId: 42,
+      cotizacion: {
+        cotizacionProductosId: 42,
+        clienteId: 1,
+        unidadDeNegocioId: 2,
+        usuarioId: 7,
+        requisitosEspeciales: false,
+        createdDate: '2026-11-14T10:00:00Z',
+        updatedDate: null,
+      } as any,
       sgc: sgcVista,
       partidas: [
         {
@@ -359,6 +388,15 @@ describe('QuoteDetailsComponent SGC', () => {
   it('Una_cotizacion_sin_registro_abre_con_valores_por_defecto_y_el_aviso_de_heredadas', () => {
     const mockRes: RespuestaObtenerSgc = {
       cotizacionProductosId: 55,
+      cotizacion: {
+        cotizacionProductosId: 55,
+        clienteId: 1,
+        unidadDeNegocioId: 2,
+        usuarioId: 7,
+        requisitosEspeciales: false,
+        createdDate: '2026-11-14T10:00:00Z',
+        updatedDate: null,
+      } as any,
       sgc: null,
       partidas: [
         {
@@ -913,6 +951,15 @@ describe('QuoteDetailsComponent SGC', () => {
     mockQuotesService.obtenerSgc.and.returnValue(
       of({
         cotizacionProductosId: 15,
+        cotizacion: {
+          cotizacionProductosId: 15,
+          clienteId: 1,
+          unidadDeNegocioId: 2,
+          usuarioId: 7,
+          requisitosEspeciales: false,
+          createdDate: '2026-11-14T10:00:00Z',
+          updatedDate: null,
+        } as any,
         sgc: { folio: 'COT-01', version: 1, etapa: 'Emitida' } as any,
         partidas: [],
         totales: { subtotal: 0, iva: 0, total: 0 } as any,
@@ -929,5 +976,389 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(component.soloLectura).toBeTrue();
     expect(component.etapa).toBe('Emitida');
     expect(component.quotesForm.disabled).toBeTrue();
+  });
+
+  describe('Tarea F15-0: Reabrir cotización con contrato exacto del API', () => {
+    // Copiado de CotizacionSgcEncabezadoVistaDto (jr_api/DTOs/CotizacionesSgc/CotizacionSgcDtos.cs)
+    const encabezadoDtoExacto: EncabezadoCotizacionSgc = {
+      cotizacionProductosId: 10,
+      clienteId: 5,
+      unidadDeNegocioId: 2,
+      usuarioId: 7,
+      requisitosEspeciales: true,
+      createdDate: '2026-11-13T10:00:00Z',
+      updatedDate: '2026-11-14T12:00:00Z',
+      nombreCliente: 'Cliente Ficticio',
+      nombreEmpresa: 'Empresa Ficticia SA de CV',
+      correo: 'contacto@ficticia.com',
+      telefono: '4421234567',
+      rfc: 'CFI200101XYZ',
+      direccionCompleta: 'Av Tecnologico 100, Queretaro',
+      estado: 'Querétaro',
+      estatus: 3,
+      observaciones: 'Entrega prioritaria en nave 2',
+    };
+
+    // Copiado de CotizacionSgcVistaDto y PartidaSgcDto (jr_api/DTOs/CotizacionesSgc/CotizacionSgcDtos.cs)
+    const sgcDtoExacto: CotizacionSgcVista = {
+      folio: 'COT-2026-0010',
+      version: 1,
+      etapa: 'Emitida',
+      subtotal: 1000,
+      iva: 160,
+      total: 1160,
+      creadoPorUsuarioId: 7,
+      creadoPorNombre: 'Vendedor Demo',
+      fechaCreacion: '2026-11-13T10:00:00Z',
+      fechaModificacion: null,
+      fechaPrimeraEmision: '2026-11-14T10:00:00Z',
+      fechaEmision: '2026-11-14T10:00:00Z',
+      fechaVencimiento: '2026-11-29T10:00:00Z',
+      medioEnvio: 'Correo',
+      clienteReceptor: 'Ing. Receptor',
+      correoReceptor: 'receptor@cliente.com',
+      claseCambioVersion: 'Inicial',
+      cambioResumen: null,
+      requerimientoId: 42,
+      tipo: 'CT',
+      moneda: 'USD',
+      tipoCambio: 19.5,
+      vigenciaDias: 15,
+      penalizacionCancelacion: '10% anticipo',
+      formaPago: 'Transferencia',
+      condicionesPago: '30 días de crédito',
+      puntoEntrega: 'Planta Querétaro',
+      condicionesEntrega: 'FOB',
+      cuentaDeposito: 'BBVA 1234567890',
+      exclusiones: 'No incluye maniobras',
+      observacionesRelevantes: 'Garantía 1 año',
+      contactoNombre: 'Ing. Receptor',
+      contactoCorreo: 'receptor@cliente.com',
+      contactoTelefono: '4429876543',
+      anexosTecnicos: 'Ficha técnica v1',
+      alcanceTecnico: 'Suministro e instalación',
+      recursosRequeridos: 'Grúa 5 ton',
+      personalInvolucrado: '2 técnicos',
+      tiemposEstimados: '3 semanas',
+      supuestosOperativos: 'Área despejada',
+      condicionesEjecucion: 'Turno diurno',
+      riesgosLimitaciones: 'Lluvia',
+      entregables: ['Planos', 'Certificado'],
+      costosIndirectos: 50,
+      margenAutorizadoPorcentaje: 20,
+    };
+
+    const partidasDtoExacto: PartidaSgc[] = [
+      {
+        partida: 1,
+        tipoConcepto: 'Material',
+        materialServicio: 'Cable uso rudo 3x10',
+        descripcion: 'Bobina 100m',
+        codigoProducto: 'CAB-001',
+        productoId: 101,
+        unidad: 'MTR',
+        cantidad: 100,
+        precioUnitario: 10,
+        descuento: 0,
+        costoUnitario: 6,
+        tiempoEntregaDias: 5,
+        notas: 'Entrega por tramos',
+        heredada: false,
+      },
+    ];
+
+    it('Reabrir_asigna_cada_campo_del_encabezado_a_su_control', () => {
+      // Cita CotizacionSgcEncabezadoVistaDto
+      const respuestaApi: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: encabezadoDtoExacto,
+        sgc: sgcDtoExacto,
+        partidas: partidasDtoExacto,
+        partidasHeredadas: false,
+        totales: { subtotal: 1000, iva: 160, total: 1160, costoDirecto: 600, utilidad: 400, margenPorcentaje: 40, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaApi));
+
+      component.loadQuotes(10);
+      fixture.detectChanges();
+
+      expect(component.quotesForm.get('cotizacionProductosId')?.value).toBe(10);
+      expect(component.quotesForm.get('clienteId')?.value).toBe(5);
+      expect(component.quotesForm.get('unidadDeNegocioId')?.value).toBe(2);
+      expect(component.quotesForm.get('usuarioId')?.value).toBe(7);
+      expect(component.quotesForm.get('requisitosEspeciales')?.value).toBe(true);
+      expect(component.quotesForm.get('createdDate')?.value).toBe('2026-11-13T10:00:00Z');
+      expect(component.quotesForm.get('updatedDate')?.value).toBe('2026-11-14T12:00:00Z');
+      expect(component.quotesForm.get('nombreCliente')?.value).toBe('Cliente Ficticio');
+      expect(component.quotesForm.get('nombreEmpresa')?.value).toBe('Empresa Ficticia SA de CV');
+      expect(component.quotesForm.get('correo')?.value).toBe('contacto@ficticia.com');
+      expect(component.quotesForm.get('telefono')?.value).toBe('4421234567');
+      expect(component.quotesForm.get('rfc')?.value).toBe('CFI200101XYZ');
+      expect(component.quotesForm.get('direccionCompleta')?.value).toBe('Av Tecnologico 100, Queretaro');
+      expect(component.quotesForm.get('estado')?.value).toBe('Querétaro');
+      expect(component.quotesForm.get('estatus')?.value).toBe(3);
+      expect(component.quotesForm.get('observaciones')?.value).toBe('Entrega prioritaria en nave 2');
+      expect(component.cotizacion).toEqual(encabezadoDtoExacto);
+    });
+
+    it('Reabrir_asigna_cada_campo_del_SGC_y_las_partidas', () => {
+      // Cita CotizacionSgcVistaDto y PartidaSgcDto
+      const respuestaApi: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: encabezadoDtoExacto,
+        sgc: sgcDtoExacto,
+        partidas: partidasDtoExacto,
+        partidasHeredadas: false,
+        totales: { subtotal: 1000, iva: 160, total: 1160, costoDirecto: 600, utilidad: 400, margenPorcentaje: 40, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaApi));
+
+      component.loadQuotes(10);
+      fixture.detectChanges();
+
+      expect(component.folio).toBe('COT-2026-0010');
+      expect(component.version).toBe(1);
+      expect(component.etapa).toBe('Emitida');
+      expect(component.sgcForm.get('requerimientoId')?.value).toBe(42);
+      expect(component.sgcForm.get('tipo')?.value).toBe('CT');
+      expect(component.sgcForm.get('moneda')?.value).toBe('USD');
+      expect(component.sgcForm.get('tipoCambio')?.value).toBe(19.5);
+      expect(component.sgcForm.get('vigenciaDias')?.value).toBe(15);
+      expect(component.sgcForm.get('penalizacionCancelacion')?.value).toBe('10% anticipo');
+      expect(component.sgcForm.get('formaPago')?.value).toBe('Transferencia');
+      expect(component.sgcForm.get('condicionesPago')?.value).toBe('30 días de crédito');
+      expect(component.sgcForm.get('puntoEntrega')?.value).toBe('Planta Querétaro');
+      expect(component.sgcForm.get('condicionesEntrega')?.value).toBe('FOB');
+      expect(component.sgcForm.get('cuentaDeposito')?.value).toBe('BBVA 1234567890');
+      expect(component.sgcForm.get('exclusiones')?.value).toBe('No incluye maniobras');
+      expect(component.sgcForm.get('observacionesRelevantes')?.value).toBe('Garantía 1 año');
+      expect(component.sgcForm.get('contactoNombre')?.value).toBe('Ing. Receptor');
+      expect(component.sgcForm.get('contactoCorreo')?.value).toBe('receptor@cliente.com');
+      expect(component.sgcForm.get('contactoTelefono')?.value).toBe('4429876543');
+      expect(component.sgcForm.get('anexosTecnicos')?.value).toBe('Ficha técnica v1');
+      expect(component.sgcForm.get('alcanceTecnico')?.value).toBe('Suministro e instalación');
+      expect(component.sgcForm.get('recursosRequeridos')?.value).toBe('Grúa 5 ton');
+      expect(component.sgcForm.get('personalInvolucrado')?.value).toBe('2 técnicos');
+      expect(component.sgcForm.get('tiemposEstimados')?.value).toBe('3 semanas');
+      expect(component.sgcForm.get('supuestosOperativos')?.value).toBe('Área despejada');
+      expect(component.sgcForm.get('condicionesEjecucion')?.value).toBe('Turno diurno');
+      expect(component.sgcForm.get('riesgosLimitaciones')?.value).toBe('Lluvia');
+      expect(component.sgcForm.get('entregables')?.value).toEqual(['Planos', 'Certificado']);
+      expect(component.sgcForm.get('costosIndirectos')?.value).toBe(50);
+      expect(component.sgcForm.get('margenAutorizadoPorcentaje')?.value).toBe(20);
+
+      expect(component.partidasFormArray.length).toBe(1);
+      const p = component.partidasFormArray.at(0).value;
+      expect(p.partida).toBe(1);
+      expect(p.tipoConcepto).toBe('Material');
+      expect(p.materialServicio).toBe('Cable uso rudo 3x10');
+      expect(p.descripcion).toBe('Bobina 100m');
+      expect(p.codigoProducto).toBe('CAB-001');
+      expect(p.productoId).toBe(101);
+      expect(p.unidad).toBe('MTR');
+      expect(p.cantidad).toBe(100);
+      expect(p.precioUnitario).toBe(10);
+      expect(p.descuento).toBe(0);
+      expect(p.costoUnitario).toBe(6);
+      expect(p.tiempoEntregaDias).toBe(5);
+      expect(p.notas).toBe('Entrega por tramos');
+    });
+
+    it('Reabrir_hace_una_sola_peticion_y_no_llama_getQuoteById', () => {
+      const respuestaApi: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: encabezadoDtoExacto,
+        sgc: sgcDtoExacto,
+        partidas: [],
+        partidasHeredadas: false,
+        totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: null, margenPorcentaje: null, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaApi));
+
+      component.loadQuotes(10);
+
+      expect(mockQuotesService.obtenerSgc).toHaveBeenCalledTimes(1);
+      expect(mockQuotesService.obtenerSgc).toHaveBeenCalledWith(10);
+      expect(mockQuotesService.getQuoteById).toHaveBeenCalledTimes(0);
+    });
+
+    it('Reabrir_y_guardar_sin_cambios_manda_los_mismos_valores', () => {
+      // Caso en USD, con requerimientoId, entregables, tipoCambio (en USD) y observaciones
+      const respuestaApi: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: encabezadoDtoExacto,
+        sgc: sgcDtoExacto,
+        partidas: partidasDtoExacto,
+        partidasHeredadas: false,
+        totales: { subtotal: 1000, iva: 160, total: 1160, costoDirecto: 600, utilidad: 400, margenPorcentaje: 40, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaApi));
+
+      component.loadQuotes(10);
+      const dto = component.armarDtoGuardar();
+
+      // Encabezado
+      expect(dto.cotizacion.cotizacionProductosId).toBe(10);
+      expect(dto.cotizacion.clienteId).toBe(5);
+      expect(dto.cotizacion.unidadDeNegocioId).toBe(2);
+      expect(dto.cotizacion.requisitosEspeciales).toBe(true);
+      expect(dto.cotizacion.nombreCliente).toBe('Cliente Ficticio');
+      expect(dto.cotizacion.nombreEmpresa).toBe('Empresa Ficticia SA de CV');
+      expect(dto.cotizacion.correo).toBe('contacto@ficticia.com');
+      expect(dto.cotizacion.telefono).toBe('4421234567');
+      expect(dto.cotizacion.rfc).toBe('CFI200101XYZ');
+      expect(dto.cotizacion.direccionCompleta).toBe('Av Tecnologico 100, Queretaro');
+      expect(dto.cotizacion.estado).toBe('Querétaro');
+      expect(dto.cotizacion.estatus).toBe(3);
+      expect(dto.cotizacion.observaciones).toBe('Entrega prioritaria en nave 2');
+
+      // SGC
+      expect(dto.sgc.tipo).toBe('CT');
+      expect(dto.sgc.moneda).toBe('USD');
+      expect(dto.sgc.tipoCambio).toBe(19.5);
+      expect(dto.sgc.requerimientoId).toBe(42);
+      expect(dto.sgc.vigenciaDias).toBe(15);
+      expect(dto.sgc.penalizacionCancelacion).toBe('10% anticipo');
+      expect(dto.sgc.formaPago).toBe('Transferencia');
+      expect(dto.sgc.condicionesPago).toBe('30 días de crédito');
+      expect(dto.sgc.puntoEntrega).toBe('Planta Querétaro');
+      expect(dto.sgc.condicionesEntrega).toBe('FOB');
+      expect(dto.sgc.cuentaDeposito).toBe('BBVA 1234567890');
+      expect(dto.sgc.exclusiones).toBe('No incluye maniobras');
+      expect(dto.sgc.observacionesRelevantes).toBe('Garantía 1 año');
+      expect(dto.sgc.contactoNombre).toBe('Ing. Receptor');
+      expect(dto.sgc.contactoCorreo).toBe('receptor@cliente.com');
+      expect(dto.sgc.contactoTelefono).toBe('4429876543');
+      expect(dto.sgc.anexosTecnicos).toBe('Ficha técnica v1');
+      expect(dto.sgc.alcanceTecnico).toBe('Suministro e instalación');
+      expect(dto.sgc.recursosRequeridos).toBe('Grúa 5 ton');
+      expect(dto.sgc.personalInvolucrado).toBe('2 técnicos');
+      expect(dto.sgc.tiemposEstimados).toBe('3 semanas');
+      expect(dto.sgc.supuestosOperativos).toBe('Área despejada');
+      expect(dto.sgc.condicionesEjecucion).toBe('Turno diurno');
+      expect(dto.sgc.riesgosLimitaciones).toBe('Lluvia');
+      expect(dto.sgc.entregables).toEqual(['Planos', 'Certificado']);
+      expect(dto.sgc.costosIndirectos).toBe(50);
+      expect(dto.sgc.margenAutorizadoPorcentaje).toBe(20);
+
+      // Partidas
+      expect(dto.partidas.length).toBe(1);
+      expect(dto.partidas[0].materialServicio).toBe('Cable uso rudo 3x10');
+      expect(dto.partidas[0].precioUnitario).toBe(10);
+      expect(dto.partidas[0].costoUnitario).toBe(6);
+    });
+
+    it('El_selector_de_cliente_muestra_el_cliente_aunque_la_lista_llegue_despues', async () => {
+      // Lista de clientes llega DESPUÉS de loadQuotes
+      const respuestaApi: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: encabezadoDtoExacto, // clienteId: 5
+        sgc: sgcDtoExacto,
+        partidas: [],
+        partidasHeredadas: false,
+        totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: null, margenPorcentaje: null, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaApi));
+
+      // Empezamos con lista de clientes vacía
+      component.clients = [];
+      component.filteredClients = [];
+      component.loadQuotes(10);
+      fixture.detectChanges();
+
+      expect(component.quotesForm.get('clienteId')?.value).toBe(5);
+
+      // Llega la lista de clientes después
+      component.clients = [{ clienteId: 5, nombre: 'Cliente Cinco S.A.' }];
+      component.filteredClients = component.clients;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const selects = fixture.debugElement.queryAll(By.directive(MatSelect));
+      expect(selects.length).toBeGreaterThan(0);
+      const clienteMatSelect = selects[0].componentInstance as MatSelect;
+      expect(clienteMatSelect.value).toBe(5);
+      expect(clienteMatSelect.options.length).toBeGreaterThan(1);
+      expect(clienteMatSelect.triggerValue).toContain('Cliente Cinco S.A.');
+    });
+
+    it('Reabrir_una_cotizacion_heredada_asigna_el_encabezado_y_las_partidas_heredadas', () => {
+      // Caso heredado: sgc: null, partidasHeredadas: true
+      const partidaHeredada: PartidaSgc = {
+        partida: 1,
+        tipoConcepto: 'Material',
+        materialServicio: 'Material Heredado CONTPAQi',
+        unidad: 'PZA',
+        cantidad: 5,
+        precioUnitario: 200,
+        descuento: 0,
+        heredada: true,
+      };
+      const respuestaApi: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: encabezadoDtoExacto,
+        sgc: null,
+        partidas: [partidaHeredada],
+        partidasHeredadas: true,
+        totales: { subtotal: 1000, iva: 160, total: 1160, costoDirecto: 0, utilidad: null, margenPorcentaje: null, margenBajo: false, partidasSinCosto: 1 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaApi));
+
+      component.loadQuotes(10);
+      fixture.detectChanges();
+
+      expect(component.esHeredada).toBeTrue();
+      expect(component.quotesForm.get('observaciones')?.value).toBe('Entrega prioritaria en nave 2');
+      expect(component.quotesForm.get('nombreCliente')?.value).toBe('Cliente Ficticio');
+      expect(component.quotesForm.get('clienteId')?.value).toBe(5);
+      expect(component.partidas.length).toBe(1);
+      expect(component.partidas[0].materialServicio).toBe('Material Heredado CONTPAQi');
+      expect(component.sgcForm.get('tipo')?.value).toBe('CS');
+      expect(component.sgcForm.get('moneda')?.value).toBe('MXN');
+      expect(component.sgcForm.get('vigenciaDias')?.value).toBe(15);
+    });
+
+    it('Si_la_respuesta_no_trae_encabezado_se_avisa', () => {
+      // Respuesta de obtenerSgc con cotizacion: null
+      const respuestaSinEncabezado: RespuestaObtenerSgc = {
+        cotizacionProductosId: 10,
+        cotizacion: null,
+        sgc: null,
+        partidas: [],
+        partidasHeredadas: false,
+        totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: null, margenPorcentaje: null, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: [],
+      };
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaSinEncabezado));
+
+      component.loadQuotes(10);
+
+      expect(mockChatService.showError).toHaveBeenCalledWith(
+        'Opps',
+        'No se pudo cargar el encabezado de la cotización.',
+        5000
+      );
+    });
+
+    it('Un_error_de_carga_se_ve_en_pantalla', () => {
+      mockQuotesService.obtenerSgc.and.returnValue(
+        throwError(() => ({ error: { mensaje: 'Error al conectar con la base de datos' } }))
+      );
+
+      component.loadQuotes(10);
+
+      expect(mockChatService.showError).toHaveBeenCalledWith(
+        'Opps',
+        'Error al conectar con la base de datos',
+        5000
+      );
+    });
   });
 });

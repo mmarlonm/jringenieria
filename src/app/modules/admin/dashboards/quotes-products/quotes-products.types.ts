@@ -35,6 +35,26 @@ export interface CotizacionSgcCabecera {
     observaciones?: string | null;
 }
 
+// Contrato de lectura del encabezado: CotizacionSgcEncabezadoVistaDto del API
+export interface EncabezadoCotizacionSgc {
+    cotizacionProductosId: number;
+    clienteId?: number | null;
+    unidadDeNegocioId?: number | null;
+    usuarioId?: number | null;
+    requisitosEspeciales: boolean;
+    createdDate?: string | Date | null;
+    updatedDate?: string | Date | null;
+    nombreCliente?: string | null;
+    nombreEmpresa?: string | null;
+    correo?: string | null;
+    telefono?: string | null;
+    rfc?: string | null;
+    direccionCompleta?: string | null;
+    estado?: string | null;
+    estatus?: number | null;
+    observaciones?: string | null;
+}
+
 export interface CotizacionSgcDatos {
     requerimientoId?: number | null;
     tipo: string;
@@ -227,6 +247,7 @@ export interface VersionSgcDetalle extends VersionSgcItem {
 
 export interface RespuestaObtenerSgc {
     cotizacionProductosId: number;
+    cotizacion?: EncabezadoCotizacionSgc | null;
     sgc: CotizacionSgcVista | null;
     partidas: PartidaSgc[];
     partidasHeredadas: boolean;

@@ -21,7 +21,7 @@ import { CommonModule } from "@angular/common";
 import { CurrencyMaskPipe } from "../../../../../pipes/currency-mask.pipe";
 import { ClientsService } from "../../../catalogs/clients/clients.service";
 import { ProspectosService } from "../../prospects/prospects.services";
-import { debounceTime, forkJoin } from "rxjs";
+import { debounceTime } from "rxjs";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
@@ -176,8 +176,8 @@ export class QuoteDetailsComponent implements OnInit {
   ngOnInit(): void {
     this.quotesForm = this.fb.group({
       cotizacionProductosId: [0], // Cambiar de `cotizacionId` a `cotizacionProductosId`
-      clienteId: [0, Validators.required],
-      unidadDeNegocioId: [0, Validators.required],
+      clienteId: [null, Validators.required],
+      unidadDeNegocioId: [null, Validators.required],
       usuarioId: [0, Validators.required],
       requisitosEspeciales: [false, Validators.required],
       createdDate: [new Date()],
@@ -191,7 +191,7 @@ export class QuoteDetailsComponent implements OnInit {
       rfc: [null, [Validators.maxLength(50)]],
       direccionCompleta: [null, [Validators.maxLength(300)]],
       estado: [null, [Validators.maxLength(100)]],
-      estatus: [0, [Validators.maxLength(50)]],
+      estatus: [null, [Validators.maxLength(50)]],
       observaciones: [null, [Validators.maxLength(300)]],
     });
     this.getEstatus();
@@ -243,6 +243,7 @@ export class QuoteDetailsComponent implements OnInit {
 
     // Inicialización del formulario SGC
     this.sgcForm = this.fb.group({
+      requerimientoId: [null],
       tipo: ['CS', [Validators.required]],
       moneda: ['MXN', [Validators.required]],
       tipoCambio: [null],
@@ -317,20 +318,27 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   loadQuotes(id: number): void {
-    forkJoin({
-      vieja: this.quotesService.getQuoteById(id),
-      sgcRes: this.quotesService.obtenerSgc(id),
-    }).subscribe({
-      next: ({ vieja, sgcRes }) => {
-        if (vieja && vieja.code === 200) {
-          const quotes = vieja.data;
+    this.quotesService.obtenerSgc(id).subscribe({
+      next: (sgcRes) => {
+        if (!sgcRes) {
+          return;
+        }
+
+        if (!sgcRes.cotizacion) {
+          this._chatNotificationService.showError(
+            "Opps",
+            "No se pudo cargar el encabezado de la cotización.",
+            5000
+          );
+        } else {
+          const quotes = sgcRes.cotizacion;
           this.cotizacion = quotes;
           this.quotesForm.patchValue({
             cotizacionProductosId: quotes.cotizacionProductosId,
-            clienteId: quotes.clienteId,
-            unidadDeNegocioId: quotes.unidadDeNegocioId,
-            usuarioId: quotes.usuarioId,
-            requisitosEspeciales: quotes.requisitosEspeciales,
+            clienteId: quotes.clienteId ?? null,
+            unidadDeNegocioId: quotes.unidadDeNegocioId ?? null,
+            usuarioId: quotes.usuarioId ?? null,
+            requisitosEspeciales: !!quotes.requisitosEspeciales,
             createdDate: quotes.createdDate,
             updatedDate: quotes.updatedDate,
             nombreCliente: quotes.nombreCliente,
@@ -340,71 +348,68 @@ export class QuoteDetailsComponent implements OnInit {
             rfc: quotes.rfc,
             direccionCompleta: quotes.direccionCompleta,
             estado: quotes.estado,
-            estatus: quotes.estatus,
+            estatus: quotes.estatus ?? null,
             observaciones: quotes.observaciones,
           });
         }
 
-        if (sgcRes) {
-          this.partidas = sgcRes.partidas || [];
-          this.sincronizarPartidasFormArray(this.partidas);
-          this.faltantes = sgcRes.faltantes || [];
-          this.requerimientoVinculado = sgcRes.requerimiento || null;
-          this.vinculoRequerimientoRemovido = false;
-          this.revisionesVigentes = sgcRes.revisiones || [];
-          this.revisionesRequeridas = sgcRes.revisionesRequeridas || [];
+        this.partidas = sgcRes.partidas || [];
+        this.sincronizarPartidasFormArray(this.partidas);
+        this.faltantes = sgcRes.faltantes || [];
+        this.requerimientoVinculado = sgcRes.requerimiento || null;
+        this.vinculoRequerimientoRemovido = false;
+        this.revisionesVigentes = sgcRes.revisiones || [];
+        this.revisionesRequeridas = sgcRes.revisionesRequeridas || [];
 
-          this.acciones = sgcRes.acciones || {
-            editar: true,
-            enviarRevision: false,
-            volverBorrador: false,
-            revisar: [],
-            emitir: false,
-            nuevaVersion: false,
-          };
+        this.acciones = sgcRes.acciones || {
+          editar: true,
+          enviarRevision: false,
+          volverBorrador: false,
+          revisar: [],
+          emitir: false,
+          nuevaVersion: false,
+        };
 
-          if (sgcRes.sgc) {
-            this.esHeredada = false;
-            this.folio = sgcRes.sgc.folio;
-            this.version = sgcRes.sgc.version;
-            this.etapa = sgcRes.sgc.etapa || 'Borrador';
-            this.sgcForm.patchValue(sgcRes.sgc);
-            this.actualizarValidacionTipoCambio(sgcRes.sgc.moneda);
-          } else {
-            this.esHeredada = !!sgcRes.partidasHeredadas;
-            this.folio = null;
-            this.version = null;
-            this.etapa = 'Borrador';
-            this.sgcForm.patchValue({
-              tipo: 'CS',
-              moneda: 'MXN',
-              tipoCambio: null,
-              vigenciaDias: 15,
-              entregables: [],
-            });
-            this.actualizarValidacionTipoCambio('MXN');
-          }
+        if (sgcRes.sgc) {
+          this.esHeredada = false;
+          this.folio = sgcRes.sgc.folio;
+          this.version = sgcRes.sgc.version;
+          this.etapa = sgcRes.sgc.etapa || 'Borrador';
+          this.actualizarValidacionTipoCambio(sgcRes.sgc.moneda);
+          this.sgcForm.patchValue(sgcRes.sgc);
+        } else {
+          this.esHeredada = !!sgcRes.partidasHeredadas;
+          this.folio = null;
+          this.version = null;
+          this.etapa = 'Borrador';
+          this.actualizarValidacionTipoCambio('MXN');
+          this.sgcForm.patchValue({
+            requerimientoId: null,
+            tipo: 'CS',
+            moneda: 'MXN',
+            tipoCambio: null,
+            vigenciaDias: 15,
+            entregables: [],
+          });
+        }
 
-          if (!this.acciones.editar) {
-            this.soloLectura = true;
-            this.quotesForm.disable({ emitEvent: false });
-            this.sgcForm.disable({ emitEvent: false });
-            this.partidasFormArray.disable({ emitEvent: false });
-          } else {
-            this.soloLectura = false;
-            this.quotesForm.enable({ emitEvent: false });
-            this.sgcForm.enable({ emitEvent: false });
-            this.partidasFormArray.enable({ emitEvent: false });
-          }
+        if (!this.acciones.editar) {
+          this.soloLectura = true;
+          this.quotesForm.disable({ emitEvent: false });
+          this.sgcForm.disable({ emitEvent: false });
+          this.partidasFormArray.disable({ emitEvent: false });
+        } else {
+          this.soloLectura = false;
+          this.quotesForm.enable({ emitEvent: false });
+          this.sgcForm.enable({ emitEvent: false });
+          this.partidasFormArray.enable({ emitEvent: false });
+        }
 
-          if (sgcRes.totales) {
-            this.totales = sgcRes.totales;
-            this.subtotal = sgcRes.totales.subtotal;
-            this.iva = sgcRes.totales.iva;
-            this.total = sgcRes.totales.total;
-          } else {
-            this.calcularTotales();
-          }
+        if (sgcRes.totales) {
+          this.totales = sgcRes.totales;
+          this.subtotal = sgcRes.totales.subtotal;
+          this.iva = sgcRes.totales.iva;
+          this.total = sgcRes.totales.total;
         } else {
           this.calcularTotales();
         }
@@ -432,7 +437,7 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   armarDtoGuardar(): GuardarCotizacionSgc {
-    const formVal = this.quotesForm.value;
+    const formVal = this.quotesForm.getRawValue();
     const cotizacion: CotizacionSgcCabecera = {
       cotizacionProductosId: formVal.cotizacionProductosId || this.quotesId || 0,
       clienteId: formVal.clienteId || null,
@@ -449,7 +454,7 @@ export class QuoteDetailsComponent implements OnInit {
       observaciones: formVal.observaciones || null,
     };
 
-    const sgcVal = this.sgcForm.value;
+    const sgcVal = this.sgcForm.getRawValue();
     let reqId: number | null | undefined = sgcVal.requerimientoId;
     if (this.vinculoRequerimientoRemovido) {
       reqId = 0;
@@ -465,7 +470,7 @@ export class QuoteDetailsComponent implements OnInit {
 
     const partidasEnviar: PartidaSgc[] =
       this.partidasFormArray && this.partidasFormArray.length > 0
-        ? this.partidasFormArray.value
+        ? this.partidasFormArray.getRawValue()
         : (this.partidas || []);
 
     return {
