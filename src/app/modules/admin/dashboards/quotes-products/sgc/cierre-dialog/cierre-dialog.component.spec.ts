@@ -180,17 +180,18 @@ describe('CierreDialogComponent', () => {
 
     quotesService.cerrar.and.returnValue(
       throwError(() => ({
-        error: { mensaje: 'La cotización ya está cerrada o aún no se emite.' },
+        status: 400,
+        error: { mensaje: 'El motivo de cierre es obligatorio y debe ser del catálogo.' },
       }))
     );
 
     component.ejecutarCierre();
     fixture.detectChanges();
 
-    expect(component.errorMensaje).toBe('La cotización ya está cerrada o aún no se emite.');
+    expect(component.errorMensaje).toBe('El motivo de cierre es obligatorio y debe ser del catálogo.');
     const mensajeError = fixture.nativeElement.querySelector('.mensaje-error');
     expect(mensajeError).not.toBeNull();
-    expect(mensajeError.textContent).toContain('La cotización ya está cerrada o aún no se emite.');
+    expect(mensajeError.textContent).toContain('El motivo de cierre es obligatorio y debe ser del catálogo.');
 
     // El diálogo NO se cierra
     expect(dialogRef.close).not.toHaveBeenCalled();
@@ -251,5 +252,61 @@ describe('CierreDialogComponent', () => {
 
     const compiled = fixture.nativeElement.querySelector('.mensaje-error');
     expect(compiled.textContent).toContain('<script id="xss-test">window.__xss = true;</script>');
+  });
+
+  // ---- Revision de Claude (Fase 3, front) ----
+  it('Un_409_cierra_el_dialogo_pidiendo_recargar_la_cotizacion', () => {
+    component.form.patchValue({
+      resultado: 'Perdida',
+      motivo: 'Competencia',
+      comentario: 'Ganó el competidor local',
+    });
+    component.actualizarValidadoresPorResultado('Perdida');
+    quotesService.cerrar.and.returnValue(
+      throwError(() => ({ status: 409, error: { mensaje: 'La cotización ya está cerrada.' } }))
+    );
+
+    component.ejecutarCierre();
+
+    expect(dialogRef.close).toHaveBeenCalledTimes(1);
+    expect(dialogRef.close).toHaveBeenCalledWith({
+      guardado: false,
+      conflicto: true,
+      mensaje: 'La cotización ya está cerrada.',
+    });
+    expect(component.guardando).toBeFalse();
+  });
+
+  it('Ningun_motivo_ni_evidencia_viene_preseleccionado', () => {
+    // Un motivo precargado (p. ej. «Precio») sesgaria los indicadores: la persona debe elegirlo
+    expect(component.form.get('motivo')?.value).toBeNull();
+    expect(component.form.get('tipoEvidencia')?.value).toBeNull();
+
+    component.form.patchValue({ resultado: 'Perdida' });
+    component.actualizarValidadoresPorResultado('Perdida');
+    expect(component.form.get('motivo')?.hasError('required')).toBeTrue();
+    expect(component.form.valid).toBeFalse();
+
+    component.form.patchValue({ resultado: 'Ganada' });
+    component.actualizarValidadoresPorResultado('Ganada');
+    component.form.patchValue({ referenciaEvidencia: 'OC-1' });
+    expect(component.form.get('tipoEvidencia')?.hasError('required')).toBeTrue();
+    expect(component.form.valid).toBeFalse();
+  });
+
+  it('Vencida_sin_elegir_motivo_manda_motivo_nulo', () => {
+    component.form.patchValue({ resultado: 'Vencida' });
+    component.actualizarValidadoresPorResultado('Vencida');
+
+    component.ejecutarCierre();
+
+    expect(quotesService.cerrar).toHaveBeenCalledWith(42, {
+      resultado: 'Vencida',
+      tipoEvidencia: null,
+      referenciaEvidencia: null,
+      montoVendido: null,
+      motivo: null,
+      comentario: null,
+    });
   });
 });

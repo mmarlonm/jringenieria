@@ -267,7 +267,7 @@
             <div *ngIf="sgcVista?.tipoEvidencia || sgcVista?.referenciaEvidencia">
               <span class="text-xs text-gray-500 block">Evidencia de aceptación</span>
               <span class="font-medium text-gray-800 dark:text-gray-200 evidencia-texto">
-                {{ sgcVista?.tipoEvidencia }} — {{ sgcVista?.referenciaEvidencia }}
+                {{ nombreTipoEvidencia(sgcVista?.tipoEvidencia) }} — {{ sgcVista?.referenciaEvidencia }}
               </span>
             </div>
             <div *ngIf="sgcVista?.montoVendido !== null && sgcVista?.montoVendido !== undefined">
@@ -279,7 +279,7 @@
             <div *ngIf="sgcVista?.motivoCierre" class="col-span-2">
               <span class="text-xs text-gray-500 block">Motivo de cierre</span>
               <span class="font-medium text-gray-800 dark:text-gray-200 motivo-cierre-texto">
-                {{ sgcVista?.motivoCierre }}
+                {{ nombreMotivoCierre(sgcVista?.motivoCierre) }}
               </span>
             </div>
             <div *ngIf="sgcVista?.comentarioCierre" class="col-span-2">

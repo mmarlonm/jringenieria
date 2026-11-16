@@ -46,7 +46,7 @@
         <mat-label>Sucursal</mat-label>
         <mat-select [(ngModel)]="unidadDeNegocioId" class="select-sucursal">
           <mat-option [value]="null">Todas las sucursales</mat-option>
-          <mat-option *ngFor="let u of unidadesDeNegocio" [value]="u.id">
+          <mat-option *ngFor="let u of unidadesDeNegocio" [value]="u.unidadId">
             {{ u.nombre }}
           </mat-option>
         </mat-select>
@@ -213,7 +213,7 @@
             <!-- CS -->
             <tr>
               <td class="py-2.5 font-medium">CS</td>
-              <td class="py-2.5 text-center text-xs text-gray-500">24 h</td>
+              <td class="py-2.5 text-center text-xs text-gray-500">{{ formatearNumero(indicadores.enTiempo.cs?.plazoHoras, ' h') }}</td>
               <td class="py-2.5 text-center text-xs">
                 {{ indicadores.enTiempo.cs?.enPlazo ?? 0 }} / {{ indicadores.enTiempo.cs?.emitidas ?? 0 }}
               </td>
@@ -233,7 +233,7 @@
             <!-- CT -->
             <tr>
               <td class="py-2.5 font-medium">CT</td>
-              <td class="py-2.5 text-center text-xs text-gray-500">120 h</td>
+              <td class="py-2.5 text-center text-xs text-gray-500">{{ formatearNumero(indicadores.enTiempo.ct?.plazoHoras, ' h') }}</td>
               <td class="py-2.5 text-center text-xs">
                 {{ indicadores.enTiempo.ct?.enPlazo ?? 0 }} / {{ indicadores.enTiempo.ct?.emitidas ?? 0 }}
               </td>
@@ -253,7 +253,7 @@
             <!-- CE -->
             <tr>
               <td class="py-2.5 font-medium">CE</td>
-              <td class="py-2.5 text-center text-xs text-gray-500">336 h</td>
+              <td class="py-2.5 text-center text-xs text-gray-500">{{ formatearNumero(indicadores.enTiempo.ce?.plazoHoras, ' h') }}</td>
               <td class="py-2.5 text-center text-xs">
                 {{ indicadores.enTiempo.ce?.enPlazo ?? 0 }} / {{ indicadores.enTiempo.ce?.emitidas ?? 0 }}
               </td>

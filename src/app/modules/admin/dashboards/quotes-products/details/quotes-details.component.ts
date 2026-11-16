@@ -46,10 +46,11 @@ import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component
 import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
 import { SeguimientoSgcComponent } from "../sgc/seguimiento-sgc/seguimiento-sgc.component";
 import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
-import { CierreDialogComponent } from "../sgc/cierre-dialog/cierre-dialog.component";
+import { CierreDialogComponent, CierreDialogResultado, MOTIVOS_CIERRE_DEFECTO, TIPOS_EVIDENCIA_DEFECTO } from "../sgc/cierre-dialog/cierre-dialog.component";
 import Swal from 'sweetalert2';
 import {
   AccionesSgc,
+  CatalogoItem,
   CatalogosSgc,
   CotizacionSgcCabecera,
   CotizacionSgcDatos,
@@ -641,11 +642,32 @@ export class QuoteDetailsComponent implements OnInit {
       },
     });
 
-    dialogRef.afterClosed().subscribe((res) => {
-      if (res && res.guardado) {
+    dialogRef.afterClosed().subscribe((res: CierreDialogResultado | false | undefined) => {
+      if (res && res.conflicto) {
+        // El API dijo 409: la cotizacion ya cambio; se avisa y se recarga para ver el estado real
+        this._chatNotificationService.showError('Opps', res.mensaje || 'La cotización cambió. Recárgala e inténtalo de nuevo.', 5000);
+        this.loadQuotes(this.quotesId);
+      } else if (res && res.guardado) {
         this.loadQuotes(this.quotesId);
       }
     });
+  }
+
+  nombreMotivoCierre(codigo?: string | null): string {
+    return this.nombreDeCatalogo(this.catalogos?.motivosCierre, MOTIVOS_CIERRE_DEFECTO, codigo);
+  }
+
+  nombreTipoEvidencia(codigo?: string | null): string {
+    return this.nombreDeCatalogo(this.catalogos?.tiposEvidencia, TIPOS_EVIDENCIA_DEFECTO, codigo);
+  }
+
+  // Nunca se muestra un codigo crudo (FaltaPresupuesto, OrdenCompra): nombre del catalogo del API o, si aun no llego, el de respaldo
+  private nombreDeCatalogo(lista: CatalogoItem[] | undefined, respaldo: CatalogoItem[], codigo?: string | null): string {
+    if (!codigo) {
+      return '';
+    }
+    const fuente = lista && lista.length > 0 ? lista : respaldo;
+    return fuente.find((i) => i.codigo === codigo)?.nombre ?? codigo;
   }
 
   sincronizarPartidasFormArray(partidas: PartidaSgc[]): void {

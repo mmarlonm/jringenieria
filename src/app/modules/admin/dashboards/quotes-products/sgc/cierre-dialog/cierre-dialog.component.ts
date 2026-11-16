@@ -23,6 +23,16 @@ import {
   CierreSgcDto,
 } from '../../quotes-products.types';
 
+// Lo que devuelve el dialogo al cerrarse. `conflicto` = el API respondio 409 (la cotizacion ya cambio):
+// quien lo abrio muestra el mensaje y recarga para ver el estado real.
+export interface CierreDialogResultado {
+  guardado: boolean;
+  conflicto?: boolean;
+  mensaje?: string;
+  resultado?: string;
+  fechaCierre?: string | Date;
+}
+
 export interface CierreDialogData {
   cotizacionId: number;
   total: number;
@@ -31,7 +41,7 @@ export interface CierreDialogData {
   catalogos?: CatalogosSgc | null;
 }
 
-const MOTIVOS_CIERRE_DEFECTO: { codigo: string; nombre: string }[] = [
+export const MOTIVOS_CIERRE_DEFECTO: { codigo: string; nombre: string }[] = [
   { codigo: 'Precio', nombre: 'Precio' },
   { codigo: 'Tiempo', nombre: 'Tiempo de entrega' },
   { codigo: 'Competencia', nombre: 'Competencia' },
@@ -43,7 +53,7 @@ const MOTIVOS_CIERRE_DEFECTO: { codigo: string; nombre: string }[] = [
   { codigo: 'Otro', nombre: 'Otro' },
 ];
 
-const TIPOS_EVIDENCIA_DEFECTO: { codigo: string; nombre: string }[] = [
+export const TIPOS_EVIDENCIA_DEFECTO: { codigo: string; nombre: string }[] = [
   { codigo: 'OrdenCompra', nombre: 'Orden de compra' },
   { codigo: 'CorreoAceptacion', nombre: 'Correo de aceptación' },
   { codigo: 'ContratoFirmado', nombre: 'Contrato firmado' },
@@ -95,10 +105,10 @@ export class CierreDialogComponent implements OnInit {
 
     this.form = this.fb.group({
       resultado: [resultadoInicial, [Validators.required]],
-      tipoEvidencia: ['OrdenCompra'],
+      tipoEvidencia: [null],
       referenciaEvidencia: [''],
       montoVendido: [this.data?.total || 0],
-      motivo: ['Precio'],
+      motivo: [null],
       comentario: [''],
     });
   }
@@ -257,12 +267,20 @@ export class CierreDialogComponent implements OnInit {
       },
       error: (err) => {
         this.guardando = false;
-        this.confirmando = false;
-        this.dialogRef.disableClose = false;
-        this.errorMensaje =
+        const mensaje =
           err?.error?.mensaje ||
           err?.message ||
           'Error al registrar el cierre de la cotización.';
+        if (err?.status === 409) {
+          // La cotizacion ya cambio (cerrada, aun vigente, otra persona): se cierra el dialogo y
+          // la pantalla muestra el mensaje y recarga el estado real
+          const conflicto: CierreDialogResultado = { guardado: false, conflicto: true, mensaje };
+          this.dialogRef.close(conflicto);
+          return;
+        }
+        this.confirmando = false;
+        this.dialogRef.disableClose = false;
+        this.errorMensaje = mensaje;
       },
     });
   }

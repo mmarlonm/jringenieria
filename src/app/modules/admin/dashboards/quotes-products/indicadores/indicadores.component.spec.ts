@@ -8,6 +8,8 @@ import { QuotesService } from '../quotes-products.service';
 import { ProjectService } from '../../project/project.service';
 import { IndicadoresSgc } from '../quotes-products.types';
 import routes from '../quotes-products.routes';
+import { By } from '@angular/platform-browser';
+import { MatSelect } from '@angular/material/select';
 
 describe('IndicadoresComponent', () => {
   let component: IndicadoresComponent;
@@ -81,8 +83,9 @@ describe('IndicadoresComponent', () => {
     quotesSpy.indicadores.and.returnValue(of(mockIndicadoresExactos));
     projectSpy.getUnidadesDeNegocio.and.returnValue(
       of([
-        { id: 1, nombre: 'Matriz' },
-        { id: 2, nombre: 'Querétaro' },
+        // Copiado de UnidadDeNegocio del API C# (jr_api/Models/UnidadDeNegocio.cs), camelCase
+        { unidadId: 1, nombre: 'Matriz', descripcion: 'Casa matriz', fechaCreacion: '2026-01-05T00:00:00Z' },
+        { unidadId: 2, nombre: 'Querétaro', descripcion: null, fechaCreacion: '2026-01-05T00:00:00Z' },
       ])
     );
 
@@ -300,5 +303,41 @@ describe('IndicadoresComponent', () => {
 
     expect(component.indicadores.emitidas).toBe(10);
     expect(fixture.nativeElement.querySelector('.tarjeta-emitidas')?.textContent).toContain('10');
+  });
+
+  // ---- Revision de Claude (Fase 3, front) ----
+  it('El_selector_de_sucursal_usa_el_unidadId_del_API', async () => {
+    const select = fixture.debugElement.query(By.css('.select-sucursal')).componentInstance as MatSelect;
+    expect(select.options.toArray().map((o) => o.value)).toEqual([null, 1, 2]);
+
+    select.open();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const opcion = (Array.from(document.querySelectorAll('mat-option')) as HTMLElement[])
+      .find((o) => (o.textContent || '').includes('Querétaro'));
+    expect(opcion).toBeDefined();
+    opcion!.click();
+    fixture.detectChanges();
+
+    expect(component.unidadDeNegocioId).toBe(2);
+    component.consultar();
+    expect(quotesService.indicadores).toHaveBeenCalledWith(jasmine.objectContaining({ unidadDeNegocioId: 2 }));
+  });
+
+  it('El_plazo_en_horas_sale_del_API_y_no_de_un_texto_fijo', () => {
+    component.indicadores = {
+      ...mockIndicadoresExactos,
+      enTiempo: {
+        ...mockIndicadoresExactos.enTiempo,
+        cs: { emitidas: 4, enPlazo: 4, porcentaje: 100.0, plazoHoras: 48 },
+      },
+    };
+    fixture.detectChanges();
+
+    const tabla = fixture.nativeElement.querySelector('.tabla-plazos').textContent;
+    expect(tabla).toContain('48 h');
+    expect(tabla).toContain('120 h');
+    expect(tabla).toContain('336 h');
+    expect(tabla).not.toContain('24 h');
   });
 });

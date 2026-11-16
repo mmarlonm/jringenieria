@@ -79,6 +79,7 @@ export class SeguimientoSgcComponent implements OnInit, OnChanges {
   cargandoBitacora: boolean = false;
   guardando: boolean = false;
   errorMensaje: string | null = null;
+  errorBitacora: string | null = null;
   hoy: string = '';
 
   constructor(
@@ -167,13 +168,16 @@ export class SeguimientoSgcComponent implements OnInit, OnChanges {
       return;
     }
     this.cargandoBitacora = true;
+    this.errorBitacora = null;
     this.quotesService.seguimientos(this.cotizacionId).subscribe({
       next: (res) => {
         this.cargandoBitacora = false;
         this.bitacora = res || [];
       },
       error: () => {
+        // Nunca en silencio: sin este aviso una bitacora que no cargo diria «No hay seguimientos registrados»
         this.cargandoBitacora = false;
+        this.errorBitacora = 'No se pudo cargar la bitácora de seguimiento.';
       },
     });
   }
@@ -218,6 +222,11 @@ export class SeguimientoSgcComponent implements OnInit, OnChanges {
           err?.error?.mensaje ||
           err?.message ||
           'Error al registrar el seguimiento.';
+        // 409: la cotizacion cambio (se cerro, hay una version nueva u otra persona la modifico):
+        // se recarga para que la pantalla muestre el estado real
+        if (err?.status === 409) {
+          this.recargar.emit();
+        }
       },
     });
   }

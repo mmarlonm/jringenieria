@@ -50,15 +50,16 @@
     </div>
   </div>
 
+  <!-- Error de la ultima accion: se ve aunque la recarga ya no permita registrar seguimientos -->
+  <div *ngIf="errorMensaje" class="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm mensaje-error">
+    {{ errorMensaje }}
+  </div>
+
   <!-- Formulario de nuevo seguimiento -->
   <div *ngIf="acciones?.seguimiento" class="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700 shadow-sm formulario-seguimiento">
     <h3 class="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">
       Registrar nuevo seguimiento
     </h3>
-
-    <div *ngIf="errorMensaje" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm mensaje-error">
-      {{ errorMensaje }}
-    </div>
 
     <form [formGroup]="form" (ngSubmit)="guardarSeguimiento()" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -121,7 +122,12 @@
       Cargando bitácora...
     </div>
 
-    <div *ngIf="!cargandoBitacora && bitacora.length === 0" class="text-sm text-gray-500 py-4 sin-seguimientos">
+    <div *ngIf="errorBitacora" class="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm flex items-center justify-between gap-3 error-bitacora">
+      <span>{{ errorBitacora }}</span>
+      <button type="button" mat-stroked-button color="warn" class="btn-reintentar-bitacora" (click)="cargarBitacora()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!cargandoBitacora && !errorBitacora && bitacora.length === 0" class="text-sm text-gray-500 py-4 sin-seguimientos">
       No hay seguimientos registrados.
     </div>
 

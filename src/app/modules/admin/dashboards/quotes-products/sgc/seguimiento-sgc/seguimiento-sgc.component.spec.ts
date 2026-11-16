@@ -258,4 +258,87 @@ describe('SeguimientoSgcComponent', () => {
     pendingSubject.complete();
     expect(component.guardando).toBeFalse();
   });
+
+  // ---- Revision de Claude (Fase 3, front) ----
+  it('Un_409_muestra_el_mensaje_y_pide_recargar_la_cotizacion', () => {
+    // El API responde 409 { mensaje } si la cotizacion cambio (cerrada, nueva version, otra persona)
+    component.form.patchValue({ tipo: 'Ajuste', notas: 'Captura que no debe perderse' });
+    quotesService.registrarSeguimiento.and.returnValue(
+      throwError(() => ({ status: 409, error: { mensaje: 'La cotización está cerrada.' } }))
+    );
+    const recargar = jasmine.createSpy('recargar');
+    component.recargar.subscribe(recargar);
+
+    component.guardarSeguimiento();
+    fixture.detectChanges();
+
+    expect(component.errorMensaje).toBe('La cotización está cerrada.');
+    expect(recargar).toHaveBeenCalledTimes(1);
+    expect(component.form.value.notas).toBe('Captura que no debe perderse');
+  });
+
+  it('Un_400_muestra_el_mensaje_y_no_recarga_la_cotizacion', () => {
+    component.form.patchValue({ tipo: 'Ajuste', notas: 'Notas válidas' });
+    quotesService.registrarSeguimiento.and.returnValue(
+      throwError(() => ({ status: 400, error: { mensaje: 'Las notas son obligatorias.' } }))
+    );
+    const recargar = jasmine.createSpy('recargar');
+    component.recargar.subscribe(recargar);
+
+    component.guardarSeguimiento();
+
+    expect(component.errorMensaje).toBe('Las notas son obligatorias.');
+    expect(recargar).not.toHaveBeenCalled();
+  });
+
+  it('El_mensaje_de_error_se_ve_aunque_la_cotizacion_ya_no_permita_seguimientos', () => {
+    component.form.patchValue({ tipo: 'Ajuste', notas: 'Notas válidas' });
+    quotesService.registrarSeguimiento.and.returnValue(
+      throwError(() => ({ status: 409, error: { mensaje: 'La cotización ya está cerrada.' } }))
+    );
+    component.guardarSeguimiento();
+
+    // La recarga trae acciones.seguimiento = false (la cotizacion se cerro): el formulario desaparece
+    component.acciones = { ...component.acciones, seguimiento: false };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.formulario-seguimiento')).toBeNull();
+    const aviso = fixture.nativeElement.querySelector('.mensaje-error');
+    expect(aviso).not.toBeNull();
+    expect(aviso.textContent).toContain('La cotización ya está cerrada.');
+  });
+
+  it('Tras_guardar_recarga_la_bitacora_y_la_cotizacion_una_sola_vez', () => {
+    component.form.patchValue({ tipo: 'PrimerSeguimiento', notas: 'Notas válidas' });
+    quotesService.seguimientos.calls.reset();
+    const recargar = jasmine.createSpy('recargar');
+    component.recargar.subscribe(recargar);
+
+    component.guardarSeguimiento();
+
+    expect(quotesService.registrarSeguimiento).toHaveBeenCalledTimes(1);
+    expect(quotesService.seguimientos).toHaveBeenCalledTimes(1);
+    expect(recargar).toHaveBeenCalledTimes(1);
+  });
+
+  it('Un_error_al_cargar_la_bitacora_se_ve_y_no_dice_que_no_hay_seguimientos', () => {
+    quotesService.seguimientos.and.returnValue(
+      throwError(() => ({ status: 500, error: { mensaje: 'Error interno.' } }))
+    );
+    component.cargarBitacora();
+    fixture.detectChanges();
+
+    const aviso = fixture.nativeElement.querySelector('.error-bitacora');
+    expect(aviso).not.toBeNull();
+    expect(aviso.textContent).toContain('No se pudo cargar la bitácora de seguimiento.');
+    expect(fixture.nativeElement.querySelector('.sin-seguimientos')).toBeNull();
+
+    // Reintentar vuelve a pedirla y, si llega, el aviso desaparece
+    quotesService.seguimientos.and.returnValue(of([]));
+    fixture.nativeElement.querySelector('.btn-reintentar-bitacora').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.error-bitacora')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.sin-seguimientos')).not.toBeNull();
+  });
 });

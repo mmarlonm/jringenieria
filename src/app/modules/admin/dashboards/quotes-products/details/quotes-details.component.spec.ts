@@ -1454,4 +1454,90 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(fixture.nativeElement.querySelector('.btn-registrar-envio')).toBeNull();
     });
   });
+
+  describe('Revisión F3: cierre con conflicto y nombres legibles', () => {
+    function abrirCierreCon(resultadoDialogo: any): void {
+      const mockDialog = TestBed.inject(MatDialog) as any;
+      mockDialog.open.and.returnValue({ afterClosed: () => of(resultadoDialogo) });
+      component.quotesId = 15;
+      component.acciones = { ...component.acciones, cerrar: ['Ganada', 'Perdida'] };
+      mockQuotesService.obtenerSgc.calls.reset();
+      mockChatService.showError.calls.reset();
+      component.abrirCierreDialog();
+    }
+
+    it('Un_conflicto_al_cerrar_muestra_el_mensaje_y_recarga_la_cotizacion', () => {
+      abrirCierreCon({ guardado: false, conflicto: true, mensaje: 'La cotización ya está cerrada.' });
+
+      expect(mockChatService.showError).toHaveBeenCalledWith('Opps', 'La cotización ya está cerrada.', 5000);
+      expect(mockQuotesService.obtenerSgc).toHaveBeenCalledTimes(1);
+      expect(mockQuotesService.obtenerSgc).toHaveBeenCalledWith(15);
+    });
+
+    it('Cerrar_con_exito_recarga_una_vez_y_sin_error', () => {
+      abrirCierreCon({ guardado: true, resultado: 'Perdida', fechaCierre: '2026-11-16T19:00:00Z' });
+
+      expect(mockQuotesService.obtenerSgc).toHaveBeenCalledTimes(1);
+      expect(mockChatService.showError).not.toHaveBeenCalled();
+    });
+
+    it('Cancelar_el_cierre_no_recarga_ni_avisa', () => {
+      abrirCierreCon(false);
+
+      expect(mockQuotesService.obtenerSgc).not.toHaveBeenCalled();
+      expect(mockChatService.showError).not.toHaveBeenCalled();
+    });
+
+    it('El_resultado_del_cierre_muestra_los_nombres_del_catalogo_y_no_los_codigos', async () => {
+      component.catalogos = {
+        tipos: [], monedas: [], tiposConcepto: [], entregables: [], ivaTasa: 0.16,
+        motivosCierre: [{ codigo: 'FaltaPresupuesto', nombre: 'Sin presupuesto del cliente' }],
+        tiposEvidencia: [{ codigo: 'CorreoAceptacion', nombre: 'Correo de aceptación del cliente' }],
+      } as any;
+      component.etapa = 'Perdida';
+      component.acciones = { ...component.acciones, editar: false, seguimiento: false, cerrar: [] };
+      component.sgcVista = {
+        folio: 'COT-2026-0042', version: 1, etapa: 'Perdida', tipo: 'CS', moneda: 'MXN', vigenciaDias: 15, entregables: [],
+        subtotal: 100, iva: 16, total: 116, creadoPorUsuarioId: 10, fechaCreacion: '2026-11-10T10:00:00Z',
+        fechaCierre: '2026-11-16T15:30:00Z', motivoCierre: 'FaltaPresupuesto', comentarioCierre: null,
+      } as any;
+      component.selectedTabIndex = 3;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      let bloque = fixture.nativeElement.querySelector('.bloque-resultado-cierre');
+      expect(bloque.querySelector('.motivo-cierre-texto').textContent).toContain('Sin presupuesto del cliente');
+      expect(bloque.textContent).not.toContain('FaltaPresupuesto');
+
+      component.etapa = 'Ganada';
+      component.sgcVista = {
+        ...(component.sgcVista as any), etapa: 'Ganada', motivoCierre: null,
+        tipoEvidencia: 'CorreoAceptacion', referenciaEvidencia: 'Correo del 15/11', montoVendido: 116,
+      };
+      fixture.detectChanges();
+      bloque = fixture.nativeElement.querySelector('.bloque-resultado-cierre');
+      expect(bloque.querySelector('.evidencia-texto').textContent).toContain('Correo de aceptación del cliente — Correo del 15/11');
+      expect(bloque.textContent).not.toContain('CorreoAceptacion');
+    });
+
+    it('Sin_catalogos_cargados_el_resultado_usa_los_nombres_de_respaldo', async () => {
+      component.catalogos = null;
+      component.etapa = 'Perdida';
+      component.acciones = { ...component.acciones, editar: false, seguimiento: false, cerrar: [] };
+      component.sgcVista = {
+        folio: 'COT-2026-0042', version: 1, etapa: 'Perdida', tipo: 'CS', moneda: 'MXN', vigenciaDias: 15, entregables: [],
+        subtotal: 100, iva: 16, total: 116, creadoPorUsuarioId: 10, fechaCreacion: '2026-11-10T10:00:00Z',
+        fechaCierre: '2026-11-16T15:30:00Z', motivoCierre: 'FaltaPresupuesto',
+      } as any;
+      component.selectedTabIndex = 3;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const texto = fixture.nativeElement.querySelector('.motivo-cierre-texto').textContent;
+      expect(texto).toContain('Falta de presupuesto');
+      expect(texto).not.toContain('FaltaPresupuesto');
+    });
+  });
 });
