@@ -8,6 +8,9 @@ import html2canvas from 'html2canvas';
 import { EMPRESA_COTIZACION } from '../sgc/empresa-cotizacion';
 import { CotizacionSgcDatos } from '../quotes-products.types';
 
+// Mientras la cotización esté en alguna de estas etapas aún no se ha enviado al cliente
+const ETAPAS_BORRADOR = ['Borrador', 'EnRevision', 'Aprobada'];
+
 @Component({
   selector: 'app-quote-pdf-dialog',
   templateUrl: './quote-pdf-dialog.component.html',
@@ -27,11 +30,32 @@ export class QuotePdfDialogComponent implements OnInit {
   partidas: any[] = [];
   totales: any;
   esHeredadaSinGuardar: boolean = false;
+  esInstantanea: boolean = false;
+  fechaEmisionInstantanea: Date | string | null = null;
+  version: number = 1;
+  etapa: string = 'Borrador';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {}
 
   ngOnInit(): void {
-    if (this.data?.cotizacion) {
+    if (this.data?.instantanea) {
+      // Es la respuesta de GET .../sgc/versiones/{n}: los datos de la versión y, dentro de
+      // `instantanea`, lo congelado al emitir: { folio, version, cabecera, sgc, partidas, totales }
+      const detalle = this.data.instantanea;
+      const snap = detalle.instantanea || {};
+      this.esInstantanea = true;
+      this.fechaEmisionInstantanea = detalle.fechaEmision || null;
+      this.version = detalle.version || snap.version || 1;
+      this.etapa = 'Emitida';
+      this.cotizacion = {
+        ...(snap.cabecera || {}),
+        folio: snap.folio,
+        createdDate: this.fechaEmisionInstantanea,
+      };
+      this.sgc = { ...(snap.sgc || {}), folio: snap.folio, version: this.version } as any;
+      this.partidas = snap.partidas || [];
+      this.totales = snap.totales || { subtotal: 0, iva: 0, total: detalle.total || 0 };
+    } else if (this.data?.cotizacion) {
       this.cotizacion = this.data.cotizacion;
       this.sgc = this.data.sgc || null;
       this.partidas = this.data.partidas || [];
@@ -40,6 +64,8 @@ export class QuotePdfDialogComponent implements OnInit {
         iva: this.cotizacion?.iva || 0,
         total: this.cotizacion?.total || 0,
       };
+      this.version = this.data.sgc?.version || this.cotizacion?.version || 1;
+      this.etapa = this.data.sgc?.etapa || this.cotizacion?.etapa || 'Borrador';
     } else {
       this.cotizacion = this.data;
       this.sgc = null;
@@ -49,6 +75,8 @@ export class QuotePdfDialogComponent implements OnInit {
         iva: this.cotizacion?.iva || 0,
         total: this.cotizacion?.total || 0,
       };
+      this.version = this.cotizacion?.version || 1;
+      this.etapa = this.cotizacion?.etapa || 'Borrador';
     }
 
     this.esHeredadaSinGuardar = !this.sgc || !this.sgc.tipo;
@@ -62,6 +90,23 @@ export class QuotePdfDialogComponent implements OnInit {
       return this.cotizacion.folio;
     }
     return `#${this.cotizacion?.cotizacionProductosId || ''}`;
+  }
+
+  get folioConVersion(): string {
+    const fol = this.folioOId;
+    return this.version > 1 ? `${fol} v${this.version}` : fol;
+  }
+
+  get esBorrador(): boolean {
+    if (this.esInstantanea) return false;
+    return ETAPAS_BORRADOR.includes(this.etapa);
+  }
+
+  get fechaDocumento(): Date | string | null {
+    if (this.esInstantanea && this.fechaEmisionInstantanea) {
+      return this.fechaEmisionInstantanea;
+    }
+    return this.cotizacion?.createdDate;
   }
 
   get moneda(): string {

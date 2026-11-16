@@ -40,12 +40,21 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
+import { EtapaChipComponent, nombreEtapa } from "../sgc/etapa-chip/etapa-chip.component";
+import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
+import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component";
+import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
+import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
+import Swal from 'sweetalert2';
 import {
+  AccionesSgc,
   CatalogosSgc,
   CotizacionSgcCabecera,
   CotizacionSgcDatos,
   GuardarCotizacionSgc,
   PartidaSgc,
+  RequerimientoResumen,
+  RevisionSgc,
   TotalesSgc
 } from "../quotes-products.types";
 import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
@@ -74,6 +83,10 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     CondicionesSgcComponent,
     PartidasSgcComponent,
     AlcanceSgcComponent,
+    EtapaChipComponent,
+    RequerimientoSgcComponent,
+    RevisionSgcComponent,
+    VersionesSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -114,6 +127,21 @@ export class QuoteDetailsComponent implements OnInit {
   guardando: boolean = false;
   folio: string | null = null;
   version: number | null = null;
+  etapa: string = 'Borrador';
+  acciones: AccionesSgc = {
+    editar: true,
+    enviarRevision: false,
+    volverBorrador: false,
+    revisar: [],
+    emitir: false,
+    nuevaVersion: false,
+  };
+  revisionesVigentes: RevisionSgc[] = [];
+  revisionesRequeridas: string[] = [];
+  soloLectura: boolean = false;
+  requerimientoVinculado: RequerimientoResumen | null = null;
+  vinculoRequerimientoRemovido: boolean = false;
+  enviandoRevision: boolean = false;
   esHeredada: boolean = false;
   partidas: PartidaSgc[] = [];
   partidasFormArray: FormArray;
@@ -127,6 +155,10 @@ export class QuoteDetailsComponent implements OnInit {
     margenBajo: false,
     partidasSinCosto: 0,
   };
+
+  get mensajeFranjaSoloLectura(): string {
+    return `Esta cotización está «${nombreEtapa(this.etapa)}» (v${this.version || 1}) y no se puede editar.`;
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -317,17 +349,32 @@ export class QuoteDetailsComponent implements OnInit {
           this.partidas = sgcRes.partidas || [];
           this.sincronizarPartidasFormArray(this.partidas);
           this.faltantes = sgcRes.faltantes || [];
+          this.requerimientoVinculado = sgcRes.requerimiento || null;
+          this.vinculoRequerimientoRemovido = false;
+          this.revisionesVigentes = sgcRes.revisiones || [];
+          this.revisionesRequeridas = sgcRes.revisionesRequeridas || [];
+
+          this.acciones = sgcRes.acciones || {
+            editar: true,
+            enviarRevision: false,
+            volverBorrador: false,
+            revisar: [],
+            emitir: false,
+            nuevaVersion: false,
+          };
 
           if (sgcRes.sgc) {
             this.esHeredada = false;
             this.folio = sgcRes.sgc.folio;
             this.version = sgcRes.sgc.version;
+            this.etapa = sgcRes.sgc.etapa || 'Borrador';
             this.sgcForm.patchValue(sgcRes.sgc);
             this.actualizarValidacionTipoCambio(sgcRes.sgc.moneda);
           } else {
             this.esHeredada = !!sgcRes.partidasHeredadas;
             this.folio = null;
             this.version = null;
+            this.etapa = 'Borrador';
             this.sgcForm.patchValue({
               tipo: 'CS',
               moneda: 'MXN',
@@ -336,6 +383,18 @@ export class QuoteDetailsComponent implements OnInit {
               entregables: [],
             });
             this.actualizarValidacionTipoCambio('MXN');
+          }
+
+          if (!this.acciones.editar) {
+            this.soloLectura = true;
+            this.quotesForm.disable({ emitEvent: false });
+            this.sgcForm.disable({ emitEvent: false });
+            this.partidasFormArray.disable({ emitEvent: false });
+          } else {
+            this.soloLectura = false;
+            this.quotesForm.enable({ emitEvent: false });
+            this.sgcForm.enable({ emitEvent: false });
+            this.partidasFormArray.enable({ emitEvent: false });
           }
 
           if (sgcRes.totales) {
@@ -360,13 +419,19 @@ export class QuoteDetailsComponent implements OnInit {
     });
   }
 
-  saveQuotes(): void {
-    if (this.guardando) {
-      return;
+  onRequerimientoChange(req: RequerimientoResumen | null): void {
+    this.requerimientoVinculado = req;
+    if (req === null) {
+      this.vinculoRequerimientoRemovido = true;
+      this.sgcForm.get('requerimientoId')?.setValue(0);
+    } else {
+      this.vinculoRequerimientoRemovido = false;
+      this.sgcForm.get('requerimientoId')?.setValue(req.id);
     }
+    this.sgcForm.markAsDirty();
+  }
 
-    this.erroresGuardado = [];
-
+  armarDtoGuardar(): GuardarCotizacionSgc {
     const formVal = this.quotesForm.value;
     const cotizacion: CotizacionSgcCabecera = {
       cotizacionProductosId: formVal.cotizacionProductosId || this.quotesId || 0,
@@ -385,23 +450,38 @@ export class QuoteDetailsComponent implements OnInit {
     };
 
     const sgcVal = this.sgcForm.value;
+    let reqId: number | null | undefined = sgcVal.requerimientoId;
+    if (this.vinculoRequerimientoRemovido) {
+      reqId = 0;
+    } else if (this.requerimientoVinculado) {
+      reqId = this.requerimientoVinculado.id;
+    }
+
     const sgc: CotizacionSgcDatos = {
       ...sgcVal,
+      requerimientoId: reqId,
       entregables: sgcVal.entregables || [],
     };
 
-    // Siempre lo que hay en la tabla (aunque este vacia): nunca se reponen los detalles heredados de CONTPAQi
     const partidasEnviar: PartidaSgc[] =
       this.partidasFormArray && this.partidasFormArray.length > 0
         ? this.partidasFormArray.value
         : (this.partidas || []);
 
-    const dto: GuardarCotizacionSgc = {
+    return {
       cotizacion,
       sgc,
       partidas: partidasEnviar || [],
     };
+  }
 
+  saveQuotes(): void {
+    if (this.guardando) {
+      return;
+    }
+
+    this.erroresGuardado = [];
+    const dto = this.armarDtoGuardar();
     this.guardando = true;
 
     this.quotesService.guardarSgc(dto).subscribe({
@@ -425,6 +505,98 @@ export class QuoteDetailsComponent implements OnInit {
           this._chatNotificationService.showError('Opps', msg, 5000);
         }
       },
+    });
+  }
+
+  async enviarARevision(): Promise<void> {
+    if (this.enviandoRevision) {
+      return;
+    }
+
+    this.enviandoRevision = true;
+
+    const confirmacion = await Swal.fire({
+      title: '¿Enviar a revisión?',
+      text: 'Esta cotización pasará al equipo de revisión y no se podrá modificar.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, enviar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (!confirmacion?.isConfirmed) {
+      this.enviandoRevision = false;
+      return;
+    }
+
+    this.erroresGuardado = [];
+
+    const hayCambios = this.quotesForm.dirty || this.sgcForm.dirty || (this.partidasFormArray && this.partidasFormArray.dirty);
+
+    const llamarEnviar = () => {
+      const id = this.quotesId || this.quotesForm.get('cotizacionProductosId')?.value || 0;
+      this.quotesService.enviarRevision(id).subscribe({
+        next: () => {
+          this.enviandoRevision = false;
+          this._chatNotificationService.showSuccess('Éxito', 'Cotización enviada a revisión.', 3000);
+          this.loadQuotes(id);
+        },
+        error: (err) => {
+          this.enviandoRevision = false;
+          if (err.status === 400 && err.error?.errores?.length > 0) {
+            this.erroresGuardado = err.error.errores;
+          } else {
+            const msg = err.error?.mensaje || 'No se pudo enviar la cotización a revisión.';
+            this.erroresGuardado = [msg];
+            this._chatNotificationService.showError('Opps', msg, 5000);
+          }
+        },
+      });
+    };
+
+    if (hayCambios) {
+      const dto = this.armarDtoGuardar();
+      this.quotesService.guardarSgc(dto).subscribe({
+        next: (res) => {
+          const id = this.quotesId || res?.data?.cotizacionProductosId || 0;
+          this.quotesId = id;
+          this.quotesForm.markAsPristine();
+          this.sgcForm.markAsPristine();
+          if (this.partidasFormArray) this.partidasFormArray.markAsPristine();
+          llamarEnviar();
+        },
+        error: (err) => {
+          this.enviandoRevision = false;
+          if (err.status === 400 && err.error?.errores?.length > 0) {
+            this.erroresGuardado = err.error.errores;
+          } else {
+            const msg = err.error?.mensaje || 'No se pudo guardar la cotización antes de enviar a revisión.';
+            this.erroresGuardado = [msg];
+            this._chatNotificationService.showError('Opps', msg, 5000);
+          }
+        },
+      });
+    } else {
+      llamarEnviar();
+    }
+  }
+
+  abrirEmisionDialog(): void {
+    const dialogRef = this.dialog.open(EmisionDialogComponent, {
+      width: '36rem',
+      maxWidth: '95vw',
+      data: {
+        cotizacionId: this.quotesId,
+        clienteReceptorPorDefecto: this.quotesForm.get('contacto')?.value || this.quotesForm.get('nombreCliente')?.value || '',
+        correoPorDefecto: this.quotesForm.get('correo')?.value || '',
+        catalogos: this.catalogos,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res && res.guardado) {
+        this.loadQuotes(this.quotesId);
+      }
     });
   }
 
@@ -608,7 +780,7 @@ export class QuoteDetailsComponent implements OnInit {
     this.dialog.open(QuotePdfDialogComponent, {
       data: {
         cotizacion,
-        sgc: { ...this.sgcForm?.value, folio: this.folio, version: this.version },
+        sgc: { ...this.sgcForm?.value, folio: this.folio, version: this.version, etapa: this.etapa },
         partidas: partidasList,
         totales: this.totales,
       },

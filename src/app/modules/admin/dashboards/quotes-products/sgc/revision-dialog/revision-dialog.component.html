@@ -1,0 +1,80 @@
+﻿<h2 mat-dialog-title class="flex items-center gap-2 font-bold text-lg">
+  <span>Revisión como {{ nombreRol }}</span>
+</h2>
+
+<mat-dialog-content class="dialogo-alto flex flex-col gap-4 py-4 min-w-[500px]">
+  <!-- Alerta de errores de API -->
+  <div *ngIf="errorMensaje || errores.length > 0" class="bg-red-50 border-l-4 border-red-500 p-3 text-red-700 rounded text-sm">
+    <div *ngIf="errorMensaje" class="font-medium">{{ errorMensaje }}</div>
+    <ul *ngIf="errores.length > 0" class="list-disc pl-5 mt-1">
+      <li *ngFor="let e of errores">{{ e }}</li>
+    </ul>
+  </div>
+
+  <!-- Lista de verificación -->
+  <div class="flex flex-col gap-2">
+    <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300">Lista de verificación</h3>
+    <div
+      *ngFor="let punto of puntos"
+      class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-700 gap-2"
+    >
+      <mat-checkbox [(ngModel)]="checklist[punto.codigo]" color="primary">
+        <span class="text-sm text-gray-800 dark:text-gray-200">{{ punto.nombre }}</span>
+      </mat-checkbox>
+      <span
+        *ngIf="esObligatorio(punto.codigo)"
+        class="text-xs px-2 py-0.5 rounded font-semibold bg-amber-100 text-amber-800 badge-obligatorio shrink-0"
+      >
+        Obligatorio
+      </span>
+    </div>
+  </div>
+
+  <!-- Comentarios -->
+  <div class="flex flex-col gap-1 mt-2">
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Comentarios</mat-label>
+      <textarea
+        matInput
+        [(ngModel)]="comentarios"
+        rows="3"
+        placeholder="Observaciones o motivo de rechazo..."
+      ></textarea>
+    </mat-form-field>
+    <div class="text-xs text-gray-500 flex justify-between items-center">
+      <span *ngIf="caracteresRestantesRechazo > 0" class="text-amber-600 font-medium">
+        Para rechazar faltan {{ caracteresRestantesRechazo }} caracteres (mínimo 10).
+      </span>
+      <span *ngIf="caracteresRestantesRechazo === 0" class="text-green-600 font-medium">
+        Comentario válido para rechazo.
+      </span>
+      <span>{{ (comentarios || '').length }} caracteres</span>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="gap-2 p-4 border-t">
+  <button mat-button type="button" [disabled]="guardando" (click)="cancelar()">
+    Cancelar
+  </button>
+  <button
+    mat-stroked-button
+    color="warn"
+    type="button"
+    [disabled]="!puedeRechazar"
+    class="btn-rechazar"
+    (click)="rechazar()"
+  >
+    Rechazar
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="!puedeAprobar"
+    class="btn-aprobar"
+    (click)="aprobar()"
+  >
+    Aprobar
+  </button>
+</mat-dialog-actions>

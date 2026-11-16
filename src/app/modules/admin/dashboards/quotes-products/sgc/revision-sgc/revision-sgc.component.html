@@ -1,0 +1,101 @@
+﻿<div class="revision-sgc-container space-y-6">
+  <!-- Banner destacado de rechazo si aplica -->
+  <div *ngIf="ultimaRevisionRechazada as rechazo" class="p-4 rounded-xl border border-red-200 bg-red-50 text-red-800 flex items-start gap-3 shadow-sm">
+    <mat-icon class="text-red-600 mt-0.5">error_outline</mat-icon>
+    <div class="flex-1">
+      <div class="font-semibold text-sm text-red-900">Cotización rechazada</div>
+      <div class="mt-1 text-xs text-red-800 leading-relaxed">
+        Rechazada por <strong>{{ rechazo.usuarioNombre }}</strong> el
+        <strong>{{ rechazo.fecha | date:'dd/MM/yyyy HH:mm' }}</strong>:
+        <span class="italic font-medium">"{{ rechazo.comentarios }}"</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón Volver a borrador -->
+  <div *ngIf="acciones?.volverBorrador" class="flex justify-end">
+    <button mat-stroked-button color="warn" (click)="onVolverBorrador()" [disabled]="volviendoBorrador" class="!border-red-300 !text-red-700 hover:!bg-red-50">
+      <mat-icon class="mr-1">undo</mat-icon>
+      Volver a borrador
+    </button>
+  </div>
+
+  <!-- Tarjetas por rol requerido -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div *ngFor="let rol of revisionesRequeridas" class="tarjeta-rol p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-semibold text-sm text-slate-800 dark:text-slate-100">{{ nombreRol(rol) }}</span>
+          <span *ngIf="!revisionDelRol(rol)" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">Pendiente</span>
+          <span *ngIf="revisionDelRol(rol)?.resultado === 'Aprobada'" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">Aprobada</span>
+          <span *ngIf="revisionDelRol(rol)?.resultado === 'Rechazada'" class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">Rechazada</span>
+        </div>
+
+        <div *ngIf="revisionDelRol(rol) as rev" class="text-xs text-slate-500 space-y-1 mb-4">
+          <div>Por: <span class="font-medium text-slate-700 dark:text-slate-300">{{ rev.usuarioNombre }}</span></div>
+          <div>Fecha: <span class="font-medium text-slate-700 dark:text-slate-300">{{ rev.fecha | date:'dd/MM/yyyy HH:mm' }}</span></div>
+          <div *ngIf="rev.comentarios" class="mt-2 text-slate-600 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-900/50 p-2 rounded border border-slate-100 dark:border-slate-800">
+            "{{ rev.comentarios }}"
+          </div>
+        </div>
+
+        <div *ngIf="!revisionDelRol(rol)" class="text-xs text-slate-400 italic mb-4">
+          Pendiente de revisión
+        </div>
+      </div>
+
+      <div *ngIf="puedeRevisar(rol)" class="pt-3 border-t border-slate-100 dark:border-slate-700">
+        <button mat-flat-button color="primary" class="w-full text-xs font-medium" (click)="abrirDialogoRevision(rol)">
+          <mat-icon class="mr-1 text-sm">rate_review</mat-icon>
+          Revisar como {{ nombreRol(rol) }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial completo de revisiones -->
+  <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+    <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Historial de revisiones</h4>
+
+    <div *ngIf="cargandoHistorial" class="text-xs text-slate-400">
+      Cargando historial...
+    </div>
+
+    <div *ngIf="!cargandoHistorial && (!historialRevisiones || historialRevisiones.length === 0)" class="text-xs text-slate-400 italic">
+      No hay revisiones registradas.
+    </div>
+
+    <div *ngIf="historialRevisiones && historialRevisiones.length > 0" class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+      <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase font-medium">
+          <tr>
+            <th class="px-3 py-2">Versión</th>
+            <th class="px-3 py-2">Rol</th>
+            <th class="px-3 py-2">Resultado</th>
+            <th class="px-3 py-2">Revisor</th>
+            <th class="px-3 py-2">Fecha</th>
+            <th class="px-3 py-2">Comentarios</th>
+            <th class="px-3 py-2">Estado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <tr *ngFor="let rev of historialRevisiones" [class.revision-descartada]="rev.descartada" [class.opacity-60]="rev.descartada" [class.bg-slate-50]="rev.descartada">
+            <td class="px-3 py-2 font-medium">v{{ rev.version }}</td>
+            <td class="px-3 py-2">{{ nombreRol(rev.rol) }}</td>
+            <td class="px-3 py-2">
+              <span *ngIf="rev.resultado === 'Aprobada'" class="text-green-600 font-semibold">Aprobada</span>
+              <span *ngIf="rev.resultado === 'Rechazada'" class="text-red-600 font-semibold">Rechazada</span>
+            </td>
+            <td class="px-3 py-2">{{ rev.usuarioNombre }}</td>
+            <td class="px-3 py-2">{{ rev.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="px-3 py-2 max-w-xs break-words">{{ rev.comentarios || '—' }}</td>
+            <td class="px-3 py-2">
+              <span *ngIf="rev.descartada" class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">Descartada</span>
+              <span *ngIf="!rev.descartada" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Vigente</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

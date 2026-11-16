@@ -9,6 +9,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, BehaviorSubject } from 'rxjs';
+import Swal from 'sweetalert2';
 import { CatalogosSgc, RespuestaObtenerSgc } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
@@ -85,6 +86,14 @@ describe('QuoteDetailsComponent SGC', () => {
           faltantes: [],
         })
       ),
+      enviarRevision: jasmine.createSpy('enviarRevision').and.returnValue(of({ etapa: 'EnRevision' })),
+      requerimientosDisponibles: jasmine.createSpy('requerimientosDisponibles').and.returnValue(of([])),
+      revisiones: jasmine.createSpy('revisiones').and.returnValue(of([])),
+      volverBorrador: jasmine.createSpy('volverBorrador').and.returnValue(of({ etapa: 'Borrador' })),
+      emitir: jasmine.createSpy('emitir').and.returnValue(of({ folio: 'COT-2026-0001', version: 1 })),
+      nuevaVersion: jasmine.createSpy('nuevaVersion').and.returnValue(of({ version: 2, etapa: 'Borrador' })),
+      versiones: jasmine.createSpy('versiones').and.returnValue(of([])),
+      version: jasmine.createSpy('version').and.returnValue(of({})),
     };
 
     mockClientsService = {
@@ -623,6 +632,18 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(datos.sgc.version).toBe(1);
   });
 
+  it('El_PDF_recibe_la_etapa_para_que_una_cotizacion_emitida_no_salga_como_borrador', () => {
+    const dialog = TestBed.inject(MatDialog) as any;
+    component.folio = 'COT-2026-0042';
+    component.version = 1;
+    component.etapa = 'Emitida';
+
+    component.openCotizacionPreview();
+
+    const datos = dialog.open.calls.mostRecent().args[1].data;
+    expect(datos.sgc.etapa).toBe('Emitida');
+  });
+
   it('Exportar_PDF_en_una_cotizacion_nueva_no_falla', () => {
     const dialog = TestBed.inject(MatDialog) as any;
     component.cotizacion = undefined;
@@ -642,5 +663,271 @@ describe('QuoteDetailsComponent SGC', () => {
 
     const args = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
     expect(args.partidas).toEqual([]);
+  });
+
+  it('Si_no_se_puede_editar_los_formularios_quedan_deshabilitados_y_no_hay_boton_Guardar', () => {
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'EnRevision' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: true, revisar: ['Comercial'], emitir: false, nuevaVersion: false },
+      })
+    );
+
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    expect(component.quotesForm.disabled).toBeTrue();
+    expect(component.sgcForm.disabled).toBeTrue();
+    expect(component.partidasFormArray.disabled).toBeTrue();
+    const btns = fixture.nativeElement.querySelectorAll('button');
+    const guardarPresent = Array.from(btns).some((b: any) => b.textContent.includes('Guardar'));
+    expect(guardarPresent).toBeFalse();
+  });
+
+  it('La_franja_dice_la_etapa_y_la_version', () => {
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 2, etapa: 'EnRevision' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: true, revisar: ['Comercial'], emitir: false, nuevaVersion: false },
+      })
+    );
+
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    const franja = fixture.nativeElement.querySelector('.franja-solo-lectura');
+    expect(franja).toBeTruthy();
+    expect(franja.textContent).toContain('revisión');
+    expect(franja.textContent).toContain('2');
+  });
+
+  it('La_franja_usa_el_nombre_legible_de_la_etapa_y_no_su_codigo', () => {
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'EnSeguimiento' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: true },
+      })
+    );
+
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    const franja = fixture.nativeElement.querySelector('.franja-solo-lectura');
+    expect(franja.textContent).toContain('En seguimiento');
+    expect(franja.textContent).not.toContain('EnSeguimiento');
+  });
+
+  it('Una_cotizacion_en_Borrador_sigue_editable', () => {
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'Borrador' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: true, enviarRevision: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false },
+      })
+    );
+
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    expect(component.quotesForm.enabled).toBeTrue();
+    expect(component.sgcForm.enabled).toBeTrue();
+    const franja = fixture.nativeElement.querySelector('.franja-solo-lectura');
+    expect(franja).toBeNull();
+    const btns = fixture.nativeElement.querySelectorAll('button');
+    const guardarPresent = Array.from(btns).some((b: any) => b.textContent.includes('Guardar'));
+    expect(guardarPresent).toBeTrue();
+  });
+
+  it('El_chip_aparece_en_el_encabezado', () => {
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'EnRevision' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false },
+      })
+    );
+
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('app-etapa-chip');
+    expect(chip).toBeTruthy();
+    expect(chip.textContent).toContain('En revisión');
+  });
+
+  it('Elegir_un_requerimiento_lo_muestra_y_lo_manda_al_guardar', async () => {
+    component.quotesForm.patchValue({ clienteId: 1, unidadDeNegocioId: 2, nombreCliente: 'Cliente' });
+    const req = { id: 101, folio: 'REQ-101', estatus: 'Calificado Comercial' };
+    component.onRequerimientoChange(req as any);
+    component.selectedTabIndex = 4;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const reqComp = fixture.nativeElement.querySelector('app-requerimiento-sgc');
+    expect(reqComp).toBeTruthy();
+
+    component.saveQuotes();
+
+    const dto = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
+    expect(dto.sgc.requerimientoId).toBe(101);
+  });
+
+  it('Quitar_el_vinculo_manda_cero', () => {
+    component.quotesForm.patchValue({ clienteId: 1, unidadDeNegocioId: 2, nombreCliente: 'Cliente' });
+    component.onRequerimientoChange(null);
+    component.saveQuotes();
+
+    const dto = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
+    expect(dto.sgc.requerimientoId).toBe(0);
+  });
+
+  it('Enviar_a_revision_guarda_primero_si_hay_cambios', async () => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    mockQuotesService.enviarRevision.and.returnValue(of({ etapa: 'EnRevision' }));
+    component.quotesId = 15;
+    component.quotesForm.patchValue({ clienteId: 1, unidadDeNegocioId: 2, nombreCliente: 'Cliente' });
+    component.quotesForm.markAsDirty();
+
+    await component.enviarARevision();
+
+    expect(mockQuotesService.guardarSgc).toHaveBeenCalled();
+    expect(mockQuotesService.enviarRevision).toHaveBeenCalledWith(15);
+  });
+
+  it('Enviar_a_revision_pide_confirmacion', async () => {
+    const swalSpy = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: false } as any));
+    component.quotesId = 15;
+
+    await component.enviarARevision();
+
+    expect(swalSpy).toHaveBeenCalled();
+    expect(mockQuotesService.enviarRevision).not.toHaveBeenCalled();
+  });
+
+  it('Enviar_a_revision_no_se_repite_con_doble_clic', async () => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    mockQuotesService.enviarRevision.and.returnValue(of({ etapa: 'EnRevision' }));
+    component.quotesId = 15;
+    component.quotesForm.markAsPristine();
+    component.sgcForm.markAsPristine();
+
+    const p1 = component.enviarARevision();
+    const p2 = component.enviarARevision();
+    await Promise.all([p1, p2]);
+
+    expect(mockQuotesService.enviarRevision.calls.count()).toBe(1);
+  });
+
+  it('Un_400_muestra_los_faltantes_y_no_recarga', async () => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    mockQuotesService.enviarRevision.and.returnValue(
+      throwError(() => ({
+        status: 400,
+        error: { mensaje: 'Faltan datos para enviar a revisión.', errores: ['Vincula un requerimiento calificado.'] },
+      }))
+    );
+    component.quotesId = 15;
+    component.quotesForm.markAsPristine();
+    component.sgcForm.markAsPristine();
+    const loadSpy = spyOn(component, 'loadQuotes');
+
+    await component.enviarARevision();
+
+    expect(component.erroresGuardado).toEqual(['Vincula un requerimiento calificado.']);
+    expect(loadSpy).not.toHaveBeenCalled();
+  });
+
+  it('El_boton_solo_aparece_si_acciones_enviarRevision', () => {
+    component.acciones = { editar: true, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
+    fixture.detectChanges();
+    let btnEnviar = Array.from(fixture.nativeElement.querySelectorAll('button')).find((b: any) => b.textContent.includes('Enviar a revisión'));
+    expect(btnEnviar).toBeFalsy();
+
+    component.acciones = { editar: true, enviarRevision: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
+    fixture.detectChanges();
+    btnEnviar = Array.from(fixture.nativeElement.querySelectorAll('button')).find((b: any) => b.textContent.includes('Enviar a revisión'));
+    expect(btnEnviar).toBeTruthy();
+  });
+
+  it('Despues_de_enviar_la_cotizacion_queda_en_solo_lectura', async () => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    mockQuotesService.enviarRevision.and.returnValue(of({ etapa: 'EnRevision' }));
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 15,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'EnRevision' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: true, revisar: ['Comercial'], emitir: false, nuevaVersion: false },
+      })
+    );
+    component.quotesId = 15;
+    component.quotesForm.markAsPristine();
+    component.sgcForm.markAsPristine();
+
+    await component.enviarARevision();
+    fixture.detectChanges();
+
+    expect(component.soloLectura).toBeTrue();
+    expect(component.quotesForm.disabled).toBeTrue();
+  });
+
+  it('El_boton_Registrar_envio_solo_aparece_si_acciones_emitir', () => {
+    component.acciones = { editar: true, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
+    fixture.detectChanges();
+    let btnEmitir = fixture.nativeElement.querySelector('.btn-registrar-envio');
+    expect(btnEmitir).toBeNull();
+
+    component.acciones = { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: true, nuevaVersion: false };
+    fixture.detectChanges();
+    btnEmitir = fixture.nativeElement.querySelector('.btn-registrar-envio');
+    expect(btnEmitir).toBeTruthy();
+  });
+
+  it('Despues_de_emitir_se_recarga_y_queda_en_solo_lectura', () => {
+    const mockDialog = TestBed.inject(MatDialog) as any;
+    mockDialog.open.and.returnValue({
+      afterClosed: () => of({ guardado: true, data: { folio: 'COT-01', version: 1 } }),
+    });
+
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 15,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'Emitida' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: true },
+      })
+    );
+
+    component.quotesId = 15;
+    component.abrirEmisionDialog();
+    fixture.detectChanges();
+
+    expect(mockQuotesService.obtenerSgc).toHaveBeenCalledWith(15);
+    expect(component.soloLectura).toBeTrue();
+    expect(component.etapa).toBe('Emitida');
+    expect(component.quotesForm.disabled).toBeTrue();
   });
 });

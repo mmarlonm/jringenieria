@@ -20,6 +20,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
+import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
 import moment from 'moment';
 
 @Component({
@@ -40,7 +41,8 @@ import moment from 'moment';
     MatMenuModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    EtapaChipComponent
   ]
 })
 export class QuoteListComponent implements OnInit, AfterViewInit {
@@ -52,6 +54,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     'createdDate',
     'requisitosEspeciales',
     'total',
+    'etapa',
+    'vigencia',
+    'envio',
+    'responsable',
     'estatus',
     'actions'
   ];
@@ -62,6 +68,21 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   vistaActual: string = '';
   permisosDisponibles: string[] = [];
   errorResumenSgc: boolean = false;
+
+  todasLasQuotesDePagina: any[] = [];
+  filtroEtapa: string = 'todas';
+  etapasFiltro: { codigo: string; nombre: string }[] = [
+    { codigo: 'Borrador', nombre: 'Borrador' },
+    { codigo: 'EnRevision', nombre: 'En revisión' },
+    { codigo: 'Aprobada', nombre: 'Aprobada' },
+    { codigo: 'Emitida', nombre: 'Emitida' },
+    { codigo: 'EnSeguimiento', nombre: 'En seguimiento' },
+    { codigo: 'Ganada', nombre: 'Ganada' },
+    { codigo: 'Perdida', nombre: 'Perdida' },
+    { codigo: 'Cancelada', nombre: 'Cancelada' },
+    { codigo: 'Vencida', nombre: 'Vencida' },
+    { codigo: 'CerradaSinRespuesta', nombre: 'Cerrada sin respuesta' }
+  ];
 
   // Paginación y Filtro de Fecha
   pageSize: number = 10;
@@ -110,7 +131,8 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
       if (res && res.code == 200) {
         const quotes = res.data;
         this.totalItems = res.totalCount || res.count || quotes.length;
-        this.dataSource.data = quotes;
+        this.todasLasQuotesDePagina = [...quotes];
+        this.aplicarFiltroEtapaInterno();
         this.quotesCount = this.totalItems;
 
         this.filterOptions.unidadDeNegocioNombre = [...new Set(
@@ -131,14 +153,21 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
                 quotes.forEach((q: any) => {
                   const r = mapResumen.get(q.cotizacionProductosId);
                   if (r) {
+                    q.tieneSgc = true;
                     q.folio = r.folio;
                     q.tipo = r.tipo;
                     q.version = r.version;
                     q.totalSgc = r.total;
                     q.moneda = r.moneda;
+                    q.etapa = r.etapa;
+                    q.fechaEmision = r.fechaEmision;
+                    q.fechaVencimiento = r.fechaVencimiento;
+                    q.creadoPorNombre = r.creadoPorNombre;
+                    q.requerimientoFolio = r.requerimientoFolio;
                   }
                 });
-                this.dataSource.data = [...quotes];
+                this.todasLasQuotesDePagina = [...quotes];
+                this.aplicarFiltroEtapaInterno();
                 this._changeDetectorRef.markForCheck();
               }
             },
@@ -252,17 +281,61 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     this.router.navigate([`/dashboards/quote-products/${projectId}`]);
   }
 
+  tieneRegistroSgc(quote: any): boolean {
+    return !!(quote?.tieneSgc || quote?.folio || (quote?.etapa && quote?.version !== undefined));
+  }
+
+  obtenerTextoFolio(quote: any): string {
+    if (quote?.folio) {
+      return quote.version && quote.version > 1 ? `${quote.folio} v${quote.version}` : quote.folio;
+    }
+    return `#${quote?.cotizacionProductosId ?? ''}`;
+  }
+
+  puedeEliminar(quote: any): boolean {
+    if (!this.tieneRegistroSgc(quote)) {
+      return true;
+    }
+    const etapa = quote.etapa || 'Borrador';
+    const version = quote.version ?? 1;
+    return etapa === 'Borrador' && version <= 1;
+  }
+
+  filtrarPorEtapa(etapa: string): void {
+    this.filtroEtapa = etapa;
+    if (!this.todasLasQuotesDePagina || this.todasLasQuotesDePagina.length === 0) {
+      this.todasLasQuotesDePagina = [...this.dataSource.data];
+    }
+    this.aplicarFiltroEtapaInterno();
+    this._changeDetectorRef.markForCheck();
+  }
+
+  private aplicarFiltroEtapaInterno(): void {
+    if (!this.filtroEtapa || this.filtroEtapa === 'todas') {
+      this.dataSource.data = [...this.todasLasQuotesDePagina];
+    } else {
+      this.dataSource.data = this.todasLasQuotesDePagina.filter(
+        (q) => q.etapa === this.filtroEtapa
+      );
+    }
+  }
+
   async deleteQuote(projectId: number) {
     const confirmed = await this.showConfirmation();
     if (confirmed) {
-
-      this.quotesService.deleteQuote(projectId).subscribe((res) => {
-        if (res.code == 200) {
-          this.getQuotes();
-          this._chatNotificationService.showSuccess('Éxito', 'Cotizacion eliminada correctamente', 3000);
-        }
-        else {
-          this._chatNotificationService.showError('Error', 'Hubo un error en el sistema, contacte al administrador del sistema.', 5000);
+      this.quotesService.deleteQuote(projectId).subscribe({
+        next: (res: any) => {
+          if (res && res.code == 200) {
+            this.getQuotes();
+            this._chatNotificationService.showSuccess('Éxito', 'Cotizacion eliminada correctamente', 3000);
+          } else {
+            const msg = res?.mensaje || res?.message || 'Hubo un error en el sistema, contacte al administrador del sistema.';
+            this._chatNotificationService.showError('Error', msg, 5000);
+          }
+        },
+        error: (err: any) => {
+          const msg = err?.error?.mensaje || err?.error?.message || 'Hubo un error al eliminar la cotización.';
+          this._chatNotificationService.showError('Error', msg, 5000);
         }
       });
     }

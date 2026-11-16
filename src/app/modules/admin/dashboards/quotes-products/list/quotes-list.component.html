@@ -42,6 +42,16 @@
             </mat-form-field>
           </div>
 
+          <!-- Etapa Filter -->
+          <div class="flex-none w-full sm:w-48">
+            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+              <mat-select [(ngModel)]="filtroEtapa" (selectionChange)="filtrarPorEtapa($event.value)" placeholder="Etapa">
+                <mat-option value="todas">Todas las etapas</mat-option>
+                <mat-option *ngFor="let e of etapasFiltro" [value]="e.codigo">{{ e.nombre }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
           <!-- Add quotes button -->
           <div class="flex-none py-2 flex justify-end translate-y-1">
             <button class="ml-4" mat-flat-button color="primary" (click)="addQuote()" *ngIf="tienePermiso('btnAdd')">
@@ -84,7 +94,7 @@
                 </button>
               </th>
               <td mat-cell *matCellDef="let quote">
-                {{ quote.folio || ('#' + quote.cotizacionProductosId) }}
+                {{ obtenerTextoFolio(quote) }}
               </td>
             </ng-container>
 
@@ -160,21 +170,58 @@
               </td>
             </ng-container>
 
+            <!-- Etapa -->
+            <ng-container matColumnDef="etapa">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Etapa</th>
+              <td mat-cell *matCellDef="let quote">
+                <app-etapa-chip *ngIf="quote.etapa" [etapa]="quote.etapa"></app-etapa-chip>
+              </td>
+            </ng-container>
+
+            <!-- Vigencia -->
+            <ng-container matColumnDef="vigencia">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Vigencia</th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.fechaVencimiento ? (quote.fechaVencimiento | date:'yyyy-MM-dd') : '' }}
+              </td>
+            </ng-container>
+
+            <!-- Envío -->
+            <ng-container matColumnDef="envio">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Envío</th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.fechaEmision ? (quote.fechaEmision | date:'yyyy-MM-dd') : '' }}
+              </td>
+            </ng-container>
+
+            <!-- Responsable -->
+            <ng-container matColumnDef="responsable">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Responsable</th>
+              <td mat-cell *matCellDef="let quote">
+                {{ quote.creadoPorNombre || '' }}
+              </td>
+            </ng-container>
+
             <!-- Estatus (editable) -->
             <ng-container matColumnDef="estatus">
               <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Estatus</th>
-              <td mat-cell *matCellDef="let quote" class="px-2 py-3 cursor-pointer whitespace-nowrap text-center"
-                [matMenuTriggerFor]="statusMenu">
-                <div
-                  class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5"
-                  [style.background-color]="getColorByEstatusId(quote.estatus)">
-                  {{ getStatusName(quote.estatus) }}
-                </div>
-                <mat-menu #statusMenu="matMenu">
-                  <button mat-menu-item *ngFor="let cat of estatusList" (click)="onEstatusChange(quote, cat.id)">
-                    {{ cat.nombre }}
-                  </button>
-                </mat-menu>
+              <td mat-cell *matCellDef="let quote" class="px-2 py-3 whitespace-nowrap text-center">
+                <ng-container *ngIf="tieneRegistroSgc(quote); else legacyStatus">
+                  <app-etapa-chip [etapa]="quote.etapa || 'Borrador'"></app-etapa-chip>
+                </ng-container>
+                <ng-template #legacyStatus>
+                  <div
+                    class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer"
+                    [style.background-color]="getColorByEstatusId(quote.estatus)"
+                    [matMenuTriggerFor]="statusMenu">
+                    {{ getStatusName(quote.estatus) }}
+                  </div>
+                  <mat-menu #statusMenu="matMenu">
+                    <button mat-menu-item *ngFor="let cat of estatusList" (click)="onEstatusChange(quote, cat.id)">
+                      {{ cat.nombre }}
+                    </button>
+                  </mat-menu>
+                </ng-template>
               </td>
             </ng-container>
 
@@ -190,7 +237,7 @@
                 </button>
 
                 <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
-                  *ngIf="tienePermiso('btnDelete')">
+                  *ngIf="tienePermiso('btnDelete') && puedeEliminar(quote)" class="btn-delete">
                   <mat-icon>delete</mat-icon>
                 </button>
 
@@ -226,7 +273,7 @@
 
           <div *ngFor="let quote of dataSource.data" class="border rounded-xl p-4 shadow-sm bg-white">
             <div class="text-xs text-gray-500">Folio</div>
-            <div class="font-semibold">{{ quote.folio || ('#' + quote.cotizacionProductosId) }}</div>
+            <div class="font-semibold">{{ obtenerTextoFolio(quote) }}</div>
 
             <div *ngIf="quote.tipo" class="mt-2 text-xs text-gray-500">Tipo</div>
             <div *ngIf="quote.tipo" class="font-medium">{{ quote.tipo }}</div>
@@ -245,27 +292,51 @@
               {{ (quote.totalSgc ?? quote.total) | currency:(quote.moneda || 'MXN'):'symbol':'1.2-2' }}
             </div>
 
-            <div class="mt-2 text-xs text-gray-500">Estatus</div>
-            <div
-              class="w-full mt-1 rounded-full cursor-pointer overflow-hidden text-center shadow-md active:scale-95 transition-transform"
-              [style.background-color]="getColorByEstatusId(quote.estatus)" [matMenuTriggerFor]="statusMenuMobile">
-              <div
-                class="flex items-center justify-center text-[10px] font-extrabold text-white uppercase tracking-wider py-2.5">
-                {{ getStatusName(quote.estatus) }}
+            <div *ngIf="quote.etapa" class="mt-2 text-xs text-gray-500">Etapa</div>
+            <div *ngIf="quote.etapa" class="mt-1">
+              <app-etapa-chip [etapa]="quote.etapa"></app-etapa-chip>
+            </div>
+
+            <div *ngIf="quote.fechaVencimiento" class="mt-2 text-xs text-gray-500">Vigencia</div>
+            <div *ngIf="quote.fechaVencimiento">{{ quote.fechaVencimiento | date:'yyyy-MM-dd' }}</div>
+
+            <div *ngIf="quote.fechaEmision" class="mt-2 text-xs text-gray-500">Envío</div>
+            <div *ngIf="quote.fechaEmision">{{ quote.fechaEmision | date:'yyyy-MM-dd' }}</div>
+
+            <div *ngIf="quote.creadoPorNombre" class="mt-2 text-xs text-gray-500">Responsable</div>
+            <div *ngIf="quote.creadoPorNombre">{{ quote.creadoPorNombre }}</div>
+
+            <div *ngIf="tieneRegistroSgc(quote); else legacyStatusMobile">
+              <div class="mt-2 text-xs text-gray-500">Estatus / Etapa</div>
+              <div class="mt-1">
+                <app-etapa-chip [etapa]="quote.etapa || 'Borrador'"></app-etapa-chip>
               </div>
             </div>
-            <mat-menu #statusMenuMobile="matMenu">
-              <button mat-menu-item *ngFor="let cat of estatusList" (click)="onEstatusChange(quote, cat.id)">
-                {{ cat.nombre }}
-              </button>
-            </mat-menu>
+            <ng-template #legacyStatusMobile>
+              <div class="mt-2 text-xs text-gray-500">Estatus</div>
+              <div
+                class="w-full mt-1 rounded-full cursor-pointer overflow-hidden text-center shadow-md active:scale-95 transition-transform"
+                [style.background-color]="getColorByEstatusId(quote.estatus)" [matMenuTriggerFor]="statusMenuMobile">
+                <div
+                  class="flex items-center justify-center text-[10px] font-extrabold text-white uppercase tracking-wider py-2.5">
+                  {{ getStatusName(quote.estatus) }}
+                </div>
+              </div>
+              <mat-menu #statusMenuMobile="matMenu">
+                <button mat-menu-item *ngFor="let cat of estatusList" (click)="onEstatusChange(quote, cat.id)">
+                  {{ cat.nombre }}
+                </button>
+              </mat-menu>
+            </ng-template>
 
             <div class="flex gap-2 mt-4">
-              <button mat-icon-button color="accent" (click)="editQuote(quote.cotizacionProductosId)">
+              <button mat-icon-button color="accent" (click)="editQuote(quote.cotizacionProductosId)"
+                *ngIf="tienePermiso('btnEdit')">
                 <mat-icon>edit</mat-icon>
               </button>
 
-              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)">
+              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
+                *ngIf="tienePermiso('btnDelete') && puedeEliminar(quote)" class="btn-delete">
                 <mat-icon>delete</mat-icon>
               </button>
 

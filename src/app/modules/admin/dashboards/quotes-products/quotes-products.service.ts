@@ -8,7 +8,16 @@ import {
   GuardarCotizacionSgc,
   RespuestaObtenerSgc,
   ResumenSgc,
-  ExistenciaMaterial
+  ExistenciaMaterial,
+  RequerimientoResumen,
+  RegistrarRevisionDto,
+  RevisionSgc,
+  EmitirCotizacionDto,
+  EmisionResultado,
+  NuevaVersionDto,
+  NuevaVersionResultado,
+  VersionSgcItem,
+  VersionSgcDetalle
 } from './quotes-products.types';
 import { ContpaqiMaterialDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 import { agruparExistencias } from 'app/shared/materiales/existencias.utils';
@@ -104,5 +113,45 @@ export class QuotesService {
   importarPorFolio(folio: string): Observable<ContpaqiMaterialDto[]> {
     const params = new HttpParams().set('folio', folio);
     return this.http.get<ContpaqiMaterialDto[]>(`${this.apiUrl}/materiales/importar`, { params });
+  }
+
+  requerimientosDisponibles(q?: string): Observable<RequerimientoResumen[]> {
+    let params = new HttpParams();
+    if (q) {
+      params = params.set('q', q);
+    }
+    return this.http.get<RequerimientoResumen[]>(`${this.apiUrl}/requerimientos-disponibles`, { params });
+  }
+
+  enviarRevision(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/sgc/enviar-revision`, {});
+  }
+
+  volverBorrador(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/sgc/volver-borrador`, {});
+  }
+
+  registrarRevision(id: number, dto: RegistrarRevisionDto): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/sgc/revisiones`, dto);
+  }
+
+  emitir(id: number, dto: EmitirCotizacionDto): Observable<EmisionResultado> {
+    return this.http.post<EmisionResultado>(`${this.apiUrl}/${id}/sgc/emitir`, dto);
+  }
+
+  nuevaVersion(id: number, dto: NuevaVersionDto): Observable<NuevaVersionResultado> {
+    return this.http.post<NuevaVersionResultado>(`${this.apiUrl}/${id}/sgc/nueva-version`, dto);
+  }
+
+  revisiones(id: number): Observable<RevisionSgc[]> {
+    return this.http.get<RevisionSgc[]>(`${this.apiUrl}/${id}/sgc/revisiones`);
+  }
+
+  versiones(id: number): Observable<VersionSgcItem[]> {
+    return this.http.get<VersionSgcItem[]>(`${this.apiUrl}/${id}/sgc/versiones`);
+  }
+
+  version(id: number, n: number): Observable<VersionSgcDetalle> {
+    return this.http.get<VersionSgcDetalle>(`${this.apiUrl}/${id}/sgc/versiones/${n}`);
   }
 }
