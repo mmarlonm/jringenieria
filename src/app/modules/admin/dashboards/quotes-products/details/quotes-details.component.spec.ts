@@ -1391,5 +1391,67 @@ describe('QuoteDetailsComponent SGC', () => {
         expect(component.etapaEsEmitidaOCerrada).toBeTrue();
       }
     });
+
+    it('El_boton_Cerrar_solo_aparece_si_acciones_cerrar_tiene_resultados', () => {
+      // Sin resultados de cierre
+      component.acciones = { ...component.acciones, cerrar: [] };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.btn-cerrar-cotizacion')).toBeNull();
+
+      // Con resultados de cierre
+      component.acciones = { ...component.acciones, cerrar: ['Ganada', 'Perdida'] };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.btn-cerrar-cotizacion')).not.toBeNull();
+    });
+
+    it('Una_cotizacion_cerrada_queda_de_solo_lectura_y_muestra_su_resultado', async () => {
+      component.etapa = 'Ganada';
+      component.acciones = {
+        editar: false,
+        enviarRevision: false,
+        volverBorrador: false,
+        revisar: [],
+        emitir: false,
+        nuevaVersion: false,
+        seguimiento: false,
+        cerrar: [],
+      };
+      // Copiado de CotizacionSgcVistaDto del API C# (CotizacionSgcDtos.cs)
+      component.sgcVista = {
+        folio: 'COT-2026-0042',
+        version: 1,
+        etapa: 'Ganada',
+        tipo: 'CS',
+        moneda: 'MXN',
+        vigenciaDias: 15,
+        entregables: [],
+        fechaCierre: '2026-11-16T15:30:00Z',
+        tipoEvidencia: 'OrdenCompra',
+        referenciaEvidencia: 'OC-998877',
+        montoVendido: 35000,
+        subtotal: 30172.41,
+        iva: 4827.59,
+        total: 35000,
+        creadoPorUsuarioId: 10,
+        fechaCreacion: '2026-11-10T10:00:00Z',
+        motivoCierre: null,
+        comentarioCierre: 'Cliente confirmó compra vía portal',
+      };
+      component.selectedTabIndex = 3; // Pestaña Resumen
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.etapaEsCerrada).toBeTrue();
+      const bloque = fixture.nativeElement.querySelector('.bloque-resultado-cierre');
+      expect(bloque).not.toBeNull();
+      expect(bloque.textContent).toContain('Resultado del cierre');
+      expect(bloque.textContent).toContain('OC-998877');
+      expect(bloque.textContent).toContain('Cliente confirmó compra vía portal');
+      // No hay botones de acción disponibles
+      expect(fixture.nativeElement.querySelector('.btn-cerrar-cotizacion')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.btn-registrar-envio')).toBeNull();
+    });
   });
 });

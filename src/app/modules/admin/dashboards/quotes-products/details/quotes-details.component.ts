@@ -46,6 +46,7 @@ import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component
 import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
 import { SeguimientoSgcComponent } from "../sgc/seguimiento-sgc/seguimiento-sgc.component";
 import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
+import { CierreDialogComponent } from "../sgc/cierre-dialog/cierre-dialog.component";
 import Swal from 'sweetalert2';
 import {
   AccionesSgc,
@@ -165,6 +166,10 @@ export class QuoteDetailsComponent implements OnInit {
 
   get etapaEsEmitidaOCerrada(): boolean {
     return ['Emitida', 'EnSeguimiento', 'Ganada', 'Perdida', 'Cancelada', 'Vencida', 'CerradaSinRespuesta'].includes(this.etapa);
+  }
+
+  get etapaEsCerrada(): boolean {
+    return ['Ganada', 'Perdida', 'Cancelada', 'Vencida', 'CerradaSinRespuesta'].includes(this.etapa);
   }
 
   get mensajeFranjaSoloLectura(): string {
@@ -607,6 +612,31 @@ export class QuoteDetailsComponent implements OnInit {
         cotizacionId: this.quotesId,
         clienteReceptorPorDefecto: this.quotesForm.get('contacto')?.value || this.quotesForm.get('nombreCliente')?.value || '',
         correoPorDefecto: this.quotesForm.get('correo')?.value || '',
+        catalogos: this.catalogos,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res && res.guardado) {
+        this.loadQuotes(this.quotesId);
+      }
+    });
+  }
+
+  abrirCierreDialog(): void {
+    if (!this.acciones?.cerrar || this.acciones.cerrar.length === 0) {
+      return;
+    }
+    const dialogRef = this.dialog.open(CierreDialogComponent, {
+      width: '36rem',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: {
+        cotizacionId: this.quotesId,
+        total: this.totales?.total || this.total || 0,
+        moneda: this.sgcForm.get('moneda')?.value || 'MXN',
+        accionesCerrar: this.acciones.cerrar,
         catalogos: this.catalogos,
       },
     });
